@@ -1,12 +1,22 @@
+"""Test connection_service.py"""
+
 import unittest
-from pgsqltoolsservice import connection_service
+from pgsqltoolsservice.connection_service import ConnectionService
 
 class TestConnectionService(unittest.TestCase):
+    """TODO"""
 
-    def test_connect(self):
-        connection = connection_service.connect('dbname=postgres user=postgres password=password host=MAIRVINE-PC connect_timeout=10')
+    def test_connect_and_disconnect(self):
+        """TODO"""
+        connection_service = ConnectionService()
+        connection_service.connect(
+            'dbname=postgres user=postgres password=password host=MAIRVINE-PC connect_timeout=10')
+        connection = connection_service.connection
         self.assertIsNotNone(connection)
-        connection.close()
+
+        connection_service.disconnect()
+        connection = connection_service.connection
+        self.assertIsNone(connection)
 
 if __name__ == '__main__':
     unittest.main()
