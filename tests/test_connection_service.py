@@ -4,10 +4,10 @@ import unittest
 from pgsqltoolsservice.connection_service import ConnectionService
 
 class TestConnectionService(unittest.TestCase):
-    """TODO"""
+    """Methods for testing the connection service"""
 
     def test_connect_and_disconnect(self):
-        """TODO"""
+        """Test that the service and connect and disconnect to/from a PostgreSQL server"""
         connection_service = ConnectionService()
         connection_service.connect(
             'dbname=postgres user=postgres password=password host=MAIRVINE-PC connect_timeout=10')
