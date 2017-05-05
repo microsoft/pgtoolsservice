@@ -1,5 +1,6 @@
 """Listen for JSON RPC inputs on stdin and dispatch them to the appropriate methods"""
 
+from __future__ import print_function
 import sys
 from jsonrpc import JSONRPCResponseManager, dispatcher
 from connection_service import ConnectionService
@@ -37,7 +38,7 @@ class Server(object):
 
 def echo(arg):
     """Function used for manually testing the JSON RPC server"""
-    print arg
+    print(arg)
 
 def handle_input():
     """Loop to process input and dispatch the requests"""
@@ -46,7 +47,7 @@ def handle_input():
         response = JSONRPCResponseManager.handle(somestring, dispatcher)
         if SERVER.should_exit:
             sys.exit(0 if SERVER.is_shutdown else 1)
-        print response.json
+        print(response.json)
 
 if __name__ == '__main__':
     SERVER = Server()
