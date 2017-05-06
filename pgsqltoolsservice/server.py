@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import sys
+import logging
 from jsonrpc import JSONRPCResponseManager, dispatcher
 from connection_service import ConnectionService
 from contracts.initialization import InitializeResult
@@ -10,18 +11,21 @@ class Server(object):
     """Class representing a server for JSON RPC requests"""
 
     def __init__(self):
+        logging.debug('creating server object')
         self.connection_service = ConnectionService()
         self.is_shutdown = False
         self.should_exit = False
         dispatcher['initialize'] = self.initialize
 
-    def initialize(self):
+    def initialize(self, processId=None, rootPath=None, rootUri=None, initializationOptions=None, capabilities=None, trace=None):
         """Initialize the service"""
+        logging.debug('initialize method')
         self.initialize_dispatcher()
         return InitializeResult().json
 
     def initialize_dispatcher(self):
         """Initialize the JSON RPC dispatcher"""
+        logging.debug('initialize_dispatcher method')
         dispatcher['connection/connect'] = self.connection_service.connect
         dispatcher['connection/disconnect'] = self.connection_service.disconnect
         dispatcher['shutdown'] = self.shutdown
@@ -30,26 +34,46 @@ class Server(object):
 
     def shutdown(self):
         """Shutdown the service"""
+        logging.debug('shutdown method')
         self.is_shutdown = True
 
     def exit(self):
         """Exit the process"""
+        logging.debug('exit method')
         self.should_exit = True
 
 def echo(arg):
     """Function used for manually testing the JSON RPC server"""
     print(arg)
 
+def read_headers():
+    """Read the VSCode Language Server Protocol message headers"""
+    headers = {}
+    for line in sys.stdin:
+        line = line.strip()
+        if line == '':
+            return headers
+        parts = line.split(': ')
+        headers[parts[0]] = parts[1]
+
+def read_content(length):
+    """Read the number of bytes of content specified"""
+    return sys.stdin.read(length)
+
 def handle_input():
     """Loop to process input and dispatch the requests"""
     while True:
-        somestring = sys.stdin.read()
+        headers = read_headers()
+        somestring = read_content(int(headers['Content-Length']))
+        logging.debug('read string: %s', somestring)
         response = JSONRPCResponseManager.handle(somestring, dispatcher)
         if SERVER.should_exit:
             sys.exit(0 if SERVER.is_shutdown else 1)
+        logging.debug('sending response: %s', response.json)
         print(response.json)
 
 if __name__ == '__main__':
+    logging.basicConfig(filename='server.log', level=logging.DEBUG)
+    logging.debug('initializing server')
     SERVER = Server()
-    SERVER.initialize_dispatcher()
     handle_input()
