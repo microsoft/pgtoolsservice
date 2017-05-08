@@ -16,7 +16,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 ## Manual Testing
 1. `python pgsqltoolsservice/server.py`
-2. Now you can pass in JSON RPC requests to stdin, following the (language server protocol specifications)[https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md]. The following commands are supported currently:
+2. Now you can pass in JSON RPC requests to stdin, following the [language server protocol specifications](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md). The following commands are supported currently:
     - initialize
     - connection/connect
     - connection/disconnect
