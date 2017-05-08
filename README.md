@@ -6,8 +6,9 @@ pgsqltoolsservice is a PostgreSQL implementation of the Data Management Protocol
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Developing the PostgreSQL Tools Service
-1. Ensure that Python2.7 or above is installed - Python3 is supported
+1. Ensure that Python2.7 or above is installed - Python3 is supported (you will have to use python3 or pip3 in place of python or pip commands in this guide)
 2. Run `pip install -r requirements.txt` from the root of the project
+    - If you need to install pip, see [https://pip.pypa.io/en/latest/installing/]()
 
 ## Running Tests
 1. `pip install nose`
