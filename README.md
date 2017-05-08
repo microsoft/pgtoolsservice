@@ -32,3 +32,15 @@ Content-Length: 106
 
 {"jsonrpc":"2.0","id":0,"method":"exit"}
 ```
+
+```
+Content-Length: 106
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":4155,"capabilities":{},"trace":"off"}}Content-Length: 170
+
+{"jsonrpc":"2.0","id":0,"method":"connection/connect","params":{"connectionstring":"dbname=postgres user=postgres password=password host=MAIRVINE-PC connect_timeout=10"}}Content-Length: 57
+
+{"jsonrpc":"2.0","id":0,"method":"connection/disconnect"}Content-Length: 40
+
+{"jsonrpc":"2.0","id":0,"method":"exit"}
+```
