@@ -17,7 +17,8 @@ class Server(object):
         self.should_exit = False
         dispatcher['initialize'] = self.initialize
 
-    def initialize(self, processId=None, rootPath=None, rootUri=None, initializationOptions=None, capabilities=None, trace=None):
+    def initialize(self, processId=None, rootPath=None, rootUri=None, initializationOptions=None,
+                   capabilities=None, trace=None):
         """Initialize the service"""
         logging.debug('initialize method')
         self.initialize_dispatcher()
