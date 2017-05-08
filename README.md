@@ -11,6 +11,10 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
     - If you need to install pip, see [https://pip.pypa.io/en/latest/installing/]()
 
 ## Running Tests
+1. `python3 -m unittest` (from the project's base directory)
+If you don't have python3, see below
+
+### Running Tests (Python 2.7)
 1. `pip install nose`
 2. `nosetests` (from the project's base directory)
 
