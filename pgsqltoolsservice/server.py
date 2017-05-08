@@ -62,7 +62,14 @@ def read_content(length):
     return sys.stdin.read(length)
 
 def handle_input():
-    """Loop to process input and dispatch the requests"""
+    """Loop to process input and dispatch the requests. Input is formatted according to the VSCode
+    language server protocol at https://github.com/Microsoft/language-server-protocol/. For example
+    a single request might look like the following (see more examples in README.md):
+
+    'Content-Length: 57
+
+    {"jsonrpc":"2.0","id":0,"method":"connection/disconnect"}'
+    """
     while True:
         headers = read_headers()
         somestring = read_content(int(headers['Content-Length']))

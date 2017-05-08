@@ -7,7 +7,7 @@ class TestConnectionService(unittest.TestCase):
     """Methods for testing the connection service"""
 
     def test_connect_and_disconnect(self):
-        """Test that the service and connect and disconnect to/from a PostgreSQL server"""
+        """Test that the service connects and disconnects to/from a PostgreSQL server"""
         connection_service = ConnectionService()
         connection_service.connect(
             'dbname=postgres user=postgres password=password host=MAIRVINE-PC connect_timeout=10')
