@@ -96,8 +96,9 @@ def handle_input():
         response = JSONRPCResponseManager.handle(somestring, dispatcher)
         if SERVER.should_exit:
             sys.exit(0 if SERVER.is_shutdown else 1)
-        logging.debug('sending response: %s', response.json)
-        print(response.json)
+        response_text = 'Content-Length: {}\r\n\r\n'.format(len(response.json)) + response.json
+        logging.debug('sending response: %s', response_text)
+        print(response_text)
 
 
 if __name__ == '__main__':
