@@ -34,7 +34,19 @@ class Server(object):
         """Initialize the service"""
         logging.debug('initialize method')
         self.initialize_dispatcher()
-        return InitializeResult().json
+        initialize_result = {
+            'capabilities': {
+                'textDocumentSync': 2,
+                'definitionProvider': False,
+                'referencesProvider': False,
+                'documentFormattingProvider': False,
+                'documentRangeFormattingProvider': False,
+                'documentHighlightProvider': False,
+                'hoverProvider': False,
+                'completionProvider': None
+            }
+        }
+        return initialize_result
 
     def initialize_dispatcher(self):
         """Initialize the JSON RPC dispatcher"""
@@ -44,6 +56,8 @@ class Server(object):
         dispatcher['shutdown'] = self.shutdown
         dispatcher['exit'] = self.exit
         dispatcher['echo'] = echo
+        dispatcher['version'] = version
+        dispatcher['capabilities/list'] = capabilities
 
     def shutdown(self):
         """Shutdown the service"""
@@ -59,6 +73,31 @@ class Server(object):
 def echo(arg):
     """Function used for manually testing the JSON RPC server"""
     print(arg)
+
+
+def version():
+    """Get the version of the tools service"""
+    return "0"
+
+
+def capabilities(hostName, hostVersion):
+    """Get the server capabilities response"""
+    return {'capabilities': {
+        'protocolVersion': '1.0',
+        'providerName': 'PGSQL',
+        'providerDisplayName': 'PostgreSQL',
+        'connectionProvider': {
+            'options': [{
+                'name': 'connectionString',
+                'displayName': 'Connection String',
+                'description': 'PostgreSQL-format connection string',
+                'valueType': 'string',
+                'isIdentity': True,
+                'isRequired': True,
+                'groupName': 'Source'
+            }]
+        }
+    }}
 
 
 def read_headers():
@@ -96,9 +135,13 @@ def handle_input():
         response = JSONRPCResponseManager.handle(somestring, dispatcher)
         if SERVER.should_exit:
             sys.exit(0 if SERVER.is_shutdown else 1)
-        response_text = 'Content-Length: {}\r\n\r\n'.format(len(response.json)) + response.json
+        if response is None:
+            continue
+        response_text = 'Content-Length: {}\r\n\r\n'.format(
+            len(response.json)) + response.json
         logging.debug('sending response: %s', response_text)
-        print(response_text)
+        sys.stdout.write(response_text)
+        sys.stdout.flush()
 
 
 if __name__ == '__main__':
