@@ -32,7 +32,7 @@ class ConnectionProviderOptions(object):
     """Defines the connection provider options that the DMP server implements"""
 
     def __init__(self, options=None):
-        self.options = options if options is not None else []
+        self.options = options
 
 
 class ConnectionOption(object):
