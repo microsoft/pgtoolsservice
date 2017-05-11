@@ -10,11 +10,15 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 2. Run `pip install -r requirements.txt` from the root of the project
     - If you need to install pip, see [https://pip.pypa.io/en/latest/installing/]()
 
-## Running Tests
-### Python 3
-1. `python3 -m unittest` (from the project's base directory)
+## Before Committing
+We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008) with a maximum line length of 120 characters. To ensure that your code has no style problems, run the following commands before committing (install them from pip first if needed):
+1. Run autopep8 to format your code according to PEP 8
+    - `autopep8 --in-place --aggressive --aggressive --max-line-length 120 -r .` (from the project's root directory)
+2. Run flake8 to look for problems that need to be resolved manually
+    - `flake8 --max-line-length=120 pgsqltoolsservice`
+    - `flake8 --max-line-length=120 tests`
 
-### Python 2.7
+## Running Tests
 1. `pip install nose`
 2. `nosetests` (from the project's base directory)
 
@@ -26,6 +30,8 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
     - connection/disconnect
     - shutdown
     - exit
+    - version
+    - capabilities/list
 
 ### Example Inputs
 ```
