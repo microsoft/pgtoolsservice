@@ -6,10 +6,17 @@
 """Listen for JSON RPC inputs on stdin and dispatch them to the appropriate methods"""
 
 from __future__ import print_function
+import json
 import logging
 import sys
+import utils
 from connection_service import ConnectionService
-from contracts.initialization import InitializeResult
+from contracts.capabilities_service import (
+    CapabilitiesResult,
+    ConnectionProviderOptions,
+    ConnectionOption,
+    DMPServerCapabilities)
+from contracts.initialization import InitializeResult, ServerCapabilities, TextDocumentSyncKind
 from jsonrpc import JSONRPCResponseManager, dispatcher
 
 
@@ -34,19 +41,19 @@ class Server(object):
         """Initialize the service"""
         logging.debug('initialize method')
         self.initialize_dispatcher()
-        initialize_result = {
-            'capabilities': {
-                'textDocumentSync': 2,
-                'definitionProvider': False,
-                'referencesProvider': False,
-                'documentFormattingProvider': False,
-                'documentRangeFormattingProvider': False,
-                'documentHighlightProvider': False,
-                'hoverProvider': False,
-                'completionProvider': None
-            }
-        }
-        return initialize_result
+        initialize_result = InitializeResult(ServerCapabilities(
+            textDocumentSync=TextDocumentSyncKind.INCREMENTAL,
+            definitionProvider=False,
+            referencesProvider=False,
+            documentFormattingProvider=False,
+            documentRangeFormattingProvider=False,
+            documentHighlightProvider=False,
+            hoverProvider=False,
+            completionProvider=None
+        ))
+        # Since jsonrpc expects a serializable object, convert it to a
+        # dictionary
+        return utils.object_to_dictionary(initialize_result)
 
     def initialize_dispatcher(self):
         """Initialize the JSON RPC dispatcher"""
@@ -82,22 +89,22 @@ def version():
 
 def capabilities(hostName, hostVersion):
     """Get the server capabilities response"""
-    return {'capabilities': {
-        'protocolVersion': '1.0',
-        'providerName': 'PGSQL',
-        'providerDisplayName': 'PostgreSQL',
-        'connectionProvider': {
-            'options': [{
-                'name': 'connectionString',
-                'displayName': 'Connection String',
-                'description': 'PostgreSQL-format connection string',
-                'valueType': 'string',
-                'isIdentity': True,
-                'isRequired': True,
-                'groupName': 'Source'
-            }]
-        }
-    }}
+    server_capabilities = CapabilitiesResult(DMPServerCapabilities(
+        protocolVersion='1.0',
+        providerName='PGSQL',
+        providerDisplayName='PostgreSQL',
+        connectionProvider=ConnectionProviderOptions(options=[ConnectionOption(
+            name='connectionString',
+            displayName='Connection String',
+            description='PostgreSQL-format connection string',
+            valueType='string',
+            isIdentity=True,
+            isRequired=True,
+            groupName='Source'
+        )])
+    ))
+    # Since jsonrpc expects a serializable object, convert it to a dictionary
+    return utils.object_to_dictionary(server_capabilities)
 
 
 def read_headers():
