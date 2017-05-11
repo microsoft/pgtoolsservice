@@ -36,6 +36,13 @@ class TestConnectionService(unittest.TestCase):
         # function
         result = json.dumps(test_object, default=get_serializable_value)
         self.assertIsNotNone(result)
+        # Verify that the result represents the object
+        result_dict = json.loads(result)
+        self.assertEqual(
+            result_dict['textDocumentSync'],
+            TextDocumentSyncKind.FULL.value)
+        self.assertTrue(result_dict['referencesProvider'])
+        self.assertTrue('resolveProvider' in result_dict['completionProvider'])
 
 
 if __name__ == '__main__':
