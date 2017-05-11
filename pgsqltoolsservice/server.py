@@ -6,7 +6,6 @@
 """Listen for JSON RPC inputs on stdin and dispatch them to the appropriate methods"""
 
 from __future__ import print_function
-import json
 import logging
 import sys
 import utils
@@ -16,7 +15,10 @@ from contracts.capabilities_service import (
     ConnectionProviderOptions,
     ConnectionOption,
     DMPServerCapabilities)
-from contracts.initialization import InitializeResult, ServerCapabilities, TextDocumentSyncKind
+from contracts.initialization import (
+    InitializeResult,
+    ServerCapabilities,
+    TextDocumentSyncKind)
 from jsonrpc import JSONRPCResponseManager, dispatcher
 
 
