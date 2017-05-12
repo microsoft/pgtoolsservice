@@ -111,17 +111,18 @@ class Server(object):
 
     def handle_output(self, output_string):
         """Add the content-length header and output the given string"""
-        full_output = 'Content-Length: {}\r\n\r\n'.format(
-            len(output_string)) + output_string
+        newlines = '\n\n' if sys.platform == 'win32' else '\r\n\r\n'
+        full_output = 'Content-Length: {}{}'.format(
+            len(output_string), newlines) + output_string
         logging.debug('sending message: %s', full_output)
-        self.output_stream.buffer.write(bytes(full_output, 'utf-8'))
+        self.output_stream.write(full_output)
         self.output_stream.flush()
 
     def read_headers(self):
         """Read the VSCode Language Server Protocol message headers"""
         headers = {}
-        for line in self.input_stream:
-            line = line.strip()
+        while True:
+            line = self.input_stream.readline().strip()
             if line == '':
                 return headers
             parts = line.split(': ')
