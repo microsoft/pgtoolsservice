@@ -114,7 +114,7 @@ class Server(object):
         full_output = 'Content-Length: {}\r\n\r\n'.format(
             len(output_string)) + output_string
         logging.debug('sending message: %s', full_output)
-        self.output_stream.write(full_output)
+        self.output_stream.buffer.write(bytes(full_output, 'utf-8'))
         self.output_stream.flush()
 
     def read_headers(self):
