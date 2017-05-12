@@ -31,7 +31,7 @@ class ConnectionService(object):
         thread.start()
         return True
 
-    def handle_disconnect_request(self, ownerUri, type):
+    def handle_disconnect_request(self, ownerUri, type=None):
         """Close a connection in response to an incoming disconnection request"""
         return self.disconnect()
 
