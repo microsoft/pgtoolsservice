@@ -8,7 +8,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ## Developing the PostgreSQL Tools Service
 1. Ensure that Python2.7 or above is installed - Python3 is supported (you will have to use python3 or pip3 in place of python or pip commands in this guide)
 2. Run `pip install -r requirements.txt` from the root of the project
-    - If you need to install pip, see [https://pip.pypa.io/en/latest/installing/]()
+    - If you need to install pip, see [pip Installation](https://pip.pypa.io/en/latest/installing/)
 
 ## Before Committing
 We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008) with a maximum line length of 120 characters. To ensure that your code has no style problems, run the following commands before committing (install them from pip first if needed):
