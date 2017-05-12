@@ -6,7 +6,8 @@
 """Test connection_service.py"""
 
 import unittest
-from pgsqltoolsservice.connection_service import ConnectionService
+
+from pgsqltoolsservice.connection_service import ConnectionInfo, ConnectionService
 
 
 class TestConnectionService(unittest.TestCase):
@@ -14,9 +15,12 @@ class TestConnectionService(unittest.TestCase):
 
     def test_connect_and_disconnect(self):
         """Test that the service connects and disconnects to/from a PostgreSQL server"""
-        connection_service = ConnectionService()
-        connection_service.connect(
-            'dbname=postgres user=postgres password=password host=MAIRVINE-PC connect_timeout=10')
+        connection_service = ConnectionService(None)
+        connection_service.connect(ConnectionInfo(
+            None,
+            {'options': {
+                'connectionString': 'dbname=postgres user=postgres password=password host=MAIRVINE-PC connect_timeout=10'}},
+            None))
         connection = connection_service.connection
         self.assertIsNotNone(connection)
 

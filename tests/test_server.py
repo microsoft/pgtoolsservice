@@ -6,8 +6,10 @@
 """Test server.py"""
 
 import unittest
-from pgsqltoolsservice.server import Server
+
 from jsonrpc import dispatcher
+
+from pgsqltoolsservice.server import Server
 
 
 class TestConnectionService(unittest.TestCase):
@@ -15,7 +17,7 @@ class TestConnectionService(unittest.TestCase):
 
     def test_server_initialization(self):
         """Test that the server can be initialized"""
-        server = Server()
+        server = Server(None, None)
         result = server.initialize()
         self.assertTrue('version' in dispatcher)
         self.assertTrue('capabilities/list' in dispatcher)
@@ -23,7 +25,7 @@ class TestConnectionService(unittest.TestCase):
 
     def test_server_capabilities(self):
         """Test that the server responds to the capabilities/list method"""
-        server = Server()
+        server = Server(None, None)
         server.initialize()
         result = dispatcher['capabilities/list']('Test Host', '1.0')
         # Validate the response
