@@ -21,6 +21,10 @@ We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008)
 ## Running Tests
 1. `pip install nose`
 2. `nosetests` (from the project's base directory)
+    - To run with coverage:
+        1. `pip install coverage`
+        2. `nosetests --with-coverage --cover-package=pgsqltoolsservice --cover-html`
+        3. `open cover/index.html` (to view coverage results)
 
 ## Manual Testing
 1. `python pgsqltoolsservice/server.py`

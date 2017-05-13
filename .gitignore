@@ -3,3 +3,6 @@ server.log
 .DS_Store
 .idea
 .vscode
+cover
+.coverage
+.cache

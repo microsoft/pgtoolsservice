@@ -7,6 +7,7 @@
 
 import unittest
 
+import mock
 from jsonrpc import dispatcher
 
 from pgsqltoolsservice.server import Server
@@ -41,6 +42,13 @@ class TestConnectionService(unittest.TestCase):
         self.assertTrue(len(options) > 0)
         for option in options:
             self.assertTrue('name' in option)
+
+    def test_send_event(self):
+        """Test that the send_event method serializes output as expected for JSON RPC"""
+        server = Server(None, None)
+        server.handle_output = mock.Mock()
+        server.send_event('connection/complete', None)
+        server.handle_output.assert_called_once_with('{"jsonrpc":"2.0","method":"connection/complete","params":null}')
 
 
 if __name__ == '__main__':
