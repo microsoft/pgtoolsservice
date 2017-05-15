@@ -5,6 +5,7 @@
 
 """Test connection_service.py"""
 
+from __future__ import unicode_literals
 import unittest
 
 import mock

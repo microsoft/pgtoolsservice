@@ -5,7 +5,7 @@
 
 """Listen for JSON RPC inputs on stdin and dispatch them to the appropriate methods"""
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import json
 import logging
 import sys

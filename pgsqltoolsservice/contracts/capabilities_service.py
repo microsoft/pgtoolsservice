@@ -5,6 +5,8 @@
 
 """Contains contract classes for interacting with Carbon's capabilities service"""
 
+from __future__ import unicode_literals
+
 
 class CapabilitiesResult(object):
     """Defines the capabilities result contract"""

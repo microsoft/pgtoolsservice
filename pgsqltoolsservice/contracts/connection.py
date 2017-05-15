@@ -5,12 +5,14 @@
 
 """Contains contract classes for the connection service"""
 
-from enum import Enum
+from __future__ import unicode_literals
+
+import enum
 
 CONNECTION_COMPLETE_NOTIFICATION_TYPE = 'connection/complete'
 
 
-class ConnectionType(Enum):
+class ConnectionType(enum.Enum):
     """
     String constants that represent connection types.
 
