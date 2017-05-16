@@ -5,7 +5,7 @@
 
 """Contains contract classes for service initialization"""
 
-from enum import Enum
+import enum
 
 
 class InitializeResult(object):
@@ -44,7 +44,7 @@ class ServerCapabilities(object):
         self.workspaceSymbolProvider = workspaceSymbolProvider
 
 
-class TextDocumentSyncKind(Enum):
+class TextDocumentSyncKind(enum.Enum):
     """Text document sync kind contract"""
     NONE = 0
     FULL = 1

@@ -7,6 +7,7 @@
 
 import json
 import unittest
+
 from pgsqltoolsservice.contracts.initialization import (
     CompletionOptions,
     ServerCapabilities,

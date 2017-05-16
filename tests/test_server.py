@@ -5,9 +5,13 @@
 
 """Test server.py"""
 
+from __future__ import unicode_literals
 import unittest
-from pgsqltoolsservice.server import Server
+
+import mock
 from jsonrpc import dispatcher
+
+from pgsqltoolsservice.server import Server
 
 
 class TestConnectionService(unittest.TestCase):
@@ -15,7 +19,7 @@ class TestConnectionService(unittest.TestCase):
 
     def test_server_initialization(self):
         """Test that the server can be initialized"""
-        server = Server()
+        server = Server(None, None)
         result = server.initialize()
         self.assertTrue('version' in dispatcher)
         self.assertTrue('capabilities/list' in dispatcher)
@@ -23,7 +27,7 @@ class TestConnectionService(unittest.TestCase):
 
     def test_server_capabilities(self):
         """Test that the server responds to the capabilities/list method"""
-        server = Server()
+        server = Server(None, None)
         server.initialize()
         result = dispatcher['capabilities/list']('Test Host', '1.0')
         # Validate the response
@@ -39,6 +43,13 @@ class TestConnectionService(unittest.TestCase):
         self.assertTrue(len(options) > 0)
         for option in options:
             self.assertTrue('name' in option)
+
+    def test_send_event(self):
+        """Test that the send_event method serializes output as expected for JSON RPC"""
+        server = Server(None, None)
+        server.handle_output = mock.Mock()
+        server.send_event('connection/complete', None)
+        server.handle_output.assert_called_once_with('{"jsonrpc":"2.0","method":"connection/complete","params":null}')
 
 
 if __name__ == '__main__':
