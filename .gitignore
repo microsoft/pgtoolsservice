@@ -6,3 +6,4 @@ server.log
 cover
 .coverage
 .cache
+build/

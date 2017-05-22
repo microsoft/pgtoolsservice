@@ -59,3 +59,8 @@ Content-Length: 106
 
 {"jsonrpc":"2.0","id":0,"method":"exit"}
 ```
+
+## Building Executables
+To build an executable, run the following commands from within the pgsqltoolsservice/pgsqltoolsservice source code directory on the platform you want to build for. The output will be placed in a folder called build.
+1. `pip install cx_freeze`
+2. `python setup.py build`
