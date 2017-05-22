@@ -12,6 +12,6 @@ executables = [
 
 setup(name='PostgreSQL Tools Service',
       version = '0.1.0',
-      description = 'VSCode language server implementation for PostgreSQL',
+      description = 'Carbon data protocol server implementation for PostgreSQL',
       options = dict(build_exe = buildOptions),
       executables = executables)
