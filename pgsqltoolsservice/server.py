@@ -12,7 +12,7 @@ import sys
 
 import utils
 
-from connection_service import ConnectionService
+from connection import ConnectionService
 from contracts.capabilities_service import (
     CapabilitiesResult,
     CategoryValue,
