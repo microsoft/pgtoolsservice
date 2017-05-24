@@ -10,16 +10,15 @@ import json
 import logging
 import sys
 
-import utils
-
-from connection_service import ConnectionService
-from contracts.capabilities_service import (
+from pgsqltoolsservice import utils
+from pgsqltoolsservice.connection_service import ConnectionService
+from pgsqltoolsservice.contracts.capabilities_service import (
     CapabilitiesResult,
     CategoryValue,
     ConnectionProviderOptions,
     ConnectionOption,
     DMPServerCapabilities)
-from contracts.initialization import (
+from pgsqltoolsservice.contracts.initialization import (
     InitializeResult,
     ServerCapabilities,
     TextDocumentSyncKind)

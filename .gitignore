@@ -7,3 +7,4 @@ cover
 .coverage
 .cache
 build/
+coverage.xml

@@ -6,8 +6,9 @@ pgsqltoolsservice is a PostgreSQL implementation of the Data Management Protocol
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Developing the PostgreSQL Tools Service
-1. Ensure that Python2.7 or above is installed - Python3 is supported (you will have to use python3 or pip3 in place of python or pip commands in this guide)
-2. Run `pip install -r requirements.txt` from the root of the project
+1. Ensure that Python3.6 or above is installed - older versions of Python may work but are not supported
+    - Note that when these instructions refer to 'python3' or 'pip3' you may need to use the commands 'python' or 'pip' instead if you are on Windows
+2. Run `pip3 install -r requirements.txt` from the root of the project
     - If you need to install pip, see [pip Installation](https://pip.pypa.io/en/latest/installing/)
 
 ## Before Committing
@@ -19,15 +20,14 @@ We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008)
     - `flake8 --max-line-length=120 tests`
 
 ## Running Tests
-1. `pip install nose`
+1. Run `pip3 install -r requirements.txt` if you haven't already
 2. `nosetests` (from the project's base directory)
     - To run with coverage:
-        1. `pip install coverage`
-        2. `nosetests --with-coverage --cover-package=pgsqltoolsservice --cover-html`
-        3. `open cover/index.html` (to view coverage results)
+        1. `nosetests --with-coverage --cover-package=pgsqltoolsservice --cover-html`
+        2. `open cover/index.html` (to view coverage results)
 
 ## Manual Testing
-1. `python pgsqltoolsservice/server.py`
+1. `python3 pgsqltoolsservice/server.py`
 2. Now you can pass in JSON RPC requests to stdin, following the [language server protocol specifications](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md). The following commands are supported currently:
     - initialize
     - connection/connect
@@ -61,6 +61,7 @@ Content-Length: 106
 ```
 
 ## Building Executables
-To build an executable, run the following commands from within the pgsqltoolsservice/pgsqltoolsservice source code directory on the platform you want to build for. The output will be placed in a folder called build.
-1. `pip install cx_freeze`
-2. `python setup.py build`
+To build an executable, run the following commands starting from the main source code directory on the platform you want to build for. The output will be placed in a folder called pgsqltoolsservice/build.
+1. `pip3 install -r requirements.txt`
+2. `cd pgsqltoolsservice`
+3. `python3 setup.py build`
