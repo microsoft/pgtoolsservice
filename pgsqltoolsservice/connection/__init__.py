@@ -12,9 +12,8 @@ import psycopg2
 import threading
 import uuid
 
-from connection.contracts.connection import (CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionCompleteParams,
-                                             ConnectionSummary,
-                                             ConnectionType)
+from connection.contracts import (CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionCompleteParams,
+                                  ConnectionSummary, ConnectionType)
 
 
 class ConnectionService(object):
