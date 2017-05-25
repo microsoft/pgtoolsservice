@@ -35,7 +35,7 @@ class JsonRpcMessageTests(unittest.TestCase):
         })
 
     def test_create_response(self):
-        # If I create a response
+        # If: I create a response
         message = JsonRpcMessage.create_response(10, {})
 
         # Then:
@@ -56,6 +56,53 @@ class JsonRpcMessageTests(unittest.TestCase):
             u'jsonrpc': u'2.0',
             u'result': {},
             u'id': 10
+        })
+
+    def test_create_request(self):
+        # If: I create a request
+        message = JsonRpcMessage.create_request(10, "test/test", {})
+
+        # Then:
+        # ... The message should have all the properties I defined
+        self.assertIsNotNone(message)
+        self.assertEqual(message.message_id, 10)
+        self.assertEqual(message.message_method, "test/test")
+        self.assertDictEqual(message.message_params, {})
+        self.assertIsNone(message.message_result)
+        self.assertIsNone(message.message_error)
+        self.assertEqual(message.message_type, JsonRpcMessageType.Request)
+
+        # ... The dictionary should have the same values stored
+        dictionary = message.dictionary
+        self.assertIsNotNone(dictionary)
+        self.assertDictEqual(dictionary, {
+            u'jsonrpc': u'2.0',
+            u'method': "test/test",
+            u'params': {},
+            u'id': 10
+        })
+
+    def test_create_notification(self):
+        # If: I create a notification
+        message = JsonRpcMessage.create_notification("test/test", {})
+
+        # Then:
+        # ... The message should have all the properties I defined
+        self.assertIsNotNone(message)
+        self.assertIsNone(message.message_id)
+        self.assertEqual(message.message_method, "test/test")
+        self.assertDictEqual(message.message_params, {})
+        self.assertIsNone(message.message_result)
+        self.assertIsNone(message.message_error)
+        self.assertEqual(message.message_type, JsonRpcMessageType.Notification)
+
+        # ... The dictionary should have the same values stored
+        dictionary = message.dictionary
+        self.assertIsNotNone(dictionary)
+        self.assertDictEqual(dictionary, {
+            u'jsonrpc': u'2.0',
+            u'method': 'test/test',
+            u'params': {}
         })
 
 if __name__ == '__main__':
