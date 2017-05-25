@@ -65,8 +65,6 @@ Content-Length: 106
 
 ## Building Executables
 To build an executable, run the following commands starting from the main source code directory on the platform you want to build for. The output will be placed in a folder called build.
-1. Clear your PYTHONPATH environment variable if it has been set to test locally by running the following commands:
-    - On Mac/Linux: `PYTHONPATH=`
-    - On Windows: `set PYTHONPATH=`
-2. `pip3 install -r requirements.txt`
-3. `python3 setup.py build`
+- On Mac/Linux: `./scripts/build.sh`
+- On Windows: `.\scripts\build.ps1`
+    - Or, from cmd.exe: `powershell.exe scripts\build.ps1`
