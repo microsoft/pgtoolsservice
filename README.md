@@ -61,7 +61,6 @@ Content-Length: 106
 ```
 
 ## Building Executables
-To build an executable, run the following commands starting from the main source code directory on the platform you want to build for. The output will be placed in a folder called pgsqltoolsservice/build.
+To build an executable, run the following commands starting from the main source code directory on the platform you want to build for. The output will be placed in a folder called build.
 1. `pip3 install -r requirements.txt`
-2. `cd pgsqltoolsservice`
-3. `python3 setup.py build`
+2. `python3 setup.py build`
