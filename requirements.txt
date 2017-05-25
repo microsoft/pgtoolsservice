@@ -3,3 +3,5 @@ jsonrpc
 mock
 enum34
 cx_freeze
+nose
+coverage

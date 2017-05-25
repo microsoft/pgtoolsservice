@@ -12,8 +12,8 @@ import psycopg2
 import threading
 import uuid
 
-from connection.contracts import (CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionCompleteParams,
-                                  ConnectionSummary, ConnectionType)
+from pgsqltoolsservice.connection.contracts import (
+    CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionCompleteParams, ConnectionSummary, ConnectionType)
 
 
 class ConnectionService(object):
