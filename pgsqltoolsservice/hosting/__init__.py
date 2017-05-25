@@ -1,6 +1,11 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
 from queue import Queue
 
-import enum
+from enum import Enum
 import json
 import threading
 import uuid
@@ -13,6 +18,11 @@ class JsonRpcServer:
     # CONSTANTS ############################################################
     OUTPUT_THREAD_NAME = u"JSON_RPC_Output_Thread"
     INPUT_THREAD_NAME = u"JSON_RPC_Input_Thread"
+
+    class Handler:
+        def __init__(self, klass, handler):
+            self.klass = klass
+            self.handler = handler
 
     def __init__(self, in_stream, out_stream, logger=None):
         self.writer = JsonRpcWriter(out_stream)
@@ -69,7 +79,7 @@ class JsonRpcServer:
         if self._logger is not None:
             self._logger.info(u"JSON RPC server stopped")
 
-    def submit_request(self, method, params):
+    def send_request(self, method, params):
         """
         Add a new request to the output queue
         :param method: Method string of the request
@@ -83,6 +93,12 @@ class JsonRpcServer:
         # TODO: Add support for handlers for the responses
         # Add the message to the output queue
         self._output_queue.put(message)
+
+    def set_request_handler(self, method, klass, handler):
+        self._request_handlers[method] = self.Handler(klass, handler)
+
+    def set_notification_handler(self, method, klass, handler):
+        self._notification_handlers[method] = self.Handler(klass, handler)
 
     # IMPLEMENTATION DETAILS ###############################################
 
@@ -105,6 +121,7 @@ class JsonRpcServer:
                     continue
 
                 # Figure out which handler will execute the request/notification
+                # TODO: Add support for routing of responses
                 if message.message_type is JsonRpcMessageType.Request:
                     if self._logger is not None:
                         self._logger.info(u"Received request id={} method={}".format(
@@ -120,9 +137,10 @@ class JsonRpcServer:
                         continue
 
                     # Call the handler with a request context
-                    # TODO: Deserialize the json
-                    request_context = RequestContext(message, self.writer)
-                    handler(request_context, message.message_params)
+                    request_context = RequestContext(message, self._output_queue)
+                    deserialized_object = handler.klass()
+                    deserialized_object.__dict__ = message.message_params
+                    handler.handler(request_context, deserialized_object)
                 elif message.message_type is JsonRpcMessageType.Notification:
                     if self._logger is not None:
                         self._logger.info(u"Received notification method={}".format(message.message_method))
@@ -135,9 +153,10 @@ class JsonRpcServer:
                         continue
 
                     # Call the handler with a notification context
-                    # TODO: Deserialize the json
-                    notification_context = NotificationContext(self.writer)
-                    handler(notification_context, message.message_params)
+                    notification_context = NotificationContext(self._output_queue)
+                    deserialized_object = handler.klass()
+                    deserialized_object.__dict__ = message.message_params
+                    handler.handler(notification_context, deserialized_object)
                 else:
                     # If this happens we have a serious issue with the JSON RPC reader
                     if self._logger is not None:
@@ -253,7 +272,7 @@ class JsonRpcReader:
     BUFFER_RESIZE_TRIGGER = 0.25
     DEFAULT_BUFFER_SIZE = 8192
 
-    class ReadState(enum.Enum):
+    class ReadState(Enum):
         Header = 1,
         Content = 2
 
@@ -460,7 +479,7 @@ class JsonRpcReader:
         self._buffer_end_offset -= bytes_to_remove
 
 
-class JsonRpcMessageType(enum):
+class JsonRpcMessageType(Enum):
     Request = 1
     ResponseSuccess = 2
     ResponseError = 3
