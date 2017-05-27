@@ -19,6 +19,16 @@ from pgsqltoolsservice.server import Server
 class TestConnectionService(unittest.TestCase):
     """Methods for testing the connection service"""
 
+    def test_connect_with_connection_string(self):
+        """Test that the service connects to a PostgreSQL server using a connection string"""
+        connection_string = 'dbname=postgres user=postgres password=password host=myserver connect_timeout=10'
+        self.connect_internal(ConnectionInfo(
+            None,
+            {'options': {
+                'connectionString': connection_string
+            }},
+            None))
+
     def test_connect_with_connection_options(self):
         """Test that the service connects and disconnects to/from a PostgreSQL server"""
         self.connect_internal(ConnectionInfo(
@@ -26,8 +36,8 @@ class TestConnectionService(unittest.TestCase):
             {'options': {
                 'user': 'postgres',
                 'password': 'password',
-                'host': 'myserver',
-                'dbname': 'postgres'
+                'server': 'myserver',
+                'database': 'postgres'
             }},
             None))
 
@@ -42,9 +52,23 @@ class TestConnectionService(unittest.TestCase):
         psycopg2.connect = mock.Mock(return_value=mock_connection)
         # Set up the connection service and call its connect method with the supported options
         connection_service = ConnectionService(None)
+        connection_string = None
+        options = connection_info.details['options']
+        try:
+            connection_string = options['connectionString']
+        except KeyError:
+            # Build the connection string from the given options
+            connection_string = 'user={} password={} host={} connect_timeout=10'.format(
+                options['user'],
+                options['password'],
+                options['server']
+            )
+            if 'database' in options:
+                connection_string += ' dbname={}'.format(options['database'])
         response = connection_service.connect(connection_info)
         # Verify that psycopg2's connection method was called and that the
         # response has a connection id, indicating success.
+        psycopg2.connect.assert_called_once_with(connection_string)
         self.assertIs(connection_service.connection, mock_connection)
         self.assertIsNotNone(response.connectionId)
 
