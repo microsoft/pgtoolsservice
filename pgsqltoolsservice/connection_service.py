@@ -7,6 +7,7 @@
 disconnect and holds the current connection, if one is present"""
 
 from __future__ import unicode_literals
+import logging
 import threading
 import uuid
 
@@ -48,18 +49,24 @@ class ConnectionService(object):
         If a connection was already open, disconnect first. Return whether the connection was
         successful
         """
+
+        # Process the connection options so that they can be turned into a PostgreSQL connection string
+        # # connection_options = connection_info.details['options']
+        # # connection_options['host'] = connection_options['server']
+        # # del connection_options['server']
+        # # if 'database' in connection_options:
+        # #     connection_options['dbname'] = connection_options['database']
+        # #     del connection_options['database']
+        # # del connection_options['authenticationType']
+
+        # Build the connection string from the provided options
         connection_options = connection_info.details['options']
-        connection_string = None
-        try:
-            connection_string = connection_options['connectionString']
-        except KeyError:
-            connection_string = 'user={} password={} host={} connect_timeout=10'.format(
-                connection_options['user'],
-                connection_options['password'],
-                connection_options['server']
-            )
-            if 'database' in connection_options:
-                connection_string += ' dbname={}'.format(connection_options['database'])
+        connection_string = ''
+        for option, value in connection_options.items():
+            connection_string += "{}='{}' ".format(option, value)
+        logging.debug(f'Connecting with connection string {connection_string}')
+
+        # Connect using psycopg2
         if self.connection:
             self.disconnect()
         try:

@@ -8,3 +8,4 @@ cover
 .cache
 build/
 coverage.xml
+nosetests.xml
