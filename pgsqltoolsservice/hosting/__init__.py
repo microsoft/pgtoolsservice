@@ -245,7 +245,7 @@ class JsonRpcWriter:
         :param message: Message to send
         """
         # Generate the message string and header string
-        json_content = json.dumps(message.dictionary(), sort_keys=True)
+        json_content = json.dumps(message.dictionary, sort_keys=True)
         header = self.HEADER.format(str(len(json_content)))
 
         # Write the message to the stream
@@ -339,14 +339,15 @@ class JsonRpcReader:
                 # We have the content
                 break
 
-            # Resize the buffer and remove bytes we have read
-            self._trim_buffer_and_resize(self._read_offset)
-            return JsonRpcMessage(json.loads(content[0]))
+            return JsonRpcMessage.from_dictionary(json.loads(content[0]))
         except ValueError as ve:
             # Response has invalid json object
             if self._logger is not None:
-                self._logger.warn(u"JSON RPC reader on read_response() encountered exception: {}".format(ve))
+                self._logger.warn(u"JSON RPC reader on read_message() encountered exception: {}".format(ve))
             raise
+        finally:
+            # Remove the bytes that have been read
+            self._trim_buffer_and_resize(self._read_offset)
 
     # IMPLEMENTATION DETAILS ###############################################
 
@@ -367,13 +368,14 @@ class JsonRpcReader:
 
         # Memory view is required in order to read into a subset of a byte array
         try:
-            length_read = self.stream.readinto(memoryview(self._buffer)[self._buffer_end_offset])
-            self._buffer_end_offset += length_read
+            length_read = self.stream.readinto(memoryview(self._buffer)[self._buffer_end_offset:])
 
             if not length_read:
                 if self._logger is not None:
                     self._logger.warn(u"JSON RPC Reader reached end of stream")
                 raise EOFError(u"End of stream reached, no output.")
+
+            self._buffer_end_offset += length_read
 
             return True
         except ValueError as ex:
@@ -384,9 +386,10 @@ class JsonRpcReader:
 
     def _try_read_headers(self):
         """
-        Try to read the header information from the internal bufffer expecting the last header to contain '\r\n\r\n'
+        Try to read the header information from the internal buffer expecting the last header to contain '\r\n\r\n'
         :raises LookupError: The content-length header was not found
         :raises ValueError: The content-length contained an invalid literal for int
+        :raises KeyError: The header block was malformed by not having a key:value format
         :return: True on successful read of headers, False on failure to find headers
         """
         # Scan the buffer up until right before the \r\n\r\n
@@ -395,11 +398,11 @@ class JsonRpcReader:
             self._buffer[scan_offset] != self.CR or
             self._buffer[scan_offset+1] != self.LF or
             self._buffer[scan_offset+2] != self.CR or
-            self._buffer[scan_offset+3] != self.LR
+            self._buffer[scan_offset+3] != self.LF
         ):
             scan_offset += 1
 
-        # If we reached the end of the vuffer
+        # If we reached the end of the buffer
             if scan_offset + 3 >= self._buffer_end_offset:
                 return False
 
@@ -418,16 +421,20 @@ class JsonRpcReader:
                 # Case insensitive check
                 header_key = header[:colon_index].strip().lower()
                 header_value = header[colon_index + 1:].strip()
+                self._headers[header_key] = header_value
 
-                # Was content-length found?
-                if not 'content-length' in self._headers:
-                    if self._logger is not None:
-                        self._logger.warn(u"JSON RPC reader did not find Content-Length in the headers")
-                    raise LookupError(u"Content-Length was not found in headers received.")
+            # Was content-length found?
+            if 'content-length' not in self._headers:
+                if self._logger is not None:
+                    self._logger.warn(u"JSON RPC reader did not find Content-Length in the headers")
+                raise LookupError(u"Content-Length was not found in headers received.")
 
-                self._expected_content_length = int(self._headers['content-length'])
-        except ValueError:
-            # Content-Length contained invalid literal for int
+            self._expected_content_length = int(self._headers['content-length'])
+
+        except (ValueError, KeyError, LookupError):
+            # ValueError: Content-Length contained invalid literal for int
+            # KeyError: Headers were malformed due to missing colon
+            # LookupError: Content-Length header was not found
             self._trim_buffer_and_resize(scan_offset + 4)
             raise
 
@@ -477,6 +484,9 @@ class JsonRpcReader:
         # Reset pointers after the shift
         self._read_offset = 0
         self._buffer_end_offset -= bytes_to_remove
+
+        # Reset the headers
+        self._headers = {}
 
 
 class JsonRpcMessageType(Enum):
