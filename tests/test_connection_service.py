@@ -8,10 +8,11 @@
 from __future__ import unicode_literals
 
 import mock
-import psycopg2
 import unittest
 
-from connection.contracts import CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionType
+import psycopg2
+
+from pgsqltoolsservice.connection.contracts import CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionType
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.server import Server
 

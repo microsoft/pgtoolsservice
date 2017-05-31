@@ -30,13 +30,13 @@ class JsonRpcMessageTests(unittest.TestCase):
         dictionary = message.dictionary
         self.assertIsNotNone(dictionary)
         self.assertDictEqual(dictionary, {
-            u'jsonrpc': u'2.0',
-            u'error': {
-                u'code': 20,
-                u'message': 'msg',
-                u'data': {}
+            'jsonrpc': u'2.0',
+            'error': {
+                'code': 20,
+                'message': 'msg',
+                'data': {}
             },
-            u'id': 10
+            'id': 10
         })
 
     def test_create_response(self):
@@ -58,9 +58,9 @@ class JsonRpcMessageTests(unittest.TestCase):
         dictionary = message.dictionary
         self.assertIsNotNone(dictionary)
         self.assertDictEqual(dictionary, {
-            u'jsonrpc': u'2.0',
-            u'result': {},
-            u'id': 10
+            'jsonrpc': '2.0',
+            'result': {},
+            'id': 10
         })
 
     def test_create_request(self):
@@ -81,10 +81,10 @@ class JsonRpcMessageTests(unittest.TestCase):
         dictionary = message.dictionary
         self.assertIsNotNone(dictionary)
         self.assertDictEqual(dictionary, {
-            u'jsonrpc': u'2.0',
-            u'method': "test/test",
-            u'params': {},
-            u'id': 10
+            'jsonrpc': '2.0',
+            'method': 'test/test',
+            'params': {},
+            'id': 10
         })
 
     def test_create_notification(self):
@@ -105,9 +105,9 @@ class JsonRpcMessageTests(unittest.TestCase):
         dictionary = message.dictionary
         self.assertIsNotNone(dictionary)
         self.assertDictEqual(dictionary, {
-            u'jsonrpc': u'2.0',
-            u'method': 'test/test',
-            u'params': {}
+            'jsonrpc': '2.0',
+            'method': 'test/test',
+            'params': {}
         })
 
 if __name__ == '__main__':

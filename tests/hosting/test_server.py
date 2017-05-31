@@ -9,43 +9,43 @@ import io
 
 from mock import call, MagicMock
 
-from pgsqltoolsservice.hosting import JsonRpcServer, JsonRpcMessage
+from pgsqltoolsservice.hosting import JSONRPCServer, JsonRpcMessage
 
 
 class JsonRpcServerTests(unittest.TestCase):
 
     def test_request_enqueued(self):
-        """
-            Verify requests are enqueued.
-        """
+        # Setup: Create empty io streams
         input_stream = io.BytesIO()
-        output_stream = io.BytesIO(b'sample output')
+        output_stream = io.BytesIO()
 
-        test_client = JsonRpcServer(input_stream, output_stream)
-        test_client.send_request(u'test/test', {'test': 'test'})
+        # If: I submit an outbound request
+        test_client = JSONRPCServer(input_stream, output_stream)
+        test_client.send_request('test/test', {'test': 'test'})
 
+        # Then:
+        # ... There should be one request in the outbound queue
         request = test_client._output_queue.get()
 
-        self.assertEqual(request.message_method, u'test/test')
+        # ... The queued message should match the request we sent
+        self.assertEqual(request.message_method, 'test/test')
         self.assertDictEqual(request.message_params, {'test': 'test'})
 
     def test_reads_message(self):
-        """
-            Verify input was read.
-        """
         # Setup:
         # ... Create an input stream with a single message
         input_stream = io.BytesIO(b'Content-Length: 30\r\n\r\n{"method":"test", "params":{}}')
         output_stream = io.BytesIO()
 
         # ... Create a server that uses the input and output streams
-        server = JsonRpcServer(input_stream, output_stream)
+        server = JSONRPCServer(input_stream, output_stream)
 
         # ... Patch the server to not dispatch a message
         dispatch_mock = MagicMock()
         server._dispatch_message = dispatch_mock
 
         # If: I start the server, run it for a bit, and stop it
+        # TODO: Remove explicit sleep and add spin-locks
         server.start()
         time.sleep(1)
         server.stop()
@@ -67,13 +67,14 @@ class JsonRpcServerTests(unittest.TestCase):
         output_stream = io.BytesIO()
 
         # ... Create a server that uses the input and output streams
-        server = JsonRpcServer(input_stream, output_stream)
+        server = JSONRPCServer(input_stream, output_stream)
 
         # ... Patch the server to not dispatch a message
         dispatch_mock = MagicMock()
         server._dispatch_message = dispatch_mock
 
         # If: I start the server, run it for a bit, and stop it
+        # TODO: Remove explicit sleep and add spin-locks
         server.start()
         time.sleep(1)
         server.stop()
@@ -89,5 +90,5 @@ class JsonRpcServerTests(unittest.TestCase):
         self.assertFalse(server._output_consumer.isAlive())
 
 
-if __name__ == u'__main__':
+if __name__ == '__main__':
     unittest.main()

@@ -7,10 +7,10 @@
 disconnect and holds the current connection, if one is present"""
 
 from __future__ import unicode_literals
-
-import psycopg2
 import threading
 import uuid
+
+import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (
     CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionCompleteParams, ConnectionSummary, ConnectionType)

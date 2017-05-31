@@ -21,18 +21,18 @@ class JsonRpcWriterTests(unittest.TestCase):
             # Then: The available properties should be set properly
             self.assertIsNotNone(writer)
             self.assertIs(writer.stream, stream)
-            self.assertEqual(writer.encoding, u"UTF-8")
+            self.assertEqual(writer.encoding, 'UTF-8')
             self.assertEqual(writer._logger, None)
 
     def test_create_nonstandard_encoding(self):
         with io.BytesIO(b'123') as stream:
             # If: I create a JSON RPC writer with a nonstandard encoding
-            writer = JsonRpcWriter(stream, u'ascii')
+            writer = JsonRpcWriter(stream, 'ascii')
 
             # Then: The available properties should be set properly
             self.assertIsNotNone(writer)
             self.assertIs(writer.stream, stream)
-            self.assertEqual(writer.encoding, u'ascii')
+            self.assertEqual(writer.encoding, 'ascii')
             self.assertEqual(writer._logger, None)
 
     def test_close(self):
@@ -54,21 +54,21 @@ class JsonRpcWriterTests(unittest.TestCase):
             writer = JsonRpcWriter(stream)
 
             # ... and I send a message
-            message = JsonRpcMessage.create_request("123", "test/test", {})
+            message = JsonRpcMessage.create_request('123', 'test/test', {})
             writer.send_message(message)
 
             # Then:
             # ... The content-length header should be present
             stream.seek(0)
-            header = stream.readline().decode(u"ascii")
-            self.assertRegex(header, re.compile("^Content-Length: [0-9]+\r\n$", re.IGNORECASE))
+            header = stream.readline().decode('ascii')
+            self.assertRegex(header, re.compile('^Content-Length: [0-9]+\r\n$', re.IGNORECASE))
 
             # ... There should be a blank line to signify the end of the headers
-            blank_line = stream.readline().decode(u"ascii")
-            self.assertEqual(blank_line, "\r\n")
+            blank_line = stream.readline().decode('ascii')
+            self.assertEqual(blank_line, '\r\n')
 
             # ... The JSON message as a dictionary should match the dictionary of the message
-            message_str = str.join(os.linesep, [x.decode(u"UTF-8") for x in stream.readlines()])
+            message_str = str.join(os.linesep, [x.decode('UTF-8') for x in stream.readlines()])
             message_dict = json.loads(message_str)
             self.assertDictEqual(message_dict, message.dictionary)
 

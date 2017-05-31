@@ -11,7 +11,7 @@ import threading
 import uuid
 
 
-class JsonRpcServer:
+class JSONRPCServer:
     """
     Handles async requests, async notifications, and async responses
     """
@@ -20,8 +20,8 @@ class JsonRpcServer:
     INPUT_THREAD_NAME = u"JSON_RPC_Input_Thread"
 
     class Handler:
-        def __init__(self, klass, handler):
-            self.klass = klass
+        def __init__(self, class_, handler):
+            self.class_ = class_
             self.handler = handler
 
     def __init__(self, in_stream, out_stream, logger=None):
@@ -94,11 +94,11 @@ class JsonRpcServer:
         # Add the message to the output queue
         self._output_queue.put(message)
 
-    def set_request_handler(self, method, klass, handler):
-        self._request_handlers[method] = self.Handler(klass, handler)
+    def set_request_handler(self, method, class_, handler):
+        self._request_handlers[method] = self.Handler(class_, handler)
 
-    def set_notification_handler(self, method, klass, handler):
-        self._notification_handlers[method] = self.Handler(klass, handler)
+    def set_notification_handler(self, method, class_, handler):
+        self._notification_handlers[method] = self.Handler(class_, handler)
 
     # IMPLEMENTATION DETAILS ###############################################
 
@@ -183,7 +183,7 @@ class JsonRpcServer:
 
             # Call the handler with a request context
             request_context = RequestContext(message, self._output_queue)
-            deserialized_object = handler.klass()
+            deserialized_object = handler.class_()
             deserialized_object.__dict__ = message.message_params
             handler.handler(request_context, deserialized_object)
         elif message.message_type is JsonRpcMessageType.Notification:
@@ -199,7 +199,7 @@ class JsonRpcServer:
 
             # Call the handler with a notification context
             notification_context = NotificationContext(self._output_queue)
-            deserialized_object = handler.klass()
+            deserialized_object = handler.class_()
             deserialized_object.__dict__ = message.message_params
             handler.handler(notification_context, deserialized_object)
         else:
@@ -233,7 +233,7 @@ class JsonRpcWriter:
         :param logger: Optional destination for logging
         """
         self.stream = stream
-        self.encoding = encoding or u'UTF-8'
+        self.encoding = encoding or 'UTF-8'
         self._logger = logger
 
     # METHODS ##############################################################
@@ -292,7 +292,7 @@ class JsonRpcReader:
         :param logger: Optional destination for logging
         """
         self.stream = stream
-        self.encoding = encoding or u'UTF-8'
+        self.encoding = encoding or 'UTF-8'
         self._logger = logger
 
         self._buffer = bytearray(self.DEFAULT_BUFFER_SIZE)
@@ -350,7 +350,7 @@ class JsonRpcReader:
         except ValueError as ve:
             # Response has invalid json object
             if self._logger is not None:
-                self._logger.warn(u"JSON RPC reader on read_message() encountered exception: {}".format(ve))
+                self._logger.warn('JSON RPC reader on read_message() encountered exception: {}'.format(ve))
             raise
         finally:
             # Remove the bytes that have been read
@@ -379,8 +379,8 @@ class JsonRpcReader:
 
             if not length_read:
                 if self._logger is not None:
-                    self._logger.warn(u"JSON RPC Reader reached end of stream")
-                raise EOFError(u"End of stream reached, no output.")
+                    self._logger.warn('JSON RPC Reader reached end of stream')
+                raise EOFError('End of stream reached, no output.')
 
             self._buffer_end_offset += length_read
 
@@ -388,7 +388,7 @@ class JsonRpcReader:
         except ValueError as ex:
             # Stream was closed
             if self._logger is not None:
-                self._logger.warn(u"JSON RPC Reader on read_next_chunk encountered exception: {}".format(ex))
+                self._logger.warn('JSON RPC Reader on read_next_chunk encountered exception: {}'.format(ex))
             raise
 
     def _try_read_headers(self):
@@ -415,15 +415,15 @@ class JsonRpcReader:
 
         # Split the headers by newline
         try:
-            headers_read = self._buffer[self._read_offset:scan_offset].decode(u'ascii')
-            for header in headers_read.split(u'\n'):
-                colon_index = header.find(u':')
+            headers_read = self._buffer[self._read_offset:scan_offset].decode('ascii')
+            for header in headers_read.split('\n'):
+                colon_index = header.find(':')
 
                 # Make sure there's a colon to split key and value on
                 if colon_index == -1:
                     if self._logger is not None:
-                        self._logger.warn(u"JSON RPC reader encountered missing colons in try_read_headers()")
-                    raise KeyError(u"Colon missing from header: {}".format(header))
+                        self._logger.warn('JSON RPC reader encountered missing colons in try_read_headers()')
+                    raise KeyError('Colon missing from header: {}'.format(header))
 
                 # Case insensitive check
                 header_key = header[:colon_index].strip().lower()
@@ -433,8 +433,8 @@ class JsonRpcReader:
             # Was content-length found?
             if 'content-length' not in self._headers:
                 if self._logger is not None:
-                    self._logger.warn(u"JSON RPC reader did not find Content-Length in the headers")
-                raise LookupError(u"Content-Length was not found in headers received.")
+                    self._logger.warn('JSON RPC reader did not find Content-Length in the headers')
+                raise LookupError('Content-Length was not found in headers received.')
 
             self._expected_content_length = int(self._headers['content-length'])
 
@@ -513,9 +513,9 @@ class JsonRpcMessage:
     @classmethod
     def create_error(cls, msg_id, code, message, data):
         error = {
-            u"code": code,
-            u"message": message,
-            u"data": data
+            'code': code,
+            'message': message,
+            'data': data
         }
         return cls(JsonRpcMessageType.ResponseError, msg_id=msg_id, msg_error=error)
 
@@ -540,16 +540,16 @@ class JsonRpcMessage:
         """
         # Read all the possible values in from the message dictionary
         # If the keys don't exist in the dict, then None is set, which is acceptable
-        msg_id = msg_dict.get(u"id")
-        msg_method = msg_dict.get(u"method")
-        msg_params = msg_dict.get(u"params")
-        msg_result = msg_dict.get(u"result")
-        msg_error = msg_dict.get(u"error")
+        msg_id = msg_dict.get('id')
+        msg_method = msg_dict.get('method')
+        msg_params = msg_dict.get('params')
+        msg_result = msg_dict.get('result')
+        msg_error = msg_dict.get('error')
 
         if msg_id is None:
             # Messages that lack an id are notifications
             if msg_method is None:
-                raise ValueError("Notification message is missing method")
+                raise ValueError('Notification message is missing method')
             msg_type = JsonRpcMessageType.Notification
 
         else:
@@ -608,27 +608,27 @@ class JsonRpcMessage:
 
     @property
     def dictionary(self):
-        message_base = {u"jsonrpc": u"2.0"}
+        message_base = {'jsonrpc': '2.0'}
 
         if self._message_type is JsonRpcMessageType.Request:
-            message_base[u"method"] = self._message_method
-            message_base[u"params"] = self._message_params
-            message_base[u"id"] = self._message_id
+            message_base['method'] = self._message_method
+            message_base['params'] = self._message_params
+            message_base['id'] = self._message_id
             return message_base
 
         if self._message_type is JsonRpcMessageType.ResponseSuccess:
-            message_base[u"result"] = self._message_result
-            message_base[u"id"] = self._message_id
+            message_base['result'] = self._message_result
+            message_base['id'] = self._message_id
             return message_base
 
         if self._message_type is JsonRpcMessageType.Notification:
-            message_base[u"method"] = self._message_method
-            message_base[u"params"] = self._message_params
+            message_base['method'] = self._message_method
+            message_base['params'] = self._message_params
             return message_base
 
         if self._message_type is JsonRpcMessageType.ResponseError:
-            message_base[u"error"] = self._message_error
-            message_base[u"id"] = self._message_id
+            message_base['error'] = self._message_error
+            message_base['id'] = self._message_id
             return message_base
 
     def __eq__(self, other):
