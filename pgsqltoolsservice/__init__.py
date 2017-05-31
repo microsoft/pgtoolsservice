@@ -6,10 +6,10 @@
 import logging
 import sys
 
-from pgsqltoolsservice.server import Server
-
-if __name__ == '__main__':
-    logging.basicConfig(filename='server.log', level=logging.DEBUG)
-    logging.debug('initializing server')
-    SERVER = Server(sys.stdin, sys.stdout)
-    SERVER.handle_input()
+# from pgsqltoolsservice.server import Server
+#
+# if __name__ == '__main__':
+#     logging.basicConfig(filename='server.log', level=logging.DEBUG)
+#     logging.debug('initializing server')
+#     SERVER = Server(sys.stdin, sys.stdout)
+#     SERVER.handle_input()

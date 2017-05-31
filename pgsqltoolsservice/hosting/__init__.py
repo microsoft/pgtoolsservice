@@ -60,7 +60,7 @@ class JsonRpcServer:
             name=self.INPUT_THREAD_NAME
         )
         self._input_consumer.daemon = True
-        self._output_consumer.start()
+        self._input_consumer.start()
 
     def stop(self):
         """
@@ -115,53 +115,7 @@ class JsonRpcServer:
         while not self._stop_requested:
             try:
                 message = self.reader.read_message()
-                if message.message_type in [JsonRpcMessageType.ResponseSuccess, JsonRpcMessageType.ResponseError]:
-                    # Responses need to be routed to the handler that requested them
-                    # TODO: Route to the handler or send error message
-                    continue
-
-                # Figure out which handler will execute the request/notification
-                # TODO: Add support for routing of responses
-                if message.message_type is JsonRpcMessageType.Request:
-                    if self._logger is not None:
-                        self._logger.info(u"Received request id={} method={}".format(
-                            message.message_id, message.message_method
-                        ))
-                    handler = self._request_handlers[message.message_method]
-
-                    # Make sure we got a handler for the request
-                    if handler is None:
-                        # TODO: Send back an error message that the request method is not supported
-                        if self._logger is not None:
-                            self._logger.warn(u"Requested method is unsupported {}".format(message.message_method))
-                        continue
-
-                    # Call the handler with a request context
-                    request_context = RequestContext(message, self._output_queue)
-                    deserialized_object = handler.klass()
-                    deserialized_object.__dict__ = message.message_params
-                    handler.handler(request_context, deserialized_object)
-                elif message.message_type is JsonRpcMessageType.Notification:
-                    if self._logger is not None:
-                        self._logger.info(u"Received notification method={}".format(message.message_method))
-                    handler = self._notification_handlers[message.message_method]
-
-                    if handler is None:
-                        # TODO: Send back an error message that the notification method is not supported?
-                        if self._logger is not None:
-                            self._logger.warn(u"Notification method is unsupported".format(message.message_method))
-                        continue
-
-                    # Call the handler with a notification context
-                    notification_context = NotificationContext(self._output_queue)
-                    deserialized_object = handler.klass()
-                    deserialized_object.__dict__ = message.message_params
-                    handler.handler(notification_context, deserialized_object)
-                else:
-                    # If this happens we have a serious issue with the JSON RPC reader
-                    if self._logger is not None:
-                        self._logger.warn(u"Received unsupported message type {}".format(message.message_type))
-                    continue
+                self._dispatch_message(message)
 
             except EOFError as error:
                 # Thread fails once we read EOF. Halt the input thread
@@ -200,6 +154,59 @@ class JsonRpcServer:
             except Exception as error:
                 # Catch generic exceptions without breaking out of loop
                 self._log_exception(error, self.OUTPUT_THREAD_NAME)
+
+    def _dispatch_message(self, message):
+        """
+        Dispatches a message that was received to the necessary handler
+        :param message: The message that was received
+        """
+        if message.message_type in [JsonRpcMessageType.ResponseSuccess, JsonRpcMessageType.ResponseError]:
+            # Responses need to be routed to the handler that requested them
+            # TODO: Route to the handler or send error message
+            return
+
+        # Figure out which handler will execute the request/notification
+        # TODO: Add support for routing of responses
+        if message.message_type is JsonRpcMessageType.Request:
+            if self._logger is not None:
+                self._logger.info(u"Received request id={} method={}".format(
+                    message.message_id, message.message_method
+                ))
+            handler = self._request_handlers[message.message_method]
+
+            # Make sure we got a handler for the request
+            if handler is None:
+                # TODO: Send back an error message that the request method is not supported
+                if self._logger is not None:
+                    self._logger.warn(u"Requested method is unsupported {}".format(message.message_method))
+                return
+
+            # Call the handler with a request context
+            request_context = RequestContext(message, self._output_queue)
+            deserialized_object = handler.klass()
+            deserialized_object.__dict__ = message.message_params
+            handler.handler(request_context, deserialized_object)
+        elif message.message_type is JsonRpcMessageType.Notification:
+            if self._logger is not None:
+                self._logger.info(u"Received notification method={}".format(message.message_method))
+            handler = self._notification_handlers[message.message_method]
+
+            if handler is None:
+                # TODO: Send back an error message that the notification method is not supported?
+                if self._logger is not None:
+                    self._logger.warn(u"Notification method is unsupported".format(message.message_method))
+                return
+
+            # Call the handler with a notification context
+            notification_context = NotificationContext(self._output_queue)
+            deserialized_object = handler.klass()
+            deserialized_object.__dict__ = message.message_params
+            handler.handler(notification_context, deserialized_object)
+        else:
+            # If this happens we have a serious issue with the JSON RPC reader
+            if self._logger is not None:
+                self._logger.warn(u"Received unsupported message type {}".format(message.message_type))
+            return
 
     def _log_exception(self, ex, thread_name):
         """
@@ -623,6 +630,12 @@ class JsonRpcMessage:
             message_base[u"error"] = self._message_error
             message_base[u"id"] = self._message_id
             return message_base
+
+    def __eq__(self, other):
+        return self.dictionary == other.dictionary
+
+    def __ne__(self, other):
+        return not self == other
 
 
 class RequestContext:
