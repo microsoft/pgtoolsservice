@@ -9,3 +9,5 @@ cover
 build/
 coverage.xml
 nosetests.xml
+.pylintrc
+.noseids

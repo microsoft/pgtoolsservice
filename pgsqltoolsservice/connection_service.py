@@ -50,15 +50,6 @@ class ConnectionService(object):
         successful
         """
 
-        # Process the connection options so that they can be turned into a PostgreSQL connection string
-        # # connection_options = connection_info.details['options']
-        # # connection_options['host'] = connection_options['server']
-        # # del connection_options['server']
-        # # if 'database' in connection_options:
-        # #     connection_options['dbname'] = connection_options['database']
-        # #     del connection_options['database']
-        # # del connection_options['authenticationType']
-
         # Build the connection string from the provided options
         connection_options = connection_info.details['options']
         connection_string = ''
