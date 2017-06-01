@@ -28,16 +28,7 @@ class CapabilitiesService:
             providerDisplayName='PostgreSQL',
             connectionProvider=ConnectionProviderOptions(options=[
                 ConnectionOption(
-                    name='connectionString',
-                    displayName='Connection String',
-                    description='PostgreSQL-format connection string',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    isIdentity=True,
-                    isRequired=False,
-                    groupName='Source'
-                ),
-                ConnectionOption(
-                    name='server',
+                    name='host',
                     displayName='Server Name',
                     description='Name of the PostgreSQL instance',
                     valueType=ConnectionOption.VALUE_TYPE_STRING,
@@ -47,7 +38,7 @@ class CapabilitiesService:
                     groupName='Source'
                 ),
                 ConnectionOption(
-                    name='database',
+                    name='dbname',
                     displayName='Database Name',
                     description='The name of the initial catalog or database in the data source',
                     valueType=ConnectionOption.VALUE_TYPE_STRING,
@@ -77,17 +68,112 @@ class CapabilitiesService:
                     groupName='Security'
                 ),
                 ConnectionOption(
-                    name='authenticationType',
-                    displayName='Authentication Type',
-                    description='Specifies the method of authenticating with SQL Server',
+                    name='hostaddr',
+                    displayName='Host IP Address',
+                    description='IP address of the server',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='Server'
+                ),
+                ConnectionOption(
+                    name='port',
+                    displayName='Port',
+                    description='Port number for the server',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='Server'
+                ),
+                ConnectionOption(
+                    name='connectTimeout',
+                    displayName='Connect Timeout',
+                    description='Seconds to wait before timing out when connecting',
+                    valueType=ConnectionOption.VALUE_TYPE_NUMBER,
+                    groupName='Client',
+                    defaultValue=15
+                ),
+                ConnectionOption(
+                    name='clientEncoding',
+                    displayName='Client Encoding',
+                    description='The client encoding for the connection',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='Client'
+                ),
+                ConnectionOption(
+                    name='options',
+                    displayName='Command-Line Options',
+                    description='Command-line options to send to the server when the connection starts',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='Server'
+                ),
+                ConnectionOption(
+                    name='applicationName',
+                    displayName='Application Name',
+                    description='Value for the "application_name" configuration parameter',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='Client',
+                    specialValueType=ConnectionOption.SPECIAL_VALUE_APP_NAME
+                ),
+                ConnectionOption(
+                    name='sslmode',
+                    displayName='SSL Mode',
+                    description='The SSL mode to use when connecting',
                     valueType=ConnectionOption.VALUE_TYPE_CATEGORY,
-                    specialValueType=ConnectionOption.SPECIAL_VALUE_AUTH_TYPE,
-                    isIdentity=True,
-                    isRequired=True,
-                    groupName='Security',
+                    groupName='SSL',
                     categoryValues=[
-                        CategoryValue('SQL Login', 'SqlLogin')
+                        CategoryValue('Disable', 'disable'),
+                        CategoryValue('Allow', 'allow'),
+                        CategoryValue('Prefer', 'prefer'),
+                        CategoryValue('Require', 'require'),
+                        CategoryValue('Verify-CA', 'verify-ca'),
+                        CategoryValue('Verify-Full', 'verify-full'),
                     ]
+                ),
+                ConnectionOption(
+                    name='sslcompression',
+                    displayName='Use SSL Compression',
+                    description='Whether to compress SSL connections',
+                    valueType=ConnectionOption.VALUE_TYPE_BOOLEAN,
+                    groupName='SSL'
+                ),
+                ConnectionOption(
+                    name='sslcert',
+                    displayName='SSL Certificate Filename',
+                    description='The filename of the SSL certificate to use',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='SSL'
+                ),
+                ConnectionOption(
+                    name='sslkey',
+                    displayName='SSL Key Filename',
+                    description='The filename of the key to use for the SSL certificate',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='SSL'
+                ),
+                ConnectionOption(
+                    name='sslrootcert',
+                    displayName='SSL Root Certificate Filename',
+                    description='The filename of the SSL root CA certificate to use',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='SSL'
+                ),
+                ConnectionOption(
+                    name='sslcrl',
+                    displayName='SSL CRL Filename',
+                    description='The filename of the SSL certificate revocation list to use',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='SSL'
+                ),
+                ConnectionOption(
+                    name='requirepeer',
+                    displayName='Require Peer',
+                    description='The required username of the server process',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='Server'
+                ),
+                ConnectionOption(
+                    name='service',
+                    displayName='Service Name',
+                    description='The service name in pg_service.conf to use for connection parameters',
+                    valueType=ConnectionOption.VALUE_TYPE_STRING,
+                    groupName='Client'
                 )
             ])
         ))
