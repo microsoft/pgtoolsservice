@@ -52,6 +52,7 @@ class ConnectionOption(object):
     SPECIAL_VALUE_AUTH_TYPE = 'authType'
     SPECIAL_VALUE_USER_NAME = 'userName'
     SPECIAL_VALUE_PASSWORD_NAME = 'password'
+    SPECIAL_VALUE_APP_NAME = 'appName'
 
     def __init__(
             self,
@@ -75,6 +76,7 @@ class ConnectionOption(object):
         self.specialValueType = specialValueType
         self.isIdentity = isIdentity
         self.isRequired = isRequired
+
 
 
 class CategoryValue(object):
