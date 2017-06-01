@@ -18,4 +18,5 @@ class CapabilitiesResult(object):
     def __init__(self, capabilities=None):
         self.capabilities = capabilities
 
+
 capabilities_request = IncomingMessageConfiguration('capabilities/list', CapabilitiesRequestParams)

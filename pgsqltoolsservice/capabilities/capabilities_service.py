@@ -179,4 +179,3 @@ class CapabilitiesService:
         ))
         # Since jsonrpc expects a serializable object, convert it to a dictionary
         return utils.object_to_dictionary(server_capabilities)
-
