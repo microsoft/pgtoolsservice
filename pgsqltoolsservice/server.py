@@ -12,6 +12,7 @@ import sys
 
 from pgsqltoolsservice import utils
 from pgsqltoolsservice.connection import ConnectionService
+from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.contracts.initialization import (
     InitializeResult,
     ServerCapabilities,
@@ -66,7 +67,7 @@ class Server(object):
         dispatcher['exit'] = self.exit
         dispatcher['echo'] = self.echo
         dispatcher['version'] = version
-        dispatcher['capabilities/list'] = capabilities
+        dispatcher['capabilities/list'] = CapabilitiesService.handle_db_capabilities_request
         dispatcher['wait'] = self.wait
 
     def shutdown(self):

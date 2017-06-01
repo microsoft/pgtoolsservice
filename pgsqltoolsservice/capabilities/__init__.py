@@ -1,12 +1,26 @@
-from connection import ConnectionProviderOptions
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
+
+from pgsqltoolsservice import utils
+from pgsqltoolsservice.contracts.capabilities_service import (
+    CapabilitiesResult,
+    CategoryValue,
+    ConnectionOption,
+    ConnectionProviderOptions,
+    DMPServerCapabilities
+)
 
 
 class CapabilitiesService:
 
-    def __init__(self, json_rpc_server):
+    def __init__(self):
         pass
 
-    def handle_db_capabilities_request(self, hostName, hostVersion):
+    @staticmethod
+    def handle_db_capabilities_request(hostName, hostVersion):
         """Get the server capabilities response"""
         server_capabilities = CapabilitiesResult(DMPServerCapabilities(
             protocolVersion='1.0',

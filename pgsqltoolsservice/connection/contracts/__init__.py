@@ -42,7 +42,7 @@ class ConnectionCompleteParams(object):
 class ConnectionSummary(object):
     """Provides high level information about a connection"""
 
-    def __init__(self, server_name=None, database_name=None, user_name=None):
-        self.serverName = server_name
-        self.databaseName = database_name
-        self.userName = user_name
+    def __init__(self, serverName=None, databaseName=None, userName=None):
+        self.serverName = serverName
+        self.databaseName = databaseName
+        self.userName = userName
