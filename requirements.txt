@@ -5,3 +5,4 @@ enum34
 cx_freeze
 nose
 coverage
+inflection

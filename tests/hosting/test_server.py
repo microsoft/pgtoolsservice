@@ -9,10 +9,11 @@ import io
 
 from mock import call, MagicMock
 
-from pgsqltoolsservice.hosting import JSONRPCServer, JsonRpcMessage
+from pgsqltoolsservice.hosting.json_rpc_server import JSONRPCServer
+from pgsqltoolsservice.hosting.json_message import JSONRPCMessage
 
 
-class JsonRpcServerTests(unittest.TestCase):
+class JSONRPCServerTests(unittest.TestCase):
 
     def test_request_enqueued(self):
         # Setup: Create empty io streams
@@ -52,7 +53,7 @@ class JsonRpcServerTests(unittest.TestCase):
         time.sleep(.1)
 
         # Then: The dispatch method should have been called
-        expected_output = JsonRpcMessage.from_dictionary({"method": "test", "params": {}})
+        expected_output = JSONRPCMessage.from_dictionary({"method": "test", "params": {}})
         dispatch_mock.assert_called_once_with(expected_output)
 
         # Teardown: All background threads should be shut down.
@@ -81,7 +82,7 @@ class JsonRpcServerTests(unittest.TestCase):
         time.sleep(.1)
 
         # Then: The dispatch method should have been called
-        expected_output = JsonRpcMessage.from_dictionary({"method": "test", "params": {}})
+        expected_output = JSONRPCMessage.from_dictionary({"method": "test", "params": {}})
         msg_call = call(expected_output)
         dispatch_mock.assert_has_calls([msg_call, msg_call])
 

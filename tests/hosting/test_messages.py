@@ -5,13 +5,13 @@
 
 import unittest
 
-from pgsqltoolsservice.hosting import JsonRpcMessage, JsonRpcMessageType
+from pgsqltoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 
 
 class JsonRpcMessageTests(unittest.TestCase):
     def test_create_error(self):
         # If: I create an error message
-        message = JsonRpcMessage.create_error(10, 20, 'msg', {})
+        message = JSONRPCMessage.create_error(10, 20, 'msg', {})
 
         # Then:
         # ... The message should have all the properties I defined
@@ -24,7 +24,7 @@ class JsonRpcMessageTests(unittest.TestCase):
         self.assertEqual(message.message_error['code'], 20)
         self.assertEqual(message.message_error['message'], 'msg')
         self.assertDictEqual(message.message_error['data'], {})
-        self.assertEqual(message.message_type, JsonRpcMessageType.ResponseError)
+        self.assertEqual(message.message_type, JSONRPCMessageType.ResponseError)
 
         # ... The dictionary should have the same values stored
         dictionary = message.dictionary
@@ -41,7 +41,7 @@ class JsonRpcMessageTests(unittest.TestCase):
 
     def test_create_response(self):
         # If: I create a response
-        message = JsonRpcMessage.create_response(10, {})
+        message = JSONRPCMessage.create_response(10, {})
 
         # Then:
         # ... The message should have all the properties I defined
@@ -52,7 +52,7 @@ class JsonRpcMessageTests(unittest.TestCase):
         self.assertIsNotNone(message.message_result)
         self.assertDictEqual(message.message_result, {})
         self.assertIsNone(message.message_error)
-        self.assertEqual(message.message_type, JsonRpcMessageType.ResponseSuccess)
+        self.assertEqual(message.message_type, JSONRPCMessageType.ResponseSuccess)
 
         # ... The dictionary should have the same values stored
         dictionary = message.dictionary
@@ -65,7 +65,7 @@ class JsonRpcMessageTests(unittest.TestCase):
 
     def test_create_request(self):
         # If: I create a request
-        message = JsonRpcMessage.create_request(10, "test/test", {})
+        message = JSONRPCMessage.create_request(10, "test/test", {})
 
         # Then:
         # ... The message should have all the properties I defined
@@ -75,7 +75,7 @@ class JsonRpcMessageTests(unittest.TestCase):
         self.assertDictEqual(message.message_params, {})
         self.assertIsNone(message.message_result)
         self.assertIsNone(message.message_error)
-        self.assertEqual(message.message_type, JsonRpcMessageType.Request)
+        self.assertEqual(message.message_type, JSONRPCMessageType.Request)
 
         # ... The dictionary should have the same values stored
         dictionary = message.dictionary
@@ -89,7 +89,7 @@ class JsonRpcMessageTests(unittest.TestCase):
 
     def test_create_notification(self):
         # If: I create a notification
-        message = JsonRpcMessage.create_notification("test/test", {})
+        message = JSONRPCMessage.create_notification("test/test", {})
 
         # Then:
         # ... The message should have all the properties I defined
@@ -99,7 +99,7 @@ class JsonRpcMessageTests(unittest.TestCase):
         self.assertDictEqual(message.message_params, {})
         self.assertIsNone(message.message_result)
         self.assertIsNone(message.message_error)
-        self.assertEqual(message.message_type, JsonRpcMessageType.Notification)
+        self.assertEqual(message.message_type, JSONRPCMessageType.Notification)
 
         # ... The dictionary should have the same values stored
         dictionary = message.dictionary

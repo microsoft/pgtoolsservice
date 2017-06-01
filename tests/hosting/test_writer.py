@@ -9,14 +9,15 @@ import os
 import re
 import unittest
 
-from pgsqltoolsservice.hosting import JsonRpcWriter, JsonRpcMessage, JsonRpcMessageType
+from pgsqltoolsservice.hosting.json_writer import JSONRPCWriter
+from pgsqltoolsservice.hosting.json_message import JSONRPCMessage
 
 
-class JsonRpcWriterTests(unittest.TestCase):
+class JSONRPCWriterTests(unittest.TestCase):
     def test_create_standard_encoding(self):
         with io.BytesIO(b'123') as stream:
             # If: I create a JSON RPC writer
-            writer = JsonRpcWriter(stream)
+            writer = JSONRPCWriter(stream)
 
             # Then: The available properties should be set properly
             self.assertIsNotNone(writer)
@@ -27,7 +28,7 @@ class JsonRpcWriterTests(unittest.TestCase):
     def test_create_nonstandard_encoding(self):
         with io.BytesIO(b'123') as stream:
             # If: I create a JSON RPC writer with a nonstandard encoding
-            writer = JsonRpcWriter(stream, 'ascii')
+            writer = JSONRPCWriter(stream, 'ascii')
 
             # Then: The available properties should be set properly
             self.assertIsNotNone(writer)
@@ -39,7 +40,7 @@ class JsonRpcWriterTests(unittest.TestCase):
         with io.BytesIO(b'123') as stream:
             # If:
             # ... I create a JSON RPC writer with an opened stream
-            writer = JsonRpcWriter(stream)
+            writer = JSONRPCWriter(stream)
 
             # ... and I close the writer
             writer.close()
@@ -51,10 +52,10 @@ class JsonRpcWriterTests(unittest.TestCase):
         with io.BytesIO(b'') as stream:
             # If:
             # ... I create a JSON RPC writer
-            writer = JsonRpcWriter(stream)
+            writer = JSONRPCWriter(stream)
 
             # ... and I send a message
-            message = JsonRpcMessage.create_request('123', 'test/test', {})
+            message = JSONRPCMessage.create_request('123', 'test/test', {})
             writer.send_message(message)
 
             # Then:
