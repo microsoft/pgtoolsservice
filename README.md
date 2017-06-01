@@ -27,8 +27,11 @@ We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008)
         2. `open cover/index.html` (to view coverage results)
 
 ## Manual Testing
-1. `python3 pgsqltoolsservice/server.py`
-2. Now you can pass in JSON RPC requests to stdin, following the [language server protocol specifications](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md). The following commands are supported currently:
+1. Update your PYTHONPATH environment variable to contain the source directory. From within the project's main directory, run the following commands:
+    - On Mac/Linux: `PYTHONPATH=$(pwd)`
+    - On Windows: `set PYTHONPATH=%cd%`
+2. `python3 pgsqltoolsservice/server.py`
+3. Now you can pass in JSON RPC requests to stdin, following the [language server protocol specifications](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md). The following commands are supported currently:
     - initialize
     - connection/connect
     - connection/disconnect
@@ -61,7 +64,7 @@ Content-Length: 106
 ```
 
 ## Building Executables
-To build an executable, run the following commands starting from the main source code directory on the platform you want to build for. The output will be placed in a folder called pgsqltoolsservice/build.
-1. `pip3 install -r requirements.txt`
-2. `cd pgsqltoolsservice`
-3. `python3 setup.py build`
+To build an executable, run the following commands starting from the main source code directory on the platform you want to build for. The output will be placed in a folder called build.
+- On Mac/Linux: `./scripts/build.sh`
+- On Windows: `.\scripts\build.ps1`
+    - Or, from cmd.exe: `powershell.exe scripts\build.ps1`
