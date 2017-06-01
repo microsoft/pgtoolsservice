@@ -23,6 +23,8 @@ from pgsqltoolsservice.contracts.initialization import (
     ServerCapabilities,
     TextDocumentSyncKind)
 from jsonrpc import JSONRPCResponseManager, dispatcher
+from pgsqltoolsservice.query_execution.query_execution_service import QueryExecutionService
+import psycopg2
 
 
 class Server(object):
@@ -31,6 +33,7 @@ class Server(object):
     def __init__(self, input_stream, output_stream):
         logging.debug('creating server object')
         self.connection_service = ConnectionService(self)
+        self.query_execution_service = QueryExecutionService(self)
         self.is_shutdown = False
         self.should_exit = False
         self.threads = set()
@@ -68,6 +71,8 @@ class Server(object):
         logging.debug('initialize_dispatcher method')
         dispatcher['connection/connect'] = self.connection_service.handle_connect_request
         dispatcher['connection/disconnect'] = self.connection_service.handle_disconnect_request
+        logging.debug("Initializing query handlers")
+        dispatcher['query/executeDocumentSelection'] = self.query_execution_service.handle_execute_query_request
         dispatcher['shutdown'] = self.shutdown
         dispatcher['exit'] = self.exit
         dispatcher['echo'] = self.echo
@@ -153,7 +158,6 @@ class Server(object):
             if response is None:
                 continue
             self.handle_output(response.json)
-
 
 def version():
     """Get the version of the tools service"""
