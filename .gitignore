@@ -8,3 +8,6 @@ cover
 .cache
 build/
 coverage.xml
+nosetests.xml
+.pylintrc
+.noseids

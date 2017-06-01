@@ -7,6 +7,7 @@
 disconnect and holds the current connection, if one is present"""
 
 from __future__ import unicode_literals
+import logging
 import threading
 import uuid
 
@@ -48,18 +49,16 @@ class ConnectionService(object):
         If a connection was already open, disconnect first. Return whether the connection was
         successful
         """
+
+        # Build the connection string from the provided options
         connection_options = connection_info.details['options']
-        connection_string = None
-        try:
-            connection_string = connection_options['connectionString']
-        except KeyError:
-            connection_string = 'user={} password={} host={} connect_timeout=10'.format(
-                connection_options['user'],
-                connection_options['password'],
-                connection_options['server']
-            )
-            if 'database' in connection_options:
-                connection_string += ' dbname={}'.format(connection_options['database'])
+        connection_string = ''
+        for option, value in connection_options.items():
+            key = CONNECTION_OPTION_KEY_MAP[option] if option in CONNECTION_OPTION_KEY_MAP else option
+            connection_string += "{}='{}' ".format(key, value)
+        logging.debug(f'Connecting with connection string {connection_string}')
+
+        # Connect using psycopg2
         if self.connection:
             self.disconnect()
         try:
@@ -114,3 +113,12 @@ def build_connection_response_error(connection_info, err):
         errorMessage=str(err)
     )
     return response
+
+
+# Dictionary mapping connection option names to their corresponding connection string keys.
+# If a name is not present in this map, the name should be used as the key.
+CONNECTION_OPTION_KEY_MAP = {
+    'connectTimeout': 'connect_timeout',
+    'clientEncoding': 'client_encoding',
+    'applicationName': 'application_name'
+}
