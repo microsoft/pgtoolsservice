@@ -30,7 +30,7 @@ class JsonRpcMessageTests(unittest.TestCase):
         dictionary = message.dictionary
         self.assertIsNotNone(dictionary)
         self.assertDictEqual(dictionary, {
-            'jsonrpc': u'2.0',
+            'jsonrpc': '2.0',
             'error': {
                 'code': 20,
                 'message': 'msg',

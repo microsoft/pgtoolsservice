@@ -95,11 +95,11 @@ class JSONRPCServer:
         # Add the message to the output queue
         self._output_queue.put(message)
 
-    def set_request_handler(self, method, class_, handler):
-        self._request_handlers[method] = self.Handler(class_, handler)
+    def set_request_handler(self, config, handler):
+        self._request_handlers[config.method] = self.Handler(config.parameter_class, handler)
 
-    def set_notification_handler(self, method, class_, handler):
-        self._notification_handlers[method] = self.Handler(class_, handler)
+    def set_notification_handler(self, config, handler):
+        self._notification_handlers[config.method] = self.Handler(config.parameter_class, handler)
 
     # IMPLEMENTATION DETAILS ###############################################
 
@@ -216,6 +216,19 @@ class JSONRPCServer:
         """
         if self._logger is not None:
             self._logger.warn(u"Thread: {} encountered exception {}".format(thread_name, ex))
+
+
+class IncomingMessageConfiguration:
+    """Object that stores the info for registering a request"""
+
+    def __init__(self, method, parameter_class):
+        """
+        Constructor for request configuration
+        :param method: String name of the method to respond to
+        :param parameter_class: Class to deserialize the request parameters into
+        """
+        self.method = method
+        self.parameter_class = parameter_class
 
 
 class RequestContext:

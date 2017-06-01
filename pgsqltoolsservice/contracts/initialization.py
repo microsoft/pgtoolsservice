@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+# TODO: Move these classes into the capabilities service
+
 """Contains contract classes for service initialization"""
 
 import enum

@@ -3,4 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.hosting.json_rpc_server import JSONRPCServer, NotificationContext, RequestContext
+from pgsqltoolsservice.hosting.json_rpc_server import (
+    JSONRPCServer,
+    NotificationContext,
+    IncomingMessageConfiguration,
+    RequestContext
+)
