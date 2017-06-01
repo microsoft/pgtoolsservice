@@ -54,7 +54,8 @@ class ConnectionService(object):
         connection_options = connection_info.details['options']
         connection_string = ''
         for option, value in connection_options.items():
-            connection_string += "{}='{}' ".format(option, value)
+            key = CONNECTION_OPTION_KEY_MAP[option] if option in CONNECTION_OPTION_KEY_MAP else option
+            connection_string += "{}='{}' ".format(key, value)
         logging.debug(f'Connecting with connection string {connection_string}')
 
         # Connect using psycopg2
@@ -112,3 +113,12 @@ def build_connection_response_error(connection_info, err):
         errorMessage=str(err)
     )
     return response
+
+
+# Dictionary mapping connection option names to their corresponding connection string keys.
+# If a name is not present in this map, the name should be used as the key.
+CONNECTION_OPTION_KEY_MAP = {
+    'connectTimeout': 'connect_timeout',
+    'clientEncoding': 'client_encoding',
+    'applicationName': 'application_name'
+}

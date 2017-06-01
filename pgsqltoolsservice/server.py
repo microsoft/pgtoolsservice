@@ -222,7 +222,7 @@ def capabilities(hostName, hostVersion):
                 groupName='Server'
             ),
             ConnectionOption(
-                name='connect_timeout',
+                name='connectTimeout',
                 displayName='Connect Timeout',
                 description='Seconds to wait before timing out when connecting',
                 valueType=ConnectionOption.VALUE_TYPE_NUMBER,
@@ -230,7 +230,7 @@ def capabilities(hostName, hostVersion):
                 defaultValue=15
             ),
             ConnectionOption(
-                name='client_encoding',
+                name='clientEncoding',
                 displayName='Client Encoding',
                 description='The client encoding for the connection',
                 valueType=ConnectionOption.VALUE_TYPE_STRING,
@@ -244,12 +244,12 @@ def capabilities(hostName, hostVersion):
                 groupName='Server'
             ),
             ConnectionOption(
-                name='application_name',
+                name='applicationName',
                 displayName='Application Name',
                 description='Value for the "application_name" configuration parameter',
                 valueType=ConnectionOption.VALUE_TYPE_STRING,
                 groupName='Client',
-                defaultValue='Carbon'
+                specialValueType=ConnectionOption.SPECIAL_VALUE_APP_NAME
             ),
             ConnectionOption(
                 name='sslmode',
