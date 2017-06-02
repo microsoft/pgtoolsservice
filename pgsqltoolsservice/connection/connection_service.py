@@ -37,6 +37,7 @@ class ConnectionService:
 
     def __init__(self, service_provider: [ServiceProvider, None]):
         self.connection = None
+        self._connection_thread = None
         self._service_provider = service_provider
 
     def initialize(self):
@@ -48,9 +49,12 @@ class ConnectionService:
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Kick off a connection in response to an incoming connection request"""
         connection_info = ConnectionInfo(params.owner_uri, params.connection, params.type)
-        thread = threading.Thread(target=self._connect_and_respond, args=(connection_info, request_context))
-        thread.daemon = True
-        thread.start()
+        self._connection_thread = threading.Thread(
+            target=self._connect_and_respond,
+            args=(connection_info, request_context)
+        )
+        self._connection_thread.daemon = True
+        self._connection_thread.start()
         request_context.send_response(True)
 
     def handle_disconnect_request(self, request_context: RequestContext, params: DisconnectRequestParams) -> None:
