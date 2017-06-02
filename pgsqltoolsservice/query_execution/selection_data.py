@@ -3,12 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-class ResultSetSummary(object):
-
-    def __init__(self, ident, row_count, column_info, special_action):
-        self.Id = ident
-        self.BatchId = 0
-        self.RowCount = row_count
-        self.ColumnInfo = column_info
-        self.SpecialAction = special_action
-        
+class QuerySelection(object):
+    def __init__(self, start_line, start_column, end_line, end_column):
+        self.StartLine = start_line
+        self.StartColumn = start_column
+        self.EndLine = end_line
+        self.EndColumn = end_column

@@ -28,15 +28,13 @@ class QueryExecutionService(object):
         try:
             self.server.send_event("query/batchStart", "") #TODO: populate and pass in a BatchSummary
             cur.execute("SELECT * from temp")
+            #TODO: send responses asynchronously
+            self.server.send_event("query/resultSetComplete", cur.fetchall()) #TODO: populate and pass in a ResultSetSummary
+            self.server.send_event("query/message", "") #TODO: populate and pass in a ResultMessage
+            self.server.send_event("query/batchEnd", "") #TODO: populate and pass in a BatchSummary
+            self.server.send_event("query/complete", "") #TODO: populate and pass in a  BatchSummary
         except:
             logging.debug('Query execution failed for following query: %s', "SELECT * from postgresql")
+        finally:
             cur.close()
-            return
-        
-        #TODO: send responses asynchronously
-        self.server.send_event("query/resultSetComplete", cur.fetchall()) #TODO: populate and pass in a ResultSetSummary
-        self.server.send_event("query/message", "") #TODO: populate and pass in a ResultMessage
-        self.server.send_event("query/batchEnd", "") #TODO: populate and pass in a BatchSummary
-        self.server.send_event("query/complete", "") #TODO: populate and pass in a  BatchSummary
-        cur.close()
 

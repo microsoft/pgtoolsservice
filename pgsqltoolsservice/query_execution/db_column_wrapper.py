@@ -3,12 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-class ResultSetSummary(object):
+class DbColumnWrapper(object):
 
-    def __init__(self, ident, row_count, column_info, special_action):
-        self.Id = ident
-        self.BatchId = 0
-        self.RowCount = row_count
-        self.ColumnInfo = column_info
-        self.SpecialAction = special_action
-        
+    def __init__(self):
