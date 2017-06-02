@@ -5,3 +5,5 @@ enum34
 cx_freeze
 nose
 coverage
+autopep8
+flake8

@@ -2,11 +2,8 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-
-import psycopg2
 import logging
 
-from pgsqltoolsservice.connection_service import ConnectionService
 
 class QueryExecutionService(object):
     """Service for executing queries"""
@@ -26,16 +23,16 @@ class QueryExecutionService(object):
             return
         cur = conn.cursor()
         try:
-            self.server.send_event("query/batchStart", "") #TODO: populate and pass in a BatchSummary
+            self.server.send_event("query/batchStart", "")  # TODO: populate and pass in a BatchSummary
             cur.execute(QUERY)
-             #TODO: send responses asynchronously
-            self.server.send_event("query/resultSetComplete", cur.fetchall()) #TODO: populate and pass in a ResultSetSummary
-            self.server.send_event("query/message", "") #TODO: populate and pass in a ResultMessage
-            self.server.send_event("query/batchEnd", "") #TODO: populate and pass in a BatchSummary
-            self.server.send_event("query/complete", "") #TODO: populate and pass in a  BatchSummary
-        except:
+            # TODO: send responses asynchronously
+            # TODO: populate and pass in a ResultSetSummary
+            self.server.send_event("query/resultSetComplete", cur.fetchall())
+            self.server.send_event("query/message", "")  # TODO: populate and pass in a ResultMessage
+            self.server.send_event("query/batchEnd", "")  # TODO: populate and pass in a BatchSummary
+            self.server.send_event("query/complete", "")  # TODO: populate and pass in a  BatchSummary
+        except BaseException:
             logging.debug('Query execution failed for following query: %s', QUERY)
             return
         finally:
             cur.close()
-

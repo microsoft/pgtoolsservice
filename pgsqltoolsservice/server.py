@@ -24,7 +24,6 @@ from pgsqltoolsservice.contracts.initialization import (
     TextDocumentSyncKind)
 from jsonrpc import JSONRPCResponseManager, dispatcher
 from pgsqltoolsservice.query_execution.query_execution_service import QueryExecutionService
-import psycopg2
 
 
 class Server(object):
@@ -158,6 +157,7 @@ class Server(object):
             if response is None:
                 continue
             self.handle_output(response.json)
+
 
 def version():
     """Get the version of the tools service"""

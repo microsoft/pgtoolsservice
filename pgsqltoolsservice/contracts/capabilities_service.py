@@ -78,7 +78,6 @@ class ConnectionOption(object):
         self.isRequired = isRequired
 
 
-
 class CategoryValue(object):
     """Defines a category value for a connection option"""
 

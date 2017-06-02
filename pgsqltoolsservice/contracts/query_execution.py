@@ -3,9 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-#Contains contracts for query execution service
+# Contains contracts for query execution service
 
 from datetime import datetime
+
 
 class QuerySelection(object):
 
