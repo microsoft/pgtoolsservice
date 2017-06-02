@@ -6,6 +6,7 @@
 import logging
 import sys
 
+from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
 
@@ -24,5 +25,12 @@ if __name__ == '__main__':
 
     # Create the service provider and add the providers to it
     service_box = ServiceProvider(server, logger)
+    service_box.set_service('capabilities', CapabilitiesService)
     service_box.set_service('connection', ConnectionService)
+
+    # Initialize all the services and start the server
+    service_box.initialize()
+    server.start()
+
+
 

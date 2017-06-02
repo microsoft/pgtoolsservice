@@ -61,13 +61,10 @@ class Server(object):
     def initialize_dispatcher(self):
         """Initialize the JSON RPC dispatcher"""
         logging.debug('initialize_dispatcher method')
-        dispatcher['connection/connect'] = self.connection_service.handle_connect_request
-        dispatcher['connection/disconnect'] = self.connection_service.handle_disconnect_request
         dispatcher['shutdown'] = self.shutdown
         dispatcher['exit'] = self.exit
         dispatcher['echo'] = self.echo
         dispatcher['version'] = version
-        dispatcher['capabilities/list'] = CapabilitiesService.handle_db_capabilities_request
         dispatcher['wait'] = self.wait
 
     def shutdown(self):
