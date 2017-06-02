@@ -6,7 +6,6 @@
 """This module holds the connection service class, which allows for the user to connect and
 disconnect and holds the current connection, if one is present"""
 
-from __future__ import unicode_literals
 import logging
 import threading
 import uuid

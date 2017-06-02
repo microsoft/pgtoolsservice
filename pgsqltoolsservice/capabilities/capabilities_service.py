@@ -4,120 +4,122 @@
 # --------------------------------------------------------------------------------------------
 
 
-from pgsqltoolsservice import utils
-from pgsqltoolsservice.capabilities.contracts.capabilities_request import CapabilitiesResult
-from pgsqltoolsservice.capabilities.contracts.connection_provider_options import (
-    CategoryValue,
-    ConnectionOption,
-    ConnectionProviderOptions
+from pgsqltoolsservice.capabilities.contracts import (
+    capabilities_request,
+    CapabilitiesRequestParams,
+    CapabilitiesResult, DMPServerCapabilities, ConnectionProviderOptions, CategoryValue, ConnectionOption
 )
-from pgsqltoolsservice.capabilities.contracts.dmp_server_capabilities import DMPServerCapabilities
+from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 
 
 class CapabilitiesService:
 
-    def __init__(self):
-        pass
+    def __init__(self, service_provider: [ServiceProvider, None]):
+        self._service_provider: ServiceProvider = service_provider
+
+    def initialize(self):
+        self._service_provider.server.set_request_handler(capabilities_request, self.handle_dmp_capabilities_request)
 
     @staticmethod
-    def handle_db_capabilities_request(hostName, hostVersion):
+    def handle_dmp_capabilities_request(request_context: RequestContext, params: CapabilitiesRequestParams) -> None:
         """Get the server capabilities response"""
-        server_capabilities = CapabilitiesResult(DMPServerCapabilities(
-            protocolVersion='1.0',
-            providerName='PGSQL',
-            providerDisplayName='PostgreSQL',
-            connectionProvider=ConnectionProviderOptions(options=[
+        result = CapabilitiesResult()
+        result.capabilities = DMPServerCapabilities()
+        result.capabilities.protocol_version = '1.0'
+        result.capabilities.provider_name = 'PGSQL'
+        result.capabilities.provider_display_name = 'PostgreSQL'
+        result.capabilities.connection_provider = ConnectionProviderOptions([
                 ConnectionOption(
                     name='host',
-                    displayName='Server Name',
+                    display_name='Server Name',
                     description='Name of the PostgreSQL instance',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    specialValueType=ConnectionOption.SPECIAL_VALUE_SERVER_NAME,
-                    isIdentity=True,
-                    isRequired=True,
-                    groupName='Source'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    special_value_type=ConnectionOption.SPECIAL_VALUE_SERVER_NAME,
+                    is_identity=True,
+                    is_required=True,
+                    group_name='Source'
                 ),
                 ConnectionOption(
                     name='dbname',
-                    displayName='Database Name',
+                    display_name='Database Name',
                     description='The name of the initial catalog or database in the data source',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    specialValueType=ConnectionOption.SPECIAL_VALUE_DATABASE_NAME,
-                    isIdentity=True,
-                    isRequired=False,
-                    groupName='Source'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    special_value_type=ConnectionOption.SPECIAL_VALUE_DATABASE_NAME,
+                    is_identity=True,
+                    is_required=False,
+                    group_name='Source'
                 ),
                 ConnectionOption(
                     name='user',
-                    displayName='User Name',
+                    display_name='User Name',
                     description='Indicates the user ID to be used when connecting to the data source',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    specialValueType=ConnectionOption.SPECIAL_VALUE_USER_NAME,
-                    isIdentity=True,
-                    isRequired=True,
-                    groupName='Security'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    special_value_type=ConnectionOption.SPECIAL_VALUE_USER_NAME,
+                    is_identity=True,
+                    is_required=True,
+                    group_name='Security'
                 ),
                 ConnectionOption(
                     name='password',
-                    displayName='Password',
+                    display_name='Password',
                     description='Indicates the password to be used when connecting to the data source',
-                    valueType=ConnectionOption.VALUE_TYPE_PASSWORD,
-                    specialValueType=ConnectionOption.SPECIAL_VALUE_PASSWORD_NAME,
-                    isIdentity=True,
-                    isRequired=True,
-                    groupName='Security'
+                    value_type=ConnectionOption.VALUE_TYPE_PASSWORD,
+                    special_value_type=ConnectionOption.SPECIAL_VALUE_PASSWORD_NAME,
+                    is_identity=True,
+                    is_required=True,
+                    group_name='Security'
                 ),
                 ConnectionOption(
                     name='hostaddr',
-                    displayName='Host IP Address',
+                    display_name='Host IP Address',
                     description='IP address of the server',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='Server'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='Server'
                 ),
                 ConnectionOption(
                     name='port',
-                    displayName='Port',
+                    display_name='Port',
                     description='Port number for the server',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='Server'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='Server'
                 ),
                 ConnectionOption(
                     name='connectTimeout',
-                    displayName='Connect Timeout',
+                    display_name='Connect Timeout',
                     description='Seconds to wait before timing out when connecting',
-                    valueType=ConnectionOption.VALUE_TYPE_NUMBER,
-                    groupName='Client',
-                    defaultValue=15
+                    value_type=ConnectionOption.VALUE_TYPE_NUMBER,
+                    group_name='Client',
+                    default_value='15'
                 ),
                 ConnectionOption(
                     name='clientEncoding',
-                    displayName='Client Encoding',
+                    display_name='Client Encoding',
                     description='The client encoding for the connection',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='Client'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='Client'
                 ),
                 ConnectionOption(
                     name='options',
-                    displayName='Command-Line Options',
+                    display_name='Command-Line Options',
                     description='Command-line options to send to the server when the connection starts',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='Server'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='Server'
                 ),
                 ConnectionOption(
                     name='applicationName',
-                    displayName='Application Name',
+                    display_name='Application Name',
                     description='Value for the "application_name" configuration parameter',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='Client',
-                    specialValueType=ConnectionOption.SPECIAL_VALUE_APP_NAME
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='Client',
+                    special_value_type=ConnectionOption.SPECIAL_VALUE_APP_NAME
                 ),
                 ConnectionOption(
                     name='sslmode',
-                    displayName='SSL Mode',
+                    display_name='SSL Mode',
                     description='The SSL mode to use when connecting',
-                    valueType=ConnectionOption.VALUE_TYPE_CATEGORY,
-                    groupName='SSL',
-                    categoryValues=[
+                    value_type=ConnectionOption.VALUE_TYPE_CATEGORY,
+                    group_name='SSL',
+                    category_values=[
                         CategoryValue('Disable', 'disable'),
                         CategoryValue('Allow', 'allow'),
                         CategoryValue('Prefer', 'prefer'),
@@ -128,54 +130,54 @@ class CapabilitiesService:
                 ),
                 ConnectionOption(
                     name='sslcompression',
-                    displayName='Use SSL Compression',
+                    display_name='Use SSL Compression',
                     description='Whether to compress SSL connections',
-                    valueType=ConnectionOption.VALUE_TYPE_BOOLEAN,
-                    groupName='SSL'
+                    value_type=ConnectionOption.VALUE_TYPE_BOOLEAN,
+                    group_name='SSL'
                 ),
                 ConnectionOption(
                     name='sslcert',
-                    displayName='SSL Certificate Filename',
+                    display_name='SSL Certificate Filename',
                     description='The filename of the SSL certificate to use',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='SSL'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='SSL'
                 ),
                 ConnectionOption(
                     name='sslkey',
-                    displayName='SSL Key Filename',
+                    display_name='SSL Key Filename',
                     description='The filename of the key to use for the SSL certificate',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='SSL'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='SSL'
                 ),
                 ConnectionOption(
                     name='sslrootcert',
-                    displayName='SSL Root Certificate Filename',
+                    display_name='SSL Root Certificate Filename',
                     description='The filename of the SSL root CA certificate to use',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='SSL'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='SSL'
                 ),
                 ConnectionOption(
                     name='sslcrl',
-                    displayName='SSL CRL Filename',
+                    display_name='SSL CRL Filename',
                     description='The filename of the SSL certificate revocation list to use',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='SSL'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='SSL'
                 ),
                 ConnectionOption(
                     name='requirepeer',
-                    displayName='Require Peer',
+                    display_name='Require Peer',
                     description='The required username of the server process',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='Server'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='Server'
                 ),
                 ConnectionOption(
                     name='service',
-                    displayName='Service Name',
+                    display_name='Service Name',
                     description='The service name in pg_service.conf to use for connection parameters',
-                    valueType=ConnectionOption.VALUE_TYPE_STRING,
-                    groupName='Client'
+                    value_type=ConnectionOption.VALUE_TYPE_STRING,
+                    group_name='Client'
                 )
             ])
-        ))
-        # Since jsonrpc expects a serializable object, convert it to a dictionary
-        return utils.object_to_dictionary(server_capabilities)
+
+        # Send the response
+        request_context.send_response(result)
