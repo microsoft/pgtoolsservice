@@ -110,5 +110,6 @@ class JsonRpcMessageTests(unittest.TestCase):
             'params': {}
         })
 
+
 if __name__ == '__main__':
     unittest.main()

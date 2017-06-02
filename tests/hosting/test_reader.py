@@ -20,18 +20,18 @@ class JSONRPCReaderTests(unittest.TestCase):
             self.assertIs(reader.stream, stream)
             self.assertEqual(reader.encoding, 'UTF-8')
             self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Header)
-            
+
     def test_create_nonstandard_encoding(self):
         with io.BytesIO(b'') as stream:
             # If: I create a JSON RPC reader with a non-standard encoding
             reader = JSONRPCReader(stream, encoding="ascii")
-            
+
             # Then: The stream and encoding should be set appropriately
             self.assertIsNotNone(reader)
             self.assertIs(reader.stream, stream)
             self.assertEqual(reader.encoding, 'ascii')
             self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Header)
-    
+
     def test_closes(self):
         with io.BytesIO(b'') as stream:
             # If:

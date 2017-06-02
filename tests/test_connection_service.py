@@ -7,12 +7,12 @@
 
 from __future__ import unicode_literals
 
-import mock
 import unittest
+from unittest.mock import Mock
 
 import psycopg2
 
-from pgsqltoolsservice.connection.contracts.contract_impl import CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionType
+from pgsqltoolsservice.connection.contracts import CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionType
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.server import Server
 
@@ -20,62 +20,181 @@ from pgsqltoolsservice.server import Server
 class TestConnectionService(unittest.TestCase):
     """Methods for testing the connection service"""
 
-    def test_connect_with_connection_options(self):
-        """Test that the service connects and disconnects to/from a PostgreSQL server"""
-        self.connect_internal(ConnectionInfo(
-            None,
-            {'options': {
-                'user': 'postgres',
-                'password': 'password',
-                'host': 'myserver',
-                'dbname': 'postgres'
-            }},
-            None))
+    def test_connect(self):
+        """Test that the service connects to a PostgreSQL server"""
+        # Set up the parameters for the connection
+        connection_uri = 'someuri'
+        connection_details = {'options': {
+            'user': 'postgres',
+            'password': 'password',
+            'host': 'myserver',
+            'dbname': 'postgres'}}
+        connection_type = ConnectionType.DEFAULT
 
-    def connect_internal(self, connection_info):
-        """Helper method for testing connections"""
         # Set up the mock connection for psycopg2's connect method to return
         mock_connection = MockConnection(dsn_parameters={
             'host': 'myserver',
             'dbname': 'postgres',
             'user': 'postgres'
         })
-        psycopg2.connect = mock.Mock(return_value=mock_connection)
+        psycopg2.connect = Mock(return_value=mock_connection)
+
         # Set up the connection service and call its connect method with the supported options
         connection_service = ConnectionService(None)
-        response = connection_service.connect(connection_info)
+        response = connection_service.connect(connection_uri, connection_details, connection_type)
+
         # Verify that psycopg2's connection method was called and that the
         # response has a connection id, indicating success.
-        self.assertIs(connection_service.connection, mock_connection)
+        self.assertIs(connection_service.owner_to_connection_map[connection_uri].get_connection(connection_type),
+                      mock_connection)
         self.assertIsNotNone(response.connectionId)
 
-    def test_connect_disconnects_existing_connection(self):
-        """Test that the connect method disconnects an existing connection if one exists"""
-        old_mock_connection = MockConnection()
-        new_mock_connection = MockConnection()
+    def test_changing_options_disconnects_existing_connection(self):
+        """
+        Test that the connect method disconnects an existing connection when trying to open the same connection with
+        different options
+        """
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+        connection_type = ConnectionType.DEFAULT
+        mock_connection = MockConnection(dsn_parameters={
+            'host': 'myserver',
+            'dbname': 'postgres',
+            'user': 'postgres'
+        })
+        psycopg2.connect = Mock(return_value=mock_connection)
         connection_service = ConnectionService(None)
-        connection_service.connection = old_mock_connection
-        psycopg2.connect = mock.Mock(return_value=new_mock_connection)
-        connection_service.connect(ConnectionInfo(None, {'options': {'connectionString': ''}}, None))
-        old_mock_connection.close.assert_called_once()
+
+        # Insert a ConnectionInfo object into the connection service's map
+        old_connection_info = ConnectionInfo(connection_uri, {'options': {'abc': 123}})
+        old_connection_info.add_connection(connection_type, mock_connection)
+        connection_service.owner_to_connection_map[connection_uri] = old_connection_info
+
+        # Connect with different options, and verify that disconnect was called
+        connection_service.connect(connection_uri, {'options': {'abc': 234}}, connection_type)
+        mock_connection.close.assert_called_once()
+
+    def test_same_options_uses_existing_connection(self):
+        """Test that the connect method uses an existing connection when connecting again with the same options"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+        connection_type = ConnectionType.DEFAULT
+        mock_connection = MockConnection(dsn_parameters={
+            'host': 'myserver',
+            'dbname': 'postgres',
+            'user': 'postgres'
+        })
+        psycopg2.connect = Mock(return_value=mock_connection)
+        connection_service = ConnectionService(None)
+
+        # Insert a ConnectionInfo object into the connection service's map
+        old_connection_info = ConnectionInfo(connection_uri, {'options': {'abc': 123}})
+        old_connection_info.add_connection(connection_type, mock_connection)
+        connection_service.owner_to_connection_map[connection_uri] = old_connection_info
+
+        # Connect with different options, and verify that disconnect was called
+        response = connection_service.connect(connection_uri, {'options': {'abc': 123}}, connection_type)
+        mock_connection.close.assert_not_called()
+        psycopg2.connect.assert_not_called()
+        self.assertIsNotNone(response.connectionId)
 
     def test_response_when_connect_fails(self):
         """Test that the proper response is given when a connection fails"""
         error_message = 'some error'
-        psycopg2.connect = mock.Mock(side_effect=Exception(error_message))
+        psycopg2.connect = Mock(side_effect=Exception(error_message))
         connection_service = ConnectionService(None)
-        response = connection_service.connect(ConnectionInfo(None, {'options': {'connectionString': ''}}, None))
+        response = connection_service.connect(None, {'options': {'connectionString': ''}}, None)
         # The response should not have a connection ID and should contain the error message
         self.assertIsNone(response.connectionId)
         self.assertEqual(response.errorMessage, error_message)
 
-    def test_disconnect(self):
-        """Test that the disconnect method calls close on the open connection"""
-        mock_connection = MockConnection()
+    def test_disconnect_single_type(self):
+        """Test that the disconnect method calls close on a single open connection type when a type is given"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+        connection_type_1 = ConnectionType.DEFAULT
+        connection_type_2 = ConnectionType.EDIT
+        mock_connection_1 = MockConnection(dsn_parameters={
+            'host': 'myserver1',
+            'dbname': 'postgres1',
+            'user': 'postgres1'
+        })
+        mock_connection_2 = MockConnection(dsn_parameters={
+            'host': 'myserver2',
+            'dbname': 'postgres2',
+            'user': 'postgres2'
+        })
         connection_service = ConnectionService(None)
-        connection_service.connection = mock_connection
-        connection_service.disconnect()
-        mock_connection.close.assert_called_once()
+
+        # Insert a ConnectionInfo object into the connection service's map
+        old_connection_info = ConnectionInfo(connection_uri, {'options': {'abc': 123}})
+        old_connection_info.add_connection(connection_type_1, mock_connection_1)
+        old_connection_info.add_connection(connection_type_2, mock_connection_2)
+        connection_service.owner_to_connection_map[connection_uri] = old_connection_info
+
+        # Close the connection by calling disconnect
+        response = connection_service.handle_disconnect_request(connection_uri, connection_type_1)
+        mock_connection_1.close.assert_called_once()
+        mock_connection_2.close.assert_not_called()
+        self.assertTrue(response)
+
+    def test_disconnect_all_types(self):
+        """Test that the disconnect method calls close on a all open connection types when no type is given"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+        connection_type_1 = ConnectionType.DEFAULT
+        connection_type_2 = ConnectionType.EDIT
+        mock_connection_1 = MockConnection(dsn_parameters={
+            'host': 'myserver1',
+            'dbname': 'postgres1',
+            'user': 'postgres1'
+        })
+        mock_connection_2 = MockConnection(dsn_parameters={
+            'host': 'myserver2',
+            'dbname': 'postgres2',
+            'user': 'postgres2'
+        })
+        connection_service = ConnectionService(None)
+
+        # Insert a ConnectionInfo object into the connection service's map
+        old_connection_info = ConnectionInfo(connection_uri, {'options': {'abc': 123}})
+        old_connection_info.add_connection(connection_type_1, mock_connection_1)
+        old_connection_info.add_connection(connection_type_2, mock_connection_2)
+        connection_service.owner_to_connection_map[connection_uri] = old_connection_info
+
+        # Close the connection by calling disconnect
+        response = connection_service.handle_disconnect_request(connection_uri)
+        mock_connection_1.close.assert_called_once()
+        mock_connection_2.close.assert_called_once()
+        self.assertTrue(response)
+
+    def test_disconnect_for_invalid_connection(self):
+        """Test that the disconnect method returns false when called on a connection that does not exist"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+        connection_type_1 = ConnectionType.DEFAULT
+        mock_connection_1 = MockConnection(dsn_parameters={
+            'host': 'myserver1',
+            'dbname': 'postgres1',
+            'user': 'postgres1'
+        })
+        connection_service = ConnectionService(None)
+
+        # Insert a ConnectionInfo object into the connection service's map
+        old_connection_info = ConnectionInfo(connection_uri, {'options': {'abc': 123}})
+        old_connection_info.add_connection(connection_type_1, mock_connection_1)
+        connection_service.owner_to_connection_map[connection_uri] = old_connection_info
+
+        # Close the connection by calling disconnect
+        response = connection_service.handle_disconnect_request(connection_uri, ConnectionType.EDIT)
+        mock_connection_1.close.assert_not_called()
+        self.assertFalse(response)
+
+    def test_handle_disconnect_request_unknown_uri(self):
+        """Test that the handle_disconnect_request method returns false when the given URI is unknown"""
+        connection_service = ConnectionService(None)
+        result = connection_service.handle_disconnect_request('someuri')
+        self.assertFalse(result)
 
     def test_handle_connect_request(self):
         """Test that the handle_connect_request method kicks off a new thread to do the connection"""
@@ -86,15 +205,11 @@ class TestConnectionService(unittest.TestCase):
             """Mock register_thread method to be used for the server"""
             output_dict['connection_thread'] = thread
 
-        def mock_connect(info):
-            """Mock connect method in order to prevent the service from actually trying to connect"""
-            output_dict['connection_info'] = info
-
         mock_server = Server(None, None)
         mock_server.register_thread = mock_register_thread
-        mock_server.send_event = mock.Mock()
+        mock_server.send_event = Mock()
         connection_service = ConnectionService(mock_server)
-        connection_service.connect = mock_connect
+        connection_service.connect = Mock(return_value=None)
 
         # Set up the connection request
         owner_uri = 'someuri'
@@ -106,39 +221,17 @@ class TestConnectionService(unittest.TestCase):
         connection_thread = output_dict['connection_thread']
         self.assertIsNotNone(connection_thread)
         connection_thread.join()
-        connection_info = output_dict['connection_info']
-        self.assertIsNotNone(connection_info)
-        self.assertEqual(connection_info.owner_uri, owner_uri)
-        self.assertEqual(connection_info.details, connection_details)
-        self.assertEqual(connection_info.connection_type, connection_type)
+        connection_service.connect.assert_called_once_with(owner_uri, connection_details, connection_type)
 
         # Verify that a connection complete notification was sent
         mock_server.send_event.assert_called_once_with(CONNECTION_COMPLETE_NOTIFICATION_TYPE, None)
-
-    def test_handle_disconnect_request(self):
-        """Test that the handle_disconnect_request method calls disconnect for the open connection"""
-        connection_service = ConnectionService(None)
-        connection = MockConnection()
-        connection_service.connection = connection
-        result = connection_service.handle_disconnect_request('someuri')
-        connection.close.assert_called_once()
-        self.assertTrue(result)
-
-    def test_handle_disconnect_request_fails(self):
-        """Test that the handle_disconnect_request method returns false when failing"""
-        connection_service = ConnectionService(None)
-        connection = MockConnection()
-        connection.close = mock.Mock(side_effect=Exception())
-        connection_service.connection = connection
-        result = connection_service.handle_disconnect_request('someuri')
-        self.assertFalse(result)
 
 
 class MockConnection(object):
     """Class used to mock psycopg2 connection objects for testing"""
 
     def __init__(self, dsn_parameters=None):
-        self.close = mock.Mock()
+        self.close = Mock()
         self.dsn_parameters = dsn_parameters
 
     def get_dsn_parameters(self):

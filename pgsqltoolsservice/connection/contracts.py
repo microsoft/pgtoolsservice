@@ -3,12 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-# NOTE: This is a temporary location for contracts until new JSON RPC is wired up
-# TODO: Move contracts to individual files
-
 """Contains contract classes for the connection service"""
-
-from __future__ import unicode_literals
 
 import enum
 
