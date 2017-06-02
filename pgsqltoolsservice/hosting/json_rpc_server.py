@@ -25,10 +25,18 @@ class JSONRPCServer:
             self.class_ = class_
             self.handler = handler
 
-    def __init__(self, in_stream, out_stream, logger=None):
-        self.writer = JSONRPCWriter(out_stream)
-        self.reader = JSONRPCReader(in_stream)
+    def __init__(self, in_stream, out_stream, logger=None, version='0'):
+        """
+        Initializes internal state of the server and sets up a few useful built-in request handlers
+        :param in_stream: Input stream that will provide messages from the client
+        :param out_stream: Output stream that will send message to the client
+        :param logger: Optional logger
+        :param version: Protocol version. Defaults to 0
+        """
+        self.writer = JSONRPCWriter(out_stream, logger=logger)
+        self.reader = JSONRPCReader(in_stream, logger=logger)
         self._logger = logger
+        self._version = version
         self._stop_requested = False
 
         self._output_queue = Queue()
@@ -38,6 +46,21 @@ class JSONRPCServer:
 
         self._output_consumer = None
         self._input_consumer = None
+
+        # Register built-in handlers
+        # 1) Echo
+        echo_config = IncomingMessageConfiguration('echo', None)
+        self.set_request_handler(echo_config, self._handle_echo_request)
+
+        # 2) Protocol version
+        version_config = IncomingMessageConfiguration('version', None)
+        self.set_request_handler(version_config, self._handle_version_request)
+
+        # 3) Shutdown/exit
+        shutdown_config = IncomingMessageConfiguration('shutdown', None)
+        self.set_request_handler(shutdown_config, self._handle_shutdown_request)
+        exit_config = IncomingMessageConfiguration('exit', None)
+        self.set_request_handler(exit_config, self._handle_shutdown_request)
 
     # METHODS ##############################################################
 
@@ -65,20 +88,15 @@ class JSONRPCServer:
 
     def stop(self):
         """
-        Signal request thread to close as soon as possible
+        Signal input and output threads to halt asap
         """
         self._stop_requested = True
 
-        # Enqueue None to optimistically unblock background threads so they can check for the cancellation flag
+        # Enqueue None to optimistically unblock output thread so it can check for the cancellation flag
         self._output_queue.put(None)
 
-        # Wait for request thread to finish with a timeout in seconds
-        self._input_consumer.join(1)
-
-        # Close the underlying writer
-        self.writer.close()
         if self._logger is not None:
-            self._logger.info(u"JSON RPC server stopped")
+            self._logger.info('JSON RPC server stopping...')
 
     def send_request(self, method, params):
         """
@@ -101,6 +119,31 @@ class JSONRPCServer:
     def set_notification_handler(self, config, handler):
         self._notification_handlers[config.method] = self.Handler(config.parameter_class, handler)
 
+    def wait_for_exit(self):
+        self._input_consumer.join()
+        self._output_consumer.join()
+        if self._logger is not None:
+            self._logger.info('Input and output threads have completed')
+
+        # Close the reader/writer here instead of in the stop method in order to allow "softer"
+        # shutdowns that will read or write the last message before halting
+        self.reader.close()
+        self.writer.close()
+
+    # BUILT-IN HANDLERS ####################################################
+
+    @staticmethod
+    def _handle_echo_request(request_context, params):
+        request_context.send_response(params)
+
+    def _handle_version_request(self, request_context, params):
+        request_context.send_response(self._version)
+
+    def _handle_shutdown_request(self, request_context, params):
+        if self._logger is not None:
+            self._logger.info('Received shutdown request')
+        self._stop_requested = True
+
     # IMPLEMENTATION DETAILS ###############################################
 
     def _consume_input(self):
@@ -111,7 +154,7 @@ class JSONRPCServer:
         :raises EOFError: The stream may not contain any bytes yet, so retry.
         """
         if self._logger is not None:
-            self._logger.info(u"Input thread started")
+            self._logger.info('Input thread started')
 
         while not self._stop_requested:
             try:
@@ -121,13 +164,11 @@ class JSONRPCServer:
             except EOFError as error:
                 # Thread fails once we read EOF. Halt the input thread
                 self._log_exception(error, self.INPUT_THREAD_NAME)
+                self.stop()
                 break
-            except ValueError as error:
-                # Stream was closed. Halt the input thread
-                self._log_exception(error, self.INPUT_THREAD_NAME)
-                break
-            except LookupError as error:
-                # Content-Length header was not found
+            except (LookupError, ValueError) as error:
+                # LookupError: Content-Length header was not found
+                # ValueError: JSON deserialization failed
                 self._log_exception(error, self.INPUT_THREAD_NAME)
                 # Do not halt the input thread
             except Exception as error:
@@ -139,6 +180,9 @@ class JSONRPCServer:
         """
         Send output over the output stream
         """
+        if self._logger is not None:
+            self._logger.info('Output thread started')
+
         while not self._stop_requested:
             try:
                 # Block until queue contains a message to send
@@ -167,10 +211,9 @@ class JSONRPCServer:
             return
 
         # Figure out which handler will execute the request/notification
-        # TODO: Add support for routing of responses
         if message.message_type is JSONRPCMessageType.Request:
             if self._logger is not None:
-                self._logger.info(u"Received request id={} method={}".format(
+                self._logger.info('Received request id={} method={}'.format(
                     message.message_id, message.message_method
                 ))
             handler = self._request_handlers[message.message_method]
@@ -179,22 +222,28 @@ class JSONRPCServer:
             if handler is None:
                 # TODO: Send back an error message that the request method is not supported
                 if self._logger is not None:
-                    self._logger.warn(u"Requested method is unsupported {}".format(message.message_method))
+                    self._logger.warn('Requested method is unsupported {}'.format(message.message_method))
                 return
 
             # Call the handler with a request context and the deserialized parameter object
             request_context = RequestContext(message, self._output_queue)
-            deserialized_object = handler.class_.from_dict(message.message_params)
+            deserialized_object = None
+            if handler.class_ is None:
+                # Don't attempt to do complex deserialization
+                deserialized_object = message.message_params
+            else:
+                # Use the complex deserializer
+                deserialized_object = handler.class_.from_dict(message.message_params)
             handler.handler(request_context, deserialized_object)
         elif message.message_type is JSONRPCMessageType.Notification:
             if self._logger is not None:
-                self._logger.info(u"Received notification method={}".format(message.message_method))
+                self._logger.info('Received notification method={}'.format(message.message_method))
             handler = self._notification_handlers[message.message_method]
 
             if handler is None:
                 # TODO: Send back an error message that the notification method is not supported?
                 if self._logger is not None:
-                    self._logger.warn(u"Notification method is unsupported".format(message.message_method))
+                    self._logger.warn('Notification method is unsupported'.format(message.message_method))
                 return
 
             # Call the handler with a notification context
@@ -205,7 +254,7 @@ class JSONRPCServer:
         else:
             # If this happens we have a serious issue with the JSON RPC reader
             if self._logger is not None:
-                self._logger.warn(u"Received unsupported message type {}".format(message.message_type))
+                self._logger.warn('Received unsupported message type {}'.format(message.message_type))
             return
 
     def _log_exception(self, ex, thread_name):
@@ -215,7 +264,7 @@ class JSONRPCServer:
         :param thread_name: Name of the thread that encountered the exception
         """
         if self._logger is not None:
-            self._logger.warn(u"Thread: {} encountered exception {}".format(thread_name, ex))
+            self._logger.warn('Thread: {} encountered exception {}'.format(thread_name, ex))
 
 
 class IncomingMessageConfiguration:

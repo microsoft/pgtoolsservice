@@ -63,8 +63,6 @@ class Server(object):
         logging.debug('initialize_dispatcher method')
         dispatcher['shutdown'] = self.shutdown
         dispatcher['exit'] = self.exit
-        dispatcher['echo'] = self.echo
-        dispatcher['version'] = version
         dispatcher['wait'] = self.wait
 
     def shutdown(self):
@@ -89,10 +87,6 @@ class Server(object):
     def register_thread(self, thread):
         """Add a thread to the set of known threads for tracking"""
         self.threads.add(thread)
-
-    def echo(self, arg):
-        """Method used for manually testing the JSON RPC server"""
-        self.output_stream.write(arg)
 
     def send_event(self, event_name, event_params):
         """Send a JSON RPC event with the given name and parameters"""
@@ -145,11 +139,6 @@ class Server(object):
             if response is None:
                 continue
             self.handle_output(response.json)
-
-
-def version():
-    """Get the version of the tools service"""
-    return "0"
 
 
 if __name__ == '__main__':

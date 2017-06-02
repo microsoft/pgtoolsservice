@@ -150,9 +150,9 @@ class JSONRPCReader:
         ):
             scan_offset += 1
 
-        # If we reached the end of the buffer
-            if scan_offset + 3 >= self._buffer_end_offset:
-                return False
+        # If we reached the end of the buffer and haven't found the control sequence, we haven't found the headers
+        if scan_offset + 3 >= self._buffer_end_offset:
+            return False
 
         # Split the headers by newline
         try:
@@ -198,6 +198,8 @@ class JSONRPCReader:
         :param content: Location to store the content
         :return: True on successful reading of content, False on incomplete read of content (based on content-length)
         """
+        # TODO: Take into consideration that the implementation of this protocol should place
+        #       2 CRLF after the completion of the message.
         if self._buffer_end_offset - self._read_offset < self._expected_content_length:
             # We buffered less than the expected content length
             return False
