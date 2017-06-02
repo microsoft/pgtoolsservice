@@ -43,8 +43,7 @@ if __name__ == '__main__':
     service_box.set_service('capabilities', CapabilitiesService)
     service_box.set_service('connection', ConnectionService)
 
-    # Initialize all the services and start the server
-    service_box.initialize()
+    # Start the server
     server.start()
     server.wait_for_exit()
 

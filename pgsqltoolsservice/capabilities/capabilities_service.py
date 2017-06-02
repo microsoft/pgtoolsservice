@@ -14,7 +14,7 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 
 class CapabilitiesService:
 
-    def __init__(self, service_provider: [ServiceProvider, None]):
+    def __init__(self, service_provider: ServiceProvider):
         self._service_provider: ServiceProvider = service_provider
 
     def initialize(self):

@@ -43,3 +43,4 @@ class ServiceProvider:
         :param service_class:  Class of the service to instantiate and initialize
         """
         self._services[name] = service_class(self)
+        self._services[name].initialize()
