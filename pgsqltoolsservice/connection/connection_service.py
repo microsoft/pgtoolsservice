@@ -13,40 +13,57 @@ import uuid
 
 import psycopg2
 
-from pgsqltoolsservice.connection.contracts.contract_impl import (
-    CONNECTION_COMPLETE_NOTIFICATION_TYPE,
-    ConnectionCompleteParams,
-    ConnectionSummary,
-    ConnectionType
+from pgsqltoolsservice.connection.contracts import (
+    connect_request, ConnectRequestParams,
+    disconnect_request, DisconnectRequestParams,
+    connection_complete_method, ConnectionCompleteParams,
+    ConnectionSummary
 )
+from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 
 
-class ConnectionService(object):
+class ConnectionInfo(object):
+    """Information pertaining to a unique connection instance"""
+
+    def __init__(self, owner_uri, details, connection_type):
+        self.owner_uri = owner_uri
+        self.details = details
+        self.connection_id = str(uuid.uuid4())
+        self.connection_type = connection_type
+
+
+class ConnectionService:
     """Manage a single connection, including the ability to connect/disconnect"""
 
-    def __init__(self, server):
+    def __init__(self, service_provider: [ServiceProvider, None]):
         self.connection = None
-        self.server = server
+        self._service_provider = service_provider
 
-    def handle_connect_request(self, ownerUri, connection, type=ConnectionType.DEFAULT):
+    def initialize(self):
+        # Register the handlers for the service
+        self._service_provider.server.set_request_handler(connect_request, self.handle_connect_request)
+        self._service_provider.server.set_request_handler(disconnect_request, self.handle_disconnect_request)
+
+    # REQUEST HANDLERS #####################################################
+    def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Kick off a connection in response to an incoming connection request"""
-        connection_info = ConnectionInfo(ownerUri, connection, type)
-        thread = threading.Thread(target=self.connect_and_respond, args=(connection_info,))
-        self.server.register_thread(thread)
+        connection_info = ConnectionInfo(params.owner_uri, params.connection, params.type)
+        thread = threading.Thread(target=self._connect_and_respond, args=(connection_info, request_context))
         thread.daemon = True
         thread.start()
-        return True
+        request_context.send_response(True)
 
-    def handle_disconnect_request(self, ownerUri, type=None):
+    def handle_disconnect_request(self, request_context: RequestContext, params: DisconnectRequestParams) -> None:
         """Close a connection in response to an incoming disconnection request"""
-        return self.disconnect()
+        request_context.send_response(self._disconnect())
 
-    def connect_and_respond(self, connection_info):
+    # IMPLEMENTATION DETAILS ###############################################
+    def _connect_and_respond(self, connection_info: ConnectionInfo, request_context: RequestContext) -> None:
         """Open a connection and fire the connection complete notification"""
-        response = self.connect(connection_info)
-        self.server.send_event(CONNECTION_COMPLETE_NOTIFICATION_TYPE, response)
+        response = self._connect(connection_info)
+        request_context.send_notification(connection_complete_method, response)
 
-    def connect(self, connection_info):
+    def _connect(self, connection_info):
         """
         Open a connection using the given connection information.
 
@@ -64,14 +81,14 @@ class ConnectionService(object):
 
         # Connect using psycopg2
         if self.connection:
-            self.disconnect()
+            self._disconnect()
         try:
             self.connection = psycopg2.connect(connection_string)
             return build_connection_response(connection_info, self.connection)
         except Exception as err:
             return build_connection_response_error(connection_info, err)
 
-    def disconnect(self):
+    def _disconnect(self):
         """Close a connection, if there is currently one open"""
         if self.connection:
             try:
@@ -82,40 +99,32 @@ class ConnectionService(object):
         return True
 
 
-class ConnectionInfo(object):
-    """Information pertaining to a unique connection instance"""
-
-    def __init__(self, owner_uri, details, connection_type):
-        self.owner_uri = owner_uri
-        self.details = details
-        self.connection_id = str(uuid.uuid4())
-        self.connection_type = connection_type
-
-
 def build_connection_response(connection_info, connection):
     """Build a connection complete response object"""
-    response = ConnectionCompleteParams(
-        ownerUri=connection_info.owner_uri,
-        type=connection_info.connection_type,
-        connectionId=connection_info.connection_id
-    )
     dsn_parameters = connection.get_dsn_parameters()
-    response.connectionSummary = ConnectionSummary(
-        serverName=dsn_parameters['host'],
-        databaseName=dsn_parameters['dbname'],
-        userName=dsn_parameters['user']
-    )
+
+    connection_summary = ConnectionSummary()
+    connection_summary.database_name = dsn_parameters['dbname']
+    connection_summary.server_name = dsn_parameters['host']
+    connection_summary.user_name = dsn_parameters['user']
+
+    response = ConnectionCompleteParams()
+    response.connection_id = connection_info.connection_id
+    response.connection_summary = connection_summary
+    response.owner_uri = connection_info.owner_uri
+    response.type = connection_info.connection_type
+
     return response
 
 
 def build_connection_response_error(connection_info, err):
     """Build a connection complete response object"""
-    response = ConnectionCompleteParams(
-        ownerUri=connection_info.owner_uri,
-        type=connection_info.connection_type,
-        messages=repr(err),
-        errorMessage=str(err)
-    )
+    response = ConnectionCompleteParams()
+    response.owner_uri = connection_info.owner_uri
+    response.type = connection_info.connection_type
+    response.messages = repr(err)
+    response.error_message = str(err)
+
     return response
 
 

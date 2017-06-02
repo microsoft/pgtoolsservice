@@ -9,3 +9,4 @@ from pgsqltoolsservice.hosting.json_rpc_server import (
     IncomingMessageConfiguration,
     RequestContext
 )
+from pgsqltoolsservice.hosting.service_provider import ServiceProvider
