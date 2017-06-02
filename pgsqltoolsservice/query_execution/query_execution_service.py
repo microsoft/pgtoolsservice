@@ -9,34 +9,33 @@ import logging
 from pgsqltoolsservice.connection_service import ConnectionService
 
 class QueryExecutionService(object):
-    """Class that executes a query"""
+    """Service for executing queries"""
 
     def __init__(self, server):
-        #TODO: Add more params
         logging.debug('creating query execution object')
         self.server = server
 
     def handle_execute_query_request(self, ownerUri, querySelection):
         logging.debug('running execute query')
 
+        QUERY = "SELECT * from temp"
         conn = self.server.connection_service.connection
         logging.debug('Connection when attempting to query is %s', self.server.connection_service.connection)
-        if conn == None:
+        if conn is None:
             logging.debug('Attempted to run query without an active connection')
             return
         cur = conn.cursor()
         try:
             self.server.send_event("query/batchStart", "") #TODO: populate and pass in a BatchSummary
-            cur.execute("SELECT * from temp")
+            cur.execute(QUERY)
+             #TODO: send responses asynchronously
+            self.server.send_event("query/resultSetComplete", cur.fetchall()) #TODO: populate and pass in a ResultSetSummary
+            self.server.send_event("query/message", "") #TODO: populate and pass in a ResultMessage
+            self.server.send_event("query/batchEnd", "") #TODO: populate and pass in a BatchSummary
+            self.server.send_event("query/complete", "") #TODO: populate and pass in a  BatchSummary
         except:
-            logging.debug('Query execution failed for following query: %s', "SELECT * from postgresql")
-            cur.close()
+            logging.debug('Query execution failed for following query: %s', QUERY)
             return
-        
-        #TODO: send responses asynchronously
-        self.server.send_event("query/resultSetComplete", cur.fetchall()) #TODO: populate and pass in a ResultSetSummary
-        self.server.send_event("query/message", "") #TODO: populate and pass in a ResultMessage
-        self.server.send_event("query/batchEnd", "") #TODO: populate and pass in a BatchSummary
-        self.server.send_event("query/complete", "") #TODO: populate and pass in a  BatchSummary
-        cur.close()
+        finally:
+            cur.close()
 
