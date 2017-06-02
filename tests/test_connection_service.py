@@ -3,16 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Test connection_service.py"""
+"""Test connection.ConnectionService"""
 
 from __future__ import unicode_literals
-import unittest
 
 import mock
+import unittest
+
 import psycopg2
 
-from pgsqltoolsservice.connection_service import ConnectionInfo, ConnectionService
-from pgsqltoolsservice.contracts.connection import CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionType
+from pgsqltoolsservice.connection.contracts.contract_impl import CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionType
+from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.server import Server
 
 
