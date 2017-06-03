@@ -46,6 +46,3 @@ if __name__ == '__main__':
     # Start the server
     server.start()
     server.wait_for_exit()
-
-
-

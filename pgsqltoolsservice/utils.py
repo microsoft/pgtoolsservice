@@ -6,8 +6,6 @@
 """Utility functions for the PostgreSQL Tools Service"""
 
 import inflection
-import json
-from enum import Enum
 
 
 def deserialize_from_dict(class_, dictionary, **kwargs):
