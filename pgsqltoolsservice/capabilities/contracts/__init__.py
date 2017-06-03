@@ -8,3 +8,8 @@ from pgsqltoolsservice.capabilities.contracts.capabilities_request import (
     CapabilitiesRequestParams,
     CapabilitiesResult, DMPServerCapabilities, ConnectionProviderOptions, ConnectionOption, CategoryValue
 )
+from pgsqltoolsservice.capabilities.contracts.initialize_request import (
+    initialize_request,
+    InitializeRequestParams,
+    InitializeResult, ServerCapabilities, SignatureHelpOptions, CompletionOptions, TextDocumentSyncKind
+)

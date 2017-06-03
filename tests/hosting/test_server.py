@@ -50,7 +50,7 @@ class JSONRPCServerTests(unittest.TestCase):
         server.start()
         time.sleep(1)
         server.stop()
-        time.sleep(.1)
+        server.wait_for_exit()
 
         # Then: The dispatch method should have been called
         expected_output = JSONRPCMessage.from_dictionary({"method": "test", "params": {}})
@@ -75,11 +75,10 @@ class JSONRPCServerTests(unittest.TestCase):
         server._dispatch_message = dispatch_mock
 
         # If: I start the server, run it for a bit, and stop it
-        # TODO: Remove explicit sleep and add spin-locks
         server.start()
         time.sleep(1)
         server.stop()
-        time.sleep(.1)
+        server.wait_for_exit()
 
         # Then: The dispatch method should have been called
         expected_output = JSONRPCMessage.from_dictionary({"method": "test", "params": {}})

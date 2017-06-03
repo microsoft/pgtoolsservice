@@ -5,7 +5,7 @@ from pgsqltoolsservice.hosting import JSONRPCServer
 
 
 class ServiceProvider:
-    def __init__(self, json_rpc_server: JSONRPCServer, logger: Logger):
+    def __init__(self, json_rpc_server: JSONRPCServer, logger: [Logger, None]):
         self._logger = logger
         self._server = json_rpc_server
         self._services = {}
