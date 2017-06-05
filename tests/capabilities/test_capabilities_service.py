@@ -21,11 +21,11 @@ class TestCapabilitiesService(unittest.TestCase):
         mock_server_set_request = mock.MagicMock()
         mock_server = JSONRPCServer(None, None)
         mock_server.set_request_handler = mock_server_set_request
-        mock_service_provider = ServiceProvider(mock_server, None)
-        service = CapabilitiesService(mock_service_provider)
+        mock_service_provider = ServiceProvider(mock_server, {}, None)
+        service = CapabilitiesService()
 
         # If: I initialize the service
-        service.initialize()
+        service.register(mock_service_provider)
 
         # Then:
         # ... There should have been request handlers set

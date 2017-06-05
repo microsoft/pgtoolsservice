@@ -46,7 +46,7 @@ class TestConnectionService(unittest.TestCase):
         })
         psycopg2.connect = mock.Mock(return_value=mock_connection)
         # Set up the connection service and call its connect method with the supported options
-        connection_service = ConnectionService(None)
+        connection_service = ConnectionService()
         response = connection_service._connect(connection_info)
         # Verify that psycopg2's connection method was called and that the
         # response has a connection id, indicating success.
@@ -57,7 +57,7 @@ class TestConnectionService(unittest.TestCase):
         """Test that the connect method disconnects an existing connection if one exists"""
         old_mock_connection = MockConnection()
         new_mock_connection = MockConnection()
-        connection_service = ConnectionService(None)
+        connection_service = ConnectionService()
         connection_service.connection = old_mock_connection
         psycopg2.connect = mock.Mock(return_value=new_mock_connection)
         connection_service._connect(ConnectionInfo(None, {'options': {'connectionString': ''}}, None))
@@ -67,7 +67,7 @@ class TestConnectionService(unittest.TestCase):
         """Test that the proper response is given when a connection fails"""
         error_message = 'some error'
         psycopg2.connect = mock.Mock(side_effect=Exception(error_message))
-        connection_service = ConnectionService(None)
+        connection_service = ConnectionService()
         response = connection_service._connect(ConnectionInfo(None, {'options': {'connectionString': ''}}, None))
         # The response should not have a connection ID and should contain the error message
         self.assertIsNone(response.connection_id)
@@ -76,7 +76,7 @@ class TestConnectionService(unittest.TestCase):
     def test_disconnect(self):
         """Test that the disconnect method calls close on the open connection"""
         mock_connection = MockConnection()
-        connection_service = ConnectionService(None)
+        connection_service = ConnectionService()
         connection_service.connection = mock_connection
         connection_service._disconnect()
         mock_connection.close.assert_called_once()
@@ -85,7 +85,7 @@ class TestConnectionService(unittest.TestCase):
         """Test that the handle_connect_request method kicks off a new thread to do the connection"""
         # Setup:
         # ... Create a connection service with a mocked up connect
-        connection_service = ConnectionService(None)
+        connection_service = ConnectionService()
         connect_mock = mock.MagicMock()
         connection_service._connect = connect_mock
 
@@ -128,7 +128,7 @@ class TestConnectionService(unittest.TestCase):
         """Test that the handle_disconnect_request method calls disconnect for the open connection"""
         # Setup:
         # ... Create connection service with mocked out connection
-        connection_service = ConnectionService(None)
+        connection_service = ConnectionService()
         connection = MockConnection()
         connection_service.connection = connection
 
@@ -152,7 +152,7 @@ class TestConnectionService(unittest.TestCase):
         """Test that the handle_disconnect_request method returns false when failing"""
         # Setup:
         # ... Create connection service with mocked out connection that fails on close
-        connection_service = ConnectionService(None)
+        connection_service = ConnectionService()
         connection = MockConnection()
         connection.close = mock.Mock(side_effect=Exception())
         connection_service.connection = connection
