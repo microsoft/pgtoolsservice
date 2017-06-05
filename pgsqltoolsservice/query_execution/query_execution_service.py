@@ -16,10 +16,12 @@ from pgsqltoolsservice.query_execution.contracts import (
 class QueryExecutionService(object):
     """Service for executing queries"""
 
-    def __init__(self, service_provider: ServiceProvider):
+    def __init__(self):
+        self._service_provider: ServiceProvider = None
+
+    def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
 
-    def initialize(self):
         # Register the request handlers with the server
         self._service_provider.server.set_request_handler(
             EXECUTE_STRING_REQUEST, self._handle_execute_query_request

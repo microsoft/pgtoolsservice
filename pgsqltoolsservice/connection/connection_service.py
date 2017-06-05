@@ -34,12 +34,14 @@ class ConnectionInfo(object):
 class ConnectionService:
     """Manage a single connection, including the ability to connect/disconnect"""
 
-    def __init__(self, service_provider: [ServiceProvider, None]):
+    def __init__(self):
         self.connection = None
         self._connection_thread = None
+        self._service_provider: ServiceProvider = None
+
+    def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
 
-    def initialize(self):
         # Register the handlers for the service
         self._service_provider.server.set_request_handler(CONNECT_REQUEST, self.handle_connect_request)
         self._service_provider.server.set_request_handler(DISCONNECT_REQUEST, self.handle_disconnect_request)

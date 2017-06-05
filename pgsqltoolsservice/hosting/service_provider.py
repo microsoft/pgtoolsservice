@@ -1,14 +1,20 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
 
 from logging import Logger
+from typing import Optional
 
 from pgsqltoolsservice.hosting import JSONRPCServer
 
 
 class ServiceProvider:
-    def __init__(self, json_rpc_server: JSONRPCServer, logger: [Logger, None]):
+    def __init__(self, json_rpc_server: JSONRPCServer, services: dict, logger: Optional[Logger]=None):
+        self._is_initialized = False
         self._logger = logger
         self._server = json_rpc_server
-        self._services = {}
+        self._services = {key: value() for (key, value) in services.items()}
 
     # PROPERTIES ###########################################################
     @property
@@ -19,28 +25,29 @@ class ServiceProvider:
     def server(self) -> JSONRPCServer:
         return self._server
 
-    # METHODS ##############################################################
-
-    def get_service(self, name: str) -> any:
+    def __getitem__(self, item: str) -> any:
         """
         If the service exists, it is returned by its lookup key
-        :param name: Key for looking up the service
+        :param item: Key for looking up the service
+        :raises RuntimeError: Service provider has not been initialized
         :return: The requested service
         """
-        return self._services[name]
+        if not self._is_initialized:
+            raise RuntimeError('Service provider must be initialized before retrieving services')
+
+        return self._services[item]
+
+    # METHODS ##############################################################
 
     def initialize(self) -> None:
         """
         Iterates over the services and initializes them with the server
+        :raises RuntimeError: Service provider has been initialized already
         """
-        for service_key in self._services:
-            self._services[service_key].initialize()
+        if self._is_initialized:
+            raise RuntimeError('Service provider cannot be initialized more than once')
 
-    def set_service(self, name: str, service_class) -> None:
-        """
-        Adds a service to the service provider
-        :param name: Key for looking up the service
-        :param service_class:  Class of the service to instantiate and initialize
-        """
-        self._services[name] = service_class(self)
-        self._services[name].initialize()
+        for service_key in self._services:
+            self._services[service_key].register(self)
+
+        self._is_initialized = True

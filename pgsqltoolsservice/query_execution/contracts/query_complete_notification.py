@@ -5,7 +5,7 @@
 
 from typing import List
 
-import pgsqltoolsservice.query_execution.contracts.common as common
+from pgsqltoolsservice.query_execution.contracts.common import BatchSummary
 
 
 class QueryCompleteNotificationParams:
@@ -15,8 +15,8 @@ class QueryCompleteNotificationParams:
         owner_uri:          URI for the editor that owns the query
         batch_summaries:    Summaries of the result sets that were returned with the query
     """
-    def __init__(self, owner_uri: str, batch_summaries: List[common.BatchSummary]):
+    def __init__(self, owner_uri: str, batch_summaries: List[BatchSummary]):
         self.owner_uri: str = owner_uri
-        self.batch_summaries: List[common.BatchSummary] = batch_summaries
+        self.batch_summaries: List[BatchSummary] = batch_summaries
 
 QUERY_COMPLETE_NOTIFICATION = 'query/complete'

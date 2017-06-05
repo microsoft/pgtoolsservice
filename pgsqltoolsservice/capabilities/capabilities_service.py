@@ -17,10 +17,12 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 
 class CapabilitiesService:
 
-    def __init__(self, service_provider: ServiceProvider):
-        self._service_provider: ServiceProvider = service_provider
+    def __init__(self):
+        self._service_provider: ServiceProvider = None
 
-    def initialize(self):
+    def register(self, service_provider: ServiceProvider):
+        self._service_provider = service_provider
+
         self._service_provider.server.set_request_handler(CAPABILITIES_REQUEST, self._handle_dmp_capabilities_request)
         self._service_provider.server.set_request_handler(INITIALIZE_REQUEST, self._handle_initialize_request)
 

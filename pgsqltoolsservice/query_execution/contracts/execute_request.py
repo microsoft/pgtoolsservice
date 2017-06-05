@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.query_execution.contracts.common as common
+from pgsqltoolsservice.query_execution.contracts.common import QuerySelection
 import pgsqltoolsservice.utils as utils
 
 
@@ -33,11 +33,11 @@ class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.deserialize_from_dict(cls, dictionary,
-                                           query_selection=common.QuerySelection)
+                                           query_selection=QuerySelection)
 
     def __init__(self):
         super().__init__()
-        self.query_selection: common.QuerySelection = None
+        self.query_selection: QuerySelection = None
 
 EXECUTE_DOCUMENT_SELECTION_REQUEST = IncomingMessageConfiguration(
     'query/executeSelection',

@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsqltoolsservice.query_execution.contracts.common as common
+from pgsqltoolsservice.query_execution.contracts.common import ResultMessage
 
 
 class MessageNotificationParams:
@@ -14,8 +14,8 @@ class MessageNotificationParams:
         message:    The message that is being returned
     """
 
-    def __init__(self, owner_uri: str, message: common.ResultMessage):
+    def __init__(self, owner_uri: str, message: ResultMessage):
         self.owner_uri: str = owner_uri
-        self.message: common.ResultMessage = message
+        self.message: ResultMessage = message
 
 MESSAGE_NOTIFICATION = 'query/message'

@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsqltoolsservice.query_execution.contracts.common as common
+from pgsqltoolsservice.query_execution.contracts.common import ResultSetSummary
 
 
 class ResultSetNotificationParams:
@@ -14,8 +14,8 @@ class ResultSetNotificationParams:
         owner_uri:          URI for the editor that owns the query
     """
 
-    def __init__(self, owner_uri: str, rs_summary: common.ResultSetSummary):
+    def __init__(self, owner_uri: str, rs_summary: ResultSetSummary):
         self.owner_uri: str = owner_uri
-        self.result_set_summary: common.ResultSetSummary = rs_summary
+        self.result_set_summary: ResultSetSummary = rs_summary
 
 RESULT_SET_COMPLETE_NOTIFICATION = 'query/resultSetComplete'

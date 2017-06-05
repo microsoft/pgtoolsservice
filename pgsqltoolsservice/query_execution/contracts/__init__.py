@@ -24,4 +24,9 @@ from pgsqltoolsservice.query_execution.contracts.result_set_notification import 
     ResultSetNotificationParams,
     RESULT_SET_COMPLETE_NOTIFICATION
 )
-import pgsqltoolsservice.query_execution.contracts.common as common
+from pgsqltoolsservice.query_execution.contracts.common import (
+    ResultSetSummary,
+    BatchSummary,
+    ResultMessage,
+    QuerySelection
+)

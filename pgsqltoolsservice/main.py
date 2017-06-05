@@ -10,6 +10,7 @@ import sys
 from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
+from pgsqltoolsservice.query_execution import QueryExecutionService
 
 if __name__ == '__main__':
     # See if we have any arguments
@@ -39,9 +40,13 @@ if __name__ == '__main__':
     server = JSONRPCServer(stdin, std_out_wrapped, logger)
 
     # Create the service provider and add the providers to it
-    service_box = ServiceProvider(server, logger)
-    service_box.set_service('capabilities', CapabilitiesService)
-    service_box.set_service('connection', ConnectionService)
+    services = {
+        'capabilities': CapabilitiesService,
+        'connection': ConnectionService,
+        'query_execution': QueryExecutionService
+    }
+    service_box = ServiceProvider(server, services, logger)
+    service_box.initialize()
 
     # Start the server
     server.start()
