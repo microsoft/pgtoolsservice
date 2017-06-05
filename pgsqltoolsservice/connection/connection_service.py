@@ -12,7 +12,7 @@ import uuid
 
 import psycopg2
 
-from pgsqltoolsservice.connection.contracts import (
+from pgsqltoolsservice.connection.contracts.contract_impl import (
     CONNECTION_COMPLETE_NOTIFICATION_TYPE,
     ConnectionCompleteParams,
     ConnectionSummary,

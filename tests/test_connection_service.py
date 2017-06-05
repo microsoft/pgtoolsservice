@@ -12,7 +12,7 @@ from unittest.mock import Mock
 
 import psycopg2
 
-from pgsqltoolsservice.connection.contracts import CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionType
+from pgsqltoolsservice.connection.contracts.contract_impl import CONNECTION_COMPLETE_NOTIFICATION_TYPE, ConnectionType
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.server import Server
 
