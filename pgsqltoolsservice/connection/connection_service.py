@@ -13,9 +13,9 @@ import uuid
 import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (
-    connect_request, ConnectRequestParams,
-    disconnect_request, DisconnectRequestParams,
-    connection_complete_method, ConnectionCompleteParams,
+    CONNECT_REQUEST, ConnectRequestParams,
+    DISCONNECT_REQUEST, DisconnectRequestParams,
+    CONNECTION_COMPLETE_METHOD, ConnectionCompleteParams,
     ConnectionSummary
 )
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
@@ -41,8 +41,8 @@ class ConnectionService:
 
     def initialize(self):
         # Register the handlers for the service
-        self._service_provider.server.set_request_handler(connect_request, self.handle_connect_request)
-        self._service_provider.server.set_request_handler(disconnect_request, self.handle_disconnect_request)
+        self._service_provider.server.set_request_handler(CONNECT_REQUEST, self.handle_connect_request)
+        self._service_provider.server.set_request_handler(DISCONNECT_REQUEST, self.handle_disconnect_request)
 
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
@@ -64,7 +64,7 @@ class ConnectionService:
     def _connect_and_respond(self, connection_info: ConnectionInfo, request_context: RequestContext) -> None:
         """Open a connection and fire the connection complete notification"""
         response = self._connect(connection_info)
-        request_context.send_notification(connection_complete_method, response)
+        request_context.send_notification(CONNECTION_COMPLETE_METHOD, response)
 
     def _connect(self, connection_info):
         """

@@ -82,4 +82,4 @@ class InitializeResult:
         self.capabilities: ServerCapabilities = None
 
 
-initialize_request = IncomingMessageConfiguration('initialize', InitializeRequestParams)
+INITIALIZE_REQUEST = IncomingMessageConfiguration('initialize', InitializeRequestParams)

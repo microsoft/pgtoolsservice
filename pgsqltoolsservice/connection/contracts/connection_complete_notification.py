@@ -20,4 +20,4 @@ class ConnectionCompleteParams:
         self.type: ConnectionType = ConnectionType.DEFAULT
 
 
-connection_complete_method = 'connection/complete'
+CONNECTION_COMPLETE_METHOD = 'connection/complete'

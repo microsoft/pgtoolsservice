@@ -17,4 +17,4 @@ class DisconnectRequestParams:
         self.type = None
 
 
-disconnect_request = IncomingMessageConfiguration('connection/disconnect', DisconnectRequestParams)
+DISCONNECT_REQUEST = IncomingMessageConfiguration('connection/disconnect', DisconnectRequestParams)

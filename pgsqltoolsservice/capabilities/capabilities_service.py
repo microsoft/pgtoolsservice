@@ -5,10 +5,10 @@
 
 
 from pgsqltoolsservice.capabilities.contracts import (
-    capabilities_request,
+    CAPABILITIES_REQUEST,
     CapabilitiesRequestParams,
     CapabilitiesResult, DMPServerCapabilities, ConnectionProviderOptions, CategoryValue, ConnectionOption,
-    initialize_request,
+    INITIALIZE_REQUEST,
     InitializeRequestParams,
     InitializeResult, ServerCapabilities, TextDocumentSyncKind
 )
@@ -21,12 +21,14 @@ class CapabilitiesService:
         self._service_provider: ServiceProvider = service_provider
 
     def initialize(self):
-        self._service_provider.server.set_request_handler(capabilities_request, self._handle_dmp_capabilities_request)
-        self._service_provider.server.set_request_handler(initialize_request, self._handle_initialize_request)
+        self._service_provider.server.set_request_handler(CAPABILITIES_REQUEST, self._handle_dmp_capabilities_request)
+        self._service_provider.server.set_request_handler(INITIALIZE_REQUEST, self._handle_initialize_request)
 
     @staticmethod
-    def _handle_dmp_capabilities_request(request_context: RequestContext, params: [CapabilitiesRequestParams, None]) \
-            -> None:
+    def _handle_dmp_capabilities_request(
+            request_context: RequestContext,
+            params: [CapabilitiesRequestParams, None]
+    ) -> None:
         """
         Sends the capabilities of the tools service data protocol features
         :param request_context: Context of the request

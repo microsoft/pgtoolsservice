@@ -91,4 +91,4 @@ class CapabilitiesResult(object):
         self.capabilities: DMPServerCapabilities
 
 
-capabilities_request = IncomingMessageConfiguration('capabilities/list', CapabilitiesRequestParams)
+CAPABILITIES_REQUEST = IncomingMessageConfiguration('capabilities/list', CapabilitiesRequestParams)

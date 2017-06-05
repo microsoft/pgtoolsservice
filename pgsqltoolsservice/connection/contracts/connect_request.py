@@ -19,4 +19,4 @@ class ConnectRequestParams:
         self.type: ConnectionType = None
 
 
-connect_request = IncomingMessageConfiguration('connection/connect', ConnectRequestParams)
+CONNECT_REQUEST = IncomingMessageConfiguration('connection/connect', ConnectRequestParams)

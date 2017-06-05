@@ -3,10 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.connection.contracts.connect_request import connect_request, ConnectRequestParams
-from pgsqltoolsservice.connection.contracts.disconnect_request import disconnect_request, DisconnectRequestParams
+from pgsqltoolsservice.connection.contracts.connect_request import CONNECT_REQUEST, ConnectRequestParams
+from pgsqltoolsservice.connection.contracts.disconnect_request import DISCONNECT_REQUEST, DisconnectRequestParams
 from pgsqltoolsservice.connection.contracts.connection_complete_notification import (
-    connection_complete_method,
+    CONNECTION_COMPLETE_METHOD,
     ConnectionCompleteParams
 )
 
