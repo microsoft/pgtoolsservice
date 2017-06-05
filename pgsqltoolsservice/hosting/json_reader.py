@@ -144,9 +144,9 @@ class JSONRPCReader:
         scan_offset = self._read_offset
         while scan_offset + 3 < self._buffer_end_offset and (
             self._buffer[scan_offset] != self.CR or
-            self._buffer[scan_offset+1] != self.LF or
-            self._buffer[scan_offset+2] != self.CR or
-            self._buffer[scan_offset+3] != self.LF
+            self._buffer[scan_offset + 1] != self.LF or
+            self._buffer[scan_offset + 2] != self.CR or
+            self._buffer[scan_offset + 3] != self.LF
         ):
             scan_offset += 1
 
