@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.connection.contracts.common import ConnectionType
+from pgsqltoolsservice.connection.contracts.common import ConnectionType    # noqa
 import pgsqltoolsservice.utils as utils
 
 

@@ -18,4 +18,5 @@ class MessageNotificationParams:
         self.owner_uri: str = owner_uri
         self.message: ResultMessage = message
 
+
 MESSAGE_NOTIFICATION = 'query/message'

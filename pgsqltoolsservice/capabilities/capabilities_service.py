@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import Optional
 
 from pgsqltoolsservice.capabilities.contracts import (
     CAPABILITIES_REQUEST,
@@ -29,19 +30,14 @@ class CapabilitiesService:
     @staticmethod
     def _handle_dmp_capabilities_request(
             request_context: RequestContext,
-            params: [CapabilitiesRequestParams, None]
+            params: Optional[CapabilitiesRequestParams]
     ) -> None:
         """
         Sends the capabilities of the tools service data protocol features
         :param request_context: Context of the request
         :param params: Parameters for the capabilities request
         """
-        result = CapabilitiesResult()
-        result.capabilities = DMPServerCapabilities()
-        result.capabilities.protocol_version = '1.0'
-        result.capabilities.provider_name = 'PGSQL'
-        result.capabilities.provider_display_name = 'PostgreSQL'
-        result.capabilities.connection_provider = ConnectionProviderOptions([
+        conn_provider_opts = ConnectionProviderOptions([
             ConnectionOption(
                 name='host',
                 display_name='Server Name',
@@ -191,19 +187,20 @@ class CapabilitiesService:
                 group_name='Client'
             )
         ])
+        capabilities = DMPServerCapabilities('1.0', 'PGSQL', 'PostgreSQL', conn_provider_opts)
+        result = CapabilitiesResult(capabilities)
 
         # Send the response
         request_context.send_response(result)
 
     @staticmethod
-    def _handle_initialize_request(request_context: RequestContext, params: [InitializeRequestParams, None]) -> None:
+    def _handle_initialize_request(request_context: RequestContext, params: Optional[InitializeRequestParams]) -> None:
         """
         Sends the capabilities of the tools service language features
         :param request_context: Context for the request
         :param params: Initialization request parameters
         """
-        result = InitializeResult()
-        result.capabilities = ServerCapabilities(
+        capabilities = ServerCapabilities(
             text_document_sync=TextDocumentSyncKind.INCREMENTAL,
             definition_provider=False,
             references_provider=False,
@@ -213,6 +210,7 @@ class CapabilitiesService:
             hover_provider=False,
             completion_provider=None
         )
+        result = InitializeResult(capabilities)
 
         # Send the request
         request_context.send_response(result)

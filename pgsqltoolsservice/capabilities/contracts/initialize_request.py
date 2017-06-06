@@ -78,8 +78,8 @@ class ServerCapabilities:
 class InitializeResult:
     """Initialization result parameters"""
 
-    def __init__(self):
-        self.capabilities: ServerCapabilities = None
+    def __init__(self, capabilities: ServerCapabilities):
+        self.capabilities: ServerCapabilities = capabilities
 
 
 INITIALIZE_REQUEST = IncomingMessageConfiguration('initialize', InitializeRequestParams)

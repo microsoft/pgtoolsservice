@@ -7,7 +7,7 @@ from pgsqltoolsservice.query_execution.contracts.batch_notification import (
     BatchNotificationParams,
     BATCH_COMPLETE_NOTIFICATION, BATCH_START_NOTIFICATION
 )
-from pgsqltoolsservice.query_execution.contracts.execute_request import(
+from pgsqltoolsservice.query_execution.contracts.execute_request import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase,
     ExecuteResult,
     EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST,
@@ -30,3 +30,21 @@ from pgsqltoolsservice.query_execution.contracts.common import (
     ResultMessage,
     QuerySelection
 )
+
+__all__ = [
+    'BatchNotificationParams',
+    'BATCH_START_NOTIFICATION', 'BATCH_COMPLETE_NOTIFICATION',
+    'ExecuteDocumentSelectionParams', 'ExecuteStringParams', 'ExecuteRequestParamsBase',
+    'ExecuteResult',
+    'EXECUTE_DOCUMENT_SELECTION_REQUEST', 'EXECUTE_STRING_REQUEST',
+    'MessageNotificationParams',
+    'MESSAGE_NOTIFICATION',
+    'QueryCompleteNotificationParams',
+    'QUERY_COMPLETE_NOTIFICATION',
+    'ResultSetNotificationParams',
+    'RESULT_SET_COMPLETE_NOTIFICATION',
+    'ResultSetSummary',
+    'BatchSummary',
+    'ResultMessage',
+    'QuerySelection'
+]

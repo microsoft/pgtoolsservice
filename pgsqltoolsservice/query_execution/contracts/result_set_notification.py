@@ -18,4 +18,5 @@ class ResultSetNotificationParams:
         self.owner_uri: str = owner_uri
         self.result_set_summary: ResultSetSummary = rs_summary
 
+
 RESULT_SET_COMPLETE_NOTIFICATION = 'query/resultSetComplete'

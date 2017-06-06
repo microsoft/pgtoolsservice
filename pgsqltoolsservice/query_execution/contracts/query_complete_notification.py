@@ -19,4 +19,5 @@ class QueryCompleteNotificationParams:
         self.owner_uri: str = owner_uri
         self.batch_summaries: List[BatchSummary] = batch_summaries
 
+
 QUERY_COMPLETE_NOTIFICATION = 'query/complete'

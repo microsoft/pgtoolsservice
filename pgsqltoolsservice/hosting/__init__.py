@@ -10,3 +10,8 @@ from pgsqltoolsservice.hosting.json_rpc_server import (
     RequestContext
 )
 from pgsqltoolsservice.hosting.service_provider import ServiceProvider
+
+__all__ = [
+    'JSONRPCServer', 'NotificationContext', 'IncomingMessageConfiguration', 'RequestContext',
+    'ServiceProvider'
+]

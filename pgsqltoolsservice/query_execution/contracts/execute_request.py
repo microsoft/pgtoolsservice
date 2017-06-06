@@ -23,6 +23,7 @@ class ExecuteStringParams(ExecuteRequestParamsBase):
         super().__init__()
         self.query: str = None
 
+
 EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
     'query/executeString',
     ExecuteStringParams
@@ -38,6 +39,7 @@ class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
     def __init__(self):
         super().__init__()
         self.query_selection: QuerySelection = None
+
 
 EXECUTE_DOCUMENT_SELECTION_REQUEST = IncomingMessageConfiguration(
     'query/executeSelection',

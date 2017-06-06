@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.connection.contracts.common import ConnectionSummary, ConnectionType
+from pgsqltoolsservice.connection.contracts.common import ConnectionSummary, ConnectionType     # noqa
 
 
 class ConnectionCompleteParams:

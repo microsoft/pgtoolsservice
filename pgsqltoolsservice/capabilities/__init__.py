@@ -4,3 +4,5 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.capabilities.capabilities_service import CapabilitiesService
+
+__all__ = ['CapabilitiesService']

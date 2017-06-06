@@ -70,25 +70,29 @@ class ConnectionOption(object):
 class ConnectionProviderOptions:
     """Defines the connection provider options that the DMP server implements"""
 
-    def __init__(self, options):
-        self.options: List[ConnectionOption] = options or None
+    def __init__(self, options: List[ConnectionOption]):
+        self.options: List[ConnectionOption] = options
 
 
 class DMPServerCapabilities:
     """Defines the DMP server capabilities"""
 
-    def __init__(self):
-        self.protocol_version: str = None
-        self.provider_name: str = None
-        self.provider_display_name: str = None
-        self.connection_provider: ConnectionProviderOptions = None
+    def __init__(self,
+                 protocol_version: str,
+                 provider_name: str,
+                 provider_display_name: str,
+                 connection_options: ConnectionProviderOptions):
+        self.protocol_version: str = protocol_version
+        self.provider_name: str = provider_name
+        self.provider_display_name: str = provider_display_name
+        self.connection_provider: ConnectionProviderOptions = connection_options
 
 
 class CapabilitiesResult(object):
     """Defines the capabilities result contract"""
 
-    def __init__(self):
-        self.capabilities: DMPServerCapabilities
+    def __init__(self, capabilities: DMPServerCapabilities):
+        self.capabilities: DMPServerCapabilities = capabilities
 
 
 CAPABILITIES_REQUEST = IncomingMessageConfiguration('capabilities/list', CapabilitiesRequestParams)

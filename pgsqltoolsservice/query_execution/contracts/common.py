@@ -58,4 +58,3 @@ class ResultSetSummary(object):
         self.owner_uri = owner_uri
         self.id = rs_id
         self.row_count = row_count
-

@@ -11,3 +11,10 @@ from pgsqltoolsservice.connection.contracts.connection_complete_notification imp
 )
 
 from pgsqltoolsservice.connection.contracts.common import ConnectionSummary, ConnectionType
+
+__all__ = [
+    'CONNECT_REQUEST', 'ConnectRequestParams',
+    'DISCONNECT_REQUEST', 'DisconnectRequestParams',
+    'CONNECTION_COMPLETE_METHOD', 'ConnectionCompleteParams',
+    'ConnectionSummary', 'ConnectionType'
+]

@@ -4,3 +4,5 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.query_execution.query_execution_service import QueryExecutionService
+
+__all__ = ['QueryExecutionService']

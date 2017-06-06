@@ -6,10 +6,10 @@
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
-    BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, BatchNotificationParams,
-    MESSAGE_NOTIFICATION, MessageNotificationParams,
-    QUERY_COMPLETE_NOTIFICATION, QueryCompleteNotificationParams,
-    RESULT_SET_COMPLETE_NOTIFICATION, ResultSetNotificationParams
+    BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION,
+    MESSAGE_NOTIFICATION,
+    QUERY_COMPLETE_NOTIFICATION,
+    RESULT_SET_COMPLETE_NOTIFICATION
 )
 
 
@@ -39,7 +39,7 @@ class QueryExecutionService(object):
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
         # Retrieve the connection service
-        connection_service = self._service_provider.get_service('connection')
+        connection_service = self._service_provider['connection']
         if connection_service is None:
             raise LookupError('Connection service could not be found')  # TODO: Localize
         conn = connection_service._connection   # TODO: Temporary until connection service provides better API
