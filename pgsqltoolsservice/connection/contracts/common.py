@@ -5,11 +5,37 @@
 
 import enum
 
+import pgsqltoolsservice.utils as utils
 
-class ConnectionSummary(object):
+
+class ConnectionSummary:
     """Provides high level information about a connection"""
+    def __init__(self, server_name: str, database_name: str, user_name: str):
+        self.server_name: str = server_name
+        self.database_name: str = database_name
+        self.user_name: str = user_name
+
+
+class ConnectionDetails:
+    """
+    Details about the connection on top of a basic connection summary. Used as part of the incoming
+    connection request
+    """
+    @classmethod
+    def from_data(cls, server_name: str, database_name: str, user_name: str, opts: dict):
+        obj = cls()
+        obj.user_name = user_name
+        obj.database_name = database_name,
+        obj.server_name = server_name,
+        obj.options = opts
+        return obj
+
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.deserialize_from_dict(cls, dictionary)
 
     def __init__(self):
+        self.options: dict = None
         self.server_name: str = None
         self.database_name: str = None
         self.user_name: str = None

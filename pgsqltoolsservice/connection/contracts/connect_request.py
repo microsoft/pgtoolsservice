@@ -4,14 +4,15 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.connection.contracts.common import ConnectionType    # noqa
+from pgsqltoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType  #noqa
 import pgsqltoolsservice.utils as utils
 
 
 class ConnectRequestParams:
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary)
+        return utils.deserialize_from_dict(cls, dictionary,
+                                           connection=ConnectionDetails)
 
     def __init__(self):
         self.connection: ConnectionDetails = None
