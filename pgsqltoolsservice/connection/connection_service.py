@@ -6,6 +6,7 @@
 """This module holds the connection service class, which allows for the user to connect and
 disconnect and holds the current connection, if one is present"""
 
+from __future__ import unicode_literals
 import logging
 import threading
 import uuid
@@ -30,14 +31,38 @@ class ConnectionInfo(object):
         self.connection_id = str(uuid.uuid4())
         self.connection_type = connection_type
 
+    def get_connection(self, connection_type):
+        """Get the connection associated with the given connection type, or return None"""
+        return self.connection_map.get(connection_type)
+
+    def get_all_connections(self):
+        """Get all connections held by this object"""
+        return self.connection_map.values()
+
+    def add_connection(self, connection_type, connection):
+        """Add a connection to the connection map, associated with the given connection type"""
+        self.connection_map[connection_type] = connection
+
+    def remove_connection(self, connection_type):
+        """
+        Remove the connection associated with the given connection type, or raise a KeyError if
+        there is no such connection
+        """
+        self.connection_map.pop(connection_type)
+
+    def remove_all_connections(self):
+        """ Remove all connections held by this object"""
+        self.connection_map = {}
+
 
 class ConnectionService:
     """Manage a single connection, including the ability to connect/disconnect"""
 
-    def __init__(self):
+    def __init__(self, server):
         self.connection = None
-        self._connection_thread = None
-        self._service_provider: ServiceProvider = None
+        self.owner_to_connection_map = {}
+        self.owner_to_thread_map = {}
+        self.server = server
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -49,26 +74,32 @@ class ConnectionService:
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Kick off a connection in response to an incoming connection request"""
-        connection_info = ConnectionInfo(params.owner_uri, params.connection, params.type)
-        self._connection_thread = threading.Thread(
+        thread = threading.Thread(
             target=self._connect_and_respond,
-            args=(connection_info, request_context)
+            args=(request_context, params)
         )
-        self._connection_thread.daemon = True
-        self._connection_thread.start()
+        thread.daemon = True
+        thread.start()
+        self.owner_to_thread_map[params.owner_uri] = thread
+
         request_context.send_response(True)
+
 
     def handle_disconnect_request(self, request_context: RequestContext, params: DisconnectRequestParams) -> None:
         """Close a connection in response to an incoming disconnection request"""
-        request_context.send_response(self._disconnect())
+        connection_info = self.owner_to_connection_map.get(params.owner_uri)
+        if connection_info is None:
+            request_context.send_response(False)
+        else
+            request_context.send_response(self._close_connections(connection_info, params.type))
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _connect_and_respond(self, connection_info: ConnectionInfo, request_context: RequestContext) -> None:
+    def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Open a connection and fire the connection complete notification"""
-        response = self._connect(connection_info)
+        response = self._connect(params)
         request_context.send_notification(CONNECTION_COMPLETE_METHOD, response)
 
-    def _connect(self, connection_info):
+    def _connect(self, params):
         """
         Open a connection using the given connection information.
 
@@ -76,8 +107,27 @@ class ConnectionService:
         successful
         """
 
-        # Build the connection string from the provided options
-        connection_options = connection_info.details['options']
+        connection_info = self.owner_to_connection_map.get(params.owner_uri)
+
+        # If there is no saved connection or the saved connections' options do not match, create a new one
+        if connection_info is None or connection_info.details['options'] != connection_details
+
+        connection_info = self.owner_to_connection_map.get(owner_uri)
+
+        # If there is no saved connection or the saved connection's options do not match, create a new one
+        if connection_info is None or connection_info.details['options'] != connection_details['options']:
+            if connection_info is not None:
+                close_connections(connection_info)
+            connection_info = ConnectionInfo(owner_uri, connection_details)
+            self.owner_to_connection_map[owner_uri] = connection_info
+
+        # Get the connection for the given type and build a response if it is present, otherwise open the connection
+        connection = connection_info.get_connection(connection_type)
+        if connection is not None:
+            return build_connection_response(connection_info, connection_type)
+
+        # The connection doesn't exist yet. Build the connection string from the provided options
+        connection_options = connection_details['options']
         connection_string = ''
         for option, value in connection_options.items():
             key = CONNECTION_OPTION_KEY_MAP[option] if option in CONNECTION_OPTION_KEY_MAP else option
@@ -88,8 +138,9 @@ class ConnectionService:
         if self.connection:
             self._disconnect()
         try:
-            self.connection = psycopg2.connect(connection_string)
-            return build_connection_response(connection_info, self.connection)
+            connection = psycopg2.connect(connection_string)
+            connection_info.add_connection(connection_type, connection)
+            return build_connection_response(connection_info, connection_type)
         except Exception as err:
             return build_connection_response_error(connection_info, err)
 
@@ -122,15 +173,43 @@ def build_connection_response(connection_info, connection):
     return response
 
 
-def build_connection_response_error(connection_info, err):
+def build_connection_response_error(connection_info, connection_type, err):
     """Build a connection complete response object"""
-    response = ConnectionCompleteParams()
-    response.owner_uri = connection_info.owner_uri
-    response.type = connection_info.connection_type
-    response.messages = repr(err)
-    response.error_message = str(err)
-
+    response = ConnectionCompleteParams(
+        ownerUri=connection_info.owner_uri,
+        type=connection_type,
+        messages=repr(err),
+        errorMessage=str(err)
+    )
     return response
+
+
+def close_connections(connection_info, connection_type=None):
+    """
+    Close the connections in the given ConnectionInfo object matching the passed type, or
+    close all of them if no type is given.
+
+    Return False if no matching connections were found to close, otherwise return True.
+    """
+    connections_to_close = []
+    if connection_type is None:
+        connections_to_close = connection_info.get_all_connections()
+        if not connections_to_close:
+            return False
+        connection_info.remove_all_connections()
+    else:
+        connection = connection_info.get_connection(connection_type)
+        if connection is None:
+            return False
+        connections_to_close.append(connection)
+        connection_info.remove_connection(connection_type)
+    for connection in connections_to_close:
+        try:
+            connection.close()
+        except Exception:
+            # Ignore errors when disconnecting
+            pass
+    return True
 
 
 # Dictionary mapping connection option names to their corresponding connection string keys.
