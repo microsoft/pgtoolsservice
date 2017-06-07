@@ -9,6 +9,12 @@ import pgsqltoolsservice.utils as utils
 
 
 class DidOpenTextDocumentParams:
+    """
+    Parameters for a textDocument/didOpen notification
+    Attributes:
+        text_document:  The document that was opened
+    """
+
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.deserialize_from_dict(cls, dictionary,

@@ -6,11 +6,40 @@
 from typing import List
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
+from pgsqltoolsservice.workspace.contracts.common import Range
 import pgsqltoolsservice.utils as utils
-import pgsqltoolsservice.workspace.contracts.common as common
+
+
+class TextDocumentChangeEvent:
+    """
+    Represents a change in the text of the document.
+    Attributes:
+        range:          Range where the document was changed. Will be null if the server's
+                        TextDocumentSyncKind is Full
+        range_length:   Length of the range being replaced in the document. Will be null if the
+                        server's TextDocumentSyncKind is Full
+        text:           The new text for the document
+    """
+
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.deserialize_from_dict(cls, dictionary,
+                                           range=Range)
+
+    def __init__(self):
+        self.range: [Range, None] = None
+        self.range_length: [int, None] = None
+        self.text: str = None
 
 
 class VersionedTextDocumentIdentifier:
+    """
+    Define a specific version of a text document
+    Attributes:
+        version:    Version of the changed text document
+        uri:        The URI that uniquely identifies the path of the text document
+    """
+
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.deserialize_from_dict(cls, dictionary)
@@ -20,32 +49,23 @@ class VersionedTextDocumentIdentifier:
         self.uri: str = None
 
 
-class TextDocumentChangeEvent:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary,
-                                           range=common.BufferRange)
-
-    def __init__(self):
-        self.range: [common.BufferRange, None] = None
-        self.range_length: [int, None] = None
-        self.text: str = None
-
-    def as_file_change(self) -> common.FileChange:
-        # The protocol's positions are 0-based, so add 1 to all offsets
-        obj = common.FileChange()
-
-
 class DidChangeTextDocumentParams:
+    """
+    Parameters for a testDocument/didChange notification
+    Attributes:
+        content_changes:    List of changes to the document's contents
+        text_document:      The document that changed
+    """
+
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.deserialize_from_dict(cls, dictionary,
-                                           text_document=VersionedTextDocumentIdentifier,
-                                           content_changes=TextDocumentChangeEvent)
+                                           content_changes=TextDocumentChangeEvent,
+                                           text_document=VersionedTextDocumentIdentifier,)
 
     def __init__(self):
-        self.text_document: VersionedTextDocumentIdentifier = None
         self.content_changes: List[TextDocumentChangeEvent] = None
+        self.text_document: VersionedTextDocumentIdentifier = None
 
 
 DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION = IncomingMessageConfiguration(

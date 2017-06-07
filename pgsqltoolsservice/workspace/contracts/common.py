@@ -6,143 +6,89 @@
 import pgsqltoolsservice.utils as utils
 
 
-class BufferPosition:
+class Position:
     """
-    Provides details about a position in a file buffer. All positions are expressed in 1-based positions (ie, the
-    first line and column in the file is position 1,1)
+    Represents a point in the document
+    Attributes:
+        line:       0-based line number
+        character:  0-based column number
     """
-
-    def __init__(self, line, column):
-        """
-        Initializes internal state of a buffer position
-        :param line: The 1-indexed line number of the buffer position
-        :param column: The 1-indexed column number of the buffer position
-        """
-        self._column = column
-        self._line = line
-
-    # PROPERTIES ###########################################################
-    @property
-    def column(self):
-        return self._column
-
-    @column.setter
-    def column(self, value):
-        self._column = value
-
-    @property
-    def line(self):
-        return self._line
-
-    @line.setter
-    def line(self, value):
-        self._line = value
-
-    # METHODS ##############################################################
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-
-        return self.column == other.column and self.line == other.line
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __gt__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-
-        return (self.line > other.line) or (self.line == other.line and self.column > other.column)
-
-    def __lt__(self, other):
-        return other > self
-
-    def __hash__(self):
-        return hash(self._line) ^ hash(self._column)
-
-    def __str__(self):
-        return u"{}:{}".format(self._line, self._column)
-
-
-class BufferRange:
-    """
-    Provides details about a range between two positions in a file buffer
-    """
-
-    # CONSTRUCTORS #########################################################
-    @classmethod
-    def from_position_data(cls, start_line, start_column, end_line, end_column):
-        """
-        Creates a BufferRange object based on position data
-        :param int start_line: 1-based starting line number of the range
-        :param int start_column: 1-based starting column number of the range
-        :param int end_line: 1-based ending line number of the range
-        :param int end_column: 1-based ending column number of the range
-        :return BufferRange: BufferRange that starts at start_line:start_column and ends at end_line:end_column
-        """
-        return cls(BufferPosition(start_line, start_column), BufferPosition(end_line, end_column))
 
     @classmethod
-    def from_positions(cls, start_position, end_position):
-        """
-        Creates a BufferRange object based on BufferPosition objects
-        :param BufferPosition start_position: BufferPosition where the range begins
-        :param BufferPosition end_position: BufferPosition where the range ends
-        :return BufferRange: BufferRange that starts at start_position and ends at end_position
-        """
-        return cls(start_position, end_position)
+    def from_dict(cls, dictionary: dict):
+        return utils.deserialize_from_dict(cls, dictionary)
 
-    def __init__(self, start, end):
-        """
-        Stores the state of a buffer range object, performs basic validation
-        :param start: BufferPosition where the range begins
-        :param end: BufferPosition where the range ends
-        """
-        if start > end:
-            # TODO: Localize
-            raise ValueError("Buffer range cannot have a start position after the end position")
+    def __init__(self):
+        self.line: int = 0
+        self.character: int = 0
 
-        self._start = start
-        self._end = end
+    def __eq__(self, other) -> bool:
+        if other is None or not isinstance(other, Position):
+            return False
 
-    # PROPERTIES ###########################################################
-    @property
-    def start(self):
-        return self._start
+        return self.line == other.line and self.character == other.character
 
-    @start.setter
-    def start(self, value):
-        self._start = value
+    def __ne__(self, other) -> bool:
+        return not self == other
 
-    @property
-    def end(self):
-        return self._end
+    def __hash__(self) -> int:
+        hash_code: int = 17
+        hash_code = hash_code * 23 + hash(self.line)
+        hash_code = hash_code * 23 + hash(self.character)
+        return hash_code
 
-    @end.setter
-    def end(self, value):
-        self._end = value
+    def __str__(self) -> str:
+        return 'Position = {}:{}'.format(self.line, self.character)
 
-    # METHODS ##############################################################
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
+
+class Range:
+    """
+    Represents a selection of the document
+    Attributes:
+        start:  The starting position of the range
+        end:    The ending position of the range
+    """
+
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.deserialize_from_dict(cls, dictionary,
+                                           start=Position,
+                                           end=Position)
+
+    def __init__(self):
+        self.start: Position = None
+        self.end: Position = None
+
+    def __eq__(self, other) -> bool:
+        if other is None or not isinstance(other, Range):
+            return False
 
         return self.start == other.start and self.end == other.end
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
+    def __ne__(self, other) -> bool:
+        return not self == other
 
-    def __hash__(self):
-        return hash(self._start) ^ hash(self._end)
+    def __hash__(self) -> int:
+        hash_code: int = 17
+        hash_code = hash_code * 23 + hash(self.start)
+        hash_code = hash_code * 23 + hash(self.end)
+        return hash_code
 
-    def __str__(self):
-        return u"{} to {}".format(self._start, self._end)
-
-# STATIC PROPERTIES ########################################################
-BufferRange.none = BufferRange.from_position_data(0, 0, 0, 0)
+    def __str__(self) -> str:
+        return 'Start = {}:{}, End = {}:{}'.format(self.start.line, self.start.character,
+                                                   self.end.line, self.end.character)
 
 
 class TextDocumentItem:
+    """
+    Defines a text document
+    Attributes:
+        uri:            The URI that uniquely identifies the path of the text document
+        language_id:    Language of the document
+        version:        The version of the document
+        text:           Full content of the document
+    """
+
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.deserialize_from_dict(cls, dictionary)
@@ -152,3 +98,4 @@ class TextDocumentItem:
         self.language_id: str = None
         self.version: int = None
         self.text: str = None
+

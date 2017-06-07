@@ -4,10 +4,17 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
+from pgsqltoolsservice.workspace.contracts.common import TextDocumentItem
 import pgsqltoolsservice.utils as utils
 
 
 class DidCloseTextDocumentParams:
+    """
+    Parameters to receive with a textDocument/didClose notification
+    Attributes:
+        text_document:  The document that was closed
+    """
+
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.deserialize_from_dict(cls, dictionary,
