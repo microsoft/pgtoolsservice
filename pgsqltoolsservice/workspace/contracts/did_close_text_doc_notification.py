@@ -17,7 +17,7 @@ class DidCloseTextDocumentParams:
         self.text_document: TextDocumentItem = None
 
 
-did_close_text_document_notification = IncomingMessageConfiguration(
+DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION = IncomingMessageConfiguration(
     'textDocument/didClose',
     DidCloseTextDocumentParams
 )

@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
+from pgsqltoolsservice.workspace.contracts.common import TextDocumentItem
 import pgsqltoolsservice.utils as utils
 
 
@@ -17,7 +18,7 @@ class DidOpenTextDocumentParams:
         self.text_document: TextDocumentItem = None
 
 
-did_open_text_document_notification = IncomingMessageConfiguration(
+DID_OPEN_TEXT_DOCUMENT_NOTIFICATION = IncomingMessageConfiguration(
     'textDocument/didOpen',
     DidOpenTextDocumentParams
 )

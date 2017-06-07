@@ -22,7 +22,6 @@ class Workspace:
 
     def __init__(self):
         self._workspace_files: dict = {}
-        pass
 
     # PROPERTIES ###########################################################
     @property
@@ -33,14 +32,14 @@ class Workspace:
         return list(self._workspace_files.values())
 
     # METHODS ##############################################################
-    def close_file(self, script_file: ScriptFile) -> None:
+    def close_file(self, file_path: str) -> None:
         """
         Closes a currently open script fil
-        :param script_file: The file to close
+        :param file_path: The file to close
         """
-        validate.is_not_none("script_file", script_file)
+        validate.is_not_none_or_whitespace("file_path", file_path)
 
-        del self._workspace_files[script_file]
+        del self._workspace_files[file_path]
 
     def contains_file(self, file_path: str) -> bool:
         """
@@ -78,6 +77,7 @@ class Workspace:
                 script_file = ScriptFile(resolved_file_path, content)
                 self._workspace_files[key_name] = script_file
             #TODO: Log
+        # TODO: Shouldn't this return None if the file isn't open? Seems pointless to open the files in two places
 
         return script_file
 

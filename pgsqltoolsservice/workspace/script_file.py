@@ -6,10 +6,20 @@
 import os
 from typing import List
 
-from utils import validate
-from workspace.contracts.buffer_position import BufferPosition
-from workspace.contracts.buffer_range import BufferRange
-from workspace.contracts.file_change import FileChange
+from pgsqltoolsservice.utils import validate
+from pgsqltoolsservice.workspace.contracts import BufferPosition, BufferRange, FileChange
+
+
+class FileChange:
+    """
+    Contains details relating to a content change in an open file
+    """
+    def __init__(self, string: str, start_line: int, start_column: int, end_line: int, end_column: int):
+        self.insert_string: str = string
+        self.start_line: int = start_line
+        self.start_column: int = start_column
+        self.end_line: int = end_line
+        self.end_column: int = end_column
 
 
 class ScriptFile:

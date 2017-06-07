@@ -17,6 +17,7 @@ class VersionedTextDocumentIdentifier:
 
     def __init__(self):
         self.version: int = None
+        self.uri: str = None
 
 
 class TextDocumentChangeEvent:
@@ -29,6 +30,10 @@ class TextDocumentChangeEvent:
         self.range: [common.BufferRange, None] = None
         self.range_length: [int, None] = None
         self.text: str = None
+
+    def as_file_change(self) -> common.FileChange:
+        # The protocol's positions are 0-based, so add 1 to all offsets
+        obj = common.FileChange()
 
 
 class DidChangeTextDocumentParams:
@@ -43,7 +48,7 @@ class DidChangeTextDocumentParams:
         self.content_changes: List[TextDocumentChangeEvent] = None
 
 
-did_change_text_document_notification = IncomingMessageConfiguration(
+DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION = IncomingMessageConfiguration(
     'textDocument/didChange',
     DidChangeTextDocumentParams
 )

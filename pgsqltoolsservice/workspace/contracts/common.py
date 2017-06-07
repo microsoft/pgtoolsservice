@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import pgsqltoolsservice.utils as utils
+
 
 class BufferPosition:
     """
@@ -138,3 +140,15 @@ class BufferRange:
 
 # STATIC PROPERTIES ########################################################
 BufferRange.none = BufferRange.from_position_data(0, 0, 0, 0)
+
+
+class TextDocumentItem:
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.deserialize_from_dict(cls, dictionary)
+
+    def __init__(self):
+        self.uri: str = None
+        self.language_id: str = None
+        self.version: int = None
+        self.text: str = None
