@@ -5,11 +5,11 @@
 
 class BatchSummary(object):
 
-    def __init__(self, ident, selection, execution_start, has_error, result_set_summaries, special_action):
+    def __init__(self, ident, selection, execution_start, has_error):
         self.Id = ident
         self.Selection = selection
         self.ExecutionStart = execution_start
         self.HasError = has_error
-        self.ResultSetSummaries = result_set_summaries
-        self.SpecialAction = special_action
+        self.ResultSets = None
+        
         

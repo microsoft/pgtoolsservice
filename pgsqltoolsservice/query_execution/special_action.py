@@ -8,7 +8,7 @@ import math
 
 class ActionFlags(IntFlag):
     NOFLAGS = 0
-    EXPECT_YUKON_XML_SHOW_PLAN = 1
+    OTHER = 1
 
 class SpecialAction(object):
 
@@ -24,18 +24,18 @@ class SpecialAction(object):
         self.flags = ActionFlags.NOFLAGS
 
     @property
-    def ExpectYukonXmlShowPlan(self):
+    def Other(self):
         #Return whether the EXPECT_YUKONG_XML_SHOW_PLAN flag bit is set
-        return self.flags & (1 << math.floor(ActionFlags.EXPECT_YUKON_XML_SHOW_PLAN / 2) ) == ActionFlags.EXPECT_YUKON_XML_SHOW_PLAN
+        return self.flags & (1 << math.floor(ActionFlags.OTHER / 2) ) == ActionFlags.OTHER
 
-    @ExpectYukonXmlShowPlan.setter
-    def ExpectYukonXmlShowPlan(self, value):
+    @Other.setter
+    def Other(self, value):
         if value:
             # OR flags with value to apply
-            self.flags |= ActionFlags.EXPECT_YUKON_XML_SHOW_PLAN
+            self.flags |= ActionFlags.OTHER
         else:
             # AND flags with the inverse of the value we want to remove
-           self.flags &= ~ActionFlags.EXPECT_YUKON_XML_SHOW_PLAN
+           self.flags &= ~ActionFlags.OTHER
 
     def CombineSpecialAction(self, action):
         self.flags |= action.flags

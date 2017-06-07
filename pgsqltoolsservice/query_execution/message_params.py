@@ -3,6 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-class DbColumnWrapper(object):
+class MessageParams(object):
 
-    def __init__(self):
+    def __init__(self, message, owner_uri):
+        self.Message = message
+        self.OwnerUri = owner_uri
+    
