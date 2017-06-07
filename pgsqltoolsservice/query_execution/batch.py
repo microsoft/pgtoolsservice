@@ -15,10 +15,10 @@ class Batch(object):
         self.executionStartTime = datetime.datetime.now()
         self.HasError = has_error
         self.HasExecuted = False #TODO: Find in sqltoolsservice where hasExecuted changes value
-        self.ResultsSets = []
+        self.ResultSets = []
 
     def build_batch_summary(self):
-        summary = None
+        summary = Summary()
         summary.Id = self.Id
         summary.Selection = self.Selection
         summary.ExecutionStart = self.executionStartTime
@@ -27,15 +27,17 @@ class Batch(object):
         if self.HasExecuted:
             #TODO handle multiple result set summaries later
             summary.ResultSetSummaries = self.get_result_set_summaries()
-            summary.ExecutionEnd = datetime.datetime.now()
+            summary.ExecutionEnd = datetime.now()
             summary.ExecutionElapsed = summary.ExecutionEnd - self.executionStartTime
             summary.SpecialAction = None
         return summary
 
     #TODO: Assuming one result set for now. Handle for multiple later
     def get_result_set_summaries(self):
-        return self.ResultsSets[0].generate_result_set_summary()
+        return self.ResultSets[0].generate_result_set_summary()
 
+class Summary(object):
+    pass
 
 
 

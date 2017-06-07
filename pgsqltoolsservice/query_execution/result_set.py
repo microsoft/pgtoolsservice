@@ -8,7 +8,7 @@ from pgsqltoolsservice.query_execution.result_set_summary import ResultSetSummar
 
 class ResultSet(object):
 
-    def __init__(self, ordinal, batchOrdinal, column, row_count):
+    def __init__(self, ordinal, batchOrdinal, columns, row_count):
         self.Id = ordinal
         self.BatchId = batchOrdinal
         self.totalBytesWritten = 0
@@ -21,7 +21,7 @@ class ResultSet(object):
         self.isSingleColumnXmlJsonResultSet = None
         self.outputFileName = None
         self.rowCountOverride = None
-        self.Columns = column
+        self.Columns = columns
         self.BatchId = 0
         self.RowCount = row_count
 
