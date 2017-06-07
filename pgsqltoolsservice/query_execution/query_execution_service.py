@@ -7,7 +7,7 @@ import psycopg2
 import logging
 import jsonpickle
 
-from pgsqltoolsservice.connection_service import ConnectionService
+from pgsqltoolsservice.connection.connection_service import ConnectionService
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.selection_data import SelectionData
 from pgsqltoolsservice.query_execution.batch_event_params import BatchEventParams

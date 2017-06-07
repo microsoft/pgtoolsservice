@@ -3,23 +3,21 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from pgsqltoolsservice.query_execution.selection_data import SelectionData
 
 class BatchSummary(object):
 
-    def __init__(self, 
-        execution_start, 
-        execution_end, 
-        has_error, 
-        ident, 
-        selection, 
-        result_set_summaries, 
-        special_action):
-        self.ExecutionStart = execution_start
-        self.ExecutionEnd = execution_end
-        self.ExecutionElapsed = self.ExecutionStart - self.ExecutionEnd
-        self.HasError = has_error
-        self.Id = ident
-        self.Selection = selection
-        self.ResultSetSummaries = result_set_summaries
-        self.SpecialAction = special_action
+    def __init__(self,
+                 batchId: int,
+                 selection: SelectionData = None,
+                 execution_start: str = None,
+                 has_error: bool = False):
+        self.id = batchId
+        self.selection = selection
+        self.executionStart: str = execution_start
+        self.hasError = has_error
+        self.executionEnd: str = None
+        self.executionElapsed = None
+        self.resultSetSummaries = None
+        self.specialAction = None
             
