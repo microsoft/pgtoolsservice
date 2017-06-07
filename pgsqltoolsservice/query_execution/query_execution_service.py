@@ -2,37 +2,70 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-import logging
+
+from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
+from pgsqltoolsservice.query_execution.contracts import (
+    EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
+    BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION,
+    MESSAGE_NOTIFICATION,
+    QUERY_COMPLETE_NOTIFICATION,
+    RESULT_SET_COMPLETE_NOTIFICATION
+)
 
 
 class QueryExecutionService(object):
     """Service for executing queries"""
 
-    def __init__(self, server):
-        logging.debug('creating query execution object')
-        self.server = server
+    def __init__(self):
+        self._service_provider: ServiceProvider = None
 
-    def handle_execute_query_request(self, ownerUri, querySelection):
-        logging.debug('running execute query')
+    def register(self, service_provider: ServiceProvider):
+        self._service_provider = service_provider
 
-        QUERY = "SELECT * from temp"
-        conn = self.server.connection_service.connection
-        logging.debug('Connection when attempting to query is %s', self.server.connection_service.connection)
+        # Register the request handlers with the server
+        self._service_provider.server.set_request_handler(
+            EXECUTE_STRING_REQUEST, self._handle_execute_query_request
+        )
+        self._service_provider.server.set_request_handler(
+            EXECUTE_DOCUMENT_SELECTION_REQUEST, self._handle_execute_query_request
+        )
+
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.info('Query execution service successfully initialized')
+
+    # REQUEST HANDLERS #####################################################
+
+    def _handle_execute_query_request(
+        self, request_context: RequestContext, params: ExecuteRequestParamsBase
+    ) -> None:
+        # Retrieve the connection service
+        connection_service = self._service_provider['connection']
+        if connection_service is None:
+            raise LookupError('Connection service could not be found')  # TODO: Localize
+        conn = connection_service._connection   # TODO: Temporary until connection service provides better API
+
+        # Setup a dummy query
+        query = "SELECT * from temp"
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.debug('Connection when attempting to query is %s', conn)
         if conn is None:
-            logging.debug('Attempted to run query without an active connection')
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.debug('Attempted to run query without an active connection')
             return
         cur = conn.cursor()
+
         try:
-            self.server.send_event("query/batchStart", "")  # TODO: populate and pass in a BatchSummary
-            cur.execute(QUERY)
+            request_context.send_notification(BATCH_START_NOTIFICATION, "")  # TODO: populate and pass in a BatchSummary
+            cur.execute(query)
             # TODO: send responses asynchronously
             # TODO: populate and pass in a ResultSetSummary
-            self.server.send_event("query/resultSetComplete", cur.fetchall())
-            self.server.send_event("query/message", "")  # TODO: populate and pass in a ResultMessage
-            self.server.send_event("query/batchEnd", "")  # TODO: populate and pass in a BatchSummary
-            self.server.send_event("query/complete", "")  # TODO: populate and pass in a  BatchSummary
+            request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, cur.fetchall())
+            request_context.send_notification(MESSAGE_NOTIFICATION, "")  # TODO: populate and pass in a ResultMessage
+            request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, "")  # TODO: populate and pass BatchSummary
+            request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, "")  # TODO: populate and pass BatchSummaries
         except BaseException:
-            logging.debug('Query execution failed for following query: %s', QUERY)
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.debug('Query execution failed for following query: %s', query)
             return
         finally:
             cur.close()

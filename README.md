@@ -28,9 +28,9 @@ We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008)
 
 ## Manual Testing
 1. Update your PYTHONPATH environment variable to contain the source directory. From within the project's main directory, run the following commands:
-    - On Mac/Linux: `PYTHONPATH=$(pwd)`
+    - On Mac/Linux: `export PYTHONPATH=$(pwd)`
     - On Windows: `set PYTHONPATH=%cd%`
-2. `python3 pgsqltoolsservice/server.py`
+2. `python3 pgsqltoolsservice/pgsqltoolsservice.py`
 3. Now you can pass in JSON RPC requests to stdin, following the [language server protocol specifications](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md). The following commands are supported currently:
     - initialize
     - connection/connect
