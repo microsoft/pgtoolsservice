@@ -5,8 +5,6 @@
 
 """Contains contract classes for the connection service"""
 
-from __future__ import unicode_literals
-
 import enum
 
 CONNECTION_COMPLETE_NOTIFICATION_TYPE = 'connection/complete'

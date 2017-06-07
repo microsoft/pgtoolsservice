@@ -3,32 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Contains contract classes for interacting with Carbon's capabilities service"""
-
-from __future__ import unicode_literals
-
-
-class CapabilitiesResult(object):
-    """Defines the capabilities result contract"""
-
-    def __init__(self, capabilities=None):
-        self.capabilities = capabilities
-
-
-class DMPServerCapabilities(object):
-    """Defines the DMP server capabilities"""
-
-    def __init__(
-            self,
-            protocolVersion=None,
-            providerName=None,
-            providerDisplayName=None,
-            connectionProvider=None):
-        self.protocolVersion = protocolVersion
-        self.providerName = providerName
-        self.providerDisplayName = providerDisplayName
-        self.connectionProvider = connectionProvider
-
 
 class ConnectionProviderOptions(object):
     """Defines the connection provider options that the DMP server implements"""
@@ -76,7 +50,6 @@ class ConnectionOption(object):
         self.specialValueType = specialValueType
         self.isIdentity = isIdentity
         self.isRequired = isRequired
-
 
 
 class CategoryValue(object):

@@ -1,7 +1,8 @@
 psycopg2==2.7.1
 json-rpc
-mock
-enum34
 cx_freeze
 nose
 coverage
+inflection
+autopep8
+flake8
