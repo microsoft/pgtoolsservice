@@ -64,7 +64,7 @@ class TestConnectionService(unittest.TestCase):
         different options
         """
         # Set up the test with mock data
-        connection_uri = 'someri'
+        connection_uri = 'someuri'
         connection_type = ConnectionType.DEFAULT
         mock_connection = MockConnection(dsn_parameters={
             'host': 'myserver',
@@ -150,7 +150,7 @@ class TestConnectionService(unittest.TestCase):
         response = connection_service._connect(params)
         # The response should not have a connection ID and should contain the error message
         self.assertIsNone(response.connection_id)
-        self.assertEqual(response.error_messages, error_message)
+        self.assertEqual(response.error_message, error_message)
 
     def test_disconnect_single_type(self):
         """Test that the disconnect method calls close on a single open connection type when a type is given"""

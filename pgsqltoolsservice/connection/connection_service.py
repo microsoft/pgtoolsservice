@@ -6,7 +6,6 @@
 """This module holds the connection service class, which allows for the user to connect and
 disconnect and holds the current connection, if one is present"""
 
-from __future__ import unicode_literals
 import logging
 import threading
 import uuid
@@ -183,10 +182,10 @@ def build_connection_response(connection_info, connection, connection_type):
 def build_connection_response_error(connection_info: ConnectionInfo, connection_type: ConnectionType, err):
     """Build a connection complete response object"""
     response: ConnectRequestParams = ConnectionCompleteParams()
-    response.owner_uri = connection_info.owner_uri,
-    response.type = connection_type,
-    response.messages = repr(err),
-    response.error_messages = str(err)
+    response.owner_uri = connection_info.owner_uri
+    response.type = connection_type
+    response.messages = repr(err)
+    response.error_message = str(err)
 
     return response
 
