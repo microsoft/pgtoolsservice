@@ -243,7 +243,7 @@ class JSONRPCServer:
             if handler is None:
                 # TODO: Send back an error message that the notification method is not supported?
                 if self._logger is not None:
-                    self._logger.warn('Notification method is unsupported'.format(message.message_method))
+                    self._logger.warn('Notification method %s is unsupported', message.message_method)
                 return
 
             # Call the handler with a notification context
