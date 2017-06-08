@@ -5,12 +5,15 @@
 
 """Utility function for serialization"""
 
+import enum
+import json
+
 import inflection
 
 
-def deserialize_from_dict(class_, dictionary, **kwargs):
+def convert_from_dict(class_, dictionary, **kwargs):
     """
-    Deserializes a class from a json-derived dictionary using attribute name normalization.
+    Converts a class from a json-derived dictionary using attribute name normalization.
     Attributes described in **kwargs will be omitted from automatic attribute definition and the
     provided method will be called to deserialize the value
     :param class_: Class to create an instance of
@@ -39,3 +42,27 @@ def deserialize_from_dict(class_, dictionary, **kwargs):
             setattr(instance, pythonic_attr, dictionary[attr])
 
     return instance
+
+
+def convert_to_dict(obj):
+    """
+    Serializes an object to a json-ready dictionary using attribute name normalization. The
+    serialization is repeated, recursively until a built-in type is returned
+    :param obj: The object to convert to a jsonic dictionary
+    :return: A json-ready dictionary representation of the object
+    """
+    return json.loads(json.dumps(obj, default=_get_serializable_value))
+
+
+def _get_serializable_value(obj):
+    """Gets a serializable representation of an object, for use as the default argument to json.dumps"""
+    # If the object is an Enum, use its value
+    if isinstance(obj, enum.Enum):
+        return _get_serializable_value(obj.value)
+    # Try to use the object's dictionary representation if available
+    try:
+        return {inflection.camelize(key, False): value for key, value in obj.__dict__.items()}
+    except AttributeError:
+        pass
+    # Assume the object can be serialized normally
+    return obj

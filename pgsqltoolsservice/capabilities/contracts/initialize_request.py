@@ -14,10 +14,10 @@ class InitializeRequestParams:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary)
+        return utils.convert_from_dict(cls, dictionary)
 
     def __init__(self):
-        self.client_capabilities: any = None    # TODO: Add support for client capabilities
+        self.capabilities: any = None    # TODO: Add support for client capabilities
         self.initialization_options: any = None
         self.process_id: int = None
         self.trace: str = None

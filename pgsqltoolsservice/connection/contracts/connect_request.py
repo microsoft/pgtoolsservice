@@ -11,8 +11,8 @@ import pgsqltoolsservice.utils as utils
 class ConnectRequestParams:
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary,
-                                           connection=ConnectionDetails)
+        return utils.convert_from_dict(cls, dictionary,
+                                       connection=ConnectionDetails)
 
     def __init__(self):
         self.connection: ConnectionDetails = None
