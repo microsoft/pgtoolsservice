@@ -6,4 +6,4 @@
 class SubsetResult(object):
     
     def __init__(self, result_subset):
-        self.ResultSubset = result_subset
+        self.resultSubset = result_subset

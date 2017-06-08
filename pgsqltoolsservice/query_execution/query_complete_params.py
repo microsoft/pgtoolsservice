@@ -6,6 +6,6 @@
 class QueryCompleteParams(object):
 
     def __init__(self, batch_summaries, owner_uri):
-        self.BatchSummaries = batch_summaries
-        self.OwnerUri = owner_uri
+        self.batchSummaries = batch_summaries
+        self.ownerUri = owner_uri
     

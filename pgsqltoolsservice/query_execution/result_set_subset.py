@@ -6,5 +6,5 @@
 class ResultSetSubset(object):
 
     def __init__(self, row_count, rows):
-        self.RowCount = row_count
-        self.Rows = rows
+        self.rowCount = row_count
+        self.rows = rows

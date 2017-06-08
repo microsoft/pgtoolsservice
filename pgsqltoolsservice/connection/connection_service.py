@@ -29,6 +29,7 @@ class ConnectionService(object):
 
     def handle_connect_request(self, ownerUri, connection, type=ConnectionType.DEFAULT):
         """Kick off a connection in response to an incoming connection request"""
+        logging.debug(f'Handling new connection request with type {type}')
         thread = threading.Thread(target=self.connect_and_respond, args=(ownerUri, connection, type))
         self.server.register_thread(thread)
         thread.daemon = True

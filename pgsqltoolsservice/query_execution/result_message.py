@@ -6,7 +6,7 @@
 class ResultMessage(object):
 
     def __init__(self, batch_id, is_error, time, message):
-        self.BatchId = batch_id
-        self.IsError = is_error
-        self.Time = time
-        self.Message = message
+        self.batchId = batch_id
+        self.isError = is_error
+        self.time = time
+        self.message = message

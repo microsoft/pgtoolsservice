@@ -6,5 +6,5 @@
 class BatchEventParams(object):
 
     def __init__(self, BatchSummary, OwnerUri):
-        self.BatchSummary = BatchSummary
-        self.OwnerUri = OwnerUri
+        self.batchSummary = BatchSummary
+        self.ownerUri = OwnerUri

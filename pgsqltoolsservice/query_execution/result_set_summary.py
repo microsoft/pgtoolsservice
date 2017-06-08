@@ -6,8 +6,8 @@
 class ResultSetSummary(object):
 
     def __init__(self, ident, batch_id, row_count, column_info, special_action):
-        self.Id = ident
-        self.BatchId = batch_id
-        self.RowCount = row_count
-        self.ColumnInfo = column_info
-        self.SpecialAction = special_action
+        self.id = ident
+        self.batchId = batch_id
+        self.rowCount = row_count
+        self.columnInfo = column_info
+        self.specialAction = special_action

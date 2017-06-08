@@ -6,5 +6,5 @@
 class ResultSetEventParams(object):
 
     def __init__(self, result_set_summary, owner_uri):
-        self.ResultSetSummary = result_set_summary
-        self.OwnerUri = owner_uri
+        self.resultSetSummary = result_set_summary
+        self.ownerUri = owner_uri

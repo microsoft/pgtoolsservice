@@ -6,7 +6,7 @@
 class DbCellValue(object):
 
     def __init__(self, display_value, is_null, raw_object, row_id):
-        self.DisplayValue = display_value
-        self.IsNull = is_null
-        self.RawObject = raw_object
-        self.RowId = row_id
+        self.displayValue = display_value
+        self.isNull = is_null
+        self.rawObject = raw_object
+        self.rowId = row_id

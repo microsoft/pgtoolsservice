@@ -6,6 +6,6 @@
 class MessageParams(object):
 
     def __init__(self, message, owner_uri):
-        self.Message = message
-        self.OwnerUri = owner_uri
+        self.message = message
+        self.ownerUri = owner_uri
     

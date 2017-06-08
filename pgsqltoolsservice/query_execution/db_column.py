@@ -16,36 +16,36 @@ class DbColumn(object):
 
         #Note that 'null_ok' is always 'None' by default because it's not easy to retrieve
         #Need to take a look if we should turn this on if it's important
-        self.AllowDBNull = cursor_description[DESC['null_ok']]
-        self.BaseCatalogName = None
-        self.BaseColumnName = cursor_description[DESC['name']]
-        self.BaseSchemaName = None
-        self.BaseServerName = None
-        self.BaseTableName = None
-        self.ColumnOrdinal = column_ordinal
+        self.allowDBNull = cursor_description[DESC['null_ok']]
+        self.baseCatalogName = None
+        self.baseColumnName = cursor_description[DESC['name']]
+        self.baseSchemaName = None
+        self.baseServerName = None
+        self.baseTableName = None
+        self.columnOrdinal = column_ordinal
         #From documentation, it seems like 'internal_size' is for the max size and
         #'display_size' is for the actual size based off of the largest entry in the column so far.
         # 'display_size' is always 'None' by default since it's expensive to calculate.
         # 'internal_size' is negative if column max is of a dynamic / variable size
-        self.ColumnSize = cursor_description[DESC['internal_size']]
-        self.IsAliased = None
-        self.IsAutoIncrement = None
-        self.IsExpression = None
-        self.IsHidden = None
-        self.IsIdentity = None
-        self.IsKey = None
-        self.IsLong = None
-        self.IsReadOnly = None
-        self.IsUnique = None
-        self.NumericPrecision = cursor_description[DESC['precision']]
-        self.NumericScale = cursor_description[DESC['scale']]
-        self.UdtAssemblyQualifiedName = cursor_description[DESC['null_ok']]
-        self.DataType = None
-        self.DataTypeName = None
-        self.IsBytes = None
-        self.IsChars = None
-        self.IsSqlVariant = None
-        self.IsUdt = None
-        self.IsXml = None
-        self.IsJson = None
-        self.SqlDbType = None
+        self.columnSize = cursor_description[DESC['internal_size']]
+        self.isAliased = None
+        self.isAutoIncrement = None
+        self.isExpression = None
+        self.isHidden = None
+        self.isIdentity = None
+        self.isKey = None
+        self.isLong = None
+        self.isReadOnly = None
+        self.isUnique = None
+        self.numericPrecision = cursor_description[DESC['precision']]
+        self.numericScale = cursor_description[DESC['scale']]
+        self.udtAssemblyQualifiedName = cursor_description[DESC['null_ok']]
+        self.dataType = None
+        self.dataTypeName = None
+        self.isBytes = None
+        self.isChars = None
+        self.isSqlVariant = None
+        self.isUdt = None
+        self.isXml = None
+        self.isJson = None
+        self.sqlDbType = None
