@@ -58,16 +58,16 @@ class WorkspaceService:
         return self._configuration
 
     # METHODS ##############################################################
-    def register_config_change_callback(self, task: Callable[PGSQLConfiguration]) -> None:
+    def register_config_change_callback(self, task: Callable[[PGSQLConfiguration], None]) -> None:
         self._config_change_callbacks.append(task)
 
-    def register_text_change_callback(self, task: Callable[ScriptFile]) -> None:
+    def register_text_change_callback(self, task: Callable[[ScriptFile], None]) -> None:
         self._text_change_callbacks.append(task)
 
-    def register_text_close_callback(self, task: Callable[ScriptFile]) -> None:
+    def register_text_close_callback(self, task: Callable[[ScriptFile], None]) -> None:
         self._text_close_callbacks.append(task)
 
-    def register_text_open_callback(self, task: Callable[ScriptFile]) -> None:
+    def register_text_open_callback(self, task: Callable[[ScriptFile], None]) -> None:
         self._text_open_callbacks.append(task)
 
     # REQUEST HANDLERS #####################################################

@@ -5,7 +5,7 @@
 
 """Utility functions for the PostgreSQL Tools Service"""
 
-import pgsqltoolsservice.utils.validate as validate
+import pgsqltoolsservice.utils.validate
 from pgsqltoolsservice.utils.serialization import deserialize_from_dict
 
 __all__ = [

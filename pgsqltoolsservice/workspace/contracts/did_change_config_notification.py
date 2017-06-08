@@ -45,4 +45,7 @@ class DidChangeConfigurationParams:
         self.settings = None
 
 
-DID_CHANGE_CONFIG_NOTIFICATION = IncomingMessageConfiguration('workspace/didChangeConfiguration')
+DID_CHANGE_CONFIG_NOTIFICATION = IncomingMessageConfiguration(
+    'workspace/didChangeConfiguration',
+    DidChangeConfigurationParams
+)

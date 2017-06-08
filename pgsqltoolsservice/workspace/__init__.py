@@ -4,5 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.workspace.workspace_service import WorkspaceService
+from pgsqltoolsservice.workspace.contracts import PGSQLConfiguration
 
-__all__ = ['WorkspaceService']
+__all__ = ['WorkspaceService', 'PGSQLConfiguration']
