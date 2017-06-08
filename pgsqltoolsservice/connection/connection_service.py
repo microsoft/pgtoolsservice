@@ -58,7 +58,6 @@ class ConnectionService:
     """Manage a single connection, including the ability to connect/disconnect"""
 
     def __init__(self):
-        self.connection = None
         self.owner_to_connection_map = {}
         self.owner_to_thread_map = {}
         self._service_provider = None

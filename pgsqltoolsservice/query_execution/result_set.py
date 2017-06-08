@@ -3,27 +3,27 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.query_execution.special_action import SpecialAction
-from pgsqltoolsservice.query_execution.result_set_summary import ResultSetSummary
+from pgsqltoolsservice.query_execution.contracts.common import SpecialAction
+from pgsqltoolsservice.query_execution.contracts.common import ResultSetSummary
 
 class ResultSet(object):
 
-    def __init__(self, ordinal, batchOrdinal, columns, row_count):
+    def __init__(self, ordinal, batch_ordinal, columns, row_count):
         self.id = ordinal
-        self.natchId = batchOrdinal
-        self.totalBytesWritten = 0
-        self.outputFileName = None
-        self.fileOffSets = []
-        self.specialAction = SpecialAction()
-        self.hasBeenRead = False
-        self.saveTasks = []
+        self.batch_id = batch_ordinal
+        self.total_bytes_written = 0
+        self.output_file_name = None
+        self.file_offsets = []
+        self.special_action = SpecialAction()
+        self.has_been_read = False
+        self.save_tasks = []
         self.disposed = None
-        self.isSingleColumnXmlJsonResultSet = None
-        self.outputFileName = None
-        self.rowCountOverride = None
+        self.is_single_column_xml_json_result_set = None
+        self.output_file_name = None
+        self.row_count_override = None
         self.columns = columns
-        self.batchId = 0
-        self.rowCount = row_count
+        self.batch_id = 0
+        self.row_count = row_count
 
     def generate_result_set_summary(self):
-        return ResultSetSummary(self.id, self.batchId, self.rowCount, self.columns, SpecialAction())
+        return ResultSetSummary(self.id, self.batch_id, self.row_count, self.columns, SpecialAction())

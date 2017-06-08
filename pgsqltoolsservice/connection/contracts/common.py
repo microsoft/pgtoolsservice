@@ -51,3 +51,4 @@ class ConnectionType(enum.Enum):
     DEFAULT = 'Default'
     QUERY = 'Query'
     EDIT = 'Edit'
+    

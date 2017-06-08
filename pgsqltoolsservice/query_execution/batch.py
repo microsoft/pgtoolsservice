@@ -4,15 +4,15 @@
 # --------------------------------------------------------------------------------------------
 from datetime import datetime
 from pgsqltoolsservice.query_execution.result_set import ResultSet
-from pgsqltoolsservice.query_execution.selection_data import SelectionData
-from pgsqltoolsservice.query_execution.batch_summary import BatchSummary
+from pgsqltoolsservice.query_execution.contracts.common import (SelectionData, BatchSummary)
+
 
 #TODO: Convert any dates to properly formatted strings
 
 class Batch(object):
 
-    def __init__(self, ordinalId: int, selection: SelectionData, has_error: bool):
-        self.id = ordinalId
+    def __init__(self, ordinal_id: int, selection: SelectionData, has_error: bool):
+        self.id = ordinal_id
         self.selection = selection
         self.start_time = datetime.now()
         self.has_error = has_error
@@ -34,7 +34,7 @@ class Batch(object):
             summary.SpecialAction = None
         return summary
 
-    #TODO: Assuming one result set for now. Handle for multiple later
+    #TODO: Assuming one result set for now. Handle for multiple later (list needed for query complete response)
     def get_result_set_summaries(self):
         """Gets result sets as summary contract objects"""
         if not self.result_sets:
