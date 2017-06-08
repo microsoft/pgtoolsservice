@@ -4,3 +4,5 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.connection.connection_service import ConnectionInfo, ConnectionService
+
+__all__ = ['ConnectionInfo', 'ConnectionService']
