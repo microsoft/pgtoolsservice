@@ -114,7 +114,7 @@ class ScriptFile:
     def get_text_in_range(self, buffer_range: Range) -> str:
         """
         Gets the text under a specific range joined with environment-specific newlines
-        :param buffer_range: The range to retrieve 
+        :param buffer_range: The range to retrieve
         :return: The text within the specified range with environment-specific newlines
         """
         return os.linesep.join(self.get_lines_in_range(buffer_range))
@@ -122,8 +122,8 @@ class ScriptFile:
     def get_lines_in_range(self, buffer_range: Range) -> List[str]:
         """
         Gets a range of lines from the file's contents.
-        :param buffer_range: The buffer range from which lines will be extracted 
-        :return: A list of strings from the specified range of the file 
+        :param buffer_range: The buffer range from which lines will be extracted
+        :return: A list of strings from the specified range of the file
         """
         # Validate range
         self.validate_position(buffer_range.start)
@@ -164,6 +164,6 @@ class ScriptFile:
     def _set_file_contents(self, file_contents: str) -> None:
         """
         Set the script file's contents
-        :param file_contents: New contents for the file 
+        :param file_contents: New contents for the file
         """
         self._file_lines = [x.rstrip('\r') for x in file_contents.split('\n')]

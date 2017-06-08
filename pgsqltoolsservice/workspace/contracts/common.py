@@ -98,4 +98,3 @@ class TextDocumentItem:
         self.language_id: str = None
         self.version: int = None
         self.text: str = None
-

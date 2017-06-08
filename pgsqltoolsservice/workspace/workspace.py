@@ -4,8 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 import os
-from typing import List, Optional
-from urllib.parse import urlparse, ParseResult
+from typing import List, Optional               # noqa
+from urllib.parse import urlparse, ParseResult  # noqa
 
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 import pgsqltoolsservice.utils as utils

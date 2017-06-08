@@ -19,3 +19,12 @@ from pgsqltoolsservice.workspace.contracts.did_close_text_doc_notification impor
 from pgsqltoolsservice.workspace.contracts.common import (
     Position, Range, TextDocumentItem
 )
+
+__all__ = [
+    'DID_CHANGE_CONFIG_NOTIFICATION', 'DidChangeConfigurationParams',
+    'Configuration', 'PGSQLConfiguration',
+    'DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION', 'DidChangeTextDocumentParams', 'TextDocumentChangeEvent',
+    'DID_OPEN_TEXT_DOCUMENT_NOTIFICATION', 'DidOpenTextDocumentParams',
+    'DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION', 'DidCloseTextDocumentParams',
+    'Position', 'Range', 'TextDocumentItem'
+]

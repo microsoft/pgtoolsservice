@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, List
+from typing import Callable, List   # noqa
 
 from pgsqltoolsservice.hosting import NotificationContext, ServiceProvider
 from pgsqltoolsservice.workspace.contracts import (
@@ -163,4 +163,3 @@ class WorkspaceService:
         :param file_uri: URI for the file to check
         """
         return file_uri.startswith('git:')
-

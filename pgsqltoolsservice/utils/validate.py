@@ -35,7 +35,7 @@ def is_less_than(param_name: str, value_to_check: float, upper_limit: float) -> 
     Raises ValueError if the value is greater than or equal to the given upper limit
     :param param_name: Name of the parameter to validate
     :param value_to_check: Value to check for compliance
-    :param upper_limit: Upper limit to validate against 
+    :param upper_limit: Upper limit to validate against
     """
     if value_to_check >= upper_limit:
         # TODO: Localize
@@ -47,7 +47,7 @@ def is_greater_than(param_name: str, value_to_check: float, lower_limit: float) 
     Raises ValueError if the value is less than or equal to the given upper limit
     :param param_name: Name of the parameter to validate
     :param value_to_check: Value to check for compliance
-    :param lower_limit: Lower limit to validate against 
+    :param lower_limit: Lower limit to validate against
     """
     if value_to_check <= lower_limit:
         # TODO: Localize
@@ -57,7 +57,7 @@ def is_greater_than(param_name: str, value_to_check: float, lower_limit: float) 
 def is_not_equal(param_name: str, value_to_check: any, undesired_value: any) -> None:
     """
     Raises ValueError if the value is equal to the undesired value
-    :param param_name: Name of the parameter to validate 
+    :param param_name: Name of the parameter to validate
     :param value_to_check: Value to check for undesired values
     :param undesired_value: Value that value_to_check should not equal
     """
@@ -85,7 +85,7 @@ def is_not_none_or_whitespace(param_name: str, value_to_check: str) -> None:
     """
     Raises ValueError if the value is None or a whitespace/empty string
     :param param_name: Name of the parameter to validate
-    :param value_to_check: Value to of the parameter being validated 
+    :param value_to_check: Value to of the parameter being validated
     """
     if value_to_check is None or value_to_check.strip() == '':
         raise ValueError(u"Parameter {} contains a None, empty, or whitespace string".format(param_name))
