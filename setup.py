@@ -7,7 +7,7 @@ buildOptions = dict(packages=[], excludes=[])
 base = 'Console'
 
 executables = [
-    Executable('pgsqltoolsservice/pgsqltoolsservice.py', base=base)
+    Executable('pgsqltoolsservice/pgtoolsservice_main.py', base=base)
 ]
 
 setup(name='PostgreSQL Tools Service',
