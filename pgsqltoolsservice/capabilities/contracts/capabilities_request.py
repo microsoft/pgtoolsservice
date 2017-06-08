@@ -18,7 +18,7 @@ class CapabilitiesRequestParams:
         self.host_version = None
 
 
-class CategoryValue(object):
+class CategoryValue():
     """Defines a category value for a connection option"""
 
     def __init__(self, display_name: str = None, name: str = None):
@@ -26,7 +26,7 @@ class CategoryValue(object):
         self.name: str = name
 
 
-class ConnectionOption(object):
+class ConnectionOption():
     """Defines a connection provider option"""
 
     VALUE_TYPE_STRING = 'string'

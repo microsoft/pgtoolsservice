@@ -54,3 +54,4 @@ class JSONRPCWriter:
                 message.message_id,
                 message.message_method
             ))
+            self._logger.debug("Sent string %s", json_content)

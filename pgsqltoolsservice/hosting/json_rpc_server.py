@@ -264,7 +264,7 @@ class JSONRPCServer:
         :param thread_name: Name of the thread that encountered the exception
         """
         if self._logger is not None:
-            self._logger.warn('Thread: {} encountered exception {}'.format(thread_name, ex))
+            self._logger.exception('Thread: {} encountered exception {}'.format(thread_name, ex))
 
 
 class IncomingMessageConfiguration:

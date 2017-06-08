@@ -87,6 +87,8 @@ class JSONRPCReader:
                 # We have the content
                 break
 
+            if self._logger is not None:
+                self._logger.debug('Read string %s', content[0])
             return JSONRPCMessage.from_dictionary(json.loads(content[0]))
         except ValueError as ve:
             # Response has invalid json object
