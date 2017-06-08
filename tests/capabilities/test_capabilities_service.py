@@ -64,5 +64,6 @@ class TestCapabilitiesService(unittest.TestCase):
         rc.send_response.assert_called_once()
         self.assertIsInstance(rc.send_response.mock_calls[0][1][0], CapabilitiesResult)
 
+
 if __name__ == '__main__':
     unittest.main()

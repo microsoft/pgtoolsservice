@@ -10,6 +10,7 @@ import pgsqltoolsservice.utils as utils
 
 class ConnectionSummary:
     """Provides high level information about a connection"""
+
     def __init__(self, server_name: str, database_name: str, user_name: str):
         self.server_name: str = server_name
         self.database_name: str = database_name

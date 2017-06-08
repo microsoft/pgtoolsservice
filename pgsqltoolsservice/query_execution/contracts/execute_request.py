@@ -51,5 +51,6 @@ class ExecuteResult:
     """
     Parameters for the query execute result. Reserved for future use
     """
+
     def __init__(self):
         pass
