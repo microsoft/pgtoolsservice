@@ -17,8 +17,8 @@ class DidOpenTextDocumentParams:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary,
-                                           text_document=TextDocumentItem)
+        return utils.serialization.convert_from_dict(cls, dictionary,
+                                                     text_document=TextDocumentItem)
 
     def __init__(self):
         self.text_document: TextDocumentItem = None

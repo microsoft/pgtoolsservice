@@ -77,7 +77,7 @@ class Workspace:
             # An initial buffer wasn't provided, load the contents
             with open(resolved_file_path, 'r') as file:
                 initial_buffer = file.read()
-        script_file = ScriptFile(resolved_file_path, initial_buffer)
+        script_file = ScriptFile(resolved_file_path, file_path, initial_buffer)
         return script_file
 
     def get_file(self, file_path: str) -> [ScriptFile, None]:

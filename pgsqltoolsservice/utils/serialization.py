@@ -35,11 +35,21 @@ def convert_from_dict(class_, dictionary, **kwargs):
             raise AttributeError('Could not deserialize to class {}, {} is not defined as an attribute'
                                  .format(class_, pythonic_attr))
 
-        # If the kwargs includes a function for deserializing this attribute, use it
+        value = dictionary[attr]
         if pythonic_attr in kwargs:
-            setattr(instance, pythonic_attr, kwargs[pythonic_attr].from_dict(dictionary[attr]))
+            # Caller provided a class to deserialize to. Use that
+            if isinstance(value, list):
+                # Value is a list. Use a list comprehension to deserialize all instances
+                deserialized_value = [kwargs[pythonic_attr].from_dict(x) for x in dictionary[attr]]
+            else:
+                # Value is a singlar object. Use the class to deserialize
+                deserialized_value = kwargs[pythonic_attr].from_dict(dictionary[attr])
         else:
-            setattr(instance, pythonic_attr, dictionary[attr])
+            # Object can be assigned directly
+            deserialized_value = dictionary[attr]
+
+        # Store the value in the instance of the object
+        setattr(instance, pythonic_attr, deserialized_value)
 
     return instance
 

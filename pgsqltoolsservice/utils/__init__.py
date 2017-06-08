@@ -6,9 +6,9 @@
 """Utility functions for the PostgreSQL Tools Service"""
 
 import pgsqltoolsservice.utils.validate
-from pgsqltoolsservice.utils.serialization import deserialize_from_dict
+import pgsqltoolsservice.utils.serialization
 
 __all__ = [
     'validate',
-    'deserialize_from_dict'
+    'serialization'
 ]

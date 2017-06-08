@@ -82,7 +82,7 @@ class WorkspaceService:
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
         """
-        self._configuration = params.settings
+        self._configuration = params.settings.pgsql
         for callback in self._config_change_callbacks:
             callback(self._configuration)
 
@@ -96,19 +96,22 @@ class WorkspaceService:
         :param notification_context: Context of the notification
         :param params: Parameters of the notification
         """
-        # Skip processing if the file is an SCM file or the file isn't opened
-        if self._is_scm_path(params.text_document.uri) or not self._workspace.contains_file(params.text_document.uri):
-            return
+        try:
+            # Skip processing if the file isn't opened
+            script_file: ScriptFile = self._workspace.get_file(params.text_document.uri)
+            if script_file is None:
+                return
 
-        script_file: ScriptFile = self._workspace.get_file(params.text_document.uri)
+            # Apply the changes to the document
+            for text_change in params.content_changes:
+                script_file.apply_change(text_change)
 
-        # Apply the changes to the document
-        for text_change in params.content_changes:
-            script_file.apply_change(text_change)
-
-        # Propagate the changes to the registered callbacks
-        for callback in self._text_change_callbacks:
-            callback(script_file)
+            # Propagate the changes to the registered callbacks
+            for callback in self._text_change_callbacks:
+                callback(script_file)
+        except Exception as e:
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception(f'Exception caught during text doc change: {e}')
 
     def _handle_did_open_text_doc(
             self,
@@ -121,16 +124,18 @@ class WorkspaceService:
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
         """
-        # Skip processing if the file is an SCM file
-        if self._is_scm_path(params.text_document.uri):
-            return
+        try:
+            # Open a new ScriptFile with the initial buffer provided
+            opened_file: ScriptFile = self._workspace.open_file(params.text_document.uri, params.text_document.text)
+            if opened_file is None:
+                return
 
-        # Open a new ScriptFile with the initial buffer provided
-        opened_file: ScriptFile = self._workspace.open_file(params.text_document.uri, params.text_document.text)
-
-        # Propagate the notification to the registered callbacks
-        for callback in self._text_open_callbacks:
-            callback(opened_file)
+            # Propagate the notification to the registered callbacks
+            for callback in self._text_open_callbacks:
+                callback(opened_file)
+        except Exception as e:
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception(f'Exception caught during text doc open: {e}')
 
     def _handle_did_close_text_doc(
             self,
@@ -143,23 +148,15 @@ class WorkspaceService:
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
         """
-        # Skip processing if this file is an SCM file or not open
-        if self._is_scm_path(params.text_document.uri) or not self._workspace.contains_file(params.text_document.uri):
-            return
+        try:
+            # Attempt to close the requested file
+            closed_file: ScriptFile = self._workspace.close_file(params.text_document.uri)
+            if closed_file is None:
+                return
 
-        # File is open. Trash the existing document from out mapping
-        closed_file: ScriptFile = self._workspace.close_file(params.text_document.uri)
-
-        # Propagate the notification to the registered callbacks
-        for callback in self._text_close_callbacks:
-            callback(closed_file)
-
-    # IMPLEMENTATION DETAILS ###############################################
-
-    @staticmethod
-    def _is_scm_path(file_uri: str):
-        """
-        If the URI is prefixed with git: then we want to skip processing the file
-        :param file_uri: URI for the file to check
-        """
-        return file_uri.startswith('git:')
+            # Propagate the notification to the registered callbacks
+            for callback in self._text_close_callbacks:
+                callback(closed_file)
+        except Exception as e:
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception(f'Exception caught during text doc close: {e}')

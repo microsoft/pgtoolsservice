@@ -23,8 +23,8 @@ class TextDocumentChangeEvent:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary,
-                                           range=Range)
+        return utils.serialization.convert_from_dict(cls, dictionary,
+                                                     range=Range)
 
     def __init__(self):
         self.range: [Range, None] = None
@@ -42,7 +42,7 @@ class VersionedTextDocumentIdentifier:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.version: int = None
@@ -59,9 +59,9 @@ class DidChangeTextDocumentParams:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary,
-                                           content_changes=TextDocumentChangeEvent,
-                                           text_document=VersionedTextDocumentIdentifier,)
+        return utils.serialization.convert_from_dict(cls, dictionary,
+                                                     content_changes=TextDocumentChangeEvent,
+                                                     text_document=VersionedTextDocumentIdentifier)
 
     def __init__(self):
         self.content_changes: List[TextDocumentChangeEvent] = None

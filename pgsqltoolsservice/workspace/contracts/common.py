@@ -16,7 +16,7 @@ class Position:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.line: int = 0
@@ -51,9 +51,9 @@ class Range:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary,
-                                           start=Position,
-                                           end=Position)
+        return utils.serialization.convert_from_dict(cls, dictionary,
+                                                     start=Position,
+                                                     end=Position)
 
     def __init__(self):
         self.start: Position = None
@@ -91,7 +91,7 @@ class TextDocumentItem:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.uri: str = None

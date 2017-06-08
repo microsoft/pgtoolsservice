@@ -13,7 +13,7 @@ class PGSQLConfiguration:
     """
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.setting = "Default_Setting"
@@ -25,8 +25,8 @@ class Configuration:
     """
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary,
-                                           pgsql=PGSQLConfiguration)
+        return utils.serialization.convert_from_dict(cls, dictionary,
+                                                     pgsql=PGSQLConfiguration)
 
     def __init__(self):
         self.pgsql = None
@@ -38,8 +38,8 @@ class DidChangeConfigurationParams:
     """
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary,
-                                           settings=Configuration)
+        return utils.serialization.convert_from_dict(cls, dictionary,
+                                                     settings=Configuration)
 
     def __init__(self):
         self.settings = None
