@@ -70,7 +70,7 @@ class JSONRPCServer:
         streams. Encapsulated into its own method for future async extensions without threads
         """
         if self._logger is not None:
-            self._logger.info(u"JSON RPC server starting...")
+            self._logger.info("JSON RPC server starting...")
 
         self._output_consumer = threading.Thread(
             target=self._consume_output,
@@ -213,16 +213,14 @@ class JSONRPCServer:
         # Figure out which handler will execute the request/notification
         if message.message_type is JSONRPCMessageType.Request:
             if self._logger is not None:
-                self._logger.info('Received request id={} method={}'.format(
-                    message.message_id, message.message_method
-                ))
+                self._logger.info('Received request id=%s method=%s', message.message_id, message.message_method)
             handler = self._request_handlers[message.message_method]
 
             # Make sure we got a handler for the request
             if handler is None:
                 # TODO: Send back an error message that the request method is not supported
                 if self._logger is not None:
-                    self._logger.warn('Requested method is unsupported {}'.format(message.message_method))
+                    self._logger.warn('Requested method is unsupported: %s', message.message_method)
                 return
 
             # Call the handler with a request context and the deserialized parameter object
@@ -237,13 +235,13 @@ class JSONRPCServer:
             handler.handler(request_context, deserialized_object)
         elif message.message_type is JSONRPCMessageType.Notification:
             if self._logger is not None:
-                self._logger.info('Received notification method={}'.format(message.message_method))
+                self._logger.info('Received notification method=%s', message.message_method)
             handler = self._notification_handlers[message.message_method]
 
             if handler is None:
                 # TODO: Send back an error message that the notification method is not supported?
                 if self._logger is not None:
-                    self._logger.warn('Notification method is unsupported'.format(message.message_method))
+                    self._logger.warn('Notification method %s is unsupported', message.message_method)
                 return
 
             # Call the handler with a notification context
@@ -254,7 +252,7 @@ class JSONRPCServer:
         else:
             # If this happens we have a serious issue with the JSON RPC reader
             if self._logger is not None:
-                self._logger.warn('Received unsupported message type {}'.format(message.message_type))
+                self._logger.warn('Received unsupported message type %s', message.message_type)
             return
 
     def _log_exception(self, ex, thread_name):
@@ -264,7 +262,7 @@ class JSONRPCServer:
         :param thread_name: Name of the thread that encountered the exception
         """
         if self._logger is not None:
-            self._logger.warn('Thread: {} encountered exception {}'.format(thread_name, ex))
+            self._logger.exception('Thread %s encountered exception %s', thread_name, ex)
 
 
 class IncomingMessageConfiguration:
