@@ -45,8 +45,8 @@ class Range:
     """
     Represents a selection of the document
     Attributes:
-        start:  The starting position of the range
-        end:    The ending position of the range
+        start:  The starting position of the range, inclusive
+        end:    The ending position of the range, inclusive
     """
 
     @classmethod

@@ -6,6 +6,7 @@
 """Utility functions for the PostgreSQL Tools Service"""
 
 import inflection
+import pgsqltoolsservice.utils.validate as validate
 
 
 def deserialize_from_dict(class_, dictionary, **kwargs):

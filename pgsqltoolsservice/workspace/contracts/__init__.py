@@ -8,7 +8,7 @@ from pgsqltoolsservice.workspace.contracts.did_change_config_notification import
     Configuration, PGSQLConfiguration
 )
 from pgsqltoolsservice.workspace.contracts.did_change_text_doc_notification import (
-    DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams
+    DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams, TextDocumentChangeEvent
 )
 from pgsqltoolsservice.workspace.contracts.did_open_text_doc_notification import (
     DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, DidOpenTextDocumentParams
@@ -17,5 +17,5 @@ from pgsqltoolsservice.workspace.contracts.did_close_text_doc_notification impor
     DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, DidCloseTextDocumentParams
 )
 from pgsqltoolsservice.workspace.contracts.common import (
-    BufferPosition, BufferRange, FileChange
+    Position, Range, TextDocumentItem
 )

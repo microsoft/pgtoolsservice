@@ -104,7 +104,6 @@ class WorkspaceService:
 
         # Apply the changes to the document
         for text_change in params.content_changes:
-            #TODO: Resolve 1 vs 0 based issue
             script_file.apply_change(text_change)
 
         # Propagate the changes to the registered callbacks
@@ -127,7 +126,7 @@ class WorkspaceService:
             return
 
         # Open a new ScriptFile with the initial buffer provided
-        opened_file: ScriptFile = self._workspace.get_file_buffer(params.text_document.uri, params.text_document.text)
+        opened_file: ScriptFile = self._workspace.open_file(params.text_document.uri, params.text_document.text)
 
         # Propagate the notification to the registered callbacks
         for callback in self._text_open_callbacks:
@@ -149,12 +148,11 @@ class WorkspaceService:
             return
 
         # File is open. Trash the existing document from out mapping
-        closed_file: ScriptFile = self._workspace.get_file(params.text_document.uri)
-        self._workspace.close_file(params.text_document.uri)
+        closed_file: ScriptFile = self._workspace.close_file(params.text_document.uri)
 
         # Propagate the notification to the registered callbacks
         for callback in self._text_close_callbacks:
-            callback(self._configuration)
+            callback(closed_file)
 
     # IMPLEMENTATION DETAILS ###############################################
 

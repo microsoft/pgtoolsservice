@@ -19,11 +19,11 @@ def is_not_none(param_name: str, value_to_check: any) -> None:
 
 def is_within_range(param_name: str, value_to_check: float, lower_limit: float, upper_limit: float) -> None:
     """
-    Raises ValueError if the value is outside of the given lower and upper limits (exclusive)
+    Validates that a number is within a range, inclusively
     :param param_name: Name of the parameter to validate
     :param value_to_check: Value to check for compliance
-    :param lower_limit: Lower limit to validate against, exclusive
-    :param upper_limit: Upper limit to validate against, exclusive
+    :param lower_limit: Lower limit to validate against, inclusive
+    :param upper_limit: Upper limit to validate against, inclusive
     """
     if value_to_check < lower_limit or value_to_check > upper_limit:
         # TODO: Localize
