@@ -3,9 +3,22 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import mock
+import unittest.mock as mock
 
-from pgsqltoolsservice.hosting import RequestContext
+from pgsqltoolsservice.hosting import NotificationContext, RequestContext
+
+
+def get_mock_notification_context() -> NotificationContext:
+    """
+    Generates a notification context with the send_notification method mocked
+    :return: NotificationContext with mocked send_notification
+    """
+    mock_send_notification = mock.MagicMock()
+
+    mock_notification_context = NotificationContext(None)
+    mock_notification_context.send_notification = mock_send_notification
+
+    return mock_notification_context
 
 
 def get_mock_request_context() -> RequestContext:
