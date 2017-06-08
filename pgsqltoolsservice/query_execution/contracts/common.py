@@ -23,7 +23,7 @@ class QuerySelection(object):
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary)
+        return utils.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.start_line: int = 0

@@ -14,7 +14,7 @@ class InitializeRequestParams:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary)
+        return utils.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.capabilities: any = None    # TODO: Add support for client capabilities

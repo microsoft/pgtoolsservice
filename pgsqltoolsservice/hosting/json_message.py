@@ -4,9 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 from enum import Enum
-import json
 
-import inflection
+import pgsqltoolsservice.utils as utils
 
 
 class JSONRPCMessageType(Enum):
@@ -125,22 +124,22 @@ class JSONRPCMessage:
 
         if self._message_type is JSONRPCMessageType.Request:
             message_base['method'] = self._message_method
-            message_base['params'] = _convert_to_dict(self._message_params)
+            message_base['params'] = utils.convert_to_dict(self._message_params)
             message_base['id'] = self._message_id
             return message_base
 
         if self._message_type is JSONRPCMessageType.ResponseSuccess:
-            message_base['result'] = _convert_to_dict(self._message_result)
+            message_base['result'] = utils.convert_to_dict(self._message_result)
             message_base['id'] = self._message_id
             return message_base
 
         if self._message_type is JSONRPCMessageType.Notification:
             message_base['method'] = self._message_method
-            message_base['params'] = _convert_to_dict(self._message_params)
+            message_base['params'] = utils.convert_to_dict(self._message_params)
             return message_base
 
         if self._message_type is JSONRPCMessageType.ResponseError:
-            message_base['error'] = _convert_to_dict(self._message_error)
+            message_base['error'] = utils.convert_to_dict(self._message_error)
             message_base['id'] = self._message_id
             return message_base
 
@@ -163,27 +162,3 @@ class JSONRPCMessage:
         :return: True if the dictionary representations are not the same, False otherwise
         """
         return not self == other
-
-
-def _convert_to_dict(obj):
-    """
-    Serializes an object to a json-ready dictionary using attribute name normalization. The
-    serialization is repeated, recursively until a built-in type is returned
-    :param obj: The object to convert to a jsonic dictionary
-    :return: A json-ready dictionary representation of the object
-    """
-    return json.loads(json.dumps(obj, default=_get_serializable_value))
-
-
-def _get_serializable_value(obj):
-    """Gets a serializable representation of an object, for use as the default argument to json.dumps"""
-    # If the object is an Enum, use its value
-    if isinstance(obj, Enum):
-        return _get_serializable_value(obj.value)
-    # Try to use the object's dictionary representation if available
-    try:
-        return {inflection.camelize(key, False): value for key, value in obj.__dict__.items()}
-    except AttributeError:
-        pass
-    # Assume the object can be serialized normally
-    return obj

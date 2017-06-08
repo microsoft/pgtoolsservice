@@ -11,14 +11,14 @@ import pgsqltoolsservice.utils as utils
 class CapabilitiesRequestParams:
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.deserialize_from_dict(cls, dictionary)
+        return utils.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.host_name = None
         self.host_version = None
 
 
-class CategoryValue():
+class CategoryValue:
     """Defines a category value for a connection option"""
 
     def __init__(self, display_name: str = None, name: str = None):
@@ -26,7 +26,7 @@ class CategoryValue():
         self.name: str = name
 
 
-class ConnectionOption():
+class ConnectionOption:
     """Defines a connection provider option"""
 
     VALUE_TYPE_STRING = 'string'
