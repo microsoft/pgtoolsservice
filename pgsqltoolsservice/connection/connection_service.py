@@ -6,10 +6,8 @@
 """This module holds the connection service class, which allows for the user to connect and
 disconnect and holds the current connection, if one is present"""
 
-import logging
 import threading
 import uuid
-
 import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (
@@ -69,6 +67,9 @@ class ConnectionService:
         self._service_provider.server.set_request_handler(CONNECT_REQUEST, self.handle_connect_request)
         self._service_provider.server.set_request_handler(DISCONNECT_REQUEST, self.handle_disconnect_request)
 
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.info('Connection service successfully initialized')
+
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Kick off a connection in response to an incoming connection request"""
@@ -124,7 +125,6 @@ class ConnectionService:
         for option, value in connection_options.items():
             key = CONNECTION_OPTION_KEY_MAP[option] if option in CONNECTION_OPTION_KEY_MAP else option
             connection_string += "{}='{}' ".format(key, value)
-        logging.debug(f'Connecting with connection string {connection_string}')
 
         # Connect using psycopg2
         try:

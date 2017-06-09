@@ -6,3 +6,4 @@ coverage
 inflection
 autopep8
 flake8
+python-dateutil

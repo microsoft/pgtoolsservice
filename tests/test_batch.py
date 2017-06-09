@@ -10,17 +10,24 @@ from __future__ import unicode_literals
 import unittest
 from nose.tools import with_setup
 from pgsqltoolsservice.query_execution.batch import Batch
-from pgsqltoolsservice.query_execution.contracts.common import (SelectionData, BatchSummary)
+from pgsqltoolsservice.query_execution.contracts.common import SelectionData, BatchSummary  # noqa
+
 
 class TestBatch(unittest.TestCase):
     """Methods for testing the batch class"""
+
     def __init__(self, methodName='runTest'):
         unittest.TestCase.__init__(self, methodName)
         self.default_sel_data = None
 
     def setup(self):
         """Constructor"""
-        self.default_sel_data = SelectionData(0, 0, 1, 1)
+        selection = SelectionData()
+        selection.start_line = 0
+        selection.start_column = 0
+        selection.end_line = 0
+        selection.end_column = 0
+        self.default_sel_data = SelectionData()
 
     @with_setup(setup)
     def test_build_batch_summary(self):
@@ -35,6 +42,7 @@ class TestBatch(unittest.TestCase):
         self.assertIsNone(batch_summary.execution_end)
         self.assertIsNone(batch_summary.result_set_summaries)
         self.assertIsNone(batch_summary.special_action)
+
 
 if __name__ == '__main__':
     unittest.main()

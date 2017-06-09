@@ -37,5 +37,6 @@ class TestQueryService(unittest.TestCase):
             self.assertIsInstance(mock_call[1][0], IncomingMessageConfiguration)
             self.assertTrue(callable(mock_call[1][1]))
 
+
 if __name__ == '__main__':
     unittest.main()

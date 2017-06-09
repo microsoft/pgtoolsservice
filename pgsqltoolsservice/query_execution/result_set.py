@@ -6,6 +6,7 @@
 from pgsqltoolsservice.query_execution.contracts.common import SpecialAction
 from pgsqltoolsservice.query_execution.contracts.common import ResultSetSummary
 
+
 class ResultSet(object):
 
     def __init__(self, ordinal, batch_ordinal, columns, row_count):
