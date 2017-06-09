@@ -14,7 +14,7 @@ import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (
     CONNECTION_COMPLETE_METHOD, ConnectionType, ConnectRequestParams, ConnectionDetails,
-    DisconnectRequestParams
+    DisconnectRequestParams, ListDatabasesParams, ListDatabasesResponse
 )
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 import tests.utils as utils
@@ -327,14 +327,44 @@ class TestConnectionService(unittest.TestCase):
         # ... An error should not have been called
         rc.send_error.assert_not_called()
 
+    def test_list_databases(self):
+        """Test that the list databases handler correctly lists the connection's databases"""
+        # Set up the test with mock data
+        mock_query_results = [('database1',), ('database2',)]
+        connection_uri = 'someuri'
+        connection_type = ConnectionType.DEFAULT
+        mock_connection = MockConnection(
+            dsn_parameters={
+                'host': 'myserver',
+                'dbname': 'postgres',
+                'user': 'postgres'
+            },
+            cursor=MockCursor(mock_query_results))
+        psycopg2.connect = Mock(return_value=mock_connection)
+        connection_service = ConnectionService()
+
+        # Insert a ConnectionInfo object into the connection service's map
+        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_info = ConnectionInfo(connection_uri, connection_details)
+        connection_info.add_connection(connection_type, mock_connection)
+        connection_service.owner_to_connection_map[connection_uri] = connection_info
+
+        # Verify that calling the listdatabases handler returns the expected databases
+        params = ListDatabasesParams()
+        params.owner_uri = connection_uri
+        response = connection_service.handle_list_databases(params)
+        expected_databases = [result[0] for result in mock_query_results]
+        self.assertEqual(response.database_names, expected_databases)
+
 
 class MockConnection(object):
     """Class used to mock psycopg2 connection objects for testing"""
 
-    def __init__(self, dsn_parameters=None):
+    def __init__(self, dsn_parameters=None, cursor=None):
         self.close = Mock()
         self.dsn_parameters = dsn_parameters
         self.server_version = '9.6.2'
+        self.cursor = Mock(return_value=cursor)
 
     def get_dsn_parameters(self):
         """Mock for the connection's get_dsn_parameters method"""
@@ -346,6 +376,14 @@ class MockConnection(object):
             return self.server_version
         else:
             raise NotImplementedError()
+
+
+class MockCursor:
+    """Class used to mock psycopg2 cursor objects for testing"""
+    def __init__(self, query_results):
+        self.execute = Mock()
+        self.commit = Mock()
+        self.fetchall = Mock(return_value=query_results)
 
 
 if __name__ == '__main__':

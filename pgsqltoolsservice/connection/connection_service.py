@@ -17,7 +17,7 @@ from pgsqltoolsservice.connection.contracts import (
     DISCONNECT_REQUEST, DisconnectRequestParams,
     CONNECTION_COMPLETE_METHOD, ConnectionCompleteParams,
     ConnectionDetails, ConnectionSummary, ConnectionType, ServerInfo,
-    LIST_DATABASES_REQUEST, ListDatabasesParams
+    LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
 )
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 
@@ -105,13 +105,9 @@ class ConnectionService:
         if not connection_info.has_connection(ConnectionType.DEFAULT):
             self._connect(ConnectRequestParams(params.owner_uri, connection_info.details, ConnectionType.DEFAULT))
         connection = connection_info.get_connection(ConnectionType.DEFAULT)
-        cursor = connection.cursor()
-        query = 'SELECT datname FROM pg_database WHERE datistemplate = false;'
-        cursor.execute(query)
-        query_results = cursor.fetchall()
-        cursor.commit()
+        query_results = _execute_query(connection, 'SELECT datname FROM pg_database WHERE datistemplate = false;')
         database_names = [result[0] for result in query_results]
-        return {'databaseNames': database_names}
+        return ListDatabasesResponse(database_names)
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
@@ -219,6 +215,15 @@ def _get_server_info(connection):
     server_version = connection.get_parameter_status('server_version')
     is_cloud = connection.get_dsn_parameters()['host'].endswith('postgres.database.azure.com')
     return ServerInfo(server_version, is_cloud)
+
+
+def _execute_query(connection, query):
+    """Execute a simple query without arguments for the given connection"""
+    cursor = connection.cursor()
+    cursor.execute(query)
+    query_results = cursor.fetchall()
+    cursor.commit()
+    return query_results
 
 
 # Dictionary mapping connection option names to their corresponding connection string keys.
