@@ -106,12 +106,12 @@ class ConnectionService:
         else:
             request_context.send_response(self._close_connections(connection_info, params.type))
 
-    def handle_list_databases(self, params: ListDatabasesParams):
+    def handle_list_databases(self, request_context: RequestContext, params: ListDatabasesParams):
         """List all databases on the server that the given URI has a connection to"""
         connection = self.get_connection(params.owner_uri, ConnectionType.DEFAULT)
         query_results = _execute_query(connection, 'SELECT datname FROM pg_database WHERE datistemplate = false;')
         database_names = [result[0] for result in query_results]
-        return ListDatabasesResponse(database_names)
+        request_context.send_response(ListDatabasesResponse(database_names))
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
@@ -226,7 +226,7 @@ def _execute_query(connection, query):
     cursor = connection.cursor()
     cursor.execute(query)
     query_results = cursor.fetchall()
-    cursor.commit()
+    connection.commit()
     return query_results
 
 

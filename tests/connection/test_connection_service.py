@@ -273,7 +273,7 @@ class TestConnectionService(unittest.TestCase):
     def test_handle_disconnect_request_unknown_uri(self):
         """Test that the handle_disconnect_request method returns false when the given URI is unknown"""
         # Setup: Create a mock request context
-        rc = utils.get_mock_request_context()
+        rc = utils.MockRequestContext()
 
         # If: I request to disconnect an unknown URI
         params: DisconnectRequestParams = DisconnectRequestParams.from_dict({
@@ -290,7 +290,7 @@ class TestConnectionService(unittest.TestCase):
     def test_handle_connect_request(self):
         """Test that the handle_connect_request method kicks off a new thread to do the connection"""
         # Setup: Create a mock request context to handle output
-        rc = utils.get_mock_request_context()
+        rc = utils.MockRequestContext()
         connection_service = ConnectionService()
         connection_service._connect = Mock(return_value=None)
 
@@ -341,6 +341,7 @@ class TestConnectionService(unittest.TestCase):
             cursor=MockCursor(mock_query_results))
         psycopg2.connect = Mock(return_value=mock_connection)
         connection_service = ConnectionService()
+        mock_request_context = utils.MockRequestContext()
 
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
@@ -350,9 +351,10 @@ class TestConnectionService(unittest.TestCase):
         # Verify that calling the listdatabases handler returns the expected databases
         params = ListDatabasesParams()
         params.owner_uri = connection_uri
-        response = connection_service.handle_list_databases(params)
+
+        connection_service.handle_list_databases(mock_request_context, params)
         expected_databases = [result[0] for result in mock_query_results]
-        self.assertEqual(response.database_names, expected_databases)
+        self.assertEqual(mock_request_context.last_response_params.database_names, expected_databases)
 
     def test_get_connection_for_existing_connection(self):
         """Test that get_connection returns a connection that already exists for the given URI and type"""
@@ -421,6 +423,7 @@ class MockConnection(object):
         self.dsn_parameters = dsn_parameters
         self.server_version = '9.6.2'
         self.cursor = Mock(return_value=cursor)
+        self.commit = Mock()
 
     def get_dsn_parameters(self):
         """Mock for the connection's get_dsn_parameters method"""
@@ -439,7 +442,6 @@ class MockCursor:
 
     def __init__(self, query_results):
         self.execute = Mock()
-        self.commit = Mock()
         self.fetchall = Mock(return_value=query_results)
 
 

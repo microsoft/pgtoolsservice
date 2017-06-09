@@ -39,7 +39,7 @@ class TestCapabilitiesService(unittest.TestCase):
     # noinspection PyUnresolvedReferences
     def test_initialization_request(self):
         # Setup: Create a request context with mocked out send_* methods
-        rc = utils.get_mock_request_context()
+        rc = utils.MockRequestContext()
 
         # If: I request the language service capabilities of this server
         CapabilitiesService._handle_initialize_request(rc, None)
@@ -53,7 +53,7 @@ class TestCapabilitiesService(unittest.TestCase):
     # noinspection PyUnresolvedReferences
     def test_dmp_capabilities_request(self):
         # Setup: Create a request context with mocked out send_* methods
-        rc = utils.get_mock_request_context()
+        rc = utils.MockRequestContext()
 
         # If: I request the dmp capabilities of this server
         CapabilitiesService._handle_dmp_capabilities_request(rc, None)

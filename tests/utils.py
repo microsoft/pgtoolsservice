@@ -8,18 +8,25 @@ import mock
 from pgsqltoolsservice.hosting import RequestContext
 
 
-def get_mock_request_context() -> RequestContext:
-    """
-    Generates a request context with each send_* method replaced with a MagicMock
-    :return: RequestContext with mocked send_* functions
-    """
-    mock_send_response = mock.MagicMock()
-    mock_send_notification = mock.MagicMock()
-    mock_send_error = mock.MagicMock()
+class MockRequestContext(RequestContext):
+    """Mock RequestContext object that allows service responses, notifications, and errors to be tested"""
 
-    mock_request_context = RequestContext(None, None)
-    mock_request_context.send_response = mock_send_response
-    mock_request_context.send_notification = mock_send_notification
-    mock_request_context.send_error = mock_send_error
+    def __init__(self):
+        RequestContext.__init__(self, None, None)
+        self.last_response_params = None
+        self.last_notification_method = None
+        self.last_notification_params = None
+        self.last_error_message = None
+        self.send_response = mock.Mock(side_effect=self.send_response_impl)
+        self.send_notification = mock.Mock(side_effect=self.send_notification_impl)
+        self.send_error = mock.Mock(side_effect=self.send_error_impl)
 
-    return mock_request_context
+    def send_response_impl(self, params):
+        self.last_response_params = params
+
+    def send_notification_impl(self, method, params):
+        self.last_notification_method = method
+        self.last_notification_params = params
+
+    def send_error_impl(self, message, data=None, code=0):
+        self.last_error_message = message
