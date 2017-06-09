@@ -346,7 +346,6 @@ class TestConnectionService(unittest.TestCase):
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
         connection_info = ConnectionInfo(connection_uri, connection_details)
-        connection_info.add_connection(connection_type, mock_connection)
         connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         # Verify that calling the listdatabases handler returns the expected databases

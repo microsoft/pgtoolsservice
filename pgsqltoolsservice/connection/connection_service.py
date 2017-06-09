@@ -103,7 +103,7 @@ class ConnectionService:
         if connection_info is None:
             raise RuntimeError('No connection associated with the given URI')
         if not connection_info.has_connection(ConnectionType.DEFAULT):
-            self._connect(ConnectRequestParams(params.owner_uri, connection_info.details, ConnectionType.DEFAULT))
+            self._connect(ConnectRequestParams(connection_info.details, params.owner_uri, ConnectionType.DEFAULT))
         connection = connection_info.get_connection(ConnectionType.DEFAULT)
         query_results = _execute_query(connection, 'SELECT datname FROM pg_database WHERE datistemplate = false;')
         database_names = [result[0] for result in query_results]
