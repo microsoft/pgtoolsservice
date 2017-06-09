@@ -4,20 +4,27 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType  # noqa
+from pgsqltoolsservice.workspace.contracts.common import TextDocumentItem
 import pgsqltoolsservice.utils as utils
 
 
-class ConnectRequestParams:
+class DidOpenTextDocumentParams:
+    """
+    Parameters for a textDocument/didOpen notification
+    Attributes:
+        text_document:  The document that was opened
+    """
+
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     connection=ConnectionDetails)
+                                                     text_document=TextDocumentItem)
 
     def __init__(self):
-        self.connection: ConnectionDetails = None
-        self.owner_uri: str = None
-        self.type: ConnectionType = None
+        self.text_document: TextDocumentItem = None
 
 
-CONNECT_REQUEST = IncomingMessageConfiguration('connection/connect', ConnectRequestParams)
+DID_OPEN_TEXT_DOCUMENT_NOTIFICATION = IncomingMessageConfiguration(
+    'textDocument/didOpen',
+    DidOpenTextDocumentParams
+)
