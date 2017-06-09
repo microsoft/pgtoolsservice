@@ -14,7 +14,7 @@ import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (
     CONNECTION_COMPLETE_METHOD, ConnectionType, ConnectRequestParams, ConnectionDetails,
-    DisconnectRequestParams, ListDatabasesParams, ListDatabasesResponse
+    DisconnectRequestParams, ListDatabasesParams
 )
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 import tests.utils as utils
@@ -332,7 +332,6 @@ class TestConnectionService(unittest.TestCase):
         # Set up the test with mock data
         mock_query_results = [('database1',), ('database2',)]
         connection_uri = 'someuri'
-        connection_type = ConnectionType.DEFAULT
         mock_connection = MockConnection(
             dsn_parameters={
                 'host': 'myserver',
@@ -437,6 +436,7 @@ class MockConnection(object):
 
 class MockCursor:
     """Class used to mock psycopg2 cursor objects for testing"""
+
     def __init__(self, query_results):
         self.execute = Mock()
         self.commit = Mock()
