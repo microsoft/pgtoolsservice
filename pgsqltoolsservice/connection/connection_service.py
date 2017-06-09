@@ -16,7 +16,8 @@ from pgsqltoolsservice.connection.contracts import (
     CONNECT_REQUEST, ConnectRequestParams,
     DISCONNECT_REQUEST, DisconnectRequestParams,
     CONNECTION_COMPLETE_METHOD, ConnectionCompleteParams,
-    ConnectionDetails, ConnectionSummary, ConnectionType
+    ConnectionDetails, ConnectionSummary, ConnectionType, ServerInfo,
+    LIST_DATABASES_REQUEST, ListDatabasesParams
 )
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 
@@ -30,7 +31,7 @@ class ConnectionInfo(object):
         self.connection_id: str = str(uuid.uuid4())
         self._connection_map: dict = {}
 
-    def get_connection(self, connection_type):
+    def get_connection(self, connection_type: ConnectionType):
         """Get the connection associated with the given connection type, or return None"""
         return self._connection_map.get(connection_type)
 
@@ -38,11 +39,11 @@ class ConnectionInfo(object):
         """Get all connections held by this object"""
         return self._connection_map.values()
 
-    def add_connection(self, connection_type, connection):
+    def add_connection(self, connection_type: ConnectionType, connection):
         """Add a connection to the connection map, associated with the given connection type"""
         self._connection_map[connection_type] = connection
 
-    def remove_connection(self, connection_type):
+    def remove_connection(self, connection_type: ConnectionType):
         """
         Remove the connection associated with the given connection type, or raise a KeyError if
         there is no such connection
@@ -50,8 +51,12 @@ class ConnectionInfo(object):
         self._connection_map.pop(connection_type)
 
     def remove_all_connections(self):
-        """ Remove all connections held by this object"""
+        """Remove all connections held by this object"""
         self._connection_map = {}
+
+    def has_connection(self, connection_type: ConnectionType):
+        """Return whether this object has a connection matching the given connection type"""
+        return connection_type in self._connection_map
 
 
 class ConnectionService:
@@ -69,6 +74,7 @@ class ConnectionService:
         # Register the handlers for the service
         self._service_provider.server.set_request_handler(CONNECT_REQUEST, self.handle_connect_request)
         self._service_provider.server.set_request_handler(DISCONNECT_REQUEST, self.handle_disconnect_request)
+        self._service_provider.server.set_request_handler(LIST_DATABASES_REQUEST, self.handle_list_databases)
 
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
@@ -91,13 +97,29 @@ class ConnectionService:
         else:
             request_context.send_response(self._close_connections(connection_info, params.type))
 
+    def handle_list_databases(self, params: ListDatabasesParams):
+        """List all databases on the server that the given URI has a connection to"""
+        connection_info = self.owner_to_connection_map.get(params.owner_uri)
+        if connection_info is None:
+            raise RuntimeError('No connection associated with the given URI')
+        if not connection_info.has_connection(ConnectionType.DEFAULT):
+            self._connect(ConnectRequestParams(params.owner_uri, connection_info.details, ConnectionType.DEFAULT))
+        connection = connection_info.get_connection(ConnectionType.DEFAULT)
+        cursor = connection.cursor()
+        query = 'SELECT datname FROM pg_database WHERE datistemplate = false;'
+        cursor.execute(query)
+        query_results = cursor.fetchall()
+        cursor.commit()
+        database_names = [result[0] for result in query_results]
+        return {'databaseNames': database_names}
+
     # IMPLEMENTATION DETAILS ###############################################
     def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Open a connection and fire the connection complete notification"""
         response = self._connect(params)
         request_context.send_notification(CONNECTION_COMPLETE_METHOD, response)
 
-    def _connect(self, params):
+    def _connect(self, params: ConnectRequestParams):
         """
         Open a connection using the given connection information.
 
@@ -117,7 +139,7 @@ class ConnectionService:
         # Get the connection for the given type and build a response if it is present, otherwise open the connection
         connection = connection_info.get_connection(params.type)
         if connection is not None:
-            return build_connection_response(connection_info, connection, params.type)
+            return _build_connection_response(connection_info, params.type)
 
         # The connection doesn't exist yet. Build the connection string from the provided options
         connection_options = params.connection.options
@@ -131,9 +153,9 @@ class ConnectionService:
         try:
             connection = psycopg2.connect(connection_string)
             connection_info.add_connection(params.type, connection)
-            return build_connection_response(connection_info, connection, params.type)
+            return _build_connection_response(connection_info, params.type)
         except Exception as err:
-            return build_connection_response_error(connection_info, params.type, err)
+            return _build_connection_response_error(connection_info, params.type, err)
 
     @staticmethod
     def _close_connections(connection_info: ConnectionInfo, connection_type=None):
@@ -164,8 +186,9 @@ class ConnectionService:
         return True
 
 
-def build_connection_response(connection_info, connection, connection_type):
+def _build_connection_response(connection_info: ConnectionInfo, connection_type: ConnectionType):
     """Build a connection complete response object"""
+    connection = connection_info.get_connection(connection_type)
     dsn_parameters = connection.get_dsn_parameters()
 
     connection_summary = ConnectionSummary(dsn_parameters['dbname'], dsn_parameters['host'], dsn_parameters['user'])
@@ -175,11 +198,12 @@ def build_connection_response(connection_info, connection, connection_type):
     response.connection_summary = connection_summary
     response.owner_uri = connection_info.owner_uri
     response.type = connection_type
+    response.server_info = _get_server_info(connection)
 
     return response
 
 
-def build_connection_response_error(connection_info: ConnectionInfo, connection_type: ConnectionType, err):
+def _build_connection_response_error(connection_info: ConnectionInfo, connection_type: ConnectionType, err):
     """Build a connection complete response object"""
     response: ConnectRequestParams = ConnectionCompleteParams()
     response.owner_uri = connection_info.owner_uri
@@ -188,6 +212,13 @@ def build_connection_response_error(connection_info: ConnectionInfo, connection_
     response.error_message = str(err)
 
     return response
+
+
+def _get_server_info(connection):
+    """Build the server info response for a connection"""
+    server_version = connection.get_parameter_status('server_version')
+    is_cloud = connection.get_dsn_parameters()['host'].endswith('postgres.database.azure.com')
+    return ServerInfo(server_version, is_cloud)
 
 
 # Dictionary mapping connection option names to their corresponding connection string keys.

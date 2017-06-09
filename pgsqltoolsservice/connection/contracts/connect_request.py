@@ -14,10 +14,10 @@ class ConnectRequestParams:
         return utils.convert_from_dict(cls, dictionary,
                                        connection=ConnectionDetails)
 
-    def __init__(self):
-        self.connection: ConnectionDetails = None
-        self.owner_uri: str = None
-        self.type: ConnectionType = None
+    def __init__(self, connection_details=None, owner_uri=None, connection_type=None):
+        self.connection: ConnectionDetails = connection_details
+        self.owner_uri: str = owner_uri
+        self.type: ConnectionType = connection_type
 
 
 CONNECT_REQUEST = IncomingMessageConfiguration('connection/connect', ConnectRequestParams)

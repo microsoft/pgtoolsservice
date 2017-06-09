@@ -57,6 +57,39 @@ class TestConnectionService(unittest.TestCase):
         self.assertIs(connection_service.owner_to_connection_map[params.owner_uri].get_connection(params.type),
                       mock_connection)
         self.assertIsNotNone(response.connection_id)
+        self.assertIsNotNone(response.server_info.server_version)
+        self.assertFalse(response.server_info.is_cloud)
+
+    def test_server_info_is_cloud(self):
+        """Test that the connection response handles cloud connections correctly"""
+        # Set up the parameters for the connection
+        connection_uri = 'someuri'
+        connection_details = ConnectionDetails()
+        connection_details.options = {
+            'user': 'postgres@myserver',
+            'password': 'password',
+            'host': 'myserver.postgres.database.azure.com',
+            'dbname': 'postgres'}
+        connection_type = ConnectionType.DEFAULT
+
+        # Set up the mock connection for psycopg2's connect method to return
+        mock_connection = MockConnection(dsn_parameters={
+            'host': 'myserver.postgres.database.azure.com',
+            'dbname': 'postgres',
+            'user': 'postgres@myserver'
+        })
+        psycopg2.connect = Mock(return_value=mock_connection)
+
+        # Set up the connection service and call its connect method with the
+        # supported options
+        connection_service = ConnectionService()
+        response = connection_service._connect(
+            ConnectRequestParams(connection_details, connection_uri, connection_type))
+
+        # Verify that the response's serverInfo.isCloud attribute is set correctly
+        self.assertIsNotNone(response.connection_id)
+        self.assertIsNotNone(response.server_info.server_version)
+        self.assertTrue(response.server_info.is_cloud)
 
     def test_changing_options_disconnects_existing_connection(self):
         """
@@ -301,10 +334,18 @@ class MockConnection(object):
     def __init__(self, dsn_parameters=None):
         self.close = Mock()
         self.dsn_parameters = dsn_parameters
+        self.server_version = '9.6.2'
 
     def get_dsn_parameters(self):
         """Mock for the connection's get_dsn_parameters method"""
         return self.dsn_parameters
+
+    def get_parameter_status(self, parameter):
+        """Mock for the connection's get_parameter_status method"""
+        if parameter == 'server_version':
+            return self.server_version
+        else:
+            raise NotImplementedError()
 
 
 if __name__ == '__main__':
