@@ -5,10 +5,10 @@
 
 """Utility functions for the PostgreSQL Tools Service"""
 
-import pgsqltoolsservice.utils.validate
 import pgsqltoolsservice.utils.serialization
+import pgsqltoolsservice.utils.validate         # noqa
 
 __all__ = [
-    'validate',
-    'serialization'
+    'serialization',
+    'validate'
 ]

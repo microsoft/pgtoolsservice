@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List     # noqa
+from typing import List, Optional     # noqa
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.workspace.contracts.common import Range
@@ -27,8 +27,8 @@ class TextDocumentChangeEvent:
                                                      range=Range)
 
     def __init__(self):
-        self.range: [Range, None] = None
-        self.range_length: [int, None] = None
+        self.range: Optional[Range] = None
+        self.range_length: Optional[int] = None
         self.text: str = None
 
 

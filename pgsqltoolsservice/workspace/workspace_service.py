@@ -3,9 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from logging import Logger          # noqa
 from typing import Callable, List   # noqa
 
-from pgsqltoolsservice.hosting import NotificationContext, ServiceProvider
+from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
 from pgsqltoolsservice.workspace.contracts import (
     DID_CHANGE_CONFIG_NOTIFICATION, DidChangeConfigurationParams,
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
@@ -25,6 +26,8 @@ class WorkspaceService:
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
+        self._server: JSONRPCServer = None
+        self._logger: [Logger, None] = None
         self._workspace: Workspace = None
 
         # Create a workspace that will handle state for the session
@@ -39,14 +42,13 @@ class WorkspaceService:
 
     def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
+        self._logger = service_provider.logger
+        self._server = service_provider.server
 
         # Register the handlers for when changes to the workspace occur
-        self._service_provider.server.set_notification_handler(DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION,
-                                                               self._handle_did_change_text_doc)
-        self._service_provider.server.set_notification_handler(DID_OPEN_TEXT_DOCUMENT_NOTIFICATION,
-                                                               self._handle_did_open_text_doc)
-        self._service_provider.server.set_notification_handler(DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION,
-                                                               self._handle_did_close_text_doc)
+        self._server.set_notification_handler(DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, self._handle_did_change_text_doc)
+        self._server.set_notification_handler(DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, self._handle_did_open_text_doc)
+        self._server.set_notification_handler(DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, self._handle_did_close_text_doc)
 
         # Register handler for when the configuration changes
         self._service_provider.server.set_notification_handler(DID_CHANGE_CONFIG_NOTIFICATION,
@@ -110,8 +112,8 @@ class WorkspaceService:
             for callback in self._text_change_callbacks:
                 callback(script_file)
         except Exception as e:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(f'Exception caught during text doc change: {e}')
+            if self._logger is not None:
+                self._logger.exception(f'Exception caught during text doc change: {e}')
 
     def _handle_did_open_text_doc(
             self,
@@ -134,8 +136,8 @@ class WorkspaceService:
             for callback in self._text_open_callbacks:
                 callback(opened_file)
         except Exception as e:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(f'Exception caught during text doc open: {e}')
+            if self._logger is not None:
+                self._logger.exception(f'Exception caught during text doc open: {e}')
 
     def _handle_did_close_text_doc(
             self,
@@ -158,5 +160,5 @@ class WorkspaceService:
             for callback in self._text_close_callbacks:
                 callback(closed_file)
         except Exception as e:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(f'Exception caught during text doc close: {e}')
+            if self._logger is not None:
+                self._logger.exception(f'Exception caught during text doc close: {e}')
