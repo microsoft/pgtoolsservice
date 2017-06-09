@@ -8,6 +8,7 @@ disconnect and holds the current connection, if one is present"""
 
 import threading
 import uuid
+
 import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (

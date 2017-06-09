@@ -3,7 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from datetime import datetime
+
 import psycopg2
+
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
@@ -12,17 +15,17 @@ from pgsqltoolsservice.query_execution.contracts import (
     QUERY_COMPLETE_NOTIFICATION,
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
-    BatchEventParams, ResultMessage, MessageParams, DbColumn
+    BatchEventParams, ResultMessage, MessageParams, DbColumn, QueryCompleteParams
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
-from pgsqltoolsservice.query_execution.batch import (Batch, get_time_str)
+from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.result_set import ResultSet
-
-from datetime import datetime
+from pgsqltoolsservice.utils.time import get_time_str
+from pgsqltoolsservice.utils.log import log_debug
 
 
 class QueryExecutionService(object):
-    """Class that executes a query"""
+    """Service for executing queries"""
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
@@ -46,8 +49,6 @@ class QueryExecutionService(object):
     def _handle_execute_query_request(
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
-
-        request_context.send_response({})
         # Retrieve the connection service
         connection_service = self._service_provider['connection']
         if connection_service is None:
@@ -57,16 +58,17 @@ class QueryExecutionService(object):
         # Setup a dummy query and batch id
         query = "SELECT * from pg_authid"
         BATCH_ID = 0
-        if self._service_provider.logger is not None:
-            self._service_provider.logger.debug('Connection when attempting to query is %s', conn)
+        log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
         if conn is None:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.debug('Attempted to run query without an active connection')
+            #TODO: Send back appropriate error response
+            log_debug(self._service_provider.logger, 'Attempted to run query without an active connection')
             return
+
+        request_context.send_response({})
         cur = conn.cursor()
 
         try:
-            cur.execute(query)
+            
             # TODO: send responses asynchronously
 
             # send query/batchStart response
@@ -76,7 +78,7 @@ class QueryExecutionService(object):
 
             cur.execute(query)
             batch.has_executed = True
-            batch.end_time = get_time_str(datetime.now())
+            batch.end_time = datetime.now()
             self.query_results = cur.fetchall()
 
             column_info = []
@@ -85,7 +87,10 @@ class QueryExecutionService(object):
                 column_info.append(DbColumn(index, desc))
                 index += 1
             batch.result_sets.append(ResultSet(0, 0, column_info, cur.rowcount))
-            batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
+            summary = batch.build_batch_summary()
+            batch_event_params = BatchEventParams(summary, params.owner_uri)
+
+            conn.commit()
 
             # send query/resultSetComplete response
             # result_set_summary = batch.build_batch_summary().result_set_summaries
@@ -98,27 +103,30 @@ class QueryExecutionService(object):
             message_params = MessageParams(result_message, params.owner_uri)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
+            summaries = []
+            summaries.append(summary)
+            query_complete_params = QueryCompleteParams(summaries, params.owner_uri)
             # send query/batchComplete and query/complete resposnes
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
-            request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, batch_event_params)
+            request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
         except psycopg2.DatabaseError as e:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.debug('Query execution failed for following query: %s', query)
-            result_message = ResultMessage(psycopg2.errorcodes.lookup(e.pgcode), True, datetime.now(), BATCH_ID)
+            log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
+            result_message = ResultMessage(psycopg2.errorcodes.lookup(e.pgcode), True, get_time_str(datetime.now()), BATCH_ID)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
             return
         finally:
-            cur.close()
+            if cur is not None:
+                cur.close()
 
     def get_connection(self, connection_service, owner_uri):
         """Get the connection string"""
         connection_info = connection_service.owner_to_connection_map[owner_uri]
-        self._service_provider.logger.debug(f'Connection info is {connection_info}')
+        log_debug(self._service_provider.logger, (f'Connection info is {connection_info}'))
         if connection_info is None:
             return None
         connection = connection_info.get_connection(ConnectionType.DEFAULT)
-        self._service_provider.logger.debug(f'Connection is {connection}')
+        log_debug(self._service_provider.logger, f'Connection is {connection}')
         return connection
 
     # TODO: Analyze arguments to look for a particular subset of a particular result.

@@ -3,9 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Test connection.ConnectionService"""
-
-from __future__ import unicode_literals
+"""Test query_execution.QueryExecutionService"""
 
 import unittest
 import mock
@@ -15,7 +13,7 @@ from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMe
 
 
 class TestQueryService(unittest.TestCase):
-    """Methods for testing the connection service"""
+    """Methods for testing the query execution service"""
 
     def test_initialization(self):
         # Setup: Create a capabilities service with a mocked out service provider

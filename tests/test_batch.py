@@ -3,9 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Test connection.ConnectionService"""
-
-from __future__ import unicode_literals
+"""Test query_execution.Batch"""
 
 import unittest
 from nose.tools import with_setup
@@ -20,16 +18,10 @@ class TestBatch(unittest.TestCase):
         unittest.TestCase.__init__(self, methodName)
         self.default_sel_data = None
 
-    def setup(self):
+    def setUp(self):
         """Constructor"""
-        selection = SelectionData()
-        selection.start_line = 0
-        selection.start_column = 0
-        selection.end_line = 0
-        selection.end_column = 0
         self.default_sel_data = SelectionData()
 
-    @with_setup(setup)
     def test_build_batch_summary(self):
         """Test that the proper Batch Summary format is created"""
         batch = Batch(0, self.default_sel_data, False)

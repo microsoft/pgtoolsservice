@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 """Contains contracts for query execution service"""
+from typing import List
 
 import pgsqltoolsservice.utils as utils
 
@@ -131,7 +132,7 @@ class MessageParams(object):
 class QueryCompleteParams(object):
 
     def __init__(self, batch_summaries, owner_uri):
-        self.batch_summaries = batch_summaries
+        self.batch_summaries: List[BatchSummary] = batch_summaries
         self.owner_uri = owner_uri
 
 
