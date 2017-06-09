@@ -76,6 +76,15 @@ class ConnectionService:
         self._service_provider.server.set_request_handler(DISCONNECT_REQUEST, self.handle_disconnect_request)
         self._service_provider.server.set_request_handler(LIST_DATABASES_REQUEST, self.handle_list_databases)
 
+    def get_connection(self, owner_uri: str, connection_type: ConnectionType):
+        """Get a psycopg2 connection for the given owner URI and connection type"""
+        if owner_uri not in self.owner_to_connection_map:
+            raise RuntimeError('No connection associated with given owner URI')
+        connection_info = self.owner_to_connection_map[owner_uri]
+        if not connection_info.has_connection(connection_type):
+            self._connect(ConnectRequestParams(connection_info.details, owner_uri, connection_type))
+        return connection_info.get_connection(connection_type)
+
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Kick off a connection in response to an incoming connection request"""
@@ -99,12 +108,7 @@ class ConnectionService:
 
     def handle_list_databases(self, params: ListDatabasesParams):
         """List all databases on the server that the given URI has a connection to"""
-        connection_info = self.owner_to_connection_map.get(params.owner_uri)
-        if connection_info is None:
-            raise RuntimeError('No connection associated with the given URI')
-        if not connection_info.has_connection(ConnectionType.DEFAULT):
-            self._connect(ConnectRequestParams(connection_info.details, params.owner_uri, ConnectionType.DEFAULT))
-        connection = connection_info.get_connection(ConnectionType.DEFAULT)
+        connection = self.get_connection(params.owner_uri, ConnectionType.DEFAULT)
         query_results = _execute_query(connection, 'SELECT datname FROM pg_database WHERE datistemplate = false;')
         database_names = [result[0] for result in query_results]
         return ListDatabasesResponse(database_names)

@@ -355,6 +355,64 @@ class TestConnectionService(unittest.TestCase):
         expected_databases = [result[0] for result in mock_query_results]
         self.assertEqual(response.database_names, expected_databases)
 
+    def test_get_connection_for_existing_connection(self):
+        """Test that get_connection returns a connection that already exists for the given URI and type"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+        connection_type = ConnectionType.EDIT
+        mock_connection = MockConnection(
+            dsn_parameters={
+                'host': 'myserver',
+                'dbname': 'postgres',
+                'user': 'postgres'
+            })
+        psycopg2.connect = Mock(return_value=mock_connection)
+        connection_service = ConnectionService()
+
+        # Insert a ConnectionInfo object into the connection service's map
+        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_info = ConnectionInfo(connection_uri, connection_details)
+        connection_service.owner_to_connection_map[connection_uri] = connection_info
+
+        # Get the connection without first creating it
+        connection = connection_service.get_connection(connection_uri, connection_type)
+        self.assertEqual(connection, mock_connection)
+        psycopg2.connect.assert_called_once()
+
+    def test_get_connection_creates_connection(self):
+        """Test that get_connection creates a new connection when none exists for the given URI and type"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+        connection_type = ConnectionType.EDIT
+        mock_connection = MockConnection(
+            dsn_parameters={
+                'host': 'myserver',
+                'dbname': 'postgres',
+                'user': 'postgres'
+            })
+        psycopg2.connect = Mock(return_value=mock_connection)
+        connection_service = ConnectionService()
+
+        # Insert a ConnectionInfo object into the connection service's map
+        connection_details = ConnectionDetails.from_data(
+            'myserver', 'postgres', 'postgres', {})
+        connection_info = ConnectionInfo(connection_uri, connection_details)
+        connection_service.owner_to_connection_map[connection_uri] = connection_info
+
+        # Open the connection
+        connection_service._connect(ConnectRequestParams(connection_details, connection_uri, connection_type))
+
+        # Get the connection
+        connection = connection_service.get_connection(connection_uri, connection_type)
+        self.assertEqual(connection, mock_connection)
+        psycopg2.connect.assert_called_once()
+
+    def test_get_connection_for_invalid_uri(self):
+        """Test that get_connection raises an error if the given URI is unknown"""
+        connection_service = ConnectionService()
+        with self.assertRaises(RuntimeError):
+            connection_service.get_connection('someuri', ConnectionType.DEFAULT)
+
 
 class MockConnection(object):
     """Class used to mock psycopg2 connection objects for testing"""
