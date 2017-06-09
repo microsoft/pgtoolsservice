@@ -14,7 +14,7 @@ class SelectionData(object):
     """Container class for a selection range from file"""
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.convert_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.start_line: int = 0

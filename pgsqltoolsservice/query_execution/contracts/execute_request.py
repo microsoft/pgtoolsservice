@@ -17,7 +17,7 @@ class ExecuteRequestParamsBase:
 class ExecuteStringParams(ExecuteRequestParamsBase):
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.convert_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         super().__init__()
@@ -33,7 +33,7 @@ EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
 class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.convert_from_dict(cls, dictionary,
+        return utils.serialization.convert_from_dict(cls, dictionary,
                                        query_selection=SelectionData)
 
     def __init__(self):
