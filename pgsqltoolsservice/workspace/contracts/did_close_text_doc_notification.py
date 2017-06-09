@@ -4,20 +4,27 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType  # noqa
+from pgsqltoolsservice.workspace.contracts.common import TextDocumentItem
 import pgsqltoolsservice.utils as utils
 
 
-class ConnectRequestParams:
+class DidCloseTextDocumentParams:
+    """
+    Parameters to receive with a textDocument/didClose notification
+    Attributes:
+        text_document:  The document that was closed
+    """
+
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     connection=ConnectionDetails)
+                                                     text_document=TextDocumentItem)
 
     def __init__(self):
-        self.connection: ConnectionDetails = None
-        self.owner_uri: str = None
-        self.type: ConnectionType = None
+        self.text_document: TextDocumentItem = None
 
 
-CONNECT_REQUEST = IncomingMessageConfiguration('connection/connect', ConnectRequestParams)
+DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION = IncomingMessageConfiguration(
+    'textDocument/didClose',
+    DidCloseTextDocumentParams
+)
