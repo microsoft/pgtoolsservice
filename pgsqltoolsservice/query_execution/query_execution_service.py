@@ -20,8 +20,7 @@ from pgsqltoolsservice.query_execution.contracts.common import (
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.result_set import ResultSet
-from pgsqltoolsservice.utils.time import get_time_str
-from pgsqltoolsservice.utils.log import log_debug
+import pgsqltoolsservice.utils as utils
 
 
 class QueryExecutionService(object):
@@ -58,10 +57,10 @@ class QueryExecutionService(object):
         # Setup a dummy query and batch id
         query = "SELECT * from pg_authid"
         BATCH_ID = 0
-        log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
+        utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
         if conn is None:
             # TODO: Send back appropriate error response
-            log_debug(self._service_provider.logger, 'Attempted to run query without an active connection')
+            utils.log.log_debug(self._service_provider.logger, 'Attempted to run query without an active connection')
             return
 
         request_context.send_response({})
@@ -99,7 +98,7 @@ class QueryExecutionService(object):
 
             # send query/message response
             message = "({0} rows affected)".format(cur.rowcount)
-            result_message = ResultMessage(BATCH_ID, False, get_time_str(datetime.now()), message)
+            result_message = ResultMessage(BATCH_ID, False, utils.time.get_time_str(datetime.now()), message)
             message_params = MessageParams(result_message, params.owner_uri)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
@@ -111,10 +110,10 @@ class QueryExecutionService(object):
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
         except psycopg2.DatabaseError as e:
-            log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
+            utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
             result_message = ResultMessage(
                 psycopg2.errorcodes.lookup(
-                    e.pgcode), True, get_time_str(
+                    e.pgcode), True, utils.time.get_time_str(
                     datetime.now()), BATCH_ID)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
             return
@@ -125,11 +124,11 @@ class QueryExecutionService(object):
     def get_connection(self, connection_service, owner_uri):
         """Get the connection string"""
         connection_info = connection_service.owner_to_connection_map[owner_uri]
-        log_debug(self._service_provider.logger, (f'Connection info is {connection_info}'))
+        utils.log.log_debug(self._service_provider.logger, f'Connection info is {connection_info}')
         if connection_info is None:
             return None
         connection = connection_info.get_connection(ConnectionType.DEFAULT)
-        log_debug(self._service_provider.logger, f'Connection is {connection}')
+        utils.log.log_debug(self._service_provider.logger, f'Connection is {connection}')
         return connection
 
     # TODO: Analyze arguments to look for a particular subset of a particular result.
