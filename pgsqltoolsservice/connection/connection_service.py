@@ -6,7 +6,6 @@
 """This module holds the connection service class, which allows for the user to connect and
 disconnect and holds the current connection, if one is present"""
 
-import logging
 import threading
 import uuid
 
@@ -58,7 +57,6 @@ class ConnectionService:
     """Manage a single connection, including the ability to connect/disconnect"""
 
     def __init__(self):
-        self.connection = None
         self.owner_to_connection_map = {}
         self.owner_to_thread_map = {}
         self._service_provider = None
@@ -69,6 +67,9 @@ class ConnectionService:
         # Register the handlers for the service
         self._service_provider.server.set_request_handler(CONNECT_REQUEST, self.handle_connect_request)
         self._service_provider.server.set_request_handler(DISCONNECT_REQUEST, self.handle_disconnect_request)
+
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.info('Connection service successfully initialized')
 
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
@@ -125,7 +126,6 @@ class ConnectionService:
         for option, value in connection_options.items():
             key = CONNECTION_OPTION_KEY_MAP[option] if option in CONNECTION_OPTION_KEY_MAP else option
             connection_string += "{}='{}' ".format(key, value)
-        logging.debug(f'Connecting with connection string {connection_string}')
 
         # Connect using psycopg2
         try:

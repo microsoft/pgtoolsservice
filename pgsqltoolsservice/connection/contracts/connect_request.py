@@ -17,7 +17,7 @@ class ConnectRequestParams:
     def __init__(self):
         self.connection: ConnectionDetails = None
         self.owner_uri: str = None
-        self.type: ConnectionType = None
+        self.type: ConnectionType = ConnectionType.DEFAULT
 
 
 CONNECT_REQUEST = IncomingMessageConfiguration('connection/connect', ConnectRequestParams)

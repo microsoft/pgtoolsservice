@@ -28,7 +28,17 @@ from pgsqltoolsservice.query_execution.contracts.common import (
     ResultSetSummary,
     BatchSummary,
     ResultMessage,
-    QuerySelection
+    SelectionData,
+    DbColumn,
+    DbCellValue,
+    BatchEventParams,
+    MessageParams,
+    QueryCompleteParams,
+    ResultSetEventParams,
+    ResultSetSubset,
+    SubsetResult,
+    SpecialAction
+
 )
 
 __all__ = [
@@ -46,5 +56,14 @@ __all__ = [
     'ResultSetSummary',
     'BatchSummary',
     'ResultMessage',
-    'QuerySelection'
+    'SelectionData',
+    'DbColumn',
+    'DbCellValue',
+    'BatchEventParams',
+    'MessageParams',
+    'QueryCompleteParams',
+    'ResultSetEventParams',
+    'ResultSetSubset',
+    'SubsetResult',
+    'SpecialAction'
 ]
