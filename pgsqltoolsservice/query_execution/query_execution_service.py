@@ -60,7 +60,7 @@ class QueryExecutionService(object):
         BATCH_ID = 0
         log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
         if conn is None:
-            #TODO: Send back appropriate error response
+            # TODO: Send back appropriate error response
             log_debug(self._service_provider.logger, 'Attempted to run query without an active connection')
             return
 
@@ -68,7 +68,7 @@ class QueryExecutionService(object):
         cur = conn.cursor()
 
         try:
-            
+
             # TODO: send responses asynchronously
 
             # send query/batchStart response
@@ -112,7 +112,10 @@ class QueryExecutionService(object):
 
         except psycopg2.DatabaseError as e:
             log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
-            result_message = ResultMessage(psycopg2.errorcodes.lookup(e.pgcode), True, get_time_str(datetime.now()), BATCH_ID)
+            result_message = ResultMessage(
+                psycopg2.errorcodes.lookup(
+                    e.pgcode), True, get_time_str(
+                    datetime.now()), BATCH_ID)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
             return
         finally:

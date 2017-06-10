@@ -40,6 +40,3 @@ class Batch(object):
             # No resultsets were set
             return None
         return self.result_sets[0].generate_result_set_summary()
-
-
-

@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 """Contains contracts for query execution service"""
-from typing import List
+from typing import List # noqa
 
 import pgsqltoolsservice.utils as utils
 

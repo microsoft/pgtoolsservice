@@ -34,7 +34,7 @@ class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary,
-                                                    query_selection=SelectionData)
+                                                     query_selection=SelectionData)
 
     def __init__(self):
         super().__init__()

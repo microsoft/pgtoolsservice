@@ -6,7 +6,6 @@
 """Test query_execution.Batch"""
 
 import unittest
-from nose.tools import with_setup
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.contracts.common import SelectionData, BatchSummary  # noqa
 

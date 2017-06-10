@@ -5,7 +5,8 @@
 
 """Utility functions for operating with datetimes"""
 
-from datetime import datetime #noaq
+from datetime import datetime  # noaq
+
 
 def get_time_str(time: datetime):
     """Convert a time object into a standard user-readable string"""
