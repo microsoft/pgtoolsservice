@@ -4,8 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 import os
-from typing import List, Optional               # noqa
-from urllib.parse import urlparse, ParseResult  # noqa
+from typing import List, Optional                        # noqa
+from urllib.parse import urlparse, unquote, ParseResult  # noqa
 from threading import Lock
 
 from pgsqltoolsservice.workspace.script_file import ScriptFile
@@ -31,100 +31,90 @@ class Workspace:
         return list(self._workspace_files.values())
 
     # METHODS ##############################################################
-    def close_file(self, file_path: str) -> [ScriptFile, None]:
+    def close_file(self, file_uri: str) -> [ScriptFile, None]:
         """
-        Closes a currently open script fil
-        :param file_path: The file to close
+        Closes a currently open script file
+        :param file_uri: URI to identify the script file as provided by the client
         :return: The ScriptFile that was closed, or None if the file is not open
         """
-        utils.validate.is_not_none_or_whitespace("file_path", file_path)
-
-        # Resolve the full file path
-        resolved_file_path: str = self._resolve_file_path(file_path)
-        key_name: str = resolved_file_path.lower()
+        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
 
         with self._workspace_files_lock:
             # Get the requested file, and delete it if it exists
             # Note: This is performed inside a lock context b/c we need this operation to be atomic
-            requested_file: ScriptFile = self._workspace_files.get(key_name)
+            requested_file: ScriptFile = self._workspace_files.get(file_uri)
             if requested_file is not None:
-                del self._workspace_files[key_name]
+                del self._workspace_files[file_uri]
             return requested_file
 
-    def contains_file(self, file_path: str) -> bool:
+    def contains_file(self, file_uri: str) -> bool:
         """
         Checks if a given URI is contained in a workspace
-        :param file_path: Path to the file to check whether or not it is open
+        :param file_uri: URI for the file, as provided by the client
         :return: Flag indicating if the file is tracked in workspace
         """
-        utils.validate.is_not_none_or_whitespace(u"file_path", file_path)
+        utils.validate.is_not_none_or_whitespace('file_uri', file_uri)
 
-        # Resolve the full file path
-        resolved_file_path: str = self._resolve_file_path(file_path)
-        key_name: str = resolved_file_path.lower()
+        return file_uri in self._workspace_files
 
-        return key_name in self._workspace_files
-
-    def open_file(self, file_path: str, initial_buffer: Optional[str]=None) -> [ScriptFile, None]:
+    def open_file(self, file_uri: str, initial_buffer: Optional[str]=None) -> [ScriptFile, None]:
         """
         Opens a file in the workspace
-        :param file_path: Path to the file to load
+        :param file_uri: URI to identify the script file, provided by the client
         :param initial_buffer: Optionally the initial contents of the file
         :return: ScriptFile representing the file that was opened
         """
-        utils.validate.is_not_none_or_whitespace("file_path", file_path)
+        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
 
         # Validate that the path is not an SCM path
-        if self._is_scm_path(file_path):
+        if self._is_scm_path(file_uri):
             return None
 
         # Resolve the full file path
         # TODO: Validate that this works with operating systems that allow files to differ by case only (ie, linux)
-        resolved_file_path: str = self._resolve_file_path(file_path)
-        key_name: str = resolved_file_path.lower()
+        resolved_file_path: str = self._resolve_file_path(file_uri)
 
         # If the file is already loaded in the workspace, just return it
-        script_file: ScriptFile = self._workspace_files.get(key_name)
+        script_file: ScriptFile = self._workspace_files.get(file_uri)
         if script_file is not None:
             return script_file
 
         # The script file isn't already loaded into the workspace. Open it.
         if initial_buffer is None:
+            if resolved_file_path is None:
+                # We can't create a script file if we don't have a buffer
+                # TODO: Localize
+                raise ValueError(f'File uri {file_uri} could not be resolved and file contents not provided.')
+
             # An initial buffer wasn't provided, load the contents
             with open(resolved_file_path, 'r') as file:
                 initial_buffer = file.read()
-        script_file = ScriptFile(resolved_file_path, file_path, initial_buffer)
+        script_file = ScriptFile(file_uri, initial_buffer, resolved_file_path)
+        self._workspace_files[file_uri] = script_file
         return script_file
 
-    def get_file(self, file_path: str) -> [ScriptFile, None]:
+    def get_file(self, file_uri: str) -> [ScriptFile, None]:
         """
         Gets an open file in the workspace. If the file isn't open, return None
-        :param file_path: File path at which the file to load exists
+        :param file_uri: URI to identify the file, provided by the client
         :return: ScriptFile representing the file that was loaded, None if the file isn't open
         """
-        utils.validate.is_not_none_or_whitespace("file_path", file_path)
+        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
 
-        # Resolve the full file path
-        resolved_file_path: str = self._resolve_file_path(file_path)
-        key_name: str = resolved_file_path.lower()
-
-        # Make sure the file isn't already loaded into the workspace
-        script_file: ScriptFile = self._workspace_files.get(key_name)
-
-        return script_file
+        return self._workspace_files.get(file_uri)
 
     # IMPLEMENTATION DETAILS ###############################################
     @staticmethod
-    def _is_path_in_memory(file_path: str) -> bool:
+    def _is_path_in_memory(file_uri: str) -> bool:
         """
         Determines if a file path is an "in-memory" path based on the schema it starts with
-        :param file_path: Path to determine if it is in-memory
+        :param file_uri: URI for the script file
         :return: True if the path is in-memory, false otherwise
         """
-        return file_path.startswith('inmemory:')\
-            or file_path.startswith('tsqloutput:')\
-            or file_path.startswith('git:')\
-            or file_path.startswith('untitled:')
+        return file_uri.startswith('inmemory:') \
+            or file_uri.startswith('tsqloutput:') \
+            or file_uri.startswith('git:') \
+            or file_uri.startswith('untitled:')
 
     @staticmethod
     def _is_scm_path(file_uri: str):
@@ -134,28 +124,47 @@ class Workspace:
         """
         return file_uri.startswith('git:')
 
-    def _resolve_file_path(self, file_path: str):
-        if not self._is_path_in_memory(file_path):
-            if file_path.startswith('file://'):
-                # Client sent the path in URI format, extract the local path and trim any extraneous slashes
-                file_uri: ParseResult = urlparse(file_path)
-                file_path: str = file_uri.path.lstrip('/')
-
-            # Some clients send paths with UNIX-style slashes, replace those if necessary
-            # TODO: Validate that this works properly
-            file_path = file_path.replace('/', '\\')
-
-            # Get the absolute file path
-            file_path = os.path.abspath(file_path)
-
-        return file_path
-
     @staticmethod
-    def _resolve_relative_script_path(base_file_path: str, relative_path: str) -> str:
-        # Skip resolution if the path is already absolute
-        if os.path.isabs(relative_path):
-            return relative_path
+    def _resolve_file_path(file_uri: str) -> Optional[str]:
+        """
+        Resolves the file URI into a path on disk based on the protocol of the uri
+        :param file_uri: URI provided by the client to identify the file
+        :return: None if the file is in memory, the location of the file if it is on disk
+        """
+        if Workspace._is_path_in_memory(file_uri):
+            # File is not on disk
+            return None
 
-        # Get the directory of the original script file, combine it with the given path and then resolve the absolute
-        # file path
-        return os.path.abspath(os.path.join(base_file_path, relative_path))
+        # File is on disk. Resolve where it could be.
+        file_path: str = file_uri
+        if file_path.startswith('file://'):
+            # This *should* always be the case, but it might not be if the client isn't adhering to
+            # the protocol properly
+            # Client sent a URI format path. Extract the path and possibly the host name
+            uri: ParseResult = urlparse(file_path)
+
+            if os.name == 'nt':
+                # If we're on windows, we need to do special processing
+                if uri.netloc != '':
+                    # eg: file://server/path/to/file -> //server/path/to/file
+                    # Path is to a remote machine
+                    file_path = f'//{unquote(uri.netloc)}{unquote(uri.path)}'
+                else:
+                    # eg: file:///d%3A/path/to/file -> d:/path/to/file
+                    # Path is local, and starts with an invalid /
+                    file_path = unquote(uri.path[1:])
+
+                # Convert / to \
+                # eg: d:/path/to/file -> d:\path\to\file
+                file_path = file_path.replace('/', '\\')
+            else:
+                if uri.netloc != '':
+                    # eg: file://server/path/to/file -> //server/path/to/file
+                    # Path is to a remote machine. Very uncommon to have a UNC path on OSX/Linux
+                    file_path = f'//{unquote(uri.netloc)}{unquote(uri.path)}'
+                else:
+                    # eg: file:///path/to/file -> /path/to/file
+                    file_path = unquote(uri.path)
+
+        # If the URI doesn't start with file:// then it is likely an absolute path to the file
+        return file_path
