@@ -21,7 +21,7 @@ class TestUtils(unittest.TestCase):
         The object includes nested objects, lists containing objects, dicts containing objects, and enums
         """
         test_object = _ConversionTestClass()
-        converted_dict = utils.convert_to_dict(test_object)
+        converted_dict = utils.serialization.convert_to_dict(test_object)
         self.assertEqual(converted_dict, test_object.expected_dict())
 
 

@@ -124,22 +124,22 @@ class JSONRPCMessage:
 
         if self._message_type is JSONRPCMessageType.Request:
             message_base['method'] = self._message_method
-            message_base['params'] = utils.convert_to_dict(self._message_params)
+            message_base['params'] = utils.serialization.convert_to_dict(self._message_params)
             message_base['id'] = self._message_id
             return message_base
 
         if self._message_type is JSONRPCMessageType.ResponseSuccess:
-            message_base['result'] = utils.convert_to_dict(self._message_result)
+            message_base['result'] = utils.serialization.convert_to_dict(self._message_result)
             message_base['id'] = self._message_id
             return message_base
 
         if self._message_type is JSONRPCMessageType.Notification:
             message_base['method'] = self._message_method
-            message_base['params'] = utils.convert_to_dict(self._message_params)
+            message_base['params'] = utils.serialization.convert_to_dict(self._message_params)
             return message_base
 
         if self._message_type is JSONRPCMessageType.ResponseError:
-            message_base['error'] = utils.convert_to_dict(self._message_error)
+            message_base['error'] = utils.serialization.convert_to_dict(self._message_error)
             message_base['id'] = self._message_id
             return message_base
 
