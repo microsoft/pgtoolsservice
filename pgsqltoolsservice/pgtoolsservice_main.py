@@ -7,6 +7,8 @@ import io
 import logging
 import sys
 
+import ptvsd
+
 from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
@@ -22,6 +24,8 @@ if __name__ == '__main__':
             arg_parts = arg.split('=')
             if arg_parts[0] == 'input':
                 stdin = io.open(arg_parts[1], 'rb', buffering=0)
+            elif arg_parts[0] == '--enable-remote-debugging':
+                ptvsd.enable_attach('', address=('0.0.0.0', 3000))
 
     # Wrap standard in and out in io streams to add readinto support
     if stdin is None:
