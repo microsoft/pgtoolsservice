@@ -60,19 +60,25 @@ class TestConnectionService(unittest.TestCase):
 
     def test_server_info_is_cloud(self):
         """Test that the connection response handles cloud connections correctly"""
+        self.server_info_is_cloud_internal('postgres.database.azure.com', True)
+        self.server_info_is_cloud_internal('postgres.database.windows.net', True)
+        self.server_info_is_cloud_internal('some.host.com', False)
+
+    def server_info_is_cloud_internal(self, host_suffix, is_cloud):
+        """Test that the connection response handles cloud connections correctly"""
         # Set up the parameters for the connection
         connection_uri = 'someuri'
         connection_details = ConnectionDetails()
         connection_details.options = {
             'user': 'postgres@myserver',
             'password': 'password',
-            'host': 'myserver.postgres.database.azure.com',
+            'host': f'myserver{host_suffix}',
             'dbname': 'postgres'}
         connection_type = ConnectionType.DEFAULT
 
         # Set up the mock connection for psycopg2's connect method to return
         mock_connection = MockConnection(dsn_parameters={
-            'host': 'myserver.postgres.database.azure.com',
+            'host': f'myserver{host_suffix}',
             'dbname': 'postgres',
             'user': 'postgres@myserver'
         })
@@ -87,7 +93,7 @@ class TestConnectionService(unittest.TestCase):
         # Verify that the response's serverInfo.isCloud attribute is set correctly
         self.assertIsNotNone(response.connection_id)
         self.assertIsNotNone(response.server_info.server_version)
-        self.assertTrue(response.server_info.is_cloud)
+        self.assertEqual(response.server_info.is_cloud, is_cloud)
 
     def test_changing_options_disconnects_existing_connection(self):
         """
@@ -412,6 +418,54 @@ class TestConnectionService(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             connection_service.get_connection('someuri', ConnectionType.DEFAULT)
 
+    def test_list_databases_handles_invalid_uri(self):
+        """Test that the connection/listdatabases handler returns an error when the given URI is unknown"""
+        mock_request_context = utils.MockRequestContext()
+        params = ListDatabasesParams()
+        params.owner_uri = 'unknown_uri'
+
+        connection_service = ConnectionService()
+        connection_service.handle_list_databases(mock_request_context, params)
+        self.assertIsNone(mock_request_context.last_notification_method)
+        self.assertIsNone(mock_request_context.last_notification_params)
+        self.assertIsNone(mock_request_context.last_response_params)
+        self.assertIsNotNone(mock_request_context.last_error_message)
+
+    def test_list_databases_handles_query_failure(self):
+        """Test that the list databases handler returns an error if the list databases query fails for any reason"""
+        # Set up the test with mock data
+        mock_query_results = [('database1',), ('database2',)]
+        connection_uri = 'someuri'
+        mock_cursor = MockCursor(mock_query_results)
+        mock_cursor.fetchall.side_effect = psycopg2.ProgrammingError('')
+        mock_connection = MockConnection(
+            dsn_parameters={
+                'host': 'myserver',
+                'dbname': 'postgres',
+                'user': 'postgres'
+            },
+            cursor=mock_cursor)
+        psycopg2.connect = Mock(return_value=mock_connection)
+        connection_service = ConnectionService()
+        mock_request_context = utils.MockRequestContext()
+
+        # Insert a ConnectionInfo object into the connection service's map
+        connection_details = ConnectionDetails.from_data(
+            'myserver', 'postgres', 'postgres', {})
+        connection_info = ConnectionInfo(connection_uri, connection_details)
+        connection_service.owner_to_connection_map[connection_uri] = connection_info
+
+        # Verify that calling the listdatabases handler returns the expected
+        # databases
+        params = ListDatabasesParams()
+        params.owner_uri = connection_uri
+
+        connection_service.handle_list_databases(mock_request_context, params)
+        self.assertIsNone(mock_request_context.last_notification_method)
+        self.assertIsNone(mock_request_context.last_notification_params)
+        self.assertIsNone(mock_request_context.last_response_params)
+        self.assertIsNotNone(mock_request_context.last_error_message)
+
 
 class MockConnection(object):
     """Class used to mock psycopg2 connection objects for testing"""
@@ -422,6 +476,7 @@ class MockConnection(object):
         self.server_version = '9.6.2'
         self.cursor = Mock(return_value=cursor)
         self.commit = Mock()
+        self.rollback = Mock()
 
     def get_dsn_parameters(self):
         """Mock for the connection's get_dsn_parameters method"""
