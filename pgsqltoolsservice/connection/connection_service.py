@@ -75,7 +75,11 @@ class ConnectionService:
         self._service_provider.server.set_request_handler(LIST_DATABASES_REQUEST, self.handle_list_databases)
 
     def get_connection(self, owner_uri: str, connection_type: ConnectionType):
-        """Get a psycopg2 connection for the given owner URI and connection type"""
+        """
+        Get a psycopg2 connection for the given owner URI and connection type
+
+        :raises RuntimeError: If there is no connection associated with the provided URI
+        """
         if owner_uri not in self.owner_to_connection_map:
             raise RuntimeError('No connection associated with given owner URI')
         connection_info = self.owner_to_connection_map[owner_uri]
@@ -109,8 +113,20 @@ class ConnectionService:
 
     def handle_list_databases(self, request_context: RequestContext, params: ListDatabasesParams):
         """List all databases on the server that the given URI has a connection to"""
-        connection = self.get_connection(params.owner_uri, ConnectionType.DEFAULT)
-        query_results = _execute_query(connection, 'SELECT datname FROM pg_database WHERE datistemplate = false;')
+        connection = None
+        try:
+            connection = self.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+        except RuntimeError as err:
+            request_context.send_error(str(err))
+            return
+        query_results = None
+        try:
+            query_results = _execute_query(connection, 'SELECT datname FROM pg_database WHERE datistemplate = false;')
+        except psycopg2.ProgrammingError as err:
+            if self._service_provider is not None and self._service_provider.logger is not None:
+                self._service_provider.logger.exception('Error listing databases')
+            request_context.send_error(str(err))
+            return
         database_names = [result[0] for result in query_results]
         request_context.send_response(ListDatabasesResponse(database_names))
 
@@ -217,15 +233,25 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
 def _get_server_info(connection):
     """Build the server info response for a connection"""
     server_version = connection.get_parameter_status('server_version')
-    is_cloud = connection.get_dsn_parameters()['host'].endswith('postgres.database.azure.com')
+    host = connection.get_dsn_parameters()['host']
+    is_cloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
     return ServerInfo(server_version, is_cloud)
 
 
 def _execute_query(connection, query):
-    """Execute a simple query without arguments for the given connection"""
+    """
+    Execute a simple query without arguments for the given connection
+
+    :raises psycopg2.ProgrammingError: if there was no result set when executing the query
+    """
     cursor = connection.cursor()
     cursor.execute(query)
-    query_results = cursor.fetchall()
+    query_results = None
+    try:
+        query_results = cursor.fetchall()
+    except psycopg2.ProgrammingError:
+        connection.rollback()
+        raise
     connection.commit()
     return query_results
 
