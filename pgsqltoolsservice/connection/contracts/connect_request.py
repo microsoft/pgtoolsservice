@@ -14,10 +14,10 @@ class ConnectRequestParams:
         return utils.serialization.convert_from_dict(cls, dictionary,
                                                      connection=ConnectionDetails)
 
-    def __init__(self):
-        self.connection: ConnectionDetails = None
-        self.owner_uri: str = None
-        self.type: ConnectionType = None
+    def __init__(self, connection=None, owner_uri=None, connection_type=ConnectionType.DEFAULT):
+        self.connection: ConnectionDetails = connection
+        self.owner_uri: str = owner_uri
+        self.type: ConnectionType = connection_type
 
 
 CONNECT_REQUEST = IncomingMessageConfiguration('connection/connect', ConnectRequestParams)

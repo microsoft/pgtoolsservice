@@ -26,6 +26,9 @@ def convert_from_dict(class_, dictionary, **kwargs):
     instance = class_()
     instance_attributes = dir(instance)
 
+    if dictionary is None:
+        return None
+
     for attr in dictionary:
         # Convert the attribute name to a snake-cased, pythonic attribute name
         pythonic_attr = inflection.underscore(attr)
@@ -75,4 +78,8 @@ def _get_serializable_value(obj):
     except AttributeError:
         pass
     # Assume the object can be serialized normally
-    return obj
+    try:
+        json.dumps(obj)
+        return obj
+    except BaseException:
+        return None
