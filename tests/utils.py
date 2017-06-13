@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import logging
 import unittest.mock as mock
 
 from pgsqltoolsservice.hosting import NotificationContext, RequestContext
@@ -19,6 +20,24 @@ def get_mock_notification_context() -> NotificationContext:
     mock_notification_context.send_notification = mock_send_notification
 
     return mock_notification_context
+
+
+def get_mock_logger() -> logging.Logger:
+    """
+    Generates a logger with mocked up log writing methods
+    :return: Logger with mocked up log writing methods
+    """
+    mock_logger = logging.getLogger('mockLogger')
+    mock_logger.exception = mock.MagicMock()
+    mock_logger.critical = mock.MagicMock()
+    mock_logger.debug = mock.MagicMock()
+    mock_logger.error = mock.MagicMock()
+    mock_logger.fatal = mock.MagicMock()
+    mock_logger.warn = mock.MagicMock()
+    mock_logger.info = mock.MagicMock()
+    mock_logger.log = mock.MagicMock()
+
+    return mock_logger
 
 
 class MockRequestContext(RequestContext):

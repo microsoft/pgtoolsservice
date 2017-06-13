@@ -46,7 +46,7 @@ class TestWorkspaceService(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = MagicMock()
         server.set_request_handler = MagicMock()
-        sp: ServiceProvider = ServiceProvider(server, {}, None)
+        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
 
         # If: I register a workspace service
         ws: WorkspaceService = WorkspaceService()
@@ -64,6 +64,7 @@ class TestWorkspaceService(unittest.TestCase):
         # Setup:
         # ... Create a workspace service
         ws: WorkspaceService = WorkspaceService()
+        ws._logger = utils.get_mock_logger()
 
         # ... Create the list of methods to test and the list of handlers to check
         test_methods = [
@@ -84,6 +85,7 @@ class TestWorkspaceService(unittest.TestCase):
     def test_handle_did_change_config(self):
         # Setup: Create a workspace service with two mock config change handlers
         ws: WorkspaceService = WorkspaceService()
+        ws._logger = utils.get_mock_logger()
         ws._config_change_callbacks = [MagicMock(), MagicMock()]
 
         # If: The workspace receives a config change notification
@@ -112,6 +114,7 @@ class TestWorkspaceService(unittest.TestCase):
         # Setup:
         # ... Create a workspace service with mock callbacks and a workspace that always returns None
         ws: WorkspaceService = WorkspaceService()
+        ws._logger = utils.get_mock_logger()
         ws._text_change_callbacks = [MagicMock()]
         ws._text_open_callbacks = [MagicMock()]
         ws._text_close_callbacks = [MagicMock()]
@@ -149,6 +152,7 @@ class TestWorkspaceService(unittest.TestCase):
         # Setup:
         # ... Create a workspace service with a mock callback and a workspace that returns a mock script file
         ws: WorkspaceService = WorkspaceService()
+        ws._logger = utils.get_mock_logger()
         ws._workspace, sf = self._get_mock_workspace(False)
         ws._text_change_callbacks = [MagicMock()]
         ws._text_open_callbacks = [MagicMock()]
@@ -203,6 +207,7 @@ class TestWorkspaceService(unittest.TestCase):
         # Setup:
         # ... Create a workspace service with a workspace that always raises an exception
         ws: WorkspaceService = WorkspaceService()
+        ws._logger = utils.get_mock_logger()
         ws._workspace, exp = self._get_mock_workspace(exception=True)
 
         # ... Create a mock notification context
