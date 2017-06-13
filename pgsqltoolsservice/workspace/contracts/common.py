@@ -15,6 +15,13 @@ class Position:
     """
 
     @classmethod
+    def from_data(cls, line: int, col: int):
+        pos = cls()
+        pos.line = line
+        pos.character = col
+        return pos
+
+    @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
 
@@ -48,6 +55,13 @@ class Range:
         start:  The starting position of the range, inclusive
         end:    The ending position of the range, inclusive
     """
+
+    @classmethod
+    def from_data(cls, start_line: int, start_col: int, end_line: int, end_col: int):
+        result = cls()
+        result.start = Position.from_data(start_line, start_col)
+        result.end = Position.from_data(end_line, end_col)
+        return result
 
     @classmethod
     def from_dict(cls, dictionary: dict):

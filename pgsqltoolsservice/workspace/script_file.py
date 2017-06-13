@@ -23,6 +23,10 @@ class ScriptFile:
         :param initial_buffer: The initial contents of the script file
         :param file_path: Path to the file on disk, if it could be resolved
         """
+        # Validate the incoming variables
+        utils.validate.is_not_none_or_whitespace('file_uri', file_uri)
+        utils.validate.is_not_none('initial_buffer', initial_buffer)
+
         self._file_uri: str = file_uri
         self._file_path: Optional[str] = file_path
 
@@ -52,15 +56,6 @@ class ScriptFile:
         """
         return self._file_path
 
-    @property
-    def id(self) -> str:
-        """
-        :return: A unique string that identifies this file. At this time, this property returns a normalized
-        version of the value stored in the file_path attribute.
-        """
-        # TODO: Validate that this works with OSs that have case-sensitive filesystems (ie, Linux)
-        return self._file_path.lower()
-
     # METHODS ##############################################################
 
     def apply_change(self, file_change: TextDocumentChangeEvent) -> None:
@@ -79,8 +74,7 @@ class ScriptFile:
         first_line_fragment: str = self.file_lines[file_change.range.start.line][:file_change.range.start.character]
 
         # Get the last fragment of the last line that will remain
-        # TODO: Verify that the +0 is correct here.
-        last_line_fragment: str = self.file_lines[file_change.range.end.line][file_change.range.end.character:]
+        last_line_fragment: str = self.file_lines[file_change.range.end.line][file_change.range.end.character+1:]
 
         # Remove the old lines (by repeatedly removing the first line of the change)
         for i in range(0, file_change.range.end.line - file_change.range.start.line + 1):
@@ -96,9 +90,9 @@ class ScriptFile:
             if change_index == 0:
                 final_line = first_line_fragment + final_line
             if change_index == len(change_lines) - 1:
-                final_line = last_line_fragment + last_line_fragment
+                final_line = final_line + last_line_fragment
 
-            self.file_lines.insert(current_line_number - 1, final_line)
+            self.file_lines.insert(current_line_number, final_line)
             current_line_number += 1
 
     def get_line(self, line: int) -> str:
