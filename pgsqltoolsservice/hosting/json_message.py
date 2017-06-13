@@ -65,6 +65,10 @@ class JSONRPCMessage:
             msg_type = JSONRPCMessageType.Notification
 
         else:
+            # Check for invalid error/result combo
+            if msg_result is not None and msg_error is not None:
+                raise ValueError('Message cannot have both result and error fields defined')
+
             # Message has id, therefore it is a response or a request
             if msg_result is not None:
                 # A result field indicates this is a successful response
