@@ -142,23 +142,3 @@ class JSONRPCMessage:
             message_base['error'] = utils.serialization.convert_to_dict(self._message_error)
             message_base['id'] = self._message_id
             return message_base
-
-    # METHODS ##############################################################
-
-    def __eq__(self, other):
-        """
-        Performs comparison of two messages to see if their contents are the same.
-        Primarily provided for unit testing
-        :param other: Message to compare against
-        :return: True if the dictionary representations are the same, False otherwise
-        """
-        return self.dictionary == other.dictionary
-
-    def __ne__(self, other):
-        """
-        Performs comparison of two messages to see if their contents are not the same.
-        Primarily provided for unit testing
-        :param other: Message to compare against
-        :return: True if the dictionary representations are not the same, False otherwise
-        """
-        return not self == other

@@ -54,7 +54,8 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # Then: The dispatch method should have been called
         expected_output = JSONRPCMessage.from_dictionary({"method": "test", "params": {}})
-        dispatch_mock.assert_called_once_with(expected_output)
+        dispatch_mock.assert_called_once()
+        self.assertDictEqual(dispatch_mock.mock_calls[0][1][0].dictionary, expected_output.dictionary)
 
         # Teardown: All background threads should be shut down.
         self.assertFalse(server._input_consumer.isAlive())
@@ -62,7 +63,7 @@ class JSONRPCServerTests(unittest.TestCase):
 
     def test_read_multiple_messages(self):
         # Setup:
-        # ... Create an input stream with a single message
+        # ... Create an input stream with two messages
         test_bytes = b'Content-Length: 30\r\n\r\n{"method":"test", "params":{}}'
         input_stream = io.BytesIO(test_bytes + test_bytes)
         output_stream = io.BytesIO()
@@ -80,10 +81,11 @@ class JSONRPCServerTests(unittest.TestCase):
         server.stop()
         server.wait_for_exit()
 
-        # Then: The dispatch method should have been called
+        # Then: The dispatch method should have been called twice
         expected_output = JSONRPCMessage.from_dictionary({"method": "test", "params": {}})
-        msg_call = call(expected_output)
-        dispatch_mock.assert_has_calls([msg_call, msg_call])
+        self.assertEqual(len(dispatch_mock.mock_calls), 2)
+        self.assertDictEqual(dispatch_mock.mock_calls[0][1][0].dictionary, expected_output.dictionary)
+        self.assertDictEqual(dispatch_mock.mock_calls[1][1][0].dictionary, expected_output.dictionary)
 
         # Teardown: All background threads should be shut down.
         self.assertFalse(server._input_consumer.isAlive())
