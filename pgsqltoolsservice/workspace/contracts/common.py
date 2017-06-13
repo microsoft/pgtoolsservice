@@ -18,9 +18,9 @@ class Position:
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
 
-    def __init__(self):
-        self.line: int = 0
-        self.character: int = 0
+    def __init__(self, line=0, character=0):
+        self.line: int = line
+        self.character: int = character
 
     def __eq__(self, other) -> bool:
         if other is None or not isinstance(other, Position):
@@ -55,9 +55,9 @@ class Range:
                                                      start=Position,
                                                      end=Position)
 
-    def __init__(self):
-        self.start: Position = None
-        self.end: Position = None
+    def __init__(self, start=None, end=None):
+        self.start: Position = start
+        self.end: Position = end
 
     def __eq__(self, other) -> bool:
         if other is None or not isinstance(other, Range):

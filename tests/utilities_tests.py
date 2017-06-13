@@ -24,9 +24,33 @@ class TestUtils(unittest.TestCase):
         converted_dict = utils.serialization.convert_to_dict(test_object)
         self.assertEqual(converted_dict, test_object.expected_dict())
 
+    def test_convert_from_dict(self):
+        """
+        Test that the convert_from_dict function creates the proper object representation of a complex object
+        """
+        test_object = _ConversionTestClass()
+        json_to_convert = test_object.expected_dict()
+        result = _ConversionTestClass.from_dict(json_to_convert)
+        self.assertEqual(result.test_int, test_object.test_int)
+        self.assertEqual(result.nested_object.test_int, test_object.nested_object.test_int)
+        self.assertEqual(result.nested_object.test_string, test_object.nested_object.test_string)
+        self.assertGreater(len(result.list), 0)
+        list_result = result.list[0]
+        self.assertEqual(list_result.test_int, test_object.list[0].test_int)
+        self.assertEqual(list_result.test_string, test_object.list[0].test_string)
+        for key in test_object.dict:
+            self.assertIn(key, result.dict)  # TODO: Update once dicts are converted correctly
+        self.assertEqual(result.enum, test_object.enum.value)  # TODO: Update once enums are converted correctly
+
 
 class _ConversionTestClass:
     """Test class to be used for testing dictionary conversions"""
+
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        """from_dict method intended to be similar to the one used in contract classes"""
+        return utils.serialization.convert_from_dict(cls, dictionary, nested_object=_NestedTestClass,
+                                                     list=_NestedTestClass)
 
     def __init__(self):
         self.test_int = 1
@@ -50,6 +74,11 @@ class _ConversionTestClass:
 
 class _NestedTestClass:
     """Test class to be nested within other classes to ensure recursive conversion works"""
+
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        """from_dict method intended to be similar to the one used in contract classes"""
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.test_int = 1

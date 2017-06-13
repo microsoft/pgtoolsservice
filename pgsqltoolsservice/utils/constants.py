@@ -3,7 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.workspace.workspace_service import WorkspaceService, TextRange
-from pgsqltoolsservice.workspace.contracts import PGSQLConfiguration
+"""Module containing constants used throughout the service"""
 
-__all__ = ['WorkspaceService', 'TextRange', 'PGSQLConfiguration']
+# Service names
+CAPABILITIES_SERVICE_NAME = 'capabilities'
+CONNECTION_SERVICE_NAME = 'connection'
+QUERY_EXECUTION_SERVICE_NAME = 'query_execution'
+WORKSPACE_SERVICE_NAME = 'workspace'

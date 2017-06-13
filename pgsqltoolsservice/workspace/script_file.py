@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import logging
 import os
 from typing import List
 
@@ -96,10 +97,11 @@ class ScriptFile:
             if change_index == 0:
                 final_line = first_line_fragment + final_line
             if change_index == len(change_lines) - 1:
-                final_line = last_line_fragment + last_line_fragment
+                final_line = final_line + last_line_fragment
 
-            self.file_lines.insert(current_line_number - 1, final_line)
-            current_line_number += 1
+            self.file_lines.insert(current_line_number + change_index, final_line)
+        logger = logging.getLogger('pgsqltoolsservice')
+        utils.log.log_debug(logger, 'New file contents: {}'.format('\n'.join(self.file_lines)))
 
     def get_line(self, line: int) -> str:
         """
@@ -147,7 +149,7 @@ class ScriptFile:
         :param BufferPosition position: The position in the buffer to be be validated
         """
         # Validate against number of lines
-        if position.line < 0 or position.line >= len(self.file_lines):
+        if position.line < 0 or position.line > len(self.file_lines):
             # TODO: Localize
             raise ValueError('Position is outside of file line range')
 
@@ -155,7 +157,7 @@ class ScriptFile:
         line_string: str = self.file_lines[position.line]
 
         # Validate against number of columns
-        if position.character < 0 or position.character >= len(line_string):
+        if position.character < 0 or position.character > len(line_string):
             # TODO: Localize
             raise ValueError('Position is outside of column range for line {}'.format(position.line))
 

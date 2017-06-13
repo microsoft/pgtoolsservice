@@ -246,8 +246,13 @@ class JSONRPCServer:
 
             # Call the handler with a notification context
             notification_context = NotificationContext(self._output_queue)
-            deserialized_object = handler.class_()
-            deserialized_object.__dict__ = message.message_params
+            deserialized_object = None
+            if handler.class_ is None:
+                # Don't attempt to do complex deserialization
+                deserialized_object = message.message_params
+            else:
+                # Use the complex deserializer
+                deserialized_object = handler.class_.from_dict(message.message_params)
             handler.handler(notification_context, deserialized_object)
         else:
             # If this happens we have a serious issue with the JSON RPC reader

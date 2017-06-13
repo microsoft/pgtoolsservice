@@ -11,6 +11,7 @@ from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
 from pgsqltoolsservice.query_execution import QueryExecutionService
+from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
 
 if __name__ == '__main__':
@@ -42,10 +43,10 @@ if __name__ == '__main__':
 
     # Create the service provider and add the providers to it
     services = {
-        'capabilities': CapabilitiesService,
-        'connection': ConnectionService,
-        'query_execution': QueryExecutionService,
-        'workspace': WorkspaceService
+        constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
+        constants.CONNECTION_SERVICE_NAME: ConnectionService,
+        constants.QUERY_EXECUTION_SERVICE_NAME: QueryExecutionService,
+        constants.WORKSPACE_SERVICE_NAME: WorkspaceService
     }
     service_box = ServiceProvider(server, services, logger)
     service_box.initialize()

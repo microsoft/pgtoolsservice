@@ -37,7 +37,11 @@ class Workspace:
         """
         utils.validate.is_not_none_or_whitespace("file_path", file_path)
 
-        del self._workspace_files[file_path]
+        # Resolve the full file path
+        resolved_file_path: str = self._resolve_file_path(file_path)
+        key_name: str = resolved_file_path.lower()
+
+        del self._workspace_files[key_name]
 
     def contains_file(self, file_path: str) -> bool:
         """
@@ -78,6 +82,7 @@ class Workspace:
             with open(resolved_file_path, 'r') as file:
                 initial_buffer = file.read()
         script_file = ScriptFile(resolved_file_path, file_path, initial_buffer)
+        self._workspace_files[key_name] = script_file
         return script_file
 
     def get_file(self, file_path: str) -> [ScriptFile, None]:
