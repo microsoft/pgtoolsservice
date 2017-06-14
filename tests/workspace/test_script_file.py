@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from os import linesep
-import unittest as unittest
+import os
+import unittest
 
 from pgsqltoolsservice.workspace.contracts import Position, Range, TextDocumentChangeEvent
 from pgsqltoolsservice.workspace.workspace import ScriptFile
@@ -119,7 +119,7 @@ class TestScriptFile(unittest.TestCase):
         result = sf.get_text_in_range(params)
 
         # Then: I should get a set of lines with the expected result
-        expected_result = linesep.join(['ef', 'ghij', 'kl'])
+        expected_result = os.linesep.join(['ef', 'ghij', 'kl'])
         self.assertEqual(result, expected_result)
 
     # VALIDATE POSITION TESTS ##############################################
@@ -270,6 +270,7 @@ class TestScriptFile(unittest.TestCase):
         self.assertListEqual(sf._file_lines, [''])
 
     # IMPLEMENTATION DETAILS ###############################################
+
     @staticmethod
     def _get_test_script_file() -> ScriptFile:
         return ScriptFile('uri', 'abc\r\ndef\r\nghij\r\nklm', None)

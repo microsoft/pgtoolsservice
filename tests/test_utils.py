@@ -24,8 +24,6 @@ class TestUtils(unittest.TestCase):
         converted_dict = utils.serialization.convert_to_dict(test_object)
         self.assertEqual(converted_dict, test_object.expected_dict())
 
-    # TODO: Add tests for convert_from_dict
-
 
 class _ConversionTestClass:
     """Test class to be used for testing dictionary conversions"""

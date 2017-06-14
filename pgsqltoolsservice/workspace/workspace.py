@@ -20,7 +20,6 @@ class Workspace:
 
     def __init__(self):
         self._workspace_files: dict = {}
-        self._workspace_files_lock: Lock = Lock()
 
     # PROPERTIES ###########################################################
     @property
@@ -31,7 +30,7 @@ class Workspace:
         return list(self._workspace_files.values())
 
     # METHODS ##############################################################
-    def close_file(self, file_uri: str) -> [ScriptFile, None]:
+    def close_file(self, file_uri: str) -> Optional[ScriptFile]:
         """
         Closes a currently open script file
         :param file_uri: URI to identify the script file as provided by the client
@@ -39,13 +38,7 @@ class Workspace:
         """
         utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
 
-        with self._workspace_files_lock:
-            # Get the requested file, and delete it if it exists
-            # Note: This is performed inside a lock context b/c we need this operation to be atomic
-            requested_file: ScriptFile = self._workspace_files.get(file_uri)
-            if requested_file is not None:
-                del self._workspace_files[file_uri]
-            return requested_file
+        return self._workspace_files.pop(file_uri, None)
 
     def contains_file(self, file_uri: str) -> bool:
         """
@@ -57,7 +50,7 @@ class Workspace:
 
         return file_uri in self._workspace_files
 
-    def open_file(self, file_uri: str, initial_buffer: Optional[str]=None) -> [ScriptFile, None]:
+    def open_file(self, file_uri: str, initial_buffer: Optional[str]=None) -> Optional[ScriptFile]:
         """
         Opens a file in the workspace
         :param file_uri: URI to identify the script file, provided by the client
@@ -71,7 +64,6 @@ class Workspace:
             return None
 
         # Resolve the full file path
-        # TODO: Validate that this works with operating systems that allow files to differ by case only (ie, linux)
         resolved_file_path: str = self._resolve_file_path(file_uri)
 
         # If the file is already loaded in the workspace, just return it

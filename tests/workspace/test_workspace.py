@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import Tuple, Optional
-import unittest as unittest
+import unittest
 import unittest.mock as mock
 
 from pgsqltoolsservice.workspace.workspace import ScriptFile, Workspace
@@ -140,9 +140,6 @@ class TestWorkspaceService(unittest.TestCase):
         self.assertDictEqual(w._workspace_files, {})
         self.assertListEqual(w.opened_files, [])
 
-        # ... The lock should still exist
-        self.assertIsNotNone(w._workspace_files_lock)
-
     def test_close_file_not_open(self):
         # If: I attempt to close a file that is not open
         w, sf = self._get_test_workspace(False)
@@ -151,9 +148,6 @@ class TestWorkspaceService(unittest.TestCase):
         # Then:
         # ... I should get none back
         self.assertIsNone(result)
-
-        # ... The lock should still exist
-        self.assertIsNotNone(w._workspace_files_lock)
 
     # _IS_PATH_IN_MEMORY TESTS #############################################
 
@@ -233,7 +227,8 @@ class TestWorkspaceService(unittest.TestCase):
 
     # IMPLEMENTATION DETAILS ###############################################
 
-    def _get_test_workspace(self, script_file: bool=True) -> Tuple[Workspace, Optional[ScriptFile]]:
+    @staticmethod
+    def _get_test_workspace(script_file: bool=True) -> Tuple[Workspace, Optional[ScriptFile]]:
         w: Workspace = Workspace()
         sf: Optional[ScriptFile] = None
         if script_file:
