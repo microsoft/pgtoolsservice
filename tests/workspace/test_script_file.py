@@ -146,9 +146,18 @@ class TestScriptFile(unittest.TestCase):
         sf = self._get_test_script_file()
 
         # If: I validate an invalid col
-        for col in [-100, -1, 4, 400]:
+        for col in [-100, -1, 5, 400]:
             with self.assertRaises(ValueError):
                 sf.validate_position(Position.from_data(2, col))
+
+    def test_validate_position_end_of_line(self):
+        """Test that the column that would add a character to a line is treated as a valid column"""
+        # Set up the script file
+        script_file = self._get_test_script_file()
+
+        # If I validate the column that would add a character to the end of a line
+        # Then no error should be raised
+        script_file.validate_position(Position.from_data(2, 4))
 
     # APPLY CHANGES TESTS ##################################################
 
@@ -243,6 +252,25 @@ class TestScriptFile(unittest.TestCase):
             'm'
         ]
         self.assertListEqual(sf.file_lines, expected_result)
+
+    def test_apply_change_add_character(self):
+        """Test applying a change by adding a single character to the end of an existing line"""
+        # Set up the test file and parameters to add a character at the end of the first line
+        script_file = self._get_test_script_file()
+
+        # If I add a single character to then end of a line
+        params = TextDocumentChangeEvent.from_dict({
+            'range': {
+                'start': {'line': 0, 'character': 3},
+                'end': {'line': 0, 'character': 3}
+            },
+            'text': 'a'
+        })
+        script_file.apply_change(params)
+
+        # Then the text should have updated without a validation error
+        expected_result = ['abca','def','ghij','klm']
+        self.assertListEqual(script_file.file_lines, expected_result)
 
     # SET FILE CONTENTS TESTS ##############################################
 

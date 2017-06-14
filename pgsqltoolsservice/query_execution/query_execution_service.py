@@ -145,7 +145,8 @@ class QueryExecutionService(object):
     def _get_query_from_execute_params(self, params: ExecuteRequestParamsBase):
         if isinstance(params, ExecuteDocumentSelectionParams):
             workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
-            return workspace_service.get_text(params.owner_uri, params.selection_data.to_range())
+            selection_range = params.query_selection.to_range() if params.query_selection is not None else None
+            return workspace_service.get_text(params.owner_uri, selection_range)
         else:
             # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
             return params.query

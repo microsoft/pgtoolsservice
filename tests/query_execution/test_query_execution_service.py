@@ -6,7 +6,7 @@
 """Module for testing the query execution service"""
 
 import unittest
-import mock
+from unittest import mock
 
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.query_execution.contracts import (
@@ -76,7 +76,32 @@ class TestQueryService(unittest.TestCase):
         result = query_execution_service._get_query_from_execute_params(params)
 
         # Then the query execution service calls the workspace service to get the query text
-        mock_workspace_service.get_text.assert_called_once_with(params.owner_uri, selection_data.to_range())
+        mock_workspace_service.get_text.assert_called_once_with(params.owner_uri, mock.ANY)
+        self.assertEqual(result, query)
+
+    def test_get_query_selection_none(self):
+        """Test getting a query for a URI from a selection when the selection is None (for the whole file)"""
+        # Set up the query execution service with a mock workspace service
+        query_execution_service = QueryExecutionService()
+        query = 'select version()'
+        mock_workspace_service = mock.Mock()
+        mock_workspace_service.get_text = mock.Mock(return_value=query)
+        query_execution_service._service_provider = {
+            constants.WORKSPACE_SERVICE_NAME: mock_workspace_service}
+
+        # Execute the query and verify that the workspace service's get_text
+        # method was called
+        # Set up the query params as an ExecuteDocumentSelectionParams object
+        params = ExecuteDocumentSelectionParams()
+        params.owner_uri = 'test_uri'
+        params.selection_data = None
+
+        # If I try to get a query using ExecuteDocumentSelectionParams
+        result = query_execution_service._get_query_from_execute_params(params)
+
+        # Then the query execution service calls the workspace service to get
+        # the query text
+        mock_workspace_service.get_text.assert_called_once_with(params.owner_uri, None)
         self.assertEqual(result, query)
 
 

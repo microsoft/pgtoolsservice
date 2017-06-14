@@ -146,14 +146,15 @@ class ScriptFile:
         :param BufferPosition position: The position in the buffer to be be validated
         """
         # Validate against number of lines
-        if position.line < 0 or position.line > len(self.file_lines):
+        if position.line < 0 or position.line >= len(self.file_lines):
             # TODO: Localize
             raise ValueError('Position is outside of file line range')
 
         # Retrieve the line of the position
         line_string: str = self.file_lines[position.line]
 
-        # Validate against number of columns
+        # Validate against number of columns. Allow the character to be in the last column to add a
+        # character to the end of the line.
         if position.character < 0 or position.character > len(line_string):
             # TODO: Localize
             raise ValueError('Position is outside of column range for line {}'.format(position.line))
