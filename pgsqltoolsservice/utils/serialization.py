@@ -33,11 +33,9 @@ def convert_from_dict(class_, dictionary, **kwargs):
         # Convert the attribute name to a snake-cased, pythonic attribute name
         pythonic_attr = inflection.underscore(attr)
 
-        # Make sure that the attribute is in the directory for the instance
+        # If an unknown attribute is provided, skip it
         if pythonic_attr not in instance_attributes:
             continue
-            # # raise AttributeError('Could not deserialize to class {}, {} is not defined as an attribute'
-            # #                      .format(class_, pythonic_attr))
 
         value = dictionary[attr]
         if pythonic_attr in kwargs:
