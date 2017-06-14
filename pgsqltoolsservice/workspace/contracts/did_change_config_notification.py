@@ -13,7 +13,7 @@ class PGSQLConfiguration:
     """
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary, ignore_extra_attributes=True)
 
     def __init__(self):
         self.setting = "Default_Setting"

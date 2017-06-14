@@ -143,6 +143,10 @@ class ScriptFile:
             output.append(current_line[start_column:end_column])
         return output
 
+    def get_all_text(self) -> str:
+        """Gets all the text from the file, joined with environment-specific newlines"""
+        return os.linesep.join(self.file_lines)
+
     def validate_position(self, position: Position) -> None:
         """
         Raises ValueError if the given position is outside of the file's buffer extents

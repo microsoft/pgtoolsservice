@@ -4,10 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 from logging import Logger          # noqa
-from typing import Callable, List   # noqa
+from typing import Callable, List, Optional  # noqa
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
-from pgsqltoolsservice.query_execution.contracts import SelectionData
 from pgsqltoolsservice.workspace.contracts import (
     DID_CHANGE_CONFIG_NOTIFICATION, DidChangeConfigurationParams,
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
@@ -73,7 +72,7 @@ class WorkspaceService:
     def register_text_open_callback(self, task: Callable[[ScriptFile], None]) -> None:
         self._text_open_callbacks.append(task)
 
-    def get_text(self, file_uri: str, selection_data: SelectionData) -> str:
+    def get_text(self, file_uri: str, selection_range: Optional[Range]) -> str:
         """
         Get the requested text selection, as a string, for a document
 
@@ -85,9 +84,10 @@ class WorkspaceService:
         open_file = self._workspace.get_file(file_uri)
         if open_file is None:
             raise ValueError('No file corresponding to the given URI')
-        if selection_data is None:
-            return '\n'.join(open_file.file_lines)
-        return open_file.get_text_in_range(Range.from_selection_data(selection_data))
+        if selection_range is None:
+            return open_file.get_all_text()
+        else:
+            return open_file.get_text_in_range(selection_range)
 
     # REQUEST HANDLERS #####################################################
     def _handle_did_change_config(
