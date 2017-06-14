@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import os
-from typing import List
+from typing import List, Optional
 
 from pgsqltoolsservice.workspace.contracts import Position, Range, TextDocumentChangeEvent
 import pgsqltoolsservice.utils as utils
@@ -16,27 +16,31 @@ class ScriptFile:
     """
 
     # CONSTRUCTORS #########################################################
-    def __init__(self, file_path, client_file_path, initial_buffer):
+    def __init__(self, file_uri: str, initial_buffer, file_path: Optional[str]):
         """
         Creates a new ScriptFile instance with the specified file contents
-        :param file_path: The path at which the script file resides
-        :param client_file_path: The path which the client uses to identify the file
+        :param file_uri: URI for the file provided by the client
         :param initial_buffer: The initial contents of the script file
+        :param file_path: Path to the file on disk, if it could be resolved
         """
-        self._file_path = file_path
-        self._client_file_path = client_file_path
+        # Validate the incoming variables
+        utils.validate.is_not_none_or_whitespace('file_uri', file_uri)
+        utils.validate.is_not_none('initial_buffer', initial_buffer)
+
+        self._file_uri: str = file_uri
+        self._file_path: Optional[str] = file_path
 
         # Store the initial contents of the file
-        self._file_lines = None
+        self._file_lines: List[str] = []
         self._set_file_contents(initial_buffer)
 
     # PROPERTIES ###########################################################
     @property
-    def client_file_path(self) -> str:
+    def file_uri(self) -> str:
         """
-        :return: Path which the editor client uses to identify this file
+        :return: URI of the file as provided by the client
         """
-        return self._client_file_path
+        return self._file_uri
 
     @property
     def file_lines(self) -> List[str]:
@@ -46,20 +50,11 @@ class ScriptFile:
         return self._file_lines
 
     @property
-    def file_path(self) -> str:
+    def file_path(self) -> Optional[str]:
         """
-        :return: Path at which this file resides
+        :return: Path to the file path on disk, if it exists
         """
         return self._file_path
-
-    @property
-    def id(self) -> str:
-        """
-        :return: A unique string that identifies this file. At this time, this property returns a normalized
-        version of the value stored in the file_path attribute.
-        """
-        # TODO: Validate that this works with OSs that have case-sensitive filesystems (ie, Linux)
-        return self._file_path.lower()
 
     # METHODS ##############################################################
 
@@ -79,8 +74,7 @@ class ScriptFile:
         first_line_fragment: str = self.file_lines[file_change.range.start.line][:file_change.range.start.character]
 
         # Get the last fragment of the last line that will remain
-        # TODO: Verify that the +0 is correct here.
-        last_line_fragment: str = self.file_lines[file_change.range.end.line][file_change.range.end.character:]
+        last_line_fragment: str = self.file_lines[file_change.range.end.line][file_change.range.end.character+1:]
 
         # Remove the old lines (by repeatedly removing the first line of the change)
         for i in range(0, file_change.range.end.line - file_change.range.start.line + 1):
@@ -96,9 +90,9 @@ class ScriptFile:
             if change_index == 0:
                 final_line = first_line_fragment + final_line
             if change_index == len(change_lines) - 1:
-                final_line = last_line_fragment + last_line_fragment
+                final_line = final_line + last_line_fragment
 
-            self.file_lines.insert(current_line_number - 1, final_line)
+            self.file_lines.insert(current_line_number, final_line)
             current_line_number += 1
 
     def get_line(self, line: int) -> str:
