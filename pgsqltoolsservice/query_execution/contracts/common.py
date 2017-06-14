@@ -73,6 +73,7 @@ class DbColumn(object):
         self.allow_db_null = cursor_description[DESC['null_ok']]
         self.base_catalog_name = None
         self.base_column_name = cursor_description[DESC['name']]
+        self.column_name = cursor_description[DESC['name']]
         self.base_schema_name = None
         self.base_server_name = None
         self.base_table_name = None
@@ -109,9 +110,9 @@ class DbColumn(object):
 class DbCellValue(object):
 
     def __init__(self, display_value, is_null, raw_object, row_id):
-        self.display_value = display_value
+        self.display_value = str(display_value)
         self.is_null = is_null
-        self.raw_object = raw_object
+        #self.raw_object = raw_object
         self.row_id = row_id
 
 
@@ -136,18 +137,11 @@ class QueryCompleteParams(object):
         self.owner_uri = owner_uri
 
 
-class ResultSetEventParams(object):
-
-    def __init__(self, result_set_summary, owner_uri):
-        self.result_set_summary = result_set_summary
-        self.owner_uri = owner_uri
-
-
 class ResultSetSubset(object):
 
     def __init__(self, row_count, rows):
         self.row_count = row_count
-        self.rows = rows
+        self.rows: List[List[DbCellValue]] = rows
 
 
 class SubsetResult(object):

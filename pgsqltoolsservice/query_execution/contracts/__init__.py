@@ -9,8 +9,8 @@ from pgsqltoolsservice.query_execution.contracts.batch_notification import (
 )
 from pgsqltoolsservice.query_execution.contracts.execute_request import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase,
-    ExecuteResult,
-    EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST,
+    ExecuteResult, SubsetParams,
+    EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST, SUBSET_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.message_notification import (
     MessageNotificationParams,
@@ -24,6 +24,10 @@ from pgsqltoolsservice.query_execution.contracts.result_set_notification import 
     ResultSetNotificationParams,
     RESULT_SET_COMPLETE_NOTIFICATION
 )
+from pgsqltoolsservice.query_execution.contracts.subset_notification import (
+    SubsetNotificationParams,
+    SUBSET_NOTIFICATION
+)
 from pgsqltoolsservice.query_execution.contracts.common import (
     ResultSetSummary,
     BatchSummary,
@@ -34,11 +38,9 @@ from pgsqltoolsservice.query_execution.contracts.common import (
     BatchEventParams,
     MessageParams,
     QueryCompleteParams,
-    ResultSetEventParams,
     ResultSetSubset,
     SubsetResult,
-    SpecialAction
-
+    SpecialAction,
 )
 
 __all__ = [
@@ -62,8 +64,7 @@ __all__ = [
     'BatchEventParams',
     'MessageParams',
     'QueryCompleteParams',
-    'ResultSetEventParams',
     'ResultSetSubset',
     'SubsetResult',
-    'SpecialAction'
+    'SpecialAction',
 ]

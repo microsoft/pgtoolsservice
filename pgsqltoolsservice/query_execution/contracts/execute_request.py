@@ -54,3 +54,24 @@ class ExecuteResult:
 
     def __init__(self):
         pass
+
+class SubsetParams(ExecuteRequestParamsBase):
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary)
+
+    def __init__(self):
+        super().__init__()
+        self.owner_uri: str = None
+        self.batch_index: int = None
+        self.result_set_index: int = None
+        self.rows_start_index: int = None
+        self.rows_count: int = None
+
+SUBSET_REQUEST = IncomingMessageConfiguration(
+    'query/subset',
+    SubsetParams
+)
+
+
+

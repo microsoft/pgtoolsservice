@@ -42,7 +42,7 @@ class JSONRPCMessage:
     @classmethod
     def create_response(cls, msg_id, result):
         return cls(JSONRPCMessageType.ResponseSuccess, msg_id=msg_id, msg_result=result)
-
+    
     @classmethod
     def from_dictionary(cls, msg_dict):
         """
