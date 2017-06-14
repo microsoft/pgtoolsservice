@@ -23,7 +23,6 @@ from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 import pgsqltoolsservice.utils as utils
-from pgsqltoolsservice.workspace import TextRange
 
 
 class QueryExecutionService(object):
@@ -58,16 +57,7 @@ class QueryExecutionService(object):
         conn = self.get_connection(connection_service, params.owner_uri)
 
         # Get the query from the parameters or from the workspace service
-        query = None
-        if isinstance(params, ExecuteDocumentSelectionParams):
-            workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
-            text_range = TextRange(params.query_selection.start_line,
-                                   params.query_selection.start_column,
-                                   params.query_selection.end_line,
-                                   params.query_selection.end_column) if params.query_selection is not None else None
-            query = workspace_service.get_text(params.owner_uri, text_range)
-        else:
-            query = params.query
+        query = self._get_query_from_execute_params(params)
         batch_id = 0
         utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
         if conn is None:
@@ -151,3 +141,10 @@ class QueryExecutionService(object):
         pass
         # send back query results
         # subsetresult -> resultsetsubset -> {rowcount, dbcellvalue[][]}
+
+    def _get_query_from_execute_params(self, params: ExecuteRequestParamsBase):
+        if isinstance(params, ExecuteDocumentSelectionParams):
+            workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
+            return workspace_service.get_text(params.owner_uri, params.selection_data)
+        else:
+            return params.query

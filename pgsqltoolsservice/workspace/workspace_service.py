@@ -7,31 +7,16 @@ from logging import Logger          # noqa
 from typing import Callable, List   # noqa
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
+from pgsqltoolsservice.query_execution.contracts import SelectionData
 from pgsqltoolsservice.workspace.contracts import (
     DID_CHANGE_CONFIG_NOTIFICATION, DidChangeConfigurationParams,
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
     DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, DidOpenTextDocumentParams,
     DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, DidCloseTextDocumentParams,
-    PGSQLConfiguration, Range, Position
+    PGSQLConfiguration, Range
 )
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 from pgsqltoolsservice.workspace.workspace import Workspace
-
-
-class TextRange:
-    """Object to be used as a parameter when getting text from the workspace service"""
-
-    def __init__(self, start_line, start_character, end_line, end_character):
-        self.start_line = start_line
-        self.start_character = start_character
-        self.end_line = end_line
-        self.end_character = end_character
-
-    def to_range_contract(self):
-        """Convert the TextRange object to an instance of the Range contract class"""
-        return Range(
-            Position(self.start_line, self.start_character),
-            Position(self.end_line, self.end_character))
 
 
 class WorkspaceService:
@@ -88,21 +73,21 @@ class WorkspaceService:
     def register_text_open_callback(self, task: Callable[[ScriptFile], None]) -> None:
         self._text_open_callbacks.append(task)
 
-    def get_text(self, file_uri: str, text_range: TextRange) -> str:
+    def get_text(self, file_uri: str, selection_data: SelectionData) -> str:
         """
-        Get the requested range of text, as a string, for a document
+        Get the requested text selection, as a string, for a document
 
         :param file_uri: The URI of the requested file
-        :param text_range: An object containing information about which part of the file to return,
+        :param selection_data: An object containing information about which part of the file to return,
         or None for the whole file
         :raises ValueError: If there is no file matching the given URI
         """
         open_file = self._workspace.get_file(file_uri)
         if open_file is None:
             raise ValueError('No file corresponding to the given URI')
-        if text_range is None:
+        if selection_data is None:
             return '\n'.join(open_file.file_lines)
-        return open_file.get_text_in_range(text_range.to_range_contract())
+        return open_file.get_text_in_range(Range.from_selection_data(selection_data))
 
     # REQUEST HANDLERS #####################################################
     def _handle_did_change_config(

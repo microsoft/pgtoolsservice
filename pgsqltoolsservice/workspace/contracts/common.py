@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from pgsqltoolsservice.query_execution.contracts import SelectionData
 import pgsqltoolsservice.utils as utils
 
 
@@ -54,6 +55,14 @@ class Range:
         return utils.serialization.convert_from_dict(cls, dictionary,
                                                      start=Position,
                                                      end=Position)
+
+    @classmethod
+    def from_selection_data(cls, selection_data: SelectionData):
+        """Create a range from a query_execution_service SelectionData object"""
+        obj = cls()
+        obj.start = Position(selection_data.start_line, selection_data.start_column)
+        obj.end = Position(selection_data.end_line, selection_data.end_column)
+        return obj
 
     def __init__(self, start=None, end=None):
         self.start: Position = start

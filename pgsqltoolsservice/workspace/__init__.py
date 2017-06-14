@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.workspace.workspace_service import WorkspaceService, TextRange
+from pgsqltoolsservice.workspace.workspace_service import WorkspaceService
 from pgsqltoolsservice.workspace.contracts import PGSQLConfiguration
 
-__all__ = ['WorkspaceService', 'TextRange', 'PGSQLConfiguration']
+__all__ = ['WorkspaceService', 'PGSQLConfiguration']
