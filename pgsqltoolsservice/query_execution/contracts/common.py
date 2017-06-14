@@ -139,13 +139,6 @@ class QueryCompleteParams(object):
 class ResultSetSubset(object):
 
     def __init__(self, row_count, rows):
-        self.result_set_summary = result_set_summary
-        self.owner_uri = owner_uri
-
-
-class ResultSetSubset(object):
-
-    def __init__(self, row_count, rows):
         self.row_count = row_count
         self.rows: List[List[DbCellValue]] = rows
 

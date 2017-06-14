@@ -55,6 +55,7 @@ class ExecuteResult:
     def __init__(self):
         pass
 
+
 class SubsetParams(ExecuteRequestParamsBase):
     @classmethod
     def from_dict(cls, dictionary: dict):
@@ -68,10 +69,8 @@ class SubsetParams(ExecuteRequestParamsBase):
         self.rows_start_index: int = None
         self.rows_count: int = None
 
+
 SUBSET_REQUEST = IncomingMessageConfiguration(
     'query/subset',
     SubsetParams
 )
-
-
-

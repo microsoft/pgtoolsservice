@@ -9,9 +9,8 @@ import unittest
 import mock
 
 from pgsqltoolsservice.query_execution.query_execution_service import QueryExecutionService
-from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
-from pgsqltoolsservice.query_execution.contracts.common import SelectionData, DbColumn
+from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 
 
 class TestQueryService(unittest.TestCase):
@@ -36,11 +35,10 @@ class TestQueryService(unittest.TestCase):
         for mock_call in mock_server_set_request.mock_calls:
             self.assertIsInstance(mock_call[1][0], IncomingMessageConfiguration)
             self.assertTrue(callable(mock_call[1][1]))
-    
 
     def test_db_cell_values(self):
         """
-        Test for proper generation of DbCellValue[][] 
+        Test for proper generation of DbCellValue[][]
         that is part of query/subset response payload
         """
         service = QueryExecutionService()
@@ -63,7 +61,6 @@ class TestQueryService(unittest.TestCase):
             column_index = 0
             row_index += 1
 
-
     def test_generate_column_info(self):
         """Test generate_batch_event_params function"""
         service = QueryExecutionService()
@@ -71,11 +68,12 @@ class TestQueryService(unittest.TestCase):
         test_columns = [DbColumn(0, description[0]), DbColumn(1, description[1])]
         generated_columns = service.generate_column_info(description)
         self.assertEqual(len(test_columns), len(generated_columns))
-        
+
         index = 0
         for column in test_columns:
             self.assertEqual(column.__dict__, generated_columns[index].__dict__)
             index += 1
+
 
 if __name__ == '__main__':
     unittest.main()

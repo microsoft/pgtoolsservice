@@ -13,10 +13,10 @@ from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
-    QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, SubsetNotificationParams
+    QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
-    BatchEventParams, ResultMessage, MessageParams, DbCellValue,
+    BatchEventParams, ResultMessage, DbCellValue,
     DbColumn, QueryCompleteParams, SubsetResult, ResultSetSubset
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
@@ -64,7 +64,7 @@ class QueryExecutionService(object):
 
         # Setup a dummy query and batch id
         query = "SELECT * from pg_authid"
-        BATCH_ID = 0
+        batch_id = 0
         utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
         if conn is None:
             # TODO: Send back appropriate error response
@@ -79,14 +79,11 @@ class QueryExecutionService(object):
             # TODO: send responses asynchronously
 
             # send query/batchStart response
-            batch = Batch(BATCH_ID, params.query_selection, False)
+            batch = Batch(batch_id, params.query_selection, False)
             batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
-            cur.execute(query)
-            batch.has_executed = True
-            batch.end_time = datetime.now()
-            self.query_results.append(cur.fetchall())
+            self.execute_query(query, cur, batch)
 
             column_info = self.generate_column_info(cur.description)
             batch.result_sets.append(ResultSet(0, 0, column_info, cur.rowcount))
@@ -96,14 +93,15 @@ class QueryExecutionService(object):
             conn.commit()
 
             # send query/resultSetComplete response
-            #assuming only 1 result set summary for now 
+            # assuming only 1 result set summary for now
             result_set_params = self.build_result_set_complete_params(batch, params.owner_uri)
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             # send query/message response
-            message_params = self.build_message_params(params.owner_uri, BATCH_ID, cur.rowcount)
+            message = "({0} rows affected)".format(cur.rowcount)
+            message_params = self.build_message_params(params.owner_uri, batch_id, message)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
-        
+
             summaries = []
             summaries.append(summary)
             query_complete_params = QueryCompleteParams(summaries, params.owner_uri)
@@ -114,16 +112,9 @@ class QueryExecutionService(object):
         except psycopg2.DatabaseError as e:
             # TODO: On error, send error correctly and then send query complete notification
             utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
-            result_message = ResultMessage(
-                psycopg2.errorcodes.lookup(
-                    e.pgcode), True, utils.time.get_time_str(
-                    datetime.now()), BATCH_ID)
-            request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
-            result_message = ResultMessage(
-                psycopg2.errorcodes.lookup(
-                    e.pgcode), True, utils.time.get_time_str(
-                    datetime.now()), BATCH_ID)
-            request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
+            result_message_params = self.build_message_params(
+                params.owner_uri, batch_id, str(psycopg2.errorcodes.lookup(e.pgcode)))
+            request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
             return
         finally:
             if cur is not None:
@@ -139,16 +130,17 @@ class QueryExecutionService(object):
         utils.log.log_debug(self._service_provider.logger, f'Connection is {connection}')
         return connection
 
-    # TODO: Analyze arguments to look for a particular subset of a particular result.
-    # Currently just sending our only result
     def _handle_subset_request(self, request_context: RequestContext, params: SubsetParams):
         # send back query results
         if not self.check_subset_ranges(params):
-            #TODO: Send proper error
-            utils.log.log_debug(self._service_provider.logger, 'Index out of range when attempting to deal with subset request')
+            # TODO: Send proper error
+            utils.log.log_debug(self._service_provider.logger,
+                                'Index out of range when attempting to deal with subset request')
             return
         # Assume we only ever have 1 'batch' since this is PostgreSQL, so batch index is unnecessary
-        db_cell_values = self.build_db_cell_values(self.query_results[params.batch_index], params.rows_start_index, params.rows_start_index + params.rows_count)
+        db_cell_values = self.build_db_cell_values(
+            self.query_results[params.batch_index], params.rows_start_index,
+            params.rows_start_index + params.rows_count)
         result_set_subset = ResultSetSubset(len(db_cell_values), db_cell_values)
         request_context.send_response(SubsetResult(result_set_subset))
 
@@ -156,14 +148,14 @@ class QueryExecutionService(object):
         """ param results: a list of rows for a query result, where each row consists of tuples """
 
         # Grab only the range of rows that we need
-        rows = results[start_index : end_index]
+        rows = results[start_index: end_index]
         rows_list: List[List[DbCellValue]] = []
         row_id = start_index
 
-        #separate out each row
+        # separate out each row
         for row in rows:
             db_cell_value_row: List[DbCellValue] = []
-            #operate on each entry/cell within a row
+            # operate on each entry/cell within a row
             for cell in row:
                 # Add each cell to the list corresponding to its row
                 db_cell_value_row.append(DbCellValue(cell, cell is None, cell, row_id))
@@ -190,28 +182,31 @@ class QueryExecutionService(object):
         Verify that the subset range given makes sense
         """
         qr_end = len(self.query_results)
-        return not (self.query_results is None or 
-                    self.check_range(self.query_results, params.batch_index, qr_end) or
-                    self.check_range(self.query_results, params.result_set_index, qr_end) or
-                    self.check_range(self.query_results[params.result_set_index],
-                                     params.row_start_index, params.row_start_index +  params.rows_count) or
-                    params.rows_count < 0)
-    
+
+        return (self.query_results is not None and
+                self.check_range(self.query_results, params.batch_index, qr_end) and
+                self.check_range(self.query_results, params.result_set_index, qr_end) and
+                self.check_range(self.query_results[params.result_set_index],
+                                 params.rows_start_index, params.rows_start_index + params.rows_count) and
+                params.rows_count >= 0)
+
     def check_range(self, item, start, end) -> bool:
         """Checks if start (inclusive) and end (exclusive) are within indexing range of item"""
-        return not (item is None or start is None or 
+        return not (item is None or start is None or
                     start < 0 or start >= end or start > len(item) or
                     end is None or end > len(item))
-        
+
     def build_result_set_complete_params(self, batch: Batch, owner_uri: str):
         result_set_summary = batch.build_batch_summary().result_set_summaries[0]
         return ResultSetNotificationParams(owner_uri, result_set_summary)
-    
-    def build_message_params(self, owner_uri: str, batch_id: int, row_count: int):
-        message = "({0} rows affected)".format(row_count)
+
+    def build_message_params(self, owner_uri: str, batch_id: int, message: str):
         result_message = ResultMessage(batch_id, False, utils.time.get_time_str(datetime.now()), message)
         return MessageNotificationParams(owner_uri, result_message)
 
-        
-
-
+    def execute_query(self, query, cur, batch: Batch):
+        """Execute query and add to QES' query results"""
+        cur.execute(query)
+        batch.has_executed = True
+        batch.end_time = datetime.now()
+        self.query_results.append(cur.fetchall())

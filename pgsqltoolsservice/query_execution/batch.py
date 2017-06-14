@@ -8,7 +8,7 @@ from typing import List
 
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query_execution.contracts.common import (
-    SelectionData, BatchSummary, ResultSetSummary, ResultSetSubset
+    SelectionData, BatchSummary, ResultSetSummary
 )
 
 
@@ -45,14 +45,3 @@ class Batch(object):
         for result_set in self.result_sets:
             result_set_summaries.append(result_set.generate_result_set_summary())
         return result_set_summaries
-    
-    def get_subset(self, result_set_index, start_row, row_count) -> ResultSetSubset:
-        """
-            Gets a subset of the result sets indicated by the
-            index, start row, and row count
-        """
-        self.result_sets[result_set_index]
-        
-
-
-

@@ -26,9 +26,5 @@ class ResultSet(object):
         self.batch_id = 0
         self.row_count = row_count
 
-
     def generate_result_set_summary(self):
         return ResultSetSummary(self.id, self.batch_id, self.row_count, self.columns, SpecialAction())
-
-
-  

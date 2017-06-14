@@ -40,7 +40,6 @@ from pgsqltoolsservice.query_execution.contracts.common import (
     QueryCompleteParams,
     ResultSetSubset,
     SubsetResult,
-    SpecialAction,
     SpecialAction
 
 )
@@ -69,5 +68,6 @@ __all__ = [
     'ResultSetSubset',
     'SubsetResult',
     'SpecialAction',
-    'SpecialAction'
+    'SubsetParams', 'SUBSET_REQUEST',
+    'SubsetNotificationParams', 'SUBSET_NOTIFICATION'
 ]

@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset, SubsetResult 
+from pgsqltoolsservice.query_execution.contracts.common import SubsetResult
 
 
 class SubsetNotificationParams(object):
@@ -12,6 +12,6 @@ class SubsetNotificationParams(object):
         self.owner_uri: str = owner_uri
         self.subset_result: SubsetResult = subset_result
 
+
 # TODO: Double check that this is the correct notification message.
 SUBSET_NOTIFICATION = "query/subset"
-
