@@ -62,8 +62,8 @@ class ResultSetSummary(object):
 
 class DbColumn(object):
 
-    # The cursor_description is part of psycopg's cursor class' description property.
-    # It is a property that is a tuple (read-only) containing sequences of 7-item sequences.
+    # The cursor_description is element from psycopg's cursor class' description property.
+    # It is a property that is a tuple (read-only) contains a 7-item sequence.
     # Each inner sequence item can be referenced by using DESC
     def __init__(self, column_ordinal, cursor_description):
         # TODO: Retrieve additional fields if necessary and relevant. Leaving as 'None' for now
