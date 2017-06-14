@@ -7,7 +7,7 @@ from typing import Tuple
 import unittest
 from unittest.mock import MagicMock
 
-from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider
+from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
 from pgsqltoolsservice.workspace import WorkspaceService, PGSQLConfiguration
 from pgsqltoolsservice.workspace.workspace import Workspace, ScriptFile
 from pgsqltoolsservice.workspace.contracts import (

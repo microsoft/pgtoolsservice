@@ -20,9 +20,6 @@ class TestWorkspaceService(unittest.TestCase):
         self.assertDictEqual(w._workspace_files, {})
         self.assertListEqual(w.opened_files, [])
 
-        # ... The lock should be created
-        self.assertIsNotNone(w._workspace_files_lock)
-
     def test_file_operations_no_path(self):
         # Setup: Create list of paths to try and a list of methods to run
         w: Workspace = Workspace()
@@ -154,15 +151,15 @@ class TestWorkspaceService(unittest.TestCase):
     def test_is_path_in_memory(self):
         # Setup: Define the tests to run
         tests = [
-            ('file://path', False),             # Non-memory path
-            ('file://inmemory:/path', False),   # inmemory in middle of path
-            ('file://tsqloutput:/path', False), # tsqloutput in middle of path
-            ('file://git:/path', False),        # git in middle of path
-            ('file://untitled:/path', False),   # untitled in middle of path
-            ('inmemory://path', True),          # Starts with inmemory
-            ('tsqloutput://path', True),        # Starts with tsqloutput
-            ('git://path', True),               # Starts with git
-            ('untitled://path', True)           # Starts with untitled
+            ('file://path', False),                 # Non-memory path
+            ('file://inmemory:/path', False),       # inmemory in middle of path
+            ('file://tsqloutput:/path', False),     # tsqloutput in middle of path
+            ('file://git:/path', False),            # git in middle of path
+            ('file://untitled:/path', False),       # untitled in middle of path
+            ('inmemory://path', True),              # Starts with inmemory
+            ('tsqloutput://path', True),            # Starts with tsqloutput
+            ('git://path', True),                   # Starts with git
+            ('untitled://path', True)               # Starts with untitled
         ]
 
         for test in tests:

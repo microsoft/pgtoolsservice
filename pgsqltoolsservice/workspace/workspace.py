@@ -6,7 +6,6 @@
 import os
 from typing import List, Optional                        # noqa
 from urllib.parse import urlparse, unquote, ParseResult  # noqa
-from threading import Lock
 
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 import pgsqltoolsservice.utils as utils
