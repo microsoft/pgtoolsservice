@@ -269,7 +269,7 @@ class TestScriptFile(unittest.TestCase):
         script_file.apply_change(params)
 
         # Then the text should have updated without a validation error
-        expected_result = ['abca','def','ghij','klm']
+        expected_result = ['abca', 'def', 'ghij', 'klm']
         self.assertListEqual(script_file.file_lines, expected_result)
 
     # SET FILE CONTENTS TESTS ##############################################

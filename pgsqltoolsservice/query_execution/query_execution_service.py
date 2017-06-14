@@ -117,7 +117,7 @@ class QueryExecutionService(object):
                 batch_id,
                 True,
                 utils.time.get_time_str(datetime.now()),
-                psycopg2.errorcodes.lookup(e.pgcode))
+                str(e))
             message_params = MessageParams(result_message, params.owner_uri)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
             return
