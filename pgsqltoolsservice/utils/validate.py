@@ -14,7 +14,7 @@ def is_not_none(param_name: str, value_to_check: any) -> None:
     """
     if value_to_check is None:
         # TODO: Localize
-        raise ValueError('{} is None'.format(param_name))
+        raise ValueError(f'{param_name} is None')
 
 
 def is_within_range(param_name: str, value_to_check: float, lower_limit: float, upper_limit: float) -> None:
@@ -27,7 +27,7 @@ def is_within_range(param_name: str, value_to_check: float, lower_limit: float, 
     """
     if value_to_check < lower_limit or value_to_check > upper_limit:
         # TODO: Localize
-        raise ValueError('Value for {} is not between {} and {}'.format(param_name, lower_limit, upper_limit))
+        raise ValueError(f'Value for {param_name} is not between {lower_limit} and {upper_limit}')
 
 
 def is_less_than(param_name: str, value_to_check: float, upper_limit: float) -> None:
@@ -39,7 +39,7 @@ def is_less_than(param_name: str, value_to_check: float, upper_limit: float) -> 
     """
     if value_to_check >= upper_limit:
         # TODO: Localize
-        raise ValueError('Value for {} is greater than or equal to {}'.format(param_name, upper_limit))
+        raise ValueError(f'Value for {param_name} is greater than or equal to {upper_limit}')
 
 
 def is_greater_than(param_name: str, value_to_check: float, lower_limit: float) -> None:
@@ -51,7 +51,7 @@ def is_greater_than(param_name: str, value_to_check: float, lower_limit: float) 
     """
     if value_to_check <= lower_limit:
         # TODO: Localize
-        raise ValueError('Value for {} is less than or equal to {}'.format(param_name, lower_limit))
+        raise ValueError(f'Value for {param_name} is less than or equal to {lower_limit}')
 
 
 def is_not_equal(param_name: str, value_to_check: any, undesired_value: any) -> None:
@@ -63,11 +63,7 @@ def is_not_equal(param_name: str, value_to_check: any, undesired_value: any) -> 
     """
     if value_to_check == undesired_value:
         raise ValueError(
-            'The given value for {} "{}" should not equal "{}"'.format(
-                param_name,
-                value_to_check,
-                undesired_value
-            )
+            f'The given value for {param_name} "{value_to_check}" should not equal "{undesired_value}"'
         )
 
 
@@ -78,7 +74,7 @@ def is_not_none_or_empty(param_name: str, value_to_check: str) -> None:
     :param value_to_check: The value of the parameter being validated
     """
     if not value_to_check:
-        raise ValueError('Parameter {} contains a None or empty string'.format(param_name))
+        raise ValueError(f'Parameter {param_name} contains a None or empty string')
 
 
 def is_not_none_or_whitespace(param_name: str, value_to_check: str) -> None:
@@ -88,4 +84,4 @@ def is_not_none_or_whitespace(param_name: str, value_to_check: str) -> None:
     :param value_to_check: Value to of the parameter being validated
     """
     if value_to_check is None or value_to_check.strip() == '':
-        raise ValueError('Parameter {} contains a None, empty, or whitespace string'.format(param_name))
+        raise ValueError(f'Parameter {param_name} contains a None, empty, or whitespace string')
