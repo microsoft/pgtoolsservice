@@ -64,7 +64,7 @@ class DidChangeTextDocumentParams:
                                                      text_document=VersionedTextDocumentIdentifier)
 
     def __init__(self):
-        self.content_changes: List[TextDocumentChangeEvent] = None
+        self.content_changes: List[TextDocumentChangeEvent] = []
         self.text_document: VersionedTextDocumentIdentifier = None
 
 
