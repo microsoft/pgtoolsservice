@@ -3,6 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+"""Module for testing the workspace service"""
+
+import os
 from typing import Tuple
 import unittest
 from unittest.mock import MagicMock
@@ -14,7 +17,9 @@ from pgsqltoolsservice.workspace.contracts import (
     DidChangeConfigurationParams,
     DidCloseTextDocumentParams,
     DidOpenTextDocumentParams,
-    DidChangeTextDocumentParams
+    DidChangeTextDocumentParams,
+    Position,
+    Range
 )
 import tests.utils as utils
 
@@ -225,6 +230,31 @@ class TestWorkspaceService(unittest.TestCase):
             call[0](nc, call[1])
 
             # Then: Everything should succeed
+
+    def test_get_text_full(self):
+        """Text the workspace service's public get_text method when getting the full text of a file"""
+        # Set up the service with a file
+        workspace_service = WorkspaceService()
+        file_uri = 'untitled:Test_file'
+        file_text = os.linesep.join(['line1', 'line 2 content', ' line 3 '])
+        workspace_service._workspace.open_file(file_uri, file_text)
+
+        # Retrieve the full text of the file and make sure it matches
+        result_text = workspace_service.get_text(file_uri, None)
+        self.assertEqual(result_text, file_text)
+
+    def test_get_text_selection(self):
+        """Text the workspace service's public get_text method when getting a selection of the text of a file"""
+        # Set up the service with a file
+        workspace_service = WorkspaceService()
+        file_uri = 'untitled:Test_file'
+        file_text = os.linesep.join(['line1', 'line 2 content', ' line 3 '])
+        workspace_service._workspace.open_file(file_uri, file_text)
+
+        # Retrieve the full text of the file and make sure it matches
+        selection_range = Range(Position(1, 1), Position(2, 4))
+        result_text = workspace_service.get_text(file_uri, selection_range)
+        self.assertEqual(result_text, os.linesep.join(['ine 2 content', ' line']))
 
     # IMPLEMENTATION DETAILS ###############################################
 

@@ -6,10 +6,12 @@
 from datetime import datetime
 
 import psycopg2
+import psycopg2.errorcodes
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query_execution.contracts import (
-    EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
+    EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST,
+    ExecuteRequestParamsBase, ExecuteDocumentSelectionParams,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION,
     MESSAGE_NOTIFICATION,
     QUERY_COMPLETE_NOTIFICATION,
@@ -49,14 +51,14 @@ class QueryExecutionService(object):
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
         # Retrieve the connection service
-        connection_service = self._service_provider['connection']
+        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         if connection_service is None:
             raise LookupError('Connection service could not be found')  # TODO: Localize
         conn = self.get_connection(connection_service, params.owner_uri)
 
-        # Setup a dummy query and batch id
-        query = "SELECT * from pg_authid"
-        BATCH_ID = 0
+        # Get the query from the parameters or from the workspace service
+        query = self._get_query_from_execute_params(params)
+        batch_id = 0
         utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
         if conn is None:
             # TODO: Send back appropriate error response
@@ -71,7 +73,7 @@ class QueryExecutionService(object):
             # TODO: send responses asynchronously
 
             # send query/batchStart response
-            batch = Batch(BATCH_ID, params.query_selection, False)
+            batch = Batch(batch_id, params.query_selection, False)
             batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
@@ -98,7 +100,7 @@ class QueryExecutionService(object):
 
             # send query/message response
             message = "({0} rows affected)".format(cur.rowcount)
-            result_message = ResultMessage(BATCH_ID, False, utils.time.get_time_str(datetime.now()), message)
+            result_message = ResultMessage(batch_id, False, utils.time.get_time_str(datetime.now()), message)
             message_params = MessageParams(result_message, params.owner_uri)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
@@ -112,9 +114,11 @@ class QueryExecutionService(object):
         except psycopg2.DatabaseError as e:
             utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
             result_message = ResultMessage(
-                psycopg2.errorcodes.lookup(
-                    e.pgcode), True, utils.time.get_time_str(
-                    datetime.now()), BATCH_ID)
+                batch_id,
+                True,
+                utils.time.get_time_str(datetime.now()),
+                str(e))
+            message_params = MessageParams(result_message, params.owner_uri)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
             return
         finally:
@@ -137,3 +141,12 @@ class QueryExecutionService(object):
         pass
         # send back query results
         # subsetresult -> resultsetsubset -> {rowcount, dbcellvalue[][]}
+
+    def _get_query_from_execute_params(self, params: ExecuteRequestParamsBase):
+        if isinstance(params, ExecuteDocumentSelectionParams):
+            workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
+            selection_range = params.query_selection.to_range() if params.query_selection is not None else None
+            return workspace_service.get_text(params.owner_uri, selection_range)
+        else:
+            # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
+            return params.query

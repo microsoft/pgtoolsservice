@@ -7,9 +7,9 @@ import unittest
 import time
 import io
 
-from mock import call, MagicMock
+import mock
 
-from pgsqltoolsservice.hosting.json_rpc_server import JSONRPCServer
+from pgsqltoolsservice.hosting.json_rpc_server import JSONRPCServer, IncomingMessageConfiguration
 from pgsqltoolsservice.hosting.json_message import JSONRPCMessage
 
 
@@ -42,7 +42,7 @@ class JSONRPCServerTests(unittest.TestCase):
         server = JSONRPCServer(input_stream, output_stream)
 
         # ... Patch the server to not dispatch a message
-        dispatch_mock = MagicMock()
+        dispatch_mock = mock.MagicMock()
         server._dispatch_message = dispatch_mock
 
         # If: I start the server, run it for a bit, and stop it
@@ -71,7 +71,7 @@ class JSONRPCServerTests(unittest.TestCase):
         server = JSONRPCServer(input_stream, output_stream)
 
         # ... Patch the server to not dispatch a message
-        dispatch_mock = MagicMock()
+        dispatch_mock = mock.MagicMock()
         server._dispatch_message = dispatch_mock
 
         # If: I start the server, run it for a bit, and stop it
@@ -82,12 +82,67 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # Then: The dispatch method should have been called
         expected_output = JSONRPCMessage.from_dictionary({"method": "test", "params": {}})
-        msg_call = call(expected_output)
+        msg_call = mock.call(expected_output)
         dispatch_mock.assert_has_calls([msg_call, msg_call])
 
         # Teardown: All background threads should be shut down.
         self.assertFalse(server._input_consumer.isAlive())
         self.assertFalse(server._output_consumer.isAlive())
+
+    def test_dispatch_request(self):
+        """Test dispatching a request message"""
+        server = JSONRPCServer(None, None)
+
+        # Set up the mock handler for the request
+        method_name = 'test/method'
+        handler = mock.Mock()
+        mock_class = mock.Mock()
+        deserialized_object = object()
+        mock_class.from_dict = mock.Mock(return_value=deserialized_object)
+        server.set_request_handler(IncomingMessageConfiguration(method_name, mock_class), handler)
+
+        # Send the message
+        message_params = {'testParam': 'test_value'}
+        message = JSONRPCMessage.create_request(0, method_name, message_params)
+        server._dispatch_message(message)
+
+        # Verify that the params object was converted and that the handler was called
+        mock_class.from_dict.assert_called_once_with(message_params)
+        handler.assert_called_once_with(mock.ANY, deserialized_object)
+
+    def test_dispatch_notification(self):
+        """Test dispatching a notification message"""
+        server = JSONRPCServer(None, None)
+
+        # Set up the mock handler for the request
+        method_name = 'test/method'
+        handler = mock.Mock()
+        mock_class = mock.Mock()
+        deserialized_object = object()
+        mock_class.from_dict = mock.Mock(return_value=deserialized_object)
+        server.set_notification_handler(IncomingMessageConfiguration(method_name, mock_class), handler)
+
+        # Send the message
+        message_params = {'testParam': 'test_value'}
+        message = JSONRPCMessage.create_notification(method_name, message_params)
+        server._dispatch_message(message)
+
+        # Verify that the params object was converted and that the handler was
+        # called
+        mock_class.from_dict.assert_called_once_with(message_params)
+        handler.assert_called_once_with(mock.ANY, deserialized_object)
+
+    def test_dispatch_no_handler(self):
+        """Test dispatching a message that has no handler"""
+        server = JSONRPCServer(None, None)
+
+        # Set up the message
+        method_name = 'test/method'
+        message_params = {'testParam': 'test_value'}
+        message = JSONRPCMessage.create_notification(method_name, message_params)
+
+        # Send the message. There should be no error
+        server._dispatch_message(message)
 
 
 if __name__ == '__main__':
