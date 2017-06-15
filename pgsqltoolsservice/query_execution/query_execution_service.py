@@ -54,7 +54,12 @@ class QueryExecutionService(object):
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         if connection_service is None:
             raise LookupError('Connection service could not be found')  # TODO: Localize
-        conn = self.get_connection(connection_service, params.owner_uri)
+        conn = None
+        try:
+            conn = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+        except ValueError:
+            request_context.send_error('No connection associated with the given URI')
+            return
 
         # Get the query from the parameters or from the workspace service
         query = self._get_query_from_execute_params(params)
@@ -68,15 +73,13 @@ class QueryExecutionService(object):
         request_context.send_response({})
         cur = conn.cursor()
 
+        # send query/batchStart response
+        batch = Batch(batch_id, params.query_selection if params is ExecuteDocumentSelectionParams else None, False)
+        batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
+        request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
+
         try:
-
             # TODO: send responses asynchronously
-
-            # send query/batchStart response
-            batch = Batch(batch_id, params.query_selection, False)
-            batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
-            request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
-
             cur.execute(query)
             batch.has_executed = True
             batch.end_time = datetime.now()
@@ -112,6 +115,7 @@ class QueryExecutionService(object):
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
         except psycopg2.DatabaseError as e:
+            # Send a message with the error to the client
             utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
             result_message = ResultMessage(
                 batch_id,
@@ -120,20 +124,25 @@ class QueryExecutionService(object):
                 str(e))
             message_params = MessageParams(result_message, params.owner_uri)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
-            return
+
+            # Send a batch complete notification
+            batch.has_executed = True
+            batch.has_error = True
+            batch.end_time = datetime.now()
+            summary = batch.build_batch_summary()
+            batch_event_params = BatchEventParams(summary, params.owner_uri)
+            request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
+
+            # Send a query complete notification
+            query_complete_params = QueryCompleteParams([summary], params.owner_uri)
+            request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
+
+            # Roll back the transaction if the connection is still open
+            if not conn.closed:
+                conn.rollback()
         finally:
             if cur is not None:
                 cur.close()
-
-    def get_connection(self, connection_service, owner_uri):
-        """Get the connection string"""
-        connection_info = connection_service.owner_to_connection_map[owner_uri]
-        utils.log.log_debug(self._service_provider.logger, f'Connection info is {connection_info}')
-        if connection_info is None:
-            return None
-        connection = connection_info.get_connection(ConnectionType.DEFAULT)
-        utils.log.log_debug(self._service_provider.logger, f'Connection is {connection}')
-        return connection
 
     # TODO: Analyze arguments to look for a particular subset of a particular result.
     # Currently just sending our only result

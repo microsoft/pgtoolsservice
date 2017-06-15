@@ -8,11 +8,15 @@
 import unittest
 from unittest import mock
 
+import psycopg2
+
+from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData)
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+import tests.utils as utils
 
 
 class TestQueryService(unittest.TestCase):
@@ -103,6 +107,54 @@ class TestQueryService(unittest.TestCase):
         # the query text
         mock_workspace_service.get_text.assert_called_once_with(params.owner_uri, None)
         self.assertEqual(result, query)
+
+    def test_query_request_invalid_uri(self):
+        """Test handling a query request when the request has an invalid owner URI"""
+        # Set up the query execution service and a connection service that has no known URIs
+        query_execution_service = QueryExecutionService()
+        query_execution_service._service_provider = {constants.CONNECTION_SERVICE_NAME: ConnectionService()}
+
+        # Set up the request context and request parameters
+        mock_request_context = utils.MockRequestContext()
+        params = ExecuteStringParams()
+        params.query = 'select version()'
+        params.owner_uri = 'invalid_uri'
+
+        # If I try to handle a query request with an invalid owner URI
+        query_execution_service._handle_execute_query_request(mock_request_context, params)
+
+        # Then it responds with an error instead of a regular response
+        mock_request_context.send_error.assert_called_once()
+        mock_request_context.send_response.assert_not_called()
+
+    def test_query_request_error_handline(self):
+        """Test handling a query request that fails when the query is executed"""
+        # Set up the query execution service and a connection service with a mock connection that
+        # has a cursor that always throws an error when executing
+        mock_cursor = utils.MockCursor(None)
+        mock_cursor.execute = mock.Mock(side_effect=psycopg2.DatabaseError())
+        mock_connection = utils.MockConnection(cursor=mock_cursor)
+        connection_service = ConnectionService()
+        connection_service.get_connection = mock.Mock(return_value=mock_connection)
+        query_execution_service = QueryExecutionService()
+        mock_service_provider = ServiceProvider(None, {})
+        mock_service_provider._services = {constants.CONNECTION_SERVICE_NAME: connection_service}
+        mock_service_provider._is_initialized = True
+        query_execution_service._service_provider = mock_service_provider
+
+        # Set up the request context and request parameters
+        mock_request_context = utils.MockRequestContext()
+        params = ExecuteStringParams()
+        params.query = 'select version()'
+        params.owner_uri = 'test_uri'
+
+        # If I handle a query that raises an error when executed
+        query_execution_service._handle_execute_query_request(mock_request_context, params)
+
+        # Then the transaction gets rolled back and the cursor gets closed
+        mock_connection.rollback.assert_called_once()
+        mock_connection.commit.assert_not_called()
+        mock_cursor.close.assert_called_once()
 
 
 if __name__ == '__main__':

@@ -16,6 +16,7 @@ from pgsqltoolsservice.connection.contracts import (
 )
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 import tests.utils as utils
+from tests.utils import MockConnection, MockCursor
 
 
 class TestConnectionService(unittest.TestCase):
@@ -415,7 +416,7 @@ class TestConnectionService(unittest.TestCase):
     def test_get_connection_for_invalid_uri(self):
         """Test that get_connection raises an error if the given URI is unknown"""
         connection_service = ConnectionService()
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             connection_service.get_connection('someuri', ConnectionType.DEFAULT)
 
     def test_list_databases_handles_invalid_uri(self):
@@ -465,37 +466,6 @@ class TestConnectionService(unittest.TestCase):
         self.assertIsNone(mock_request_context.last_notification_params)
         self.assertIsNone(mock_request_context.last_response_params)
         self.assertIsNotNone(mock_request_context.last_error_message)
-
-
-class MockConnection(object):
-    """Class used to mock psycopg2 connection objects for testing"""
-
-    def __init__(self, dsn_parameters=None, cursor=None):
-        self.close = Mock()
-        self.dsn_parameters = dsn_parameters
-        self.server_version = '9.6.2'
-        self.cursor = Mock(return_value=cursor)
-        self.commit = Mock()
-        self.rollback = Mock()
-
-    def get_dsn_parameters(self):
-        """Mock for the connection's get_dsn_parameters method"""
-        return self.dsn_parameters
-
-    def get_parameter_status(self, parameter):
-        """Mock for the connection's get_parameter_status method"""
-        if parameter == 'server_version':
-            return self.server_version
-        else:
-            raise NotImplementedError()
-
-
-class MockCursor:
-    """Class used to mock psycopg2 cursor objects for testing"""
-
-    def __init__(self, query_results):
-        self.execute = Mock()
-        self.fetchall = Mock(return_value=query_results)
 
 
 if __name__ == '__main__':
