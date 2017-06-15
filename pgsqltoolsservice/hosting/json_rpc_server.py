@@ -240,7 +240,7 @@ class JSONRPCServer:
         if message.message_type is JSONRPCMessageType.Request:
             if self._logger is not None:
                 self._logger.info('Received request id=%s method=%s', message.message_id, message.message_method)
-            handler = self._request_handlers[message.message_method]
+            handler = self._request_handlers.get(message.message_method)
 
             # Make sure we got a handler for the request
             if handler is None:
@@ -251,7 +251,6 @@ class JSONRPCServer:
 
             # Call the handler with a request context and the deserialized parameter object
             request_context = RequestContext(message, self._output_queue)
-            deserialized_object = None
             if handler.class_ is None:
                 # Don't attempt to do complex deserialization
                 deserialized_object = message.message_params
@@ -262,7 +261,7 @@ class JSONRPCServer:
         elif message.message_type is JSONRPCMessageType.Notification:
             if self._logger is not None:
                 self._logger.info('Received notification method=%s', message.message_method)
-            handler = self._notification_handlers[message.message_method]
+            handler = self._notification_handlers.get(message.message_method)
 
             if handler is None:
                 # TODO: Send back an error message that the notification method is not supported?

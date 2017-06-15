@@ -8,9 +8,11 @@ import json
 import os
 import re
 import unittest
+import unittest.mock as mock
 
 from pgsqltoolsservice.hosting.json_writer import JSONRPCWriter
 from pgsqltoolsservice.hosting.json_message import JSONRPCMessage
+import tests.utils as utils
 
 
 class JSONRPCWriterTests(unittest.TestCase):
@@ -40,7 +42,7 @@ class JSONRPCWriterTests(unittest.TestCase):
         with io.BytesIO(b'123') as stream:
             # If:
             # ... I create a JSON RPC writer with an opened stream
-            writer = JSONRPCWriter(stream)
+            writer = JSONRPCWriter(stream, logger=utils.get_mock_logger())
 
             # ... and I close the writer
             writer.close()
@@ -48,11 +50,29 @@ class JSONRPCWriterTests(unittest.TestCase):
             # Then: The stream should be closed
             self.assertTrue(writer.stream.closed)
 
+    @staticmethod
+    def test_closes_exception():
+        # Setup: Patch the stream to have a custom close handler
+        stream = io.BytesIO(b'')
+        close_orig = stream.close
+        stream.close = mock.MagicMock(side_effect=AttributeError)
+
+        # If: Close a reader and it throws an exception
+        logger = utils.get_mock_logger()
+        reader = JSONRPCWriter(stream, logger=logger)
+        reader.close()
+
+        # Then: There should not have been an exception throws
+        logger.exception.assert_called_once()
+
+        # Cleanup: Close the stream
+        close_orig()
+
     def test_send_message(self):
         with io.BytesIO(b'') as stream:
             # If:
             # ... I create a JSON RPC writer
-            writer = JSONRPCWriter(stream)
+            writer = JSONRPCWriter(stream, logger=utils.get_mock_logger())
 
             # ... and I send a message
             message = JSONRPCMessage.create_request('123', 'test/test', {})
@@ -72,5 +92,3 @@ class JSONRPCWriterTests(unittest.TestCase):
             message_str = str.join(os.linesep, [x.decode('UTF-8') for x in stream.readlines()])
             message_dict = json.loads(message_str)
             self.assertDictEqual(message_dict, message.dictionary)
-
-    # TODO: test_send_message_logged

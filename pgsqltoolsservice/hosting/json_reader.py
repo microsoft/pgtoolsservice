@@ -56,7 +56,8 @@ class JSONRPCReader:
         try:
             self.stream.close()
         except Exception as e:
-            self._logger.exception(f'Exception raised when reader stream closed: {e}')
+            if self._logger is not None:
+                self._logger.exception(f'Exception raised when reader stream closed: {e}')
 
     def read_message(self):
         """

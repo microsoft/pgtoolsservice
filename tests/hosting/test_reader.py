@@ -46,7 +46,8 @@ class JSONRPCReaderTests(unittest.TestCase):
             # Then: The stream should be closed
             self.assertTrue(reader.stream.closed)
 
-    def test_closes_exception(self):
+    @staticmethod
+    def test_closes_exception():
         # Setup: Patch the stream to have a custom close handler
         stream = io.BytesIO(b'')
         close_orig = stream.close
