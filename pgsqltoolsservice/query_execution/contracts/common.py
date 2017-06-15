@@ -7,6 +7,7 @@
 from typing import List  # noqa
 
 import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.workspace.contracts import Position, Range
 
 DESC = {'name': 0, 'type_code': 1, 'display_size': 2, 'internal_size': 3, 'precision': 4, 'scale': 5, 'null_ok': 6}
 
@@ -22,6 +23,10 @@ class SelectionData(object):
         self.start_column: int = 0
         self.end_line: int = 0
         self.end_column: int = 0
+
+    def to_range(self):
+        """Convert the SelectionData object to a workspace service Range object"""
+        return Range(Position(self.start_line, self.start_column), Position(self.end_line, self.end_column))
 
 
 class BatchSummary(object):

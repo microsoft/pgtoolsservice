@@ -244,7 +244,8 @@ class JSONRPCServer:
 
             # Make sure we got a handler for the request
             if handler is None:
-                # TODO: Send back an error message that the request method is not supported
+                # TODO: Localize?
+                request_context.send_error(f'Requested method is unsupported: {message.message_method}')
                 if self._logger is not None:
                     self._logger.warn('Requested method is unsupported: %s', message.message_method)
                 return
@@ -264,15 +265,20 @@ class JSONRPCServer:
             handler = self._notification_handlers.get(message.message_method)
 
             if handler is None:
-                # TODO: Send back an error message that the notification method is not supported?
+                # Ignore the notification
                 if self._logger is not None:
                     self._logger.warn('Notification method %s is unsupported', message.message_method)
                 return
 
             # Call the handler with a notification context
             notification_context = NotificationContext(self._output_queue)
-            deserialized_object = handler.class_()
-            deserialized_object.__dict__ = message.message_params
+            deserialized_object = None
+            if handler.class_ is None:
+                # Don't attempt to do complex deserialization
+                deserialized_object = message.message_params
+            else:
+                # Use the complex deserializer
+                deserialized_object = handler.class_.from_dict(message.message_params)
             handler.handler(notification_context, deserialized_object)
         else:
             # If this happens we have a serious issue with the JSON RPC reader
