@@ -5,6 +5,7 @@
 
 """Module for testing the workspace service"""
 
+import os
 from typing import Tuple
 import unittest
 from unittest.mock import MagicMock
@@ -235,7 +236,7 @@ class TestWorkspaceService(unittest.TestCase):
         # Set up the service with a file
         workspace_service = WorkspaceService()
         file_uri = 'untitled:Test_file'
-        file_text = 'line1\nline 2 content\n line 3 '
+        file_text = os.linesep.join(['line1', 'line 2 content', ' line 3 '])
         workspace_service._workspace.open_file(file_uri, file_text)
 
         # Retrieve the full text of the file and make sure it matches
@@ -247,13 +248,13 @@ class TestWorkspaceService(unittest.TestCase):
         # Set up the service with a file
         workspace_service = WorkspaceService()
         file_uri = 'untitled:Test_file'
-        file_text = 'line1\nline 2 content\n line 3 '
+        file_text = os.linesep.join(['line1', 'line 2 content', ' line 3 '])
         workspace_service._workspace.open_file(file_uri, file_text)
 
         # Retrieve the full text of the file and make sure it matches
         selection_range = Range(Position(1, 1), Position(2, 4))
         result_text = workspace_service.get_text(file_uri, selection_range)
-        self.assertEqual(result_text, 'ine 2 content\n line')
+        self.assertEqual(result_text, os.linesep.join(['ine 2 content', ' line']))
 
     # IMPLEMENTATION DETAILS ###############################################
 
