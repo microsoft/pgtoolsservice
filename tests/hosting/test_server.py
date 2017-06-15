@@ -132,6 +132,18 @@ class JSONRPCServerTests(unittest.TestCase):
         mock_class.from_dict.assert_called_once_with(message_params)
         handler.assert_called_once_with(mock.ANY, deserialized_object)
 
+    def test_dispatch_no_handler(self):
+        """Test dispatching a message that has no handler"""
+        server = JSONRPCServer(None, None)
+
+        # Set up the message
+        method_name = 'test/method'
+        message_params = {'testParam': 'test_value'}
+        message = JSONRPCMessage.create_notification(method_name, message_params)
+
+        # Send the message. There should be no error
+        server._dispatch_message(message)
+
 
 if __name__ == '__main__':
     unittest.main()
