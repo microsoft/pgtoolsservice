@@ -241,6 +241,7 @@ class JSONRPCServer:
             if self._logger is not None:
                 self._logger.info('Received request id=%s method=%s', message.message_id, message.message_method)
             handler = self._request_handlers.get(message.message_method)
+            request_context = RequestContext(message, self._output_queue)
 
             # Make sure we got a handler for the request
             if handler is None:
@@ -251,7 +252,6 @@ class JSONRPCServer:
                 return
 
             # Call the handler with a request context and the deserialized parameter object
-            request_context = RequestContext(message, self._output_queue)
             if handler.class_ is None:
                 # Don't attempt to do complex deserialization
                 deserialized_object = message.message_params
