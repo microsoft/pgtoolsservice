@@ -54,7 +54,6 @@ class QueryExecutionService(object):
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         if connection_service is None:
             raise LookupError('Connection service could not be found')  # TODO: Localize
-        conn = None
         try:
             conn = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
         except ValueError:
