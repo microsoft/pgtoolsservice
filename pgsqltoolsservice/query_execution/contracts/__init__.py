@@ -41,6 +41,8 @@ from pgsqltoolsservice.query_execution.contracts.common import (
     ResultSetSubset,
     SubsetResult,
     SpecialAction,
+    SpecialAction
+
 )
 
 __all__ = [
@@ -67,4 +69,5 @@ __all__ = [
     'ResultSetSubset',
     'SubsetResult',
     'SpecialAction',
+    'SpecialAction'
 ]

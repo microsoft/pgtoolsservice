@@ -119,6 +119,11 @@ class QueryExecutionService(object):
                     e.pgcode), True, utils.time.get_time_str(
                     datetime.now()), BATCH_ID)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
+            result_message = ResultMessage(
+                psycopg2.errorcodes.lookup(
+                    e.pgcode), True, utils.time.get_time_str(
+                    datetime.now()), BATCH_ID)
+            request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
             return
         finally:
             if cur is not None:

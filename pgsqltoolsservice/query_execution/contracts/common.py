@@ -62,7 +62,7 @@ class ResultSetSummary(object):
 
 class DbColumn(object):
 
-    # The cursor_description is element from psycopg's cursor class' description property.
+    # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) contains a 7-item sequence.
     # Each inner sequence item can be referenced by using DESC
     def __init__(self, column_ordinal, cursor_description):
@@ -112,7 +112,6 @@ class DbCellValue(object):
     def __init__(self, display_value, is_null, raw_object, row_id):
         self.display_value = str(display_value)
         self.is_null = is_null
-        #self.raw_object = raw_object
         self.row_id = row_id
 
 
@@ -134,6 +133,13 @@ class QueryCompleteParams(object):
 
     def __init__(self, batch_summaries, owner_uri):
         self.batch_summaries: List[BatchSummary] = batch_summaries
+        self.owner_uri = owner_uri
+
+
+class ResultSetSubset(object):
+
+    def __init__(self, row_count, rows):
+        self.result_set_summary = result_set_summary
         self.owner_uri = owner_uri
 
 
