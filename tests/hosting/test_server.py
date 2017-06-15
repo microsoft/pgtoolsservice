@@ -474,13 +474,15 @@ class JSONRPCServerTests(unittest.TestCase):
         self.assertFalse(server._input_consumer.isAlive())
         self.assertFalse(server._output_consumer.isAlive())
 
+
 class _TestParams:
     @classmethod
     def from_dict(cls, dictionary):
         return _TestParams()
 
     def __init__(self):
-        value = '234'
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

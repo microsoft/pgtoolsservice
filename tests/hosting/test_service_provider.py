@@ -3,11 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import io
 import unittest
 import unittest.mock as mock
 
-from pgsqltoolsservice.hosting.json_reader import JSONRPCReader
 from pgsqltoolsservice.hosting.json_rpc_server import JSONRPCServer
 from pgsqltoolsservice.hosting.service_provider import ServiceProvider
 import tests.utils as utils
