@@ -143,6 +143,7 @@ class JSONRPCServer:
         if self._logger is not None:
             self._logger.info('Received shutdown request')
         self._stop_requested = True
+        self.stop()
 
     # IMPLEMENTATION DETAILS ###############################################
 
