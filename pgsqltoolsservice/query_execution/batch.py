@@ -31,17 +31,15 @@ class Batch(object):
             # TODO handle multiple result set summaries later
             elapsed_time = get_elapsed_time_str(self.start_time, self.end_time)
             summary.execution_elapsed = elapsed_time
-            summary.result_set_summaries: List[ResultSetSummary] = self.get_result_set_summaries()
+            summary.result_set_summaries: List[ResultSetSummary] = self.result_set_summaries
             summary.execution_end = get_time_str(self.end_time)
             summary.special_action = None
         return summary
 
-    def get_result_set_summaries(self) -> List[ResultSetSummary]:
+    @property
+    def result_set_summaries(self) -> List[ResultSetSummary]:
         """Gets result sets as summary contract objects"""
         if not self.result_sets:
             # No resultsets were set
             return None
-        result_set_summaries = []
-        for result_set in self.result_sets:
-            result_set_summaries.append(result_set.generate_result_set_summary())
-        return result_set_summaries
+        return [x.result_set_summary for x in self.result_sets]

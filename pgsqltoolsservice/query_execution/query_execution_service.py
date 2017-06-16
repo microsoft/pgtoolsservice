@@ -31,7 +31,7 @@ class QueryExecutionService(object):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
-        self.query_results = []
+        self.query_results: List[List[tuple]] = []
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -84,16 +84,16 @@ class QueryExecutionService(object):
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
             self.execute_query(query, cur, batch)
-
-            column_info = self.generate_column_info(cur.description)
-            batch.result_sets.append(ResultSet(0, 0, column_info, cur.rowcount))
+            if cur.description is not None:
+                batch.result_sets.append(ResultSet(len(self.query_results),
+                                    batch_id, cur.description, cur.rowcount))
             summary = batch.build_batch_summary()
             batch_event_params = BatchEventParams(summary, params.owner_uri)
 
             conn.commit()
 
             # send query/resultSetComplete response
-            # assuming only 1 result set summary for now
+            # assuming only 0 or 1 result set summaries for now
             result_set_params = self.build_result_set_complete_params(batch, params.owner_uri)
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
@@ -109,13 +109,15 @@ class QueryExecutionService(object):
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
-        except psycopg2.DatabaseError as e:
+        except Exception as e:
             # TODO: On error, send error correctly and then send query complete notification
-            utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
+            message = f'Query {query} failed'
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception(message)
             result_message_params = self.build_message_params(
-                params.owner_uri, batch_id, str(psycopg2.errorcodes.lookup(e.pgcode)))
+                params.owner_uri, batch_id, message)
             request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
-            return
+            raise RuntimeError(str(e))
         finally:
             if cur is not None:
                 cur.close()
@@ -131,82 +133,29 @@ class QueryExecutionService(object):
         return connection
 
     def _handle_subset_request(self, request_context: RequestContext, params: SubsetParams):
-        # send back query results
-        if not self.check_subset_ranges(params):
-            # TODO: Send proper error
-            utils.log.log_debug(self._service_provider.logger,
-                                'Index out of range when attempting to deal with subset request')
-            return
-        # Assume we only ever have 1 'batch' since this is PostgreSQL, so batch index is unnecessary
-        db_cell_values = self.build_db_cell_values(
-            self.query_results[params.batch_index], params.rows_start_index,
-            params.rows_start_index + params.rows_count)
-        result_set_subset = ResultSetSubset(len(db_cell_values), db_cell_values)
+        """Sends a response back to the query/subset request"""
+        # Assume we only ever have 1 'batch' since this is PostgreSQL, so batch index is unnecessary.
+        # Result_set_index starts from 1, so subtract 1 when indexing.
+        result_set_subset = ResultSetSubset(self.query_results[params.result_set_index - 1], 
+            params.rows_start_index, params.rows_start_index + params.rows_count)
         request_context.send_response(SubsetResult(result_set_subset))
 
-    def build_db_cell_values(self, results, start_index, end_index) -> List[List[DbCellValue]]:
-        """ param results: a list of rows for a query result, where each row consists of tuples """
-
-        # Grab only the range of rows that we need
-        rows = results[start_index: end_index]
-        rows_list: List[List[DbCellValue]] = []
-        row_id = start_index
-
-        # separate out each row
-        for row in rows:
-            db_cell_value_row: List[DbCellValue] = []
-            # operate on each entry/cell within a row
-            for cell in row:
-                # Add each cell to the list corresponding to its row
-                db_cell_value_row.append(DbCellValue(cell, cell is None, cell, row_id))
-            # Add our row to the overall row list
-            rows_list.append(db_cell_value_row)
-            row_id += 1
-        return rows_list
-
-    def generate_column_info(self, description):
-        """
-        Generate and return an array of DbColumns in order to be sent back as part of a notification
-        :param description: sequence of 7-item sequences that contains info about each column.
-        Each 7-item sequence corresponds to information for one row
-        """
-        column_info = []
-        index = 0
-        for desc in description:
-            column_info.append(DbColumn(index, desc))
-            index += 1
-        return column_info
-
-    def check_subset_ranges(self, params: SubsetParams) -> bool:
-        """
-        Verify that the subset range given makes sense
-        """
-        qr_end = len(self.query_results)
-
-        return (self.query_results is not None and
-                self.check_range(self.query_results, params.batch_index, qr_end) and
-                self.check_range(self.query_results, params.result_set_index, qr_end) and
-                self.check_range(self.query_results[params.result_set_index],
-                                 params.rows_start_index, params.rows_start_index + params.rows_count) and
-                params.rows_count >= 0)
-
-    def check_range(self, item, start, end) -> bool:
-        """Checks if start (inclusive) and end (exclusive) are within indexing range of item"""
-        return not (item is None or start is None or
-                    start < 0 or start >= end or start > len(item) or
-                    end is None or end > len(item))
-
     def build_result_set_complete_params(self, batch: Batch, owner_uri: str):
-        result_set_summary = batch.build_batch_summary().result_set_summaries[0]
+        summaries = batch.build_batch_summary().result_set_summaries
+        result_set_summary = None if (summaries is None) else summaries[0]
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
     def build_message_params(self, owner_uri: str, batch_id: int, message: str):
         result_message = ResultMessage(batch_id, False, utils.time.get_time_str(datetime.now()), message)
         return MessageNotificationParams(owner_uri, result_message)
 
-    def execute_query(self, query, cur, batch: Batch):
-        """Execute query and add to QES' query results"""
+    def execute_query(self, query, cur, batch: Batch) -> bool:
+        """Execute query and add to the query execution service's query results
+        """
         cur.execute(query)
         batch.has_executed = True
         batch.end_time = datetime.now()
-        self.query_results.append(cur.fetchall())
+        utils.log.log_debug(self._service_provider.logger, f'cur.description is {cur.description}')
+        if cur.description is not None:
+            self.query_results.append(cur.fetchall())
+            

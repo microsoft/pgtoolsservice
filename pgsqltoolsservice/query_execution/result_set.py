@@ -5,11 +5,12 @@
 
 from pgsqltoolsservice.query_execution.contracts.common import SpecialAction
 from pgsqltoolsservice.query_execution.contracts.common import ResultSetSummary
+from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 
 
 class ResultSet(object):
 
-    def __init__(self, ordinal, batch_ordinal, columns, row_count):
+    def __init__(self, ordinal, batch_ordinal, description, row_count):
         self.id = ordinal
         self.batch_id = batch_ordinal
         self.total_bytes_written = 0
@@ -22,9 +23,25 @@ class ResultSet(object):
         self.is_single_column_xml_json_result_set = None
         self.output_file_name = None
         self.row_count_override = None
-        self.columns = columns
-        self.batch_id = 0
+        self.columns = self.generate_column_info(description)
         self.row_count = row_count
 
-    def generate_result_set_summary(self):
+    @property
+    def result_set_summary(self):
         return ResultSetSummary(self.id, self.batch_id, self.row_count, self.columns, SpecialAction())
+
+    def generate_column_info(self, description):
+        """
+        Generate and return an array of DbColumns in order to be sent back as part of a notification
+        :param description: sequence of 7-item sequences that contains info about each column.
+        Each 7-item sequence corresponds to information for one row
+        """
+        column_info = []
+        if description is None:
+            return column_info
+
+        index = 0
+        for desc in description:
+            column_info.append(DbColumn(index, desc))
+            index += 1
+        return column_info

@@ -70,7 +70,4 @@ class SubsetParams(ExecuteRequestParamsBase):
         self.rows_count: int = None
 
 
-SUBSET_REQUEST = IncomingMessageConfiguration(
-    'query/subset',
-    SubsetParams
-)
+SUBSET_REQUEST = IncomingMessageConfiguration('query/subset', SubsetParams)
