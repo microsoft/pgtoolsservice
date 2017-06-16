@@ -25,7 +25,12 @@ if __name__ == '__main__':
             if arg_parts[0] == 'input':
                 stdin = io.open(arg_parts[1], 'rb', buffering=0)
             elif arg_parts[0] == '--enable-remote-debugging' or arg_parts[0] == '--enable-remote-debugging-wait':
-                ptvsd.enable_attach('', address=('0.0.0.0', 3000))
+                port = 3000
+                try:
+                    port = int(arg_parts[1])
+                except IndexError:
+                    pass
+                ptvsd.enable_attach('', address=('0.0.0.0', port))
             if arg_parts[0] == '--enable-remote-debugging-wait':
                 ptvsd.wait_for_attach()
 

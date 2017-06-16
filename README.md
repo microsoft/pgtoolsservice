@@ -38,6 +38,8 @@ It is possible to remotely attach a debugger to the PostgreSQL Tools Service thr
 
 If you want to debug startup, use the flag `--enable-remote-debugging-wait` instead, and the service will wait for you to attach the debugger before starting up.
 
+By default, the remote debugging server runs on port 3000. If you need to use a different port, just pass it as the argument to that flag, e.g. `--enable-remote-debugging=3001`
+
 ### Remote Debugging with Carbon
 You can set configuration options in Carbon to let you attach the remote debugger to the PostgreSQL Tools Service running inside Carbon. Set `pgsql.useDebugSource` to true and set `pgsql.debugSourcePath` to the path to the root of your PostgreSQL Tools Service repo (i.e. the folder containing this readme file). If you want to debug startup, also set `pgsql.enableStartupDebugging` to true. Here are examples from a settings.json file:
 
