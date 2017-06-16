@@ -7,13 +7,14 @@ from datetime import datetime
 from typing import List
 
 import psycopg2
+import psycopg2.errorcodes
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
-    QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST
+    QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
     BatchEventParams, ResultMessage, DbCellValue,
@@ -57,13 +58,13 @@ class QueryExecutionService(object):
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
         # Retrieve the connection service
-        connection_service = self._service_provider['connection']
+        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         if connection_service is None:
             raise LookupError('Connection service could not be found')  # TODO: Localize
         conn = self.get_connection(connection_service, params.owner_uri)
 
-        # Setup a dummy query and batch id
-        query = "SELECT * from pg_authid"
+        # Get the query from the parameters or from the workspace service
+        query = self._get_query_from_execute_params(params)
         batch_id = 0
         utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
         if conn is None:
@@ -111,13 +112,12 @@ class QueryExecutionService(object):
 
         except Exception as e:
             # TODO: On error, send error correctly and then send query complete notification
-            message = f'Query {query} failed'
             if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(message)
+                self._service_provider.logger.exception(f'Query {query} failed')
             result_message_params = self.build_message_params(
-                params.owner_uri, batch_id, message)
+                params.owner_uri, batch_id, str(e))
             request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
-            raise RuntimeError(str(e))
+            return
         finally:
             if cur is not None:
                 cur.close()
@@ -158,4 +158,12 @@ class QueryExecutionService(object):
         utils.log.log_debug(self._service_provider.logger, f'cur.description is {cur.description}')
         if cur.description is not None:
             self.query_results.append(cur.fetchall())
-            
+    
+    def _get_query_from_execute_params(self, params: ExecuteRequestParamsBase):
+        if isinstance(params, ExecuteDocumentSelectionParams):
+            workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
+            selection_range = params.query_selection.to_range() if params.query_selection is not None else None
+            return workspace_service.get_text(params.owner_uri, selection_range)
+        else:
+            # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
+            return params.query

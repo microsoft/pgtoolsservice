@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from logging import Logger          # noqa
-from typing import Callable, List   # noqa
+from typing import Callable, List, Optional  # noqa
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
 from pgsqltoolsservice.workspace.contracts import (
@@ -12,7 +12,7 @@ from pgsqltoolsservice.workspace.contracts import (
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
     DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, DidOpenTextDocumentParams,
     DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, DidCloseTextDocumentParams,
-    PGSQLConfiguration
+    PGSQLConfiguration, Range
 )
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 from pgsqltoolsservice.workspace.workspace import Workspace
@@ -71,6 +71,23 @@ class WorkspaceService:
 
     def register_text_open_callback(self, task: Callable[[ScriptFile], None]) -> None:
         self._text_open_callbacks.append(task)
+
+    def get_text(self, file_uri: str, selection_range: Optional[Range]) -> str:
+        """
+        Get the requested text selection, as a string, for a document
+
+        :param file_uri: The URI of the requested file
+        :param selection_data: An object containing information about which part of the file to return,
+        or None for the whole file
+        :raises ValueError: If there is no file matching the given URI
+        """
+        open_file = self._workspace.get_file(file_uri)
+        if open_file is None:
+            raise ValueError('No file corresponding to the given URI')
+        if selection_range is None:
+            return open_file.get_all_text()
+        else:
+            return open_file.get_text_in_range(selection_range)
 
     # REQUEST HANDLERS #####################################################
     def _handle_did_change_config(

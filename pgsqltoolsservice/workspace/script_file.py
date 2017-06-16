@@ -135,6 +135,10 @@ class ScriptFile:
             output.append(current_line[start_column:end_column])
         return output
 
+    def get_all_text(self) -> str:
+        """Gets all the text from the file, joined with environment-specific newlines"""
+        return os.linesep.join(self.file_lines)
+
     def validate_position(self, position: Position) -> None:
         """
         Raises ValueError if the given position is outside of the file's buffer extents
@@ -148,8 +152,9 @@ class ScriptFile:
         # Retrieve the line of the position
         line_string: str = self.file_lines[position.line]
 
-        # Validate against number of columns
-        if position.character < 0 or position.character >= len(line_string):
+        # Validate against number of columns. Allow the character to be in the last column to add a
+        # character to the end of the line.
+        if position.character < 0 or position.character > len(line_string):
             # TODO: Localize
             raise ValueError('Position is outside of column range for line {}'.format(position.line))
 
