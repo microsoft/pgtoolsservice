@@ -31,8 +31,9 @@ class JSONRPCWriter:
         """
         try:
             self.stream.close()
-        except AttributeError:
-            pass
+        except Exception as e:
+            if self._logger is not None:
+                self._logger.exception(f'Exception raised when writer stream closed: {e}')
 
     def send_message(self, message):
         """

@@ -43,6 +43,7 @@ class JSONRPCServer:
 
         self._request_handlers = {}
         self._notification_handlers = {}
+        self._shutdown_handlers = []
 
         self._output_consumer = None
         self._input_consumer = None
@@ -63,6 +64,13 @@ class JSONRPCServer:
         self.set_request_handler(exit_config, self._handle_shutdown_request)
 
     # METHODS ##############################################################
+
+    def add_shutdown_handler(self, handler):
+        """
+        Adds the provided shutdown handler to the list of shutdown handlers
+        :param handler: The callable handler to call when shutdown occurs
+        """
+        self._shutdown_handlers.append(handler)
 
     def start(self):
         """
@@ -114,12 +122,25 @@ class JSONRPCServer:
         self._output_queue.put(message)
 
     def set_request_handler(self, config, handler):
+        """
+        Sets the handler for a request with a given configuration
+        :param config: Configuration of the request to listen for
+        :param handler: Handler to call when the server receives a request that matches the config
+        """
         self._request_handlers[config.method] = self.Handler(config.parameter_class, handler)
 
     def set_notification_handler(self, config, handler):
+        """
+        Sets the handler for a notification with a given configuration
+        :param config: Configuration of the notification to listen for
+        :param handler: Handler to call when the server receives a notification that matches the config
+        """
         self._notification_handlers[config.method] = self.Handler(config.parameter_class, handler)
 
     def wait_for_exit(self):
+        """
+        Blocks until both input and output threads return, ie, until the server stops.
+        """
         self._input_consumer.join()
         self._output_consumer.join()
         if self._logger is not None:
@@ -140,9 +161,14 @@ class JSONRPCServer:
         request_context.send_response(self._version)
 
     def _handle_shutdown_request(self, request_context, params):
+        # Signal that the threads should stop
         if self._logger is not None:
             self._logger.info('Received shutdown request')
         self._stop_requested = True
+
+        # Execute the shutdown request handlers
+        for handler in self._shutdown_handlers:
+            handler()
 
     # IMPLEMENTATION DETAILS ###############################################
 
@@ -219,13 +245,13 @@ class JSONRPCServer:
 
             # Make sure we got a handler for the request
             if handler is None:
+                # TODO: Localize?
                 request_context.send_error(f'Requested method is unsupported: {message.message_method}')
                 if self._logger is not None:
                     self._logger.warn('Requested method is unsupported: %s', message.message_method)
                 return
 
             # Call the handler with a request context and the deserialized parameter object
-            deserialized_object = None
             if handler.class_ is None:
                 # Don't attempt to do complex deserialization
                 deserialized_object = message.message_params
