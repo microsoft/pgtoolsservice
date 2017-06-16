@@ -31,14 +31,21 @@ We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008)
     - On Mac/Linux: `export PYTHONPATH=$(pwd)`
     - On Windows: `set PYTHONPATH=%cd%`
 2. `python3 pgsqltoolsservice/pgsqltoolsservice.py`
-3. Now you can pass in JSON RPC requests to stdin, following the [language server protocol specifications](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md). The following commands are supported currently:
-    - initialize
-    - connection/connect
-    - connection/disconnect
-    - shutdown
-    - exit
-    - version
-    - capabilities/list
+3. Now you can pass in JSON RPC requests to stdin, following the [language server protocol specifications](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md).
+
+## Remote Debugging with VS Code
+It is possible to remotely attach a debugger to the PostgreSQL Tools Service through VS Code's Python extension. Just start the service with the command line argument `--enable-remote-debugging` and then, from the debug tab in VS Code, click 'Attach (Remote Debug)'.
+
+If you want to debug startup, use the flag `--enable-remote-debugging-wait` instead, and the service will wait for you to attach the debugger before starting up.
+
+### Remote Debugging with Carbon
+You can set configuration options in Carbon to let you attach the remote debugger to the PostgreSQL Tools Service running inside Carbon. Set `pgsql.useDebugSource` to true and set `pgsql.debugSourcePath` to the path to the root of your PostgreSQL Tools Service repo (i.e. the folder containing this readme file). If you want to debug startup, also set `pgsql.enableStartupDebugging` to true. Here are examples from a settings.json file:
+
+```
+    "pgsql.debugSourcePath": "/Users/mairvine/code/pgsqltoolsservice",
+    "pgsql.useDebugSource": true,
+    "pgsql.enableStartupDebugging": true
+```
 
 ### Example Inputs
 ```

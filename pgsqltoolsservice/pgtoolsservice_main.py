@@ -24,8 +24,10 @@ if __name__ == '__main__':
             arg_parts = arg.split('=')
             if arg_parts[0] == 'input':
                 stdin = io.open(arg_parts[1], 'rb', buffering=0)
-            elif arg_parts[0] == '--enable-remote-debugging':
+            elif arg_parts[0] == '--enable-remote-debugging' or arg_parts[0] == '--enable-remote-debugging-wait':
                 ptvsd.enable_attach('', address=('0.0.0.0', 3000))
+            if arg_parts[0] == '--enable-remote-debugging-wait':
+                ptvsd.wait_for_attach()
 
     # Wrap standard in and out in io streams to add readinto support
     if stdin is None:
