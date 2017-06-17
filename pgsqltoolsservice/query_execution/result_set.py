@@ -2,6 +2,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
+from typing import List  # noqa
 
 from pgsqltoolsservice.query_execution.contracts.common import SpecialAction
 from pgsqltoolsservice.query_execution.contracts.common import ResultSetSummary
@@ -10,8 +11,10 @@ from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 
 class ResultSet(object):
 
-    def __init__(self, ordinal, batch_ordinal, description, row_count):
+    def __init__(self, ordinal, batch_ordinal, description, row_count, rows):
+        # The ID of the resultset, the ordinal of the result within the batch
         self.id = ordinal
+        # The ID of the batch, the ordinal of the batch within the query
         self.batch_id = batch_ordinal
         self.total_bytes_written = 0
         self.output_file_name = None
@@ -25,6 +28,7 @@ class ResultSet(object):
         self.row_count_override = None
         self.columns = self.generate_column_info(description)
         self.row_count = row_count
+        self.rows: List[tuple] = rows
 
     @property
     def result_set_summary(self):
@@ -36,12 +40,7 @@ class ResultSet(object):
         :param description: sequence of 7-item sequences that contains info about each column.
         Each 7-item sequence corresponds to information for one row
         """
-        column_info = []
         if description is None:
-            return column_info
-
-        index = 0
-        for desc in description:
-            column_info.append(DbColumn(index, desc))
-            index += 1
-        return column_info
+            return []
+        desc_len = len(description)
+        return [DbColumn(index, description[index]) for index in range(desc_len)]

@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 """Contains contracts for query execution service"""
-from typing import List  # noqa
+from typing import List, Dict  # noqa
 
 import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.workspace.contracts import Position, Range
@@ -48,11 +48,11 @@ class BatchSummary(object):
 
 class ResultMessage(object):
 
-    def __init__(self, batch_id, is_error, time, message):
-        self.batch_id = batch_id
-        self.is_error = is_error
+    def __init__(self, batch_id: int, is_error: bool, time, message: str):
+        self.batch_id: int = batch_id
+        self.is_error: bool = is_error
         self.time = time
-        self.message = message
+        self.message: str = message
 
 
 class ResultSetSummary(object):
@@ -114,7 +114,7 @@ class DbColumn(object):
 
 class DbCellValue(object):
 
-    def __init__(self, display_value : any, is_null : bool, raw_object : object, row_id : int):
+    def __init__(self, display_value: any, is_null: bool, raw_object: object, row_id: int):
         self.display_value: str = None if (display_value is None) else str(display_value)
         self.is_null: bool = is_null
         self.row_id: int = row_id
@@ -122,57 +122,85 @@ class DbCellValue(object):
 
 class BatchEventParams(object):
 
-    def __init__(self, batch_summary : BatchSummary, owner_uri : str):
+    def __init__(self, batch_summary: BatchSummary, owner_uri: str):
         self.batch_summary: BatchSummary = batch_summary
         self.owner_uri: str = owner_uri
 
 
 class MessageParams(object):
 
-    def __init__(self, message : str, owner_uri : str):
+    def __init__(self, message: str, owner_uri: str):
         self.message: str = message
         self.owner_uri: str = owner_uri
 
 
 class QueryCompleteParams(object):
 
-    def __init__(self, batch_summaries : List[BatchSummary], owner_uri : str):
+    def __init__(self, batch_summaries: List[BatchSummary], owner_uri: str):
         self.batch_summaries: List[BatchSummary] = batch_summaries
         self.owner_uri: str = owner_uri
 
 
 class ResultSetSubset(object):
 
-    def __init__(self, results: List[tuple], start_index: int, end_index: int):
-        self.rows: List[List[DbCellValue]] = self.build_db_cell_values(results, start_index, end_index)
+    def __init__(self, results, owner_uri: str, batch_ordinal: int,
+                 result_set_ordinal: int, start_index: int, end_index: int):
+        self.rows: List[List[DbCellValue]] = self.build_db_cell_values(
+            results, owner_uri, batch_ordinal, result_set_ordinal, start_index, end_index)
         self.row_count: int = len(self.rows)
-        
-    def build_db_cell_values(self, results: List[tuple], start_index: int, end_index: int) -> List[List[DbCellValue]]:
+
+    def build_db_cell_values(self, results, owner_uri: str, batch_ordinal: int,
+                             result_set_ordinal: int, start_index: int,
+                             end_index: int) -> List[List[DbCellValue]]:
         """ param results: a list of rows for a query result, where each row consists of tuples
-        :param results: list of rows
-        :param start_index: the starting index that we will index into 'results' with, inclusive
-        :param end_index: the ending index we will index into 'results' with, exclusive
+        :param results: mapping of owner uris to their list of batches Dict[str, List[Batch]]
+        :param batch_ordinal: ordinal of the batch within 'results'
+        :param result_set_ordinal: ordinal of the result set within the batch's result_set field
+        :param start_index: the starting index that we will index into a list of rows with, inclusive
+        :param end_index: the ending index we will index into a list of rows with, exclusive
         """
 
         utils.validate.is_not_none("results", results)
+        utils.validate.is_not_none("owner_uri", owner_uri)
+        utils.validate.is_not_none("batch_ordinal", batch_ordinal)
+        utils.validate.is_not_none("result_set_ordinal", result_set_ordinal)
         utils.validate.is_not_none("start_index", start_index)
         utils.validate.is_not_none("end_index", end_index)
+
+        # Check the specified owner uri key exists
+        if owner_uri not in results:
+            raise IndexError(f'(Results corresponding to {owner_uri} do not exist)')  # TODO: Localize
+
+        # Check that the list of batches for the specified owner uri exists
+        utils.validate.is_not_none("results[owner_uri]", results[owner_uri])
+        batch_list = results[owner_uri]
+
+        # validate that there is an entry for the batch at position batch_ordinal
+        utils.validate.is_within_range("batch_ordinal", batch_ordinal, 0, len(batch_list) - 1)
+
+        batch = batch_list[batch_ordinal]
+        utils.validate.is_not_none("batch", batch)
+        utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, len(batch.result_sets) - 1)
+
+        result_sets = batch.result_sets[result_set_ordinal]
         utils.validate.is_within_range("start_index", start_index, 0, end_index - 1)
-        utils.validate.is_within_range("end_index", end_index - 1, start_index, len(results) - 1)
+        utils.validate.is_within_range("end_index", end_index - 1, start_index, len(result_sets.rows) - 1)
 
         rows_list: List[List[DbCellValue]] = []
         row_id = start_index
 
         # operate only on results within the specified range
         for row_id in range(start_index, end_index):
-            db_cell_value_row: List[DbCellValue] = []
-            # operate on each entry/cell within a row
-            for cell in results[row_id]:
-                # Add each cell to the list corresponding to its row
-                db_cell_value_row.append(DbCellValue(cell, cell is None, cell, row_id))
+            db_cell_value_row: List[DbCellValue] = [
+                DbCellValue(
+                    cell,
+                    cell is None,
+                    cell,
+                    row_id) for cell in result_sets.rows[row_id]]
             # Add our row to the overall row list
             rows_list.append(db_cell_value_row)
         return rows_list
+
 
 class SubsetResult(object):
 

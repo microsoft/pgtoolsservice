@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from datetime import datetime
-from typing import List
+from typing import List  # noqa
 
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query_execution.contracts.common import (
@@ -20,7 +20,7 @@ class Batch(object):
         self.start_time: datetime = datetime.now()
         self.has_error = has_error
         self.has_executed = False
-        self.result_sets = []
+        self.result_sets: List[ResultSet] = []
         self.end_time: datetime = None
 
     def build_batch_summary(self) -> BatchSummary:
