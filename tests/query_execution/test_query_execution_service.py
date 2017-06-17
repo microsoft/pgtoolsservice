@@ -112,7 +112,11 @@ class TestQueryService(unittest.TestCase):
         """Test handling a query request when the request has an invalid owner URI"""
         # Set up the query execution service and a connection service that has no known URIs
         query_execution_service = QueryExecutionService()
-        query_execution_service._service_provider = {constants.CONNECTION_SERVICE_NAME: ConnectionService()}
+        service_provider = ServiceProvider(None, {})
+        service_provider._logger = utils.get_mock_logger()
+        service_provider._services = {constants.CONNECTION_SERVICE_NAME: ConnectionService()}
+        service_provider._is_initialized = True
+        query_execution_service._service_provider = service_provider
 
         # Set up the request context and request parameters
         mock_request_context = utils.MockRequestContext()

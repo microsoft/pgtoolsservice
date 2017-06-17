@@ -50,34 +50,34 @@ class QueryExecutionService(object):
     def _handle_execute_query_request(
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
-        # Retrieve the connection service
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        if connection_service is None:
-            raise LookupError('Connection service could not be found')  # TODO: Localize
+        # Wrap all the work up to sending the response in a try/except block so that we can send an error if it fails
         try:
+            # Retrieve the connection service
+            connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
             conn = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
-        except ValueError:
-            request_context.send_error('No connection associated with the given URI')
+
+            # Get the query from the parameters or from the workspace service
+            query = self._get_query_from_execute_params(params)
+            batch_id = 0
+            utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
+            request_context.send_response({})
+        except Exception as e:
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception('Encountered exception while handling query request')
+            request_context.send_error('Unhandled exception: {}'.format(str(e)))  # TODO: Localize
             return
-
-        # Get the query from the parameters or from the workspace service
-        query = self._get_query_from_execute_params(params)
-        batch_id = 0
-        utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
-        if conn is None:
-            # TODO: Send back appropriate error response
-            utils.log.log_debug(self._service_provider.logger, 'Attempted to run query without an active connection')
-            return
-
-        request_context.send_response({})
-        cur = conn.cursor()
-
-        # send query/batchStart response
-        batch = Batch(batch_id, params.query_selection if params is ExecuteDocumentSelectionParams else None, False)
-        batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
-        request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
         try:
+            # Get the cursor and start executing the query
+            cur = conn.cursor()
+
+            # send query/batchStart response
+            batch = Batch(batch_id,
+                          params.query_selection if isinstance(params, ExecuteDocumentSelectionParams) else None,
+                          False)
+            batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
+            request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
+
             # TODO: send responses asynchronously
             cur.execute(query)
             batch.has_executed = True
@@ -101,7 +101,7 @@ class QueryExecutionService(object):
             # self.server.send_event("query/resultSetComplete", result_set_event_params)
 
             # send query/message response
-            message = "({0} rows affected)".format(cur.rowcount)
+            message = "({0} rows affected)".format(cur.rowcount)  # TODO: Localize
             result_message = ResultMessage(batch_id, False, utils.time.get_time_str(datetime.now()), message)
             message_params = MessageParams(result_message, params.owner_uri)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
@@ -113,14 +113,21 @@ class QueryExecutionService(object):
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
-        except psycopg2.DatabaseError as e:
-            # Send a message with the error to the client
+        except Exception as e:
             utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
+            if isinstance(e, psycopg2.DatabaseError):
+                error_message = str(e)
+            else:
+                error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
+                if self._service_provider.logger is not None:
+                    self._service_provider.logger.exception('Unhandled exception while executing query')
+
+            # Send a message with the error to the client
             result_message = ResultMessage(
                 batch_id,
                 True,
                 utils.time.get_time_str(datetime.now()),
-                str(e))
+                error_message)
             message_params = MessageParams(result_message, params.owner_uri)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
