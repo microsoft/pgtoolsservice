@@ -13,10 +13,26 @@ class PGSQLConfiguration:
     """
     @classmethod
     def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary,
+                                                     intellisense=IntellisenseConfiguration)
+
+    def __init__(self):
+        self.intellisense: IntellisenseConfiguration = IntellisenseConfiguration()
+
+class IntellisenseConfiguration:
+    """
+    Configuration for Intellisense settings
+    """
+    @classmethod
+    def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary, ignore_extra_attributes=True)
 
     def __init__(self):
-        self.setting = "Default_Setting"
+        self.enable_intellisense = True
+        self.enable_suggestions = True
+        self.enable_lowercase_suggestions = False
+        self.enable_error_checking = True
+        self.enable_quick_info = True
 
 
 class Configuration:

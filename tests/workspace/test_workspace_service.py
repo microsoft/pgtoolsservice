@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
-from pgsqltoolsservice.workspace import WorkspaceService, PGSQLConfiguration
+from pgsqltoolsservice.workspace import WorkspaceService, PGSQLConfiguration, IntellisenseConfiguration
 from pgsqltoolsservice.workspace.workspace import Workspace, ScriptFile
 from pgsqltoolsservice.workspace.contracts import (
     DidChangeConfigurationParams,
@@ -87,6 +87,21 @@ class TestWorkspaceService(unittest.TestCase):
             # Then: The callback list should be updated
             self.assertListEqual(test_param[1], [test_callback])
 
+    def test_config_defaults(self):
+        # Setup: Create a workspace service 
+        ws: WorkspaceService = WorkspaceService()
+
+        # Then:
+        # ... The config should have sensible default values
+        intellisense: IntellisenseConfiguration = ws.configuration.intellisense
+        self.assertIsNotNone(intellisense)
+        self.assertTrue(intellisense.enable_intellisense)
+        self.assertTrue(intellisense.enable_suggestions)
+        self.assertFalse(intellisense.enable_lowercase_suggestions)
+        self.assertTrue(intellisense.enable_error_checking)
+        self.assertTrue(intellisense.enable_quick_info)
+
+
     def test_handle_did_change_config(self):
         # Setup: Create a workspace service with two mock config change handlers
         ws: WorkspaceService = WorkspaceService()
@@ -98,7 +113,9 @@ class TestWorkspaceService(unittest.TestCase):
         params: DidChangeConfigurationParams = DidChangeConfigurationParams.from_dict({
             'settings': {
                 'pgsql': {
-                    'setting': 'NonDefault'
+                    'intellisense': {
+                        'enable_intellisense': False
+                    }
                 }
             }
         })
@@ -110,6 +127,8 @@ class TestWorkspaceService(unittest.TestCase):
 
         # ... The config should have been updated
         self.assertIs(ws.configuration, params.settings.pgsql)
+        # ... And default values that weren't specified in the notification are preserved
+        self.assertTrue(ws.configuration.intellisense.enable_suggestions)
 
         # ... The mock config change callbacks should have been called
         for callback in ws._config_change_callbacks:
