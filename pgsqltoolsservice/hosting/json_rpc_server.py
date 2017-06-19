@@ -170,6 +170,8 @@ class JSONRPCServer:
         for handler in self._shutdown_handlers:
             handler()
 
+        self.stop()
+
     # IMPLEMENTATION DETAILS ###############################################
 
     def _consume_input(self):
