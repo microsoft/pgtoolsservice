@@ -5,7 +5,7 @@
 
 """Utility functions for operating with datetimes"""
 
-from datetime import datetime  # noaq
+from datetime import datetime  # noqa
 
 
 def get_time_str(time: datetime):

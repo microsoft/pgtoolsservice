@@ -4,24 +4,26 @@
 # --------------------------------------------------------------------------------------------
 
 from datetime import datetime
+from typing import List, Dict  # noqa
 
 import psycopg2
 import psycopg2.errorcodes
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query_execution.contracts import (
-    EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST,
-    ExecuteRequestParamsBase, ExecuteDocumentSelectionParams,
-    BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION,
-    MESSAGE_NOTIFICATION,
-    QUERY_COMPLETE_NOTIFICATION,
+    EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
+    BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
+    MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
+    QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
-    BatchEventParams, ResultMessage, MessageParams, DbColumn, QueryCompleteParams
+    BatchEventParams, ResultMessage,
+    QueryCompleteParams, SubsetResult, ResultSetSubset
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.result_set import ResultSet
+from pgsqltoolsservice.query_execution.contracts.execute_request import SubsetParams
 import pgsqltoolsservice.utils as utils
 
 
@@ -30,6 +32,8 @@ class QueryExecutionService(object):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
+        # Dictionary mapping uri to a list of batches
+        self.query_results: Dict[str, List[Batch]] = {}
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -42,6 +46,10 @@ class QueryExecutionService(object):
             EXECUTE_DOCUMENT_SELECTION_REQUEST, self._handle_execute_query_request
         )
 
+        self._service_provider.server.set_request_handler(
+            SUBSET_REQUEST, self._handle_subset_request
+        )
+
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Query execution service successfully initialized')
 
@@ -50,6 +58,8 @@ class QueryExecutionService(object):
     def _handle_execute_query_request(
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
+
+        self.query_results[params.owner_uri] = []
         # Retrieve the connection service
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         if connection_service is None:
@@ -76,32 +86,26 @@ class QueryExecutionService(object):
             batch = Batch(batch_id, params.query_selection, False)
             batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
-
-            cur.execute(query)
-            batch.has_executed = True
-            batch.end_time = datetime.now()
-            self.query_results = cur.fetchall()
-
-            column_info = []
-            index = 0
-            for desc in cur.description:
-                column_info.append(DbColumn(index, desc))
-                index += 1
-            batch.result_sets.append(ResultSet(0, 0, column_info, cur.rowcount))
+            results = self.execute_query(query, cur, batch)
+            if results is not None:
+                result_set = ResultSet(len(self.query_results[params.owner_uri]),
+                                       batch_id, cur.description, cur.rowcount, results)
+                batch.result_sets.append(result_set)
+                
             summary = batch.build_batch_summary()
             batch_event_params = BatchEventParams(summary, params.owner_uri)
 
             conn.commit()
+            self.query_results[params.owner_uri].append(batch)
 
             # send query/resultSetComplete response
-            # result_set_summary = batch.build_batch_summary().result_set_summaries
-            # result_set_event_params = ResultSetEventParams(result_set_summary, params.owner_uri)
-            # self.server.send_event("query/resultSetComplete", result_set_event_params)
+            # assuming only 0 or 1 result set summaries for now
+            result_set_params = self.build_result_set_complete_params(batch, params.owner_uri)
+            request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             # send query/message response
             message = "({0} rows affected)".format(cur.rowcount)
-            result_message = ResultMessage(batch_id, False, utils.time.get_time_str(datetime.now()), message)
-            message_params = MessageParams(result_message, params.owner_uri)
+            message_params = self.build_message_params(params.owner_uri, batch_id, message)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
             summaries = []
@@ -111,19 +115,27 @@ class QueryExecutionService(object):
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
-        except psycopg2.DatabaseError as e:
-            utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
-            result_message = ResultMessage(
-                batch_id,
-                True,
-                utils.time.get_time_str(datetime.now()),
-                str(e))
-            message_params = MessageParams(result_message, params.owner_uri)
-            request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
-            return
+        except Exception as e:
+            # TODO: On error, send error correctly and then send query complete notification
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception(f'Query {query} failed')
+            result_message_params = self.build_message_params(
+                params.owner_uri, batch_id, str(e))
+            request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
+            if not isinstance(e, psycopg2.DatabaseError):
+                raise
+
         finally:
             if cur is not None:
                 cur.close()
+
+    def _handle_subset_request(self, request_context: RequestContext, params: SubsetParams):
+        """Sends a response back to the query/subset request"""
+
+        result_set_subset = ResultSetSubset(self.query_results, params.owner_uri,
+                                            params.batch_index, params.result_set_index, params.rows_start_index,
+                                            params.rows_start_index + params.rows_count)
+        request_context.send_response(SubsetResult(result_set_subset))
 
     def get_connection(self, connection_service, owner_uri):
         """Get the connection string"""
@@ -135,12 +147,34 @@ class QueryExecutionService(object):
         utils.log.log_debug(self._service_provider.logger, f'Connection is {connection}')
         return connection
 
-    # TODO: Analyze arguments to look for a particular subset of a particular result.
-    # Currently just sending our only result
-    def handle_subset_request(self, subset_params, request_context):
-        pass
-        # send back query results
-        # subsetresult -> resultsetsubset -> {rowcount, dbcellvalue[][]}
+    def build_result_set_complete_params(self, batch: Batch, owner_uri: str):
+        summaries = batch.build_batch_summary().result_set_summaries
+        result_set_summary = None if summaries is None else summaries[0]
+        return ResultSetNotificationParams(owner_uri, result_set_summary)
+
+    def build_message_params(self, owner_uri: str, batch_id: int, message: str):
+        result_message = ResultMessage(batch_id, False, utils.time.get_time_str(datetime.now()), message)
+        return MessageNotificationParams(owner_uri, result_message)
+
+    def execute_query(self, query: str, cur, batch: Batch) -> bool:
+        """Execute query and add to the query execution service's query results
+        :raises psycopg2.DatabaseError:
+        :param query: query text to be executed
+        :param cur: cursor object that will be used to execute the query
+        :param batch: batch that will be updated after query execution is complete
+        """
+        try:
+            cur.execute(query)
+        except Exception:
+            raise
+        finally:
+            batch.has_executed = True
+            batch.end_time = datetime.now()
+            return
+        
+        if cur.description is not None:
+            return cur.fetchall()
+        return None
 
     def _get_query_from_execute_params(self, params: ExecuteRequestParamsBase):
         if isinstance(params, ExecuteDocumentSelectionParams):
