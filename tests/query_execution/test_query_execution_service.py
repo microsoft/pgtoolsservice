@@ -7,6 +7,7 @@
 
 import unittest
 from unittest import mock
+from typing import List, Dict  # noqa
 
 import psycopg2
 
@@ -16,8 +17,10 @@ from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData)
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset, DbColumn
+from pgsqltoolsservice.query_execution.batch import Batch
+from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
-
 
 class TestQueryService(unittest.TestCase):
     """Methods for testing the query execution service"""
@@ -131,7 +134,7 @@ class TestQueryService(unittest.TestCase):
         mock_request_context.send_error.assert_called_once()
         mock_request_context.send_response.assert_not_called()
 
-    def test_query_request_error_handline(self):
+    def test_query_request_error_handling(self):
         """Test handling a query request that fails when the query is executed"""
         # Set up the query execution service and a connection service with a mock connection that
         # has a cursor that always throws an error when executing
@@ -159,6 +162,98 @@ class TestQueryService(unittest.TestCase):
         mock_connection.rollback.assert_called_once()
         mock_connection.commit.assert_not_called()
         mock_cursor.close.assert_called_once()
+
+    def test_result_set_subset(self):
+        """
+        Test for proper generation of ResultSetSubset
+        that is part of query/subset response payload
+        """
+
+        query_results: Dict[str, List[Batch]] = {}
+        owner_uri = "untitled"
+        query_results[owner_uri] = []
+        batch_ordinal = 0
+        result_ordinal = 0
+        rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
+        query_results[owner_uri].append(Batch(batch_ordinal, SelectionData(), False))
+        query_results[owner_uri][batch_ordinal].result_sets.append(
+            ResultSet(result_ordinal, batch_ordinal, None, len(rows), rows))
+
+        result_rows = query_results[owner_uri][batch_ordinal].result_sets[result_ordinal].rows
+        results_size = len(result_rows)
+        result_set_subset = ResultSetSubset(query_results, owner_uri, batch_ordinal,
+                                            result_ordinal, 0, results_size)
+
+        row_size = 3
+        self.assertEquals(results_size, result_set_subset.row_count)
+        db_cell_values = result_set_subset.rows
+        values_len = len(db_cell_values)
+        self.assertEqual(values_len, results_size)
+
+        # Check that the DbColumn[][] is generated correctly
+        for row_index in range(0, values_len):
+            row_len = len(db_cell_values[row_index])
+            self.assertEqual(row_len, row_size)
+            row = db_cell_values[row_index]
+            for column_index in range(0, row_len):
+                result_cell = result_rows[row_index][column_index]
+                cell = row[column_index]
+                self.assertEqual(cell.display_value, None if result_cell is None else str(result_cell))
+                self.assertEqual(cell.is_null, result_cell is None)
+                self.assertEqual(cell.row_id, row_index)
+
+        # Test that we raise Value Errors when using incorrect indices
+        with self.assertRaises(ValueError):
+            ResultSetSubset(query_results, owner_uri, -1, result_ordinal, 0, results_size)
+        with self.assertRaises(ValueError):
+            ResultSetSubset(query_results, owner_uri, 1, result_ordinal, 0, results_size)
+        with self.assertRaises(ValueError):
+            ResultSetSubset(query_results, owner_uri, batch_ordinal, 500, 0, results_size)
+        with self.assertRaises(ValueError):
+            ResultSetSubset(query_results, owner_uri, batch_ordinal, -1, 0, results_size)
+        with self.assertRaises(ValueError):
+            ResultSetSubset(query_results, owner_uri, batch_ordinal, result_ordinal, 0, results_size + 1)
+        with self.assertRaises(ValueError):
+            ResultSetSubset(query_results, owner_uri, batch_ordinal, result_ordinal, 2, results_size)
+        with self.assertRaises(ValueError):
+            ResultSetSubset(query_results, owner_uri, batch_ordinal, result_ordinal, -1, results_size)
+        with self.assertRaises(ValueError):
+            ResultSetSubset(query_results, owner_uri, batch_ordinal, result_ordinal, 0, -1)
+
+    def test_result_set_positive(self):
+        """Test that we properly generate the result set"""
+        description = [("first", 0, 1, 2, 3, 4, True), ("second", 5, 6, 7, 8, 9, False)]
+        test_columns = [DbColumn(0, description[0]), DbColumn(1, description[1])]
+        ordinal = 0
+        batch_ordinal = 0
+        row_count = len(description)
+
+        result_set = ResultSet(ordinal, batch_ordinal, description, row_count, [])
+        self.assertEqual(len(test_columns), len(result_set.columns))
+
+        for index in range(0, len(test_columns)):
+            self.assertEqual(test_columns[index].__dict__, result_set.columns[index].__dict__)
+        self.assertEqual(ordinal, result_set.id)
+        self.assertEqual(batch_ordinal, result_set.batch_id)
+        self.assertEqual(0, result_set.total_bytes_written)
+        self.assertEqual(None, result_set.output_file_name)
+        self.assertEqual([], result_set.file_offsets)
+        self.assertEqual(0, result_set.special_action.flags)
+        self.assertEqual(False, result_set.has_been_read)
+        self.assertEqual([], result_set.save_tasks)
+        self.assertEqual(None, result_set.is_single_column_xml_json_result_set)
+        self.assertEqual(None, result_set.output_file_name)
+        self.assertEqual(None, result_set.row_count_override)
+        self.assertEqual(row_count, result_set.row_count)
+        self.assertEqual([], result_set.rows)
+
+    def test_result_set_column_none_description(self):
+        """Test that result set column is empty if description is None.
+        Description is None if there were no results for a query
+        """
+        description = None
+        result_set = ResultSet(0, 0, description, 0, [])
+        self.assertEqual([], result_set.columns)
 
 
 if __name__ == '__main__':

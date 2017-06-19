@@ -9,8 +9,8 @@ from pgsqltoolsservice.query_execution.contracts.batch_notification import (
 )
 from pgsqltoolsservice.query_execution.contracts.execute_request import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase,
-    ExecuteResult,
-    EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST,
+    ExecuteResult, SubsetParams,
+    EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST, SUBSET_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.message_notification import (
     MessageNotificationParams,
@@ -24,46 +24,23 @@ from pgsqltoolsservice.query_execution.contracts.result_set_notification import 
     ResultSetNotificationParams,
     RESULT_SET_COMPLETE_NOTIFICATION
 )
-from pgsqltoolsservice.query_execution.contracts.common import (
-    ResultSetSummary,
-    BatchSummary,
-    ResultMessage,
-    SelectionData,
-    DbColumn,
-    DbCellValue,
-    BatchEventParams,
-    MessageParams,
-    QueryCompleteParams,
-    ResultSetEventParams,
-    ResultSetSubset,
-    SubsetResult,
-    SpecialAction
 
+from pgsqltoolsservice.query_execution.contracts.common import (
+    ResultSetSummary, BatchSummary, ResultMessage,
+    SelectionData, DbColumn, DbCellValue, BatchEventParams,
+    MessageParams, QueryCompleteParams, ResultSetSubset,
+    SubsetResult, SpecialAction
 )
 
 __all__ = [
     'BatchNotificationParams',
     'BATCH_START_NOTIFICATION', 'BATCH_COMPLETE_NOTIFICATION',
     'ExecuteDocumentSelectionParams', 'ExecuteStringParams', 'ExecuteRequestParamsBase',
-    'ExecuteResult',
-    'EXECUTE_DOCUMENT_SELECTION_REQUEST', 'EXECUTE_STRING_REQUEST',
-    'MessageNotificationParams',
-    'MESSAGE_NOTIFICATION',
-    'QueryCompleteNotificationParams',
-    'QUERY_COMPLETE_NOTIFICATION',
-    'ResultSetNotificationParams',
-    'RESULT_SET_COMPLETE_NOTIFICATION',
-    'ResultSetSummary',
-    'BatchSummary',
-    'ResultMessage',
-    'SelectionData',
-    'DbColumn',
-    'DbCellValue',
-    'BatchEventParams',
-    'MessageParams',
-    'QueryCompleteParams',
-    'ResultSetEventParams',
-    'ResultSetSubset',
-    'SubsetResult',
-    'SpecialAction'
+    'ExecuteResult', 'EXECUTE_DOCUMENT_SELECTION_REQUEST', 'EXECUTE_STRING_REQUEST',
+    'MessageNotificationParams', 'MESSAGE_NOTIFICATION', 'QueryCompleteNotificationParams',
+    'QUERY_COMPLETE_NOTIFICATION', 'ResultSetNotificationParams',
+    'RESULT_SET_COMPLETE_NOTIFICATION', 'ResultSetSummary',
+    'BatchSummary', 'ResultMessage', 'SelectionData', 'DbColumn',
+    'DbCellValue', 'BatchEventParams', 'MessageParams', 'QueryCompleteParams',
+    'ResultSetSubset', 'SubsetResult', 'SpecialAction', 'SubsetParams', 'SUBSET_REQUEST'
 ]

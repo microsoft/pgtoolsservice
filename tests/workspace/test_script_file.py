@@ -201,7 +201,7 @@ class TestScriptFile(unittest.TestCase):
             'abc',
             'd12',
             '3456',
-            '78m'
+            '78lm'
         ]
         self.assertListEqual(sf.file_lines, expected_result)
 
@@ -223,7 +223,7 @@ class TestScriptFile(unittest.TestCase):
         # ... The text should have updated
         expected_result = [
             'abc',
-            'd1m'
+            'd1lm'
         ]
         self.assertListEqual(sf.file_lines, expected_result)
 
@@ -249,7 +249,7 @@ class TestScriptFile(unittest.TestCase):
             'pgsql',
             'is',
             'awesome',
-            'm'
+            'lm'
         ]
         self.assertListEqual(sf.file_lines, expected_result)
 
@@ -258,7 +258,7 @@ class TestScriptFile(unittest.TestCase):
         # Set up the test file and parameters to add a character at the end of the first line
         script_file = self._get_test_script_file()
 
-        # If I add a single character to then end of a line
+        # If I add a single character to the end of a line
         params = TextDocumentChangeEvent.from_dict({
             'range': {
                 'start': {'line': 0, 'character': 3},
@@ -270,6 +270,89 @@ class TestScriptFile(unittest.TestCase):
 
         # Then the text should have updated without a validation error
         expected_result = ['abca', 'def', 'ghij', 'klm']
+        self.assertListEqual(script_file.file_lines, expected_result)
+
+    def test_apply_change_add_parentheses(self):
+        """Test applying a change that simulates typing parentheses and putting text between them"""
+        # Set up the test file and parameters to add a character at the end of the first line
+        script_file = self._get_test_script_file()
+
+        # If I add parentheses to the end of a line...
+        params = TextDocumentChangeEvent.from_dict({
+            'range': {
+                'start': {'line': 0, 'character': 3},
+                'end': {'line': 0, 'character': 3}
+            },
+            'text': '()'
+        })
+        script_file.apply_change(params)
+
+        expected_result = ['abc()', 'def', 'ghij', 'klm']
+        self.assertListEqual(script_file.file_lines, expected_result)
+
+        # And then type inside the parentheses
+        params = TextDocumentChangeEvent.from_dict({
+            'range': {
+                'start': {'line': 0, 'character': 4},
+                'end': {'line': 0, 'character': 4}
+            },
+            'text': 'a'
+        })
+        script_file.apply_change(params)
+
+        expected_result = ['abc(a)', 'def', 'ghij', 'klm']
+        self.assertListEqual(script_file.file_lines, expected_result)
+
+        # And then overwrite the last parenthesis
+        params = TextDocumentChangeEvent.from_dict({
+            'range': {
+                'start': {'line': 0, 'character': 5},
+                'end': {'line': 0, 'character': 6}
+            },
+            'text': ')'
+        })
+        script_file.apply_change(params)
+
+        # Then the text should have updated without a validation error
+        expected_result = ['abc(a)', 'def', 'ghij', 'klm']
+        self.assertListEqual(script_file.file_lines, expected_result)
+
+    def test_apply_change_remove_across_line(self):
+        """Test removing an entire line from the script file by selecting across the line"""
+        # Set up the test file and parameters to remove a line from the file
+        script_file = self._get_test_script_file()
+
+        # If I remove a line from the file
+        params = TextDocumentChangeEvent.from_dict({
+            'range': {
+                'start': {'line': 0, 'character': 3},
+                'end': {'line': 2, 'character': 0}
+            },
+            'text': ''
+        })
+        script_file.apply_change(params)
+
+        # Then the text should have updated without a validation error
+        expected_result = ['abcghij', 'klm']
+        self.assertListEqual(script_file.file_lines, expected_result)
+
+    def test_apply_change_remove_line(self):
+        """Test removing an entire line from the script file by selecting the line"""
+        # Set up the test file and parameters to remove a line from the file
+        script_file = self._get_test_script_file()
+
+        # If I remove a line from the file
+        params = TextDocumentChangeEvent.from_dict({
+            'range': {
+                'start': {'line': 1, 'character': 0},
+                'end': {'line': 2, 'character': 0}
+            },
+            'text': ''
+        })
+        script_file.apply_change(params)
+
+        # Then the text should have updated without a validation error
+        expected_result = ['abc', 'ghij', 'klm']
         self.assertListEqual(script_file.file_lines, expected_result)
 
     # SET FILE CONTENTS TESTS ##############################################

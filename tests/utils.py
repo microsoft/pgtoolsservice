@@ -34,6 +34,7 @@ def get_mock_logger() -> logging.Logger:
     mock_logger.error = mock.MagicMock()
     mock_logger.fatal = mock.MagicMock()
     mock_logger.warn = mock.MagicMock()
+    mock_logger.warning = mock.MagicMock()
     mock_logger.info = mock.MagicMock()
     mock_logger.log = mock.MagicMock()
 
