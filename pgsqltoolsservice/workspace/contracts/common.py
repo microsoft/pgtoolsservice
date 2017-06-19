@@ -75,3 +75,33 @@ class TextDocumentItem:
         self.language_id: str = None
         self.version: int = None
         self.text: str = None
+
+class TextDocumentIdentifier:
+    """
+    Defines a base parameter class for identifying a text document
+    Attributes:
+        uri:        The URI that uniquely identifies the path of the text document
+    """
+
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary)
+
+    def __init__(self):
+        self.uri: str = None
+
+class TextDocumentPosition:
+    """
+    Defines a position in a text document
+    Attributes:
+        text_document: The document identifier
+        position: The position in the document
+    """
+
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary)
+
+    def __init__(self):
+        self.text_document: TextDocumentIdentifier = None
+        self.position: Position = None
