@@ -14,7 +14,8 @@ from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
-    QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams
+    QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams,
+    BatchSummary
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
     BatchEventParams, ResultMessage,
@@ -102,11 +103,14 @@ class QueryExecutionService(object):
 
             # send query/resultSetComplete response
             # assuming only 0 or 1 result set summaries for now
-            result_set_params = self.build_result_set_complete_params(batch, params.owner_uri)
+            result_set_params = self.build_result_set_complete_params(summary, params.owner_uri)
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             # send query/message response
-            message = "({0} rows affected)".format(cur.rowcount)
+            if summary.result_set_summaries:
+                message = "({0} rows affected)".format(cur.rowcount)
+            else:
+                message = ""
             message_params = self.build_message_params(params.owner_uri, batch_id, message)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
@@ -156,9 +160,13 @@ class QueryExecutionService(object):
                                             params.rows_start_index + params.rows_count)
         request_context.send_response(SubsetResult(result_set_subset))
 
-    def build_result_set_complete_params(self, batch: Batch, owner_uri: str):
-        summaries = batch.build_batch_summary().result_set_summaries
-        result_set_summary = None if summaries is None else summaries[0]
+    def build_result_set_complete_params(self, summary: BatchSummary, owner_uri: str):
+        summaries = summary.result_set_summaries
+        result_set_summary = None
+        # Check if none or empty list
+        if summaries:
+            result_set_summary = summaries[0]
+        utils.log.log_debug(self._service_provider.logger, f'result set summary is {result_set_summary}')
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
     def build_message_params(self, owner_uri: str, batch_id: int, message: str):
