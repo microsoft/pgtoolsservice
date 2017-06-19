@@ -109,7 +109,6 @@ class DbColumn(object):
         self.is_udt: bool = None
         self.is_xml: bool = None
         self.is_json: bool = None
-        self.sql_db_type = None
 
 
 class DbCellValue(object):
