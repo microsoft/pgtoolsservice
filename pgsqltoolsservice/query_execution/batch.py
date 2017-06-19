@@ -10,6 +10,7 @@ from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query_execution.contracts.common import (
     SelectionData, BatchSummary, ResultSetSummary
 )
+from pgsqltoolsservice.query_execution.result_set import ResultSet  # noqa
 
 
 class Batch(object):
