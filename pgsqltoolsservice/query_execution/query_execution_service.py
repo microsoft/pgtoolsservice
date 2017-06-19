@@ -91,9 +91,7 @@ class QueryExecutionService(object):
                 result_set = ResultSet(len(self.query_results[params.owner_uri]),
                                        batch_id, cur.description, cur.rowcount, results)
                 batch.result_sets.append(result_set)
-                utils.log.log_debug(
-                    self._service_provider.logger,
-                    f'result set ordinal is {len(batch.result_sets) - 1}')
+                
             summary = batch.build_batch_summary()
             batch_event_params = BatchEventParams(summary, params.owner_uri)
 
@@ -125,7 +123,7 @@ class QueryExecutionService(object):
                 params.owner_uri, batch_id, str(e))
             request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
             if not isinstance(e, psycopg2.DatabaseError):
-                raise BaseException(e)
+                raise
 
         finally:
             if cur is not None:
@@ -133,7 +131,7 @@ class QueryExecutionService(object):
 
     def _handle_subset_request(self, request_context: RequestContext, params: SubsetParams):
         """Sends a response back to the query/subset request"""
-        utils.log.log_debug(self._service_provider.logger, f'requested result set index is {params.result_set_index}')
+
         result_set_subset = ResultSetSubset(self.query_results, params.owner_uri,
                                             params.batch_index, params.result_set_index, params.rows_start_index,
                                             params.rows_start_index + params.rows_count)
@@ -167,8 +165,8 @@ class QueryExecutionService(object):
         """
         try:
             cur.execute(query)
-        except psycopg2.DatabaseError as ex:
-            raise psycopg2.DatabaseError(ex)
+        except Exception:
+            raise
         finally:
             batch.has_executed = True
             batch.end_time = datetime.now()

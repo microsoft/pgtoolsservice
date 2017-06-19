@@ -37,10 +37,10 @@ class ResultSet(object):
     def generate_column_info(self, description):
         """
         Generate and return an array of DbColumns in order to be sent back as part of a notification
-        :param description: sequence of 7-item sequences that contains info about each column.
+        :param descriptions: sequence of 7-item sequences that contains info about each column.
         Each 7-item sequence corresponds to information for one row
         """
         if description is None:
             return []
-        desc_len = len(description)
-        return [DbColumn(index, description[index]) for index in range(desc_len)]
+
+        return [DbColumn(index, desc) for index, desc in enumerate(description)]

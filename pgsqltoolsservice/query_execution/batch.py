@@ -39,7 +39,4 @@ class Batch(object):
     @property
     def result_set_summaries(self) -> List[ResultSetSummary]:
         """Gets result sets as summary contract objects"""
-        if not self.result_sets:
-            # No resultsets were set
-            return None
         return [x.result_set_summary for x in self.result_sets]
