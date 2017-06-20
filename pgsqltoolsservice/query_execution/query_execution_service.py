@@ -73,6 +73,7 @@ class QueryExecutionService(object):
             query = self._get_query_from_execute_params(params)
             batch_id = 0
             utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
+            request_context.send_response({})
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Encountered exception while handling query request')
@@ -132,7 +133,7 @@ class QueryExecutionService(object):
 
             # Send a message with the error to the client
             result_message_params = self.build_message_params(
-                params.owner_uri, batch_id, error_message)
+                params.owner_uri, batch_id, error_message, True)
             request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
 
             # Send a batch complete notification
@@ -169,8 +170,8 @@ class QueryExecutionService(object):
         utils.log.log_debug(self._service_provider.logger, f'result set summary is {result_set_summary}')
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
-    def build_message_params(self, owner_uri: str, batch_id: int, message: str):
-        result_message = ResultMessage(batch_id, False, utils.time.get_time_str(datetime.now()), message)
+    def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool=False):
+        result_message = ResultMessage(batch_id, is_error, utils.time.get_time_str(datetime.now()), message)
         return MessageNotificationParams(owner_uri, result_message)
 
     def execute_query(self, query: str, cur, batch: Batch) -> bool:

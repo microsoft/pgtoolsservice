@@ -22,6 +22,7 @@ from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
 
+
 class TestQueryService(unittest.TestCase):
     """Methods for testing the query execution service"""
 
