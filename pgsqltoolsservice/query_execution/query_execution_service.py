@@ -61,30 +61,33 @@ class QueryExecutionService(object):
     ) -> None:
 
         self.query_results[params.owner_uri] = []
-        # Retrieve the connection service
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        if connection_service is None:
-            raise LookupError('Connection service could not be found')  # TODO: Localize
-        conn = self.get_connection(connection_service, params.owner_uri)
+        # Wrap all the work up to sending the response in a try/except block so that we can send an error if it fails
+        try:
+            # Retrieve the connection service
+            connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+            if connection_service is None:
+                raise LookupError('Connection service could not be found')  # TODO: Localize
+            conn = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
 
-        # Get the query from the parameters or from the workspace service
-        query = self._get_query_from_execute_params(params)
-        batch_id = 0
-        utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
-        if conn is None:
-            # TODO: Send back appropriate error response
-            utils.log.log_debug(self._service_provider.logger, 'Attempted to run query without an active connection')
+            # Get the query from the parameters or from the workspace service
+            query = self._get_query_from_execute_params(params)
+            batch_id = 0
+            utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
+            request_context.send_response({})
+        except Exception as e:
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception('Encountered exception while handling query request')
+            request_context.send_error('Unhandled exception: {}'.format(str(e)))  # TODO: Localize
             return
 
-        request_context.send_response({})
-        cur = conn.cursor()
-
         try:
-
-            # TODO: send responses asynchronously
+            # Get the cursor and start executing the query
+            cur = conn.cursor()
 
             # send query/batchStart response
-            batch = Batch(batch_id, params.query_selection, False)
+            batch = Batch(batch_id,
+                          params.query_selection if isinstance(params, ExecuteDocumentSelectionParams) else None,
+                          False)
             batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
             results = self.execute_query(query, cur, batch)
@@ -120,15 +123,32 @@ class QueryExecutionService(object):
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
         except Exception as e:
-            # TODO: On error, send error correctly and then send query complete notification
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(f'Query {query} failed')
-            result_message_params = self.build_message_params(
-                params.owner_uri, batch_id, str(e))
-            request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
-            if not isinstance(e, psycopg2.DatabaseError):
-                raise
+            utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
+            if isinstance(e, psycopg2.DatabaseError):
+                error_message = str(e)
+            else:
+                error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
+                if self._service_provider.logger is not None:
+                    self._service_provider.logger.exception('Unhandled exception while executing query')
 
+            # Send a message with the error to the client
+            result_message_params = self.build_message_params(
+                params.owner_uri, batch_id, error_message, True)
+            request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
+
+            # Send a batch complete notification
+            batch.has_error = True
+            summary = batch.build_batch_summary()
+            batch_event_params = BatchEventParams(summary, params.owner_uri)
+            request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
+
+            # Send a query complete notification
+            query_complete_params = QueryCompleteParams([summary], params.owner_uri)
+            request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
+
+            # Roll back the transaction if the connection is still open
+            if not conn.closed:
+                conn.rollback()
         finally:
             if cur is not None:
                 cur.close()
@@ -141,16 +161,6 @@ class QueryExecutionService(object):
                                             params.rows_start_index + params.rows_count)
         request_context.send_response(SubsetResult(result_set_subset))
 
-    def get_connection(self, connection_service, owner_uri):
-        """Get the connection string"""
-        connection_info = connection_service.owner_to_connection_map[owner_uri]
-        utils.log.log_debug(self._service_provider.logger, f'Connection info is {connection_info}')
-        if connection_info is None:
-            return None
-        connection = connection_info.get_connection(ConnectionType.DEFAULT)
-        utils.log.log_debug(self._service_provider.logger, f'Connection is {connection}')
-        return connection
-
     def build_result_set_complete_params(self, summary: BatchSummary, owner_uri: str):
         summaries = summary.result_set_summaries
         result_set_summary = None
@@ -160,8 +170,8 @@ class QueryExecutionService(object):
         utils.log.log_debug(self._service_provider.logger, f'result set summary is {result_set_summary}')
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
-    def build_message_params(self, owner_uri: str, batch_id: int, message: str):
-        result_message = ResultMessage(batch_id, False, utils.time.get_time_str(datetime.now()), message)
+    def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool=False):
+        result_message = ResultMessage(batch_id, is_error, utils.time.get_time_str(datetime.now()), message)
         return MessageNotificationParams(owner_uri, result_message)
 
     def execute_query(self, query: str, cur, batch: Batch) -> bool:
