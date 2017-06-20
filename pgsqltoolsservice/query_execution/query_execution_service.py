@@ -108,11 +108,12 @@ class QueryExecutionService(object):
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             # send query/message response
+            message = ""
+            # Only add in rows affected if we had result set summaries
             if summary.result_set_summaries:
                 message = "({0} rows affected)".format(cur.rowcount)
-            else:
-                message = ""
-            message_params = self.build_message_params(params.owner_uri, batch_id, message)
+
+            message_params = self.build_message_params(params.owner_uri, batch_id, message, False, conn.notices)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
             summaries = []
@@ -133,7 +134,7 @@ class QueryExecutionService(object):
 
             # Send a message with the error to the client
             result_message_params = self.build_message_params(
-                params.owner_uri, batch_id, error_message, True)
+                params.owner_uri, batch_id, error_message, True, conn.notices)
             request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
 
             # Send a batch complete notification
@@ -170,7 +171,9 @@ class QueryExecutionService(object):
         utils.log.log_debug(self._service_provider.logger, f'result set summary is {result_set_summary}')
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
-    def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool=False):
+    def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool=False, notices: List[str]=[]):
+        # Always have the notices as part of our message
+        message = ''.join(notices) + message
         result_message = ResultMessage(batch_id, is_error, utils.time.get_time_str(datetime.now()), message)
         return MessageNotificationParams(owner_uri, result_message)
 

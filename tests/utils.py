@@ -5,8 +5,10 @@
 
 import logging
 import unittest.mock as mock
+import psycopg2
 
 from pgsqltoolsservice.hosting import NotificationContext, RequestContext
+from pgsqltoolsservice.query_execution.contracts import ExecuteStringParams
 
 
 def get_mock_notification_context() -> NotificationContext:
@@ -40,6 +42,12 @@ def get_mock_logger() -> logging.Logger:
 
     return mock_logger
 
+def get_execute_string_params() -> ExecuteStringParams:
+    """Get a simple ExecutestringParams"""
+    params = ExecuteStringParams()
+    params.query = 'select version()'
+    params.owner_uri = 'test_uri'
+    return params
 
 class MockRequestContext(RequestContext):
     """Mock RequestContext object that allows service responses, notifications, and errors to be tested"""
@@ -75,6 +83,7 @@ class MockConnection(object):
         self.cursor = mock.Mock(return_value=cursor)
         self.commit = mock.Mock()
         self.rollback = mock.Mock()
+        self.notices = []
 
     @property
     def closed(self):
@@ -95,8 +104,20 @@ class MockConnection(object):
 
 class MockCursor:
     """Class used to mock psycopg2 cursor objects for testing"""
-
+    
     def __init__(self, query_results):
-        self.execute = mock.Mock()
+        self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
         self.fetchall = mock.Mock(return_value=query_results)
         self.close = mock.Mock()
+        self.connection = mock.Mock()
+        self.description = None
+
+    def execute_success_side_effects(self, query: str):
+        """Set up dummy results for query execution success"""
+        self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
+        self.description = []
+
+    def execute_failure_side_effects(self, query: str):
+        """Set up dummy results and raise error for query execution failure"""
+        self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
+        raise psycopg2.DatabaseError()
