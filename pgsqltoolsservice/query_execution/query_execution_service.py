@@ -108,12 +108,12 @@ class QueryExecutionService(object):
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             # send query/message response
-            message = ""
+            message = ''.join(conn.notices)
             # Only add in rows affected if we had result set summaries
             if summary.result_set_summaries:
-                message = "({0} rows affected)".format(cur.rowcount)
+                message = message + "({0} rows affected)".format(cur.rowcount)
 
-            message_params = self.build_message_params(params.owner_uri, batch_id, message, False, conn.notices)
+            message_params = self.build_message_params(params.owner_uri, batch_id, message, False)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
             summaries = []
@@ -132,9 +132,15 @@ class QueryExecutionService(object):
                 if self._service_provider.logger is not None:
                     self._service_provider.logger.exception('Unhandled exception while executing query')
 
+            # Send back notices as a separate message to avoid error coloring / highlighting of text
+            if conn is not None and conn.notices:
+                notice_message_params = self.build_message_params(
+                    params.owner_uri, batch_id, ''.join(conn.notices), False)
+                request_context.send_notification(MESSAGE_NOTIFICATION, notice_message_params)
+
             # Send a message with the error to the client
             result_message_params = self.build_message_params(
-                params.owner_uri, batch_id, error_message, True, conn.notices)
+                params.owner_uri, batch_id, error_message, True)
             request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
 
             # Send a batch complete notification
@@ -171,9 +177,8 @@ class QueryExecutionService(object):
         utils.log.log_debug(self._service_provider.logger, f'result set summary is {result_set_summary}')
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
-    def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool=False, notices: List[str]=[]):
+    def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool=False):
         # Always have the notices as part of our message
-        message = ''.join(notices) + message
         result_message = ResultMessage(batch_id, is_error, utils.time.get_time_str(datetime.now()), message)
         return MessageNotificationParams(owner_uri, result_message)
 

@@ -322,7 +322,7 @@ class TestQueryService(unittest.TestCase):
 
         # Assert that at least one message notification was sent and that it was an error message
         self.assertEqual(len(call_params_list), 1)
-        self.assertTrue(not call_params_list[0].message.is_error)
+        self.assertFalse(call_params_list[0].message.is_error)
         subset = ''.join(mock_connection.notices)
         self.assertTrue(subset in call_params_list[0].message.message)
 
@@ -364,11 +364,16 @@ class TestQueryService(unittest.TestCase):
         # call[0] would refer to the name of the notification call. call[1] allows access to the arguments list of the notification call
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION]
 
-        # Assert that only one message notification was sent and that it was an error message
-        self.assertEqual(len(call_params_list), 1)
-        self.assertTrue(call_params_list[0].message.is_error)
-        subset = ''.join(mock_connection.notices)
-        self.assertTrue(subset in call_params_list[0].message.message)
+        # Assert that only two message notifications were sent.
+        # The first is a message containing only the notifications, where is_error is false
+        # The second is the error message, where is_error is true
+        self.assertEqual(len(call_params_list), 2)
+        self.assertFalse(call_params_list[0].message.is_error)
+        self.assertTrue(call_params_list[1].message.is_error)
+        expected_notices = ''.join(mock_connection.notices)
+
+        # Make sure that the whole first message consists of the notices, as expected
+        self.assertEqual(expected_notices, call_params_list[0].message.message)
 
 if __name__ == '__main__':
     unittest.main()
