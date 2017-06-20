@@ -8,5 +8,6 @@
 # Service names
 CAPABILITIES_SERVICE_NAME = 'capabilities'
 CONNECTION_SERVICE_NAME = 'connection'
+LANGUAGE_SERVICE_NAME = 'language_service'
 QUERY_EXECUTION_SERVICE_NAME = 'query_execution'
 WORKSPACE_SERVICE_NAME = 'workspace'

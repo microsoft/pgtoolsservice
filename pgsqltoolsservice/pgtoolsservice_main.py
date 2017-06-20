@@ -12,6 +12,7 @@ import ptvsd
 from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
+from pgsqltoolsservice.language import LanguageService
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
@@ -56,6 +57,7 @@ if __name__ == '__main__':
     services = {
         constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
         constants.CONNECTION_SERVICE_NAME: ConnectionService,
+        constants.LANGUAGE_SERVICE_NAME: LanguageService,
         constants.QUERY_EXECUTION_SERVICE_NAME: QueryExecutionService,
         constants.WORKSPACE_SERVICE_NAME: WorkspaceService
     }

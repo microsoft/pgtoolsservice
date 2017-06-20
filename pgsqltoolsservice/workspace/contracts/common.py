@@ -100,7 +100,9 @@ class TextDocumentPosition:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary,
+                                                     text_document=TextDocumentIdentifier,
+                                                     position=Position)
 
     def __init__(self):
         self.text_document: TextDocumentIdentifier = None

@@ -7,11 +7,14 @@ from typing import Callable, List, Optional  # noqa
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
 from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition
+from pgsqltoolsservice.workspace import WorkspaceService
 from pgsqltoolsservice.language.contracts import (
     COMPLETION_REQUEST, CompletionItem, CompletionItemKind, TextEdit,
     COMPLETION_RESOLVE_REQUEST,
     LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams
 )
+import pgsqltoolsservice.utils as utils
+
 class LanguageService:
     """
     Class for handling requests/events that deal with Language requests such as auto-complete
@@ -43,6 +46,11 @@ class LanguageService:
         Lookup available completions when valid completion suggestions are requested.
         Sends an array of CompletionItem objects over the wire
         """
+        if self.should_skip_intellisense(params.text_document.uri):
+            request_context.send_response([])
+            return
+
+        
         # TODO:
         # - Add Default Keywords list from pgadmin
         # - Match these against input request when not connected
@@ -67,8 +75,14 @@ class LanguageService:
                 self._non_pgsql_uris.discard(params.uri)
 
     # PROPERTIES ###########################################################
-    
+    @property
+    def _workspace_service(self) -> WorkspaceService:
+        return self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
+
     # METHODS ##############################################################
+    def should_skip_intellisense(self, uri: str) -> bool:
+        return self._workspace_service.configuration.intellisense.enable_intellisense and self.is_pgsql_uri(uri)
+
     def is_pgsql_uri(self, uri: str) -> bool:
         """
         Checks if this URI can be treated as a PGSQL candidate for processing or should be skipped
