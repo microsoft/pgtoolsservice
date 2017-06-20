@@ -17,6 +17,14 @@ from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
 
 if __name__ == '__main__':
+    # Create the output logger
+    logger = logging.getLogger('pgsqltoolsservice')
+    handler = logging.FileHandler('pgsqltoolsservice.log')
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+
     # See if we have any arguments
     stdin = None
     if len(sys.argv) > 1:
@@ -32,6 +40,7 @@ if __name__ == '__main__':
                     pass
                 ptvsd.enable_attach('', address=('0.0.0.0', port))
             if arg_parts[0] == '--enable-remote-debugging-wait':
+                logger.debug('Waiting for a debugger to attach...')
                 ptvsd.wait_for_attach()
 
     # Wrap standard in and out in io streams to add readinto support
@@ -40,13 +49,6 @@ if __name__ == '__main__':
 
     std_out_wrapped = io.open(sys.stdout.fileno(), 'wb', buffering=0, closefd=False)
 
-    # Create the output logger
-    logger = logging.getLogger('pgsqltoolsservice')
-    handler = logging.FileHandler('pgsqltoolsservice.log')
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
     logger.info('PostgreSQL Tools Service is starting up...')
 
     # Create the server, but don't start it yet

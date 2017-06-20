@@ -17,7 +17,7 @@ from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData)
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
-from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset, DbColumn
+from pgsqltoolsservice.query_execution.contracts import DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
@@ -159,10 +159,46 @@ class TestQueryService(unittest.TestCase):
         # If I handle a query that raises an error when executed
         query_execution_service._handle_execute_query_request(mock_request_context, params)
 
-        # Then the transaction gets rolled back and the cursor gets closed
+        # Then the transaction gets rolled back, the cursor gets closed, and an error notification gets sent
         mock_connection.rollback.assert_called_once()
         mock_connection.commit.assert_not_called()
         mock_cursor.close.assert_called_once()
+        mock_request_context.send_notification.assert_called()
+
+        notification_calls = mock_request_context.send_notification.mock_calls
+        # Get the message params for all message notifications that were sent
+        call_params_list = [call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION]
+        # Assert that at least one message notification was sent and that it was an error message
+        self.assertGreater(len(call_params_list), 0)
+        for call_params in call_params_list:
+            self.assertTrue(call_params.message.is_error)
+
+    def test_query_request_response(self):
+        """Test that a response is sent when handling a query request"""
+        # Set up the query execution service with a mock connection service
+        connection_service = ConnectionService()
+        connection_service.get_connection = mock.Mock(return_value=None)
+        query_execution_service = QueryExecutionService()
+        mock_service_provider = ServiceProvider(None, {})
+        mock_service_provider._services = {constants.CONNECTION_SERVICE_NAME: connection_service}
+        mock_service_provider._is_initialized = True
+        query_execution_service._service_provider = mock_service_provider
+
+        # Set up the request context and request parameters
+        mock_request_context = utils.MockRequestContext()
+        params = ExecuteStringParams()
+        params.query = 'select version()'
+        params.owner_uri = 'test_uri'
+
+        # If I handle a query
+        try:
+            query_execution_service._handle_execute_query_request(mock_request_context, params)
+        except BaseException:            # This test doesn't mock enough to actually execute the query
+            pass
+
+        # Then there should have been a response sent to my request
+        mock_request_context.send_error.assert_not_called()
+        mock_request_context.send_response.assert_called_once()
 
     def test_result_set_subset(self):
         """
