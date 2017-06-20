@@ -15,6 +15,7 @@ from pgsqltoolsservice.connection.contracts import (
     DisconnectRequestParams, ListDatabasesParams
 )
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
+import pgsqltoolsservice.connection.connection_service
 import tests.utils as utils
 from tests.utils import MockConnection, MockCursor
 
@@ -466,6 +467,37 @@ class TestConnectionService(unittest.TestCase):
         self.assertIsNone(mock_request_context.last_notification_params)
         self.assertIsNone(mock_request_context.last_response_params)
         self.assertIsNotNone(mock_request_context.last_error_message)
+
+    def test_build_connection_response(self):
+        """Test that the connection response is built correctly"""
+        # Set up the test with mock data
+        server_name = 'testserver'
+        db_name = 'testdb'
+        user = 'testuser'
+        mock_connection = MockConnection({
+            'host': server_name,
+            'dbname': db_name,
+            'user': user
+        })
+        connection_type = ConnectionType.EDIT
+        connection_details = ConnectionDetails.from_data(
+            server_name=server_name, database_name=db_name, user_name=user, opts={})
+        owner_uri = 'test_uri'
+        connection_info = ConnectionInfo(owner_uri, connection_details)
+        connection_info._connection_map = {connection_type: mock_connection}
+
+        # If I build a connection response for the connection
+        response = pgsqltoolsservice.connection.connection_service._build_connection_response(
+            connection_info, connection_type)
+
+        # Then the response should have accurate information about the connection
+        self.assertEqual(response.owner_uri, owner_uri)
+        self.assertEqual(response.server_info.server_version, mock_connection.server_version)
+        self.assertEqual(response.server_info.is_cloud, False)
+        self.assertEqual(response.connection_summary.server_name, server_name)
+        self.assertEqual(response.connection_summary.database_name, db_name)
+        self.assertEqual(response.connection_summary.user_name, user)
+        self.assertEqual(response.type, connection_type)
 
 
 if __name__ == '__main__':
