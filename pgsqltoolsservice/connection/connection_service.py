@@ -207,7 +207,10 @@ def _build_connection_response(connection_info: ConnectionInfo, connection_type:
     connection = connection_info.get_connection(connection_type)
     dsn_parameters = connection.get_dsn_parameters()
 
-    connection_summary = ConnectionSummary(dsn_parameters['dbname'], dsn_parameters['host'], dsn_parameters['user'])
+    connection_summary = ConnectionSummary(
+        server_name=dsn_parameters['host'],
+        database_name=dsn_parameters['dbname'],
+        user_name=dsn_parameters['user'])
 
     response = ConnectionCompleteParams()
     response.connection_id = connection_info.connection_id
