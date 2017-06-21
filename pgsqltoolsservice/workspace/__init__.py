@@ -6,5 +6,9 @@
 from pgsqltoolsservice.workspace.contracts import PGSQLConfiguration, IntellisenseConfiguration
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 from pgsqltoolsservice.workspace.workspace_service import WorkspaceService
+from pgsqltoolsservice.workspace.workspace import Workspace
 
-__all__ = ['PGSQLConfiguration', 'IntellisenseConfiguration', 'ScriptFile', 'WorkspaceService']
+__all__ = [
+    'PGSQLConfiguration', 'IntellisenseConfiguration',
+    'ScriptFile', 'WorkspaceService', 'Workspace'
+]

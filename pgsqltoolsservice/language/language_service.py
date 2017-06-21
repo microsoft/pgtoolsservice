@@ -101,11 +101,11 @@ class LanguageService:
     @property
     def should_lowercase(self) -> bool:
         """Looks up enable_lowercase_suggestions from the workspace config"""
-        return self._workspace_service.configuration.enable_lowercase_suggestions
+        return self._workspace_service.configuration.intellisense.enable_lowercase_suggestions
 
     # METHODS ##############################################################
     def should_skip_intellisense(self, uri: str) -> bool:
-        return self._workspace_service.configuration.intellisense.enable_intellisense and self.is_pgsql_uri(uri)
+        return not self._workspace_service.configuration.intellisense.enable_intellisense or not self.is_pgsql_uri(uri)
 
     def is_pgsql_uri(self, uri: str) -> bool:
         """

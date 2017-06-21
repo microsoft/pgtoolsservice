@@ -46,7 +46,7 @@ class TextUtilities:
         if length == 0:
             return 0
 
-        utils.validate.is_within_range('start_col', start_col, 0, length - 1)
+        utils.validate.is_within_range('start_col', start_col, 0, length)
         index = start_col
         while index < length:
             if TextUtilities.is_char_delimiter(line[index]):
@@ -65,9 +65,10 @@ class TextUtilities:
         if length == 0:
             return 0
 
-        utils.validate.is_within_range('start_col', start_col, 0, length - 1)
+        utils.validate.is_within_range('start_col', start_col, 0, length)
         index = start_col
-        if index > 0 and TextUtilities.is_char_delimiter(line[index]):
+        if index == len(line) or (index > 0 and TextUtilities.is_char_delimiter(line[index])):
+            # If at the end of a line, skip to previous character to begin searching
             # If the current index is a delimiter, go back one since we need to capture the
             # context of the word. We are essentially "to the left" of that delimiter
             index -= 1

@@ -5,6 +5,7 @@
 
 """Test connection.ConnectionService"""
 
+from typing import List, Tuple, Optional
 import unittest
 from unittest import mock
 import psycopg2
@@ -18,10 +19,15 @@ from pgsqltoolsservice.hosting import (
 )
 from pgsqltoolsservice.language import LanguageService
 from pgsqltoolsservice.language.contracts import (
-    LanguageFlavorChangeParams
+    LanguageFlavorChangeParams, CompletionItem, CompletionItemKind
 )
 from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.workspace import WorkspaceService, PGSQLConfiguration
+from pgsqltoolsservice.workspace import (
+    WorkspaceService, PGSQLConfiguration, ScriptFile, Workspace
+)
+from pgsqltoolsservice.workspace.contracts import (
+    Range
+)
 import tests.utils as utils
 
 
@@ -33,8 +39,9 @@ class TestLanguageService(unittest.TestCase):
         self.mock_server_set_request = None
         self.mock_server: JSONRPCServer = None
         self.mock_service_provider: ServiceProvider = None
-        self.mock_workspace: WorkspaceService = None
+        self.mock_workspace_service: WorkspaceService = None
         self.default_text_position: TextDocumentPosition = None
+        self.default_uri = 'file://my.sql'
 
 
     def setUp(self):
@@ -42,13 +49,13 @@ class TestLanguageService(unittest.TestCase):
         self.mock_server_set_request = mock.MagicMock()
         self.mock_server = JSONRPCServer(None, None)
         self.mock_server.set_request_handler = self.mock_server_set_request
-        self.mock_workspace = mock.Mock()
-        services = {constants.WORKSPACE_SERVICE_NAME: self.mock_workspace}
-        self.mock_service_provider = ServiceProvider(self.mock_server, services, None)
+        self.mock_workspace_service = WorkspaceService()
+        self.mock_service_provider = ServiceProvider(self.mock_server, {}, None)
+        self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
         self.mock_service_provider._is_initialized = True
         self.default_text_position = TextDocumentPosition.from_dict({
             'text_document': {
-                'uri': 'file://my.sql'
+                'uri': self.default_uri
             },
             'position':  {
                 'line': 1,
@@ -84,25 +91,71 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: intellisense is disabled
         context: RequestContext = utils.MockRequestContext()
-        self.mock_workspace.configuration = PGSQLConfiguration()
-        self.mock_workspace.configuration.intellisense.enable_intellisense = False
+        self.mock_workspace_service._configuration = PGSQLConfiguration()
+        self.mock_workspace_service._configuration.intellisense.enable_intellisense = False
         service: LanguageService = self._init_service()
 
         # When: I request completion item
         service.handle_completion_request(context, self.default_text_position)
 
-        # Then: 
+        # Then:
         # ... An empty completion should be sent over the notification
         context.send_response.asssert_called_once()
         self.assertEqual(context.last_response_params, [])
-        # ... and workspace service should not have been queried
-        self.mock_workspace.get_text.assert_not_called()
+
+    def test_completion_file_not_found(self):
+        """
+        Test that the completion handler returns empty if the intellisense
+        is disabled
+        """
+        # If: The script file doesn't exist (there is an empty workspace)
+        context: RequestContext = utils.MockRequestContext()
+        config: PGSQLConfiguration = PGSQLConfiguration()
+
+        self.mock_workspace_service._configuration = config
+        self.mock_workspace_service._workspace = Workspace()
+        service: LanguageService = self._init_service()
+
+        # When: I request completion item
+        service.handle_completion_request(context, self.default_text_position)
+
+        # Then:
+        # ... An empty completion should be sent over the notification
+        context.send_response.asssert_called_once()
+        self.assertEqual(context.last_response_params, [])
 
     def test_default_completion_items(self):
         """
         Test that the completion handler returns a set of default values
         when not connected to any URI
         """
+        # If: The script file doesn't exist (there is an empty workspace)
+        input_text = 'create tab'
+        doc_position = TextDocumentPosition.from_dict({
+            'text_document': {
+                'uri': self.default_uri
+            },
+            'position':  {
+                'line': 0,
+                'character': 10 # end of 'tab' word
+            }
+        })
+        context: RequestContext = utils.MockRequestContext()
+        self.mock_workspace_service._configuration = PGSQLConfiguration()
+        self.mock_workspace_service._configuration.intellisense.enable_intellisense = True
+        workspace, script_file = self._get_test_workspace(True, input_text)
+        self.mock_workspace_service._workspace = workspace
+        service: LanguageService = self._init_service()
+
+        # When: I request completion item
+        service.handle_completion_request(context, doc_position)
+
+        # Then:
+        # ... An empty completion should be sent over the notification
+        context.send_response.asssert_called_once()
+        completions: List[CompletionItem] = context.last_response_params
+        self.assertTrue(len(completions) > 0)
+        self.verify_match('TABLE', completions, Range.from_data(0, 7, 0, 10))
         
     def test_language_flavor(self):
         """
@@ -140,4 +193,27 @@ class TestLanguageService(unittest.TestCase):
         service.register(self.mock_service_provider)
         return service
 
+    def _get_test_workspace(self, script_file: bool=True, buffer: str='') -> Tuple[Workspace, Optional[ScriptFile]]:
+        workspace: Workspace = Workspace()
+        file: Optional[ScriptFile] = None
+        if script_file:
+            file = ScriptFile(self.default_uri, buffer, '')
+            workspace._workspace_files[self.default_uri] = file
+        return workspace, file
 
+
+    def verify_match(self, word: str, matches: List[CompletionItem], text_range: Range):
+        """Verifies match against its label and other properties"""
+        match: CompletionItem = next(iter(obj for obj in matches if obj.label == word), None)
+        self.assertIsNotNone(match)
+        self.assertEqual(word, match.label)
+        self.assertEqual(CompletionItemKind.Keyword, match.kind)
+        self.assertEqual(word, match.insert_text)
+        self.assert_range_equals(text_range, match.text_edit.range)
+        self.assertEqual(word, match.text_edit.new_text)
+
+    def assert_range_equals(self, first: Range, second: Range):
+        self.assertEqual(first.start.line, second.start.line)
+        self.assertEqual(first.start.character, second.start.character)
+        self.assertEqual(first.end.line, second.end.line)
+        self.assertEqual(first.end.character, second.end.character)
