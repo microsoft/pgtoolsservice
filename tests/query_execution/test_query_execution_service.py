@@ -140,7 +140,7 @@ class TestQueryService(unittest.TestCase):
 
         # Set up the request context and request parameters
         mock_request_context = utils.MockRequestContext()
-        params = utils.get_execute_string_params()
+        params = get_execute_string_params()
 
         # If I try to handle a query request with an invalid owner URI
         query_execution_service._handle_execute_query_request(mock_request_context, params)
@@ -166,7 +166,7 @@ class TestQueryService(unittest.TestCase):
 
         # Set up the request context and request parameters
         mock_request_context = utils.MockRequestContext()
-        params = utils.get_execute_string_params()
+        params = get_execute_string_params()
 
         # If I handle a query that raises an error when executed
         query_execution_service._handle_execute_query_request(mock_request_context, params)
@@ -198,7 +198,7 @@ class TestQueryService(unittest.TestCase):
 
         # Set up the request context and request parameters
         mock_request_context = utils.MockRequestContext()
-        params = utils.get_execute_string_params()
+        params = get_execute_string_params()
 
         # If I handle a query
         try:
@@ -304,8 +304,7 @@ class TestQueryService(unittest.TestCase):
     def test_message_notices_no_error(self):
         """Test to make sure that notices are being sent as part of a message notification"""
         # Set up params that are sent as part of a query execution request
-        params = utils.get_execute_string_params()
-
+        params = get_execute_string_params()
         # If we handle an execute query request
         self.query_execution_service._handle_execute_query_request(self.request_context, params)
 
@@ -338,28 +337,28 @@ class TestQueryService(unittest.TestCase):
         """
         # Set up query execution side effect and params sent as part of a QE request
         self.cursor.execute = mock.Mock(side_effect=self.cursor.execute_failure_side_effects)
-        params = utils.get_execute_string_params()
+        params = get_execute_string_params()
 
         # If we handle an execute query request
         self.query_execution_service._handle_execute_query_request(self.request_context, params)
 
-        # Then we executed the query, closed the cursor, 
+        # Then we executed the query, closed the cursor,
         # did not call fetchall(), and cleared the notices
         self.cursor.execute.assert_called_once()
         self.cursor.close.assert_called_once()
         self.cursor.fetchall.assert_not_called()
         self.assertEqual(self.connection.notices, [])
-        
+
         # Get the message params for all message notifications that were sent
         # call[0] would refer to the name of the notification call. call[1] allows
         # access to the arguments list of the notification call
         notification_calls = self.request_context.send_notification.mock_calls
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION]
-        
+
         # Assert that only two message notifications were sent.
         # The first is a message containing only the notifications, where is_error is false
         # The second is the error message, where is_error is true
-        expected_notices =  ["NOTICE: foo", "DEBUG: bar"]
+        expected_notices = ["NOTICE: foo", "DEBUG: bar"]
         self.assertEqual(len(call_params_list), 2)
         self.assertFalse(call_params_list[0].message.is_error)
         self.assertTrue(call_params_list[1].message.is_error)
@@ -367,6 +366,14 @@ class TestQueryService(unittest.TestCase):
 
         # Make sure that the whole first message consists of the notices, as expected
         self.assertEqual(notices_str, call_params_list[0].message.message)
+
+
+def get_execute_string_params() -> ExecuteStringParams:
+    """Get a simple ExecutestringParams"""
+    params = ExecuteStringParams()
+    params.query = 'select version()'
+    params.owner_uri = 'test_uri'
+    return params
 
 
 if __name__ == '__main__':

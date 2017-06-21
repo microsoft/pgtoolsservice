@@ -8,7 +8,6 @@ import unittest.mock as mock
 import psycopg2
 
 from pgsqltoolsservice.hosting import NotificationContext, RequestContext
-from pgsqltoolsservice.query_execution.contracts import ExecuteStringParams
 
 
 def get_mock_notification_context() -> NotificationContext:
@@ -41,14 +40,6 @@ def get_mock_logger() -> logging.Logger:
     mock_logger.log = mock.MagicMock()
 
     return mock_logger
-
-
-def get_execute_string_params() -> ExecuteStringParams:
-    """Get a simple ExecutestringParams"""
-    params = ExecuteStringParams()
-    params.query = 'select version()'
-    params.owner_uri = 'test_uri'
-    return params
 
 
 class MockRequestContext(RequestContext):
@@ -113,6 +104,7 @@ class MockCursor:
         self.close = mock.Mock()
         self.connection = mock.Mock()
         self.description = None
+        self.rowcount = -1
 
     def execute_success_side_effects(self, query: str):
         """Set up dummy results for query execution success"""

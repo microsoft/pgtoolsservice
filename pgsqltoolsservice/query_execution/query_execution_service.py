@@ -109,10 +109,12 @@ class QueryExecutionService(object):
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             # send query/message response
-            message = ''
-            # Only add in rows affected if we had result set summaries
-            if summary.result_set_summaries:
-                message = message + "({0} rows affected)".format(cur.rowcount)
+            message = 'Commands completed successfully'  # TODO: Localize
+            # Only add in rows affected if cursor object's rowcount is not -1.
+            # rowcount is automatically -1 when an operation occurred that
+            # a row count cannot be determined for or execute() was not performed
+            if cur.rowcount != -1:
+                message = "({0} row(s) affected)".format(cur.rowcount)  # TODO: Localize
 
             message_params = self.build_message_params(params.owner_uri, batch_id, message, False)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
