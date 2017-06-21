@@ -5,6 +5,7 @@
 
 """Module for testing the query execution service"""
 
+from datetime import datetime
 import unittest
 from unittest import mock
 from typing import List, Dict  # noqa
@@ -15,10 +16,11 @@ from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData)
+import pgsqltoolsservice.utils
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
-from pgsqltoolsservice.query_execution.contracts import DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset
-from pgsqltoolsservice.query_execution.batch import Batch
+from pgsqltoolsservice.query_execution.contracts import DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams
+from pgsqltoolsservice.query_execution.batch import Batch, BatchSummary
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
 
@@ -291,6 +293,87 @@ class TestQueryService(unittest.TestCase):
         description = None
         result_set = ResultSet(0, 0, description, 0, [])
         self.assertEqual([], result_set.columns)
+
+    def test_result_set_complete_params(self):
+        """Test building parameters for the result set complete notification"""
+        # Set up the test with a batch summary and owner uri
+        batch = Batch(10, SelectionData(), False)
+        batch.has_executed = True
+        batch.result_sets = [ResultSet(1, 10, None, 0, [])]
+        summary = batch.build_batch_summary()
+        owner_uri = 'test_uri'
+
+        # Set up the mock query execution service
+        query_execution_service = QueryExecutionService()
+        query_execution_service._service_provider = ServiceProvider(None, {}, utils.get_mock_logger())
+
+        # If I build a result set complete response from the summary
+        result = query_execution_service.build_result_set_complete_params(summary, owner_uri)
+
+        # Then the parameters should have an owner uri and result set summary that matches the ones provided
+        self.assertEqual(result.owner_uri, owner_uri)
+        self.assertEqual(result.result_set_summary, summary.result_set_summaries[0])
+
+    def test_handle_subset_request(self):
+        """Test that the query execution service handles subset requests correctly"""
+        # Set up the test with the proper parameters and a mock request context
+        params = SubsetParams.from_dict({
+            'owner_uri': 'test_uri',
+            'batch_index': 2,
+            'result_set_index': 0,
+            'rows_start_index': 1,
+            'rows_count': 2
+        })
+        request_context = utils.MockRequestContext()
+
+        # Set up the mock query execution service with query results
+        query_execution_service = QueryExecutionService()
+        query_execution_service._service_provider = ServiceProvider(None, {}, utils.get_mock_logger())
+        batch = Batch(2, SelectionData(), False)
+        batch_rows = [(1, 2), (3, 4), (5, 6)]
+        batch.result_sets = [ResultSet(0, 0, {}, 3, batch_rows)]
+        query_execution_service.query_results = {
+            params.owner_uri: [Batch(0, SelectionData(), False), Batch(1, SelectionData(), False), batch],
+            'some_other_uri': [Batch(3, SelectionData(), False)]
+        }
+
+        # If I call the subset request handler
+        query_execution_service._handle_subset_request(request_context, params)
+
+        # Then the response should match the subset we requested
+        response = request_context.last_response_params
+        result_subset = response.result_subset
+        self.assertEqual(len(result_subset.rows), params.rows_count)
+        self.assertEqual(result_subset.row_count, params.rows_count)
+        self.assertEqual(len(result_subset.rows[0]), 2)
+        self.assertEqual(len(result_subset.rows[1]), 2)
+        self.assertEqual(result_subset.rows[0][0].display_value, str(batch_rows[1][0]))
+        self.assertEqual(result_subset.rows[0][1].display_value, str(batch_rows[1][1]))
+        self.assertEqual(result_subset.rows[1][0].display_value, str(batch_rows[2][0]))
+        self.assertEqual(result_subset.rows[1][1].display_value, str(batch_rows[2][1]))
+
+    def test_build_result_set_subset(self):
+        """Test the ResultSetSubset's conversion of rows to DbCellValue objects"""
+        # Set up the test with mock batch data
+        rows = [(1, 2), (3, 4), (5, 6)]
+        batch = Batch(1, SelectionData(), False)
+        batch.result_sets = [ResultSet(0, 1, {}, 3, rows)]
+        mock_results = [Batch(0, SelectionData(), False), batch, Batch(2, SelectionData(), False)]
+        owner_uri = 'test_uri'
+        results_map = {owner_uri: mock_results, 'other_uri': []}
+
+        # If I build a ResultSetSubset for the batch
+        result_subset = ResultSetSubset(results_map, owner_uri, 1, 0, 1, 3)
+
+        # Then the subset's rows should reflect the expected rows
+        self.assertEqual(len(result_subset.rows), 2)
+        self.assertEqual(result_subset.row_count, 2)
+        self.assertEqual(len(result_subset.rows[0]), 2)
+        self.assertEqual(len(result_subset.rows[1]), 2)
+        self.assertEqual(result_subset.rows[0][0].display_value, str(rows[1][0]))
+        self.assertEqual(result_subset.rows[0][1].display_value, str(rows[1][1]))
+        self.assertEqual(result_subset.rows[1][0].display_value, str(rows[2][0]))
+        self.assertEqual(result_subset.rows[1][1].display_value, str(rows[2][1]))
 
 
 if __name__ == '__main__':
