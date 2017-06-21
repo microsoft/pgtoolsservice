@@ -78,7 +78,7 @@ class LanguageService:
 
     def handle_completion_resolve_request(self, request_context: RequestContext, params: CompletionItem) -> None:
         """Fill in additional details for a CompletionItem. Returns the same CompletionItem over the wire"""
-
+        request_context.send_response(params)
 
     def handle_flavor_change(self,
                              context: NotificationContext,
