@@ -90,7 +90,8 @@ class QueryExecutionService(object):
                           False)
             batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
-            results = self.execute_query(query, cur, batch)
+
+            results = self.execute_query(query, cur, batch, params.owner_uri, request_context)
             if results is not None:
                 result_set = ResultSet(len(self.query_results[params.owner_uri]),
                                        batch_id, cur.description, cur.rowcount, results)
@@ -108,11 +109,14 @@ class QueryExecutionService(object):
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             # send query/message response
-            if summary.result_set_summaries:
-                message = "({0} rows affected)".format(cur.rowcount)
-            else:
-                message = ""
-            message_params = self.build_message_params(params.owner_uri, batch_id, message)
+            message = 'Commands completed successfully'  # TODO: Localize
+            # Only add in rows affected if cursor object's rowcount is not -1.
+            # rowcount is automatically -1 when an operation occurred that
+            # a row count cannot be determined for or execute() was not performed
+            if cur.rowcount != -1:
+                message = "({0} row(s) affected)".format(cur.rowcount)  # TODO: Localize
+
+            message_params = self.build_message_params(params.owner_uri, batch_id, message, False)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
             summaries = []
@@ -174,12 +178,14 @@ class QueryExecutionService(object):
         result_message = ResultMessage(batch_id, is_error, utils.time.get_time_str(datetime.now()), message)
         return MessageNotificationParams(owner_uri, result_message)
 
-    def execute_query(self, query: str, cur, batch: Batch) -> bool:
-        """Execute query and add to the query execution service's query results
+    def execute_query(self, query: str, cur, batch: Batch, owner_uri: str, request_context: RequestContext) -> bool:
+        """Execute query, send back notices, and add to the query execution service's query results
         :raises psycopg2.DatabaseError:
         :param query: query text to be executed
         :param cur: cursor object that will be used to execute the query
         :param batch: batch that will be updated after query execution is complete
+        :param owner_uri: uri of edtior where query execution request came from
+        :param request_context: request context where we will send back notices
         """
         try:
             cur.execute(query)
@@ -188,6 +194,14 @@ class QueryExecutionService(object):
         finally:
             batch.has_executed = True
             batch.end_time = datetime.now()
+
+            # Send back notices as a separate message to avoid error coloring / highlighting of text
+            notices = cur.connection.notices
+            if notices:
+                notice_message_params = self.build_message_params(
+                    owner_uri, batch.id, ''.join(notices), False)
+                request_context.send_notification(MESSAGE_NOTIFICATION, notice_message_params)
+                cur.connection.notices = []
 
         if cur.description is not None:
             return cur.fetchall()
