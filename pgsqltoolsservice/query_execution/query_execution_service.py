@@ -199,6 +199,7 @@ class QueryExecutionService(object):
                 notice_message_params = self.build_message_params(
                     owner_uri, batch.id, ''.join(notices), False)
                 request_context.send_notification(MESSAGE_NOTIFICATION, notice_message_params)
+                cur.connection.notices = []
 
         if cur.description is not None:
             return cur.fetchall()

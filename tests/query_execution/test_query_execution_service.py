@@ -26,6 +26,22 @@ import tests.utils as utils
 class TestQueryService(unittest.TestCase):
     """Methods for testing the query execution service"""
 
+    def setUp(self):
+        """Set up mock objects for testing the query execution service.
+        Ran before each unit test.
+        """
+        self.cursor = utils.MockCursor(None)
+        self.connection = utils.MockConnection(cursor=self.cursor)
+        self.cursor.connection = self.connection
+        self.connection_service = ConnectionService()
+        self.connection_service.get_connection = mock.Mock(return_value=self.connection)
+        self.query_execution_service = QueryExecutionService()
+        self.service_provider = ServiceProvider(None, {})
+        self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: self.connection_service}
+        self.service_provider._is_initialized = True
+        self.query_execution_service._service_provider = self.service_provider
+        self.request_context = utils.MockRequestContext()
+
     def test_initialization(self):
         # Setup: Create a capabilities service with a mocked out service
         # provider
@@ -199,7 +215,6 @@ class TestQueryService(unittest.TestCase):
         Test for proper generation of ResultSetSubset
         that is part of query/subset response payload
         """
-
         query_results: Dict[str, List[Batch]] = {}
         owner_uri = "untitled"
         query_results[owner_uri] = []
@@ -288,37 +303,23 @@ class TestQueryService(unittest.TestCase):
 
     def test_message_notices_no_error(self):
         """Test to make sure that notices are being sent as part of a message notification"""
-
-        # Set up query execution service and connection service with a basic cursor
-        mock_cursor = utils.MockCursor(None)
-        mock_connection = utils.MockConnection(cursor=mock_cursor)
-        mock_cursor.connection = mock_connection
-        connection_service = ConnectionService()
-        connection_service.get_connection = mock.Mock(return_value=mock_connection)
-        query_execution_service = QueryExecutionService()
-        mock_service_provider = ServiceProvider(None, {})
-        mock_service_provider._services = {constants.CONNECTION_SERVICE_NAME: connection_service}
-        mock_service_provider._is_initialized = True
-        query_execution_service._service_provider = mock_service_provider
-
-        # Set up the request context and params for a simple query request
-        mock_request_context = utils.MockRequestContext()
+        # Set up params that are sent as part of a query execution request
         params = utils.get_execute_string_params()
 
         # If we handle an execute query request
-        query_execution_service._handle_execute_query_request(mock_request_context, params)
+        self.query_execution_service._handle_execute_query_request(self.request_context, params)
 
         # Then we executed the query, closed the cursor, and called fetchall once each.
         # And the connection's notices is set properly
-        mock_cursor.execute.assert_called_once()
-        mock_cursor.close.assert_called_once()
-        mock_cursor.fetchall.assert_called_once()
-        self.assertEqual(mock_connection.notices, ["NOTICE: foo", "DEBUG: bar"])
+        self.cursor.execute.assert_called_once()
+        self.cursor.close.assert_called_once()
+        self.cursor.fetchall.assert_called_once()
+        self.assertEqual(self.connection.notices, [])
 
         # Get the message params for all message notifications that were sent
         # call[0] would refer to the name of the notification call. call[1] allows
         # access to the arguments list of the notification call
-        notification_calls = mock_request_context.send_notification.mock_calls
+        notification_calls = self.request_context.send_notification.mock_calls
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION]
 
         # Assert that at least one message notification was sent and that there were no errors
@@ -327,58 +328,45 @@ class TestQueryService(unittest.TestCase):
             self.assertFalse(param.message.is_error)
 
         # The first message should have the notices
-        subset = ''.join(mock_connection.notices)
+        expected_notices = ["NOTICE: foo", "DEBUG: bar"]
+        subset = ''.join(expected_notices)
         self.assertTrue(subset in call_params_list[0].message.message)
 
     def test_message_notices_error(self):
         """Test that the notices are being sent as part of messages correctly in the case of
         an error during execution of a query
         """
-        # Set up query execution service and connection service with
-        # a cursor that generates an error on execute() call
-        mock_cursor = utils.MockCursor(None)
-        mock_cursor.execute = mock.Mock(side_effect=mock_cursor.execute_failure_side_effects)
-        mock_connection = utils.MockConnection(cursor=mock_cursor)
-        mock_cursor.connection = mock_connection
-        connection_service = ConnectionService()
-        connection_service.get_connection = mock.Mock(return_value=mock_connection)
-        query_execution_service = QueryExecutionService()
-        mock_service_provider = ServiceProvider(None, {})
-        mock_service_provider._services = {constants.CONNECTION_SERVICE_NAME: connection_service}
-        mock_service_provider._is_initialized = True
-        query_execution_service._service_provider = mock_service_provider
-
-        # Set up the request context and params for a simple query request
-        mock_request_context = utils.MockRequestContext()
+        # Set up query execution side effect and params sent as part of a QE request
+        self.cursor.execute = mock.Mock(side_effect=self.cursor.execute_failure_side_effects)
         params = utils.get_execute_string_params()
 
         # If we handle an execute query request
-        query_execution_service._handle_execute_query_request(mock_request_context, params)
+        self.query_execution_service._handle_execute_query_request(self.request_context, params)
 
-        # Then we executed the query, closed the cursor, and did not call fetchall()
-        mock_cursor.execute.assert_called_once()
-        mock_cursor.close.assert_called_once()
-        mock_cursor.fetchall.assert_not_called()
-
-        # And the the connection's notices is set properly
-        self.assertEqual(mock_connection.notices, ["NOTICE: foo", "DEBUG: bar"])
-        notification_calls = mock_request_context.send_notification.mock_calls
-
+        # Then we executed the query, closed the cursor, 
+        # did not call fetchall(), and cleared the notices
+        self.cursor.execute.assert_called_once()
+        self.cursor.close.assert_called_once()
+        self.cursor.fetchall.assert_not_called()
+        self.assertEqual(self.connection.notices, [])
+        
         # Get the message params for all message notifications that were sent
         # call[0] would refer to the name of the notification call. call[1] allows
         # access to the arguments list of the notification call
+        notification_calls = self.request_context.send_notification.mock_calls
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION]
-
+        
         # Assert that only two message notifications were sent.
         # The first is a message containing only the notifications, where is_error is false
         # The second is the error message, where is_error is true
+        expected_notices =  ["NOTICE: foo", "DEBUG: bar"]
         self.assertEqual(len(call_params_list), 2)
         self.assertFalse(call_params_list[0].message.is_error)
         self.assertTrue(call_params_list[1].message.is_error)
-        expected_notices = ''.join(mock_connection.notices)
+        notices_str = ''.join(expected_notices)
 
         # Make sure that the whole first message consists of the notices, as expected
-        self.assertEqual(expected_notices, call_params_list[0].message.message)
+        self.assertEqual(notices_str, call_params_list[0].message.message)
 
 
 if __name__ == '__main__':
