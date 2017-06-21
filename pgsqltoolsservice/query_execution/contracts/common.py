@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 """Contains contracts for query execution service"""
-from typing import List  # noqa
+from typing import List, Dict  # noqa
 
 import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.workspace.contracts import Position, Range
@@ -48,11 +48,11 @@ class BatchSummary(object):
 
 class ResultMessage(object):
 
-    def __init__(self, batch_id, is_error, time, message):
-        self.batch_id = batch_id
-        self.is_error = is_error
+    def __init__(self, batch_id: int, is_error: bool, time, message: str):
+        self.batch_id: int = batch_id
+        self.is_error: bool = is_error
         self.time = time
-        self.message = message
+        self.message: str = message
 
 
 class ResultSetSummary(object):
@@ -67,98 +67,144 @@ class ResultSetSummary(object):
 
 class DbColumn(object):
 
-    # The cursor_description is part of psycopg's cursor class' description property.
-    # It is a property that is a tuple (read-only) containing sequences of 7-item sequences.
+    # The cursor_description is an element from psycopg's cursor class' description property.
+    # It is a property that is a tuple (read-only) containing a 7-item sequence.
     # Each inner sequence item can be referenced by using DESC
-    def __init__(self, column_ordinal, cursor_description):
+    def __init__(self, column_ordinal: int, cursor_description: tuple):
         # TODO: Retrieve additional fields if necessary and relevant. Leaving as 'None' for now
 
         # Note that 'null_ok' is always 'None' by default because it's not easy to retrieve
         # Need to take a look if we should turn this on if it's important
-        self.allow_db_null = cursor_description[DESC['null_ok']]
-        self.base_catalog_name = None
-        self.base_column_name = cursor_description[DESC['name']]
-        self.base_schema_name = None
-        self.base_server_name = None
-        self.base_table_name = None
-        self.column_ordinal = column_ordinal
+        self.allow_db_null: bool = cursor_description[DESC['null_ok']]
+        self.base_catalog_name: str = None
+        self.base_column_name: str = cursor_description[DESC['name']]
+        self.column_name: str = cursor_description[DESC['name']]
+        self.base_schema_name: str = None
+        self.base_server_name: str = None
+        self.base_table_name: str = None
+        self.column_ordinal: int = column_ordinal
 
         # From documentation, it seems like 'internal_size' is for the max size and
         # 'display_size' is for the actual size based off of the largest entry in the column so far.
         # 'display_size' is always 'None' by default since it's expensive to calculate.
         # 'internal_size' is negative if column max is of a dynamic / variable size
-        self.column_size = cursor_description[DESC['internal_size']]
-        self.is_aliased = None
-        self.is_auto_increment = None
-        self.is_expression = None
-        self.is_hidden = None
-        self.is_identity = None
-        self.is_key = None
-        self.is_long = None
-        self.is_read_only = None
-        self.is_unique = None
-        self.numeric_precision = cursor_description[DESC['precision']]
-        self.numeric_scale = cursor_description[DESC['scale']]
-        self.udt_assembly_qualified_name = cursor_description[DESC['null_ok']]
+        self.column_size: int = cursor_description[DESC['internal_size']]
+        self.is_aliased: bool = None
+        self.is_auto_increment: bool = None
+        self.is_expression: bool = None
+        self.is_hidden: bool = None
+        self.is_identity: bool = None
+        self.is_key: bool = None
+        self.is_long: bool = None
+        self.is_read_only: bool = None
+        self.is_unique: bool = None
+        self.numeric_precision: int = cursor_description[DESC['precision']]
+        self.numeric_scale: int = cursor_description[DESC['scale']]
+        self.udt_assembly_qualified_name: str = cursor_description[DESC['null_ok']]
         self.data_type = None
-        self.data_type_name = None
-        self.is_bytes = None
-        self.is_chars = None
-        self.is_sql_variant = None
-        self.is_udt = None
-        self.is_xml = None
-        self.is_json = None
-        self.sql_db_type = None
+        self.data_type_name: str = None
+        self.is_bytes: bool = None
+        self.is_chars: bool = None
+        self.is_sql_variant: bool = None
+        self.is_udt: bool = None
+        self.is_xml: bool = None
+        self.is_json: bool = None
 
 
 class DbCellValue(object):
 
-    def __init__(self, display_value, is_null, raw_object, row_id):
-        self.display_value = display_value
-        self.is_null = is_null
-        self.raw_object = raw_object
-        self.row_id = row_id
+    def __init__(self, display_value: any, is_null: bool, raw_object: object, row_id: int):
+        self.display_value: str = None if (display_value is None) else str(display_value)
+        self.is_null: bool = is_null
+        self.row_id: int = row_id
 
 
 class BatchEventParams(object):
 
-    def __init__(self, batch_summary, owner_uri):
-        self.batch_summary = batch_summary
-        self.owner_uri = owner_uri
+    def __init__(self, batch_summary: BatchSummary, owner_uri: str):
+        self.batch_summary: BatchSummary = batch_summary
+        self.owner_uri: str = owner_uri
 
 
 class MessageParams(object):
 
-    def __init__(self, message, owner_uri):
-        self.message = message
-        self.owner_uri = owner_uri
+    def __init__(self, message: str, owner_uri: str):
+        self.message: str = message
+        self.owner_uri: str = owner_uri
 
 
 class QueryCompleteParams(object):
 
-    def __init__(self, batch_summaries, owner_uri):
+    def __init__(self, batch_summaries: List[BatchSummary], owner_uri: str):
         self.batch_summaries: List[BatchSummary] = batch_summaries
-        self.owner_uri = owner_uri
-
-
-class ResultSetEventParams(object):
-
-    def __init__(self, result_set_summary, owner_uri):
-        self.result_set_summary = result_set_summary
-        self.owner_uri = owner_uri
+        self.owner_uri: str = owner_uri
 
 
 class ResultSetSubset(object):
 
-    def __init__(self, row_count, rows):
-        self.row_count = row_count
-        self.rows = rows
+    def __init__(self, results, owner_uri: str, batch_ordinal: int,
+                 result_set_ordinal: int, start_index: int, end_index: int):
+        self.rows: List[List[DbCellValue]] = self.build_db_cell_values(
+            results, owner_uri, batch_ordinal, result_set_ordinal, start_index, end_index)
+        self.row_count: int = len(self.rows)
+
+    def build_db_cell_values(self, results, owner_uri: str, batch_ordinal: int,
+                             result_set_ordinal: int, start_index: int,
+                             end_index: int) -> List[List[DbCellValue]]:
+        """ param results: a list of rows for a query result, where each row consists of tuples
+        :param results: mapping of owner uris to their list of batches Dict[str, List[Batch]]
+        :param batch_ordinal: ordinal of the batch within 'results'
+        :param result_set_ordinal: ordinal of the result set within the batch's result_set field
+        :param start_index: the starting index that we will index into a list of rows with, inclusive
+        :param end_index: the ending index we will index into a list of rows with, exclusive
+        """
+
+        utils.validate.is_not_none("results", results)
+        utils.validate.is_not_none("owner_uri", owner_uri)
+        utils.validate.is_not_none("batch_ordinal", batch_ordinal)
+        utils.validate.is_not_none("result_set_ordinal", result_set_ordinal)
+        utils.validate.is_not_none("start_index", start_index)
+        utils.validate.is_not_none("end_index", end_index)
+
+        # Check the specified owner uri key exists
+        if owner_uri not in results:
+            raise IndexError(f'(Results corresponding to {owner_uri} do not exist)')  # TODO: Localize
+
+        # Check that the list of batches for the specified owner uri exists
+        utils.validate.is_not_none("results[owner_uri]", results[owner_uri])
+        batch_list = results[owner_uri]
+
+        # validate that there is an entry for the batch at position batch_ordinal
+        utils.validate.is_within_range("batch_ordinal", batch_ordinal, 0, len(batch_list) - 1)
+
+        batch = batch_list[batch_ordinal]
+        utils.validate.is_not_none("batch", batch)
+        utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, len(batch.result_sets) - 1)
+
+        result_sets = batch.result_sets[result_set_ordinal]
+        utils.validate.is_within_range("start_index", start_index, 0, end_index - 1)
+        utils.validate.is_within_range("end_index", end_index - 1, start_index, len(result_sets.rows) - 1)
+
+        rows_list: List[List[DbCellValue]] = []
+        row_id = start_index
+
+        # operate only on results within the specified range
+        for row_id in range(start_index, end_index):
+            db_cell_value_row: List[DbCellValue] = [
+                DbCellValue(
+                    cell,
+                    cell is None,
+                    cell,
+                    row_id) for cell in result_sets.rows[row_id]]
+            # Add our row to the overall row list
+            rows_list.append(db_cell_value_row)
+        return rows_list
 
 
 class SubsetResult(object):
 
-    def __init__(self, result_subset):
-        self.result_subset = result_subset
+    def __init__(self, result_subset: ResultSetSubset):
+        self.result_subset: ResultSetSubset = result_subset
 
 
 class SpecialAction(object):
