@@ -41,6 +41,7 @@ class CompletionItem:
     Completion items are presented in an IntelliSense user interface, representing valid
     items to complete an in-process typing
     """
+
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
