@@ -289,7 +289,7 @@ class TestQueryService(unittest.TestCase):
     def test_message_notices_no_error(self):
         """Test to make sure that notices are being sent as part of a message notification"""
 
-        # Set up query execution service and connection service with a basic cursor      
+        # Set up query execution service and connection service with a basic cursor
         mock_cursor = utils.MockCursor(None)
         mock_connection = utils.MockConnection(cursor=mock_cursor)
         mock_cursor.connection = mock_connection
@@ -316,21 +316,25 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(mock_connection.notices, ["NOTICE: foo", "DEBUG: bar"])
 
         # Get the message params for all message notifications that were sent
-        # call[0] would refer to the name of the notification call. call[1] allows access to the arguments list of the notification call
+        # call[0] would refer to the name of the notification call. call[1] allows
+        # access to the arguments list of the notification call
         notification_calls = mock_request_context.send_notification.mock_calls
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION]
 
-        # Assert that at least one message notification was sent and that it was an error message
-        self.assertEqual(len(call_params_list), 1)
-        self.assertFalse(call_params_list[0].message.is_error)
+        # Assert that at least one message notification was sent and that there were no errors
+        self.assertGreaterEqual(len(call_params_list), 1)
+        for param in call_params_list:
+            self.assertFalse(param.message.is_error)
+
+        # The first message should have the notices
         subset = ''.join(mock_connection.notices)
         self.assertTrue(subset in call_params_list[0].message.message)
 
     def test_message_notices_error(self):
-        """Test that the notices are being sent as part of messages correctly in the case of 
+        """Test that the notices are being sent as part of messages correctly in the case of
         an error during execution of a query
         """
-        # Set up query execution service and connection service with 
+        # Set up query execution service and connection service with
         # a cursor that generates an error on execute() call
         mock_cursor = utils.MockCursor(None)
         mock_cursor.execute = mock.Mock(side_effect=mock_cursor.execute_failure_side_effects)
@@ -361,7 +365,8 @@ class TestQueryService(unittest.TestCase):
         notification_calls = mock_request_context.send_notification.mock_calls
 
         # Get the message params for all message notifications that were sent
-        # call[0] would refer to the name of the notification call. call[1] allows access to the arguments list of the notification call
+        # call[0] would refer to the name of the notification call. call[1] allows
+        # access to the arguments list of the notification call
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION]
 
         # Assert that only two message notifications were sent.
@@ -374,6 +379,7 @@ class TestQueryService(unittest.TestCase):
 
         # Make sure that the whole first message consists of the notices, as expected
         self.assertEqual(expected_notices, call_params_list[0].message.message)
+
 
 if __name__ == '__main__':
     unittest.main()

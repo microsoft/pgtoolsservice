@@ -42,12 +42,14 @@ def get_mock_logger() -> logging.Logger:
 
     return mock_logger
 
+
 def get_execute_string_params() -> ExecuteStringParams:
     """Get a simple ExecutestringParams"""
     params = ExecuteStringParams()
     params.query = 'select version()'
     params.owner_uri = 'test_uri'
     return params
+
 
 class MockRequestContext(RequestContext):
     """Mock RequestContext object that allows service responses, notifications, and errors to be tested"""
@@ -104,7 +106,7 @@ class MockConnection(object):
 
 class MockCursor:
     """Class used to mock psycopg2 cursor objects for testing"""
-    
+
     def __init__(self, query_results):
         self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
         self.fetchall = mock.Mock(return_value=query_results)
