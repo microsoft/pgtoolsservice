@@ -31,6 +31,7 @@ class DefaultCompletionHelper():
         self.keywords: dict = DefaultCompletionHelper._create_keywords()
 
     def is_keyword(self, key: str) -> bool:
+        """Looks up a string to verify if it is / is not a keyword"""
         return (key in self.keywords) or False
 
     def get_matches(self, start: str, text_range: Range, lowercase: bool) -> List[CompletionItem]:
@@ -38,11 +39,18 @@ class DefaultCompletionHelper():
         Gets matching keywords as a list of CompletionItem.
         """
         matches: List[CompletionItem] = []
+        if not start:
+            return matches
+
         start = start.lower()
         for key in self.keywords.keys():
             if key.startswith(start):
                 matches.append(DefaultCompletionHelper._to_completion_item(key, text_range, lowercase))
         return matches
+
+    @property
+    def count_keywords(self) -> int:
+        return len(self.keywords.keys())
 
     @classmethod
     def _to_completion_item(cls, key: str, text_range: Range, lowercase: bool) -> CompletionItem:
@@ -53,6 +61,7 @@ class DefaultCompletionHelper():
         completion.insert_text = key
         completion.kind = CompletionItemKind.Keyword
         completion.text_edit = TextEdit.from_data(text_range, key)
+        return completion
 
     @classmethod
     def _create_keywords(cls):
