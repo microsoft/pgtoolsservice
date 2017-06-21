@@ -7,11 +7,13 @@
 disconnect and holds the current connection, if one is present"""
 
 import threading
+from typing import Set, Tuple
 import uuid
 
 import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (
+    CANCEL_CONNECT_REQUEST, CancelConnectParams,
     CONNECT_REQUEST, ConnectRequestParams,
     DISCONNECT_REQUEST, DisconnectRequestParams,
     CONNECTION_COMPLETE_METHOD, ConnectionCompleteParams,
@@ -65,6 +67,7 @@ class ConnectionService:
         self.owner_to_connection_map = {}
         self.owner_to_thread_map = {}
         self._service_provider = None
+        self._cancellation_map: Set[Tuple[str, ConnectionType]] = set()
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -130,9 +133,15 @@ class ConnectionService:
         database_names = [result[0] for result in query_results]
         request_context.send_response(ListDatabasesResponse(database_names))
 
+    def handle_cancellation_request(self, request_context: RequestContext, params: CancelConnectParams) -> None:
+        """Cancel a connection attempt in response to a cancellation request"""
+        self._cancellation_map.add((params.owner_uri, params.type))
+
     # IMPLEMENTATION DETAILS ###############################################
     def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Open a connection and fire the connection complete notification"""
+        from time import sleep
+        sleep(10)
         response = self._connect(params)
         request_context.send_notification(CONNECTION_COMPLETE_METHOD, response)
 
@@ -140,8 +149,8 @@ class ConnectionService:
         """
         Open a connection using the given connection information.
 
-        If a connection was already open, disconnect first. Return whether the connection was
-        successful
+        If a connection was already open, disconnect first. Return a connection response indicating
+        whether the connection was successful
         """
 
         connection_info: ConnectionInfo = self.owner_to_connection_map.get(params.owner_uri)
@@ -227,7 +236,7 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
     response: ConnectRequestParams = ConnectionCompleteParams()
     response.owner_uri = connection_info.owner_uri
     response.type = connection_type
-    response.messages = repr(err)
+    response.messages = str(err)
     response.error_message = str(err)
 
     return response
