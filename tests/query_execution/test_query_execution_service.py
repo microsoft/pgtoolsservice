@@ -5,7 +5,6 @@
 
 """Module for testing the query execution service"""
 
-from datetime import datetime
 import unittest
 from unittest import mock
 from typing import List, Dict  # noqa
@@ -16,13 +15,12 @@ from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData)
-import pgsqltoolsservice.utils
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 from pgsqltoolsservice.query_execution.contracts import (
     DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION)
-from pgsqltoolsservice.query_execution.batch import Batch, BatchSummary
+from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
 
