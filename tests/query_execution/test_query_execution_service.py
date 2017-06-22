@@ -17,7 +17,9 @@ from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData)
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
-from pgsqltoolsservice.query_execution.contracts import DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset
+from pgsqltoolsservice.query_execution.contracts import (
+    DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
+    BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION)
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
@@ -301,6 +303,22 @@ class TestQueryService(unittest.TestCase):
         result_set = ResultSet(0, 0, description, 0, [])
         self.assertEqual([], result_set.columns)
 
+    def test_result_set_complete_params(self):
+        """Test building parameters for the result set complete notification"""
+        # Set up the test with a batch summary and owner uri
+        batch = Batch(10, SelectionData(), False)
+        batch.has_executed = True
+        batch.result_sets = [ResultSet(1, 10, None, 0, [])]
+        summary = batch.build_batch_summary()
+        owner_uri = 'test_uri'
+
+        # If I build a result set complete response from the summary
+        result = self.query_execution_service.build_result_set_complete_params(summary, owner_uri)
+
+        # Then the parameters should have an owner uri and result set summary that matches the ones provided
+        self.assertEqual(result.owner_uri, owner_uri)
+        self.assertEqual(result.result_set_summary, summary.result_set_summaries[0])
+
     def test_message_notices_no_error(self):
         """Test to make sure that notices are being sent as part of a message notification"""
         # Set up params that are sent as part of a query execution request
@@ -366,6 +384,64 @@ class TestQueryService(unittest.TestCase):
 
         # Make sure that the whole first message consists of the notices, as expected
         self.assertEqual(notices_str, call_params_list[0].message.message)
+
+    def test_query_execution(self):
+        """Test that query execution sends the proper response/notices to the client"""
+        # Set up params that are sent as part of a query execution request
+        params = get_execute_string_params()
+
+        # If we handle an execute query request
+        self.query_execution_service._handle_execute_query_request(self.request_context, params)
+
+        # Then we executed the query, closed the cursor, and called fetchall once each.
+        self.cursor.execute.assert_called_once()
+        self.cursor.close.assert_called_once()
+        self.cursor.fetchall.assert_called_once()
+
+        # And we sent a response to the initial query, along with notifications for
+        # query/batchStart, query/resultSetComplete, query/message, query/batchComplete,
+        # and query/complete
+        self.request_context.send_response.assert_called_once_with({})
+        notification_calls = self.request_context.send_notification.mock_calls
+        call_methods_list = [call[1][0] for call in notification_calls]
+        self.assertEqual(call_methods_list.count(BATCH_START_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(RESULT_SET_COMPLETE_NOTIFICATION), 1)
+        self.assertGreaterEqual(call_methods_list.count(MESSAGE_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(BATCH_COMPLETE_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(QUERY_COMPLETE_NOTIFICATION), 1)
+
+    def test_handle_subset_request(self):
+        """Test that the query execution service handles subset requests correctly"""
+        # Set up the test with the proper parameters and query results
+        params = SubsetParams.from_dict({
+            'owner_uri': 'test_uri',
+            'batch_index': 2,
+            'result_set_index': 0,
+            'rows_start_index': 1,
+            'rows_count': 2
+        })
+        batch = Batch(2, SelectionData(), False)
+        batch_rows = [(1, 2), (3, 4), (5, 6)]
+        batch.result_sets = [ResultSet(0, 0, {}, 3, batch_rows)]
+        self.query_execution_service.query_results = {
+            params.owner_uri: [Batch(0, SelectionData(), False), Batch(1, SelectionData(), False), batch],
+            'some_other_uri': [Batch(3, SelectionData(), False)]
+        }
+
+        # If I call the subset request handler
+        self.query_execution_service._handle_subset_request(self.request_context, params)
+
+        # Then the response should match the subset we requested
+        response = self.request_context.last_response_params
+        result_subset = response.result_subset
+        self.assertEqual(len(result_subset.rows), params.rows_count)
+        self.assertEqual(result_subset.row_count, params.rows_count)
+        self.assertEqual(len(result_subset.rows[0]), 2)
+        self.assertEqual(len(result_subset.rows[1]), 2)
+        self.assertEqual(result_subset.rows[0][0].display_value, str(batch_rows[1][0]))
+        self.assertEqual(result_subset.rows[0][1].display_value, str(batch_rows[1][1]))
+        self.assertEqual(result_subset.rows[1][0].display_value, str(batch_rows[2][0]))
+        self.assertEqual(result_subset.rows[1][1].display_value, str(batch_rows[2][1]))
 
 
 def get_execute_string_params() -> ExecuteStringParams:
