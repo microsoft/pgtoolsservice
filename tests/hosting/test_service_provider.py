@@ -62,7 +62,7 @@ class TestServiceProvider(unittest.TestCase):
         # If: I attempt to get a service
         # Then: An exception should be thrown
         with self.assertRaises(RuntimeError):
-            service = sp['service']
+            sp['service']
 
     def test_get_service(self):
         # Setup: Create a service provider that has been initialized

@@ -74,7 +74,7 @@ class ScriptFile:
         first_line_fragment: str = self.file_lines[file_change.range.start.line][:file_change.range.start.character]
 
         # Get the last fragment of the last line that will remain
-        last_line_fragment: str = self.file_lines[file_change.range.end.line][file_change.range.end.character + 1:]
+        last_line_fragment: str = self.file_lines[file_change.range.end.line][file_change.range.end.character:]
 
         # Remove the old lines (by repeatedly removing the first line of the change)
         for i in range(0, file_change.range.end.line - file_change.range.start.line + 1):

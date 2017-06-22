@@ -5,6 +5,7 @@
 
 import logging
 import unittest.mock as mock
+import psycopg2
 
 from pgsqltoolsservice.hosting import NotificationContext, RequestContext
 
@@ -63,3 +64,54 @@ class MockRequestContext(RequestContext):
 
     def send_error_impl(self, message, data=None, code=0):
         self.last_error_message = message
+
+
+class MockConnection(object):
+    """Class used to mock psycopg2 connection objects for testing"""
+
+    def __init__(self, dsn_parameters=None, cursor=None):
+        self.close = mock.Mock()
+        self.dsn_parameters = dsn_parameters
+        self.server_version = '9.6.2'
+        self.cursor = mock.Mock(return_value=cursor)
+        self.commit = mock.Mock()
+        self.rollback = mock.Mock()
+        self.notices = []
+
+    @property
+    def closed(self):
+        """Mock for the connection's closed property"""
+        return self.close.call_count > 0
+
+    def get_dsn_parameters(self):
+        """Mock for the connection's get_dsn_parameters method"""
+        return self.dsn_parameters
+
+    def get_parameter_status(self, parameter):
+        """Mock for the connection's get_parameter_status method"""
+        if parameter == 'server_version':
+            return self.server_version
+        else:
+            raise NotImplementedError()
+
+
+class MockCursor:
+    """Class used to mock psycopg2 cursor objects for testing"""
+
+    def __init__(self, query_results):
+        self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
+        self.fetchall = mock.Mock(return_value=query_results)
+        self.close = mock.Mock()
+        self.connection = mock.Mock()
+        self.description = None
+        self.rowcount = -1
+
+    def execute_success_side_effects(self, query: str):
+        """Set up dummy results for query execution success"""
+        self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
+        self.description = []
+
+    def execute_failure_side_effects(self, query: str):
+        """Set up dummy results and raise error for query execution failure"""
+        self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
+        raise psycopg2.DatabaseError()

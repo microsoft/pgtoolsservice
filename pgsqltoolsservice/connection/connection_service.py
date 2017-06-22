@@ -81,7 +81,7 @@ class ConnectionService:
         :raises RuntimeError: If there is no connection associated with the provided URI
         """
         if owner_uri not in self.owner_to_connection_map:
-            raise RuntimeError('No connection associated with given owner URI')
+            raise ValueError('No connection associated with given owner URI')
         connection_info = self.owner_to_connection_map[owner_uri]
         if not connection_info.has_connection(connection_type):
             self._connect(ConnectRequestParams(connection_info.details, owner_uri, connection_type))
@@ -116,7 +116,7 @@ class ConnectionService:
         connection = None
         try:
             connection = self.get_connection(params.owner_uri, ConnectionType.DEFAULT)
-        except RuntimeError as err:
+        except ValueError as err:
             request_context.send_error(str(err))
             return
         query_results = None
@@ -207,7 +207,10 @@ def _build_connection_response(connection_info: ConnectionInfo, connection_type:
     connection = connection_info.get_connection(connection_type)
     dsn_parameters = connection.get_dsn_parameters()
 
-    connection_summary = ConnectionSummary(dsn_parameters['dbname'], dsn_parameters['host'], dsn_parameters['user'])
+    connection_summary = ConnectionSummary(
+        server_name=dsn_parameters['host'],
+        database_name=dsn_parameters['dbname'],
+        user_name=dsn_parameters['user'])
 
     response = ConnectionCompleteParams()
     response.connection_id = connection_info.connection_id
