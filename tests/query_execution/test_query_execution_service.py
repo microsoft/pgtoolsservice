@@ -404,22 +404,17 @@ class TestQueryService(unittest.TestCase):
         self.cursor.close.assert_called_once()
         self.cursor.fetchall.assert_called_once()
 
-        # And we sent a response to the initial query
+        # And we sent a response to the initial query, along with notifications for
+        # query/batchStart, query/resultSetComplete, query/message, query/batchComplete,
+        # and query/complete
         self.request_context.send_response.assert_called_once_with({})
         notification_calls = self.request_context.send_notification.mock_calls
-        call_args_list = [call[1] for call in notification_calls]
-
-        # And a batch start notification
-        batch_start_params_list = [args[1] for args in call_args_list if args[0] == BATCH_START_NOTIFICATION]
-        result_set_params_list = [args[1] for args in call_args_list if args[0] == RESULT_SET_COMPLETE_NOTIFICATION]
-        message_params_list = [args[1] for args in call_args_list if args[0] == MESSAGE_NOTIFICATION]
-        batch_complete_params_list = [args[1] for args in call_args_list if args[0] == BATCH_COMPLETE_NOTIFICATION]
-        query_complete_params_list = [args[1] for args in call_args_list if args[0] == QUERY_COMPLETE_NOTIFICATION]
-        self.assertEqual(len(batch_start_params_list), 1)
-        self.assertEqual(len(result_set_params_list), 1)
-        self.assertGreaterEqual(len(message_params_list), 1)
-        self.assertEqual(len(batch_complete_params_list), 1)
-        self.assertEqual(len(query_complete_params_list), 1)
+        call_methods_list = [call[1][0] for call in notification_calls]
+        self.assertEqual(call_methods_list.count(BATCH_START_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(RESULT_SET_COMPLETE_NOTIFICATION), 1)
+        self.assertGreaterEqual(call_methods_list.count(MESSAGE_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(BATCH_COMPLETE_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(QUERY_COMPLETE_NOTIFICATION), 1)
 
     def test_handle_subset_request(self):
         """Test that the query execution service handles subset requests correctly"""
