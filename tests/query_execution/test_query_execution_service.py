@@ -312,12 +312,8 @@ class TestQueryService(unittest.TestCase):
         summary = batch.build_batch_summary()
         owner_uri = 'test_uri'
 
-        # Set up the mock query execution service
-        query_execution_service = QueryExecutionService()
-        query_execution_service._service_provider = ServiceProvider(None, {}, utils.get_mock_logger())
-
         # If I build a result set complete response from the summary
-        result = query_execution_service.build_result_set_complete_params(summary, owner_uri)
+        result = self.query_execution_service.build_result_set_complete_params(summary, owner_uri)
 
         # Then the parameters should have an owner uri and result set summary that matches the ones provided
         self.assertEqual(result.owner_uri, owner_uri)
