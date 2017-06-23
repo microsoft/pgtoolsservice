@@ -46,7 +46,7 @@ class CompletionItem:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary, kind=CompletionItemKind, text_edit=TextEdit)
 
     def __init__(self):
         self.label: str = None

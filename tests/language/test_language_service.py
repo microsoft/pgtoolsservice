@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Test connection.ConnectionService"""
+"""Test the language service"""
 
 from typing import List, Tuple, Optional
 import unittest
@@ -33,17 +33,9 @@ import tests.utils as utils
 class TestLanguageService(unittest.TestCase):
     """Methods for testing the language service"""
 
-    def __init__(self, methodName='runTest'):
-        unittest.TestCase.__init__(self, methodName)
-        self.mock_server_set_request = None
-        self.mock_server: JSONRPCServer = None
-        self.mock_service_provider: ServiceProvider = None
-        self.mock_workspace_service: WorkspaceService = None
-        self.default_text_position: TextDocumentPosition = None
-        self.default_uri = 'file://my.sql'
-
     def setUp(self):
         """Constructor"""
+        self.default_uri = 'file://my.sql'
         self.mock_server_set_request = mock.MagicMock()
         self.mock_server = JSONRPCServer(None, None)
         self.mock_server.set_request_handler = self.mock_server_set_request

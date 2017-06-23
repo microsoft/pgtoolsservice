@@ -12,15 +12,15 @@ class TextEdit:
     A textual edit applicable to a text document.
     """
     @classmethod
-    def from_data(cls, range: Range, new_text: str):
+    def from_data(cls, text_range: Range, new_text: str):
         obj = cls()
-        obj.range = range
+        obj.range = text_range
         obj.new_text = new_text
         return obj
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary, range=Range)
 
     def __init__(self):
         self.range: Range = None

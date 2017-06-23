@@ -6,7 +6,7 @@
     Language Service Implementation
 """
 from logging import Logger          # noqa
-from typing import Callable  # noqa
+from typing import Callable, Set  # noqa
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
 from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition
@@ -31,7 +31,7 @@ class LanguageService:
         self._service_provider: ServiceProvider = None
         self._server: JSONRPCServer = None
         self._logger: [Logger, None] = None
-        self._non_pgsql_uris: set = set()
+        self._non_pgsql_uris: Set[str] = set()
         self._completion_helper = DefaultCompletionHelper()
 
     def register(self, service_provider: ServiceProvider) -> None:
@@ -60,7 +60,7 @@ class LanguageService:
             do_send_response()
             return
         file: ScriptFile = self._workspace_service.workspace.get_file(params.text_document.uri)
-        if not file:
+        if file is None:
             do_send_response()
             return
 
@@ -85,7 +85,7 @@ class LanguageService:
         Processes a language flavor change notification, adding non-PGSQL files to a tracking set
         so they can be excluded from intellisense processing
         """
-        if params and params.uri is not None:
+        if params is not None and params.uri is not None:
             if params.language.lower() == 'sql' and params.flavor.lower() != 'pgsql':
                 self._non_pgsql_uris.add(params.uri)
             else:

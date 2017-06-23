@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 """Utility functions for operating with text"""
-from typing import Tuple
+from typing import Tuple, Set
 
 import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.workspace.contracts.common import Position, Range
@@ -13,7 +13,7 @@ from pgsqltoolsservice.workspace.contracts.common import Position, Range
 class TextUtilities:
     """Utility functions for operating with text"""
 
-    char_delimiters: set = set([
+    char_delimiters: Set[str] = set([
         ' ',
         '\t',
         '\n',
@@ -68,7 +68,7 @@ class TextUtilities:
 
         utils.validate.is_within_range('start_col', start_col, 0, length)
         index = start_col
-        if index == len(line) or (index > 0 and TextUtilities.is_char_delimiter(line[index])):
+        if index == length or (index > 0 and TextUtilities.is_char_delimiter(line[index])):
             # If at the end of a line, skip to previous character to begin searching
             # If the current index is a delimiter, go back one since we need to capture the
             # context of the word. We are essentially "to the left" of that delimiter
