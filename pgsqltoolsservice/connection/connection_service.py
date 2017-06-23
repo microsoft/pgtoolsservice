@@ -7,6 +7,7 @@
 disconnect and holds the current connection, if one is present"""
 
 import threading
+from typing import Dict, Tuple  # noqa
 import uuid
 
 import psycopg2
