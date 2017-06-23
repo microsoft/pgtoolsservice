@@ -17,7 +17,7 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 
 
 class CapabilitiesService:
-
+    """Defines the capabilities supported by PG Tools including language service and DMP support"""
     def __init__(self):
         self._service_provider: ServiceProvider = None
 
@@ -208,7 +208,7 @@ class CapabilitiesService:
             document_range_formatting_provider=False,
             document_highlight_provider=False,
             hover_provider=False,
-            completion_provider=CompletionOptions(True, ['.', '-', ':', '\\', '[', '\"'])
+            completion_provider=CompletionOptions(True, ['.', '-', ':', '\\', '[', '"'])
         )
         result = InitializeResult(capabilities)
 

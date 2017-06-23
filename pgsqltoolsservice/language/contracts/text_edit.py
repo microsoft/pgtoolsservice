@@ -6,6 +6,7 @@
 import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.workspace.contracts import Range
 
+
 class TextEdit:
     """
     A textual edit applicable to a text document.

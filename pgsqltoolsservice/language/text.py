@@ -9,6 +9,7 @@ from typing import Tuple
 import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.workspace.contracts.common import Position, Range
 
+
 class TextUtilities:
     """Utility functions for operating with text"""
 

@@ -19,6 +19,7 @@ class PGSQLConfiguration:
     def __init__(self):
         self.intellisense: IntellisenseConfiguration = IntellisenseConfiguration()
 
+
 class IntellisenseConfiguration:
     """
     Configuration for Intellisense settings

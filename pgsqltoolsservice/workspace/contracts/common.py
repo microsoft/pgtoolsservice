@@ -76,6 +76,7 @@ class TextDocumentItem:
         self.version: int = None
         self.text: str = None
 
+
 class TextDocumentIdentifier:
     """
     Defines a base parameter class for identifying a text document
@@ -89,6 +90,7 @@ class TextDocumentIdentifier:
 
     def __init__(self):
         self.uri: str = None
+
 
 class TextDocumentPosition:
     """

@@ -8,6 +8,7 @@
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
 
+
 class LanguageFlavorChangeParams:
     """
     Parameters for the Language Flavor Change notification
@@ -28,5 +29,6 @@ class LanguageFlavorChangeParams:
         self.uri: str = None
         self.language: str = None
         self.flavor: str = None
+
 
 LANGUAGE_FLAVOR_CHANGE_NOTIFICATION = IncomingMessageConfiguration('connection/languageflavorchanged', LanguageFlavorChangeParams)

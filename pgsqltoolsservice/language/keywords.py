@@ -15,12 +15,14 @@ from pgsqltoolsservice.workspace.contracts.common import (
     Range
 )
 
+
 class KeywordType(enum.Enum):
     """Type of keyword in Postgres"""
     UNRESERVED_KEYWORD = 0
     COL_NAME_KEYWORD = 1
     TYPE_FUNC_NAME_KEYWORD = 2
     RESERVED_KEYWORD = 3
+
 
 class DefaultCompletionHelper():
     """

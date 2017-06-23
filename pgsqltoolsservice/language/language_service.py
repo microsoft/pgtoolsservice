@@ -2,24 +2,25 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
+"""
+    Language Service Implementation
+"""
 from logging import Logger          # noqa
-from typing import Callable, List, Optional  # noqa
+from typing import Callable  # noqa
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
-from pgsqltoolsservice.workspace.contracts.common import (
-    TextDocumentPosition,
-    Range
-)
+from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition
 from pgsqltoolsservice.workspace import WorkspaceService
-from pgsqltoolsservice.workspace.script_file import ScriptFile
+from pgsqltoolsservice.workspace.script_file import ScriptFile  # noqa
 from pgsqltoolsservice.language.contracts import (
-    COMPLETION_REQUEST, CompletionItem, CompletionItemKind, TextEdit,
+    COMPLETION_REQUEST, CompletionItem,
     COMPLETION_RESOLVE_REQUEST,
     LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams
 )
-from pgsqltoolsservice.language.keywords import DefaultCompletionHelper, KeywordType
+from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
 from pgsqltoolsservice.language.text import TextUtilities
 import pgsqltoolsservice.utils as utils
+
 
 class LanguageService:
     """
@@ -46,7 +47,6 @@ class LanguageService:
         self._server.set_request_handler(COMPLETION_RESOLVE_REQUEST, self.handle_completion_resolve_request)
         self._server.set_notification_handler(LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, self.handle_flavor_change)
 
-
     # REQUEST HANDLERS #####################################################
     def handle_completion_request(self, request_context: RequestContext, params: TextDocumentPosition) -> None:
         """
@@ -54,7 +54,8 @@ class LanguageService:
         Sends an array of CompletionItem objects over the wire
         """
         response = []
-        do_send_response = lambda: request_context.send_response(response)
+
+        def do_send_response(): request_context.send_response(response)
         if self.should_skip_intellisense(params.text_document.uri):
             do_send_response()
             return
@@ -63,7 +64,6 @@ class LanguageService:
             do_send_response()
             return
 
-        # TODO: handle line out of range?
         line: str = file.get_line(params.position.line)
         (token_text, text_range) = TextUtilities.get_text_and_range(params.position, line)
         if token_text:
@@ -73,8 +73,6 @@ class LanguageService:
             response = completions
         # Finally send response
         do_send_response()
-
-
 
     def handle_completion_resolve_request(self, request_context: RequestContext, params: CompletionItem) -> None:
         """Fill in additional details for a CompletionItem. Returns the same CompletionItem over the wire"""
@@ -112,5 +110,3 @@ class LanguageService:
         Checks if this URI can be treated as a PGSQL candidate for processing or should be skipped
         """
         return uri not in self._non_pgsql_uris
-
-    

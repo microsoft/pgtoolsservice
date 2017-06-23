@@ -10,7 +10,8 @@ import enum
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.workspace.contracts import TextDocumentPosition
-from pgsqltoolsservice.language.contracts import TextEdit
+from pgsqltoolsservice.language.contracts import TextEdit   # noqa
+
 
 class CompletionItemKind(enum.Enum):
     """
@@ -36,6 +37,7 @@ class CompletionItemKind(enum.Enum):
     File = 17,
     Reference = 18
 
+
 class CompletionItem:
     """
     Completion items are presented in an IntelliSense user interface, representing valid
@@ -56,6 +58,7 @@ class CompletionItem:
         self.insert_text: str = None
         self.text_edit: TextEdit = None
         self.data: any = None
+
 
 COMPLETION_REQUEST = IncomingMessageConfiguration('textDocument/completion', TextDocumentPosition)
 

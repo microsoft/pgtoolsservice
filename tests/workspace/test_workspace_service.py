@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
-from pgsqltoolsservice.workspace import WorkspaceService, PGSQLConfiguration, IntellisenseConfiguration
+from pgsqltoolsservice.workspace import WorkspaceService, PGSQLConfiguration, IntellisenseConfiguration     # noqa
 from pgsqltoolsservice.workspace.workspace import Workspace, ScriptFile
 from pgsqltoolsservice.workspace.contracts import (
     DidChangeConfigurationParams,
@@ -88,7 +88,7 @@ class TestWorkspaceService(unittest.TestCase):
             self.assertListEqual(test_param[1], [test_callback])
 
     def test_config_defaults(self):
-        # Setup: Create a workspace service 
+        # Setup: Create a workspace service
         ws: WorkspaceService = WorkspaceService()
 
         # Then:
@@ -100,7 +100,6 @@ class TestWorkspaceService(unittest.TestCase):
         self.assertFalse(intellisense.enable_lowercase_suggestions)
         self.assertTrue(intellisense.enable_error_checking)
         self.assertTrue(intellisense.enable_quick_info)
-
 
     def test_handle_did_change_config(self):
         # Setup: Create a workspace service with two mock config change handlers

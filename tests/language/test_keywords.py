@@ -9,19 +9,16 @@ from typing import List
 import unittest
 
 from pgsqltoolsservice.language.contracts import (
-    CompletionItem, CompletionItemKind, TextEdit
+    CompletionItem, CompletionItemKind
 )
 from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
 from pgsqltoolsservice.workspace.contracts import (
-    Position,
     Range
 )
 
 
 class TestCompletionHelper(unittest.TestCase):
     """Methods for testing text utility functions"""
-
-
 
     def test_is_keyword_match(self):
         """Test keyword lookup"""
@@ -49,7 +46,6 @@ class TestCompletionHelper(unittest.TestCase):
         matches: List[CompletionItem] = helper.get_matches('', None, False)
         # Then I expect no keywords to be returned
         self.assertEqual([], matches)
-    
 
     def test_get_matches_one_char(self):
         """Test get matches on 1 character range"""
@@ -95,8 +91,6 @@ class TestCompletionHelper(unittest.TestCase):
         self.assertEqual(text_range, match.text_edit.range)
         self.assertEqual(word, match.text_edit.new_text)
 
-
     def verify_miss(self, word: str, matches: List[CompletionItem]):
         match = next(iter(obj for obj in matches if obj.label == word), None)
         self.assertIsNone(match)
-

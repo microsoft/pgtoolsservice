@@ -8,10 +8,9 @@
 from typing import List, Tuple, Optional
 import unittest
 from unittest import mock
-import psycopg2
 
 from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition
-from pgsqltoolsservice.hosting import (
+from pgsqltoolsservice.hosting import (     # noqa
     JSONRPCServer,
     NotificationContext,
     RequestContext,
@@ -42,7 +41,6 @@ class TestLanguageService(unittest.TestCase):
         self.mock_workspace_service: WorkspaceService = None
         self.default_text_position: TextDocumentPosition = None
         self.default_uri = 'file://my.sql'
-
 
     def setUp(self):
         """Constructor"""
@@ -137,7 +135,7 @@ class TestLanguageService(unittest.TestCase):
             },
             'position':  {
                 'line': 0,
-                'character': 10 # end of 'tab' word
+                'character': 10  # end of 'tab' word
             }
         })
         context: RequestContext = utils.MockRequestContext()
@@ -156,7 +154,7 @@ class TestLanguageService(unittest.TestCase):
         completions: List[CompletionItem] = context.last_response_params
         self.assertTrue(len(completions) > 0)
         self.verify_match('TABLE', completions, Range.from_data(0, 7, 0, 10))
-        
+
     def test_language_flavor(self):
         """
         Test that the service ignores files registered as being for non-PGSQL flavors
@@ -200,7 +198,6 @@ class TestLanguageService(unittest.TestCase):
             file = ScriptFile(self.default_uri, buffer, '')
             workspace._workspace_files[self.default_uri] = file
         return workspace, file
-
 
     def verify_match(self, word: str, matches: List[CompletionItem], text_range: Range):
         """Verifies match against its label and other properties"""

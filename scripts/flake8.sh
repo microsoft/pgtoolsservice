@@ -5,5 +5,5 @@ then
   exit 1
 fi
 
-flake8 --max-line-length=120 pgsqltoolsservice
-flake8 --max-line-length=120 tests
+flake8 --max-line-length=160 pgsqltoolsservice
+flake8 --max-line-length=160 tests
