@@ -525,7 +525,8 @@ class TestConnectionCancellation(unittest.TestCase):
             'user': 'postgres'
         })
 
-        # Mock psycopg2's connect method to store the current cancellation token
+        # Mock psycopg2's connect method to store the current cancellation token. This lets us
+        # capture the cancellation token state as it would be during a long-running connection.
         self.token_store = []
 
         def mock_connect(*args):
@@ -561,7 +562,9 @@ class TestConnectionCancellation(unittest.TestCase):
 
     def test_connecting_cancels_previous_connection(self):
         """Test that opening a new connection while one is ongoing cancels the previous connection"""
-        # Set up psycopg2's connection method to kick off a new connection
+        # Set up psycopg2's connection method to kick off a new connection. This simulates the case
+        # where a call to psycopg2.connect is taking a long time and another connection request for
+        # the same URI and connection type comes in and finishes before the current connection
         old_mock_connect = psycopg2.connect.side_effect
 
         def first_mock_connect(*args):
@@ -586,7 +589,10 @@ class TestConnectionCancellation(unittest.TestCase):
 
     def test_newer_cancellation_token_not_removed(self):
         """Test that a newer connection's cancellation token is not removed after a connection completes"""
-        # Set up psycopg2's connection method to simulate a new connection by overriding the current cancellation token
+        # Set up psycopg2's connection method to simulate a new connection by overriding the
+        # current cancellation token. This simulates the case where a call to psycopg2.connect is
+        # taking a long time and another connection request for the same URI and connection type
+        # comes in and finishes after the current connection
         cancellation_token = CancellationToken()
         cancellation_key = (self.owner_uri, self.connection_type)
 
