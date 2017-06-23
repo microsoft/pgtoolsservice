@@ -189,8 +189,6 @@ class ConnectionService:
         # Connect using psycopg2
         try:
             connection = psycopg2.connect(connection_string)
-            import time
-            time.sleep(0)
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
