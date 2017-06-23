@@ -211,3 +211,10 @@ class SpecialAction(object):
 
     def __init__(self):
         self.flags = 0
+
+class QueryCancelResult(object):
+    """Parameters to return as the result of a query dispose request"""
+    def __init__(self, messages: str = None):
+        # Optional error messages during query cancellation that can be sent back
+        # Set to none if no errors
+        self.messages = messages

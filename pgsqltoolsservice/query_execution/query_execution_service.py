@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from datetime import datetime
+import threading
 from typing import List, Dict  # noqa
 
 import psycopg2
@@ -15,14 +16,15 @@ from pgsqltoolsservice.query_execution.contracts import (
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
     QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams,
-    BatchSummary
+    BatchSummary, QueryCancelParams, CANCEL_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
     BatchEventParams, ResultMessage,
-    QueryCompleteParams, SubsetResult, ResultSetSubset
+    QueryCompleteParams, SubsetResult, ResultSetSubset,
+    QueryCancelResult
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
-from pgsqltoolsservice.query_execution.batch import Batch
+from pgsqltoolsservice.query_execution.batch import Batch, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 from pgsqltoolsservice.query_execution.contracts.execute_request import SubsetParams
 import pgsqltoolsservice.utils as utils
@@ -35,6 +37,8 @@ class QueryExecutionService(object):
         self._service_provider: ServiceProvider = None
         # Dictionary mapping uri to a list of batches
         self.query_results: Dict[str, List[Batch]] = {}
+        self.owner_to_thread_map: dict = {}
+        self.lock = threading.Lock()
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -51,6 +55,10 @@ class QueryExecutionService(object):
             SUBSET_REQUEST, self._handle_subset_request
         )
 
+        self._service_provider.server.set_request_handler(
+            CANCEL_REQUEST, self._handle_cancel_query_request
+        )
+
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Query execution service successfully initialized')
 
@@ -59,22 +67,91 @@ class QueryExecutionService(object):
     def _handle_execute_query_request(
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
+        """Kick off thread to execute query in response to an incoming execute query request"""
+        
+        self.lock.acquire()
+        if params.owner_uri not in self.query_results:
+            self.query_results[params.owner_uri] = []
+        batch_id = 0
+        batch = Batch(batch_id,
+                    params.query_selection if isinstance(params, ExecuteDocumentSelectionParams) else None)
+        if len(self.query_results[params.owner_uri]) == 0:
+            self.query_results[params.owner_uri].append(batch)
+        else:
+            self.query_results[params.owner_uri][batch_id] = batch
+       
+        self.query_results[params.owner_uri].append(batch)
+        self.lock.release()
 
-        self.query_results[params.owner_uri] = []
+        thread = threading.Thread(
+            target=self.handle_execute_query_request_worker,
+            args=(request_context, params)
+        )
+        self.owner_to_thread_map[params.owner_uri] = thread
+        thread.daemon = True
+        thread.start()
+
+    def _handle_subset_request(self, request_context: RequestContext, params: SubsetParams):
+        """Sends a response back to the query/subset request"""
+        result_set_subset = ResultSetSubset(self.query_results, params.owner_uri,
+                                            params.batch_index, params.result_set_index, params.rows_start_index,
+                                            params.rows_start_index + params.rows_count)
+        request_context.send_response(SubsetResult(result_set_subset))
+
+    def _handle_cancel_query_request(self, request_context: RequestContext, params: QueryCancelParams):
+        """Handles a 'query/cancel' request"""
+        try:
+            batch_id = 0
+
+            self.lock.acquire()
+            batch = self.query_results[params.owner_uri][batch_id]
+            batch.is_cancelled = True
+            self.lock.release()
+
+            if batch.execution_state is ExecutionState.EXECUTING:
+                self.cancel_query(params.owner_uri)
+            request_context.send_response(QueryCancelResult())
+        
+        except psycopg2.extensions.QueryCanceledError:
+            request_context.send_response(QueryCancelResult())
+        except Exception as e:
+            if self._service_provider.logger is not None:
+                    self._service_provider.logger.exception(str(e))
+
+    def cancel_query(self, owner_uri: str):
+        # TODO: Put connection stuff this in its own method
+        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        if connection_service is None:
+            raise LookupError('Connection service could not be found')  # TODO: Localize
+        conn = connection_service.get_connection(owner_uri, ConnectionType.CANCEL)
+        cancel_conn = connection_service.get_connection(owner_uri, ConnectionType.QUERY)
+        if conn is None or cancel_conn is None:
+            raise LookupError('Could not find associated connection') # TODO: Localize
+        backend_pid = cancel_conn.get_backend_pid()
+        query = f'SELECT pg_cancel_backend({backend_pid})'
+        cur = conn.cursor()
+        cur.execute(query)
+
+    def handle_execute_query_request_worker(self, request_context: RequestContext, params: ExecuteRequestParamsBase):
+        """Worker method for 'handle execute query request' thread"""
         # Wrap all the work up to sending the response in a try/except block so that we can send an error if it fails
         try:
             # Retrieve the connection service
+            conn = None
             connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
             if connection_service is None:
                 raise LookupError('Connection service could not be found')  # TODO: Localize
             conn = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
+            if conn is None:
+                raise LookupError('Could not find associated connection') # TODO: Localize
 
             # Get the query from the parameters or from the workspace service
             query = self._get_query_from_execute_params(params)
             batch_id = 0
-            utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
             request_context.send_response({})
-        except Exception as e:
+            utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
+            
+        except Exception as e: 
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Encountered exception while handling query request')
             request_context.send_error('Unhandled exception: {}'.format(str(e)))  # TODO: Localize
@@ -82,26 +159,36 @@ class QueryExecutionService(object):
 
         try:
             # Get the cursor and start executing the query
+            cur = None
+            batch = None
+
             cur = conn.cursor()
 
             # send query/batchStart response
-            batch = Batch(batch_id,
-                          params.query_selection if isinstance(params, ExecuteDocumentSelectionParams) else None,
-                          False)
+            self.lock.acquire()
+            batch = self.query_results[params.owner_uri][batch_id]
+            self.lock.release()
+
             batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
             results = self.execute_query(query, cur, batch, params.owner_uri, request_context)
+
+            self.lock.acquire()
             if results is not None:
-                result_set = ResultSet(len(self.query_results[params.owner_uri]),
-                                       batch_id, cur.description, cur.rowcount, results)
+                result_set = ResultSet(0,
+                                    batch_id, cur.description, cur.rowcount, results)
                 batch.result_sets.append(result_set)
+            self.lock.release()
 
             summary = batch.build_batch_summary()
-            batch_event_params = BatchEventParams(summary, params.owner_uri)
-
-            conn.commit()
-            self.query_results[params.owner_uri].append(batch)
+            
+            self.lock.acquire()
+            if batch.is_cancelled:
+                raise psycopg2.DatabaseError # TODO: Handle more gracefully
+            else:
+                conn.commit()
+            self.lock.release()
 
             # send query/resultSetComplete response
             # assuming only 0 or 1 result set summaries for now
@@ -109,12 +196,15 @@ class QueryExecutionService(object):
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             # send query/message response
-            message = 'Commands completed successfully'  # TODO: Localize
+            
             # Only add in rows affected if cursor object's rowcount is not -1.
             # rowcount is automatically -1 when an operation occurred that
             # a row count cannot be determined for or execute() was not performed
+            message = ''
             if cur.rowcount != -1:
                 message = "({0} row(s) affected)".format(cur.rowcount)  # TODO: Localize
+            else:
+                message = 'Commands completed successfully'  # TODO: Localize
 
             message_params = self.build_message_params(params.owner_uri, batch_id, message, False)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
@@ -123,13 +213,17 @@ class QueryExecutionService(object):
             summaries.append(summary)
             query_complete_params = QueryCompleteParams(summaries, params.owner_uri)
             # send query/batchComplete and query/complete resposnes
+
+            batch_event_params = BatchEventParams(summary, params.owner_uri)
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
         except Exception as e:
-            utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}')
+            utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}\n {e}')
             if isinstance(e, psycopg2.DatabaseError):
                 error_message = str(e)
+                if not error_message:
+                    error_message = 'Query failed.' # TODO: Localize
             else:
                 error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
                 if self._service_provider.logger is not None:
@@ -141,8 +235,15 @@ class QueryExecutionService(object):
             request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
 
             # Send a batch complete notification
-            batch.has_error = True
-            summary = batch.build_batch_summary()
+            summary = None
+
+            self.lock.acquire()
+            if batch is not None:
+                batch.has_error = True
+                summary = batch.build_batch_summary()
+                batch.is_cancelled = False
+            self.lock.release()
+
             batch_event_params = BatchEventParams(summary, params.owner_uri)
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
 
@@ -156,14 +257,6 @@ class QueryExecutionService(object):
         finally:
             if cur is not None:
                 cur.close()
-
-    def _handle_subset_request(self, request_context: RequestContext, params: SubsetParams):
-        """Sends a response back to the query/subset request"""
-
-        result_set_subset = ResultSetSubset(self.query_results, params.owner_uri,
-                                            params.batch_index, params.result_set_index, params.rows_start_index,
-                                            params.rows_start_index + params.rows_count)
-        request_context.send_response(SubsetResult(result_set_subset))
 
     def build_result_set_complete_params(self, summary: BatchSummary, owner_uri: str):
         summaries = summary.result_set_summaries
@@ -188,12 +281,23 @@ class QueryExecutionService(object):
         :param request_context: request context where we will send back notices
         """
         try:
-            cur.execute(query)
+            self.lock.acquire()
+            if batch.is_cancelled:
+                self.lock.release()
+                raise psycopg2.DatabaseError("Batch cancelled by user.") # TODO: Handle this better (i.e. raise a better exception and handle this separately)
+                
+            else:
+                batch.execution_state = ExecutionState.EXECUTING
+                self.lock.release()
+                cur.execute(query)
+
         except Exception:
             raise
         finally:
-            batch.has_executed = True
+            self.lock.acquire()
+            batch.execution_state = ExecutionState.EXECUTED
             batch.end_time = datetime.now()
+            self.lock.release()
 
             # Send back notices as a separate message to avoid error coloring / highlighting of text
             notices = cur.connection.notices

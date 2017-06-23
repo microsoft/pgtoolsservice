@@ -349,6 +349,7 @@ class RequestContext:
         :param data: Optional data to send back with the error
         :param code: Optional error code to identify the error
         """
+        
         message = JSONRPCMessage.create_error(self._message.message_id, code, message, data)
         self._queue.put(message)
 

@@ -189,7 +189,9 @@ class TestQueryService(unittest.TestCase):
         """Test that a response is sent when handling a query request"""
         # Set up the query execution service with a mock connection service
         connection_service = ConnectionService()
-        connection_service.get_connection = mock.Mock(return_value=None)
+        mock_cursor = utils.MockCursor(None)
+        mock_connection = utils.MockConnection(cursor=mock_cursor)
+        connection_service.get_connection = mock.Mock(return_value=mock_connection)
         query_execution_service = QueryExecutionService()
         mock_service_provider = ServiceProvider(None, {})
         mock_service_provider._services = {constants.CONNECTION_SERVICE_NAME: connection_service}

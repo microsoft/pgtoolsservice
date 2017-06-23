@@ -9,8 +9,9 @@ from pgsqltoolsservice.query_execution.contracts.batch_notification import (
 )
 from pgsqltoolsservice.query_execution.contracts.execute_request import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase,
-    ExecuteResult, SubsetParams,
-    EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST, SUBSET_REQUEST
+    ExecuteResult, SubsetParams, QueryCancelParams,
+    EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST, SUBSET_REQUEST,
+    CANCEL_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.message_notification import (
     MessageNotificationParams,
@@ -42,5 +43,6 @@ __all__ = [
     'RESULT_SET_COMPLETE_NOTIFICATION', 'ResultSetSummary',
     'BatchSummary', 'ResultMessage', 'SelectionData', 'DbColumn',
     'DbCellValue', 'BatchEventParams', 'MessageParams', 'QueryCompleteParams',
-    'ResultSetSubset', 'SubsetResult', 'SpecialAction', 'SubsetParams', 'SUBSET_REQUEST'
+    'ResultSetSubset', 'SubsetResult', 'SpecialAction', 'SubsetParams', 'SUBSET_REQUEST',
+    'QueryCancelParams', 'CANCEL_REQUEST'
 ]

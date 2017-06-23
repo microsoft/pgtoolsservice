@@ -63,7 +63,6 @@ class SubsetParams(ExecuteRequestParamsBase):
 
     def __init__(self):
         super().__init__()
-        self.owner_uri: str = None
         self.batch_index: int = None
         self.result_set_index: int = None
         self.rows_start_index: int = None
@@ -71,3 +70,14 @@ class SubsetParams(ExecuteRequestParamsBase):
 
 
 SUBSET_REQUEST = IncomingMessageConfiguration('query/subset', SubsetParams)
+
+class QueryCancelParams(ExecuteDocumentSelectionParams):
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary)
+
+    def __init__(self):
+        super().__init__()
+
+CANCEL_REQUEST = IncomingMessageConfiguration('query/cancel', QueryCancelParams)
+
