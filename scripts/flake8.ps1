@@ -8,8 +8,8 @@ $oldPythonpath=$Env:PYTHONPATH
 # Build the program
 Set-Location $scriptloc/..
 $Env:PYTHONPATH = ""
-pip3 install -r requirements.txt
-python3 setup.py build
+flake8 --max-line-length=160 pgsqltoolsservice
+flake8 --max-line-length=160 tests
 
 # Restore the old PYTHONPATH and move back to the original directory
 Set-Location $curloc

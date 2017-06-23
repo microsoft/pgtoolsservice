@@ -3,11 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Module containing constants used throughout the service"""
+from pgsqltoolsservice.language.language_service import LanguageService
 
-# Service names
-CAPABILITIES_SERVICE_NAME = 'capabilities'
-CONNECTION_SERVICE_NAME = 'connection'
-LANGUAGE_SERVICE_NAME = 'language_service'
-QUERY_EXECUTION_SERVICE_NAME = 'query_execution'
-WORKSPACE_SERVICE_NAME = 'workspace'
+__all__ = ['LanguageService']

@@ -59,6 +59,11 @@ class WorkspaceService:
     def configuration(self) -> PGSQLConfiguration:
         return self._configuration
 
+    @property
+    def workspace(self) -> Workspace:
+        """Gets the current workspace"""
+        return self._workspace
+
     # METHODS ##############################################################
     def register_config_change_callback(self, task: Callable[[PGSQLConfiguration], None]) -> None:
         self._config_change_callbacks.append(task)
