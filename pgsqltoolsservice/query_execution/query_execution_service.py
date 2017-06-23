@@ -120,11 +120,8 @@ class QueryExecutionService(object):
 
     def cancel_query(self, owner_uri: str):
         # TODO: Put connection stuff this in its own method
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        if connection_service is None:
-            raise LookupError('Connection service could not be found')  # TODO: Localize
-        conn = connection_service.get_connection(owner_uri, ConnectionType.CANCEL)
-        cancel_conn = connection_service.get_connection(owner_uri, ConnectionType.QUERY)
+        conn = self.get_connection(owner_uri, ConnectionType.QUERY)
+        cancel_conn = self.get_connection(owner_uri, ConnectionType.CANCEL)
         if conn is None or cancel_conn is None:
             raise LookupError('Could not find associated connection') # TODO: Localize
         backend_pid = cancel_conn.get_backend_pid()
@@ -136,24 +133,18 @@ class QueryExecutionService(object):
         """Worker method for 'handle execute query request' thread"""
         # Wrap all the work up to sending the response in a try/except block so that we can send an error if it fails
         try:
-            # Retrieve the connection service
-            conn = None
-            connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-            if connection_service is None:
-                raise LookupError('Connection service could not be found')  # TODO: Localize
-            conn = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
-            if conn is None:
-                raise LookupError('Could not find associated connection') # TODO: Localize
-
+            # Initialize connection to None in case getting connection raises an exception,
+            # where we attempt to use conn
+            conn = None 
+            conn = self.get_connection(params.owner_uri, ConnectionType.QUERY)
             # Get the query from the parameters or from the workspace service
             query = self._get_query_from_execute_params(params)
             batch_id = 0
             request_context.send_response({})
-            utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
-            
-        except Exception as e: 
+  
+        except Exception as e:
             if self._service_provider.logger is not None:
-                self._service_provider.logger.exception('Encountered exception while handling query request')
+                self._service_provider.logger.exception('Encountered exception while handling query request') # TODO: Localize
             request_context.send_error('Unhandled exception: {}'.format(str(e)))  # TODO: Localize
             return
 
@@ -161,14 +152,9 @@ class QueryExecutionService(object):
             # Get the cursor and start executing the query
             cur = None
             batch = None
-
             cur = conn.cursor()
-
-            # send query/batchStart response
-            self.lock.acquire()
+         # send query/batchStart response
             batch = self.query_results[params.owner_uri][batch_id]
-            self.lock.release()
-
             batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
@@ -182,13 +168,6 @@ class QueryExecutionService(object):
             self.lock.release()
 
             summary = batch.build_batch_summary()
-            
-            self.lock.acquire()
-            if batch.is_cancelled:
-                raise psycopg2.DatabaseError # TODO: Handle more gracefully
-            else:
-                conn.commit()
-            self.lock.release()
 
             # send query/resultSetComplete response
             # assuming only 0 or 1 result set summaries for now
@@ -197,68 +176,34 @@ class QueryExecutionService(object):
 
             # send query/message response
             
-            # Only add in rows affected if cursor object's rowcount is not -1.
-            # rowcount is automatically -1 when an operation occurred that
-            # a row count cannot be determined for or execute() was not performed
-            message = ''
-            if cur.rowcount != -1:
-                message = "({0} row(s) affected)".format(cur.rowcount)  # TODO: Localize
-            else:
-                message = 'Commands completed successfully'  # TODO: Localize
-
+            message = self.create_message(cur)
             message_params = self.build_message_params(params.owner_uri, batch_id, message, False)
             request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
-            summaries = []
-            summaries.append(summary)
-            query_complete_params = QueryCompleteParams(summaries, params.owner_uri)
-            # send query/batchComplete and query/complete resposnes
-
-            batch_event_params = BatchEventParams(summary, params.owner_uri)
-            request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
-            request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
-
-        except Exception as e:
-            utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}\n {e}')
-            if isinstance(e, psycopg2.DatabaseError):
-                error_message = str(e)
-                if not error_message:
-                    error_message = 'Query failed.' # TODO: Localize
-            else:
-                error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
-                if self._service_provider.logger is not None:
-                    self._service_provider.logger.exception('Unhandled exception while executing query')
-
-            # Send a message with the error to the client
-            result_message_params = self.build_message_params(
-                params.owner_uri, batch_id, error_message, True)
-            request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
-
-            # Send a batch complete notification
-            summary = None
-
-            self.lock.acquire()
-            if batch is not None:
-                batch.has_error = True
-                summary = batch.build_batch_summary()
-                batch.is_cancelled = False
-            self.lock.release()
-
+            # send query/batchComplete and query/complete response
             batch_event_params = BatchEventParams(summary, params.owner_uri)
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
 
-            # Send a query complete notification
             query_complete_params = QueryCompleteParams([summary], params.owner_uri)
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
-            # Roll back the transaction if the connection is still open
-            if not conn.closed:
-                conn.rollback()
+        except Exception as e:
+            self.handle_query_exception(e, query, params.owner_uri, batch, 
+                                       request_context, conn)
         finally:
             if cur is not None:
                 cur.close()
 
-    def build_result_set_complete_params(self, summary: BatchSummary, owner_uri: str):
+    def get_connection(self, owner_uri: str, connection_type: ConnectionType):
+        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        if connection_service is None:
+            raise LookupError('Connection service could not be found')  # TODO: Localize
+        conn = connection_service.get_connection(owner_uri, connection_type)
+        if conn is None:
+            raise LookupError('Could not find associated connection') # TODO: Localize
+        return conn
+
+    def build_result_set_complete_params(self, summary: BatchSummary, owner_uri: str) -> ResultSetNotificationParams:
         summaries = summary.result_set_summaries
         result_set_summary = None
         # Check if none or empty list
@@ -284,12 +229,11 @@ class QueryExecutionService(object):
             self.lock.acquire()
             if batch.is_cancelled:
                 self.lock.release()
-                raise psycopg2.DatabaseError("Batch cancelled by user.") # TODO: Handle this better (i.e. raise a better exception and handle this separately)
+                raise psycopg2.DatabaseError("Batch cancelled by user.")
                 
-            else:
-                batch.execution_state = ExecutionState.EXECUTING
-                self.lock.release()
-                cur.execute(query)
+            batch.execution_state = ExecutionState.EXECUTING
+            self.lock.release()
+            cur.execute(query)
 
         except Exception:
             raise
@@ -307,10 +251,19 @@ class QueryExecutionService(object):
                 request_context.send_notification(MESSAGE_NOTIFICATION, notice_message_params)
                 cur.connection.notices = []
 
-        if cur.description is not None:
-            return cur.fetchall()
-        return None
+        # Fetch the results before we commit the transaction and can't access the results anymore
+        self.lock.acquire()
+        if batch.is_cancelled:
+            self.lock.release()
+            raise psycopg2.DatabaseError("Batch cancelled by user.")
 
+        results = None
+        if cur.description is not None:
+            results = cur.fetchall()
+        cur.connection.commit()
+        self.lock.release()
+        return results
+        
     def _get_query_from_execute_params(self, params: ExecuteRequestParamsBase):
         if isinstance(params, ExecuteDocumentSelectionParams):
             workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
@@ -319,3 +272,51 @@ class QueryExecutionService(object):
         else:
             # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
             return params.query
+    
+    def create_message(self, cur) -> str:
+        # Only add in rows affected if cursor object's rowcount is not -1.
+        # rowcount is automatically -1 when an operation occurred that
+        # a row count cannot be determined for or execute() was not performed
+        if cur.rowcount != -1:
+            return '({0} row(s) affected)'.format(cur.rowcount)  # TODO: Localize
+        else:
+            return 'Commands completed successfully'  # TODO: Localize
+
+    def handle_query_exception(self, e: Exception, query: str, owner_uri: str, batch: Batch, 
+                              request_context: RequestContext, conn):
+        batch_id = 0
+        utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}\n {e}')
+        if isinstance(e, psycopg2.DatabaseError):
+            error_message = str(e)
+            if not error_message:
+                error_message = 'Query failed.' # TODO: Localize
+        else:
+            error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception('Unhandled exception while executing query')
+
+        # Send a message with the error to the client
+        result_message_params = self.build_message_params(
+            owner_uri, 0, error_message, True)
+        request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
+
+        # Send a batch complete notification
+        summary = None
+
+        self.lock.acquire()
+        if batch is not None:
+            batch.has_error = True
+            summary = batch.build_batch_summary()
+            batch.is_cancelled = False
+        self.lock.release()
+
+        batch_event_params = BatchEventParams(summary, owner_uri)
+        request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
+
+        # Send a query complete notification
+        query_complete_params = QueryCompleteParams([summary], owner_uri)
+        request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
+
+        # Roll back the transaction if the connection is still open
+        if not conn.closed:
+            conn.rollback()
