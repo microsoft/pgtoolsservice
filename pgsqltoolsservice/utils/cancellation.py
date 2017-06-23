@@ -5,8 +5,10 @@
 
 """Module containing utilities for cancelling requests"""
 
+
 class CancellationToken:
     """Token used to indicate if an operation has been canceled"""
+
     def __init__(self):
         self.canceled = False
 

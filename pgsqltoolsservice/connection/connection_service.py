@@ -7,7 +7,6 @@
 disconnect and holds the current connection, if one is present"""
 
 import threading
-from typing import Dict, Tuple
 import uuid
 
 import psycopg2
@@ -135,11 +134,11 @@ class ConnectionService:
 
     def handle_cancellation_request(self, request_context: RequestContext, params: CancelConnectParams) -> None:
         """Cancel a connection attempt in response to a cancellation request"""
-        connection_tuple = (params.owner_uri, params.type)
+        cancellation_key = (params.owner_uri, params.type)
         with self._cancellation_lock:
-            connection_found = connection_tuple in self._cancellation_map
+            connection_found = cancellation_key in self._cancellation_map
             if connection_found:
-                self._cancellation_map[connection_tuple].cancel()
+                self._cancellation_map[cancellation_key].cancel()
         request_context.send_response(connection_found)
 
     # IMPLEMENTATION DETAILS ###############################################
@@ -175,12 +174,12 @@ class ConnectionService:
 
         # The connection doesn't exist yet. Cancel any ongoing connection, set up a cancellation
         # token, and build the connection string from the provided options
-        connection_tuple = (params.owner_uri, params.type)
+        cancellation_key = (params.owner_uri, params.type)
         cancellation_token = CancellationToken()
         with self._cancellation_lock:
-            if connection_tuple in self._cancellation_map:
-                self._cancellation_map[connection_tuple].cancel()
-            self._cancellation_map[connection_tuple] = cancellation_token
+            if cancellation_key in self._cancellation_map:
+                self._cancellation_map[cancellation_key].cancel()
+            self._cancellation_map[cancellation_key] = cancellation_token
         connection_options = params.connection.options
         connection_string = ''
         for option, value in connection_options.items():
@@ -192,23 +191,23 @@ class ConnectionService:
             connection = psycopg2.connect(connection_string)
             import time
             time.sleep(0)
-
-            # Remove this thread's cancellation token if needed
-            with self._cancellation_lock:
-                if (connection_tuple in self._cancellation_map
-                        and cancellation_token is self._cancellation_map[connection_tuple]):
-                    del self._cancellation_map[connection_tuple]
-
-            # If the connection was canceled, close it
-            if cancellation_token.canceled:
-                connection.close()
-                return None
-
-            # The connection was not canceled, so add the connection and respond
-            connection_info.add_connection(params.type, connection)
-            return _build_connection_response(connection_info, params.type)
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
+        finally:
+            # Remove this thread's cancellation token if needed
+            with self._cancellation_lock:
+                if (cancellation_key in self._cancellation_map
+                        and cancellation_token is self._cancellation_map[cancellation_key]):
+                    del self._cancellation_map[cancellation_key]
+
+        # If the connection was canceled, close it
+        if cancellation_token.canceled:
+            connection.close()
+            return None
+
+        # The connection was not canceled, so add the connection and respond
+        connection_info.add_connection(params.type, connection)
+        return _build_connection_response(connection_info, params.type)
 
     @staticmethod
     def _close_connections(connection_info: ConnectionInfo, connection_type=None):

@@ -12,10 +12,11 @@ import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (
     CONNECTION_COMPLETE_METHOD, ConnectionType, ConnectRequestParams, ConnectionDetails,
-    DisconnectRequestParams, ListDatabasesParams
+    DisconnectRequestParams, ListDatabasesParams, ConnectionCompleteParams, CancelConnectParams
 )
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 import pgsqltoolsservice.connection.connection_service
+from pgsqltoolsservice.utils.cancellation import CancellationToken
 import tests.utils as utils
 from tests.utils import MockConnection, MockCursor
 
@@ -298,7 +299,8 @@ class TestConnectionService(unittest.TestCase):
         # Setup: Create a mock request context to handle output
         rc = utils.MockRequestContext()
         connection_service = ConnectionService()
-        connection_service._connect = Mock(return_value=None)
+        connect_response = ConnectionCompleteParams()
+        connection_service._connect = Mock(return_value=connect_response)
 
         # If: I make a request to connect
         params: ConnectRequestParams = ConnectRequestParams.from_dict({
@@ -328,7 +330,7 @@ class TestConnectionService(unittest.TestCase):
         rc.send_response.assert_called_once_with(True)
 
         # ... A connection complete notification should have been sent back as well
-        rc.send_notification.assert_called_once_with(CONNECTION_COMPLETE_METHOD, None)
+        rc.send_notification.assert_called_once_with(CONNECTION_COMPLETE_METHOD, connect_response)
 
         # ... An error should not have been called
         rc.send_error.assert_not_called()
@@ -498,6 +500,146 @@ class TestConnectionService(unittest.TestCase):
         self.assertEqual(response.connection_summary.database_name, db_name)
         self.assertEqual(response.connection_summary.user_name, user)
         self.assertEqual(response.type, connection_type)
+
+
+class TestConnectionCancellation(unittest.TestCase):
+    """Methods for testing connection cancellation requests"""
+
+    def setUp(self):
+        """Set up the tests with common connection parameters"""
+        # Set up the mock connection service and connection info
+        self.connection_service = ConnectionService()
+        self.owner_uri = 'test_uri'
+        self.connection_type = ConnectionType.DEFAULT
+        self.connect_params: ConnectRequestParams = ConnectRequestParams.from_dict({
+            'ownerUri': self.owner_uri,
+            'type': self.connection_type,
+            'connection': {
+                'options': {
+                }
+            }
+        })
+        self.mock_connection = MockConnection(dsn_parameters={
+            'host': 'myserver',
+            'dbname': 'postgres',
+            'user': 'postgres'
+        })
+
+        # Mock psycopg2's connect method to store the current cancellation token
+        self.token_store = []
+
+        def mock_connect(*args):
+            """Mock connection method to store the current cancellation token"""
+            return self._mock_connect()
+
+        psycopg2.connect = Mock(side_effect=mock_connect)
+
+    def test_connecting_sets_cancellation_token(self):
+        """Test that a cancellation token is set before a connection thread attempts to connect"""
+        # If I attempt to connect
+        response = self.connection_service._connect(self.connect_params)
+
+        # Then the cancellation token should have been set and should not have been canceled
+        self.assertEqual(len(self.token_store), 1)
+        self.assertFalse(self.token_store[0].canceled)
+
+        # And the cancellation token should have been cleared when the connection succeeded
+        self.assertIsNone(response.error_message)
+        self.assertFalse((self.owner_uri, self.connection_type) in self.connection_service._cancellation_map)
+
+    def test_connection_failed_removes_own_token(self):
+        """Test that the cancellation token is removed after a connection fails"""
+        # Set up psycopg2's connection method to throw an error
+        psycopg2.connect = Mock(side_effect=Exception())
+
+        # If I attempt to connect
+        response = self.connection_service._connect(self.connect_params)
+
+        # Then the cancellation token should have been cleared when the connection failed
+        self.assertIsNotNone(response.error_message)
+        self.assertFalse((self.owner_uri, self.connection_type) in self.connection_service._cancellation_map)
+
+    def test_connecting_cancels_previous_connection(self):
+        """Test that opening a new connection while one is ongoing cancels the previous connection"""
+        # Set up psycopg2's connection method to kick off a new connection
+        old_mock_connect = psycopg2.connect.side_effect
+
+        def first_mock_connect(*args):
+            """Mock connection method to store the current cancellation token, and kick off another connection"""
+            mock_connection = self._mock_connect()
+            psycopg2.connect.side_effect = old_mock_connect
+            self.connection_service._connect(self.connect_params)
+            return mock_connection
+
+        psycopg2.connect.side_effect = first_mock_connect
+
+        # If I attempt to connect, and then kick off a new connection while connecting
+        response = self.connection_service._connect(self.connect_params)
+
+        # Then the connection should have been canceled and returned none
+        self.assertIsNone(response)
+
+        # And the recorded cancellation tokens should show that the first request was cancelled
+        self.assertEqual(len(self.token_store), 2)
+        self.assertTrue(self.token_store[0].canceled)
+        self.assertFalse(self.token_store[1].canceled)
+
+    def test_newer_cancellation_token_not_removed(self):
+        """Test that a newer connection's cancellation token is not removed after a connection completes"""
+        # Set up psycopg2's connection method to simulate a new connection by overriding the current cancellation token
+        cancellation_token = CancellationToken()
+        cancellation_key = (self.owner_uri, self.connection_type)
+
+        def override_mock_connect(*args):
+            """Mock connection method to override the current connection token, as if another connection is executing"""
+            mock_connection = self._mock_connect()
+            self.connection_service._cancellation_map[cancellation_key].cancel()
+            self.connection_service._cancellation_map[cancellation_key] = cancellation_token
+            return mock_connection
+
+        psycopg2.connect.side_effect = override_mock_connect
+
+        # If I attempt to connect, and the cancellation token gets updated while connecting
+        response = self.connection_service._connect(self.connect_params)
+
+        # Then the connection should have been canceled and returned none
+        self.assertIsNone(response)
+
+        # And the current cancellation token should not have been removed
+        self.assertIs(self.connection_service._cancellation_map[cancellation_key], cancellation_token)
+
+    def test_handle_cancellation_request(self):
+        """Test that handling a cancellation request modifies the cancellation token for a matched connection"""
+        # Set up the connection service with a mock request handler and cancellation token
+        cancellation_key = (self.owner_uri, self.connection_type)
+        cancellation_token = CancellationToken()
+        self.connection_service._cancellation_map[cancellation_key] = cancellation_token
+        request_context = utils.MockRequestContext()
+
+        # If I call the cancellation request handler
+        cancel_params = CancelConnectParams(self.owner_uri, self.connection_type)
+        self.connection_service.handle_cancellation_request(request_context, cancel_params)
+
+        # Then the handler should have responded and set the cancellation flag
+        request_context.send_response.assert_called_once_with(True)
+        self.assertTrue(cancellation_token.canceled)
+
+    def test_handle_cancellation_no_match(self):
+        """Test that handling a cancellation request returns false if there is no matching connection to cancel"""
+        # Set up a mock request handler
+        request_context = utils.MockRequestContext()
+
+        # If I call the cancellation request handler
+        cancel_params = CancelConnectParams(self.owner_uri, self.connection_type)
+        self.connection_service.handle_cancellation_request(request_context, cancel_params)
+
+        # Then the handler should have responded false to indicate that no matching connection was in progress
+        request_context.send_response.assert_called_once_with(False)
+
+    def _mock_connect(self):
+        """Implementation for the mock psycopg2.connect method that saves the current cancellation token"""
+        self.token_store.append(self.connection_service._cancellation_map[(self.owner_uri, self.connection_type)])
+        return self.mock_connection
 
 
 if __name__ == '__main__':
