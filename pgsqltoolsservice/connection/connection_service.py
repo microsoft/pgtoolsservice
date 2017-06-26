@@ -163,6 +163,7 @@ class ConnectionService:
 
         # Connect using psycopg2
         try:
+            # Pass connection parameters as keyword arguments to psycopg2.connect by unpacking the connection_options dict
             connection = psycopg2.connect(**connection_options)
             connection_info.add_connection(params.type, connection)
             return _build_connection_response(connection_info, params.type)
