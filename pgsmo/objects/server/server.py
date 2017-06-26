@@ -17,7 +17,7 @@ class Server:
         """
         Initializes a server object using the provided connection
         :param connection: psycopg2 connection
-        :param fetch: Whether or not to refresh the database info during initialization (defaults to true)
+        :param fetch: Whether or not to fetch all properties of the server and create child objects, defaults to true
         """
         # Everything we know about the server will be based on the connection
         self._conn = utils.querying.ConnectionWrapper(connection)
@@ -41,30 +41,37 @@ class Server:
 
     @property
     def connection(self):
+        """Connection to the server/db that this object will use"""
         return self._conn
 
     @property
     def databases(self) -> List[Database]:
+        """Databases that belong to the server"""
         return self._databases
 
     @property
     def host(self) -> str:
+        """Hostname of the server"""
         return self._host
 
     @property
     def in_recovery(self) -> bool:
+        """Whether or not the server is in recovery mode"""
         return self._in_recovery
 
     @property
     def maintenance_db(self) -> str:
+        """Name of the database this server's connection is attached to"""
         return self._maintenance_db
 
     @property
     def port(self) -> int:
+        """Port number of the server"""
         return self._port
 
     @property
     def version(self) -> Tuple[int, int, int]:
+        """Tuple representing the server version: (major, minor, patch)"""
         return self._conn.version
 
     def wal_paused(self) -> bool:
@@ -72,15 +79,15 @@ class Server:
         return self._wal_paused
 
     # METHODS ##############################################################
-
-    def refresh(self):
+    def refresh(self) -> None:
+        """Refreshes properties of the server and initializes the child items"""
         self._fetch_recovery_state()
         self._fetch_databases()
 
     # IMPLEMENTATION DETAILS ###############################################
 
     def _fetch_databases(self) -> None:
-        self._databases = Database.get_server_databases(self._conn)
+        self._databases = Database.get_databases_for_server(self._conn)
 
     def _fetch_recovery_state(self) -> None:
         recovery_check_sql = utils.templating.render_template(

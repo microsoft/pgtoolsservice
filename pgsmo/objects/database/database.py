@@ -13,7 +13,7 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 class Database:
     @staticmethod
-    def get_server_databases(conn: utils.querying.ConnectionWrapper, fetch: bool=True) -> List['Database']:
+    def get_databases_for_server(conn: utils.querying.ConnectionWrapper, fetch: bool=True) -> List['Database']:
         # Execute query to get list of databases
         sql = utils.templating.render_template(
             utils.templating.get_template_path(TEMPLATE_ROOT, 'nodes.sql', conn.version),
@@ -122,16 +122,6 @@ class Database:
     # IMPLEMENTATION DETAILS ###############################################
     def _fetch_properties(self):
         pass
-        # sql = utils.templating.render_template(
-        #     utils.templating.get_template_path(TEMPLATE_ROOT, "properties.sql", self._conn.version),
-        #     did=self._did, conn=conn, last_system_oid=0
-        # )
-        #
-        # # Fetch basic properties
-        # # TODO Properly execute query
-        # status, rset = utils.querying.execute_dict(self._conn, sql)
-        # if not status:
-        #     raise 1     # TODO throw proper exception
 
     def _fetch_schemas(self):
         self._schemas = schema.Schema.get_schemas_for_database(self._conn)
