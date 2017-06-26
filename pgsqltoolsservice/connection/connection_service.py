@@ -7,11 +7,13 @@
 disconnect and holds the current connection, if one is present"""
 
 import threading
+from typing import Dict, Tuple  # noqa
 import uuid
 
 import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (
+    CANCEL_CONNECT_REQUEST, CancelConnectParams,
     CONNECT_REQUEST, ConnectRequestParams,
     DISCONNECT_REQUEST, DisconnectRequestParams,
     CONNECTION_COMPLETE_METHOD, ConnectionCompleteParams,
@@ -19,6 +21,7 @@ from pgsqltoolsservice.connection.contracts import (
     LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
 )
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
+from pgsqltoolsservice.utils.cancellation import CancellationToken
 
 
 class ConnectionInfo(object):
@@ -65,6 +68,8 @@ class ConnectionService:
         self.owner_to_connection_map = {}
         self.owner_to_thread_map = {}
         self._service_provider = None
+        self._cancellation_map: Dict[Tuple[str, ConnectionType], CancellationToken] = {}
+        self._cancellation_lock: threading.Lock = threading.Lock()
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -73,6 +78,7 @@ class ConnectionService:
         self._service_provider.server.set_request_handler(CONNECT_REQUEST, self.handle_connect_request)
         self._service_provider.server.set_request_handler(DISCONNECT_REQUEST, self.handle_disconnect_request)
         self._service_provider.server.set_request_handler(LIST_DATABASES_REQUEST, self.handle_list_databases)
+        self._service_provider.server.set_request_handler(CANCEL_CONNECT_REQUEST, self.handle_cancellation_request)
 
     def get_connection(self, owner_uri: str, connection_type: ConnectionType):
         """
@@ -86,9 +92,6 @@ class ConnectionService:
         if not connection_info.has_connection(connection_type):
             self._connect(ConnectRequestParams(connection_info.details, owner_uri, connection_type))
         return connection_info.get_connection(connection_type)
-
-        if self._service_provider.logger is not None:
-            self._service_provider.logger.info('Connection service successfully initialized')
 
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
@@ -130,18 +133,30 @@ class ConnectionService:
         database_names = [result[0] for result in query_results]
         request_context.send_response(ListDatabasesResponse(database_names))
 
+    def handle_cancellation_request(self, request_context: RequestContext, params: CancelConnectParams) -> None:
+        """Cancel a connection attempt in response to a cancellation request"""
+        cancellation_key = (params.owner_uri, params.type)
+        with self._cancellation_lock:
+            connection_found = cancellation_key in self._cancellation_map
+            if connection_found:
+                self._cancellation_map[cancellation_key].cancel()
+        request_context.send_response(connection_found)
+
     # IMPLEMENTATION DETAILS ###############################################
     def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Open a connection and fire the connection complete notification"""
         response = self._connect(params)
-        request_context.send_notification(CONNECTION_COMPLETE_METHOD, response)
+
+        # Send the connection complete response unless the connection was canceled
+        if response is not None:
+            request_context.send_notification(CONNECTION_COMPLETE_METHOD, response)
 
     def _connect(self, params: ConnectRequestParams):
         """
         Open a connection using the given connection information.
 
-        If a connection was already open, disconnect first. Return whether the connection was
-        successful
+        If a connection was already open, disconnect first. Return a connection response indicating
+        whether the connection was successful
         """
 
         connection_info: ConnectionInfo = self.owner_to_connection_map.get(params.owner_uri)
@@ -158,17 +173,38 @@ class ConnectionService:
         if connection is not None:
             return _build_connection_response(connection_info, params.type)
 
-        # The connection doesn't exist yet. Map the connection options to their psycopg2-specific options
+        # The connection doesn't exist yet. Cancel any ongoing connection and set up a cancellation token
+        cancellation_key = (params.owner_uri, params.type)
+        cancellation_token = CancellationToken()
+        with self._cancellation_lock:
+            if cancellation_key in self._cancellation_map:
+                self._cancellation_map[cancellation_key].cancel()
+            self._cancellation_map[cancellation_key] = cancellation_token
+
+        # Map the connection options to their psycopg2-specific options
         connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()}
 
         # Connect using psycopg2
         try:
             # Pass connection parameters as keyword arguments to psycopg2.connect by unpacking the connection_options dict
             connection = psycopg2.connect(**connection_options)
-            connection_info.add_connection(params.type, connection)
-            return _build_connection_response(connection_info, params.type)
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
+        finally:
+            # Remove this thread's cancellation token if needed
+            with self._cancellation_lock:
+                if (cancellation_key in self._cancellation_map
+                        and cancellation_token is self._cancellation_map[cancellation_key]):
+                    del self._cancellation_map[cancellation_key]
+
+        # If the connection was canceled, close it
+        if cancellation_token.canceled:
+            connection.close()
+            return None
+
+        # The connection was not canceled, so add the connection and respond
+        connection_info.add_connection(params.type, connection)
+        return _build_connection_response(connection_info, params.type)
 
     @staticmethod
     def _close_connections(connection_info: ConnectionInfo, connection_type=None):
@@ -224,7 +260,7 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
     response: ConnectRequestParams = ConnectionCompleteParams()
     response.owner_uri = connection_info.owner_uri
     response.type = connection_type
-    response.messages = repr(err)
+    response.messages = str(err)
     response.error_message = str(err)
 
     return response
