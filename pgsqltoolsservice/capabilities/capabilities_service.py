@@ -18,6 +18,7 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 
 class CapabilitiesService:
     """Defines the capabilities supported by PG Tools including language service and DMP support"""
+
     def __init__(self):
         self._service_provider: ServiceProvider = None
 
@@ -135,7 +136,8 @@ class CapabilitiesService:
                     CategoryValue('Require', 'require'),
                     CategoryValue('Verify-CA', 'verify-ca'),
                     CategoryValue('Verify-Full', 'verify-full'),
-                ]
+                ],
+                default_value='prefer'
             ),
             ConnectionOption(
                 name='sslcompression',

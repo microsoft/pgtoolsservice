@@ -47,7 +47,7 @@ class TestLanguageService(unittest.TestCase):
             'text_document': {
                 'uri': self.default_uri
             },
-            'position':  {
+            'position': {
                 'line': 1,
                 'character': 1
             }
@@ -72,7 +72,7 @@ class TestLanguageService(unittest.TestCase):
         server.set_request_handler.assert_called()
 
         # ... The service provider should have been stored
-        self.assertIs(service._service_provider, provider) # noqa
+        self.assertIs(service._service_provider, provider)  # noqa
 
     def test_completion_intellisense_off(self):
         """
@@ -125,7 +125,7 @@ class TestLanguageService(unittest.TestCase):
             'text_document': {
                 'uri': self.default_uri
             },
-            'position':  {
+            'position': {
                 'line': 0,
                 'character': 10  # end of 'tab' word
             }
