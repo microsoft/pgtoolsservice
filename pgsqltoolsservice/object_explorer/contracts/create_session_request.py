@@ -16,5 +16,9 @@ class CreateSessionParameters:
     def __init__(self):
         self.owner_uri = None
         self.type = None
+        self.options: dict = None
+        self.server_name: str = None
+        self.database_name: str = None
+        self.user_name: str = None        
 
 CREATE_SESSION_REQUEST = IncomingMessageConfiguration('objectexplorer/createsession', CreateSessionParameters)
