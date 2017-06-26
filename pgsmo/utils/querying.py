@@ -3,9 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Tuple
+from typing import List, Mapping, Tuple
 
-from psycopg2.extensions import Column, connection, cursor
+from psycopg2.extensions import Column, connection, cursor      # noqa
 
 
 class ConnectionWrapper:
@@ -27,7 +27,7 @@ class ConnectionWrapper:
         return self._conn
 
     @property
-    def dsn_parameters(self):
+    def dsn_parameters(self) -> Mapping[str, str]:
         return self._dsn_parameters
 
     @property

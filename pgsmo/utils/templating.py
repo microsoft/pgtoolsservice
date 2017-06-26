@@ -114,6 +114,7 @@ def render_template_string(source, **context):
 #
 ##########################################################################
 
+
 def qtLiteral(value):
     adapted = adapt(value)
 

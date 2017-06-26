@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple                # noqa
 
 from pgsmo.objects.database.database import Database
 import pgsmo.utils as utils

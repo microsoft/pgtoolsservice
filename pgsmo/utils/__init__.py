@@ -4,6 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 import pgsmo.utils.querying
-import pgsmo.utils.templating
+import pgsmo.utils.templating   # noqa
 
-__all__ = ['querying', 'templating']
+__all__ = [
+    'querying',
+    'templating'
+]

@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional
+from typing import List, Optional               # noqa
 
 import pgsmo.objects.schema.schema as schema
 import pgsmo.utils as utils
