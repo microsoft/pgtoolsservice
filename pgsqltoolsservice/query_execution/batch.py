@@ -13,15 +13,17 @@ from pgsqltoolsservice.query_execution.contracts.common import (
 )
 from pgsqltoolsservice.query_execution.result_set import ResultSet  # noqa
 
+
 class ExecutionState(Enum):
     NOT_STARTED = 'Not Started',
     EXECUTING = 'Executing',
     EXECUTED = 'Executed'
 
+
 class Batch(object):
 
-    def __init__(self, ordinal_id: int=None, selection: SelectionData=None, 
-     has_error: bool=False, is_cancelled: bool=False):
+    def __init__(self, ordinal_id: int=None, selection: SelectionData=None,
+                 has_error: bool=False, is_cancelled: bool=False):
         self.id = ordinal_id
         self.selection = selection
         self.start_time: datetime = datetime.now()

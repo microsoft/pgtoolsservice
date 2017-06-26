@@ -76,6 +76,7 @@ class MockConnection(object):
         self.cursor = mock.Mock(return_value=cursor)
         self.commit = mock.Mock()
         self.rollback = mock.Mock()
+        self.get_backend_pid = mock.Mock(return_value=0)
         self.notices = []
 
     @property
