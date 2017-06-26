@@ -98,7 +98,7 @@ class TestTextUtilities(unittest.TestCase):
 
             # ... and I expect the word to be the one covered by the indent
             actual_word = line[text_range.start.character:text_range.end.character]
-            self.assertEqual(actual_word, expected_word, 'For start {0} expected "{1}" actual "{2}"'.format(start, expected_word, actual_word)) # noqa
+            self.assertEqual(actual_word, expected_word, 'For start {0} expected "{1}" actual "{2}"'.format(start, expected_word, actual_word))  # noqa
 
     def test_get_text_and_range(self):
         """Should return a word and its range"""
@@ -128,4 +128,4 @@ class TestTextUtilities(unittest.TestCase):
             self.assertEqual(text_range.end.line, expected_line)
 
             # ... and I expect the word to be the one covered by the indent
-            self.assertEqual(actual_word, expected_word, 'For start {0} expected "{1}" actual "{2}"'.format(start, expected_word, actual_word)) # noqa
+            self.assertEqual(actual_word, expected_word, 'For start {0} expected "{1}" actual "{2}"'.format(start, expected_word, actual_word))  # noqa
