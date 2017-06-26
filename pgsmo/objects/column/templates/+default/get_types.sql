@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT * FROM
     (SELECT format_type(t.oid,NULL) AS typname,
     CASE WHEN typelem > 0 THEN typelem ELSE t.oid END AS elemoid

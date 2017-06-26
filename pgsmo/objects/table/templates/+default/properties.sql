@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT *,
 	(CASE when pre_coll_inherits is NULL then ARRAY[]::varchar[] else pre_coll_inherits END) as coll_inherits
 FROM (

@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 {% import 'catalog/pg/macros/catalogs.sql' as CATALOGS %}
 SELECT
     nsp.nspname as schema_name,

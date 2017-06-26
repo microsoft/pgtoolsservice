@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT att.attname as name, att.*, def.*, pg_catalog.pg_get_expr(def.adbin, def.adrelid) AS defval,
         CASE WHEN att.attndims > 0 THEN 1 ELSE 0 END AS isarray,
         format_type(ty.oid,NULL) AS typname,

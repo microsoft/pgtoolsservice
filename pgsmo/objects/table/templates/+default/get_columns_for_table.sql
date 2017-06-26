@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT
     a.attname AS name, format_type(a.atttypid, NULL) AS cltype,
     quote_ident(n.nspname)||'.'||quote_ident(c.relname) as inheritedfrom,

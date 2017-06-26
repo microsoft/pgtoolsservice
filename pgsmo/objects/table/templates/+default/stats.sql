@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT
     seq_scan AS {{ conn|qtIdent(_('Sequential scans')) }},
     seq_tup_read AS {{ conn|qtIdent(_('Sequential tuples read')) }},

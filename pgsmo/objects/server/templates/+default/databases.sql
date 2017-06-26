@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT
     db.oid as did, db.datname as name, ta.spcname as spcname, db.datallowconn,
     has_database_privilege(db.oid, 'CREATE') as cancreate, datdba as owner

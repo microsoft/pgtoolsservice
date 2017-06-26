@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT att.attname as name, att.attnum as OID, format_type(ty.oid,NULL) AS datatype,
 att.attnotnull as not_null, att.atthasdef as has_default_val
 FROM pg_attribute att

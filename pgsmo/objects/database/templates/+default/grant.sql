@@ -1,4 +1,10 @@
 {#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
+{#
 # CREATE DATABSE does not allow us to run any
 # other sql statments along with it, so we wrote
 # seprate sql for rest alter sql statments here

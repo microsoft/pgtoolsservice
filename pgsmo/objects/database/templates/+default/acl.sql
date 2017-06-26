@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT
     'datacl' AS deftype, COALESCE(gt.rolname, 'PUBLIC') AS grantee,
     g.rolname AS grantor, array_agg(privilege_type) AS privileges,

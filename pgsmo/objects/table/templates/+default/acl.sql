@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT 'relacl' as deftype, privileges_information.grantee, privileges_information.grantor,
     array_agg(privilege_type) as privileges, array_agg(is_grantable) as grantable
 from (

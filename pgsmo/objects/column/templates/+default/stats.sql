@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT
     null_frac AS {{ conn|qtIdent(_('Null fraction')) }},
     avg_width AS {{ conn|qtIdent(_('Average width')) }},

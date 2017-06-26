@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 {% if data %}
 {% if action == "rename_database" %} {% if data.old_name != data.name %}
 ALTER DATABASE {{ conn|qtIdent(data.old_name) }} RENAME TO {{ conn|qtIdent(data.name) }};
