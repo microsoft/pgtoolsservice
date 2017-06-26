@@ -135,7 +135,8 @@ class CapabilitiesService:
                     CategoryValue('Require', 'require'),
                     CategoryValue('Verify-CA', 'verify-ca'),
                     CategoryValue('Verify-Full', 'verify-full'),
-                ]
+                ],
+                default_value='prefer'
             ),
             ConnectionOption(
                 name='sslcompression',

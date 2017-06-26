@@ -158,16 +158,12 @@ class ConnectionService:
         if connection is not None:
             return _build_connection_response(connection_info, params.type)
 
-        # The connection doesn't exist yet. Build the connection string from the provided options
-        connection_options = params.connection.options
-        connection_string = ''
-        for option, value in connection_options.items():
-            key = CONNECTION_OPTION_KEY_MAP[option] if option in CONNECTION_OPTION_KEY_MAP else option
-            connection_string += "{}='{}' ".format(key, value)
+        # The connection doesn't exist yet. Map the connection options to their psycopg2-specific options
+        connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()}
 
         # Connect using psycopg2
         try:
-            connection = psycopg2.connect(connection_string)
+            connection = psycopg2.connect(**connection_options)
             connection_info.add_connection(params.type, connection)
             return _build_connection_response(connection_info, params.type)
         except Exception as err:
