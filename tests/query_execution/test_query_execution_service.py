@@ -322,7 +322,7 @@ class TestQueryService(unittest.TestCase):
         """Test building parameters for the result set complete notification"""
         # Set up the test with a batch summary and owner uri
         batch = Batch(10, SelectionData(), False)
-        batch.has_executed = True
+        batch.execution_state = ExecutionState.EXECUTED
         batch.result_sets = [ResultSet(1, 10, None, 0, [])]
         summary = batch.build_batch_summary()
         owner_uri = 'test_uri'

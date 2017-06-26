@@ -136,7 +136,7 @@ class QueryExecutionService(object):
         except BaseException:
             raise
         finally:
-            cur.rollback()
+            cancel_conn.rollback()
 
     def handle_execute_query_request_worker(self, request_context: RequestContext, params: ExecuteRequestParamsBase):
         """Worker method for 'handle execute query request' thread"""
