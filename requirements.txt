@@ -1,9 +1,16 @@
+# Shared Requirements
 psycopg2==2.7.1
-json-rpc
+
+# PGToolsService Requirements
+inflection
+
+# PGSMO Requirements
+jinja2
+
+# Build/Test Requirements
 cx_freeze
 nose
 coverage
-inflection
 autopep8
 flake8
 ptvsd==2.2.0
