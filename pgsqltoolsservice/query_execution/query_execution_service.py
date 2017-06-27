@@ -16,7 +16,7 @@ from pgsqltoolsservice.query_execution.contracts import (
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
     QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams,
-    BatchSummary, QueryCancelParams, CANCEL_REQUEST
+    BatchSummary, CANCEL_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
     BatchEventParams, ResultMessage,
@@ -39,7 +39,7 @@ class QueryExecutionService(object):
         self._service_provider: ServiceProvider = None
         # Dictionary mapping uri to a list of batches
         self.query_results: Dict[str, List[Batch]] = {}
-        self.owner_to_thread_map: dict = {}
+        self.owner_to_thread_map: dict = {} # Only used for testing
         self.lock = threading.Lock()
 
     def register(self, service_provider: ServiceProvider):
@@ -74,10 +74,10 @@ class QueryExecutionService(object):
         self.lock.acquire()
         if params.owner_uri not in self.query_results:
             self.query_results[params.owner_uri] = []
-
+        
         batch = Batch(BATCH_ID,
                       params.query_selection if isinstance(params, ExecuteDocumentSelectionParams) else None)
-        if len(self.query_results[params.owner_uri]) == 0:
+        if not self.query_results[params.owner_uri]:
             self.query_results[params.owner_uri].append(batch)
         else:
             self.query_results[params.owner_uri][BATCH_ID] = batch
@@ -85,7 +85,7 @@ class QueryExecutionService(object):
         self.lock.release()
 
         thread = threading.Thread(
-            target=self.handle_execute_query_request_worker,
+            target=self._execute_query_request_worker,
             args=(request_context, params)
         )
         self.owner_to_thread_map[params.owner_uri] = thread
@@ -99,7 +99,7 @@ class QueryExecutionService(object):
                                             params.rows_start_index + params.rows_count)
         request_context.send_response(SubsetResult(result_set_subset))
 
-    def _handle_cancel_query_request(self, request_context: RequestContext, params: QueryCancelParams):
+    def _handle_cancel_query_request(self, request_context: RequestContext, params: ExecuteDocumentSelectionParams):
         """Handles a 'query/cancel' request"""
         try:
             batch = self.query_results[params.owner_uri][BATCH_ID]
@@ -123,9 +123,8 @@ class QueryExecutionService(object):
             request_context.send_error('Unhandled exception: {}'.format(str(e)))  # TODO: Localize
 
     def cancel_query(self, owner_uri: str):
-        # TODO: Put connection stuff this in its own method
         conn = self.get_connection(owner_uri, ConnectionType.QUERY)
-        cancel_conn = self.get_connection(owner_uri, ConnectionType.CANCEL)
+        cancel_conn = self.get_connection(owner_uri, ConnectionType.QUERY_CANCEL)
         if conn is None or cancel_conn is None:
             raise LookupError('Could not find associated connection')  # TODO: Localize
         backend_pid = conn.get_backend_pid()
@@ -138,7 +137,7 @@ class QueryExecutionService(object):
         finally:
             cancel_conn.rollback()
 
-    def handle_execute_query_request_worker(self, request_context: RequestContext, params: ExecuteRequestParamsBase):
+    def _execute_query_request_worker(self, request_context: RequestContext, params: ExecuteRequestParamsBase):
         """Worker method for 'handle execute query request' thread"""
         # Wrap all the work up to sending the response in a try/except block so that we can send an error if it fails
         try:
@@ -171,8 +170,7 @@ class QueryExecutionService(object):
 
             self.lock.acquire()
             if results is not None:
-                result_set = ResultSet(0,
-                                       BATCH_ID, cur.description, cur.rowcount, results)
+                result_set = ResultSet(0, BATCH_ID, cur.description, cur.rowcount, results)
                 batch.result_sets.append(result_set)
             self.lock.release()
 
@@ -204,7 +202,7 @@ class QueryExecutionService(object):
                 cur.close()
 
     def get_connection(self, owner_uri: str, connection_type: ConnectionType):
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        connection_service = self._service_provider.get(utils.constants.CONNECTION_SERVICE_NAME)
         if connection_service is None:
             raise LookupError('Connection service could not be found')  # TODO: Localize
         conn = connection_service.get_connection(owner_uri, connection_type)
@@ -244,9 +242,6 @@ class QueryExecutionService(object):
             batch.execution_state = ExecutionState.EXECUTING
             self.lock.release()
             cur.execute(query)
-
-        except Exception:
-            raise
         finally:
             self.lock.acquire()
             batch.execution_state = ExecutionState.EXECUTED

@@ -70,15 +70,4 @@ class SubsetParams(ExecuteRequestParamsBase):
 
 
 SUBSET_REQUEST = IncomingMessageConfiguration('query/subset', SubsetParams)
-
-
-class QueryCancelParams(ExecuteDocumentSelectionParams):
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
-
-    def __init__(self):
-        super().__init__()
-
-
-CANCEL_REQUEST = IncomingMessageConfiguration('query/cancel', QueryCancelParams)
+CANCEL_REQUEST = IncomingMessageConfiguration('query/cancel', ExecuteDocumentSelectionParams)

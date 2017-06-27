@@ -50,7 +50,7 @@ class TestQueryService(unittest.TestCase):
         self.cursor_cancel.connection = self.connection_cancel
 
         def connection_side_effect(owner_uri: str, connection_type: ConnectionType):
-            if connection_type is ConnectionType.CANCEL:
+            if connection_type is ConnectionType.QUERY_CANCEL:
                 return self.connection_cancel
             else:
                 return self.connection
@@ -202,30 +202,18 @@ class TestQueryService(unittest.TestCase):
 
     def test_query_request_response(self):
         """Test that a response is sent when handling a query request"""
-        # Set up the query execution service with a mock connection service
-        connection_service = ConnectionService()
-        mock_cursor = utils.MockCursor(None)
-        mock_connection = utils.MockConnection(cursor=mock_cursor)
-        connection_service.get_connection = mock.Mock(return_value=mock_connection)
-        query_execution_service = QueryExecutionService()
-        mock_service_provider = ServiceProvider(None, {})
-        mock_service_provider._services = {constants.CONNECTION_SERVICE_NAME: connection_service}
-        mock_service_provider._is_initialized = True
-        query_execution_service._service_provider = mock_service_provider
-
-        # Set up the request context and request parameters
         mock_request_context = utils.MockRequestContext()
         params = get_execute_string_params()
 
         # If I handle a query
         try:
-            query_execution_service._handle_execute_query_request(mock_request_context, params)
+            self.query_execution_service._handle_execute_query_request(self.request_context, params)
         except BaseException:            # This test doesn't mock enough to actually execute the query
             pass
 
         # Then there should have been a response sent to my request
-        mock_request_context.send_error.assert_not_called()
-        mock_request_context.send_response.assert_called_once()
+        self.request_context.send_error.assert_not_called()
+        self.request_context.send_response.assert_called_once()
 
     def test_result_set_subset(self):
         """
@@ -520,6 +508,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(batch.execution_state, ExecutionState.EXECUTED)
         self.connection.commit.assert_called_once()
         self.connection.rollback.assert_not_called()
+        
     def test_query_execution(self):
         """Test that query execution sends the proper response/notices to the client"""
         # Set up params that are sent as part of a query execution request

@@ -213,7 +213,7 @@ class SpecialAction(object):
         self.flags = 0
 
 
-class QueryCancelResult(object):
+class QueryCancelResult:
     """Parameters to return as the result of a query dispose request"""
 
     def __init__(self, messages: str = None):

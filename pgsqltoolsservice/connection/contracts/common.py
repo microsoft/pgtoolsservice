@@ -52,4 +52,4 @@ class ConnectionType(enum.Enum):
     DEFAULT = 'Default'
     QUERY = 'Query'
     EDIT = 'Edit'
-    CANCEL = 'Cancel'
+    QUERY_CANCEL = 'QueryCancel'

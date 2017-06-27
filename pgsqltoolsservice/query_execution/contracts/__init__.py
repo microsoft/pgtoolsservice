@@ -9,7 +9,7 @@ from pgsqltoolsservice.query_execution.contracts.batch_notification import (
 )
 from pgsqltoolsservice.query_execution.contracts.execute_request import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase,
-    ExecuteResult, SubsetParams, QueryCancelParams,
+    ExecuteResult, SubsetParams,
     EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST, SUBSET_REQUEST,
     CANCEL_REQUEST
 )
