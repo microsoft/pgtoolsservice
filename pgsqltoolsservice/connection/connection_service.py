@@ -173,23 +173,21 @@ class ConnectionService:
         if connection is not None:
             return _build_connection_response(connection_info, params.type)
 
-        # The connection doesn't exist yet. Cancel any ongoing connection, set up a cancellation
-        # token, and build the connection string from the provided options
+        # The connection doesn't exist yet. Cancel any ongoing connection and set up a cancellation token
         cancellation_key = (params.owner_uri, params.type)
         cancellation_token = CancellationToken()
         with self._cancellation_lock:
             if cancellation_key in self._cancellation_map:
                 self._cancellation_map[cancellation_key].cancel()
             self._cancellation_map[cancellation_key] = cancellation_token
-        connection_options = params.connection.options
-        connection_string = ''
-        for option, value in connection_options.items():
-            key = CONNECTION_OPTION_KEY_MAP[option] if option in CONNECTION_OPTION_KEY_MAP else option
-            connection_string += "{}='{}' ".format(key, value)
+
+        # Map the connection options to their psycopg2-specific options
+        connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()}
 
         # Connect using psycopg2
         try:
-            connection = psycopg2.connect(connection_string)
+            # Pass connection parameters as keyword arguments to psycopg2.connect by unpacking the connection_options dict
+            connection = psycopg2.connect(**connection_options)
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
