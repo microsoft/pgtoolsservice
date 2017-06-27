@@ -14,10 +14,10 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ## Before Committing
 We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008) with a maximum line length of 120 characters. To ensure that your code has no style problems, run the following commands before committing (install them from pip first if needed):
 1. Run autopep8 to format your code according to PEP 8
-    - `autopep8 --in-place --aggressive --aggressive --max-line-length 120 -r .` (from the project's root directory)
+    - `autopep8 --in-place --aggressive --aggressive --max-line-length 160 -r .` (from the project's root directory)
 2. Run flake8 to look for problems that need to be resolved manually
-    - `flake8 --max-line-length=120 pgsqltoolsservice`
-    - `flake8 --max-line-length=120 tests`
+    - On Mac/Linux: `./scripts/flake8.sh`
+    - On Windows: `.\scripts\flake8.ps1`
 
 ## Running Tests
 1. Run `pip3 install -r requirements.txt` if you haven't already
@@ -30,7 +30,7 @@ We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008)
 1. Update your PYTHONPATH environment variable to contain the source directory. From within the project's main directory, run the following commands:
     - On Mac/Linux: `export PYTHONPATH=$(pwd)`
     - On Windows: `set PYTHONPATH=%cd%`
-2. `python3 pgsqltoolsservice/pgsqltoolsservice.py`
+2. `python3 pgsqltoolsservice/pgtoolsservice_main.py`
 3. Now you can pass in JSON RPC requests to stdin, following the [language server protocol specifications](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md).
 
 ## Remote Debugging with VS Code
