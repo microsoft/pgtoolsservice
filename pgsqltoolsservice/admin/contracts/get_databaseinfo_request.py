@@ -7,27 +7,17 @@ from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType  # noqa
 import pgsqltoolsservice.utils as utils
 
-class CreateSessionParameters:
+class GetDatabaseInfoParameters:
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
-        self.owner_uri = None
-        self.type = None
         self.options: dict = None
-        self.server_name: str = None
-        self.database_name: str = None
-        self.user_name: str = None
+        self.owner_uri: str = None
 
-class CreateSessionResponse:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+class GetDatabaseInfoResponse:
+    def __init__(self):
+        self.error_messages: str = None
 
-
-    def __init__(self, session_id):
-        self.session_id: str = session_id
-
-
-CREATE_SESSION_REQUEST = IncomingMessageConfiguration('objectexplorer/createsession', CreateSessionParameters)
+GET_DATABASEINFO_REQUEST = IncomingMessageConfiguration('admin/getdatabaseinfo', GetDatabaseInfoParameters)

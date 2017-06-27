@@ -9,14 +9,16 @@ import sys
 
 import ptvsd
 
+from pgsqltoolsservice.admin import AdminService
 from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
 from pgsqltoolsservice.language import LanguageService
+from pgsqltoolsservice.metadata import MetadataService
+from pgsqltoolsservice.object_explorer import ObjectExplorerService
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
-from pgsqltoolsservice.object_explorer import ObjectExplorerService
 
 if __name__ == '__main__':
     # Create the output logger
@@ -58,12 +60,15 @@ if __name__ == '__main__':
 
     # Create the service provider and add the providers to it
     services = {
+        constants.ADMIN_SERVICE_NAME: AdminService,
         constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
         constants.CONNECTION_SERVICE_NAME: ConnectionService,
         constants.LANGUAGE_SERVICE_NAME: LanguageService,
+        constants.METADATA_SERVICE_NAME: MetadataService,
+        constants.OBJECT_EXPLORER_NAME: ObjectExplorerService,
         constants.QUERY_EXECUTION_SERVICE_NAME: QueryExecutionService,
         constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
-        constants.OBJECT_EXPLORER_NAME: ObjectExplorerService,
+        
     }
     service_box = ServiceProvider(server, services, logger)
     service_box.initialize()

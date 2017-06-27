@@ -5,29 +5,19 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType  # noqa
+from pgsqltoolsservice.object_explorer.contracts import ObjectMetadata
 import pgsqltoolsservice.utils as utils
 
-class CreateSessionParameters:
+class MetadataListParameters:
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
-        self.owner_uri = None
-        self.type = None
-        self.options: dict = None
-        self.server_name: str = None
-        self.database_name: str = None
-        self.user_name: str = None
+        self.owner_uri: str = None
 
-class CreateSessionResponse:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+class MetadataListResponse:
+    def __init__(self):
+        self.Metadata: List[ObjectMetadata] = None
 
-
-    def __init__(self, session_id):
-        self.session_id: str = session_id
-
-
-CREATE_SESSION_REQUEST = IncomingMessageConfiguration('objectexplorer/createsession', CreateSessionParameters)
+METADATA_LIST_REQUEST = IncomingMessageConfiguration('metadata/list', MetadataListParameters)

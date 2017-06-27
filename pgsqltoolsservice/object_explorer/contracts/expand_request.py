@@ -7,7 +7,7 @@ from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType  # noqa
 import pgsqltoolsservice.utils as utils
 
-class CreateSessionParameters:
+class ExpandParameters:
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
@@ -19,15 +19,7 @@ class CreateSessionParameters:
         self.server_name: str = None
         self.database_name: str = None
         self.user_name: str = None
+        self.node_path: str = None      
 
-class CreateSessionResponse:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+EXPAND_REQUEST = IncomingMessageConfiguration('objectexplorer/expand', ExpandParameters)
 
-
-    def __init__(self, session_id):
-        self.session_id: str = session_id
-
-
-CREATE_SESSION_REQUEST = IncomingMessageConfiguration('objectexplorer/createsession', CreateSessionParameters)
