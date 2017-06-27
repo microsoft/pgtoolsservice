@@ -6,6 +6,7 @@
 from typing import List, Optional, Tuple                # noqa
 
 from pgsmo.objects.database.database import Database
+from pgsmo.objects.tablespace.tablespace import Tablespace
 import pgsmo.utils as utils
 
 
@@ -29,9 +30,12 @@ class Server:
         self._maintenance_db: str = props['dbname']
 
         # These properties will be defined later
-        self._databases: List[Database] = []
         self._in_recovery: Optional[bool] = None
         self._wal_paused: Optional[bool] = None
+
+        # Declare the child objects
+        self._databases: List[Database] = None
+        self._tablespaces: List[Tablespace] = None
 
         # Fetch the data for the server
         if fetch:
@@ -43,11 +47,6 @@ class Server:
     def connection(self):
         """Connection to the server/db that this object will use"""
         return self._conn
-
-    @property
-    def databases(self) -> List[Database]:
-        """Databases that belong to the server"""
-        return self._databases
 
     @property
     def host(self) -> str:
@@ -78,16 +77,31 @@ class Server:
         """Whether or not the Write-Ahead Log (WAL) is paused"""
         return self._wal_paused
 
+    # -CHILD OBJECTS #######################################################
+    @property
+    def databases(self) -> List[Database]:
+        """Databases that belong to the server"""
+        return self._databases
+
+    @property
+    def tablespaces(self) -> List[Tablespace]:
+        """Tablespaces defined for the server"""
+        return self._tablespaces
+
     # METHODS ##############################################################
     def refresh(self) -> None:
         """Refreshes properties of the server and initializes the child items"""
         self._fetch_recovery_state()
         self._fetch_databases()
+        self._fetch_tablespaces()
 
     # IMPLEMENTATION DETAILS ###############################################
 
     def _fetch_databases(self) -> None:
         self._databases = Database.get_databases_for_server(self._conn)
+
+    def _fetch_tablespaces(self) -> None:
+        self._tablespaces = Tablespace.get_tablespaces_for_server(self._conn)
 
     def _fetch_recovery_state(self) -> None:
         recovery_check_sql = utils.templating.render_template(
