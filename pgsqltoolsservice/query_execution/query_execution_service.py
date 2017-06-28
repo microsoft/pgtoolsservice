@@ -4,10 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 from datetime import datetime
-from typing import List, Dict  # noqa
+from typing import Callable, Dict, List, Optional  # noqa
 
 import psycopg2
 import psycopg2.errorcodes
+import sqlparse
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query_execution.contracts import (
@@ -70,8 +71,8 @@ class QueryExecutionService(object):
             conn = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
 
             # Get the query from the parameters or from the workspace service
-            query = self._get_query_from_execute_params(params)
             batch_id = 0
+            query = self._get_query_text_from_execute_params(params)
             utils.log.log_debug(self._service_provider.logger, f'Connection when attempting to query is {conn}')
             request_context.send_response({})
         except Exception as e:
@@ -95,7 +96,7 @@ class QueryExecutionService(object):
             if results is not None:
                 result_set = ResultSet(len(self.query_results[params.owner_uri]),
                                        batch_id, cur.description, cur.rowcount, results)
-                batch.result_sets.append(result_set)
+                batch.result_set = result_set
 
             summary = batch.build_batch_summary()
             batch_event_params = BatchEventParams(summary, params.owner_uri)
@@ -122,7 +123,7 @@ class QueryExecutionService(object):
             summaries = []
             summaries.append(summary)
             query_complete_params = QueryCompleteParams(summaries, params.owner_uri)
-            # send query/batchComplete and query/complete resposnes
+            # send query/batchComplete and query/complete responses
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
@@ -207,7 +208,7 @@ class QueryExecutionService(object):
             return cur.fetchall()
         return None
 
-    def _get_query_from_execute_params(self, params: ExecuteRequestParamsBase):
+    def _get_query_text_from_execute_params(self, params: ExecuteRequestParamsBase):
         if isinstance(params, ExecuteDocumentSelectionParams):
             workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
             selection_range = params.query_selection.to_range() if params.query_selection is not None else None
@@ -215,3 +216,61 @@ class QueryExecutionService(object):
         else:
             # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
             return params.query
+
+
+class Query:
+    """Object representing a single query, consisting of one or more batches"""
+    def __init__(self, owner_uri: str, query_text: str, request_context: RequestContext = None):
+        self.owner_uri: str = owner_uri
+        self.executed: bool = False
+        self.canceled: bool = False
+        self.notices: List[str] = []
+        self.batches: List[Batch] = []
+        self.request_context: Optional[RequestContext] = request_context
+
+        # Initialize the batches
+        for batch_text in sqlparse.split(query_text):
+            # Skip any empty text
+            if not batch_text.strip():
+                continue
+            # Create and save the batch
+            batch = Batch(batch_text, len(self.batches), None, request_context)  # TODO: Save the selection of the batch
+            self.batches.append(batch)
+
+    def execute(self, connection, batch_start_callback: Callable[[Query, Batch], None] = None, batch_end_callback: Callable[[Query, Batch], None] = None):
+        """
+        Execute the query using the given connection
+
+        :param connection: The psycopg2 connection to use when executing the query
+        :param batch_start_callback: A function to run before executing each batch
+        :param batch_end_callback: A function to run after executing each batch
+        :raises RuntimeError: If the query was already executed
+        :raises psycopg2.DatabaseError: If there was an error while running the query
+        """
+        if self.executed:
+            raise RuntimeError('Cannot execute a query multiple times')
+
+        # Run each batch sequentially
+        try:
+            for batch in self.batches:
+                if self.canceled:
+                    break
+                if batch_start_callback is not None:
+                    batch_start_callback(self, batch)
+                try:
+                    batch.execute(connection.cursor())
+                finally:
+                    if batch_end_callback is not None:
+                        batch_end_callback(self, batch)
+            has_error = False
+        except psycopg2.DatabaseError:
+            has_error = True
+            raise
+        finally:
+            self.executed = True
+            self.notices = connection.notices
+            # Roll back the query if there was an error or the query was canceled, otherwise commit it
+            if self.canceled or has_error:
+                connection.rollback()
+            else:
+                connection.commit()

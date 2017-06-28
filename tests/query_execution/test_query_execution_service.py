@@ -73,7 +73,7 @@ class TestQueryService(unittest.TestCase):
         params = ExecuteStringParams()
         params.query = 'select version()'
         # If I try to get a query using ExecuteStringParams
-        result = query_execution_service._get_query_from_execute_params(params)
+        result = query_execution_service._get_query_text_list_from_execute_params(params)
         # Then the retrieved query should be the same as the one on the params object
         self.assertEqual(result, params.query)
 
@@ -99,7 +99,7 @@ class TestQueryService(unittest.TestCase):
         params.selection_data = selection_data
 
         # If I try to get a query using ExecuteDocumentSelectionParams
-        result = query_execution_service._get_query_from_execute_params(params)
+        result = query_execution_service._get_query_text_list_from_execute_params(params)
 
         # Then the query execution service calls the workspace service to get the query text
         mock_workspace_service.get_text.assert_called_once_with(params.owner_uri, mock.ANY)
@@ -123,7 +123,7 @@ class TestQueryService(unittest.TestCase):
         params.selection_data = None
 
         # If I try to get a query using ExecuteDocumentSelectionParams
-        result = query_execution_service._get_query_from_execute_params(params)
+        result = query_execution_service._get_query_text_list_from_execute_params(params)
 
         # Then the query execution service calls the workspace service to get
         # the query text

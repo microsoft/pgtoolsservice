@@ -4,8 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 from datetime import datetime
-from typing import List  # noqa
+from typing import List, Optional  # noqa
 
+import psycopg2
+
+from pgsqltoolsservice.hosting import RequestContext
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query_execution.contracts.common import (
     SelectionData, BatchSummary, ResultSetSummary
@@ -15,14 +18,16 @@ from pgsqltoolsservice.query_execution.result_set import ResultSet  # noqa
 
 class Batch(object):
 
-    def __init__(self, ordinal_id: int, selection: SelectionData, has_error: bool):
+    def __init__(self, batch_text: str, ordinal_id: int, selection: SelectionData, request_context: RequestContext = None):
+        self.batch_text = batch_text
         self.id = ordinal_id
         self.selection = selection
         self.start_time: datetime = datetime.now()
-        self.has_error = has_error
+        self.has_error = False
         self.has_executed = False
-        self.result_sets: List[ResultSet] = []
+        self.result_set: ResultSet = None
         self.end_time: datetime = None
+        self.request_context: Optional[RequestContext] = None
 
     def build_batch_summary(self) -> BatchSummary:
         """returns a summary of current batch status"""
@@ -37,7 +42,26 @@ class Batch(object):
             summary.special_action = None
         return summary
 
+    def execute(self, cursor):
+        """
+        Execute the batch using the given psycopg2 cursor
+
+        :raises psycopg2.DatabaseError: if an error is encountered while running the batch's query
+        """
+        try:
+            cursor.execute(self.batch_text)
+        except psycopg2.DatabaseError:
+            self.has_error = True
+            raise
+        finally:
+            self.has_executed = True
+            self.end_time = datetime.now()
+
+        if cursor.description is not None:
+            results = cursor.fetchall()
+            self.result_set = ResultSet(0, self.id, cursor.description, cursor.rowcount, results)
+
     @property
     def result_set_summaries(self) -> List[ResultSetSummary]:
-        """Gets result sets as summary contract objects"""
-        return [x.result_set_summary for x in self.result_sets]
+        """Gets the batch's result set as a summary contract list"""
+        return [self.result_set.result_set_summary]
