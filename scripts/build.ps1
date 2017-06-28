@@ -9,7 +9,7 @@ $oldPythonpath=$Env:PYTHONPATH
 Set-Location $scriptloc/..
 $Env:PYTHONPATH = ""
 pip3 install -r requirements.txt
-python3 setup.py build
+python setup.py build
 
 # Restore the old PYTHONPATH and move back to the original directory
 Set-Location $curloc
