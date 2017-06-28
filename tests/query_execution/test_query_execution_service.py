@@ -12,16 +12,20 @@ from typing import List, Dict  # noqa
 import psycopg2
 
 from pgsqltoolsservice.connection import ConnectionService
+from pgsqltoolsservice.connection.contracts.common import ConnectionType
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.query_execution.contracts import (
-    ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData)
+    ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData, ExecuteRequestParamsBase)
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 from pgsqltoolsservice.query_execution.contracts import (
     DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
-    BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION)
+    BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
+    QueryCancelResult)
 from pgsqltoolsservice.query_execution.batch import Batch
+from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
+from pgsqltoolsservice.hosting import RequestContext
 import tests.utils as utils
 
 
@@ -36,13 +40,24 @@ class TestQueryService(unittest.TestCase):
         self.connection = utils.MockConnection(cursor=self.cursor)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
-        self.connection_service.get_connection = mock.Mock(return_value=self.connection)
         self.query_execution_service = QueryExecutionService()
         self.service_provider = ServiceProvider(None, {})
         self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: self.connection_service}
         self.service_provider._is_initialized = True
         self.query_execution_service._service_provider = self.service_provider
         self.request_context = utils.MockRequestContext()
+
+        self.cursor_cancel = utils.MockCursor(None)
+        self.connection_cancel = utils.MockConnection(cursor=self.cursor_cancel)
+        self.cursor_cancel.connection = self.connection_cancel
+
+        def connection_side_effect(owner_uri: str, connection_type: ConnectionType):
+            if connection_type is ConnectionType.QUERY_CANCEL:
+                return self.connection_cancel
+            else:
+                return self.connection
+
+        self.connection_service.get_connection = mock.Mock(side_effect=connection_side_effect)
 
     def test_initialization(self):
         # Setup: Create a capabilities service with a mocked out service
@@ -73,7 +88,7 @@ class TestQueryService(unittest.TestCase):
         params = ExecuteStringParams()
         params.query = 'select version()'
         # If I try to get a query using ExecuteStringParams
-        result = query_execution_service._get_query_text_list_from_execute_params(params)
+        result = query_execution_service._get_query_text_from_execute_params(params)
         # Then the retrieved query should be the same as the one on the params object
         self.assertEqual(result, params.query)
 
@@ -99,7 +114,7 @@ class TestQueryService(unittest.TestCase):
         params.selection_data = selection_data
 
         # If I try to get a query using ExecuteDocumentSelectionParams
-        result = query_execution_service._get_query_text_list_from_execute_params(params)
+        result = query_execution_service._get_query_text_from_execute_params(params)
 
         # Then the query execution service calls the workspace service to get the query text
         mock_workspace_service.get_text.assert_called_once_with(params.owner_uri, mock.ANY)
@@ -123,7 +138,7 @@ class TestQueryService(unittest.TestCase):
         params.selection_data = None
 
         # If I try to get a query using ExecuteDocumentSelectionParams
-        result = query_execution_service._get_query_text_list_from_execute_params(params)
+        result = query_execution_service._get_query_text_from_execute_params(params)
 
         # Then the query execution service calls the workspace service to get
         # the query text
@@ -133,53 +148,35 @@ class TestQueryService(unittest.TestCase):
     def test_query_request_invalid_uri(self):
         """Test handling a query request when the request has an invalid owner URI"""
         # Set up the query execution service and a connection service that has no known URIs
-        query_execution_service = QueryExecutionService()
-        service_provider = ServiceProvider(None, {})
-        service_provider._logger = utils.get_mock_logger()
-        service_provider._services = {constants.CONNECTION_SERVICE_NAME: ConnectionService()}
-        service_provider._is_initialized = True
-        query_execution_service._service_provider = service_provider
-
-        # Set up the request context and request parameters
-        mock_request_context = utils.MockRequestContext()
+        self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: ConnectionService()}
         params = get_execute_string_params()
 
         # If I try to handle a query request with an invalid owner URI
-        query_execution_service._handle_execute_query_request(mock_request_context, params)
+        self.query_execution_service._handle_execute_query_request(self.request_context, params)
+        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then it responds with an error instead of a regular response
-        mock_request_context.send_error.assert_called_once()
-        mock_request_context.send_response.assert_not_called()
+        self.request_context.send_error.assert_called_once()
+        self.request_context.send_response.assert_not_called()
 
     def test_query_request_error_handling(self):
         """Test handling a query request that fails when the query is executed"""
         # Set up the query execution service and a connection service with a mock connection that
         # has a cursor that always throws an error when executing
-        mock_cursor = utils.MockCursor(None)
-        mock_cursor.execute = mock.Mock(side_effect=psycopg2.DatabaseError())
-        mock_connection = utils.MockConnection(cursor=mock_cursor)
-        connection_service = ConnectionService()
-        connection_service.get_connection = mock.Mock(return_value=mock_connection)
-        query_execution_service = QueryExecutionService()
-        mock_service_provider = ServiceProvider(None, {})
-        mock_service_provider._services = {constants.CONNECTION_SERVICE_NAME: connection_service}
-        mock_service_provider._is_initialized = True
-        query_execution_service._service_provider = mock_service_provider
-
-        # Set up the request context and request parameters
-        mock_request_context = utils.MockRequestContext()
+        self.cursor.execute = mock.Mock(side_effect=psycopg2.DatabaseError())
         params = get_execute_string_params()
 
         # If I handle a query that raises an error when executed
-        query_execution_service._handle_execute_query_request(mock_request_context, params)
+        self.query_execution_service._handle_execute_query_request(self.request_context, params)
+        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then the transaction gets rolled back, the cursor gets closed, and an error notification gets sent
-        mock_connection.rollback.assert_called_once()
-        mock_connection.commit.assert_not_called()
-        mock_cursor.close.assert_called_once()
-        mock_request_context.send_notification.assert_called()
+        self.connection.rollback.assert_called_once()
+        self.connection.commit.assert_not_called()
+        self.cursor.close.assert_called_once()
+        self.request_context.send_notification.assert_called()
 
-        notification_calls = mock_request_context.send_notification.mock_calls
+        notification_calls = self.request_context.send_notification.mock_calls
         # Get the message params for all message notifications that were sent
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION]
         # Assert that at least one message notification was sent and that it was an error message
@@ -189,45 +186,34 @@ class TestQueryService(unittest.TestCase):
 
     def test_query_request_response(self):
         """Test that a response is sent when handling a query request"""
-        # Set up the query execution service with a mock connection service
-        connection_service = ConnectionService()
-        connection_service.get_connection = mock.Mock(return_value=None)
-        query_execution_service = QueryExecutionService()
-        mock_service_provider = ServiceProvider(None, {})
-        mock_service_provider._services = {constants.CONNECTION_SERVICE_NAME: connection_service}
-        mock_service_provider._is_initialized = True
-        query_execution_service._service_provider = mock_service_provider
-
-        # Set up the request context and request parameters
-        mock_request_context = utils.MockRequestContext()
         params = get_execute_string_params()
 
         # If I handle a query
         try:
-            query_execution_service._handle_execute_query_request(mock_request_context, params)
+            self.query_execution_service._handle_execute_query_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
         except BaseException:            # This test doesn't mock enough to actually execute the query
             pass
 
         # Then there should have been a response sent to my request
-        mock_request_context.send_error.assert_not_called()
-        mock_request_context.send_response.assert_called_once()
+        self.request_context.send_error.assert_not_called()
+        self.request_context.send_response.assert_called_once()
 
     def test_result_set_subset(self):
         """
         Test for proper generation of ResultSetSubset
         that is part of query/subset response payload
         """
-        query_results: Dict[str, List[Batch]] = {}
+        query_results: Dict[str, Query] = {}
         owner_uri = "untitled"
-        query_results[owner_uri] = []
+        query_results[owner_uri] = Query(owner_uri, '', self.request_context)
         batch_ordinal = 0
         result_ordinal = 0
         rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
-        query_results[owner_uri].append(Batch(batch_ordinal, SelectionData(), False))
-        query_results[owner_uri][batch_ordinal].result_sets.append(
-            ResultSet(result_ordinal, batch_ordinal, None, len(rows), rows))
+        query_results[owner_uri].batches.append(Batch(batch_ordinal, SelectionData(), False))
+        query_results[owner_uri].batches[batch_ordinal].result_set = ResultSet(result_ordinal, batch_ordinal, None, len(rows), rows)
 
-        result_rows = query_results[owner_uri][batch_ordinal].result_sets[result_ordinal].rows
+        result_rows = query_results[owner_uri].batches[batch_ordinal].result_set.rows
         results_size = len(result_rows)
         result_set_subset = ResultSetSubset(query_results, owner_uri, batch_ordinal,
                                             result_ordinal, 0, results_size)
@@ -308,7 +294,7 @@ class TestQueryService(unittest.TestCase):
         # Set up the test with a batch summary and owner uri
         batch = Batch(10, SelectionData(), False)
         batch.has_executed = True
-        batch.result_sets = [ResultSet(1, 10, None, 0, [])]
+        batch.result_set = ResultSet(1, 10, None, 0, [])
         summary = batch.build_batch_summary()
         owner_uri = 'test_uri'
 
@@ -325,7 +311,7 @@ class TestQueryService(unittest.TestCase):
         params = get_execute_string_params()
         # If we handle an execute query request
         self.query_execution_service._handle_execute_query_request(self.request_context, params)
-
+        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
         # Then we executed the query, closed the cursor, and called fetchall once each.
         # And the connection's notices is set properly
         self.cursor.execute.assert_called_once()
@@ -359,6 +345,7 @@ class TestQueryService(unittest.TestCase):
 
         # If we handle an execute query request
         self.query_execution_service._handle_execute_query_request(self.request_context, params)
+        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then we executed the query, closed the cursor,
         # did not call fetchall(), and cleared the notices
@@ -385,6 +372,124 @@ class TestQueryService(unittest.TestCase):
         # Make sure that the whole first message consists of the notices, as expected
         self.assertEqual(notices_str, call_params_list[0].message.message)
 
+    def test_cancel_query_during_query_execution(self):
+        """
+        Test that we handle query cancellation requests correctly
+        if we receive a cancel request during cursor.execute() call
+        """
+        execute_params = get_execute_string_params()
+        cancel_params = get_execute_request_params()
+
+        def cancel_during_execute_side_effects(*args):
+            self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
+
+        # Set up to run cancel query handler during execute() attempt
+        self.cursor.execute = mock.Mock(side_effect=cancel_during_execute_side_effects)
+
+        # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
+        self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
+        # Wait for query execution worker thread to finish
+        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+        query = self.query_execution_service.query_results['test_uri']
+
+        # Then we must have ran execute for a batch, and executed 'SELECTED pg_cancel_backend(pid)
+        # to cancel the query
+        self.cursor.execute.assert_called_once()
+        self.cursor_cancel.execute.assert_called_once()
+        self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
+        self.assertEqual(self.request_context.last_response_params.messages, None)
+
+        # The batch is also marked as canceled and executed. There should have been no commits and
+        # we should have rolled back. During execute_query call,
+        self.assertTrue(query.is_canceled)
+        self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
+        self.connection.commit.assert_not_called()
+        self.connection.rollback.assert_called_once()
+
+    def test_cancel_query_before_query_execution(self):
+        """
+        Test that we handle query cancellation requests correctly
+        if we receive a cancel request before cursor.execute() call
+        """
+        # Set up params
+        execute_params = get_execute_string_params()
+        cancel_params = get_execute_request_params()
+
+        real_execute_query = self.query_execution_service.execute_query
+
+        # Create a side effect to attempt to cancel query before any batches start executing
+        def cancel_before_execute_side_effect(
+                query: str,
+                cur,
+                batch: Batch,
+                owner_uri: str,
+                request_context: RequestContext) -> List[tuple]:
+            self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
+            real_execute_query(query, cur, batch, owner_uri, request_context)
+
+        self.query_execution_service.execute_query = mock.Mock(side_effect=cancel_before_execute_side_effect)
+
+        # If we start the execute query request handler with a cancel query request before the query execution
+        self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
+        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+        query = self.query_execution_service.query_results[execute_params.owner_uri]
+
+        # Then the execute request handler's execute is not called,
+        # as well as the cancel query's execute of 'SELECT pg_cancel_backend(pid) is called,
+        # but doesn't do anything
+        self.cursor.execute.assert_not_called()
+        self.cursor_cancel.execute.assert_called_once()
+        self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
+        self.assertEqual(self.request_context.last_response_params.messages, None)
+
+        # The batch should be marked as canceled, the state should be executed, and we should have rolled back
+        self.assertTrue(query.is_canceled)
+        self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
+        self.connection.commit.assert_not_called()
+        self.connection.rollback.assert_called_once()
+
+    def test_cancel_query_after_query_execution(self):
+        """
+        Test that we handle query cancellation requests correctly
+        if we receive a cancel request after cursor.execute() call
+        """
+
+        # Set up params
+        execute_params = get_execute_string_params()
+        cancel_params = get_execute_request_params()
+        real_execute_query = self.query_execution_service.execute_query
+
+        # Set up the side effect of execute_query to execute first and then handle the cancel query request afterwards
+        def cancel_after_execute_side_effect(
+                query: str,
+                cur,
+                batch: Batch,
+                owner_uri: str,
+                request_context: RequestContext) -> List[tuple]:
+            real_execute_query(query, cur, batch, owner_uri, request_context)
+            self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
+
+        self.query_execution_service.execute_query = mock.Mock(side_effect=cancel_after_execute_side_effect)
+
+        # If we start the execute query request handler with the cancel query
+        # request handled after the execute_query() and cursor.execute() calls
+        self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
+        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+        query = self.query_execution_service.query_results['test_uri']
+
+        # Then execute() in the execute query handler should have been called and
+        # the cancel cursor's execute() should have been called (but did nothing)
+        self.cursor.execute.assert_called_once()
+        self.cursor_cancel.execute.assert_called_once()
+        self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
+        self.assertEqual(self.request_context.last_response_params.messages, None)
+
+        # And the query should be in a canceled and executed stated. The connection should have committed as well
+        self.assertTrue(query.is_canceled)
+        self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
+        self.connection.commit.assert_called_once()
+        self.connection.rollback.assert_not_called()
+
     def test_query_execution(self):
         """Test that query execution sends the proper response/notices to the client"""
         # Set up params that are sent as part of a query execution request
@@ -392,6 +497,7 @@ class TestQueryService(unittest.TestCase):
 
         # If we handle an execute query request
         self.query_execution_service._handle_execute_query_request(self.request_context, params)
+        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then we executed the query, closed the cursor, and called fetchall once each.
         self.cursor.execute.assert_called_once()
@@ -422,10 +528,14 @@ class TestQueryService(unittest.TestCase):
         })
         batch = Batch(2, SelectionData(), False)
         batch_rows = [(1, 2), (3, 4), (5, 6)]
-        batch.result_sets = [ResultSet(0, 0, {}, 3, batch_rows)]
+        batch.result_set = ResultSet(0, 0, {}, 3, batch_rows)
+        test_query = Query(params.owner_uri, '', self.request_context)
+        test_query.batches = [Batch(0, SelectionData(), False), Batch(1, SelectionData(), False), batch]
+        other_query = Query('some_other_uri', '', self.request_context)
+        other_query.batches = [Batch(3, SelectionData(), False)]
         self.query_execution_service.query_results = {
-            params.owner_uri: [Batch(0, SelectionData(), False), Batch(1, SelectionData(), False), batch],
-            'some_other_uri': [Batch(3, SelectionData(), False)]
+            params.owner_uri: test_query,  # TODO: clean up
+            'some_other_uri': other_query
         }
 
         # If I call the subset request handler
@@ -448,6 +558,13 @@ def get_execute_string_params() -> ExecuteStringParams:
     """Get a simple ExecutestringParams"""
     params = ExecuteStringParams()
     params.query = 'select version()'
+    params.owner_uri = 'test_uri'
+    return params
+
+
+def get_execute_request_params():
+    """Get a simple ExecuteRequestParamsBase"""
+    params = ExecuteRequestParamsBase()
     params.owner_uri = 'test_uri'
     return params
 

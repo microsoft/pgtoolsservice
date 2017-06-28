@@ -1,0 +1,77 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+from enum import Enum
+from typing import Callable, List, Optional
+
+import psycopg2
+import sqlparse
+
+from pgsqltoolsservice.hosting import RequestContext
+from pgsqltoolsservice.query_execution.batch import Batch
+
+
+class ExecutionState(Enum):
+    NOT_STARTED = 'Not Started',
+    EXECUTING = 'Executing',
+    EXECUTED = 'Executed'
+
+
+class Query:
+    """Object representing a single query, consisting of one or more batches"""
+    def __init__(self, owner_uri: str, query_text: str, request_context: RequestContext = None):
+        self.execution_state: ExecutionState = ExecutionState.NOT_STARTED
+        self.is_canceled = False
+        self.owner_uri: str = owner_uri
+        self.notices: List[str] = []
+        self.batches: List[Batch] = []
+        self.request_context: Optional[RequestContext] = request_context
+
+        # Initialize the batches
+        for batch_text in sqlparse.split(query_text):
+            # Skip any empty text
+            if not batch_text.strip():
+                continue
+            # Create and save the batch
+            batch = Batch(batch_text, len(self.batches), None, request_context)  # TODO: Save the selection of the batch
+            self.batches.append(batch)
+
+    def execute(self, connection, batch_start_callback: Callable[['Query', Batch], None] = None, batch_end_callback: Callable[['Query', Batch], None] = None):
+        """
+        Execute the query using the given connection
+
+        :param connection: The psycopg2 connection to use when executing the query
+        :param batch_start_callback: A function to run before executing each batch
+        :param batch_end_callback: A function to run after executing each batch
+        :raises RuntimeError: If the query was already executed
+        :raises psycopg2.DatabaseError: If there was an error while running the query
+        """
+        if self.execution_state is ExecutionState.EXECUTED:
+            raise RuntimeError('Cannot execute a query multiple times')
+
+        # Run each batch sequentially
+        try:
+            for batch in self.batches:
+                if self.is_canceled:
+                    break
+                if batch_start_callback is not None:
+                    batch_start_callback(self, batch)
+                try:
+                    batch.execute(connection.cursor())
+                finally:
+                    if batch_end_callback is not None:
+                        batch_end_callback(self, batch)
+            has_error = False
+        except psycopg2.DatabaseError:
+            has_error = True
+            raise
+        finally:
+            self.executed = True
+            self.notices = connection.notices
+            # Roll back the query if there was an error or the query was canceled, otherwise commit it
+            if self.is_canceled or has_error:
+                connection.rollback()
+            else:
+                connection.commit()
+

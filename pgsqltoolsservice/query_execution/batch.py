@@ -64,4 +64,4 @@ class Batch(object):
     @property
     def result_set_summaries(self) -> List[ResultSetSummary]:
         """Gets the batch's result set as a summary contract list"""
-        return [self.result_set.result_set_summary]
+        return [self.result_set.result_set_summary] if self.result_set is not None else []

@@ -76,6 +76,7 @@ class MockConnection(object):
         self.cursor = mock.Mock(return_value=cursor)
         self.commit = mock.Mock()
         self.rollback = mock.Mock()
+        self.get_backend_pid = mock.Mock(return_value=0)
         self.notices = []
 
     @property
@@ -106,12 +107,12 @@ class MockCursor:
         self.description = None
         self.rowcount = -1
 
-    def execute_success_side_effects(self, query: str):
+    def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
         self.description = []
 
-    def execute_failure_side_effects(self, query: str):
+    def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
         raise psycopg2.DatabaseError()

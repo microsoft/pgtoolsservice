@@ -23,7 +23,7 @@ class TestBatch(unittest.TestCase):
 
     def test_build_batch_summary(self):
         """Test that the proper Batch Summary format is created"""
-        batch = Batch(0, self.default_sel_data, False)
+        batch = Batch('', 0, self.default_sel_data)
 
         batch_summary: BatchSummary = batch.build_batch_summary()
         self.assertEqual(batch_summary.id, 0)
