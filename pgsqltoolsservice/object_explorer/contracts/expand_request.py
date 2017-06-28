@@ -13,12 +13,7 @@ class ExpandParameters:
         return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
-        self.owner_uri = None
-        self.type = None
-        self.options: dict = None
-        self.server_name: str = None
-        self.database_name: str = None
-        self.user_name: str = None
+        self.session_id: str = None
         self.node_path: str = None      
 
 EXPAND_REQUEST = IncomingMessageConfiguration('objectexplorer/expand', ExpandParameters)

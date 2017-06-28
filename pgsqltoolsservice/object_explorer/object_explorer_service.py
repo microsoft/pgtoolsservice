@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from datetime import datetime
+from typing import List
 
 import psycopg2
 import psycopg2.errorcodes
@@ -13,6 +14,7 @@ from pgsqltoolsservice.object_explorer.contracts import (
     CreateSessionParameters, CreateSessionResponse, CREATE_SESSION_REQUEST,
     CloseSessionParameters, CLOSE_SESSION_REQUEST,
     ExpandParameters, EXPAND_REQUEST,
+    ExpandCompletedParameters, EXPAND_COMPLETED_METHOD,
     SessionCreatedParameters, SESSION_CREATED_METHOD,
     NodeInfo)
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
@@ -23,6 +25,7 @@ class ObjectExplorerService(object):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
+
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -73,4 +76,29 @@ class ObjectExplorerService(object):
 
 
     def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
+        table_node = NodeInfo()
+        table_node.label = 'Tables'
+        table_node.isLeaf = False
+        table_node.node_path = 'sqltools100/wideworldimporters/Tables'
+        table_node.node_type = 'Folder'
+
+        view_node = NodeInfo()
+        view_node.label = 'Views'
+        view_node.isLeaf = False
+        view_node.node_path = 'sqltools100/wideworldimporters/Views'
+        view_node.node_type = 'Folder'
+
+        nodes =[ table_node, view_node ]
+
+        response = ExpandCompletedParameters()
+        response.session_id = 'objectexplorer://1'
+        response.node_path = 'sqltools100/wideworldimporters'
+        response.nodes = nodes
+
         request_context.send_response(True)
+        request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
+
+
+    # def _get_session_id(self) -> None:
+        
+
