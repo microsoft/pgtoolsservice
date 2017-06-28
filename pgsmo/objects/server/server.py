@@ -34,8 +34,8 @@ class Server:
         self._wal_paused: Optional[bool] = None
 
         # Declare the child objects
-        self._databases: List[Database] = None
-        self._tablespaces: List[Tablespace] = None
+        self._databases: Optional[List[Database]] = None
+        self._tablespaces: Optional[List[Tablespace]] = None
 
         # Fetch the data for the server
         if fetch:
@@ -79,12 +79,12 @@ class Server:
 
     # -CHILD OBJECTS #######################################################
     @property
-    def databases(self) -> List[Database]:
+    def databases(self) -> Optional[List[Database]]:
         """Databases that belong to the server"""
         return self._databases
 
     @property
-    def tablespaces(self) -> List[Tablespace]:
+    def tablespaces(self) -> Optional[List[Tablespace]]:
         """Tablespaces defined for the server"""
         return self._tablespaces
 
