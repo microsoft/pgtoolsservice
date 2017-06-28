@@ -78,12 +78,12 @@ class Server:
 
     # -CHILD OBJECTS #######################################################
     @property
-    def databases(self) -> List[Database]:
+    def databases(self) -> Optional[List[Database]]:
         """Databases that belong to the server"""
         return self._databases
 
     @property
-    def roles(self) -> List[Role]:
+    def roles(self) -> Optional[List[Role]]:
         """Roles that belong to the server"""
         return self._roles
 
