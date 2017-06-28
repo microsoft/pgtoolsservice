@@ -16,14 +16,14 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 class Schema:
     @staticmethod
-    def get_schemas_for_database(conn: utils.querying.ConnectionWrapper) -> List['Schema']:
+    def get_schemas_for_database(conn: utils.querying.ServerConnection) -> List['Schema']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
         sql = utils.templating.render_template(
             utils.templating.get_template_path(type_template_root, 'nodes.sql', conn.version),
 
         )
 
-        cols, rows = utils.querying.execute_dict(conn, sql)
+        cols, rows = conn.execute_dict(sql)
 
         return [Schema._from_node_query(conn, row['oid'], row['name'], **row) for row in rows]
 
@@ -51,7 +51,7 @@ class Schema:
         self._name: str = name
 
         # Declare the optional parameters
-        self._conn: utils.querying.ConnectionWrapper = None
+        self._conn: utils.querying.ServerConnection = None
         self._oid: Optional[int] = None
         self._can_create: Optional[bool] = None
         self._has_usage: Optional[bool] = None

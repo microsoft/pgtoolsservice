@@ -12,19 +12,19 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 class Column:
     @staticmethod
-    def get_columns_for_table(conn: utils.querying.ConnectionWrapper, tid: int, fetch: bool=False):
+    def get_columns_for_table(conn: utils.querying.ServerConnection, tid: int, fetch: bool=False):
         # Execute query to get list of columns
         sql = utils.templating.render_template(
             utils.templating.get_template_path(TEMPLATE_ROOT, 'nodes.sql', conn.version),
             tid=tid
             # TODO: Add show system objs support
         )
-        cols, rows = utils.querying.execute_dict(conn, sql)
+        cols, rows = conn.execute_dict(sql)
 
         return [Column._from_node_query(conn, row['oid'], row['name'], row['datatype'], **row) for row in rows]
 
     @classmethod
-    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper,
+    def _from_node_query(cls, conn: utils.querying.ServerConnection,
                          col_id: int, col_name: str, col_datatype: str,
                          **kwargs):
         """
@@ -61,7 +61,7 @@ class Column:
         self._datatype: str = datatype
 
         # Declare the optional parameters
-        self._conn: Optional[utils.querying.ConnectionWrapper] = None
+        self._conn: Optional[utils.querying.ServerConnection] = None
         self._cid: Optional[int] = None
         self._has_default_value: Optional[bool] = None
         self._not_null: Optional[bool] = None

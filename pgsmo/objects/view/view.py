@@ -14,14 +14,14 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'view_templates')
 
 class View:
     @staticmethod
-    def get_views_for_schema(conn: utils.querying.ConnectionWrapper, scid: int) -> List['View']:
+    def get_views_for_schema(conn: utils.querying.ServerConnection, scid: int) -> List['View']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
         sql = utils.templating.render_template(
             utils.templating.get_template_path(type_template_root, 'nodes.sql', conn.version),
             scid=scid
         )
 
-        cols, rows = utils.querying.execute_dict(conn, sql)
+        cols, rows = conn.execute_dict(sql)
 
         return [View._from_node_query(conn, row['oid'], row['name'], **row) for row in rows]
 
@@ -43,7 +43,7 @@ class View:
         self._name: str = name
 
         # Declare optional parameters
-        self._conn: Optional[utils.querying.ConnectionWrapper] = None
+        self._conn: Optional[utils.querying.ServerConnection] = None
         self._oid: Optional[int] = None
 
         # Declare child items

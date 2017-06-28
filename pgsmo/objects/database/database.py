@@ -13,18 +13,18 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 class Database:
     @staticmethod
-    def get_databases_for_server(conn: utils.querying.ConnectionWrapper, fetch: bool=True) -> List['Database']:
+    def get_databases_for_server(conn: utils.querying.ServerConnection, fetch: bool=True) -> List['Database']:
         # Execute query to get list of databases
         sql = utils.templating.render_template(
             utils.templating.get_template_path(TEMPLATE_ROOT, 'nodes.sql', conn.version),
             last_system_oid=0
         )
-        cols, rows = utils.querying.execute_dict(conn, sql)
+        cols, rows = conn.execute_dict(sql)
 
         return [Database._from_node_query(conn, row['did'], row['name'], fetch, **row) for row in rows]
 
     @classmethod
-    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, db_did: int, db_name: str, fetch: bool=True,
+    def _from_node_query(cls, conn: utils.querying.ServerConnection, db_did: int, db_name: str, fetch: bool=True,
                          **kwargs):
         """
         Creates a new Database object based on the results from a query to lookup databases
@@ -67,7 +67,7 @@ class Database:
         self._is_connected: bool = False
 
         # Declare the optional parameters
-        self._conn: utils.querying.ConnectionWrapper = None
+        self._conn: utils.querying.ServerConnection = None
         self._did: Optional[int] = None
         self._tablespace: Optional[str] = None
         self._allow_conn: Optional[bool] = None

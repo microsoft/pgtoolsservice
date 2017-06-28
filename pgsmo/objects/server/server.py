@@ -20,7 +20,7 @@ class Server:
         :param fetch: Whether or not to fetch all properties of the server and create child objects, defaults to true
         """
         # Everything we know about the server will be based on the connection
-        self._conn = utils.querying.ConnectionWrapper(connection)
+        self._conn = utils.querying.ServerConnection(connection)
 
         # Declare the server properties
         props = self._conn.connection.get_dsn_parameters()
@@ -94,7 +94,7 @@ class Server:
             utils.templating.get_template_path(TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)
         )
 
-        cols, rows = utils.querying.execute_dict(self._conn, recovery_check_sql)
+        cols, rows = self._conn.execute_dict(recovery_check_sql)
         if len(rows) > 0:
             self._in_recovery = rows[0]['inrecovery']
             self._wal_paused = rows[0]['isreplaypaused']

@@ -14,13 +14,13 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 class Table:
     @staticmethod
-    def get_tables_for_schema(conn: utils.querying.ConnectionWrapper, schema_id: int) -> List['Table']:
+    def get_tables_for_schema(conn: utils.querying.ServerConnection, schema_id: int) -> List['Table']:
         sql = utils.templating.render_template(
             utils.templating.get_template_path(TEMPLATE_ROOT, 'nodes.sql', conn.version),
             scid=schema_id
         )
 
-        cols, rows = utils.querying.execute_dict(conn, sql)
+        cols, rows = conn.execute_dict(sql)
 
         return [Table._from_node_query(conn, row['oid'], row['name'], **row) for row in rows]
 
@@ -42,7 +42,7 @@ class Table:
         self._name: str = name
 
         # Declare the optional parameters
-        self._conn: Optional[utils.querying.ConnectionWrapper] = None
+        self._conn: Optional[utils.querying.ServerConnection] = None
         self._oid: Optional[int] = None
 
         # Declare child items
