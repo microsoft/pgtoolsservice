@@ -24,12 +24,11 @@ from pgsqltoolsservice.query_execution.contracts.common import (
     QueryCancelResult
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
-from pgsqltoolsservice.query_execution.batch import Batch, ExecutionState
+from pgsqltoolsservice.query_execution.batch import Batch
+from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 from pgsqltoolsservice.query_execution.contracts.execute_request import SubsetParams
 import pgsqltoolsservice.utils as utils
-
-BATCH_ID = 0  # TODO: Be able to split up into more than 1 batch
 
 
 class QueryExecutionService(object):
@@ -38,9 +37,8 @@ class QueryExecutionService(object):
     def __init__(self):
         self._service_provider: ServiceProvider = None
         # Dictionary mapping uri to a list of batches
-        self.query_results: Dict[str, List[Batch]] = {}
-        self.owner_to_thread_map: dict = {} # Only used for testing
-        self.lock = threading.Lock()
+        self.query_results: Dict[str, Query] = {}
+        self.owner_to_thread_map: dict = {}  # Only used for testing
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -71,18 +69,12 @@ class QueryExecutionService(object):
     ) -> None:
         """Kick off thread to execute query in response to an incoming execute query request"""
 
-        self.lock.acquire()
-        if params.owner_uri not in self.query_results:
-            self.query_results[params.owner_uri] = []
-        
-        batch = Batch(BATCH_ID,
-                      params.query_selection if isinstance(params, ExecuteDocumentSelectionParams) else None)
-        if not self.query_results[params.owner_uri]:
-            self.query_results[params.owner_uri].append(batch)
-        else:
-            self.query_results[params.owner_uri][BATCH_ID] = batch
-
-        self.lock.release()
+        # Create a new query if one does not already exist or we already executed the previous one
+        if params.owner_uri not in self.query_results or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED:
+            self.query_results[params.owner_uri] = Query()
+        if self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTING:
+            raise RuntimeError('Another query currently executing')  # TODO: Localize
+        self.query_results[params.owner_uri].execution_state = ExecutionState.EXECUTING
 
         thread = threading.Thread(
             target=self._execute_query_request_worker,
@@ -102,21 +94,18 @@ class QueryExecutionService(object):
     def _handle_cancel_query_request(self, request_context: RequestContext, params: ExecuteDocumentSelectionParams):
         """Handles a 'query/cancel' request"""
         try:
-            batch = self.query_results[params.owner_uri][BATCH_ID]
+            query = self.query_results[params.owner_uri]
 
             # Only cancel the query if we're in a cancellable state
-            if batch.execution_state is not ExecutionState.EXECUTED:
-                batch.is_cancelled = True
+            if query.execution_state is not ExecutionState.EXECUTED:
+                query.is_canceled = True
 
             # Only need to do additional work to cancel the query
             # if it's currently running
-            if batch.execution_state is ExecutionState.EXECUTING:
+            if query.execution_state is ExecutionState.EXECUTING:
                 self.cancel_query(params.owner_uri)
-
             request_context.send_response(QueryCancelResult())
 
-        except psycopg2.extensions.QueryCanceledError:
-            request_context.send_response(QueryCancelResult())
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(str(e))
@@ -128,10 +117,13 @@ class QueryExecutionService(object):
         if conn is None or cancel_conn is None:
             raise LookupError('Could not find associated connection')  # TODO: Localize
         backend_pid = conn.get_backend_pid()
-        query = f'SELECT pg_cancel_backend({backend_pid})'
         cur = cancel_conn.cursor()
         try:
-            cur.execute(query)
+            cur.execute("SELECT pg_cancel_backend (%s)", (backend_pid,))
+        # This exception occurs when we run SELECT pg_cancel_backend on
+        # a query that's currently executing
+        except psycopg2.extensions.QueryCanceledError:
+            pass
         except BaseException:
             raise
         finally:
@@ -141,12 +133,18 @@ class QueryExecutionService(object):
         """Worker method for 'handle execute query request' thread"""
         # Wrap all the work up to sending the response in a try/except block so that we can send an error if it fails
         try:
-            # Initialize connection to None in case getting connection raises an exception,
-            # where we attempt to use conn
+            # Initialize these in case initializing any of them raise an exception,
+            # since they're all being used in our exception method
             conn = None
+            cur = None
+            batch = None
+
+            query = self.query_results[params.owner_uri]
             conn = self.get_connection(params.owner_uri, ConnectionType.QUERY)
             # Get the query from the parameters or from the workspace service
-            query = self._get_query_from_execute_params(params)
+            query_string = self._get_query_from_execute_params(params)
+            batch_strings = get_batch_strings(query_string)
+            self.create_batches(params, len(batch_strings))
             request_context.send_response({})
 
         except Exception as e:
@@ -158,51 +156,51 @@ class QueryExecutionService(object):
 
         try:
             # Get the cursor and start executing the query
-            cur = None
-            batch = None
             cur = conn.cursor()
-            # send query/batchStart response
-            batch = self.query_results[params.owner_uri][BATCH_ID]
-            batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
-            request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
-            results = self.execute_query(query, cur, batch, params.owner_uri, request_context)
+            for batch in query.batches:
+                # send query/batchStart response
+                if query.is_canceled:
+                    raise RuntimeError("Query canceled by user.")  # TODO: Localize
+                batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
+                request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
-            self.lock.acquire()
-            if results is not None:
-                result_set = ResultSet(0, BATCH_ID, cur.description, cur.rowcount, results)
-                batch.result_sets.append(result_set)
-            self.lock.release()
+                results = self.execute_query(batch_strings.pop(0), cur, batch, params.owner_uri, request_context)
 
-            summary = batch.build_batch_summary()
+                if results is not None:
+                    result_set = ResultSet(0, batch.id, cur.description, cur.rowcount, results)
+                    batch.result_sets.append(result_set)
 
-            # send query/resultSetComplete response
-            # assuming only 0 or 1 result set summaries for now
-            result_set_params = self.build_result_set_complete_params(summary, params.owner_uri)
-            request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
+                summary = batch.build_batch_summary()
 
-            # send query/message response
+                # send query/resultSetComplete response
+                # assuming only 0 or 1 result set summaries for now
+                result_set_params = self.build_result_set_complete_params(summary, params.owner_uri)
+                request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
-            message = self.create_message(cur)
-            message_params = self.build_message_params(params.owner_uri, BATCH_ID, message, False)
-            request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
+                # send query/message response
+                message = self.create_message(cur)
+                message_params = self.build_message_params(params.owner_uri, batch.id, message, False)
+                request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
-            # send query/batchComplete and query/complete response
-            batch_event_params = BatchEventParams(summary, params.owner_uri)
-            request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
+                # send query/batchComplete and query/complete response
+                batch_event_params = BatchEventParams(summary, params.owner_uri)
+                request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
 
+            query.execution_state = ExecutionState.EXECUTED
+            conn.commit()
             query_complete_params = QueryCompleteParams([summary], params.owner_uri)
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
         except Exception as e:
-            self.handle_query_exception(e, query, params.owner_uri, batch,
+            self.handle_query_exception(e, query_string, params.owner_uri, batch,
                                         request_context, conn)
         finally:
             if cur is not None:
                 cur.close()
 
     def get_connection(self, owner_uri: str, connection_type: ConnectionType):
-        connection_service = self._service_provider.get(utils.constants.CONNECTION_SERVICE_NAME)
+        connection_service = self._service_provider._services[utils.constants.CONNECTION_SERVICE_NAME]
         if connection_service is None:
             raise LookupError('Connection service could not be found')  # TODO: Localize
         conn = connection_service.get_connection(owner_uri, connection_type)
@@ -223,10 +221,10 @@ class QueryExecutionService(object):
         result_message = ResultMessage(batch_id, is_error, utils.time.get_time_str(datetime.now()), message)
         return MessageNotificationParams(owner_uri, result_message)
 
-    def execute_query(self, query: str, cur, batch: Batch, owner_uri: str,
+    def execute_query(self, query_string: str, cur, batch: Batch, owner_uri: str,
                       request_context: RequestContext) -> List[tuple]:
         """Execute query, send back notices, and add to the query execution service's query results
-        :raises psycopg2.DatabaseError:
+        :raises RuntimeError, psycopg2.DatabaseError:
         :param query: query text to be executed
         :param cur: cursor object that will be used to execute the query
         :param batch: batch that will be updated after query execution is complete
@@ -234,19 +232,14 @@ class QueryExecutionService(object):
         :param request_context: request context where we will send back notices
         """
         try:
-            self.lock.acquire()
-            if batch.is_cancelled:
-                self.lock.release()
-                raise psycopg2.DatabaseError("Batch cancelled by user.")
+            if self.query_results[owner_uri].is_canceled:
+                raise RuntimeError("Batch canceled by user.")  # TODO: Localize
 
-            batch.execution_state = ExecutionState.EXECUTING
-            self.lock.release()
-            cur.execute(query)
+            # Will raise psycopg2.DatabaseError if query is invalid
+            cur.execute(query_string)
         finally:
-            self.lock.acquire()
-            batch.execution_state = ExecutionState.EXECUTED
             batch.end_time = datetime.now()
-            self.lock.release()
+            batch.has_executed = True
 
             # Send back notices as a separate message to avoid error coloring / highlighting of text
             notices = cur.connection.notices
@@ -257,16 +250,12 @@ class QueryExecutionService(object):
                 cur.connection.notices = []
 
         # Fetch the results before we commit the transaction and can't access the results anymore
-        self.lock.acquire()
-        if batch.is_cancelled:
-            self.lock.release()
-            raise psycopg2.DatabaseError("Batch cancelled by user.")
+        if self.query_results[owner_uri].is_canceled:
+            raise RuntimeError("Batch canceled by user.")  # TODO: Localize
 
         results = None
         if cur.description is not None:
             results = cur.fetchall()
-        cur.connection.commit()
-        self.lock.release()
         return results
 
     def _get_query_from_execute_params(self, params: ExecuteRequestParamsBase):
@@ -290,10 +279,8 @@ class QueryExecutionService(object):
     def handle_query_exception(self, e: Exception, query: str, owner_uri: str, batch: Batch,
                                request_context: RequestContext, conn):
         utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}\n {e}')
-        if isinstance(e, psycopg2.DatabaseError):
+        if isinstance(e, psycopg2.DatabaseError) or isinstance(e, RuntimeError):
             error_message = str(e)
-            if not error_message:
-                error_message = 'Query failed.'  # TODO: Localize
         else:
             error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
             if self._service_provider.logger is not None:
@@ -306,13 +293,11 @@ class QueryExecutionService(object):
 
         # Send a batch complete notification
         summary = None
-
-        self.lock.acquire()
         if batch is not None:
             batch.has_error = True
+            batch.has_executed = True
             summary = batch.build_batch_summary()
-            batch.execution_state = ExecutionState.EXECUTED
-        self.lock.release()
+            self.query_results[owner_uri].execution_state = ExecutionState.EXECUTED
 
         batch_event_params = BatchEventParams(summary, owner_uri)
         request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
@@ -324,3 +309,15 @@ class QueryExecutionService(object):
         # Roll back the transaction if the connection is still open
         if not conn.closed:
             conn.rollback()
+
+    def create_batches(self, params: ExecuteRequestParamsBase, length: int):
+        for index in range(length):
+            batch = Batch(index,
+                          params.query_selection if isinstance(params, ExecuteDocumentSelectionParams) else None)
+            self.query_results[params.owner_uri].batches.append(batch)
+
+
+def get_batch_strings(query_string: str) -> List[str]:
+    """Splits query string into a list of batch strings"""
+    # TODO: Update this to actually split the strings once spliting a query into batches is in place
+    return [query_string]

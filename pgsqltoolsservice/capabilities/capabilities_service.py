@@ -18,6 +18,7 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 
 class CapabilitiesService:
     """Defines the capabilities supported by PG Tools including language service and DMP support"""
+
     def __init__(self):
         self._service_provider: ServiceProvider = None
 

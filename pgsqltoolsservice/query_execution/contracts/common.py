@@ -12,7 +12,7 @@ from pgsqltoolsservice.workspace.contracts import Position, Range
 DESC = {'name': 0, 'type_code': 1, 'display_size': 2, 'internal_size': 3, 'precision': 4, 'scale': 5, 'null_ok': 6}
 
 
-class SelectionData(object):
+class SelectionData:
     """Container class for a selection range from file"""
     @classmethod
     def from_dict(cls, dictionary: dict):
@@ -29,7 +29,7 @@ class SelectionData(object):
         return Range(Position(self.start_line, self.start_column), Position(self.end_line, self.end_column))
 
 
-class BatchSummary(object):
+class BatchSummary:
 
     def __init__(self,
                  batchId: int,
@@ -46,7 +46,7 @@ class BatchSummary(object):
         self.special_action = None
 
 
-class ResultMessage(object):
+class ResultMessage:
 
     def __init__(self, batch_id: int, is_error: bool, time, message: str):
         self.batch_id: int = batch_id
@@ -55,7 +55,7 @@ class ResultMessage(object):
         self.message: str = message
 
 
-class ResultSetSummary(object):
+class ResultSetSummary:
 
     def __init__(self, ident, batch_id, row_count, column_info, special_action):
         self.id = ident
@@ -65,7 +65,7 @@ class ResultSetSummary(object):
         self.special_action = special_action
 
 
-class DbColumn(object):
+class DbColumn:
 
     # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) containing a 7-item sequence.
@@ -111,7 +111,7 @@ class DbColumn(object):
         self.is_json: bool = None
 
 
-class DbCellValue(object):
+class DbCellValue:
 
     def __init__(self, display_value: any, is_null: bool, raw_object: object, row_id: int):
         self.display_value: str = None if (display_value is None) else str(display_value)
@@ -119,28 +119,28 @@ class DbCellValue(object):
         self.row_id: int = row_id
 
 
-class BatchEventParams(object):
+class BatchEventParams:
 
     def __init__(self, batch_summary: BatchSummary, owner_uri: str):
         self.batch_summary: BatchSummary = batch_summary
         self.owner_uri: str = owner_uri
 
 
-class MessageParams(object):
+class MessageParams:
 
     def __init__(self, message: str, owner_uri: str):
         self.message: str = message
         self.owner_uri: str = owner_uri
 
 
-class QueryCompleteParams(object):
+class QueryCompleteParams:
 
     def __init__(self, batch_summaries: List[BatchSummary], owner_uri: str):
         self.batch_summaries: List[BatchSummary] = batch_summaries
         self.owner_uri: str = owner_uri
 
 
-class ResultSetSubset(object):
+class ResultSetSubset:
 
     def __init__(self, results, owner_uri: str, batch_ordinal: int,
                  result_set_ordinal: int, start_index: int, end_index: int):
@@ -172,12 +172,12 @@ class ResultSetSubset(object):
 
         # Check that the list of batches for the specified owner uri exists
         utils.validate.is_not_none("results[owner_uri]", results[owner_uri])
-        batch_list = results[owner_uri]
+        query = results[owner_uri]
 
         # validate that there is an entry for the batch at position batch_ordinal
-        utils.validate.is_within_range("batch_ordinal", batch_ordinal, 0, len(batch_list) - 1)
+        utils.validate.is_within_range("batch_ordinal", batch_ordinal, 0, len(query.batches) - 1)
 
-        batch = batch_list[batch_ordinal]
+        batch = query.batches[batch_ordinal]
         utils.validate.is_not_none("batch", batch)
         utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, len(batch.result_sets) - 1)
 
@@ -201,13 +201,13 @@ class ResultSetSubset(object):
         return rows_list
 
 
-class SubsetResult(object):
+class SubsetResult:
 
     def __init__(self, result_subset: ResultSetSubset):
         self.result_subset: ResultSetSubset = result_subset
 
 
-class SpecialAction(object):
+class SpecialAction:
 
     def __init__(self):
         self.flags = 0
