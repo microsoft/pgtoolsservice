@@ -107,12 +107,12 @@ class MockCursor:
         self.description = None
         self.rowcount = -1
 
-    def execute_success_side_effects(self, *arg):
+    def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
         self.description = []
 
-    def execute_failure_side_effects(self, *arg):
+    def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
         raise psycopg2.DatabaseError()

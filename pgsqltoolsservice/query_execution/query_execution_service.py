@@ -16,7 +16,7 @@ from pgsqltoolsservice.query_execution.contracts import (
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
     QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams,
-    BatchSummary, CANCEL_REQUEST
+    BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
     BatchEventParams, ResultMessage,
@@ -27,7 +27,6 @@ from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
-from pgsqltoolsservice.query_execution.contracts.execute_request import SubsetParams
 import pgsqltoolsservice.utils as utils
 
 
@@ -73,7 +72,7 @@ class QueryExecutionService(object):
         if params.owner_uri not in self.query_results or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED:
             self.query_results[params.owner_uri] = Query()
         if self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTING:
-            raise RuntimeError('Another query currently executing')  # TODO: Localize
+            request_context.send_error('Another query currently executing.')  # TODO: Localize
         self.query_results[params.owner_uri].execution_state = ExecutionState.EXECUTING
 
         thread = threading.Thread(
@@ -91,10 +90,14 @@ class QueryExecutionService(object):
                                             params.rows_start_index + params.rows_count)
         request_context.send_response(SubsetResult(result_set_subset))
 
-    def _handle_cancel_query_request(self, request_context: RequestContext, params: ExecuteDocumentSelectionParams):
+    def _handle_cancel_query_request(self, request_context: RequestContext, params: QueryCancelParams):
         """Handles a 'query/cancel' request"""
         try:
-            query = self.query_results[params.owner_uri]
+            if params.owner_uri in self.query_results:
+                query = self.query_results[params.owner_uri]
+            else:
+                request_context.send_response(QueryCancelResult('QueryServiceRequestsNoQuery'))  # TODO: Localize
+                return
 
             # Only cancel the query if we're in a cancellable state
             if query.execution_state is not ExecutionState.EXECUTED:
@@ -122,12 +125,11 @@ class QueryExecutionService(object):
             cur.execute("SELECT pg_cancel_backend (%s)", (backend_pid,))
         # This exception occurs when we run SELECT pg_cancel_backend on
         # a query that's currently executing
-        except psycopg2.extensions.QueryCanceledError:
-            pass
         except BaseException:
-            raise
-        finally:
             cancel_conn.rollback()
+            raise
+
+        cancel_conn.commit()
 
     def _execute_query_request_worker(self, request_context: RequestContext, params: ExecuteRequestParamsBase):
         """Worker method for 'handle execute query request' thread"""
@@ -193,8 +195,8 @@ class QueryExecutionService(object):
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
         except Exception as e:
-            self.handle_query_exception(e, query_string, params.owner_uri, batch,
-                                        request_context, conn)
+            self._resolve_query_exception(e, query_string, params.owner_uri, batch,
+                                          request_context, conn)
         finally:
             if cur is not None:
                 cur.close()
@@ -276,10 +278,10 @@ class QueryExecutionService(object):
         else:
             return 'Commands completed successfully'  # TODO: Localize
 
-    def handle_query_exception(self, e: Exception, query: str, owner_uri: str, batch: Batch,
-                               request_context: RequestContext, conn):
+    def _resolve_query_exception(self, e: Exception, query: str, owner_uri: str, batch: Batch,
+                                 request_context: RequestContext, conn):
         utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query}\n {e}')
-        if isinstance(e, psycopg2.DatabaseError) or isinstance(e, RuntimeError):
+        if isinstance(e, psycopg2.DatabaseError) or isinstance(e, RuntimeError) or isinstance(e, psycopg2.extensions.QueryCanceledError):
             error_message = str(e)
         else:
             error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
