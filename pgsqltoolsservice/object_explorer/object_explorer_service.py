@@ -9,12 +9,13 @@ import psycopg2
 import psycopg2.errorcodes
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
-from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.object_explorer.contracts import (
     CreateSessionParameters, CreateSessionResponse, CREATE_SESSION_REQUEST,
     CloseSessionParameters, CLOSE_SESSION_REQUEST,
     ExpandParameters, EXPAND_REQUEST,
-    ExpandCompletedNotificationParams, EXPAND_COMPLETED_METHOD)
+    SessionCreatedParameters, SESSION_CREATED_METHOD,
+    NodeInfo)
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import pgsqltoolsservice.utils as utils
 
 class ObjectExplorerService(object):
@@ -44,8 +45,27 @@ class ObjectExplorerService(object):
 
     # REQUEST HANDLERS #####################################################
 
-    def _handle_create_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:
-        request_context.send_response(CreateSessionResponse('1'))
+    def _handle_create_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:        
+        session_id = 'objectexplorer://1'
+
+        metadata = ObjectMetadata()
+        metadata.metadata_type = 0
+        metadata.metadata_type_name = 'Database'
+        metadata.name = 'testdb'
+        metadata.schema = None
+
+        node = NodeInfo()
+        node.label = 'testdb'
+        node.isLeaf = False
+        node.node_path = 'sqltools100/wideworldimporters'
+        node.node_type = 'Database'
+
+        response = SessionCreatedParameters()
+        response.session_id = session_id
+        response.root_node = node
+
+        request_context.send_response(CreateSessionResponse(session_id))
+        request_context.send_notification(SESSION_CREATED_METHOD, response)
 
 
     def _handle_close_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:

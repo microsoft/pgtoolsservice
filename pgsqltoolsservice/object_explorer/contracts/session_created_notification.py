@@ -6,13 +6,12 @@
 from typing import List
 from pgsqltoolsservice.object_explorer.contracts.node_info import NodeInfo
 
-class ExpandCompletedParameters:
-    """Parameters to be sent back with a expand completed"""
+class SessionCreatedParameters:
+    """Parameters to be sent back when an object explorer session is created"""
 
     def __init__(self):
-        self.error_message: str = None
+        self.success: bool = True
         self.session_id: str = None
-        self.nodes: List[NodeInfo] = None
-        self.node_path: str = None
+        self.root_node: NodeInfo = None
 
-EXPAND_COMPLETED_METHOD = 'objectexplorer/expandCompleted'
+SESSION_CREATED_METHOD = 'objectexplorer/sessioncreated'

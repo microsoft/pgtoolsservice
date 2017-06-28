@@ -5,7 +5,7 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType  # noqa
-from pgsqltoolsservice.object_explorer.contracts import ObjectMetadata
+from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.utils as utils
 
 class MetadataListParameters:

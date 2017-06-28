@@ -3,11 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.metadata.contracts.metadata_list_request import (
-    MetadataListParameters, MetadataListResponse, METADATA_LIST_REQUEST)
-from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+class ObjectMetadata(object):
+    """Database object metadata"""
 
-__all__ = [
-    'MetadataListParameters', 'MetadataListResponse', 'METADATA_LIST_REQUEST',
-    'ObjectMetadata'
-]
+    def __init__(self):
+        self.metadata_type: int = 0
+        self.metadata_type_name: str = None
+        self.schema: str = None
+        self.name: str = None
