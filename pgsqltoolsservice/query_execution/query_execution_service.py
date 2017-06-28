@@ -71,8 +71,10 @@ class QueryExecutionService(object):
         # Create a new query if one does not already exist or we already executed the previous one
         if params.owner_uri not in self.query_results or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED:
             self.query_results[params.owner_uri] = Query()
-        if self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTING:
+        elif self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTING:
             request_context.send_error('Another query currently executing.')  # TODO: Localize
+            return
+
         self.query_results[params.owner_uri].execution_state = ExecutionState.EXECUTING
 
         thread = threading.Thread(
