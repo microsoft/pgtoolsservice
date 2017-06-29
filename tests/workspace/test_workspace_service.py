@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
-from pgsqltoolsservice.workspace import WorkspaceService, PGSQLConfiguration, IntellisenseConfiguration     # noqa
+from pgsqltoolsservice.workspace import WorkspaceService, SQLConfiguration, IntellisenseConfiguration     # noqa
 from pgsqltoolsservice.workspace.workspace import Workspace, ScriptFile
 from pgsqltoolsservice.workspace.contracts import (
     DidChangeConfigurationParams,
@@ -33,7 +33,7 @@ class TestWorkspaceService(unittest.TestCase):
 
         # Then:
         # ... The service should have configuration and expose it via the property
-        self.assertIsInstance(ws._configuration, PGSQLConfiguration)
+        self.assertIsInstance(ws._configuration, SQLConfiguration)
         self.assertIs(ws.configuration, ws._configuration)
 
         # ... The service should have a workspace
@@ -111,7 +111,7 @@ class TestWorkspaceService(unittest.TestCase):
         nc: NotificationContext = utils.get_mock_notification_context()
         params: DidChangeConfigurationParams = DidChangeConfigurationParams.from_dict({
             'settings': {
-                'pgsql': {
+                'sql': {
                     'intellisense': {
                         'enable_intellisense': False
                     }
@@ -125,13 +125,13 @@ class TestWorkspaceService(unittest.TestCase):
         nc.send_notification.assert_not_called()
 
         # ... The config should have been updated
-        self.assertIs(ws.configuration, params.settings.pgsql)
+        self.assertIs(ws.configuration, params.settings.sql)
         # ... And default values that weren't specified in the notification are preserved
         self.assertTrue(ws.configuration.intellisense.enable_suggestions)
 
         # ... The mock config change callbacks should have been called
         for callback in ws._config_change_callbacks:
-            callback.assert_called_once_with(params.settings.pgsql)
+            callback.assert_called_once_with(params.settings.sql)
 
     def test_handle_text_notification_none(self):
         # Setup:

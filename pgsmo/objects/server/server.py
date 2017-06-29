@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple                # noqa
 
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.tablespace.tablespace import Tablespace
+from pgsmo.objects.role.role import Role
 import pgsmo.utils as utils
 
 
@@ -35,6 +36,7 @@ class Server:
 
         # Declare the child objects
         self._databases: Optional[List[Database]] = None
+        self._roles: Optional[List[Role]] = None
         self._tablespaces: Optional[List[Tablespace]] = None
 
         # Fetch the data for the server
@@ -73,6 +75,7 @@ class Server:
         """Tuple representing the server version: (major, minor, patch)"""
         return self._conn.version
 
+    @property
     def wal_paused(self) -> bool:
         """Whether or not the Write-Ahead Log (WAL) is paused"""
         return self._wal_paused
@@ -82,6 +85,10 @@ class Server:
     def databases(self) -> Optional[List[Database]]:
         """Databases that belong to the server"""
         return self._databases
+
+    def roles(self) -> Optional[List[Role]]:
+        """Roles that belong to the server"""
+        return self._roles
 
     @property
     def tablespaces(self) -> Optional[List[Tablespace]]:
@@ -93,13 +100,16 @@ class Server:
         """Refreshes properties of the server and initializes the child items"""
         self._fetch_recovery_state()
         self._fetch_databases()
+        self._fetch_roles()
         self._fetch_tablespaces()
 
     # IMPLEMENTATION DETAILS ###############################################
-
     def _fetch_databases(self) -> None:
         self._databases = Database.get_databases_for_server(self._conn)
 
+    def _fetch_roles(self) -> None:
+        self._roles = Role.get_roles_for_server(self._conn)
+    
     def _fetch_tablespaces(self) -> None:
         self._tablespaces = Tablespace.get_tablespaces_for_server(self._conn)
 
