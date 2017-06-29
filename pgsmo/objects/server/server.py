@@ -6,6 +6,7 @@
 from typing import List, Optional, Tuple                # noqa
 
 from pgsmo.objects.database.database import Database
+from pgsmo.objects.role.role import Role
 import pgsmo.utils as utils
 
 
@@ -29,7 +30,8 @@ class Server:
         self._maintenance_db: str = props['dbname']
 
         # These properties will be defined later
-        self._databases: List[Database] = []
+        self._databases: Optional[List[Database]] = None
+        self._roles: Optional[List[Role]] = None
         self._in_recovery: Optional[bool] = None
         self._wal_paused: Optional[bool] = None
 
@@ -43,11 +45,6 @@ class Server:
     def connection(self):
         """Connection to the server/db that this object will use"""
         return self._conn
-
-    @property
-    def databases(self) -> List[Database]:
-        """Databases that belong to the server"""
-        return self._databases
 
     @property
     def host(self) -> str:
@@ -74,20 +71,35 @@ class Server:
         """Tuple representing the server version: (major, minor, patch)"""
         return self._conn.version
 
+    @property
     def wal_paused(self) -> bool:
         """Whether or not the Write-Ahead Log (WAL) is paused"""
         return self._wal_paused
+
+    # -CHILD OBJECTS #######################################################
+    @property
+    def databases(self) -> Optional[List[Database]]:
+        """Databases that belong to the server"""
+        return self._databases
+
+    @property
+    def roles(self) -> Optional[List[Role]]:
+        """Roles that belong to the server"""
+        return self._roles
 
     # METHODS ##############################################################
     def refresh(self) -> None:
         """Refreshes properties of the server and initializes the child items"""
         self._fetch_recovery_state()
         self._fetch_databases()
+        self._fetch_roles()
 
     # IMPLEMENTATION DETAILS ###############################################
-
     def _fetch_databases(self) -> None:
         self._databases = Database.get_databases_for_server(self._conn)
+
+    def _fetch_roles(self) -> None:
+        self._roles = Role.get_roles_for_server(self._conn)
 
     def _fetch_recovery_state(self) -> None:
         recovery_check_sql = utils.templating.render_template(
