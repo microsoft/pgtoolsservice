@@ -17,7 +17,8 @@ from pgsqltoolsservice.query_execution.contracts import (
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
     QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams,
     BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams,
-    BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams
+    BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams,
+    DISPOSE_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
     ResultMessage, SubsetResult, ResultSetSubset, QueryCancelResult
@@ -60,6 +61,9 @@ class QueryExecutionService(object):
             CANCEL_REQUEST, self._handle_cancel_query_request
         )
 
+        self._service_provider.server.set_request_handler(
+            DISPOSE_REQUEST, self._handle_dispose_request
+        )
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Query execution service successfully initialized')
 
