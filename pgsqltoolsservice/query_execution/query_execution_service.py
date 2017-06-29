@@ -129,10 +129,7 @@ class QueryExecutionService(object):
         # This exception occurs when we run SELECT pg_cancel_backend on
         # a query that's currently executing
         except BaseException:
-            cancel_conn.rollback()
             raise
-
-        cancel_conn.commit()
 
     def _execute_query_request_worker(self, request_context: RequestContext, params: ExecuteRequestParamsBase):
         """Worker method for 'handle execute query request' thread"""
@@ -189,7 +186,6 @@ class QueryExecutionService(object):
                 request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
 
             query.execution_state = ExecutionState.EXECUTED
-            conn.commit()
             query_complete_params = QueryCompleteParams([summary], params.owner_uri)
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
@@ -307,9 +303,11 @@ class QueryExecutionService(object):
         query_complete_params = QueryCompleteParams([summary], owner_uri)
         request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
-        # Roll back the transaction if the connection is still open
-        if not conn.closed:
-            conn.rollback()
+        # If there was a failure in the middle of a transaction, roll it back.
+        # Note that conn.rollback() won't work since the connection is in autocommit mode
+        if conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR:
+            query = Query(owner_uri, 'ROLLBACK')
+            query.execute(conn)
 
 
 def get_batch_strings(query_string: str) -> List[str]:

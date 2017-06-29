@@ -69,9 +69,3 @@ class Query:
         finally:
             self.executed = True
             self.notices = connection.notices
-            # Roll back the query if there was an error or the query was canceled, otherwise commit it
-            if self.is_canceled or has_error:
-                connection.rollback()
-            else:
-                connection.commit()
-

@@ -171,8 +171,6 @@ class TestQueryService(unittest.TestCase):
         self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then the transaction gets rolled back, the cursor gets closed, and an error notification gets sent
-        self.connection.rollback.assert_called_once()
-        self.connection.commit.assert_not_called()
         self.cursor.close.assert_called_once()
         self.request_context.send_notification.assert_called()
 
@@ -403,8 +401,6 @@ class TestQueryService(unittest.TestCase):
         # we should have rolled back. During execute_query call,
         self.assertTrue(query.is_canceled)
         self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
-        self.connection.commit.assert_not_called()
-        self.connection.rollback.assert_called_once()
 
     def test_cancel_query_before_query_execution(self):
         """
@@ -445,8 +441,6 @@ class TestQueryService(unittest.TestCase):
         # The batch should be marked as canceled, the state should be executed, and we should have rolled back
         self.assertTrue(query.is_canceled)
         self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
-        self.connection.commit.assert_not_called()
-        self.connection.rollback.assert_called_once()
 
     def test_cancel_query_after_query_execution(self):
         """
@@ -487,8 +481,6 @@ class TestQueryService(unittest.TestCase):
         # And the query should be in a canceled and executed stated. The connection should have committed as well
         self.assertTrue(query.is_canceled)
         self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
-        self.connection.commit.assert_called_once()
-        self.connection.rollback.assert_not_called()
 
     def test_query_execution(self):
         """Test that query execution sends the proper response/notices to the client"""

@@ -74,10 +74,9 @@ class MockConnection(object):
         self.dsn_parameters = dsn_parameters
         self.server_version = '9.6.2'
         self.cursor = mock.Mock(return_value=cursor)
-        self.commit = mock.Mock()
-        self.rollback = mock.Mock()
         self.get_backend_pid = mock.Mock(return_value=0)
         self.notices = []
+        self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
     @property
     def closed(self):
