@@ -54,6 +54,7 @@ class MockRequestContext(RequestContext):
         self.send_response = mock.Mock(side_effect=self.send_response_impl)
         self.send_notification = mock.Mock(side_effect=self.send_notification_impl)
         self.send_error = mock.Mock(side_effect=self.send_error_impl)
+        self.send_default_error_response = mock.Mock()
 
     def send_response_impl(self, params):
         self.last_response_params = params

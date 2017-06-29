@@ -16,18 +16,20 @@ from pgsqltoolsservice.query_execution.contracts import (
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
     QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams,
-    BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams
+    BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams,
+    BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
-    BatchEventParams, ResultMessage,
-    QueryCompleteParams, SubsetResult, ResultSetSubset,
-    QueryCancelResult
+    ResultMessage, SubsetResult, ResultSetSubset, QueryCancelResult
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 import pgsqltoolsservice.utils as utils
+
+CANCELATION_QUERY = 'SELECT pg_cancel_backend (%s)'
+NO_QUERY_MESSAGE = 'QueryServiceRequestsNoQuery'
 
 
 class QueryExecutionService(object):
@@ -98,7 +100,7 @@ class QueryExecutionService(object):
             if params.owner_uri in self.query_results:
                 query = self.query_results[params.owner_uri]
             else:
-                request_context.send_response(QueryCancelResult('QueryServiceRequestsNoQuery'))  # TODO: Localize
+                request_context.send_response(QueryCancelResult(NO_QUERY_MESSAGE))  # TODO: Localize
                 return
 
             # Only cancel the query if we're in a cancellable state
@@ -114,7 +116,22 @@ class QueryExecutionService(object):
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(str(e))
-            request_context.send_error('Unhandled exception: {}'.format(str(e)))  # TODO: Localize
+            request_context.send_unhandled_error_response(e)
+
+    def _handle_dispose_request(self, request_context: RequestContext, params: QueryDisposeParams):
+        try:
+            if params.owner_uri not in self.query_results:
+                request_context.send_error(NO_QUERY_MESSAGE)  # TODO: Localize
+                return
+            # Make sure to cancel the query first if it's not executed.
+            # If it's not started, then make sure it never starts. If it's executing, make sure
+            # that we stop it
+            if self.query_results[params.owner_uri].execution_state is not ExecutionState.EXECUTED:
+                self.cancel_query(params.owner_uri)
+            del self.query_results[params.owner_uri]
+            request_context.send_response({})
+        except Exception as e:
+            request_context.send_default_error_response(e)
 
     def cancel_query(self, owner_uri: str):
         conn = self.get_connection(owner_uri, ConnectionType.QUERY)
@@ -124,7 +141,7 @@ class QueryExecutionService(object):
         backend_pid = conn.get_backend_pid()
         cur = cancel_conn.cursor()
         try:
-            cur.execute("SELECT pg_cancel_backend (%s)", (backend_pid,))
+            cur.execute(CANCELATION_QUERY, (backend_pid,))
         # This exception occurs when we run SELECT pg_cancel_backend on
         # a query that's currently executing
         except BaseException:
@@ -155,7 +172,7 @@ class QueryExecutionService(object):
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(
                     'Encountered exception while handling query request')  # TODO: Localize
-            request_context.send_error('Unhandled exception: {}'.format(str(e)))  # TODO: Localize
+            request_context.send_unhandled_error_response(e)  # TODO: Localize
             return
 
         try:
@@ -166,7 +183,7 @@ class QueryExecutionService(object):
                 # send query/batchStart response
                 if query.is_canceled:
                     raise RuntimeError("Query canceled by user.")  # TODO: Localize
-                batch_event_params = BatchEventParams(batch.build_batch_summary(), params.owner_uri)
+                batch_event_params = BatchNotificationParams(batch.build_batch_summary(), params.owner_uri)
                 request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
                 results = self.execute_query(batch_strings.pop(0), cur, batch, params.owner_uri, request_context)
@@ -188,12 +205,12 @@ class QueryExecutionService(object):
                 request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
                 # send query/batchComplete and query/complete response
-                batch_event_params = BatchEventParams(summary, params.owner_uri)
+                batch_event_params = BatchNotificationParams(summary, params.owner_uri)
                 request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
 
             query.execution_state = ExecutionState.EXECUTED
             conn.commit()
-            query_complete_params = QueryCompleteParams([summary], params.owner_uri)
+            query_complete_params = QueryCompleteNotificationParams(params.owner_uri, [summary])
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
         except Exception as e:
@@ -303,11 +320,11 @@ class QueryExecutionService(object):
             summary = batch.build_batch_summary()
             self.query_results[owner_uri].execution_state = ExecutionState.EXECUTED
 
-        batch_event_params = BatchEventParams(summary, owner_uri)
+        batch_event_params = BatchNotificationParams(summary, owner_uri)
         request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
 
         # Send a query complete notification
-        query_complete_params = QueryCompleteParams([summary], owner_uri)
+        query_complete_params = QueryCompleteNotificationParams(owner_uri, [summary])
         request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
         # Roll back the transaction if the connection is still open
