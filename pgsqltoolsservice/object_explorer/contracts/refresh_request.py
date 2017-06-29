@@ -4,16 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.object_explorer.contracts.expand_request import ExpandParameters
 
-class ExpandParameters:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
-
-    def __init__(self):
-        self.session_id: str = None
-        self.node_path: str = None      
-
-EXPAND_REQUEST = IncomingMessageConfiguration('objectexplorer/expand', ExpandParameters)
-
+REFRESH_REQUEST = IncomingMessageConfiguration('objectexplorer/refresh', ExpandParameters)

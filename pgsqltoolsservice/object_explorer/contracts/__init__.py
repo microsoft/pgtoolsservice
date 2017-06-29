@@ -11,6 +11,7 @@ from pgsqltoolsservice.object_explorer.contracts.expand_request import (ExpandPa
 from pgsqltoolsservice.object_explorer.contracts.expand_completed_notification import (
     ExpandCompletedParameters, EXPAND_COMPLETED_METHOD)
 from pgsqltoolsservice.object_explorer.contracts.node_info import NodeInfo
+from pgsqltoolsservice.object_explorer.contracts.refresh_request import REFRESH_REQUEST
 
 __all__ = [
     'CreateSessionParameters', 'CREATE_SESSION_REQUEST',
@@ -18,5 +19,5 @@ __all__ = [
     'CloseSessionParameters', 'CLOSE_SESSION_REQUEST',
     'ExpandParameters', 'EXPAND_REQUEST',
     'ExpandCompletedParameters', 'EXPAND_COMPLETED_METHOD',
-    'NodeInfo'
+    'REFRESH_REQUEST', 'NodeInfo'
 ]

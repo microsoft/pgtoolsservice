@@ -18,7 +18,7 @@ from pgsqltoolsservice.object_explorer.contracts import (
     ExpandParameters, EXPAND_REQUEST,
     ExpandCompletedParameters, EXPAND_COMPLETED_METHOD,
     SessionCreatedParameters, SESSION_CREATED_METHOD,
-    NodeInfo)
+    REFRESH_REQUEST, NodeInfo)
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import pgsqltoolsservice.utils as utils
 from pgsmo.objects.server.server import Server
@@ -49,6 +49,10 @@ class ObjectExplorerService(object):
 
         self._service_provider.server.set_request_handler(
             EXPAND_REQUEST, self._handle_expand_request
+        )
+
+        self._service_provider.server.set_request_handler(
+            REFRESH_REQUEST, self._handle_refresh_request
         )
 
         if self._service_provider.logger is not None:
@@ -86,6 +90,10 @@ class ObjectExplorerService(object):
 
     def _handle_close_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:
         request_context.send_response(True)
+
+        
+    def _handle_refresh_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
+        connection_details = self._session_map[params.session_id]
 
 
     def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
@@ -161,16 +169,15 @@ class ObjectExplorerService(object):
 
     def _get_view_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
         database = self._get_database(session_id)
-
-        metadata = ObjectMetadata()
-        metadata.metadata_type = 0
-        metadata.metadata_type_name = 'View'
-        metadata.name = 'spt_values'
-        metadata.schema = 'dbo'
-
         node_list: List[NodeInfo] = []
         for cur_schema in database.schemas:
             for cur_view in cur_schema.views:
+                metadata = ObjectMetadata()
+                metadata.metadata_type = 0
+                metadata.metadata_type_name = 'View'
+                metadata.name = cur_view.name
+                metadata.schema = cur_schema.name
+            
                 cur_node = NodeInfo()
                 cur_node.label = cur_schema.name + '.' + cur_view.name
                 cur_node.isLeaf = True
@@ -183,16 +190,15 @@ class ObjectExplorerService(object):
 
     def _get_table_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
         database = self._get_database(session_id)
-
-        metadata = ObjectMetadata()
-        metadata.metadata_type = 0
-        metadata.metadata_type_name = 'View'
-        metadata.name = 'spt_values'
-        metadata.schema = 'dbo'
-
         node_list: List[NodeInfo] = []
         for cur_schema in database.schemas:
             for cur_table in cur_schema.tables:
+                metadata = ObjectMetadata()
+                metadata.metadata_type = 0
+                metadata.metadata_type_name = 'Table'
+                metadata.name = cur_table.name
+                metadata.schema = cur_schema.name
+
                 cur_node = NodeInfo()
                 cur_node.label = cur_schema.name + '.' + cur_table.name
                 cur_node.isLeaf = True
