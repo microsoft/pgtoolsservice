@@ -15,14 +15,15 @@ from pgsqltoolsservice.query_execution.result_set import ResultSet  # noqa
 
 class Batch(object):
 
-    def __init__(self, ordinal_id: int, selection: SelectionData, has_error: bool):
+    def __init__(self, ordinal_id: int=None, selection: SelectionData=None,
+                 has_error: bool=False):
         self.id = ordinal_id
         self.selection = selection
         self.start_time: datetime = datetime.now()
         self.has_error = has_error
-        self.has_executed = False
         self.result_sets: List[ResultSet] = []
         self.end_time: datetime = None
+        self.has_executed = False
 
     def build_batch_summary(self) -> BatchSummary:
         """returns a summary of current batch status"""
