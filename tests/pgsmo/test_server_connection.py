@@ -19,12 +19,11 @@ class TestServerConnection(unittest.TestCase):
         server_conn = pgsmo_utils.querying.ServerConnection(mock_conn)
 
         # Then: The properties should be properly set
-        self.assertEqual(mock_conn, server_conn._conn, server_conn.connection)
-        self.assertDictEqual(
-            {'dbname': 'postgres', 'host': 'localhost'},
-            server_conn._dsn_parameters,
-            server_conn.dsn_parameters
-         )
+        self.assertEqual(server_conn._conn, mock_conn)
+        self.assertEqual(server_conn.connection, mock_conn)
+        expected_dict = {'dbname': 'postgres', 'host': 'localhost'}
+        self.assertDictEqual(server_conn._dsn_parameters, expected_dict)
+        self.assertDictEqual(server_conn.dsn_parameters, expected_dict)
         self.assertEqual('pg', server_conn.server_type)
         self.assertTupleEqual((10, 2, 16), server_conn.version)
 
