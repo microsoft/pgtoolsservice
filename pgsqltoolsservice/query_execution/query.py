@@ -24,9 +24,10 @@ class Query:
         self.execution_state: ExecutionState = ExecutionState.NOT_STARTED
         self.is_canceled = False
         self.owner_uri: str = owner_uri
-        self.notices: List[str] = []
         self.batches: List[Batch] = []
         self.request_context: Optional[RequestContext] = request_context
+        self.query_text = query_text
+        self.current_batch_index = 0
 
         # Initialize the batches
         for batch_text in sqlparse.split(query_text):
@@ -45,23 +46,25 @@ class Query:
         :param batch_start_callback: A function to run before executing each batch
         :param batch_end_callback: A function to run after executing each batch
         :raises RuntimeError: If the query was already executed
-        :raises psycopg2.DatabaseError: If there was an error while running the query
+        :raises QueryExecutionError: If there was an error while running the query
         """
         if self.execution_state is ExecutionState.EXECUTED:
             raise RuntimeError('Cannot execute a query multiple times')
 
         # Run each batch sequentially
         try:
-            for batch in self.batches:
+            for batch_index, batch in enumerate(self.batches):
+                self.current_batch_index = batch_index
                 if self.is_canceled:
                     break
                 if batch_start_callback is not None:
                     batch_start_callback(self, batch)
                 try:
-                    batch.execute(connection.cursor())
+                    cursor = connection.cursor()
+                    batch.execute(cursor)
                 finally:
+                    cursor.close()
                     if batch_end_callback is not None:
                         batch_end_callback(self, batch)
         finally:
             self.execution_state = ExecutionState.EXECUTED
-            self.notices = connection.notices

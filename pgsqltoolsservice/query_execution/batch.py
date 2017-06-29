@@ -28,6 +28,8 @@ class Batch(object):
         self.result_set: ResultSet = None
         self.end_time: datetime = None
         self.request_context: Optional[RequestContext] = None
+        self.row_count: int = -1  # Use -1 as the default since that's what psycopg2 uses
+        self.notices: List[str] = []
 
     def build_batch_summary(self) -> BatchSummary:
         """returns a summary of current batch status"""
@@ -37,7 +39,7 @@ class Batch(object):
             # TODO handle multiple result set summaries later
             elapsed_time = get_elapsed_time_str(self.start_time, self.end_time)
             summary.execution_elapsed = elapsed_time
-            summary.result_set_summaries: List[ResultSetSummary] = self.result_set_summaries
+            summary.result_set_summaries: List[ResultSetSummary] = [self.result_set.result_set_summary] if self.result_set is not None else []
             summary.execution_end = get_time_str(self.end_time)
             summary.special_action = None
         return summary
@@ -56,12 +58,10 @@ class Batch(object):
         finally:
             self.has_executed = True
             self.end_time = datetime.now()
+            self.notices = cursor.connection.notices
+            cursor.connection.notices = []
 
         if cursor.description is not None:
+            self.row_count = cursor.rowcount
             results = cursor.fetchall()
             self.result_set = ResultSet(0, self.id, cursor.description, cursor.rowcount, results)
-
-    @property
-    def result_set_summaries(self) -> List[ResultSetSummary]:
-        """Gets the batch's result set as a summary contract list"""
-        return [self.result_set.result_set_summary] if self.result_set is not None else []

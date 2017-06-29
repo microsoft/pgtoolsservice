@@ -23,7 +23,7 @@ We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008)
 1. Run `pip3 install -r requirements.txt` if you haven't already
 2. `nosetests` (from the project's base directory)
     - To run with coverage:
-        1. `nosetests --with-coverage --cover-package=pgsqltoolsservice --cover-html`
+        1. `nosetests --with-coverage --cover-package=pgsqltoolsservice,pgsmo --cover-html`
         2. `open cover/index.html` (to view coverage results)
 
 ## Manual Testing

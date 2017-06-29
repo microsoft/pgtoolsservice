@@ -84,7 +84,7 @@ class ConnectionService:
         """
         Get a psycopg2 connection for the given owner URI and connection type
 
-        :raises RuntimeError: If there is no connection associated with the provided URI
+        :raises ValueError: If there is no connection associated with the provided URI
         """
         if owner_uri not in self.owner_to_connection_map:
             raise ValueError('No connection associated with given owner URI')
