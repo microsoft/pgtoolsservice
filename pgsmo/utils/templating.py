@@ -12,7 +12,7 @@ from psycopg2.extensions import adapt
 
 TEMPLATE_ENVIRONMENTS: Dict[str, Environment] = {}
 TEMPLATE_FOLDER_REGEX = re.compile('(\d+)\.(\d+)(?:_(\w+))?')
-TEMPLATE_NON_DISCOVERED_NAMES: List[str] = ['macros']
+TEMPLATE_SKIPPED_FOLDERS: List[str] = ['macros']
 
 
 def get_template_root(file_path: str, template_directory: str) -> str:
@@ -29,7 +29,7 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     """
     # Step 1) Get the list of folders in the template folder that contains the
     # Step 1.1) Get the list of folders in the template root folder
-    all_folders: List[str] = [x[0] for x in os.walk(template_root)]
+    all_folders: List[str] = [os.path.normpath(x[0]) for x in os.walk(template_root)]
 
     # Step 1.2) Filter out the folders that don't contain the target template
     containing_folders: List[str] = [x for x in all_folders if template_name in next(os.walk(x))[2]]
@@ -40,16 +40,17 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     # Step 2) Iterate over the list of directories and check if the server version fits the bill
     for folder in containing_folders:
         # Skip over non-included folders
-        if os.path.dirname(folder) in TEMPLATE_NON_DISCOVERED_NAMES:
+        if os.path.basename(folder) in TEMPLATE_SKIPPED_FOLDERS:
             continue
 
         # If we are at the default, we are at the end of the list, so it is the only valid match
-        if folder.endswith('/+default'):
+        if folder.endswith(os.sep + '+default'):
             return os.path.join(folder, template_name)
 
         # Process the folder name with the regex
         match = TEMPLATE_FOLDER_REGEX.search(folder)
         if not match:
+            # This indicates a serious bug that shouldn't occur in production code, so this needn't be localized.
             raise ValueError(f'Templates folder {template_root} contains improperly formatted folder name {folder}')
         captures = match.groups()
         major = int(captures[0])
@@ -67,6 +68,7 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
         # TODO: Modifier is minus
 
     # If we make it to here, the template doesn't exist.
+    # This indicates a serious bug that shouldn't occur in production code, so this doesn't need to be localized.
     raise ValueError(f'Template folder {template_root} does not contain {template_name}')
 
 
@@ -75,6 +77,7 @@ def render_template(template_path: str, **context) -> str:
     Renders a template from the template folder with the given context.
     :param template_path: the path to the template to be rendered
     :param context: the variables that should be available in the context of the template.
+    :return: The template rendered with the provided context
     """
     path, filename = os.path.split(template_path)
     if path not in TEMPLATE_ENVIRONMENTS:
@@ -89,9 +92,9 @@ def render_template(template_path: str, **context) -> str:
         new_env.filters['qtIdent'] = qtIdent
         new_env.filters['qtTypeIdent'] = qtTypeIdent
 
-        TEMPLATE_ENVIRONMENTS[template_path] = new_env
+        TEMPLATE_ENVIRONMENTS[path] = new_env
 
-    env = TEMPLATE_ENVIRONMENTS[template_path]
+    env = TEMPLATE_ENVIRONMENTS[path]
     return env.get_template(filename).render(context)
 
 
@@ -101,6 +104,7 @@ def render_template_string(source, **context):
     autoescaped.
     :param source: the source code of the template to be rendered
     :param context: the variables that should be available in the context of the template.
+    :return: The template rendered with the provided context
     """
     template = Template(source)
     return template.render(context)
