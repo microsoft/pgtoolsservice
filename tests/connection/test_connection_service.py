@@ -582,7 +582,7 @@ class TestConnectionCancellation(unittest.TestCase):
         # Then the connection should have been canceled and returned none
         self.assertIsNone(response)
 
-        # And the recorded cancellation tokens should show that the first request was cancelled
+        # And the recorded cancellation tokens should show that the first request was canceled
         self.assertEqual(len(self.token_store), 2)
         self.assertTrue(self.token_store[0].canceled)
         self.assertFalse(self.token_store[1].canceled)
