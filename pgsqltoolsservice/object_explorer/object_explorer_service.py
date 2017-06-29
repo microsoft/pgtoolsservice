@@ -32,6 +32,7 @@ class ObjectExplorerService(object):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
+        self._session_map: dict = dict()
 
 
     def register(self, service_provider: ServiceProvider):
@@ -56,14 +57,12 @@ class ObjectExplorerService(object):
     # REQUEST HANDLERS #####################################################
 
     def _handle_create_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:        
+        # generate a session id and create a dedicated oe connection
         session_id = self._generate_uri(params)
-        
-        self._create_oe_connection(params, session_id)
+        connection_details = self._create_oe_connection(params, session_id)
+        self._session_map[session_id] = connection_details
 
         dbname = params.options['dbname']
-        self.cur_dbname = dbname
-        #root_path = params.options['host'] + '/' + params.options['dbname']
-
         metadata = ObjectMetadata()
         metadata.metadata_type = 0
         metadata.metadata_type_name = 'Database'
@@ -73,7 +72,7 @@ class ObjectExplorerService(object):
         node = NodeInfo()
         node.label = dbname
         node.isLeaf = False
-        node.node_path = 'sqltools100/wideworldimporters'
+        node.node_path = self._get_root_path(connection_details)
         node.node_type = 'Database'
         node.metadata = metadata
 
@@ -85,7 +84,35 @@ class ObjectExplorerService(object):
         request_context.send_notification(SESSION_CREATED_METHOD, response)
 
 
-    def _create_oe_connection(self, params: CreateSessionParameters, session_id: str) -> None:
+    def _handle_close_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:
+        request_context.send_response(True)
+
+
+    def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
+        connection_details = self._session_map[params.session_id]
+        root_path = self._get_root_path(connection_details)
+        nodes: List[NodeInfo] = None
+        if params.node_path == root_path + '/Views':
+            nodes = self._get_view_nodes(params.session_id, root_path)
+        elif params.node_path == root_path + '/Tables':
+            nodes = self._get_table_nodes(params.session_id, root_path)
+        else:
+            nodes = self._get_folder_nodes(root_path)        
+
+        response = ExpandCompletedParameters()        
+        response.session_id = params.session_id
+        response.node_path = params.node_path 
+        response.nodes = nodes
+
+        request_context.send_response(True)
+        request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
+
+
+    def _get_root_path(self, connection_details: ConnectionDetails) -> str:
+        return connection_details.server_name[0] + '/' + connection_details.database_name[0]
+
+
+    def _create_oe_connection(self, params: CreateSessionParameters, session_id: str) -> ConnectionDetails:
         details = ConnectionDetails.from_data(params.options['host'], params.options['dbname'], 
             params.options['user'], params.options)
         connect_request = ConnectRequestParams(details, session_id)
@@ -96,28 +123,8 @@ class ObjectExplorerService(object):
             raise LookupError('Connection service could not be found')  # TODO: Localize
         
         connection_service._connect(connect_request)
+        return details
 
-
-    def _handle_close_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:
-        request_context.send_response(True)
-
-
-    def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
-        nodes: List[NodeInfo] = None
-        if params.node_path == 'sqltools100/wideworldimporters/Views':
-            nodes = self._get_view_nodes(params.session_id)
-        elif params.node_path == 'sqltools100/wideworldimporters/Tables':
-            nodes = self._get_table_nodes(params.session_id)
-        else:
-            nodes = self._get_folder_nodes()        
-
-        response = ExpandCompletedParameters()        
-        response.session_id = params.session_id
-        response.node_path = params.node_path 
-        response.nodes = nodes
-
-        request_context.send_response(True)
-        request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
 
     def _get_database(self, session_id: str) -> Database:
         # Retrieve the connection service
@@ -126,31 +133,33 @@ class ObjectExplorerService(object):
             raise LookupError('Connection service could not be found')  # TODO: Localize
         conn = connection_service.get_connection(session_id, ConnectionType.DEFAULT)
 
+        connection_details = self._session_map[session_id]
+        dbname = connection_details.database_name[0]
         server = Server(conn)
         database = None
         for cur_db in server.databases:
-            if cur_db.name == self.cur_dbname:
+            if cur_db.name == dbname:
                 database = cur_db
 
         return database
 
 
-    def _get_folder_nodes(self) -> List[NodeInfo]:        
+    def _get_folder_nodes(self, root_path: str) -> List[NodeInfo]:        
         table_node = NodeInfo()
         table_node.label = 'Tables'
         table_node.isLeaf = False
-        table_node.node_path = 'sqltools100/wideworldimporters/Tables'
+        table_node.node_path = root_path + '/Tables'
         table_node.node_type = 'Folder'
 
         view_node = NodeInfo()
         view_node.label = 'Views'
         view_node.isLeaf = False
-        view_node.node_path = 'sqltools100/wideworldimporters/Views'
+        view_node.node_path = root_path + '/Views'
         view_node.node_type = 'Folder'
         return [ table_node, view_node ]
 
 
-    def _get_view_nodes(self, session_id: str) -> List[NodeInfo]:
+    def _get_view_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
         database = self._get_database(session_id)
 
         metadata = ObjectMetadata()
@@ -159,16 +168,20 @@ class ObjectExplorerService(object):
         metadata.name = 'spt_values'
         metadata.schema = 'dbo'
 
-        view_node = NodeInfo()
-        view_node.label = 'View Item 1'
-        view_node.isLeaf = True
-        view_node.node_path = 'sqltools100/wideworldimporters/Views/ViewItem1'
-        view_node.node_type = 'View'
-        view_node.metadata = metadata
-        return [ view_node ]
+        node_list: List[NodeInfo] = []
+        for cur_schema in database.schemas:
+            for cur_view in cur_schema.views:
+                cur_node = NodeInfo()
+                cur_node.label = cur_schema.name + '.' + cur_view.name
+                cur_node.isLeaf = True
+                cur_node.node_path = root_path + '/Views/' + cur_node.label
+                cur_node.node_type = 'View'
+                cur_node.metadata = metadata
+                node_list.append(cur_node)
+        return node_list
 
 
-    def _get_table_nodes(self, session_id: str) -> List[NodeInfo]:
+    def _get_table_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
         database = self._get_database(session_id)
 
         metadata = ObjectMetadata()
@@ -183,7 +196,7 @@ class ObjectExplorerService(object):
                 cur_node = NodeInfo()
                 cur_node.label = cur_schema.name + '.' + cur_table.name
                 cur_node.isLeaf = True
-                cur_node.node_path = 'sqltools100/wideworldimporters/Tables/' + cur_node.label
+                cur_node.node_path = root_path + '/Tables/' + cur_node.label
                 cur_node.node_type = 'Table'
                 cur_node.metadata = metadata
                 node_list.append(cur_node)
@@ -194,25 +207,6 @@ class ObjectExplorerService(object):
         uri = 'objectexplorer://' + quote(params.options['host'])
         if (params.options['dbname'] != None):
             uri +=  ';' + 'databaseName=' + params.options['dbname']
-
         if (params.options['user'] != None):   
             uri +=  ';' + 'user=' + params.options['user']
-
         return uri
-
-
-        #   internal static string GenerateUri(ConnectionDetails details)
-        # {
-        #     Validate.IsNotNull("details", details);
-        #     string uri = string.Format(CultureInfo.InvariantCulture, "{0}{1}", uriPrefix, Uri.EscapeUriString(details.ServerName));
-        #     uri = AppendIfExists(uri, "databaseName", details.DatabaseName);
-        #     uri = AppendIfExists(uri, "user", details.UserName);
-        #     return uri;
-        # }
-
-
-        #         ['host']:'10.128.18.175'
-        # ['dbname']:'TestDb'
-        # ['user']:'postgres'
-        # ['password']:'Katmai900'
-        # ['applicationName']:'carbon'
