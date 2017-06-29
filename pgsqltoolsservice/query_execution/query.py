@@ -62,10 +62,6 @@ class Query:
                 finally:
                     if batch_end_callback is not None:
                         batch_end_callback(self, batch)
-            has_error = False
-        except psycopg2.DatabaseError:
-            has_error = True
-            raise
         finally:
-            self.executed = True
+            self.execution_state = ExecutionState.EXECUTED
             self.notices = connection.notices
