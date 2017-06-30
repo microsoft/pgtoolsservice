@@ -7,35 +7,32 @@ import os.path as path
 from typing import List, Optional
 
 import pgsmo.objects.column.column as col
+import pgsmo.objects.node_object as node
 import pgsmo.utils as utils
 
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'view_templates')
 
 
 class View:
-    @staticmethod
-    def get_views_for_schema(conn: utils.querying.ConnectionWrapper, scid: int) -> List['View']:
+    @classmethod
+    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper, scid: int) -> List['View']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
-        sql = utils.templating.render_template(
-            utils.templating.get_template_path(type_template_root, 'nodes.sql', conn.version),
-            scid=scid
-        )
-
-        cols, rows = utils.querying.execute_dict(conn, sql)
-
-        return [View._from_node_query(conn, row['oid'], row['name'], **row) for row in rows]
+        return node.get_nodes(conn, type_template_root, cls._from_node_query, scid=scid)
 
     @classmethod
-    def _from_node_query(cls, conn, view_oid: int, view_name: str, fetch=True, **kwargs) -> 'View':
-        view = cls(view_name)
-
-        # Assign the optional properties
+    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'View':
+        """
+        Creates a view object from the results of a node query
+        :param conn: Connection used to execute the nodes query
+        :param kwargs: A row from the nodes query
+        Kwargs:
+            name str: Name of the view
+            oid int: Object ID of the view
+        :return: A view instance
+        """
+        view = cls(kwargs['name'])
         view._conn = conn
-        view._oid = view_oid
-
-        # Fetch the children if requested
-        if fetch:
-            view.refresh()
+        view._oid = kwargs['oid']
 
         return view
 

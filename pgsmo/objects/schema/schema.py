@@ -17,25 +17,28 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 class Schema:
     @classmethod
-    def get_schemas_for_database(cls, conn: utils.querying.ConnectionWrapper) -> List['Schema']:
+    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper) -> List['Schema']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
         return node.get_nodes(conn, type_template_root, cls._from_node_query)
 
     @classmethod
-    def _from_node_query(cls, conn, schema_oid, schema_name, **kwargs) -> 'Schema':
-        schema = cls(schema_name)
-
-        # Assign the mandatory properties
-        schema._oid = schema_oid
+    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'Schema':
+        """
+        Creates an instance of a schema object from the results of a nodes query
+        :param conn: The connection used to execute the nodes query
+        :param kwargs: A row from the nodes query
+        Kwargs:
+            name str: Name of the schema
+            oid int: Object ID of the schema
+            can_create bool: Whether or not the schema can be created by the current user
+            has_usage bool: Whether or not the schema can be used(?)
+        :return:
+        """
+        schema = cls(kwargs['name'])
         schema._conn = conn
-
-        # Assign the optional properties
-        schema._can_create = kwargs.get('can_create')
-        schema._has_usage = kwargs.get('has_usage')
-
-        # If fetch was requested, do complete refresh
-        if fetch:
-            schema.refresh()
+        schema._oid = kwargs['oid']
+        schema._can_create = kwargs['can_create']
+        schema._has_usage = kwargs['has_usage']
 
         return schema
 

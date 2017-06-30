@@ -18,7 +18,7 @@ class Database:
         return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query)
 
     @classmethod
-    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs):
+    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param conn: Connection used to generate the db info query
@@ -33,17 +33,13 @@ class Database:
         :return: Instance of the Database
         """
         db = cls(kwargs['name'])
-
-        # Assign the mandatory properties
-        db._did = kwargs['did']
         db._conn = conn
+        db._did = kwargs['did']
         db._is_connected = kwargs['name'] == conn.dsn_parameters.get('dbname')
-
-        # Assign the optional properties
-        db._tablespace = kwargs.get('spcname')
-        db._allow_conn = kwargs.get('datallowconn')
-        db._can_create = kwargs.get('cancreate')
-        db._owner_oid = kwargs.get('owner')
+        db._tablespace = kwargs['spcname']
+        db._allow_conn = kwargs['datallowconn']
+        db._can_create = kwargs['cancreate']
+        db._owner_oid = kwargs['owner']
 
         return db
 

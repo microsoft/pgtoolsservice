@@ -6,6 +6,7 @@
 from typing import List, Optional
 
 import pgsmo.objects.column.column as col
+import pgsmo.objects.node_object as node
 import pgsmo.utils as utils
 
 
@@ -13,28 +14,24 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
 class Table:
-    @staticmethod
-    def get_tables_for_schema(conn: utils.querying.ConnectionWrapper, schema_id: int) -> List['Table']:
-        sql = utils.templating.render_template(
-            utils.templating.get_template_path(TEMPLATE_ROOT, 'nodes.sql', conn.version),
-            scid=schema_id
-        )
-
-        cols, rows = utils.querying.execute_dict(conn, sql)
-
-        return [Table._from_node_query(conn, row['oid'], row['name'], **row) for row in rows]
+    @classmethod
+    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper, schema_id: int) -> List['Table']:
+        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, scid=schema_id)
 
     @classmethod
-    def _from_node_query(cls, conn, table_oid: int, table_name: str, fetch=True, **kwargs) -> 'Table':
-        table = cls(table_name)
-
-        # Assign the mandatory properties
-        table._oid = table_oid
+    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'Table':
+        """
+        Creates a table instance from the results of a node query
+        :param conn: The connection used to execute the node query
+        :param kwargs: A row from the node query
+        Kwargs:
+            oid int: Object ID of the table
+            name str: Name of the table
+        :return: A table instance
+        """
+        table = cls(kwargs['name'])
         table._conn = conn
-
-        # If fetch was requested, do complete refresh
-        if fetch:
-            table.refresh()
+        table._oid = kwargs['oid']
 
         return table
 
