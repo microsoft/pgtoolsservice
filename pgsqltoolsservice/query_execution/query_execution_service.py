@@ -96,9 +96,6 @@ class QueryExecutionService(object):
         thread.daemon = True
         thread.start()
 
-        # Send a response to indicate that the query was kicked off
-        request_context.send_response({})
-
     def _handle_subset_request(self, request_context: RequestContext, params: SubsetParams):
         """Sends a response back to the query/subset request"""
         result_set_subset = ResultSetSubset(self.query_results, params.owner_uri,
@@ -116,8 +113,11 @@ class QueryExecutionService(object):
                 return
 
             # Only cancel the query if we're in a cancellable state
-            if query.execution_state is not ExecutionState.EXECUTED:
-                query.is_canceled = True
+            if query.execution_state is ExecutionState.EXECUTED:
+                request_context.send_response(QueryCancelResult('Query already executed'))  # TODO: Localize
+                return
+
+            query.is_canceled = True
 
             # Only need to do additional work to cancel the query
             # if it's currently running
@@ -146,6 +146,8 @@ class QueryExecutionService(object):
 
     def _execute_query_request_worker(self, request_context: RequestContext, params: ExecuteRequestParamsBase, conn: 'psycopg2.connection'):
         """Worker method for 'handle execute query request' thread"""
+        # Send a response to indicate that the query was kicked off
+        request_context.send_response({})
 
         # Set up batch execution callback methods for sending notifications
         def _batch_execution_started_callback(query: Query, batch: Batch) -> None:

@@ -410,14 +410,14 @@ class TestQueryService(unittest.TestCase):
         execute_params = get_execute_string_params()
         cancel_params = get_execute_request_params()
 
-        real_execute_query = self.query_execution_service._execute_query_request_worker
-
-        # Create a side effect to attempt to cancel query before any batches start executing
-        def cancel_before_execute_side_effect(*args) -> List[tuple]:
+        # Create a side effect when responding to the query request to cancel the query
+        real_send_response = self.request_context.send_response
+        def cancel_before_execute_side_effect(*args):
+            real_send_response(*args)
+            self.request_context.send_response.side_effect = real_send_response
             self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
-            real_execute_query(*args)
 
-        self.query_execution_service._execute_query_request_worker = mock.Mock(side_effect=cancel_before_execute_side_effect)
+        self.request_context.send_response = mock.Mock(side_effect=cancel_before_execute_side_effect)
 
         # If we start the execute query request handler with a cancel query request before the query execution
         self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
@@ -445,31 +445,23 @@ class TestQueryService(unittest.TestCase):
         # Set up params
         execute_params = get_execute_string_params()
         cancel_params = get_execute_request_params()
-        real_execute_query = Query.execute
-
-        # Set up the side effect of query.execute to execute first and then handle the cancel query request afterwards
-        def cancel_after_execute_side_effect(self, *args):
-            real_execute_query(*args)
-            Query.execute.side_effect = real_execute_query
-            self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
-
-        # # Query.execute = mock.Mock(side_effect=cancel_after_execute_side_effect)
 
         # If we start the execute query request handler with the cancel query
         # request handled after the execute_query() and cursor.execute() calls
         self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
         self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+        self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
         query = self.query_execution_service.query_results['test_uri']
 
         # Then execute() in the execute query handler should have been called and
-        # the cancel cursor's execute() should have been called (but did nothing)
+        # the cancel cursor's execute() should not have been called
         self.cursor.execute.assert_called_once()
-        self.cursor_cancel.execute.assert_called_once()
+        self.cursor_cancel.execute.assert_not_called()
         self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
-        self.assertEqual(self.request_context.last_response_params.messages, None)
+        self.assertIsNotNone(self.request_context.last_response_params.messages)
 
-        # And the query should be in a canceled and executed stated. The connection should have committed as well
-        self.assertTrue(query.is_canceled)
+        # And the query should executed but not canceled.
+        self.assertFalse(query.is_canceled)
         self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
 
     def test_query_execution(self):
