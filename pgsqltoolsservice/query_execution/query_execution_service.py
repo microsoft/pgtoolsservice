@@ -220,7 +220,7 @@ class QueryExecutionService(object):
             # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
             return params.query
 
-    def _resolve_query_exception(self, e: Exception, query: Query, request_context: RequestContext, conn: 'psycopg2.connection'):
+    def _resolve_query_exception(self, e: Exception, query: Query, request_context: RequestContext, conn: 'psycopg2.connection', is_rollback_error=False):
         utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query.query_text}\n {e}')
         if isinstance(e, psycopg2.DatabaseError) or isinstance(e, RuntimeError) or isinstance(e, psycopg2.extensions.QueryCanceledError):
             error_message = str(e)
@@ -229,15 +229,23 @@ class QueryExecutionService(object):
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Unhandled exception while executing query')
 
+        # If the error occured during rollback, add a note about it
+        if is_rollback_error:
+            error_message = 'Error while rolling back open transaction due to previous failure: ' + error_message  # TODO: Localize
+
         # Send a message with the error to the client
         result_message_params = self.build_message_params(query.owner_uri, query.batches[query.current_batch_index].id, error_message, True)
         request_context.send_notification(MESSAGE_NOTIFICATION, result_message_params)
 
         # If there was a failure in the middle of a transaction, roll it back.
         # Note that conn.rollback() won't work since the connection is in autocommit mode
-        if conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR:
-            query = Query(query.owner_uri, 'ROLLBACK')
-            query.execute(conn)
+        if not is_rollback_error and conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR:
+            rollback_query = Query(query.owner_uri, 'ROLLBACK')
+            try:
+                rollback_query.execute(conn)
+            except Exception as rollback_exception:
+                # If the rollback failed, handle the error as usual but don't try to roll back again
+                self._resolve_query_exception(rollback_exception, rollback_query, request_context, conn, True)
 
 
 def _create_rows_affected_message(batch: Batch) -> str:

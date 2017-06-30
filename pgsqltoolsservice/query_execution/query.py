@@ -7,7 +7,6 @@ from typing import Callable, List, Optional  # noqa
 
 import sqlparse
 
-from pgsqltoolsservice.hosting import RequestContext
 from pgsqltoolsservice.query_execution.batch import Batch
 
 

@@ -8,7 +8,6 @@ from typing import List, Optional  # noqa
 
 import psycopg2
 
-from pgsqltoolsservice.hosting import RequestContext
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query_execution.contracts.common import (  # noqa
     SelectionData, BatchSummary, ResultSetSummary

@@ -527,15 +527,34 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(result_subset.rows[1][0].display_value, str(batch_rows[2][0]))
         self.assertEqual(result_subset.rows[1][1].display_value, str(batch_rows[2][1]))
 
+    def test_execution_error_rolls_back_transaction(self):
+        """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
+        # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
+        self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
+        self.connection.get_transaction_status.return_value = psycopg2.extensions.TRANSACTION_STATUS_INERROR
+        query_params = get_execute_string_params()
+        self.query_execution_service.query_results[query_params.owner_uri] = Query(query_params.owner_uri, query_params.query)
+
+        # If I execute a query that opens a transaction and then throws an error when executed
+        self.query_execution_service._execute_query_request_worker(self.request_context, query_params, self.connection)
+
+        # Then a rollback transaction should have been executed
+        self.cursor.execute.assert_has_calls([mock.call(query_params.query), mock.call('ROLLBACK')])
+
 
 class TestQueryAndBatchObjects(unittest.TestCase):
     """Unit tests for Query and Batch objects"""
+
     def setUp(self):
         """Set up the test by creating a query with multiple batches"""
         self.statement_list = statement_list = ['select version;', 'select * from t1;']
         self.statement_str = ''.join(statement_list)
         self.query_uri = 'test_uri'
         self.query = Query(self.query_uri, self.statement_str)
+
+        self.mock_query_results = object()
+        self.cursor = utils.MockCursor(self.mock_query_results)
+        self.connection = utils.MockConnection(cursor=self.cursor)
 
     def test_query_creates_batches(self):
         """Test that creating a query also creates batches for each statement in the query"""
@@ -545,7 +564,59 @@ class TestQueryAndBatchObjects(unittest.TestCase):
 
     def test_executing_query_executes_batches(self):
         """Test that executing a query also executes all of the query's batches in order"""
-        pass
+        # Set up the query execution callbacks
+        callback_before_batch = mock.Mock()
+        callback_after_batch = mock.Mock()
+
+        # If I call query.execute
+        self.query.execute(self.connection, callback_before_batch, callback_after_batch)
+
+        # Then each of the batches executed in order
+        expected_calls = [mock.call(statement) for statement in self.statement_list]
+        self.cursor.execute.assert_has_calls(expected_calls)
+        self.assertEqual(len(self.cursor.execute.mock_calls), 2)
+
+        # And each of the batches holds the expected results
+        for batch in self.query.batches:
+            self.assertIs(batch.result_set.rows, self.mock_query_results)
+
+        # And the callbacks were executed
+        expected_calls = [mock.call(self.query, batch) for batch in self.query.batches]
+        callback_before_batch.assert_has_calls(expected_calls)
+        self.assertEqual(len(callback_before_batch.mock_calls), 2)
+        callback_after_batch.assert_has_calls(expected_calls)
+        self.assertEqual(len(callback_after_batch.mock_calls), 2)
+
+        # And the query is marked as executed
+        self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
+
+    def test_batch_failure(self):
+        """Test that query execution handles a batch execution failure by stopping further execution"""
+        # Set up the query execution callbacks
+        callback_before_batch = mock.Mock()
+        callback_after_batch = mock.Mock()
+
+        # Set up the cursor to fail when executed
+        self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
+
+        # If I call query.execute then it raises the database error
+        with self.assertRaises(psycopg2.DatabaseError):
+            self.query.execute(self.connection, callback_before_batch, callback_after_batch)
+
+        # And only the first batch was executed
+        expected_calls = [mock.call(self.statement_list[0])]
+        self.cursor.execute.assert_has_calls(expected_calls)
+        self.assertEqual(len(self.cursor.execute.mock_calls), 1)
+
+        # And the callbacks were only executed once
+        expected_calls = [mock.call(self.query, self.query.batches[0])]
+        callback_before_batch.assert_has_calls(expected_calls)
+        self.assertEqual(len(callback_before_batch.mock_calls), 1)
+        callback_after_batch.assert_has_calls(expected_calls)
+        self.assertEqual(len(callback_after_batch.mock_calls), 1)
+
+        # And the query is marked as executed
+        self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
 
 
 def get_execute_string_params() -> ExecuteStringParams:
