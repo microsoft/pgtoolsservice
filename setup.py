@@ -2,7 +2,18 @@ from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need
 # fine tuning.
-buildOptions = dict(packages=[], excludes=[])
+include_files = [
+    './pgsmo/objects/column/templates', 
+    './pgsmo/objects/database/templates', 
+    './pgsmo/objects/role/templates', 
+    './pgsmo/objects/schema/templates', 
+    './pgsmo/objects/server/templates', 
+    './pgsmo/objects/table/templates', 
+    './pgsmo/objects/tablespace/templates', 
+    './pgsmo/objects/view/view_templates'
+]
+
+buildOptions = dict(packages=['asyncio'], excludes=[], include_files=include_files)
 
 base = 'Console'
 
