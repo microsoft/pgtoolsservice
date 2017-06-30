@@ -5,6 +5,7 @@
 
 from typing import List, Optional               # noqa
 
+import pgsmo.objects.node_object as node
 import pgsmo.objects.schema.schema as schema
 import pgsmo.utils as utils
 
@@ -12,49 +13,37 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
 class Database:
-    @staticmethod
-    def get_databases_for_server(conn: utils.querying.ConnectionWrapper, fetch: bool=True) -> List['Database']:
-        # Execute query to get list of databases
-        sql = utils.templating.render_template(
-            utils.templating.get_template_path(TEMPLATE_ROOT, 'nodes.sql', conn.version),
-            last_system_oid=0
-        )
-        cols, rows = utils.querying.execute_dict(conn, sql)
-
-        return [Database._from_node_query(conn, row['did'], row['name'], fetch, **row) for row in rows]
+    @classmethod
+    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper) -> List['Database']:
+        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query)
 
     @classmethod
-    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, db_did: int, db_name: str, fetch: bool=True,
-                         **kwargs):
+    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs):
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param conn: Connection used to generate the db info query
-        :param db_did: Object ID of the database
-        :param db_name: Name of the database
         :param kwargs: Optional parameters for the database. Values that can be provided:
         Kwargs:
+            did int: Object ID of the database
+            name str: Name of the database
             spcname str: Name of the tablespace for the database
             datallowconn bool: Whether or not the database can be connected to
             cancreate bool: Whether or not the database can be created by the current user
             owner int: Object ID of the user that owns the database
         :return: Instance of the Database
         """
-        db = cls(db_name)
+        db = cls(kwargs['name'])
 
         # Assign the mandatory properties
-        db._did = db_did
+        db._did = kwargs['did']
         db._conn = conn
-        db._is_connected = db_name == conn.dsn_parameters.get('dbname')
+        db._is_connected = kwargs['name'] == conn.dsn_parameters.get('dbname')
 
         # Assign the optional properties
         db._tablespace = kwargs.get('spcname')
         db._allow_conn = kwargs.get('datallowconn')
         db._can_create = kwargs.get('cancreate')
         db._owner_oid = kwargs.get('owner')
-
-        # If fetch was requested, do complete refresh
-        if fetch and db._is_connected:
-            db.refresh()
 
         return db
 

@@ -6,6 +6,7 @@
 import os.path as path
 from typing import List, Optional
 
+import pgsmo.objects.node_object as node
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 import pgsmo.utils as utils
@@ -15,20 +16,13 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
 class Schema:
-    @staticmethod
-    def get_schemas_for_database(conn: utils.querying.ConnectionWrapper) -> List['Schema']:
+    @classmethod
+    def get_schemas_for_database(cls, conn: utils.querying.ConnectionWrapper) -> List['Schema']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
-        sql = utils.templating.render_template(
-            utils.templating.get_template_path(type_template_root, 'nodes.sql', conn.version),
-
-        )
-
-        cols, rows = utils.querying.execute_dict(conn, sql)
-
-        return [Schema._from_node_query(conn, row['oid'], row['name'], **row) for row in rows]
+        return node.get_nodes(conn, type_template_root, cls._from_node_query)
 
     @classmethod
-    def _from_node_query(cls, conn, schema_oid, schema_name, fetch=True, **kwargs) -> 'Schema':
+    def _from_node_query(cls, conn, schema_oid, schema_name, **kwargs) -> 'Schema':
         schema = cls(schema_name)
 
         # Assign the mandatory properties
