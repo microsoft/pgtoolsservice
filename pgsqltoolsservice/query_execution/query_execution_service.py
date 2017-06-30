@@ -135,7 +135,7 @@ class QueryExecutionService(object):
             del self.query_results[params.owner_uri]
             request_context.send_response({})
         except Exception as e:
-            request_context.send_default_error_response(e)
+            request_context.send_unhandled_error_response(e)
 
     def cancel_query(self, owner_uri: str):
         conn = self.get_connection(owner_uri, ConnectionType.QUERY)
