@@ -508,8 +508,8 @@ class TestQueryService(unittest.TestCase):
         other_query = Query('some_other_uri', '')
         other_query.batches = [Batch(3, SelectionData(), False)]
         self.query_execution_service.query_results = {
-            params.owner_uri: test_query,  # TODO: clean up
-            'some_other_uri': other_query
+            test_query.owner_uri: test_query,
+            other_query.owner_uri: other_query
         }
 
         # If I call the subset request handler
