@@ -109,7 +109,7 @@ class Server:
 
     def _fetch_roles(self) -> None:
         self._roles = Role.get_roles_for_server(self._conn)
-    
+
     def _fetch_tablespaces(self) -> None:
         self._tablespaces = Tablespace.get_tablespaces_for_server(self._conn)
 
