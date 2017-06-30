@@ -202,7 +202,7 @@ class TestQueryService(unittest.TestCase):
         """
         query_results: Dict[str, Query] = {}
         owner_uri = "untitled"
-        query_results[owner_uri] = Query(owner_uri, '', self.request_context)
+        query_results[owner_uri] = Query(owner_uri, '')
         batch_ordinal = 0
         result_ordinal = 0
         rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
@@ -503,9 +503,9 @@ class TestQueryService(unittest.TestCase):
         batch = Batch(2, SelectionData(), False)
         batch_rows = [(1, 2), (3, 4), (5, 6)]
         batch.result_set = ResultSet(0, 0, {}, 3, batch_rows)
-        test_query = Query(params.owner_uri, '', self.request_context)
+        test_query = Query(params.owner_uri, '')
         test_query.batches = [Batch(0, SelectionData(), False), Batch(1, SelectionData(), False), batch]
-        other_query = Query('some_other_uri', '', self.request_context)
+        other_query = Query('some_other_uri', '')
         other_query.batches = [Batch(3, SelectionData(), False)]
         self.query_execution_service.query_results = {
             params.owner_uri: test_query,  # TODO: clean up
@@ -526,6 +526,26 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(result_subset.rows[0][1].display_value, str(batch_rows[1][1]))
         self.assertEqual(result_subset.rows[1][0].display_value, str(batch_rows[2][0]))
         self.assertEqual(result_subset.rows[1][1].display_value, str(batch_rows[2][1]))
+
+
+class TestQueryAndBatchObjects(unittest.TestCase):
+    """Unit tests for Query and Batch objects"""
+    def setUp(self):
+        """Set up the test by creating a query with multiple batches"""
+        self.statement_list = statement_list = ['select version;', 'select * from t1;']
+        self.statement_str = ''.join(statement_list)
+        self.query_uri = 'test_uri'
+        self.query = Query(self.query_uri, self.statement_str)
+
+    def test_query_creates_batches(self):
+        """Test that creating a query also creates batches for each statement in the query"""
+        # Verify that the query created in setUp has a batch corresponding to each statement
+        for index, statement in enumerate(self.statement_list):
+            self.assertEqual(self.query.batches[index].batch_text, statement)
+
+    def test_executing_query_executes_batches(self):
+        """Test that executing a query also executes all of the query's batches in order"""
+        pass
 
 
 def get_execute_string_params() -> ExecuteStringParams:

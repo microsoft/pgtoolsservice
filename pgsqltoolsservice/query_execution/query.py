@@ -20,12 +20,11 @@ class ExecutionState(Enum):
 class Query:
     """Object representing a single query, consisting of one or more batches"""
 
-    def __init__(self, owner_uri: str, query_text: str, request_context: RequestContext = None):
+    def __init__(self, owner_uri: str, query_text: str):
         self.execution_state: ExecutionState = ExecutionState.NOT_STARTED
         self.is_canceled = False
         self.owner_uri: str = owner_uri
         self.batches: List[Batch] = []
-        self.request_context: Optional[RequestContext] = request_context
         self.query_text = query_text
         self.current_batch_index = 0
 
@@ -35,7 +34,7 @@ class Query:
             if not batch_text.strip():
                 continue
             # Create and save the batch
-            batch = Batch(batch_text, len(self.batches), None, request_context)  # TODO: Save the selection of the batch
+            batch = Batch(batch_text, len(self.batches), None)  # TODO: Save the selection of the batch
             self.batches.append(batch)
 
     def execute(self, connection, batch_start_callback: Callable[['Query', Batch], None] = None, batch_end_callback: Callable[['Query', Batch], None] = None):

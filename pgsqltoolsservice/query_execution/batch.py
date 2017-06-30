@@ -18,7 +18,7 @@ from pgsqltoolsservice.query_execution.result_set import ResultSet  # noqa
 
 class Batch(object):
 
-    def __init__(self, batch_text: str, ordinal_id: int, selection: SelectionData, request_context: RequestContext = None):
+    def __init__(self, batch_text: str, ordinal_id: int, selection: SelectionData):
         self.batch_text = batch_text
         self.id = ordinal_id
         self.selection = selection
@@ -27,7 +27,6 @@ class Batch(object):
         self.has_executed = False
         self.result_set: ResultSet = None
         self.end_time: datetime = None
-        self.request_context: Optional[RequestContext] = None
         self.row_count: int = -1  # Use -1 as the default since that's what psycopg2 uses
         self.notices: List[str] = []
 
