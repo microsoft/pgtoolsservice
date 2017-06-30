@@ -48,7 +48,7 @@ class TestBatch(unittest.TestCase):
         self.assertFalse(self.batch.has_error)
         self.assertTrue(self.batch.has_executed)
         self.assertIsNotNone(self.batch.result_set)
-        self.assertGreater(self.batch.end_time, self.batch.start_time)
+        self.assertGreaterEqual(self.batch.end_time, self.batch.start_time)
         self.assertEqual(self.batch.row_count, self.mock_cursor.rowcount)
         self.assertGreater(len(self.batch.notices), 0)
 
@@ -68,7 +68,7 @@ class TestBatch(unittest.TestCase):
         self.assertTrue(self.batch.has_error)
         self.assertTrue(self.batch.has_executed)
         self.assertIsNone(self.batch.result_set)
-        self.assertGreater(self.batch.end_time, self.batch.start_time)
+        self.assertGreaterEqual(self.batch.end_time, self.batch.start_time)
         self.assertEqual(self.batch.row_count, -1)
         self.assertGreater(len(self.batch.notices), 0)
 
