@@ -37,6 +37,9 @@ class ScriptingService(object):
     # REQUEST HANDLERS #####################################################
 
     def _handle_scriptas_request(self, request_context: RequestContext, params: ScriptAsParameters) -> None:
-        script = 'SELECT *\nFROM ' + params.metadata['schema'] + '."' + params.metadata['name'] + '"\nLIMIT 1000\n'
+        if params.operation == 0:
+            script = 'SELECT *\nFROM ' + params.metadata['schema'] + '."' + params.metadata['name'] + '"\nLIMIT 1000\n'
+        else:
+             script = 'Coming soon.  Check back in an upcoming release'
         request_context.send_response(ScriptAsResponse(params.owner_uri, script))
  
