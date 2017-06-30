@@ -12,7 +12,7 @@ import pgsmo.utils as utils
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
-class Database:
+class Database(node.NodeObject):
     @classmethod
     def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper) -> List['Database']:
         return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query)
@@ -32,9 +32,8 @@ class Database:
             owner int: Object ID of the user that owns the database
         :return: Instance of the Database
         """
-        db = cls(kwargs['name'])
-        db._conn = conn
-        db._did = kwargs['did']
+        db = cls(conn, kwargs['name'])
+        db._oid = kwargs['did']
         db._is_connected = kwargs['name'] == conn.dsn_parameters.get('dbname')
         db._tablespace = kwargs['spcname']
         db._allow_conn = kwargs['datallowconn']
@@ -43,17 +42,15 @@ class Database:
 
         return db
 
-    def __init__(self, name: str):
+    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str):
         """
         Initializes a new instance of a database
         :param name: Name of the database
         """
-        self._name: str = name
+        super(Database, self).__init__(conn, name)
         self._is_connected: bool = False
 
         # Declare the optional parameters
-        self._conn: utils.querying.ConnectionWrapper = None
-        self._did: Optional[int] = None
         self._tablespace: Optional[str] = None
         self._allow_conn: Optional[bool] = None
         self._can_create: Optional[bool] = None
@@ -72,14 +69,6 @@ class Database:
     @property
     def can_create(self) -> bool:
         return self._can_create
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def oid(self) -> int:
-        return self._did
 
     @property
     def schemas(self) -> List[schema.Schema]:

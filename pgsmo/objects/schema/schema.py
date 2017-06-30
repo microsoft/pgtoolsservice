@@ -15,7 +15,7 @@ import pgsmo.utils as utils
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
-class Schema:
+class Schema(node.NodeObject):
     @classmethod
     def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper) -> List['Schema']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
@@ -34,22 +34,17 @@ class Schema:
             has_usage bool: Whether or not the schema can be used(?)
         :return:
         """
-        schema = cls(kwargs['name'])
-        schema._conn = conn
+        schema = cls(conn, kwargs['name'])
         schema._oid = kwargs['oid']
         schema._can_create = kwargs['can_create']
         schema._has_usage = kwargs['has_usage']
 
         return schema
 
-    def __init__(self, name: str):
-        #
-
-        self._name: str = name
+    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str):
+        super(Schema, self).__init__(conn, name)
 
         # Declare the optional parameters
-        self._conn: utils.querying.ConnectionWrapper = None
-        self._oid: Optional[int] = None
         self._can_create: Optional[bool] = None
         self._has_usage: Optional[bool] = None
 
@@ -65,14 +60,6 @@ class Schema:
     @property
     def has_usage(self) -> Optional[bool]:
         return self._has_usage
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def oid(self) -> Optional[int]:
-        return self._oid
 
     @property
     def tables(self) -> List[Table]:

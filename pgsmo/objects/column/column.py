@@ -11,7 +11,7 @@ import pgsmo.utils as utils
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
-class Column:
+class Column(node.NodeObject):
     @classmethod
     def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper, tid: int) -> List['Column']:
         return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, tid=tid)
@@ -30,26 +30,24 @@ class Column:
             has_default_value bool: Whether or not the column has a default value constraint
         :return: Instance of the Column
         """
-        col = cls(kwargs['name'], kwargs['datatype'])
-        col._conn = conn
-        col._cid = kwargs['oid']
+        col = cls(conn, kwargs['name'], kwargs['datatype'])
+        col._oid = kwargs['oid']
         col._has_default_value = kwargs['has_default_value']
         col._not_null = kwargs['not_null']
 
         return col
 
-    def __init__(self, name: str, datatype: str):
+    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str, datatype: str):
         """
         Initializes a new instance of a Column
+        :param conn: Connection to the server/database that this object will belong to
         :param name: Name of the column
         :param datatype: Type of the column
         """
-        self._name: str = name
+        super(Column, self).__init__(conn, name)
         self._datatype: str = datatype
 
         # Declare the optional parameters
-        self._conn: Optional[utils.querying.ConnectionWrapper] = None
-        self._cid: Optional[int] = None
         self._has_default_value: Optional[bool] = None
         self._not_null: Optional[bool] = None
 
@@ -63,16 +61,8 @@ class Column:
         return self._has_default_value
 
     @property
-    def name(self) -> str:
-        return self._name
-
-    @property
     def not_null(self) -> Optional[bool]:
         return self._not_null
-
-    @property
-    def oid(self) -> Optional[int]:
-        return self._cid
 
     # METHODS ##############################################################
     def refresh(self):

@@ -13,7 +13,7 @@ import pgsmo.utils as utils
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'view_templates')
 
 
-class View:
+class View(node.NodeObject):
     @classmethod
     def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper, scid: int) -> List['View']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
@@ -36,12 +36,8 @@ class View:
 
         return view
 
-    def __init__(self, name: str):
-        self._name: str = name
-
-        # Declare optional parameters
-        self._conn: Optional[utils.querying.ConnectionWrapper] = None
-        self._oid: Optional[int] = None
+    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str):
+        super(View, self).__init__(conn, name)
 
         # Declare child items
         self._columns: Optional[List[col.Column]]

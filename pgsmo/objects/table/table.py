@@ -13,7 +13,7 @@ import pgsmo.utils as utils
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
-class Table:
+class Table(node.NodeObject):
     @classmethod
     def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper, schema_id: int) -> List['Table']:
         return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, scid=schema_id)
@@ -35,12 +35,8 @@ class Table:
 
         return table
 
-    def __init__(self, name: str):
-        self._name: str = name
-
-        # Declare the optional parameters
-        self._conn: Optional[utils.querying.ConnectionWrapper] = None
-        self._oid: Optional[int] = None
+    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str):
+        super(Table, self).__init__(conn, name)
 
         # Declare child items
         self._columns: Optional[List[col.Column]]
@@ -49,14 +45,6 @@ class Table:
     @property
     def columns(self) -> Optional[List[col.Column]]:
         return self._columns
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def oid(self) -> Optional[int]:
-        return self._oid
 
     # METHODS ##############################################################
     def refresh(self) -> None:
