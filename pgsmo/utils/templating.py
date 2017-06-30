@@ -27,12 +27,18 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     :param server_version: Tuple of the connected server version components (major, minor, ignored)
     :return: Path to the desired template
     """
+
+    # full_path = os.path.join(template_root, '+default')
+    # full_path = os.path.join(full_path, template_name)
+    # return full_path
+
     # Step 1) Get the list of folders in the template folder that contains the
     # Step 1.1) Get the list of folders in the template root folder
     all_folders: List[str] = [x[0] for x in os.walk(template_root)]
 
     # Step 1.2) Filter out the folders that don't contain the target template
-    containing_folders: List[str] = [x for x in all_folders if template_name in next(os.walk(x))[2]]
+    # containing_folders: List[str] = [x for x in all_folders if template_name in next(os.walk(x))[2]]
+    containing_folders = all_folders
 
     # Step 1.3) Reverse the order of the list, to allow processing from greatest version to lowest
     containing_folders = containing_folders[::-1]
