@@ -7,9 +7,9 @@ from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
 
 
-class PGSQLConfiguration:
+class SQLConfiguration:
     """
-    Configuration for PGSQL tool service
+    Configuration for SQL settings in general. These are common to any SQL provider
     """
     @classmethod
     def from_dict(cls, dictionary: dict):
@@ -19,6 +19,20 @@ class PGSQLConfiguration:
 
     def __init__(self):
         self.intellisense: IntellisenseConfiguration = IntellisenseConfiguration()
+
+# TODO reenable this when there are PG-specific settings
+# class PGSQLConfiguration:
+#     """
+#     Configuration for PGSQL tool service
+#     """
+#     @classmethod
+#     def from_dict(cls, dictionary: dict):
+#         return utils.serialization.convert_from_dict(cls, dictionary,
+#                                                      ignore_extra_attributes=True,
+#                                                      intellisense=IntellisenseConfiguration)
+
+#     def __init__(self):
+#         self.intellisense: IntellisenseConfiguration = IntellisenseConfiguration()
 
 
 class IntellisenseConfiguration:
@@ -44,10 +58,10 @@ class Configuration:
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     pgsql=PGSQLConfiguration)
+                                                     sql=SQLConfiguration)
 
     def __init__(self):
-        self.pgsql = None
+        self.sql = None
 
 
 class DidChangeConfigurationParams:
