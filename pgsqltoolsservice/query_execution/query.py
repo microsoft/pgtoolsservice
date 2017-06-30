@@ -3,9 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 from enum import Enum
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional  # noqa
 
-import psycopg2
 import sqlparse
 
 from pgsqltoolsservice.hosting import RequestContext
@@ -20,6 +19,7 @@ class ExecutionState(Enum):
 
 class Query:
     """Object representing a single query, consisting of one or more batches"""
+
     def __init__(self, owner_uri: str, query_text: str, request_context: RequestContext = None):
         self.execution_state: ExecutionState = ExecutionState.NOT_STARTED
         self.is_canceled = False

@@ -9,7 +9,6 @@ from typing import Callable, Dict, List, Optional  # noqa
 
 import psycopg2
 import psycopg2.errorcodes
-import sqlparse
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query_execution.contracts import (
@@ -27,7 +26,6 @@ from pgsqltoolsservice.query_execution.contracts.common import (
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
-from pgsqltoolsservice.query_execution.result_set import ResultSet
 import pgsqltoolsservice.utils as utils
 
 
@@ -180,7 +178,7 @@ class QueryExecutionService(object):
 
         query = self.query_results[params.owner_uri]
 
-        # Wrap execution in a try/except block so that we can send an error if it fails        
+        # Wrap execution in a try/except block so that we can send an error if it fails
         try:
             query.execute(conn, _batch_execution_started_callback, _batch_execution_finished_callback)
         except Exception as e:

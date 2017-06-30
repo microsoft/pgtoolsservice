@@ -25,7 +25,6 @@ from pgsqltoolsservice.query_execution.contracts import (
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
-from pgsqltoolsservice.hosting import RequestContext
 import tests.utils as utils
 
 
@@ -410,8 +409,9 @@ class TestQueryService(unittest.TestCase):
         execute_params = get_execute_string_params()
         cancel_params = get_execute_request_params()
 
-        # Create a side effect when responding to the query request to cancel the query
+        # Create a side effect to cancel the query while responding to the query request
         real_send_response = self.request_context.send_response
+
         def cancel_before_execute_side_effect(*args):
             real_send_response(*args)
             self.request_context.send_response.side_effect = real_send_response
