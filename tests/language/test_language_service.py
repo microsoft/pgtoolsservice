@@ -22,7 +22,7 @@ from pgsqltoolsservice.language.contracts import (
 )
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import (
-    WorkspaceService, PGSQLConfiguration, ScriptFile, Workspace
+    WorkspaceService, SQLConfiguration, ScriptFile, Workspace
 )
 from pgsqltoolsservice.workspace.contracts import (
     Range
@@ -81,7 +81,7 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: intellisense is disabled
         context: RequestContext = utils.MockRequestContext()
-        self.mock_workspace_service._configuration = PGSQLConfiguration()
+        self.mock_workspace_service._configuration = SQLConfiguration()
         self.mock_workspace_service._configuration.intellisense.enable_intellisense = False
         service: LanguageService = self._init_service()
 
@@ -100,7 +100,7 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: The script file doesn't exist (there is an empty workspace)
         context: RequestContext = utils.MockRequestContext()
-        config: PGSQLConfiguration = PGSQLConfiguration()
+        config: SQLConfiguration = SQLConfiguration()
 
         self.mock_workspace_service._configuration = config
         self.mock_workspace_service._workspace = Workspace()
@@ -131,7 +131,7 @@ class TestLanguageService(unittest.TestCase):
             }
         })
         context: RequestContext = utils.MockRequestContext()
-        self.mock_workspace_service._configuration = PGSQLConfiguration()
+        self.mock_workspace_service._configuration = SQLConfiguration()
         self.mock_workspace_service._configuration.intellisense.enable_intellisense = True
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
