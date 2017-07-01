@@ -24,10 +24,12 @@ from pgsqltoolsservice.workspace import WorkspaceService
 if __name__ == '__main__':
     # Create the output logger
     logger = logging.getLogger('pgsqltoolsservice')
-    handler = logging.FileHandler('pgsqltoolsservice.log')
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    # TODO: Fix logging to work with release builds on mac
+    # handler = logging.FileHandler('pgsqltoolsservice.log')
+    # formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    # handler.setFormatter(formatter)
+    # logger.addHandler(handler)
+    logger.addHandler(logging.NullHandler())
     logger.setLevel(logging.DEBUG)
 
     # See if we have any arguments
