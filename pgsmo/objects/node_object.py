@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Callable, List, Optional, Union
 
 from pgsmo.utils.abstract_class_method import abstractclassmethod
 import pgsmo.utils.templating as t
@@ -26,6 +26,55 @@ class NodeObject:
     def oid(self) -> Optional[int]:
         return self._oid
 
+
+class NodeCollection:
+    def __init__(self, generator: Callable, *generator_args):
+        self._generator: Callable = generator
+        self._items: Optional[List[NodeObject]] = None
+
+    def __index__(self, index: Union[int, str]) -> NodeObject:
+        """
+        Searches for a node in the list of items by OID or name
+        :param index: If an int, the object ID of the item to look up. If a str, the name of the
+                      item to look up. Otherwise, TypeError will be raised.
+        :raises TypeError: If index is not a str or int
+        :raises NameError: If an item with the provided index does not exist
+        :return: The instance that matches the provided index
+        """
+        # Determine how we will be looking up the item
+        if isinstance(index, int):
+            # Lookup is by object ID
+            lookup = (lambda x: x.oid == index)
+        elif isinstance(index, str):
+            # Lookup is by object name
+            lookup = (lambda x: x.name == index)
+        else:
+            raise TypeError('Index must be either a string or int')
+
+        # Load the items if they haven't been loaded
+        if self._items is None:
+            self._items = self._generator()
+
+        # Look up the desired item
+        for item in self._items:
+            if lookup(item):
+                return item
+
+        # If we make it to here, an item with the given index does not exist
+        raise NameError('An item with the provided index does not exist')
+
+    def __iter__(self):
+        # Load the items if they haven't been loaded
+        if self._items is None:
+            self._items = self._generator()
+
+        return self._items.__iter__()
+
+    def reset(self):
+        # Empty the items so that next iteration will reload the collection
+        self._items = None
+
+
 def get_nodes(conn: q.ConnectionWrapper, template_root: str, generator, **kwargs):
     sql = t.render_template(
         t.get_template_path(template_root, 'nodes.sql', conn.version),
@@ -33,4 +82,4 @@ def get_nodes(conn: q.ConnectionWrapper, template_root: str, generator, **kwargs
     )
     cols, rows = q.execute_dict(conn, sql)
 
-    return [generator(**row) for row in rows]
+    return [generator(conn, **row) for row in rows]

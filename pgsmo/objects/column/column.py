@@ -32,7 +32,7 @@ class Column(node.NodeObject):
         """
         col = cls(conn, kwargs['name'], kwargs['datatype'])
         col._oid = kwargs['oid']
-        col._has_default_value = kwargs['has_default_value']
+        col._has_default_value = kwargs['has_default_val']
         col._not_null = kwargs['not_null']
 
         return col

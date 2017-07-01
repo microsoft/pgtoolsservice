@@ -6,7 +6,7 @@
 import os.path as path
 from typing import List, Optional
 
-import pgsmo.objects.column.column as col
+from pgsmo.objects.column.column import Column
 import pgsmo.objects.node_object as node
 import pgsmo.utils as utils
 
@@ -30,8 +30,7 @@ class View(node.NodeObject):
             oid int: Object ID of the view
         :return: A view instance
         """
-        view = cls(kwargs['name'])
-        view._conn = conn
+        view = cls(conn, kwargs['name'])
         view._oid = kwargs['oid']
 
         return view
@@ -40,25 +39,15 @@ class View(node.NodeObject):
         super(View, self).__init__(conn, name)
 
         # Declare child items
-        self._columns: Optional[List[col.Column]]
+        self._columns: node.NodeCollection = node.NodeCollection(
+            lambda: Column.get_nodes_for_parent(self._conn, self.oid)
+        )
 
     # PROPERTIES ###########################################################
     @property
-    def columns(self) -> Optional[List[col.Column]]:
+    def columns(self) -> node.NodeCollection:
         return self._columns
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def oid(self) -> Optional[int]:
-        return self._oid
 
     # METHODS ##############################################################
     def refresh(self) -> None:
-        self._fetch_columns()
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _fetch_columns(self) -> None:
-        self._columns = col.Column.get_columns_for_table(self._conn, self._oid)
+        self._columns.reset()

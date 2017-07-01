@@ -49,8 +49,12 @@ class Schema(node.NodeObject):
         self._has_usage: Optional[bool] = None
 
         # Declare the child items
-        self._tables: List[Table] = []
-        self._views: List[View] = []
+        self._tables: node.NodeCollection = node.NodeCollection(
+            lambda: Table.get_nodes_for_parent(self._conn, self._oid)
+        )
+        self._views: node.NodeCollection = node.NodeCollection(
+            lambda: View.get_nodes_for_parent(self._conn, self.oid)
+        )
 
     # PROPERTIES ###########################################################
     @property
@@ -61,12 +65,14 @@ class Schema(node.NodeObject):
     def has_usage(self) -> Optional[bool]:
         return self._has_usage
 
+
+    # -CHILD OBJECTS #######################################################
     @property
-    def tables(self) -> List[Table]:
+    def tables(self) -> node.NodeCollection:
         return self._tables
 
     @property
-    def views(self) -> List[View]:
+    def views(self) -> node.NodeCollection:
         return self._views
 
     # METHODS ##############################################################

@@ -6,7 +6,7 @@
 from typing import List, Optional               # noqa
 
 import pgsmo.objects.node_object as node
-import pgsmo.objects.schema.schema as schema
+from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils as utils
 
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
@@ -15,7 +15,7 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 class Database(node.NodeObject):
     @classmethod
     def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper) -> List['Database']:
-        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query)
+        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, last_system_oid=0)
 
     @classmethod
     def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'Database':
@@ -57,7 +57,7 @@ class Database(node.NodeObject):
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-        self._schemas: List[schema.Schema] = None
+        self._schemas: node.NodeCollection = node.NodeCollection((lambda: Schema.get_nodes_for_parent(self._conn)))
 
     # PROPERTIES ###########################################################
     # TODO: Create setters for optional values
@@ -71,18 +71,19 @@ class Database(node.NodeObject):
         return self._can_create
 
     @property
-    def schemas(self) -> List[schema.Schema]:
-        return self._schemas
-
-    @property
     def tablespace(self) -> str:
         return self._tablespace
+
+    # -CHILD OBJECTS #######################################################
+    @property
+    def schemas(self) -> node.NodeCollection:
+        return self._schemas
 
     # METHODS ##############################################################
 
     def refresh(self):
         self._fetch_properties()
-        self._fetch_schemas()
+        self._schemas.reset()
 
     def create(self):
         pass
@@ -96,6 +97,3 @@ class Database(node.NodeObject):
     # IMPLEMENTATION DETAILS ###############################################
     def _fetch_properties(self):
         pass
-
-    def _fetch_schemas(self):
-        self._schemas = schema.Schema.get_schemas_for_database(self._conn)

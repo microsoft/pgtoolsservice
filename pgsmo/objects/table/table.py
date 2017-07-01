@@ -5,7 +5,7 @@
 
 from typing import List, Optional
 
-import pgsmo.objects.column.column as col
+from pgsmo.objects.column.column import Column
 import pgsmo.objects.node_object as node
 import pgsmo.utils as utils
 
@@ -29,8 +29,7 @@ class Table(node.NodeObject):
             name str: Name of the table
         :return: A table instance
         """
-        table = cls(kwargs['name'])
-        table._conn = conn
+        table = cls(conn, kwargs['name'])
         table._oid = kwargs['oid']
 
         return table
@@ -39,17 +38,16 @@ class Table(node.NodeObject):
         super(Table, self).__init__(conn, name)
 
         # Declare child items
-        self._columns: Optional[List[col.Column]]
+        self._columns: node.NodeCollection = node.NodeCollection(
+            lambda: Column.get_nodes_for_parent(self._conn, self._oid)
+        )
 
     # PROPERTIES ###########################################################
+    # -CHILD OBJECTS #######################################################
     @property
-    def columns(self) -> Optional[List[col.Column]]:
+    def columns(self) -> node.NodeCollection:
         return self._columns
 
     # METHODS ##############################################################
     def refresh(self) -> None:
-        self._fetch_columns()
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _fetch_columns(self) -> None:
-        self._columns = col.Column.get_columns_for_table(self._conn, self._oid)
+        self._columns.reset()
