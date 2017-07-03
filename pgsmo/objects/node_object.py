@@ -1,3 +1,8 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
 from typing import Callable, List, Optional, Union
 
 from pgsmo.utils.abstract_class_method import abstractclassmethod
@@ -28,11 +33,11 @@ class NodeObject:
 
 
 class NodeCollection:
-    def __init__(self, generator: Callable, *generator_args):
+    def __init__(self, generator: Callable):
         self._generator: Callable = generator
         self._items: Optional[List[NodeObject]] = None
 
-    def __index__(self, index: Union[int, str]) -> NodeObject:
+    def __getitem__(self, index: Union[int, str]) -> NodeObject:
         """
         Searches for a node in the list of items by OID or name
         :param index: If an int, the object ID of the item to look up. If a str, the name of the
