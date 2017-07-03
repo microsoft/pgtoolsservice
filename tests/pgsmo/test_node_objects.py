@@ -123,6 +123,53 @@ class TestNodeObject(unittest.TestCase):
 
         self.assertIs(node_obj._conn, conn)
 
+    def test_get_nodes(self):
+        # Setup:
+        # ... Create a mockup of a connection wrapper
+        version = (1, 1, 1)
+        class MockConn:
+            def __init__(self):
+                self.version = version
+        mock_conn = MockConn()
+
+        # ... Create a mock template renderer
+        mock_render = mock.MagicMock(return_value="SQL")
+        mock_template_path = mock.MagicMock(return_value="path")
+
+        # ... Create a mock query executor
+        mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
+        mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
+
+        # ... Create a mock generator
+        mock_output = {}
+        mock_generator = mock.MagicMock(return_value=mock_output)
+
+        # ... Do the patching
+        with mock.patch('pgsmo.objects.node_object.t.render_template', mock_render, create=True):
+            with mock.patch('pgsmo.objects.node_object.t.get_template_path', mock_template_path, create=True):
+                with mock.patch('pgsmo.objects.node_object.q.execute_dict', mock_executor, create=True):
+                    # If: I ask for a collection of nodes
+                    kwargs = {'arg1': 'something'}
+                    nodes = no.get_nodes(mock_conn, 'root', mock_generator, **kwargs)
+
+        # Then:
+        # ... The template path should have been called once
+        mock_template_path.assert_called_once_with('root', 'nodes.sql', version)
+
+        # ... The template renderer should have been called once
+        mock_render.assert_called_once_with('path', **kwargs)
+
+        # ... A query should have been executed
+        mock_executor.assert_called_once_with(mock_conn, 'SQL')
+
+        # ... The generator should have been called twice with different object props
+        mock_generator.assert_any_call(mock_conn, **mock_objs[0])
+        mock_generator.assert_any_call(mock_conn, **mock_objs[1])
+
+        # ... The output list of nodes should match what the generator created
+        self.assertIsInstance(nodes, list)
+        self.assertListEqual(nodes, [mock_output, mock_output])
+
 
 def _get_mock_generator():
     mock_object1 = no.NodeObject(None, 'a')
