@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import List
+
 from pgsmo.objects.column.column import Column
 import pgsmo.objects.node_object as node
 import pgsmo.utils as utils
