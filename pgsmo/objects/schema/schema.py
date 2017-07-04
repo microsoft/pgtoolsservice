@@ -65,7 +65,6 @@ class Schema(node.NodeObject):
     def has_usage(self) -> Optional[bool]:
         return self._has_usage
 
-
     # -CHILD OBJECTS #######################################################
     @property
     def tables(self) -> node.NodeCollection:

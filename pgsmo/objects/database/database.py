@@ -57,7 +57,7 @@ class Database(node.NodeObject):
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-        self._schemas: node.NodeCollection = node.NodeCollection((lambda: Schema.get_nodes_for_parent(self._conn)))
+        self._schemas: node.NodeCollection = node.NodeCollection(lambda: Schema.get_nodes_for_parent(self._conn))
 
     # PROPERTIES ###########################################################
     # TODO: Create setters for optional values

@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import os.path as path
-from typing import List, Optional
+from typing import List
 
 from pgsmo.objects.column.column import Column
 import pgsmo.objects.node_object as node
