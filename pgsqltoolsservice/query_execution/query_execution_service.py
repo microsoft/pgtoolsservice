@@ -239,7 +239,6 @@ class QueryExecutionService(object):
         # Check if none or empty list
         if summaries:
             result_set_summary = summaries[0]
-        utils.log.log_debug(self._service_provider.logger, f'result set summary is {result_set_summary}')
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
     def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool=False):

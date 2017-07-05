@@ -11,7 +11,7 @@ from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 
 class ResultSet(object):
 
-    def __init__(self, ordinal, batch_ordinal, description, row_count, rows):
+    def __init__(self, ordinal: int = None, batch_ordinal: int = None, description=None, row_count: int = None, rows: List[tuple] = None):
         # The ID of the resultset, the ordinal of the result within the batch
         self.id = ordinal
         # The ID of the batch, the ordinal of the batch within the query
