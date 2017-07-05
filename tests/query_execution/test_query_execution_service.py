@@ -156,7 +156,7 @@ class TestQueryService(unittest.TestCase):
         self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then it responds with an error instead of a regular response
-        self.request_context.send_error.assert_called_once()
+        self.request_context.send_unhandled_error_response.assert_called_once()
         self.request_context.send_response.assert_not_called()
 
     def test_query_request_error_handling(self):
