@@ -32,3 +32,15 @@ class QueryCancelParams:
 
 
 CANCEL_REQUEST = IncomingMessageConfiguration('query/cancel', QueryCancelParams)
+
+
+class QueryDisposeParams:
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary)
+
+    def __init__(self):
+        self.owner_uri = None
+
+
+DISPOSE_REQUEST = IncomingMessageConfiguration('query/dispose', QueryDisposeParams)

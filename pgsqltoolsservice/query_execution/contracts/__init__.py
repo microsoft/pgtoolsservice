@@ -12,7 +12,8 @@ from pgsqltoolsservice.query_execution.contracts.execute_request import (
     ExecuteResult, EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.query_request import (
-    SubsetParams, SUBSET_REQUEST, QueryCancelParams, CANCEL_REQUEST
+    SubsetParams, SUBSET_REQUEST, QueryCancelParams, CANCEL_REQUEST,
+    QueryDisposeParams, DISPOSE_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.message_notification import (
     MessageNotificationParams,
@@ -28,8 +29,7 @@ from pgsqltoolsservice.query_execution.contracts.result_set_notification import 
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
     ResultSetSummary, BatchSummary, ResultMessage,
-    SelectionData, DbColumn, DbCellValue, BatchEventParams,
-    MessageParams, QueryCompleteParams, ResultSetSubset,
+    SelectionData, DbColumn, DbCellValue, ResultSetSubset,
     SubsetResult, SpecialAction, QueryCancelResult
 )
 
@@ -42,7 +42,7 @@ __all__ = [
     'QUERY_COMPLETE_NOTIFICATION', 'ResultSetNotificationParams',
     'RESULT_SET_COMPLETE_NOTIFICATION', 'ResultSetSummary',
     'BatchSummary', 'ResultMessage', 'SelectionData', 'DbColumn',
-    'DbCellValue', 'BatchEventParams', 'MessageParams', 'QueryCompleteParams',
-    'ResultSetSubset', 'SubsetResult', 'SpecialAction', 'SubsetParams', 'SUBSET_REQUEST',
-    'CANCEL_REQUEST', 'QueryCancelResult', 'QueryCancelParams'
+    'DbCellValue', 'ResultSetSubset', 'SubsetResult', 'SpecialAction', 'SubsetParams',
+    'SUBSET_REQUEST', 'CANCEL_REQUEST', 'QueryCancelResult', 'QueryCancelParams',
+    'QueryDisposeParams', 'DISPOSE_REQUEST'
 ]
