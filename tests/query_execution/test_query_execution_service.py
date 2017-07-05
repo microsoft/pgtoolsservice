@@ -618,6 +618,51 @@ class TestQueryAndBatchObjects(unittest.TestCase):
         # And the query is marked as executed
         self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
 
+    def test_batch_selections_with_initial_selection(self):
+        """Test that the query sets up batch objects with correct selection information"""
+        full_query = '''select * from t1;
+select * from t2;;;
+;  ;
+select version(); select * from
+t3 ;
+select * from t2
+'''
+        initial_selection = SelectionData(5, 4, 11, 0)
+
+        # If I build a query that contains several statements
+        query = Query('test_uri', full_query, initial_selection)
+
+        # Then there is a batch for each statement
+        self.assertEqual(len(query.batches), 9)
+
+        # And each batch should have the correct location information
+        expected_selections = [(5, 4, 5, 20), (6, 0, 6, 16), (6, 17, 6, 17), (6, 18, 6, 18), (7, 0, 7, 0), (7, 3, 7, 3), (8, 0, 8, 16), (8, 18, 9, 3),
+                               (10, 0, 10, 15)]
+        for index, batch in enumerate(query.batches):
+            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
+
+    def test_batch_selections_no_initial_selection(self):
+        """Test that the query sets up batch objects with correct selection information"""
+        full_query = '''select * from t1;
+select * from t2;;;
+;  ;
+select version(); select * from
+t3 ;
+select * from t2
+'''
+
+        # If I build a query that contains several statements
+        query = Query('test_uri', full_query)
+
+        # Then there is a batch for each statement
+        self.assertEqual(len(query.batches), 9)
+
+        # And each batch should have the correct location information
+        expected_selections = [(0, 0, 0, 16), (1, 0, 1, 16), (1, 17, 1, 17), (1, 18, 1, 18), (2, 0, 2, 0), (2, 3, 2, 3), (3, 0, 3, 16), (3, 18, 4, 3),
+                               (5, 0, 5, 15)]
+        for index, batch in enumerate(query.batches):
+            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
+
 
 def get_execute_string_params() -> ExecuteStringParams:
     """Get a simple ExecutestringParams"""
@@ -632,6 +677,11 @@ def get_execute_request_params():
     params = ExecuteRequestParamsBase()
     params.owner_uri = 'test_uri'
     return params
+
+
+def _tuple_from_selection_data(data: SelectionData):
+    """Convert a SelectionData object to a tuple so that its values can easily be verified"""
+    return (data.start_line, data.start_column, data.end_line, data.end_column)
 
 
 if __name__ == '__main__':

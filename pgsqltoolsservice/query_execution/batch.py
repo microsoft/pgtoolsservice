@@ -17,7 +17,7 @@ from pgsqltoolsservice.query_execution.result_set import ResultSet  # noqa
 
 class Batch(object):
 
-    def __init__(self, batch_text: str, ordinal_id: int, selection: SelectionData):
+    def __init__(self, batch_text: str, ordinal_id: int, selection: Optional[SelectionData]):
         self.batch_text = batch_text
         self.id = ordinal_id
         self.selection = selection

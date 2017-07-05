@@ -8,6 +8,7 @@ from typing import Callable, List, Optional  # noqa
 import sqlparse
 
 from pgsqltoolsservice.query_execution.batch import Batch
+from pgsqltoolsservice.query_execution.contracts import SelectionData
 
 
 class ExecutionState(Enum):
@@ -19,7 +20,7 @@ class ExecutionState(Enum):
 class Query:
     """Object representing a single query, consisting of one or more batches"""
 
-    def __init__(self, owner_uri: str, query_text: str):
+    def __init__(self, owner_uri: str, query_text: str, selection: SelectionData = None):
         self.execution_state: ExecutionState = ExecutionState.NOT_STARTED
         self.is_canceled = False
         self.owner_uri: str = owner_uri
@@ -28,12 +29,14 @@ class Query:
         self.current_batch_index = 0
 
         # Initialize the batches
-        for batch_text in sqlparse.split(query_text):
+        statements = sqlparse.split(query_text)
+        selection_data = _compute_selection_data_for_batches(statements, query_text, selection)
+        for index, batch_text in enumerate(sqlparse.split(query_text)):
             # Skip any empty text
             if not batch_text.strip():
                 continue
             # Create and save the batch
-            batch = Batch(batch_text, len(self.batches), None)  # TODO: Save the selection of the batch
+            batch = Batch(batch_text, len(self.batches), selection_data[index])
             self.batches.append(batch)
 
     def execute(self, connection, batch_start_callback: Callable[['Query', Batch], None] = None, batch_end_callback: Callable[['Query', Batch], None] = None):
@@ -66,3 +69,42 @@ class Query:
                         batch_end_callback(self, batch)
         finally:
             self.execution_state = ExecutionState.EXECUTED
+
+
+def _compute_selection_data_for_batches(batches: List[str], full_text: str, query_selection: SelectionData = None):
+    # Build a map of starting indices for each line
+    line_map = {}
+    search_offset = 0
+    for line_num, line in enumerate(full_text.split('\n')):
+        start_index = full_text.index(line, search_offset)
+        line_map[start_index] = line_num
+        search_offset = start_index + len(line)
+
+    # Iterate through the batches to build selection data
+    selection_data = []
+    search_offset = 0
+    for batch in batches:
+        # Calculate the starting line number and column
+        start_index = full_text.index(batch, search_offset)
+        start_line_index = max(filter(lambda i: i <= start_index, line_map.keys()))
+        start_line_num = line_map[start_line_index]
+        start_col_num = start_index - start_line_index
+
+        # Calculate the ending line number and column
+        end_index = start_index + len(batch)
+        end_line_index = max(filter(lambda i: i < end_index, line_map.keys()))
+        end_line_num = line_map[end_line_index]
+        end_col_num = end_index - end_line_index
+
+        # Update the information to account for the starting offset if needed
+        if query_selection is not None:
+            start_line_num += query_selection.start_line
+            end_line_num += query_selection.start_line
+            if start_line_num == query_selection.start_line:
+                start_col_num += query_selection.start_column
+                end_col_num += query_selection.start_column
+
+        # Create a SelectionData object with the results and update the search offset to exclude batches that have been processed
+        selection_data.append(SelectionData(start_line_num, start_col_num, end_line_num, end_col_num - 1))
+        search_offset = end_index
+    return selection_data

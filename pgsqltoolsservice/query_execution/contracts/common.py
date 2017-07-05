@@ -18,11 +18,11 @@ class SelectionData:
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
 
-    def __init__(self):
-        self.start_line: int = 0
-        self.start_column: int = 0
-        self.end_line: int = 0
-        self.end_column: int = 0
+    def __init__(self, start_line: int = 0, start_column: int = 0, end_line: int = 0, end_column: int = 0):
+        self.start_line: int = start_line
+        self.start_column: int = start_column
+        self.end_line: int = end_line
+        self.end_column: int = end_column
 
     def to_range(self):
         """Convert the SelectionData object to a workspace service Range object"""
