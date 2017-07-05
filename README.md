@@ -74,6 +74,8 @@ Content-Length: 106
 
 ## Building Executables
 To build an executable, run the following commands starting from the main source code directory on the platform you want to build for. The output will be placed in a folder called build.
-- On Mac/Linux: `./scripts/build.sh`
+- On Mac: `./scripts/build-mac.sh`
+    - The output will be placed in the build/pgtoolsservice directory
+- On Linux: `./scripts/build-linux.sh`
 - On Windows: `.\scripts\build.ps1`
     - Or, from cmd.exe: `powershell.exe scripts\build.ps1`
