@@ -10,6 +10,7 @@ from unittest import mock
 from typing import List, Dict  # noqa
 
 import psycopg2
+from dateutil import parser
 
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.connection.contracts.common import ConnectionType
@@ -549,6 +550,46 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(result_subset.rows[0][1].display_value, str(batch_rows[1][1]))
         self.assertEqual(result_subset.rows[1][0].display_value, str(batch_rows[2][0]))
         self.assertEqual(result_subset.rows[1][1].display_value, str(batch_rows[2][1]))
+
+    def test_time(self):
+        """Test to see that the start, end, and execution times are properly set"""
+
+        # Set up and run handler for executing queries
+        params = get_execute_string_params()
+        self.query_execution_service._handle_execute_query_request(self.request_context, params)
+        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
+        # Grab all notification calls and make sure that we call the notifications that we're interested in
+        # exactly once
+        notification_calls = self.request_context.send_notification.mock_calls
+        call_methods_list = [call[1][0] for call in notification_calls]
+        self.assertEqual(call_methods_list.count(BATCH_START_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(BATCH_COMPLETE_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(QUERY_COMPLETE_NOTIFICATION), 1)
+
+        start_time = None
+        for call in notification_calls:
+            # Check that only the execution start time is defined for batch start
+            if call[1][0] is BATCH_START_NOTIFICATION:
+                start_time = call[1][1].batch_summary.execution_start
+                self.assertIsNotNone(start_time)
+                self.assertIsNone(call[1][1].batch_summary.execution_end)
+                self.assertIsNone(call[1][1].batch_summary.execution_elapsed)
+            elif call[1][0] is BATCH_COMPLETE_NOTIFICATION or call[1][0] is QUERY_COMPLETE_NOTIFICATION:
+                # Set batch summary depending on complete notification type
+                batch_summary = None
+                if call[1][0] is BATCH_COMPLETE_NOTIFICATION:
+                    batch_summary = call[1][1].batch_summary
+                else:
+                    self.assertEqual(len(call[1][1].batch_summaries), 1)
+                    batch_summary = call[1][1].batch_summaries[0]
+                # Make sure that all time-related fields are set and make sense
+                self.assertEqual(start_time, batch_summary.execution_start)
+                self.assertIsNotNone(batch_summary.execution_start)
+                self.assertIsNotNone(batch_summary.execution_end)
+                self.assertIsNotNone(batch_summary.execution_elapsed)
+                self.assertLessEqual(parser.parse(batch_summary.execution_start), parser.parse(batch_summary.execution_end))
+                self.assertEqual(batch_summary.execution_elapsed, str(parser.parse(batch_summary.execution_end) - parser.parse(batch_summary.execution_start)))
 
 
 def get_execute_string_params() -> ExecuteStringParams:
