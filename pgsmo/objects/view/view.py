@@ -4,68 +4,50 @@
 # --------------------------------------------------------------------------------------------
 
 import os.path as path
-from typing import List, Optional
+from typing import List
 
-import pgsmo.objects.column.column as col
+from pgsmo.objects.column.column import Column
+import pgsmo.objects.node_object as node
 import pgsmo.utils as utils
 
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'view_templates')
 
 
-class View:
-    @staticmethod
-    def get_views_for_schema(conn: utils.querying.ConnectionWrapper, scid: int) -> List['View']:
+class View(node.NodeObject):
+    @classmethod
+    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper, scid: int) -> List['View']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
-        sql = utils.templating.render_template(
-            utils.templating.get_template_path(type_template_root, 'nodes.sql', conn.version),
-            scid=scid
-        )
-
-        cols, rows = utils.querying.execute_dict(conn, sql)
-
-        return [View._from_node_query(conn, row['oid'], row['name'], **row) for row in rows]
+        return node.get_nodes(conn, type_template_root, cls._from_node_query, scid=scid)
 
     @classmethod
-    def _from_node_query(cls, conn, view_oid: int, view_name: str, fetch=True, **kwargs) -> 'View':
-        view = cls(view_name)
-
-        # Assign the optional properties
-        view._conn = conn
-        view._oid = view_oid
-
-        # Fetch the children if requested
-        if fetch:
-            view.refresh()
+    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'View':
+        """
+        Creates a view object from the results of a node query
+        :param conn: Connection used to execute the nodes query
+        :param kwargs: A row from the nodes query
+        Kwargs:
+            name str: Name of the view
+            oid int: Object ID of the view
+        :return: A view instance
+        """
+        view = cls(conn, kwargs['name'])
+        view._oid = kwargs['oid']
 
         return view
 
-    def __init__(self, name: str):
-        self._name: str = name
-
-        # Declare optional parameters
-        self._conn: Optional[utils.querying.ConnectionWrapper] = None
-        self._oid: Optional[int] = None
+    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str):
+        super(View, self).__init__(conn, name)
 
         # Declare child items
-        self._columns: Optional[List[col.Column]]
+        self._columns: node.NodeCollection = node.NodeCollection(
+            lambda: Column.get_nodes_for_parent(self._conn, self.oid)
+        )
 
     # PROPERTIES ###########################################################
     @property
-    def columns(self) -> Optional[List[col.Column]]:
+    def columns(self) -> node.NodeCollection:
         return self._columns
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def oid(self) -> Optional[int]:
-        return self._oid
 
     # METHODS ##############################################################
     def refresh(self) -> None:
-        self._fetch_columns()
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _fetch_columns(self) -> None:
-        self._columns = col.Column.get_columns_for_table(self._conn, self._oid)
+        self._columns.reset()

@@ -6,6 +6,7 @@
 import os.path as path
 from typing import List, Optional
 
+import pgsmo.objects.node_object as node
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 import pgsmo.utils as utils
@@ -14,51 +15,46 @@ import pgsmo.utils as utils
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
-class Schema:
-    @staticmethod
-    def get_schemas_for_database(conn: utils.querying.ConnectionWrapper) -> List['Schema']:
+class Schema(node.NodeObject):
+    @classmethod
+    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper) -> List['Schema']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
-        sql = utils.templating.render_template(
-            utils.templating.get_template_path(type_template_root, 'nodes.sql', conn.version),
-
-        )
-
-        cols, rows = utils.querying.execute_dict(conn, sql)
-
-        return [Schema._from_node_query(conn, row['oid'], row['name'], **row) for row in rows]
+        return node.get_nodes(conn, type_template_root, cls._from_node_query)
 
     @classmethod
-    def _from_node_query(cls, conn, schema_oid, schema_name, fetch=True, **kwargs) -> 'Schema':
-        schema = cls(schema_name)
-
-        # Assign the mandatory properties
-        schema._oid = schema_oid
-        schema._conn = conn
-
-        # Assign the optional properties
-        schema._can_create = kwargs.get('can_create')
-        schema._has_usage = kwargs.get('has_usage')
-
-        # If fetch was requested, do complete refresh
-        if fetch:
-            schema.refresh()
+    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'Schema':
+        """
+        Creates an instance of a schema object from the results of a nodes query
+        :param conn: The connection used to execute the nodes query
+        :param kwargs: A row from the nodes query
+        Kwargs:
+            name str: Name of the schema
+            oid int: Object ID of the schema
+            can_create bool: Whether or not the schema can be created by the current user
+            has_usage bool: Whether or not the schema can be used(?)
+        :return:
+        """
+        schema = cls(conn, kwargs['name'])
+        schema._oid = kwargs['oid']
+        schema._can_create = kwargs['can_create']
+        schema._has_usage = kwargs['has_usage']
 
         return schema
 
-    def __init__(self, name: str):
-        #
-
-        self._name: str = name
+    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str):
+        super(Schema, self).__init__(conn, name)
 
         # Declare the optional parameters
-        self._conn: utils.querying.ConnectionWrapper = None
-        self._oid: Optional[int] = None
         self._can_create: Optional[bool] = None
         self._has_usage: Optional[bool] = None
 
         # Declare the child items
-        self._tables: List[Table] = []
-        self._views: List[View] = []
+        self._tables: node.NodeCollection = node.NodeCollection(
+            lambda: Table.get_nodes_for_parent(self._conn, self._oid)
+        )
+        self._views: node.NodeCollection = node.NodeCollection(
+            lambda: View.get_nodes_for_parent(self._conn, self.oid)
+        )
 
     # PROPERTIES ###########################################################
     @property
@@ -69,20 +65,13 @@ class Schema:
     def has_usage(self) -> Optional[bool]:
         return self._has_usage
 
+    # -CHILD OBJECTS #######################################################
     @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def oid(self) -> Optional[int]:
-        return self._oid
-
-    @property
-    def tables(self) -> List[Table]:
+    def tables(self) -> node.NodeCollection:
         return self._tables
 
     @property
-    def views(self) -> List[View]:
+    def views(self) -> node.NodeCollection:
         return self._views
 
     # METHODS ##############################################################

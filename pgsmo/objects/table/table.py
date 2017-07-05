@@ -3,68 +3,51 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional
+from typing import List
 
-import pgsmo.objects.column.column as col
+from pgsmo.objects.column.column import Column
+import pgsmo.objects.node_object as node
 import pgsmo.utils as utils
 
 
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
-class Table:
-    @staticmethod
-    def get_tables_for_schema(conn: utils.querying.ConnectionWrapper, schema_id: int) -> List['Table']:
-        sql = utils.templating.render_template(
-            utils.templating.get_template_path(TEMPLATE_ROOT, 'nodes.sql', conn.version),
-            scid=schema_id
-        )
-
-        cols, rows = utils.querying.execute_dict(conn, sql)
-
-        return [Table._from_node_query(conn, row['oid'], row['name'], **row) for row in rows]
+class Table(node.NodeObject):
+    @classmethod
+    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper, schema_id: int) -> List['Table']:
+        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, scid=schema_id)
 
     @classmethod
-    def _from_node_query(cls, conn, table_oid: int, table_name: str, fetch=True, **kwargs) -> 'Table':
-        table = cls(table_name)
-
-        # Assign the mandatory properties
-        table._oid = table_oid
-        table._conn = conn
-
-        # If fetch was requested, do complete refresh
-        if fetch:
-            table.refresh()
+    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'Table':
+        """
+        Creates a table instance from the results of a node query
+        :param conn: The connection used to execute the node query
+        :param kwargs: A row from the node query
+        Kwargs:
+            oid int: Object ID of the table
+            name str: Name of the table
+        :return: A table instance
+        """
+        table = cls(conn, kwargs['name'])
+        table._oid = kwargs['oid']
 
         return table
 
-    def __init__(self, name: str):
-        self._name: str = name
-
-        # Declare the optional parameters
-        self._conn: Optional[utils.querying.ConnectionWrapper] = None
-        self._oid: Optional[int] = None
+    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str):
+        super(Table, self).__init__(conn, name)
 
         # Declare child items
-        self._columns: Optional[List[col.Column]]
+        self._columns: node.NodeCollection = node.NodeCollection(
+            lambda: Column.get_nodes_for_parent(self._conn, self._oid)
+        )
 
     # PROPERTIES ###########################################################
+    # -CHILD OBJECTS #######################################################
     @property
-    def columns(self) -> Optional[List[col.Column]]:
+    def columns(self) -> node.NodeCollection:
         return self._columns
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def oid(self) -> Optional[int]:
-        return self._oid
 
     # METHODS ##############################################################
     def refresh(self) -> None:
-        self._fetch_columns()
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _fetch_columns(self) -> None:
-        self._columns = col.Column.get_columns_for_table(self._conn, self._oid)
+        self._columns.reset()
