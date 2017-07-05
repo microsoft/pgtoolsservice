@@ -6,7 +6,7 @@
 import unittest
 
 import pgsmo.utils as pgsmo_utils
-import tests.pgsmo.utils as utils
+import tests.pgsmo_tests.utils as utils
 
 
 class TestServerConnection(unittest.TestCase):
