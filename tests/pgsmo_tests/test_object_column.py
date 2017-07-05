@@ -7,6 +7,7 @@ import unittest
 
 from pgsmo.objects.node_object import NodeObject
 from pgsmo.objects.column.column import Column
+from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
 
 COLUMN_ROW = {
@@ -21,7 +22,7 @@ COLUMN_ROW = {
 class TestColumn(unittest.TestCase):
     def test_init(self):
         # If: I create a new column object
-        mock_conn = {}
+        mock_conn = ServerConnection(utils.MockConnection(None))
         mock_name = 'abc'
         mock_datatype = 'character'
         col = Column(mock_conn, mock_name, mock_datatype)
@@ -31,8 +32,9 @@ class TestColumn(unittest.TestCase):
         self.assertIsInstance(col, NodeObject)
 
         # ... All the properties should be assigned properly
-        self.assertEqual(col._oid, None)
-        self.assertEqual(col.oid, None)
+        self.assertIs(col._conn, mock_conn)
+        self.assertIsNone(col._oid, None)
+        self.assertIsNone(col.oid, None)
         self.assertEqual(col._name, mock_name)
         self.assertEqual(col.name, mock_name)
         self.assertEqual(col._datatype, mock_datatype)
@@ -44,7 +46,7 @@ class TestColumn(unittest.TestCase):
 
     def test_from_node_query(self):
         # If: I create a column from a node query
-        mock_conn = {}
+        mock_conn = ServerConnection(utils.MockConnection(None))
         col = Column._from_node_query(mock_conn, **COLUMN_ROW)
 
         # Then:

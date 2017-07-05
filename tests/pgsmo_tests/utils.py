@@ -72,21 +72,27 @@ class MockCursor:
         self._has_been_read = True
 
 
-class MockConnection:
-    def __init__(self, cur: Optional[MockCursor], version: str='90602'):
+class MockConnection(connection):
+    def __init__(self, cur: Optional[MockCursor], version: str='90602', name: str='postgres'):
         # Setup the properties
-        self.server_version = version
+        self._server_version = version
 
         # Setup mocks for the connection
         self.close = mock.MagicMock()
         self.cursor = mock.MagicMock(return_value=cur)
-        self.get_dsn_parameters = mock.MagicMock(return_value={'dbname': 'postgres', 'host': 'localhost'})
+
+        dsn_params = {'dbname': name, 'host': 'localhost'}
+        self.get_dsn_parameters = mock.MagicMock(return_value=dsn_params)
+
+    @property
+    def server_version(self):
+        return self._server_version
 
 
 # OBJECT TEST HELPERS ######################################################
 def get_nodes_for_parent_base(class_, data: dict, get_nodes_for_parent: Callable, validate_obj: Callable):
     # Setup: Create a mockup server connection
-    mock_cur = MockCursor((get_named_mock_columns(data.keys()), [data for i in range(0, 6)]))
+    mock_cur = MockCursor((get_named_mock_columns(list(data.keys())), [data for i in range(0, 6)]))
     mock_conn = MockConnection(mock_cur)
     server_conn = ServerConnection(mock_conn)
 
