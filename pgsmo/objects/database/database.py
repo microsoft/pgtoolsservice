@@ -5,77 +5,59 @@
 
 from typing import List, Optional               # noqa
 
-import pgsmo.objects.schema.schema as schema
+import pgsmo.objects.node_object as node
+from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils as utils
 
 TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
-class Database:
-    @staticmethod
-    def get_databases_for_server(conn: utils.querying.ConnectionWrapper, fetch: bool=True) -> List['Database']:
-        # Execute query to get list of databases
-        sql = utils.templating.render_template(
-            utils.templating.get_template_path(TEMPLATE_ROOT, 'nodes.sql', conn.version),
-            last_system_oid=0
-        )
-        cols, rows = utils.querying.execute_dict(conn, sql)
-
-        return [Database._from_node_query(conn, row['did'], row['name'], fetch, **row) for row in rows]
+class Database(node.NodeObject):
+    @classmethod
+    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper) -> List['Database']:
+        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, last_system_oid=0)
 
     @classmethod
-    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, db_did: int, db_name: str, fetch: bool=True,
-                         **kwargs):
+    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param conn: Connection used to generate the db info query
-        :param db_did: Object ID of the database
-        :param db_name: Name of the database
         :param kwargs: Optional parameters for the database. Values that can be provided:
         Kwargs:
+            did int: Object ID of the database
+            name str: Name of the database
             spcname str: Name of the tablespace for the database
             datallowconn bool: Whether or not the database can be connected to
             cancreate bool: Whether or not the database can be created by the current user
             owner int: Object ID of the user that owns the database
         :return: Instance of the Database
         """
-        db = cls(db_name)
-
-        # Assign the mandatory properties
-        db._did = db_did
-        db._conn = conn
-        db._is_connected = db_name == conn.dsn_parameters.get('dbname')
-
-        # Assign the optional properties
-        db._tablespace = kwargs.get('spcname')
-        db._allow_conn = kwargs.get('datallowconn')
-        db._can_create = kwargs.get('cancreate')
-        db._owner_oid = kwargs.get('owner')
-
-        # If fetch was requested, do complete refresh
-        if fetch and db._is_connected:
-            db.refresh()
+        db = cls(conn, kwargs['name'])
+        db._oid = kwargs['did']
+        db._is_connected = kwargs['name'] == conn.dsn_parameters.get('dbname')
+        db._tablespace = kwargs['spcname']
+        db._allow_conn = kwargs['datallowconn']
+        db._can_create = kwargs['cancreate']
+        db._owner_oid = kwargs['owner']
 
         return db
 
-    def __init__(self, name: str):
+    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str):
         """
         Initializes a new instance of a database
         :param name: Name of the database
         """
-        self._name: str = name
+        super(Database, self).__init__(conn, name)
         self._is_connected: bool = False
 
         # Declare the optional parameters
-        self._conn: utils.querying.ConnectionWrapper = None
-        self._did: Optional[int] = None
         self._tablespace: Optional[str] = None
         self._allow_conn: Optional[bool] = None
         self._can_create: Optional[bool] = None
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-        self._schemas: List[schema.Schema] = None
+        self._schemas: node.NodeCollection = node.NodeCollection(lambda: Schema.get_nodes_for_parent(self._conn))
 
     # PROPERTIES ###########################################################
     # TODO: Create setters for optional values
@@ -89,26 +71,19 @@ class Database:
         return self._can_create
 
     @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def oid(self) -> int:
-        return self._did
-
-    @property
-    def schemas(self) -> List[schema.Schema]:
-        return self._schemas
-
-    @property
     def tablespace(self) -> str:
         return self._tablespace
+
+    # -CHILD OBJECTS #######################################################
+    @property
+    def schemas(self) -> node.NodeCollection:
+        return self._schemas
 
     # METHODS ##############################################################
 
     def refresh(self):
         self._fetch_properties()
-        self._fetch_schemas()
+        self._schemas.reset()
 
     def create(self):
         pass
@@ -122,6 +97,3 @@ class Database:
     # IMPLEMENTATION DETAILS ###############################################
     def _fetch_properties(self):
         pass
-
-    def _fetch_schemas(self):
-        self._schemas = schema.Schema.get_schemas_for_database(self._conn)
