@@ -5,7 +5,7 @@
 
 import unittest
 
-import mock
+import unittest.mock as mock
 
 from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.capabilities.contracts import InitializeResult, CapabilitiesResult

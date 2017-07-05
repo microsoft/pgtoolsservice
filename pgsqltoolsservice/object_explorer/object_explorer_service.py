@@ -60,12 +60,20 @@ class ObjectExplorerService(object):
 
     # REQUEST HANDLERS #####################################################
 
-    def _handle_create_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:        
-        # generate a session id and create a dedicated oe connection
+    def _handle_create_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:
+        """Handle a create object explorer session request"""
+
+        # validate that input parameters are as expected
+        if not self._are_create_session_params_valid(params):
+            request_context.send_response(None)
+            return
+
+        # generate a session id and create a dedicated Object Explorer connection
         session_id = self._generate_uri(params)
         connection_details = self._create_oe_connection(params, session_id)
         self._session_map[session_id] = connection_details
 
+        # create database node metadata object
         dbname = params.options['dbname']
         metadata = ObjectMetadata()
         metadata.metadata_type = 0
@@ -73,6 +81,7 @@ class ObjectExplorerService(object):
         metadata.name = dbname
         metadata.schema = None
 
+        # create database tree node
         node = NodeInfo()
         node.label = dbname
         node.isLeaf = False
@@ -80,25 +89,34 @@ class ObjectExplorerService(object):
         node.node_type = 'Database'
         node.metadata = metadata
 
+        # create response notification notification
         response = SessionCreatedParameters()
         response.session_id = session_id
         response.root_node = node
 
+        # send request return code and session created notification
         request_context.send_response(CreateSessionResponse(session_id))
         request_context.send_notification(SESSION_CREATED_METHOD, response)
 
 
     def _handle_close_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:
+        """Handle close Object Explorer" sessions request"""
         request_context.send_response(True)
 
         
     def _handle_refresh_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
+        """Handle refresh Object Explorer create node request"""
         connection_details = self._session_map[params.session_id]
 
 
     def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
+        """Handle expand Object Explorer tree node request"""
+
         connection_details = self._session_map[params.session_id]
         root_path = self._get_root_path(connection_details)
+
+        # the below dispatch switch block needs to be replaced with some type of look map so it can
+        # easily scale to all the different types of items that may be in the OE tree (TODO: karlb 7/5/2017)
         nodes: List[NodeInfo] = None
         if params.node_path == root_path + '/Views':
             nodes = self._get_view_nodes(params.session_id, root_path)
@@ -114,6 +132,9 @@ class ObjectExplorerService(object):
 
         request_context.send_response(True)
         request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
+
+    def _are_create_session_params_valid(self, params: CreateSessionParameters) -> bool:
+        return params != None and params.options != None and params.options['host'] != None
 
 
     def _get_root_path(self, connection_details: ConnectionDetails) -> str:

@@ -4,73 +4,115 @@
 # --------------------------------------------------------------------------------------------
 
 """Module for testing the object explorer service"""
-
 import unittest
-import io
-from queue import Queue
-import time
 import unittest.mock as mock
+import tests.utils as utils
 
-from pgsqltoolsservice.query_execution import QueryExecutionService
-from pgsqltoolsservice.query_execution.contracts import (
-    ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData)
 from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
-from pgsqltoolsservice.object_explorer.contracts import CreateSessionParameters
+from pgsqltoolsservice.hosting import (JSONRPCServer, ServiceProvider, RequestContext)
+from pgsqltoolsservice.connection import ConnectionService
+from pgsqltoolsservice.object_explorer import ObjectExplorerService
+from pgsqltoolsservice.object_explorer.contracts import (CreateSessionParameters, ExpandParameters)
+
 
 class TestObjectExplorer(unittest.TestCase):
     """Methods for testing the object explorer service"""
 
-    def test_initialization(self):
-        # Setup: Create a capabilities service with a mocked out service
-        # provider
-        mock_server_set_request = mock.MagicMock()
-        mock_server = JSONRPCServer(None, None)
-        mock_server.set_request_handler = mock_server_set_request
-        mock_service_provider = ServiceProvider(mock_server, {}, None)
-        service = QueryExecutionService()
+    TEST_HOST = 'testhost'
+    TEST_DBNAME = 'testdb'
+    TEST_USER = 'testuser'
 
-        # If: I initialize the service
-        service.register(mock_service_provider)
+    def _initialize_test_objects(self) -> None:
+        """Handle common initialization tasks for Object Explorer tests"""
+        self.mock_connection_service = ConnectionService()
+        self.mock_connection_service._connect = mock.MagicMock()
+        server: JSONRPCServer = JSONRPCServer(None, None)
+        server.set_notification_handler = mock.MagicMock()
+        server.set_request_handler = mock.MagicMock()
 
-        # Then:
-        # ... There should have been request handlers set
-        mock_server_set_request.assert_called()
+        self.context: RequestContext = utils.MockRequestContext()
+        self.oe_service: ObjectExplorerService = ObjectExplorerService()
 
-        # ... Each mock call should have an IncomingMessageConfig and a function pointer
-        for mock_call in mock_server_set_request.mock_calls:
-            self.assertIsInstance(
-                mock_call[1][0], IncomingMessageConfiguration)
-            self.assertTrue(callable(mock_call[1][1]))
-
-    def test_get_oe_tree(self):
-        """Test getting a query for a URI from the entire file"""
-
-        self.assertEqual(1, 1)
-        # Set up the service and the query
-        # query_execution_service = QueryExecutionService()
-        # params = ExecuteStringParams()
-        # params.query = 'select version()'
-        # # If I try to get a query using ExecuteStringParams
-        # result = query_execution_service._get_query_from_execute_params(params)
-        # # Then the retrieved query should be the same as the one on the params object
-        # self.assertEqual(result, params.query)
+        self.service_provider: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
+        self.service_provider._services = {
+            constants.CONNECTION_SERVICE_NAME: self.mock_connection_service,
+            constants.OBJECT_EXPLORER_NAME: self.oe_service}
+        self.service_provider.initialize()
 
 
+    def _get_test_root_path_uri(self) -> str:
+        """Returns the Object Explorer test root path URI"""
+        return TestObjectExplorer.TEST_HOST + '/' + TestObjectExplorer.TEST_DBNAME
 
-    def test_create_sessions(self):
+
+    def test_oe_create_session_with_valid_params(self) -> str:
         """Test creating an Object Explorer session"""
 
-        self.assertEqual(1, 1)
+        self._initialize_test_objects()
 
-        # Set up the service and the query
-        # query_execution_service = QueryExecutionService()
-        # params = ExecuteStringParams()
-        # params.query = 'select version()'
-        # # If I try to get a query using ExecuteStringParams
-        # result = query_execution_service._get_query_from_execute_params(params)
-        # # Then the retrieved query should be the same as the one on the params object
-        # self.assertEqual(result, params.query)        
+        self.context: RequestContext = utils.MockRequestContext()
+        params: CreateSessionParameters = CreateSessionParameters()
+        params.options = dict()
+        params.options['host'] = TestObjectExplorer.TEST_HOST
+        params.options['dbname'] = TestObjectExplorer.TEST_DBNAME
+        params.options['user'] = TestObjectExplorer.TEST_USER
+        self.oe_service._handle_create_session_request(self.context, params)
+
+        self.context.send_response.asssert_called_once()
+        self.assertIsNotNone(self.context.last_response_params)
+        self.assertTrue(params.options['host'] in self.context.last_response_params.session_id)
+        self.assertTrue(params.options['dbname'] in self.context.last_response_params.session_id)
+        self.assertTrue(params.options['user'] in self.context.last_response_params.session_id)
+        return self.context.last_response_params.session_id
+
+
+    def test_oe_create_session_with_invalid_params(self) -> None:
+        """Test creating an Object Explorer session with invalid parameters"""
+        # initial common test objects
+        self._initialize_test_objects()
+        # send and validate request
+        params: CreateSessionParameters = CreateSessionParameters()
+        self.oe_service._handle_create_session_request(self.context, params)
+        # check the request context was called once with None to indicate an error
+        self.context.send_response.asssert_called_once()
+        self.assertIsNone(self.context.last_response_params)
+
+
+    def test_oe_expand_session_with_invalid_params(self) -> str:
+        """Test expanding Object Explorer session"""
+        # initialize common test objects and create an OE session
+        self._initialize_test_objects()
+        session_id = self.test_oe_create_session_with_valid_params()
+        # send and validate request
+        params: ExpandParameters = ExpandParameters()
+        params.session_id = session_id
+        params.root_node = self._get_test_root_path_uri()
+        self.oe_service._handle_expand_request(self.context, params)
+        self.context.send_response.asssert_called_once()
+
+
+    def test_oe_refresh_session_with_invalid_params(self) -> str:
+        """Test refreshing an Object Explorer session"""
+        # initialize common test objects and create an OE session
+        self._initialize_test_objects()
+        session_id = self.test_oe_create_session_with_valid_params()
+        # send and validate request
+        params: ExpandParameters = ExpandParameters()
+        params.session_id = session_id
+        params.root_node = self._get_test_root_path_uri()
+        self.oe_service._handle_refresh_request(self.context, params)
+        self.context.send_response.asssert_called_once()
+
+
+    def test_oe_close_session_with_invalid_params(self) -> str:
+        """Test closing an Object Explorer session"""
+        self._initialize_test_objects()
+        session_id = self.test_oe_create_session_with_valid_params()
+        # send and validate request
+        params: CreateSessionParameters = CreateSessionParameters()
+        self.oe_service._handle_close_session_request(self.context, params)
+        self.context.send_response.asssert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()
