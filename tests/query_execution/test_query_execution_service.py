@@ -207,7 +207,7 @@ class TestQueryService(unittest.TestCase):
         batch_ordinal = 0
         result_ordinal = 0
         rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
-        query_results[owner_uri].batches.append(Batch(batch_ordinal, SelectionData(), False))
+        query_results[owner_uri].batches.append(Batch('', batch_ordinal, SelectionData()))
         query_results[owner_uri].batches[batch_ordinal].result_set = ResultSet(result_ordinal, batch_ordinal, None, len(rows), rows)
 
         result_rows = query_results[owner_uri].batches[batch_ordinal].result_set.rows
@@ -289,7 +289,7 @@ class TestQueryService(unittest.TestCase):
     def test_result_set_complete_params(self):
         """Test building parameters for the result set complete notification"""
         # Set up the test with a batch summary and owner uri
-        batch = Batch(10, SelectionData(), False)
+        batch = Batch('', 10, SelectionData())
         batch.has_executed = True
         batch.result_set = ResultSet(1, 10, None, 0, [])
         summary = batch.build_batch_summary()
@@ -515,9 +515,9 @@ class TestQueryService(unittest.TestCase):
         batch_rows = [(1, 2), (3, 4), (5, 6)]
         batch.result_set = ResultSet(0, 0, {}, 3, batch_rows)
         test_query = Query(params.owner_uri, '')
-        test_query.batches = [Batch(0, SelectionData(), False), Batch(1, SelectionData(), False), batch]
+        test_query.batches = [Batch('', 0, SelectionData()), Batch('', 1, SelectionData()), batch]
         other_query = Query('some_other_uri', '')
-        other_query.batches = [Batch(3, SelectionData(), False)]
+        other_query.batches = [Batch('', 3, SelectionData())]
         self.query_execution_service.query_results = {
             test_query.owner_uri: test_query,
             other_query.owner_uri: other_query
@@ -740,31 +740,7 @@ class TestQueryAndBatchObjects(unittest.TestCase):
         # And the query is marked as executed
         self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
 
-    def test_batch_selections_with_initial_selection(self):
-        """Test that the query sets up batch objects with correct selection information"""
-        full_query = '''select * from
-t1;
-select * from t2;;;
-;  ;
-select version(); select * from
-t3 ;
-select * from t2
-'''
-        initial_selection = SelectionData(5, 4, 11, 0)
-
-        # If I build a query that contains several statements
-        query = Query('test_uri', full_query, initial_selection)
-
-        # Then there is a batch for each statement
-        self.assertEqual(len(query.batches), 9)
-
-        # And each batch should have the correct location information
-        expected_selections = [(5, 4, 6, 2), (7, 0, 7, 16), (7, 17, 7, 17), (7, 18, 7, 18), (8, 0, 8, 0), (8, 3, 8, 3), (9, 0, 9, 16), (9, 18, 10, 3),
-                               (11, 0, 11, 15)]
-        for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
-
-    def test_batch_selections_no_initial_selection(self):
+    def test_batch_selections(self):
         """Test that the query sets up batch objects with correct selection information"""
         full_query = '''select * from
 t1;
@@ -786,24 +762,6 @@ select * from t2
                                (6, 0, 6, 15)]
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
-
-    def test_batch_selections_on_first_line(self):
-        """Test that the query sets up batch objects with correct selection information when multiple statements are on the first line"""
-        full_query = '''select * from t1; select * from t12; select
-* from t123;'''
-        initial_selection = SelectionData(5, 4, 6, 11)
-
-        # If I build a query that contains several statements
-        query = Query('test_uri', full_query, initial_selection)
-
-        # Then there is a batch for each statement
-        self.assertEqual(len(query.batches), 3)
-
-        # And each batch should have the correct location information
-        expected_selections = [(5, 4, 5, 20), (5, 22, 5, 39), (5, 41, 6, 11)]
-        for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
-
 
 def get_execute_string_params() -> ExecuteStringParams:
     """Get a simple ExecutestringParams"""
