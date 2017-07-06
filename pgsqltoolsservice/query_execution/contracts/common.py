@@ -119,27 +119,6 @@ class DbCellValue:
         self.row_id: int = row_id
 
 
-class BatchEventParams:
-
-    def __init__(self, batch_summary: BatchSummary, owner_uri: str):
-        self.batch_summary: BatchSummary = batch_summary
-        self.owner_uri: str = owner_uri
-
-
-class MessageParams:
-
-    def __init__(self, message: str, owner_uri: str):
-        self.message: str = message
-        self.owner_uri: str = owner_uri
-
-
-class QueryCompleteParams:
-
-    def __init__(self, batch_summaries: List[BatchSummary], owner_uri: str):
-        self.batch_summaries: List[BatchSummary] = batch_summaries
-        self.owner_uri: str = owner_uri
-
-
 class ResultSetSubset:
 
     def __init__(self, results, owner_uri: str, batch_ordinal: int,
@@ -179,7 +158,7 @@ class ResultSetSubset:
 
         batch = query.batches[batch_ordinal]
         utils.validate.is_not_none("batch", batch)
-        utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, 0)  # TODO: Clean up
+        utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, 0)
 
         result_set = batch.result_set
         utils.validate.is_within_range("start_index", start_index, 0, end_index - 1)

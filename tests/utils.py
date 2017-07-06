@@ -54,6 +54,7 @@ class MockRequestContext(RequestContext):
         self.send_response = mock.Mock(side_effect=self.send_response_impl)
         self.send_notification = mock.Mock(side_effect=self.send_notification_impl)
         self.send_error = mock.Mock(side_effect=self.send_error_impl)
+        self.send_unhandled_error_response = mock.Mock(side_effect=self.send_unhandled_error_response_impl)
 
     def send_response_impl(self, params):
         self.last_response_params = params
@@ -64,6 +65,9 @@ class MockRequestContext(RequestContext):
 
     def send_error_impl(self, message, data=None, code=0):
         self.last_error_message = message
+
+    def send_unhandled_error_response_impl(self, ex: Exception):
+        self.last_error_message = str(ex)
 
 
 class MockConnection(object):

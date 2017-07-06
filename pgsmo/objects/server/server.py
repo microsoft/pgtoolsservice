@@ -3,9 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional, Tuple                # noqa
+from typing import Optional, Tuple                # noqa
+
+from psycopg2.extensions import connection
 
 from pgsmo.objects.database.database import Database
+
+from pgsmo.objects.node_object import NodeCollection
+from pgsmo.objects.role.role import Role
+from pgsmo.objects.tablespace.tablespace import Tablespace
 import pgsmo.utils as utils
 
 
@@ -13,14 +19,13 @@ TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
 
 class Server:
-    def __init__(self, connection, fetch: bool=True):
+    def __init__(self, conn: connection):
         """
         Initializes a server object using the provided connection
-        :param connection: psycopg2 connection
-        :param fetch: Whether or not to fetch all properties of the server and create child objects, defaults to true
+        :param conn: psycopg2 connection
         """
         # Everything we know about the server will be based on the connection
-        self._conn = utils.querying.ConnectionWrapper(connection)
+        self._conn = utils.querying.ConnectionWrapper(conn)
 
         # Declare the server properties
         props = self._conn.connection.get_dsn_parameters()
@@ -29,13 +34,13 @@ class Server:
         self._maintenance_db: str = props['dbname']
 
         # These properties will be defined later
-        self._databases: List[Database] = []
         self._in_recovery: Optional[bool] = None
         self._wal_paused: Optional[bool] = None
 
-        # Fetch the data for the server
-        if fetch:
-            self.refresh()
+        # Declare the child objects
+        self._databases: NodeCollection = NodeCollection(lambda: Database.get_nodes_for_parent(self._conn))
+        self._roles: NodeCollection = NodeCollection(lambda: Role.get_nodes_for_parent(self._conn))
+        self._tablespaces: NodeCollection = NodeCollection(lambda: Tablespace.get_nodes_for_parent(self._conn))
 
     # PROPERTIES ###########################################################
 
@@ -43,11 +48,6 @@ class Server:
     def connection(self):
         """Connection to the server/db that this object will use"""
         return self._conn
-
-    @property
-    def databases(self) -> List[Database]:
-        """Databases that belong to the server"""
-        return self._databases
 
     @property
     def host(self) -> str:
@@ -74,21 +74,30 @@ class Server:
         """Tuple representing the server version: (major, minor, patch)"""
         return self._conn.version
 
+    @property
     def wal_paused(self) -> bool:
         """Whether or not the Write-Ahead Log (WAL) is paused"""
         return self._wal_paused
 
+    # -CHILD OBJECTS #######################################################
+    @property
+    def databases(self) -> NodeCollection:
+        """Databases that belong to the server"""
+        return self._databases
+
+    @property
+    def roles(self) -> NodeCollection:
+        """Roles that belong to the server"""
+        return self._roles
+
+    @property
+    def tablespaces(self) -> NodeCollection:
+        """Tablespaces defined for the server"""
+        return self._tablespaces
+
     # METHODS ##############################################################
-    def refresh(self) -> None:
-        """Refreshes properties of the server and initializes the child items"""
-        self._fetch_recovery_state()
-        self._fetch_databases()
 
     # IMPLEMENTATION DETAILS ###############################################
-
-    def _fetch_databases(self) -> None:
-        self._databases = Database.get_databases_for_server(self._conn)
-
     def _fetch_recovery_state(self) -> None:
         recovery_check_sql = utils.templating.render_template(
             utils.templating.get_template_path(TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)
