@@ -31,12 +31,13 @@ class Batch(object):
 
     def build_batch_summary(self) -> BatchSummary:
         """returns a summary of current batch status"""
-        summary = BatchSummary(self.id, self.selection, self.start_time, self.has_error)
+        if self.start_time is None:
+            self.start_time = datetime.now()
+        summary = BatchSummary(self.id, self.selection, get_time_str(self.start_time), self.has_error)
 
         if self.has_executed:
             # TODO handle multiple result set summaries later
-            elapsed_time = get_elapsed_time_str(self.start_time, self.end_time)
-            summary.execution_elapsed = elapsed_time
+            summary.execution_elapsed = get_elapsed_time_str(self.start_time, self.end_time)
             summary.result_set_summaries: List[ResultSetSummary] = [self.result_set.result_set_summary] if self.result_set is not None else []
             summary.execution_end = get_time_str(self.end_time)
             summary.special_action = None

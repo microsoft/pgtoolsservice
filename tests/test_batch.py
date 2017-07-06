@@ -5,12 +5,14 @@
 
 """Test query_execution.Batch"""
 
+from datetime import datetime
 import unittest
 
 import psycopg2
 
 from pgsqltoolsservice.query_execution.batch import Batch
-from pgsqltoolsservice.query_execution.contracts.common import SelectionData, BatchSummary  # noqa
+from pgsqltoolsservice.query_execution.contracts.common import SelectionData, BatchSummary, ResultSetSummary  # noqa
+from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
 
 
@@ -37,6 +39,24 @@ class TestBatch(unittest.TestCase):
         self.assertIsNotNone(batch_summary.execution_start)
         self.assertIsNone(batch_summary.execution_end)
         self.assertIsNone(batch_summary.result_set_summaries)
+        self.assertIsNone(batch_summary.special_action)
+        self.assertIsNone(batch_summary.execution_elapsed)
+
+        # Check batch summary parameters after batch has executed,
+        # a result set has been added, and
+        # we re-call build batch summary
+        self.batch.has_executed = True
+        self.batch.end_time = datetime.now()
+        self.batch.result_set = ResultSet()
+        batch_summary = self.batch.build_batch_summary()
+        self.assertEqual(batch_summary.id, 0)
+        self.assertEqual(batch_summary.selection, self.default_sel_data)
+        self.assertFalse(batch_summary.has_error)
+        self.assertIsNotNone(batch_summary.execution_start)
+        self.assertIsNotNone(batch_summary.execution_end)
+        self.assertIsNotNone(batch_summary.execution_elapsed)
+        self.assertIsNotNone(batch_summary.result_set_summaries)
+        self.assertTrue(isinstance(batch_summary.result_set_summaries[0], ResultSetSummary))
         self.assertIsNone(batch_summary.special_action)
 
     def test_batch_execution_updates_batch(self):

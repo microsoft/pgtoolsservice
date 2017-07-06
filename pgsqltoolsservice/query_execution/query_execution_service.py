@@ -16,17 +16,20 @@ from pgsqltoolsservice.query_execution.contracts import (
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
     QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams,
-    BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams
+    BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams,
+    BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams,
+    DISPOSE_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.common import (
-    BatchEventParams, ResultMessage,
-    QueryCompleteParams, SubsetResult, ResultSetSubset,
-    QueryCancelResult
+    ResultMessage, SubsetResult, ResultSetSubset, QueryCancelResult
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
 import pgsqltoolsservice.utils as utils
+
+CANCELATION_QUERY = 'SELECT pg_cancel_backend (%s)'
+NO_QUERY_MESSAGE = 'QueryServiceRequestsNoQuery'
 
 
 class QueryExecutionService(object):
@@ -57,6 +60,9 @@ class QueryExecutionService(object):
             CANCEL_REQUEST, self._handle_cancel_query_request
         )
 
+        self._service_provider.server.set_request_handler(
+            DISPOSE_REQUEST, self._handle_dispose_request
+        )
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Query execution service successfully initialized')
 
@@ -83,7 +89,7 @@ class QueryExecutionService(object):
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(
                     'Encountered exception while handling query request')  # TODO: Localize
-            request_context.send_error('Unhandled exception: {}'.format(str(e)))  # TODO: Localize
+            request_context.send_unhandled_error_response(e)
             return
 
         thread = threading.Thread(
@@ -107,7 +113,7 @@ class QueryExecutionService(object):
             if params.owner_uri in self.query_results:
                 query = self.query_results[params.owner_uri]
             else:
-                request_context.send_response(QueryCancelResult('QueryServiceRequestsNoQuery'))  # TODO: Localize
+                request_context.send_response(QueryCancelResult(NO_QUERY_MESSAGE))  # TODO: Localize
                 return
 
             # Only cancel the query if we're in a cancellable state
@@ -126,7 +132,22 @@ class QueryExecutionService(object):
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(str(e))
-            request_context.send_error('Unhandled exception: {}'.format(str(e)))  # TODO: Localize
+            request_context.send_unhandled_error_response(e)
+
+    def _handle_dispose_request(self, request_context: RequestContext, params: QueryDisposeParams):
+        try:
+            if params.owner_uri not in self.query_results:
+                request_context.send_error(NO_QUERY_MESSAGE)  # TODO: Localize
+                return
+            # Make sure to cancel the query first if it's not executed.
+            # If it's not started, then make sure it never starts. If it's executing, make sure
+            # that we stop it
+            if self.query_results[params.owner_uri].execution_state is not ExecutionState.EXECUTED:
+                self.cancel_query(params.owner_uri)
+            del self.query_results[params.owner_uri]
+            request_context.send_response({})
+        except Exception as e:
+            request_context.send_unhandled_error_response(e)
 
     def cancel_query(self, owner_uri: str):
         conn = self._get_connection(owner_uri, ConnectionType.QUERY)
@@ -136,7 +157,7 @@ class QueryExecutionService(object):
         backend_pid = conn.get_backend_pid()
         cur = cancel_conn.cursor()
         try:
-            cur.execute("SELECT pg_cancel_backend (%s)", (backend_pid,))
+            cur.execute(CANCELATION_QUERY, (backend_pid,))
         # This exception occurs when we run SELECT pg_cancel_backend on
         # a query that's currently executing
         except BaseException:
@@ -149,7 +170,7 @@ class QueryExecutionService(object):
 
         # Set up batch execution callback methods for sending notifications
         def _batch_execution_started_callback(query: Query, batch: Batch) -> None:
-            batch_event_params = BatchEventParams(batch.build_batch_summary(), query.owner_uri)
+            batch_event_params = BatchNotificationParams(batch.build_batch_summary(), params.owner_uri)
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
         def _batch_execution_finished_callback(query: Query, batch: Batch) -> None:
@@ -173,7 +194,7 @@ class QueryExecutionService(object):
                 request_context.send_notification(MESSAGE_NOTIFICATION, message_params)
 
             # send query/batchComplete and query/complete response
-            batch_event_params = BatchEventParams(batch_summary, query.owner_uri)
+            batch_event_params = BatchNotificationParams(batch_summary, params.owner_uri)
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
 
         query = self.query_results[params.owner_uri]
@@ -185,7 +206,7 @@ class QueryExecutionService(object):
             self._resolve_query_exception(e, query, request_context, conn)
         finally:
             # Send a query complete notification
-            query_complete_params = QueryCompleteParams([batch.build_batch_summary() for batch in query.batches], params.owner_uri)
+            query_complete_params = QueryCompleteNotificationParams(params.owner_uri, [batch.build_batch_summary() for batch in query.batches])
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
     def _get_connection(self, owner_uri: str, connection_type: ConnectionType) -> 'psycopg2.connection':
@@ -207,7 +228,6 @@ class QueryExecutionService(object):
         # Check if none or empty list
         if summaries:
             result_set_summary = summaries[0]
-        utils.log.log_debug(self._service_provider.logger, f'result set summary is {result_set_summary}')
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
     def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool=False):

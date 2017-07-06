@@ -16,9 +16,10 @@ class BatchNotificationParams:
         owner_uri:      URI for the editor that owns the query
     """
 
-    def __init__(self, owner_uri: str, batch_summary: BatchSummary):
+    def __init__(self, batch_summary: BatchSummary, owner_uri: str):
         self.batch_summary: BatchSummary = batch_summary
         self.owner_uri: str = owner_uri
+        
 
 
 BATCH_COMPLETE_NOTIFICATION = 'query/batchComplete'

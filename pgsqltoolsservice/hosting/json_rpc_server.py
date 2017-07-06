@@ -353,6 +353,10 @@ class RequestContext:
         message = JSONRPCMessage.create_error(self._message.message_id, code, message, data)
         self._queue.put(message)
 
+    def send_unhandled_error_response(self, ex: Exception):
+        """Send response for any unhandled exceptions"""
+        self.send_error('Unhandled exception: {}'.format(str(ex)))  # TODO: Localize
+
 
 class NotificationContext:
     """

@@ -10,10 +10,11 @@ from unittest import mock
 from typing import List, Dict  # noqa
 
 import psycopg2
+from dateutil import parser
 
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.connection.contracts.common import ConnectionType
-from pgsqltoolsservice.query_execution import QueryExecutionService
+from pgsqltoolsservice.query_execution.query_execution_service import QueryExecutionService, CANCELATION_QUERY, NO_QUERY_MESSAGE
 from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData, ExecuteRequestParamsBase)
 from pgsqltoolsservice.utils import constants
@@ -21,7 +22,7 @@ from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMe
 from pgsqltoolsservice.query_execution.contracts import (
     DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
-    QueryCancelResult)
+    QueryCancelResult, QueryDisposeParams)
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
@@ -154,7 +155,7 @@ class TestQueryService(unittest.TestCase):
         self.query_execution_service._handle_execute_query_request(self.request_context, params)
 
         # Then it responds with an error instead of a regular response
-        self.request_context.send_error.assert_called_once()
+        self.request_context.send_unhandled_error_response.assert_called_once()
         self.request_context.send_response.assert_not_called()
 
     def test_query_request_error_handling(self):
@@ -395,6 +396,10 @@ class TestQueryService(unittest.TestCase):
         self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
         self.assertEqual(self.request_context.last_response_params.messages, None)
 
+        # Check the positional args for the first arg of of the first (and only) call
+        # is the query string to cancel the ongoing query
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+
         # The batch is also marked as canceled and executed. There should have been no commits and
         # we should have rolled back. During execute_query call,
         self.assertTrue(query.is_canceled)
@@ -434,6 +439,9 @@ class TestQueryService(unittest.TestCase):
         self.cursor_cancel.execute.assert_called_once()
         self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
         self.assertEqual(self.request_context.last_response_params.messages, None)
+        # Check the positional args for the first arg of of the first (and only) call
+        # is the query string to cancel the ongoing query
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
 
         # The batch should be marked as canceled, the state should be executed, and we should have rolled back
         self.assertTrue(query.is_canceled)
@@ -530,6 +538,117 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(result_subset.rows[1][0].display_value, str(batch_rows[2][0]))
         self.assertEqual(result_subset.rows[1][1].display_value, str(batch_rows[2][1]))
 
+    def test_time(self):
+        """Test to see that the start, end, and execution times are properly set"""
+
+        # Set up and run handler for executing queries
+        params = get_execute_string_params()
+        self.query_execution_service._handle_execute_query_request(self.request_context, params)
+        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
+        # Grab all notification calls and make sure that we call the notifications that we're interested in
+        # exactly once
+        notification_calls = self.request_context.send_notification.mock_calls
+        call_methods_list = [call[1][0] for call in notification_calls]
+        self.assertEqual(call_methods_list.count(BATCH_START_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(BATCH_COMPLETE_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(QUERY_COMPLETE_NOTIFICATION), 1)
+
+        start_time = None
+        for call in notification_calls:
+            # Check that only the execution start time is defined for batch start
+            if call[1][0] is BATCH_START_NOTIFICATION:
+                start_time = call[1][1].batch_summary.execution_start
+                self.assertIsNotNone(start_time)
+                self.assertIsNone(call[1][1].batch_summary.execution_end)
+                self.assertIsNone(call[1][1].batch_summary.execution_elapsed)
+            elif call[1][0] is BATCH_COMPLETE_NOTIFICATION or call[1][0] is QUERY_COMPLETE_NOTIFICATION:
+                # Set batch summary depending on complete notification type
+                batch_summary = None
+                if call[1][0] is BATCH_COMPLETE_NOTIFICATION:
+                    batch_summary = call[1][1].batch_summary
+                else:
+                    self.assertEqual(len(call[1][1].batch_summaries), 1)
+                    batch_summary = call[1][1].batch_summaries[0]
+                # Make sure that all time-related fields are set and make sense
+                self.assertEqual(start_time, batch_summary.execution_start)
+                self.assertIsNotNone(batch_summary.execution_start)
+                self.assertIsNotNone(batch_summary.execution_end)
+                self.assertIsNotNone(batch_summary.execution_elapsed)
+                self.assertLessEqual(parser.parse(batch_summary.execution_start), parser.parse(batch_summary.execution_end))
+                self.assertEqual(batch_summary.execution_elapsed, str(parser.parse(batch_summary.execution_end) - parser.parse(batch_summary.execution_start)))
+
+    def test_query_disposal_success_executed(self):
+        """
+        Test for handling query/dispose request in case where disposal is possible
+        and query that we're attempting to dispose is already finished executing
+        """
+        # Initialize results
+        uri = 'test_uri'
+        self.query_execution_service.query_results[uri] = Query(uri, '')
+        self.query_execution_service.query_results[uri].execution_state = ExecutionState.EXECUTED
+        params = QueryDisposeParams()
+        params.owner_uri = uri
+
+        # If we attempt to dispose of an existing owner uri's query results when the result is populated
+        self.query_execution_service._handle_dispose_request(self.request_context, params)
+
+        # Then the uri key should no longer be in the results, and we sent an empty response
+        self.assertTrue(uri not in self.query_execution_service.query_results)
+        self.request_context.send_response.assert_called_once_with({})
+        self.request_context.send_error.assert_not_called()
+        self.cursor_cancel.execute.assert_not_called()
+
+    def test_query_disposal_failure(self):
+        """Test for handling query/dispose request in case where disposal is not possible"""
+        # Note that query_results[uri] is never populated
+        uri = 'test_uri'
+        params = QueryDisposeParams()
+        params.owner_uri = uri
+
+        # If we attempt to dispose of a query result that doesn't exist
+        self.query_execution_service._handle_dispose_request(self.request_context, params)
+
+        # Then that result still doesn't exist, and we send an error as a response
+        self.assertTrue(uri not in self.query_execution_service.query_results)
+        self.request_context.send_response.assert_not_called()
+        self.request_context.send_error.assert_called_once_with(NO_QUERY_MESSAGE)
+
+    def test_query_disposal_with_query_executing(self):
+        """Test query disposal while a query is executing"""
+        uri = 'test_uri'
+        self.query_execution_service.query_results[uri] = Query(uri, '')
+        self.query_execution_service.query_results[uri].execution_state = ExecutionState.EXECUTING
+        params = QueryDisposeParams()
+        params.owner_uri = uri
+
+        self.query_execution_service._handle_dispose_request(self.request_context, params)
+
+        self.assertTrue(uri not in self.query_execution_service.query_results)
+        self.request_context.send_response.assert_called_once_with({})
+        self.request_context.send_error.assert_not_called()
+        self.cursor_cancel.execute.assert_called_once()
+        # Check the positional args for the first arg of of the first (and only) call
+        # is the query string to cancel the ongoing query
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+
+    def test_query_disposal_with_query_not_started(self):
+        """Test query disposal while a query has not started executing"""
+        uri = 'test_uri'
+        self.query_execution_service.query_results[uri] = Query(uri, '')
+        params = QueryDisposeParams()
+        params.owner_uri = uri
+
+        self.query_execution_service._handle_dispose_request(self.request_context, params)
+
+        self.assertTrue(uri not in self.query_execution_service.query_results)
+        self.request_context.send_response.assert_called_once_with({})
+        self.request_context.send_error.assert_not_called()
+        self.cursor_cancel.execute.assert_called_once()
+        # Check the positional args for the first arg of of the first (and only) call
+        # is the query string to cancel the ongoing query
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+    
     def test_execution_error_rolls_back_transaction(self):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open

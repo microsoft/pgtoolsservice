@@ -11,7 +11,7 @@ from jinja2 import Environment, FileSystemLoader, Template
 from psycopg2.extensions import adapt
 
 TEMPLATE_ENVIRONMENTS: Dict[str, Environment] = {}
-TEMPLATE_FOLDER_REGEX = re.compile('(\d+)\.(\d+)(?:_(\w+))?')
+TEMPLATE_FOLDER_REGEX = re.compile('(\d+)\.(\d+)(?:_(\w+))?$')
 TEMPLATE_NON_DISCOVERED_NAMES: List[str] = ['macros']
 
 
