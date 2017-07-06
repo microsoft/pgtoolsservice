@@ -11,7 +11,7 @@ import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, os.path.join('templates', 'function'))
+TEMPLATE_ROOT = templating.get_template_root(__file__, os.path.join('templates', 'functions'))
 
 
 class Function(node.NodeObject):
@@ -39,6 +39,8 @@ class Function(node.NodeObject):
         func._lanname = kwargs['lanname']
         func._owner = kwargs['funcowner']
         func._description = kwargs['description']
+
+        return func
 
     def __init__(self, conn: querying.ServerConnection, name: str):
         super(Function, self).__init__(conn, name)
