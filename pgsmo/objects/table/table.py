@@ -7,19 +7,20 @@ from typing import List
 
 from pgsmo.objects.column.column import Column
 import pgsmo.objects.node_object as node
-import pgsmo.utils as utils
+import pgsmo.utils.querying as querying
+import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
+TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
 
 class Table(node.NodeObject):
     @classmethod
-    def get_nodes_for_parent(cls, conn: utils.querying.ServerConnection, schema_id: int) -> List['Table']:
+    def get_nodes_for_parent(cls, conn: querying.ServerConnection, schema_id: int) -> List['Table']:
         return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, scid=schema_id)
 
     @classmethod
-    def _from_node_query(cls, conn: utils.querying.ServerConnection, **kwargs) -> 'Table':
+    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Table':
         """
         Creates a table instance from the results of a node query
         :param conn: The connection used to execute the node query
@@ -34,7 +35,7 @@ class Table(node.NodeObject):
 
         return table
 
-    def __init__(self, conn: utils.querying.ServerConnection, name: str):
+    def __init__(self, conn: querying.ServerConnection, name: str):
         super(Table, self).__init__(conn, name)
 
         # Declare child items
