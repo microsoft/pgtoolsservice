@@ -179,7 +179,7 @@ class ResultSetSubset:
 
         batch = query.batches[batch_ordinal]
         utils.validate.is_not_none("batch", batch)
-        utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, 0)  # TODO: Clean up
+        utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, 0)
 
         result_set = batch.result_set
         utils.validate.is_within_range("start_index", start_index, 0, end_index - 1)

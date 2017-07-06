@@ -188,10 +188,13 @@ class QueryExecutionService(object):
             query_complete_params = QueryCompleteParams([batch.build_batch_summary() for batch in query.batches], params.owner_uri)
             request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
-    def _get_connection(self, owner_uri: str, connection_type: ConnectionType):
+    def _get_connection(self, owner_uri: str, connection_type: ConnectionType) -> 'psycopg2.connection':
         """
         Get a connection for the given owner URI and connection type from the connection service
 
+        :param owner_uri: the URI to get the connection for
+        :param connection_type: the type of connection to get
+        :returns: a psycopg2 connection
         :raises LookupError: if there is no connection service
         :raises ValueError: if there is no connection corresponding to the given owner_uri
         """

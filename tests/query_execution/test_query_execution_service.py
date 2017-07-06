@@ -417,6 +417,9 @@ class TestQueryService(unittest.TestCase):
             self.request_context.send_response.side_effect = real_send_response
             self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
 
+        # Set the send_response method to have a side effect of cancelling the query, so that when we send the empty
+        # response for starting the query, the query gets canceled. The side effect also resets send_response to its
+        # normal behavior, so that the response to the cancel query request does not try to cancel the query again.
         self.request_context.send_response = mock.Mock(side_effect=cancel_before_execute_side_effect)
 
         # If we start the execute query request handler with a cancel query request before the query execution
