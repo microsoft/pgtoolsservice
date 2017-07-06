@@ -4,11 +4,13 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
+import unittest.mock as mock
 
 from pgsmo.objects.node_object import NodeObject, NodeCollection
 from pgsmo.objects.schema.schema import Schema
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
+
 
 SCHEMA_ROW = {
     'name': 'schema',
@@ -21,29 +23,9 @@ SCHEMA_ROW = {
 class TestSchema(unittest.TestCase):
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
-        # If: I create a new schema object
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        schema = Schema(mock_conn, SCHEMA_ROW['name'])
-
-        # Then:
-        # ... The schema object should be an instance of a schema
-        self.assertIsInstance(schema, NodeObject)
-        self.assertIsInstance(schema, Schema)
-
-        # ... NodeObject basic properties should be set appropriately
-        self.assertIs(schema._conn, mock_conn)
-        self.assertEqual(schema._name, SCHEMA_ROW['name'])
-        self.assertEqual(schema.name, SCHEMA_ROW['name'])
-        self.assertIsNone(schema._oid)
-        self.assertIsNone(schema.oid)
-
-        # ... The rest of the properties should be none
-        for prop in ['_can_create', 'can_create', '_has_usage', 'has_usage']:
-            self.assertIsNone(getattr(schema, prop))
-
-        # ... The child properties should be assigned to node collections
-        for coll in ['_tables', 'tables', '_views', 'views']:
-            self.assertIsInstance(getattr(schema, coll), NodeCollection)
+        props = ['_can_create', 'can_create', '_has_usage', 'has_usage']
+        collections = ['_tables', 'tables', '_views', 'views']
+        utils.init_base(Schema, props, collections)
 
     def test_from_node_query(self):
         # If: I create a new schema object from a node row
@@ -60,6 +42,21 @@ class TestSchema(unittest.TestCase):
     def test_from_nodes_for_parent(self):
         # Use the test helper for this method
         utils.get_nodes_for_parent_base(Schema, SCHEMA_ROW, Schema.get_nodes_for_parent, self._validate_schema)
+
+    # METHOD TESTS #########################################################
+    def test_refresh(self):
+        # Setup: Create a schema object and mock up the node collection reset methods
+        mock_conn = ServerConnection(utils.MockConnection(None))
+        schema = Schema._from_node_query(mock_conn, **SCHEMA_ROW)
+        schema._tables.reset = mock.MagicMock()
+        schema._views.reset = mock.MagicMock()
+
+        # If: I refresh a schema object
+        schema.refresh()
+
+        # Then: The child object node collections should have been reset
+        schema._tables.reset.assert_called_once()
+        schema._views.reset.assert_called_once()
 
     def _validate_schema(self, schema: Schema, mock_conn: ServerConnection):
         # NodeObject basic properties
