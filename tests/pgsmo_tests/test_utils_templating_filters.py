@@ -82,4 +82,3 @@ class TestTemplatingFilters(unittest.TestCase):
         # Then: It should be quoted
         self.assertTrue(pgsmo_utils.templating.needsQuoting('Something+Else', False))
         self.assertTrue(pgsmo_utils.templating.needsQuoting('Something+Else', True))
-

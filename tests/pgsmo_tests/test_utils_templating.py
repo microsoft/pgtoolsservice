@@ -116,6 +116,7 @@ class TestTemplatingUtils(unittest.TestCase):
         # Then: The string should be properly rendered
         self.assertEqual(rendered, 'bar')
 
+
 # Mock setup for a template tree
 TEMPLATE_ROOT_NAME = 'templates'
 TEMPLATE_EXACT_1 = (path.join(TEMPLATE_ROOT_NAME, '9.0'), [], ['template.sql'])

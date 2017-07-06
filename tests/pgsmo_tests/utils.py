@@ -8,7 +8,7 @@ import unittest
 import unittest.mock as mock
 
 from psycopg2 import DatabaseError
-from psycopg2.extensions import Column, connection, cursor
+from psycopg2.extensions import Column, connection
 
 from pgsmo.objects.node_object import NodeObject, NodeCollection
 from pgsmo.utils.querying import ServerConnection

@@ -32,7 +32,7 @@ class TestTablespace(unittest.TestCase):
             Tablespace.get_nodes_for_parent,
             self._validate_tablespace
         )
-        
+
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_tablespace(self, obj: Tablespace, mock_conn: ServerConnection):
         # NodeObject basic properties
@@ -45,4 +45,3 @@ class TestTablespace(unittest.TestCase):
         # Tablespace-specific properties
         self.assertEqual(obj._owner, NODE_ROW['owner'])
         self.assertEqual(obj.owner, NODE_ROW['owner'])
-

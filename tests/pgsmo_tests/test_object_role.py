@@ -5,7 +5,6 @@
 
 import unittest
 
-from pgsmo.objects.node_object import NodeObject
 from pgsmo.objects.role.role import Role
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils

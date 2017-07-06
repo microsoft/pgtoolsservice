@@ -240,6 +240,7 @@ def needsQuoting(key, forTypes):
 def ScanKeywordExtraLookup(key):
     return (key in _EXTRA_KEYWORDS and _EXTRA_KEYWORDS[key]) or _KEYWORD_DICT.get(key)
 
+
 # UNRESERVED_KEYWORD      0
 # COL_NAME_KEYWORD        1
 # TYPE_FUNC_NAME_KEYWORD  2
@@ -324,4 +325,3 @@ _KEYWORD_DICT = {
     "xmlconcat": 1, "xmlelement": 1, "xmlexists": 1, "xmlforest": 1, "xmlparse": 1, "xmlpi": 1, "xmlroot": 1,
     "xmlserialize": 1, "year": 0, "yes": 0, "zone": 0
 }
-
