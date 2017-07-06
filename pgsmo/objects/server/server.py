@@ -28,7 +28,7 @@ class Server:
         self._conn = utils.querying.ServerConnection(conn)
 
         # Declare the server properties
-        props = self._conn.connection.get_dsn_parameters()
+        props = self._conn.dsn_parameters
         self._host: str = props['host']
         self._port: int = int(props['port'])
         self._maintenance_db: str = props['dbname']
@@ -55,7 +55,7 @@ class Server:
         return self._host
 
     @property
-    def in_recovery(self) -> bool:
+    def in_recovery(self) -> Optional[bool]:
         """Whether or not the server is in recovery mode"""
         return self._in_recovery
 
@@ -75,7 +75,7 @@ class Server:
         return self._conn.version
 
     @property
-    def wal_paused(self) -> bool:
+    def wal_paused(self) -> Optional[bool]:
         """Whether or not the Write-Ahead Log (WAL) is paused"""
         return self._wal_paused
 
@@ -98,15 +98,16 @@ class Server:
     # METHODS ##############################################################
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _fetch_recovery_state(self) -> None:
-        recovery_check_sql = utils.templating.render_template(
-            utils.templating.get_template_path(TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)
-        )
-
-        cols, rows = self._conn.execute_dict(recovery_check_sql)
-        if len(rows) > 0:
-            self._in_recovery = rows[0]['inrecovery']
-            self._wal_paused = rows[0]['isreplaypaused']
-        else:
-            self._in_recovery = None
-            self._wal_paused = None
+    # Commenting out until support for extended properties is added
+    # def _fetch_recovery_state(self) -> None:
+    #     recovery_check_sql = utils.templating.render_template(
+    #         utils.templating.get_template_path(TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)
+    #     )
+    #
+    #     cols, rows = self._conn.execute_dict(recovery_check_sql)
+    #     if len(rows) > 0:
+    #         self._in_recovery = rows[0]['inrecovery']
+    #         self._wal_paused = rows[0]['isreplaypaused']
+    #     else:
+    #         self._in_recovery = None
+    #         self._wal_paused = None
