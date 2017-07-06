@@ -56,7 +56,7 @@ class Server:
 
     @property
     def in_recovery(self) -> Optional[bool]:
-        """Whether or not the server is in recovery mode"""
+        """Whether or not the server is in recovery mode. If None, value was not loaded from server"""
         return self._in_recovery
 
     @property
@@ -76,7 +76,7 @@ class Server:
 
     @property
     def wal_paused(self) -> Optional[bool]:
-        """Whether or not the Write-Ahead Log (WAL) is paused"""
+        """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
         return self._wal_paused
 
     # -CHILD OBJECTS #######################################################
@@ -99,6 +99,7 @@ class Server:
 
     # IMPLEMENTATION DETAILS ###############################################
     # Commenting out until support for extended properties is added
+    # See https://github.com/Microsoft/carbon/issues/1342
     # def _fetch_recovery_state(self) -> None:
     #     recovery_check_sql = utils.templating.render_template(
     #         utils.templating.get_template_path(TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)

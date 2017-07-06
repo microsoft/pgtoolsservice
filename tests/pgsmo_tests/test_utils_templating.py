@@ -85,9 +85,9 @@ class TestTemplatingUtils(unittest.TestCase):
         self.assertIsInstance(env, jinja2.Environment)
 
         # ... The environment should have the proper filters defined
-        self.assertEquals(env.filters['qtLiteral'], pgsmo_utils.templating.qtLiteral)
-        self.assertEquals(env.filters['qtIdent'], pgsmo_utils.templating.qtIdent)
-        self.assertEquals(env.filters['qtTypeIdent'], pgsmo_utils.templating.qtTypeIdent)
+        self.assertEquals(env.filters['qtLiteral'], pgsmo_utils.templating.qt_literal)
+        self.assertEquals(env.filters['qtIdent'], pgsmo_utils.templating.qt_ident)
+        self.assertEquals(env.filters['qtTypeIdent'], pgsmo_utils.templating.qt_type_ident)
 
     def test_render_template_cached(self):
         # NOTE: This test has an external dependency on dummy_template.txt

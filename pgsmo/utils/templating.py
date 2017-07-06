@@ -88,9 +88,9 @@ def render_template(template_path: str, **context) -> str:
 
         # Create the environment and add the basic filters
         new_env: Environment = Environment(loader=loader)
-        new_env.filters['qtLiteral'] = qtLiteral
-        new_env.filters['qtIdent'] = qtIdent
-        new_env.filters['qtTypeIdent'] = qtTypeIdent
+        new_env.filters['qtLiteral'] = qt_literal
+        new_env.filters['qtIdent'] = qt_ident
+        new_env.filters['qtTypeIdent'] = qt_type_ident
 
         TEMPLATE_ENVIRONMENTS[path] = new_env
 
@@ -119,7 +119,7 @@ def render_template_string(source, **context):
 ##########################################################################
 
 
-def qtLiteral(value):
+def qt_literal(value):
     adapted = adapt(value)
 
     # Not all adapted objects have encoding
@@ -137,7 +137,7 @@ def qtLiteral(value):
     return res
 
 
-def qtTypeIdent(conn, *args):
+def qt_type_ident(conn, *args):
     # We're not using the conn object at the moment, but - we will modify the
     # logic to use the server version specific keywords later.
     res = None
@@ -148,7 +148,7 @@ def qtTypeIdent(conn, *args):
             continue
         value = val
 
-        if needsQuoting(val, True):
+        if needs_quoting(val, True):
             value = value.replace("\"", "\"\"")
             value = "\"" + value + "\""
 
@@ -157,7 +157,7 @@ def qtTypeIdent(conn, *args):
     return res
 
 
-def qtIdent(conn, *args):
+def qt_ident(conn, *args):
     # We're not using the conn object at the moment, but - we will modify the
     # logic to use the server version specific keywords later.
     res = None
@@ -165,14 +165,14 @@ def qtIdent(conn, *args):
 
     for val in args:
         if type(val) == list:
-            return map(lambda w: qtIdent(conn, w), val)
+            return map(lambda w: qt_ident(conn, w), val)
 
         if len(val) == 0:
             continue
 
         value = val
 
-        if needsQuoting(val, False):
+        if needs_quoting(val, False):
             value = value.replace("\"", "\"\"")
             value = "\"" + value + "\""
 
@@ -181,18 +181,18 @@ def qtIdent(conn, *args):
     return res
 
 
-def needsQuoting(key, forTypes):
+def needs_quoting(key, for_types):
     value = key
-    valNoArray = value
+    val_no_array = value
 
     # check if the string is number or not
     if isinstance(value, int):
         return True
     # certain types should not be quoted even though it contains a space. Evilness.
-    elif forTypes and value[-2:] == u"[]":
-        valNoArray = value[:-2]
+    elif for_types and value[-2:] == u"[]":
+        val_no_array = value[:-2]
 
-    if forTypes and valNoArray.lower() in [
+    if for_types and val_no_array.lower() in [
         u'bit varying',
         u'"char"',
         u'character varying',
@@ -207,21 +207,21 @@ def needsQuoting(key, forTypes):
         return False
 
     # If already quoted?, If yes then do not quote again
-    if forTypes and valNoArray:
-        if valNoArray.startswith('"') \
-                or valNoArray.endswith('"'):
+    if for_types and val_no_array:
+        if val_no_array.startswith('"') \
+                or val_no_array.endswith('"'):
             return False
 
-    if u'0' <= valNoArray[0] <= u'9':
+    if u'0' <= val_no_array[0] <= u'9':
         return True
 
-    for c in valNoArray:
+    for c in val_no_array:
         if (not (u'a' <= c <= u'z') and c != u'_' and
                 not (u'0' <= c <= u'9')):
             return True
 
     # check string is keywaord or not
-    category = ScanKeywordExtraLookup(value)
+    category = scan_keyword_extra_lookup(value)
 
     if category is None:
         return False
@@ -231,13 +231,13 @@ def needsQuoting(key, forTypes):
         return False
 
     # COL_NAME_KEYWORD
-    if forTypes and category == 1:
+    if for_types and category == 1:
         return False
 
     return True
 
 
-def ScanKeywordExtraLookup(key):
+def scan_keyword_extra_lookup(key):
     return (key in _EXTRA_KEYWORDS and _EXTRA_KEYWORDS[key]) or _KEYWORD_DICT.get(key)
 
 
