@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 from enum import Enum
-from typing import Callable, List, Optional  # noqa
+from typing import Callable, Dict, List, Optional  # noqa
 
 import sqlparse
 
@@ -71,40 +71,39 @@ class Query:
             self.execution_state = ExecutionState.EXECUTED
 
 
-def _compute_selection_data_for_batches(batches: List[str], full_text: str, query_selection: SelectionData = None):
-    # Build a map of starting indices for each line
-    line_map = {}
+def _compute_selection_data_for_batches(batches: List[str], full_text: str, query_selection: SelectionData = None) -> List[SelectionData]:
+    # Map the starting index of each line to the line number
+    line_map: Dict[int, int] = {}
     search_offset = 0
     for line_num, line in enumerate(full_text.split('\n')):
         start_index = full_text.index(line, search_offset)
-        line_map[start_index] = line_num
+        line_map[start_index] = line_num + (query_selection.start_line if query_selection is not None else 0)
         search_offset = start_index + len(line)
 
     # Iterate through the batches to build selection data
-    selection_data = []
+    selection_data: List[SelectionData] = []
     search_offset = 0
     for batch in batches:
         # Calculate the starting line number and column
         start_index = full_text.index(batch, search_offset)
-        start_line_index = max(filter(lambda i: i <= start_index, line_map.keys()))
+        start_line_index = max(filter(lambda line_index: line_index <= start_index, line_map.keys()))
         start_line_num = line_map[start_line_index]
         start_col_num = start_index - start_line_index
 
         # Calculate the ending line number and column
         end_index = start_index + len(batch)
-        end_line_index = max(filter(lambda i: i < end_index, line_map.keys()))
+        end_line_index = max(filter(lambda line_index: line_index < end_index, line_map.keys()))
         end_line_num = line_map[end_line_index]
-        end_col_num = end_index - end_line_index
+        end_col_num = end_index - end_line_index - 1
 
         # Update the information to account for the starting offset if needed
         if query_selection is not None:
-            start_line_num += query_selection.start_line
-            end_line_num += query_selection.start_line
             if start_line_num == query_selection.start_line:
                 start_col_num += query_selection.start_column
+            if end_line_num == query_selection.start_line:
                 end_col_num += query_selection.start_column
 
         # Create a SelectionData object with the results and update the search offset to exclude batches that have been processed
-        selection_data.append(SelectionData(start_line_num, start_col_num, end_line_num, end_col_num - 1))
+        selection_data.append(SelectionData(start_line_num, start_col_num, end_line_num, end_col_num))
         search_offset = end_index
     return selection_data
