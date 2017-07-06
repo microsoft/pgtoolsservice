@@ -54,19 +54,22 @@ class TestColumn(unittest.TestCase):
         self.assertIsInstance(col, NodeObject)
         self.assertIsInstance(col, Column)
 
-        self._validate_column(col)
+        self._validate_column(col, mock_conn)
 
     def test_get_nodes_for_parent(self):
         # Use the test helper for this method
         get_nodes_for_parent = (lambda conn: Column.get_nodes_for_parent(conn, 10))
         utils.get_nodes_for_parent_base(Column, COLUMN_ROW, get_nodes_for_parent, self._validate_column)
 
-    def _validate_column(self, obj: Column):
-        # ... All properties should be assigned properly
+    def _validate_column(self, obj: Column, mock_conn: ServerConnection):
+        # NodeObject basic properties
+        self.assertIs(obj._conn, mock_conn)
         self.assertEqual(obj._oid, COLUMN_ROW['oid'])
         self.assertEqual(obj.oid, COLUMN_ROW['oid'])
         self.assertEqual(obj._name, COLUMN_ROW['name'])
         self.assertEqual(obj.name, COLUMN_ROW['name'])
+
+        # Column-specific basic properties
         self.assertEqual(obj._datatype, COLUMN_ROW['datatype'])
         self.assertEqual(obj.datatype, COLUMN_ROW['datatype'])
         self.assertEqual(obj._has_default_value, COLUMN_ROW['has_default_val'])

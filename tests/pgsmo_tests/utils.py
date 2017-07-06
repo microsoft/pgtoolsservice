@@ -93,8 +93,7 @@ class MockConnection(connection):
 def get_nodes_for_parent_base(class_, data: dict, get_nodes_for_parent: Callable, validate_obj: Callable):
     # Setup: Create a mockup server connection
     mock_cur = MockCursor((get_named_mock_columns(list(data.keys())), [data for i in range(0, 6)]))
-    mock_conn = MockConnection(mock_cur)
-    server_conn = ServerConnection(mock_conn)
+    mock_conn = ServerConnection(MockConnection(mock_cur))
 
     # ... Create a mock template renderer
     mock_render = mock.MagicMock(return_value="SQL")
@@ -107,7 +106,7 @@ def get_nodes_for_parent_base(class_, data: dict, get_nodes_for_parent: Callable
     with mock.patch(class_.__module__ + '.templating.render_template', mock_render, create=True):
         with mock.patch(class_.__module__ + '.templating.get_template_path', mock_template_path, create=True):
             # If: ask for a collection of nodes
-            output = get_nodes_for_parent(server_conn)
+            output = get_nodes_for_parent(mock_conn)
 
             # Then:
             # ... The output should be a list of objects
@@ -118,6 +117,6 @@ def get_nodes_for_parent_base(class_, data: dict, get_nodes_for_parent: Callable
                 test_case.assertIsInstance(obj, class_)
 
                 # ... Call the validator on the object
-                validate_obj(obj)
+                validate_obj(obj, mock_conn)
 
 

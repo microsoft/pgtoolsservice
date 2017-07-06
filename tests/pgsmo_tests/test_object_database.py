@@ -59,7 +59,7 @@ class TestDatabase(unittest.TestCase):
         self.assertIsInstance(db, NodeObject)
         self.assertIsInstance(db, Database)
 
-        self._validate_database(db)
+        self._validate_database(db, mock_conn)
 
     def test_get_nodes_for_parent(self):
         # Use the test helper for this method
@@ -105,13 +105,15 @@ class TestDatabase(unittest.TestCase):
             self.assertIsNone(db._schemas)
             self.assertIsNone(db.schemas)
 
-    def _validate_database(self, db: Database):
-        # ... All properties should be assigned properly
+    def _validate_database(self, db: Database, mock_conn: ServerConnection):
+        # NodeObject basic properties
+        self.assertIs(db._conn, mock_conn)
         self.assertEqual(db._oid, DATABASE_ROW['did'])
         self.assertEqual(db.oid, DATABASE_ROW['did'])
         self.assertEqual(db._name, DATABASE_ROW['name'])
         self.assertEqual(db.name, DATABASE_ROW['name'])
 
+        # Database-specific basic properties
         self.assertEqual(db._tablespace, DATABASE_ROW['spcname'])
         self.assertEqual(db.tablespace, DATABASE_ROW['spcname'])
         self.assertEqual(db._allow_conn, DATABASE_ROW['datallowconn'])
@@ -120,6 +122,7 @@ class TestDatabase(unittest.TestCase):
         self.assertEqual(db.can_create, DATABASE_ROW['cancreate'])
         self.assertEqual(db._owner_oid, DATABASE_ROW['owner'])
 
+        # Child objects
         self.assertFalse(db._is_connected)
         self.assertIsNone(db._schemas)
         self.assertIsNone(db.schemas)

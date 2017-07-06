@@ -6,15 +6,16 @@
 from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeObject, get_nodes
-import pgsmo.utils as utils
+import pgsmo.utils.querying as querying
+import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
+TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
 
 class Role(NodeObject):
     @classmethod
-    def get_nodes_for_parent(cls, conn: utils.querying.ServerConnection) -> List['Role']:
+    def get_nodes_for_parent(cls, conn: querying.ServerConnection) -> List['Role']:
         """
         Generates a list of roles for a given server. Intended to only be called by a Server object
         :param conn: Connection to use to look up the roles for the server
@@ -23,7 +24,7 @@ class Role(NodeObject):
         return get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query)
 
     @classmethod
-    def _from_node_query(cls, conn: utils.querying.ServerConnection, **kwargs) -> 'Role':
+    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Role':
         """
         Creates a Role object from the result of a role node query
         :param conn: Connection that executed the role node query
@@ -39,7 +40,7 @@ class Role(NodeObject):
 
         return role
 
-    def __init__(self, conn: utils.querying.ServerConnection, name: str):
+    def __init__(self, conn: querying.ServerConnection, name: str):
         """
         Initializes internal state of a Role object
         :param conn: Connection that executed the role node query
