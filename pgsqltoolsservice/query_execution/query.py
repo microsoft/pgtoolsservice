@@ -33,7 +33,7 @@ class Query:
         selection_data = _compute_selection_data_for_batches(statements, query_text)
         for index, batch_text in enumerate(sqlparse.split(query_text)):
             # Skip any empty text
-            if not batch_text.strip():
+            if not batch_text.strip() or batch_text.strip() == ';':
                 continue
             # Create and save the batch
             batch = Batch(batch_text, len(self.batches), selection_data[index])

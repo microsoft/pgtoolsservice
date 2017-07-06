@@ -17,7 +17,7 @@ from pgsqltoolsservice.query_execution.result_set import ResultSet  # noqa
 
 class Batch(object):
 
-    def __init__(self, batch_text: str, ordinal_id: int, selection: Optional[SelectionData]):
+    def __init__(self, batch_text: str, ordinal_id: int, selection: SelectionData) -> None:
         self.batch_text = batch_text
         self.id = ordinal_id
         self.selection = selection
@@ -36,9 +36,8 @@ class Batch(object):
         summary = BatchSummary(self.id, self.selection, get_time_str(self.start_time), self.has_error)
 
         if self.has_executed:
-            # TODO handle multiple result set summaries later
             summary.execution_elapsed = get_elapsed_time_str(self.start_time, self.end_time)
-            summary.result_set_summaries: List[ResultSetSummary] = [self.result_set.result_set_summary] if self.result_set is not None else []
+            summary.result_set_summaries = [self.result_set.result_set_summary] if self.result_set is not None else []
             summary.execution_end = get_time_str(self.end_time)
             summary.special_action = None
         return summary

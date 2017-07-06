@@ -754,12 +754,11 @@ select * from t2
         # If I build a query that contains several statements
         query = Query('test_uri', full_query)
 
-        # Then there is a batch for each statement
-        self.assertEqual(len(query.batches), 9)
+        # Then there is a batch for each non-empty statement
+        self.assertEqual(len(query.batches), 5)
 
         # And each batch should have the correct location information
-        expected_selections = [(0, 0, 1, 2), (2, 0, 2, 16), (2, 17, 2, 17), (2, 18, 2, 18), (3, 0, 3, 0), (3, 3, 3, 3), (4, 0, 4, 16), (4, 18, 5, 3),
-                               (6, 0, 6, 15)]
+        expected_selections = [(0, 0, 1, 2), (2, 0, 2, 16), (4, 0, 4, 16), (4, 18, 5, 3), (6, 0, 6, 15)]
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
 
