@@ -12,7 +12,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
     - If you need to install pip, see [pip Installation](https://pip.pypa.io/en/latest/installing/)
 
 ## Before Committing
-We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008) with a maximum line length of 120 characters. To ensure that your code has no style problems, run the following commands before committing (install them from pip first if needed):
+We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008) with a maximum line length of 160 characters. To ensure that your code has no style problems, run the following commands before committing (install them from pip first if needed):
 1. Run autopep8 to format your code according to PEP 8
     - `autopep8 --in-place --aggressive --aggressive --max-line-length 160 -r .` (from the project's root directory)
 2. Run flake8 to look for problems that need to be resolved manually
