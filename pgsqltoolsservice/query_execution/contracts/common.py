@@ -158,11 +158,11 @@ class ResultSetSubset:
 
         batch = query.batches[batch_ordinal]
         utils.validate.is_not_none("batch", batch)
-        utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, len(batch.result_sets) - 1)
+        utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, 0)
 
-        result_sets = batch.result_sets[result_set_ordinal]
+        result_set = batch.result_set
         utils.validate.is_within_range("start_index", start_index, 0, end_index - 1)
-        utils.validate.is_within_range("end_index", end_index - 1, start_index, len(result_sets.rows) - 1)
+        utils.validate.is_within_range("end_index", end_index - 1, start_index, len(result_set.rows) - 1)
 
         rows_list: List[List[DbCellValue]] = []
         row_id = start_index
@@ -174,7 +174,7 @@ class ResultSetSubset:
                     cell,
                     cell is None,
                     cell,
-                    row_id) for cell in result_sets.rows[row_id]]
+                    row_id) for cell in result_set.rows[row_id]]
             # Add our row to the overall row list
             rows_list.append(db_cell_value_row)
         return rows_list

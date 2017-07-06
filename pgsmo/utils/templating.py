@@ -11,8 +11,8 @@ from jinja2 import Environment, FileSystemLoader, Template
 from psycopg2.extensions import adapt
 
 TEMPLATE_ENVIRONMENTS: Dict[str, Environment] = {}
-TEMPLATE_FOLDER_REGEX = re.compile('(\d+)\.(\d+)(?:_(\w+))?')
-TEMPLATE_SKIPPED_FOLDERS: List[str] = ['macros']
+TEMPLATE_FOLDER_REGEX = re.compile('(\d+)\.(\d+)(?:_(\w+))?$')
+TEMPLATE_NON_DISCOVERED_NAMES: List[str] = ['macros']
 
 
 def get_template_root(file_path: str, template_directory: str) -> str:

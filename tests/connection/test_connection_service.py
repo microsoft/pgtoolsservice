@@ -529,7 +529,7 @@ class TestConnectionCancellation(unittest.TestCase):
         # capture the cancellation token state as it would be during a long-running connection.
         self.token_store = []
 
-        def mock_connect(*args):
+        def mock_connect(**kwargs):
             """Mock connection method to store the current cancellation token"""
             return self._mock_connect()
 
@@ -567,7 +567,7 @@ class TestConnectionCancellation(unittest.TestCase):
         # the same URI and connection type comes in and finishes before the current connection
         old_mock_connect = psycopg2.connect.side_effect
 
-        def first_mock_connect(*args):
+        def first_mock_connect(**kwargs):
             """Mock connection method to store the current cancellation token, and kick off another connection"""
             mock_connection = self._mock_connect()
             psycopg2.connect.side_effect = old_mock_connect
@@ -596,7 +596,7 @@ class TestConnectionCancellation(unittest.TestCase):
         cancellation_token = CancellationToken()
         cancellation_key = (self.owner_uri, self.connection_type)
 
-        def override_mock_connect(*args):
+        def override_mock_connect(**kwargs):
             """Mock connection method to override the current connection token, as if another connection is executing"""
             mock_connection = self._mock_connect()
             self.connection_service._cancellation_map[cancellation_key].cancel()
