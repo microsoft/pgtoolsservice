@@ -6,7 +6,7 @@
 import unittest
 import unittest.mock as mock
 
-from pgsmo.objects.node_object import NodeObject, NodeCollection
+from pgsmo.objects.node_object import NodeCollection
 from pgsmo.objects.schema.schema import Schema
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
@@ -28,16 +28,7 @@ class TestSchema(unittest.TestCase):
         utils.init_base(Schema, props, collections)
 
     def test_from_node_query(self):
-        # If: I create a new schema object from a node row
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        schema = Schema._from_node_query(mock_conn, **SCHEMA_ROW)
-
-        # Then:
-        # ... The returned object must be a schema
-        self.assertIsInstance(schema, NodeObject)
-        self.assertIsInstance(schema, Schema)
-
-        self._validate_schema(schema, mock_conn)
+        utils.from_node_query_base(Schema, SCHEMA_ROW, self._validate_schema)
 
     def test_from_nodes_for_parent(self):
         # Use the test helper for this method

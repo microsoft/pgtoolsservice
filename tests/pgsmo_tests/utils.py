@@ -121,12 +121,32 @@ def get_nodes_for_parent_base(class_, data: dict, get_nodes_for_parent: Callable
                 validate_obj(obj, mock_conn)
 
 
-def init_base(class_, props: List[str], collections: List[str]):
+def from_node_query_base(class_, data: dict, validate_obj: Callable):
+    # If: I create a new object from a node row
+    mock_conn = ServerConnection(MockConnection(None))
+    obj = class_._from_node_query(mock_conn, **data)
+
+    # Then:
+    # ... The returned object must be an instance of the class
+    test_case = unittest.TestCase('__init__')
+    test_case.assertIsInstance(obj, NodeObject)
+    test_case.assertIsInstance(obj, class_)
+
+    # ... Call the validation function
+    validate_obj(obj, mock_conn)
+
+
+def init_base(class_, props: List[str], collections: List[str], custom_validation: Callable=None):
     # If: I create an instance of the provided class
     mock_conn = ServerConnection(MockConnection(None))
     name = 'test'
     obj = class_(mock_conn, name)
 
+    validate_init(class_, name, mock_conn, obj, props, collections, custom_validation)
+
+
+def validate_init(class_, name, mock_conn, obj, props: List[str], collections: List[str],
+                  custom_validation: Callable=None):
     # Then:
     # ... The object must be of the type that was provided
     test_case = unittest.TestCase('__init__')
@@ -147,3 +167,7 @@ def init_base(class_, props: List[str], collections: List[str]):
     # ... The child properties should be assigned to node collections
     for coll in collections:
         test_case.assertIsInstance(getattr(obj, coll), NodeCollection)
+
+    # ... Run the custom validation
+    if custom_validation is not None:
+        custom_validation(obj)

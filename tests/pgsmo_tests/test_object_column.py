@@ -20,46 +20,34 @@ COLUMN_ROW = {
 
 
 class TestColumn(unittest.TestCase):
+    # CONSTRUCTION TESTS ###################################################
     def test_init(self):
-        # If: I create a new column object
+        props = [
+            'has_default_value', '_has_default_value',
+            'not_null', '_not_null'
+        ]
+        colls = []
+        name = 'column'
+        datatype = 'character'
         mock_conn = ServerConnection(utils.MockConnection(None))
-        mock_name = 'abc'
-        mock_datatype = 'character'
-        col = Column(mock_conn, mock_name, mock_datatype)
-
-        # Then:
-        # ... The column should be an instance of a node object
-        self.assertIsInstance(col, NodeObject)
-
-        # ... All the properties should be assigned properly
-        self.assertIs(col._conn, mock_conn)
-        self.assertIsNone(col._oid, None)
-        self.assertIsNone(col.oid, None)
-        self.assertEqual(col._name, mock_name)
-        self.assertEqual(col.name, mock_name)
-        self.assertEqual(col._datatype, mock_datatype)
-        self.assertEqual(col.datatype, mock_datatype)
-        self.assertIsNone(col._has_default_value)
-        self.assertIsNone(col.has_default_value)
-        self.assertIsNone(col._not_null)
-        self.assertIsNone(col.not_null)
+        obj = Column(mock_conn, name, datatype)
+        utils.validate_init(
+            Column, name, mock_conn, obj, props, colls,
+            lambda obj: self._validate_init(obj, datatype)
+        )
 
     def test_from_node_query(self):
-        # If: I create a column from a node query
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        col = Column._from_node_query(mock_conn, **COLUMN_ROW)
-
-        # Then:
-        # ... The returned column must be a column
-        self.assertIsInstance(col, NodeObject)
-        self.assertIsInstance(col, Column)
-
-        self._validate_column(col, mock_conn)
+        utils.from_node_query_base(Column, COLUMN_ROW, self._validate_column)
 
     def test_get_nodes_for_parent(self):
         # Use the test helper for this method
         get_nodes_for_parent = (lambda conn: Column.get_nodes_for_parent(conn, 10))
         utils.get_nodes_for_parent_base(Column, COLUMN_ROW, get_nodes_for_parent, self._validate_column)
+
+    # IMPLEMENTATION DETAILS ###############################################
+    def _validate_init(self, obj: Column, datatype: str):
+        self.assertEqual(obj._datatype, datatype)
+        self.assertEqual(obj.datatype, datatype)
 
     def _validate_column(self, obj: Column, mock_conn: ServerConnection):
         # NodeObject basic properties

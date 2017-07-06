@@ -20,47 +20,20 @@ ROLE_ROW = {
 
 
 class TestRole(unittest.TestCase):
+    # CONSTRUCTION TESTS ###################################################
     def test_init(self):
-        # If: I create a new role object
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        mock_name = 'role1'
-        role = Role(mock_conn, mock_name)
-
-        # Then:
-        # ... The role should be an instance of a node object
-        self.assertIsInstance(role, NodeObject)
-        self.assertIsInstance(role, Role)
-
-        # ... The node object properties should be assigned properly
-        self.assertIs(role._conn, mock_conn)
-        self.assertIsNone(role._oid)
-        self.assertIsNone(role.oid)
-        self.assertEqual(role._name, mock_name)
-        self.assertEqual(role.name, mock_name)
-
-        # ... The role-specific basic properties should be set to none
-        self.assertIsNone(role._can_login)
-        self.assertIsNone(role.can_login)
-        self.assertIsNone(role._super)
-        self.assertIsNone(role.super)
+        props = ['_can_login', 'can_login', '_super', 'super']
+        colls = []
+        utils.init_base(Role, props, colls)
 
     def test_from_node_query(self):
-        # If: I crate a new role object from a node query row
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        role = Role._from_node_query(mock_conn, **ROLE_ROW)
-
-        # Then:
-        # ... The role should be an instance of a Role
-        self.assertIsInstance(role, NodeObject)
-        self.assertIsInstance(role, Role)
-
-        # ... The properties should be assigned properly based on the row
-        self._validate_role(role, mock_conn)
+        utils.from_node_query_base(Role, ROLE_ROW, self._validate_role)
 
     def test_get_nodes_for_parent(self):
         # Use the test helper
         utils.get_nodes_for_parent_base(Role, ROLE_ROW, Role.get_nodes_for_parent, self._validate_role)
 
+    # IMPLEMENTATION DETAILS ###############################################
     def _validate_role(self, role: Role, mock_conn: ServerConnection):
         # NodeObject basic properties
         self.assertIs(role._conn, mock_conn)
