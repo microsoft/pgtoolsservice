@@ -53,6 +53,6 @@ class TestFunction(unittest.TestCase):
         self.assertEqual(obj._description, NODE_ROW['description'])
         self.assertEqual(obj.description, NODE_ROW['description'])
         self.assertEqual(obj._lanname, NODE_ROW['lanname'])
-        self.assertEqual(obj.lanname, NODE_ROW['lanname'])
+        self.assertEqual(obj.language, NODE_ROW['lanname'])
         self.assertEqual(obj._owner, NODE_ROW['funcowner'])
         self.assertEqual(obj.owner, NODE_ROW['funcowner'])
