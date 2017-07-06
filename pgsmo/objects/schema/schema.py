@@ -7,6 +7,7 @@ import os.path as path
 from typing import List, Optional
 
 import pgsmo.objects.node_object as node
+from pgsmo.objects.functions.function import Function
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 import pgsmo.utils.querying as querying
@@ -50,6 +51,9 @@ class Schema(node.NodeObject):
         self._has_usage: Optional[bool] = None
 
         # Declare the child items
+        self._functions: node.NodeCollection = node.NodeCollection(
+            lambda: Function.get_nodes_for_parent(self._conn, self._oid)
+        )
         self._tables: node.NodeCollection = node.NodeCollection(
             lambda: Table.get_nodes_for_parent(self._conn, self._oid)
         )
@@ -67,6 +71,10 @@ class Schema(node.NodeObject):
         return self._has_usage
 
     # -CHILD OBJECTS #######################################################
+    @property
+    def functions(self) -> node.NodeCollection:
+        return self._functions
+
     @property
     def tables(self) -> node.NodeCollection:
         return self._tables
