@@ -5,7 +5,7 @@
 
 from typing import List
 
-from pgsmo.objects.column.column import Column
+from pgsmo.objects.table_objects.column.column import Column
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating

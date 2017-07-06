@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo.objects.column.column import Column
+from pgsmo.objects.table_objects.column.column import Column
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.schema.schema import Schema
