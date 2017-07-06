@@ -19,7 +19,6 @@ class BatchNotificationParams:
     def __init__(self, batch_summary: BatchSummary, owner_uri: str):
         self.batch_summary: BatchSummary = batch_summary
         self.owner_uri: str = owner_uri
-        
 
 
 BATCH_COMPLETE_NOTIFICATION = 'query/batchComplete'

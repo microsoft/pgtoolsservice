@@ -648,7 +648,7 @@ class TestQueryService(unittest.TestCase):
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
         self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
-    
+
     def test_execution_error_rolls_back_transaction(self):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
