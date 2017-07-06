@@ -9,20 +9,21 @@ from typing import List, Optional
 import pgsmo.objects.node_object as node
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
-import pgsmo.utils as utils
+import pgsmo.utils.querying as querying
+import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
+TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
 
 class Schema(node.NodeObject):
     @classmethod
-    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper) -> List['Schema']:
+    def get_nodes_for_parent(cls, conn: querying.ServerConnection) -> List['Schema']:
         type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
         return node.get_nodes(conn, type_template_root, cls._from_node_query)
 
     @classmethod
-    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'Schema':
+    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Schema':
         """
         Creates an instance of a schema object from the results of a nodes query
         :param conn: The connection used to execute the nodes query
@@ -41,7 +42,7 @@ class Schema(node.NodeObject):
 
         return schema
 
-    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str):
+    def __init__(self, conn: querying.ServerConnection, name: str):
         super(Schema, self).__init__(conn, name)
 
         # Declare the optional parameters
@@ -53,7 +54,7 @@ class Schema(node.NodeObject):
             lambda: Table.get_nodes_for_parent(self._conn, self._oid)
         )
         self._views: node.NodeCollection = node.NodeCollection(
-            lambda: View.get_nodes_for_parent(self._conn, self.oid)
+            lambda: View.get_nodes_for_parent(self._conn, self._oid)
         )
 
     # PROPERTIES ###########################################################
@@ -76,5 +77,6 @@ class Schema(node.NodeObject):
 
     # METHODS ##############################################################
     def refresh(self) -> None:
-        self._tables = Table.get_tables_for_schema(self._conn, self._oid)
-        self._views = View.get_views_for_schema(self._conn, self._oid)
+        """Resets the internal collections of child objects"""
+        self._tables.reset()
+        self._views.reset()

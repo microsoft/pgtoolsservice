@@ -14,12 +14,12 @@ import pgsmo.utils.querying as querying
 class NodeObject:
     @classmethod
     @abstractmethod
-    def _from_node_query(cls, conn: querying.ConnectionWrapper, **kwargs):
+    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs):
         pass
 
-    def __init__(self, conn: querying.ConnectionWrapper, name: str):
+    def __init__(self, conn: querying.ServerConnection, name: str):
         # Define the state of the object
-        self._conn: querying.ConnectionWrapper = conn
+        self._conn: querying.ServerConnection = conn
 
         # Declare node basic properties
         self._name: str = name
@@ -92,9 +92,9 @@ class NodeCollection:
 T = TypeVar('T')
 
 
-def get_nodes(conn: querying.ConnectionWrapper,
+def get_nodes(conn: querying.ServerConnection,
               template_root: str,
-              generator: Callable[[type, querying.ConnectionWrapper, Dict[str, any]], T],
+              generator: Callable[[type, querying.ServerConnection, Dict[str, any]], T],
               **kwargs) -> List[T]:
     """
     Renders and executes nodes.sql for the given database version to generate a list of NodeObjects
@@ -108,6 +108,6 @@ def get_nodes(conn: querying.ConnectionWrapper,
         templating.get_template_path(template_root, 'nodes.sql', conn.version),
         **kwargs
     )
-    cols, rows = querying.execute_dict(conn, sql)
+    cols, rows = conn.execute_dict(sql)
 
     return [generator(conn, **row) for row in rows]

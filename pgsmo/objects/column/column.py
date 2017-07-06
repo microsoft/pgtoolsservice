@@ -6,18 +6,19 @@
 from typing import List, Optional
 
 import pgsmo.objects.node_object as node
-import pgsmo.utils as utils
+import pgsmo.utils.querying as querying
+import pgsmo.utils.templating as templating
 
-TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
+TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
 
 class Column(node.NodeObject):
     @classmethod
-    def get_nodes_for_parent(cls, conn: utils.querying.ConnectionWrapper, tid: int) -> List['Column']:
+    def get_nodes_for_parent(cls, conn: querying.ServerConnection, tid: int) -> List['Column']:
         return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, tid=tid)
 
     @classmethod
-    def _from_node_query(cls, conn: utils.querying.ConnectionWrapper, **kwargs) -> 'Column':
+    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Column':
         """
         Creates a new Column object based on the the results from the column nodes query
         :param conn: Connection used to execute the column nodes query
@@ -37,7 +38,7 @@ class Column(node.NodeObject):
 
         return col
 
-    def __init__(self, conn: utils.querying.ConnectionWrapper, name: str, datatype: str):
+    def __init__(self, conn: querying.ServerConnection, name: str, datatype: str):
         """
         Initializes a new instance of a Column
         :param conn: Connection to the server/database that this object will belong to
@@ -63,11 +64,3 @@ class Column(node.NodeObject):
     @property
     def not_null(self) -> Optional[bool]:
         return self._not_null
-
-    # METHODS ##############################################################
-    def refresh(self):
-        self._fetch_properties()
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _fetch_properties(self):
-        pass
