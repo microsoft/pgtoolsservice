@@ -787,6 +787,23 @@ select * from t2
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
 
+    def test_batch_selections_on_first_line(self):
+        """Test that the query sets up batch objects with correct selection information when multiple statements are on the first line"""
+        full_query = '''select * from t1; select * from t12; select
+* from t123;'''
+        initial_selection = SelectionData(5, 4, 6, 11)
+
+        # If I build a query that contains several statements
+        query = Query('test_uri', full_query, initial_selection)
+
+        # Then there is a batch for each statement
+        self.assertEqual(len(query.batches), 3)
+
+        # And each batch should have the correct location information
+        expected_selections = [(5, 4, 5, 20), (5, 22, 5, 39), (5, 41, 6, 11)]
+        for index, batch in enumerate(query.batches):
+            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
+
 
 def get_execute_string_params() -> ExecuteStringParams:
     """Get a simple ExecutestringParams"""
