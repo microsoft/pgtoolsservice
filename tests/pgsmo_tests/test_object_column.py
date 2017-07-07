@@ -5,7 +5,7 @@
 
 import unittest
 
-from pgsmo.objects.table_objects.column.column import Column
+from pgsmo.objects.table_objects.column import Column
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
 

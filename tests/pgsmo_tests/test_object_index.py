@@ -5,12 +5,12 @@
 
 import unittest
 
-from pgsmo.objects.table_objects.rule.rule import Rule
+from pgsmo.objects.table_objects.index import Index
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
 
 NODE_ROW = {
-    'name': 'rulename',
+    'name': 'idxname',
     'oid': 123
 }
 
@@ -20,21 +20,21 @@ class TestIndex(unittest.TestCase):
     def test_init(self):
         props = []
         colls = []
-        utils.init_base(Rule, props, colls)
+        utils.init_base(Index, props, colls)
 
     def test_from_node_query(self):
-        utils.from_node_query_base(Rule, NODE_ROW, self._validate)
+        utils.from_node_query_base(Index, NODE_ROW, self._validate)
 
     def test_from_nodes_for_parent(self):
         utils.get_nodes_for_parent_base(
-            Rule,
+            Index,
             NODE_ROW,
-            lambda conn: Rule.get_nodes_for_parent(conn, 0),
+            lambda conn: Index.get_nodes_for_parent(conn, 0),
             self._validate
         )
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _validate(self, obj: Rule, mock_conn: ServerConnection):
+    def _validate(self, obj: Index, mock_conn: ServerConnection):
         # NodeObject basic properties
         self.assertIs(obj._conn, mock_conn)
         self.assertEqual(obj._oid, NODE_ROW['oid'])

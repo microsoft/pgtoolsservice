@@ -6,8 +6,8 @@
 import os.path as path
 from typing import List
 
-from pgsmo.objects.table_objects.column.column import Column
-from pgsmo.objects.table_objects.rule.rule import Rule
+from pgsmo.objects.table_objects.column import Column
+from pgsmo.objects.table_objects.rule import Rule
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
