@@ -21,7 +21,7 @@ class TestTablespace(unittest.TestCase):
     def test_init(self):
         props = ['owner', '_owner']
         utils.init_base(Tablespace, props, [])
-    
+
     def test_from_node_query(self):
         utils.from_node_query_base(Tablespace, NODE_ROW, self._validate_tablespace)
 

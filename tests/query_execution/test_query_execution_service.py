@@ -207,7 +207,7 @@ class TestQueryService(unittest.TestCase):
         batch_ordinal = 0
         result_ordinal = 0
         rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
-        query_results[owner_uri].batches.append(Batch(batch_ordinal, SelectionData(), False))
+        query_results[owner_uri].batches.append(Batch('', batch_ordinal, SelectionData()))
         query_results[owner_uri].batches[batch_ordinal].result_set = ResultSet(result_ordinal, batch_ordinal, None, len(rows), rows)
 
         result_rows = query_results[owner_uri].batches[batch_ordinal].result_set.rows
@@ -289,7 +289,7 @@ class TestQueryService(unittest.TestCase):
     def test_result_set_complete_params(self):
         """Test building parameters for the result set complete notification"""
         # Set up the test with a batch summary and owner uri
-        batch = Batch(10, SelectionData(), False)
+        batch = Batch('', 10, SelectionData())
         batch.has_executed = True
         batch.result_set = ResultSet(1, 10, None, 0, [])
         summary = batch.build_batch_summary()
@@ -515,9 +515,9 @@ class TestQueryService(unittest.TestCase):
         batch_rows = [(1, 2), (3, 4), (5, 6)]
         batch.result_set = ResultSet(0, 0, {}, 3, batch_rows)
         test_query = Query(params.owner_uri, '')
-        test_query.batches = [Batch(0, SelectionData(), False), Batch(1, SelectionData(), False), batch]
+        test_query.batches = [Batch('', 0, SelectionData()), Batch('', 1, SelectionData()), batch]
         other_query = Query('some_other_uri', '')
-        other_query.batches = [Batch(3, SelectionData(), False)]
+        other_query.batches = [Batch('', 3, SelectionData())]
         self.query_execution_service.query_results = {
             test_query.owner_uri: test_query,
             other_query.owner_uri: other_query
@@ -740,6 +740,48 @@ class TestQueryAndBatchObjects(unittest.TestCase):
         # And the query is marked as executed
         self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
 
+    def test_batch_selections(self):
+        """Test that the query sets up batch objects with correct selection information"""
+        full_query = '''select * from
+t1;
+select * from t2;;;
+;  ;
+select version(); select * from
+t3 ;
+select * from t2
+'''
+
+        # If I build a query that contains several statements
+        query = Query('test_uri', full_query)
+
+        # Then there is a batch for each non-empty statement
+        self.assertEqual(len(query.batches), 5)
+
+        # And each batch should have the correct location information
+        expected_selections = [(0, 0, 1, 2), (2, 0, 2, 16), (4, 0, 4, 16), (4, 18, 5, 3), (6, 0, 6, 15)]
+        for index, batch in enumerate(query.batches):
+            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
+
+    def test_batch_selections_do_block(self):
+        """Test that the query sets up batch objects with correct selection information for blocks containing statements"""
+        full_query = '''DO $$
+BEGIN
+RAISE NOTICE 'Hello world 1';
+RAISE NOTICE 'Hello world 2';
+END $$;
+select * from t1;'''
+
+        # If I build a query that contains a block that contains several statements
+        query = Query('test_uri', full_query)
+
+        # Then there is a batch for each top-level statement
+        self.assertEqual(len(query.batches), 2)
+
+        # And each batch should have the correct location information
+        expected_selections = [(0, 0, 4, 6), (5, 0, 5, 16)]
+        for index, batch in enumerate(query.batches):
+            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
+
 
 def get_execute_string_params() -> ExecuteStringParams:
     """Get a simple ExecutestringParams"""
@@ -754,6 +796,11 @@ def get_execute_request_params():
     params = ExecuteRequestParamsBase()
     params.owner_uri = 'test_uri'
     return params
+
+
+def _tuple_from_selection_data(data: SelectionData):
+    """Convert a SelectionData object to a tuple so that its values can easily be verified"""
+    return (data.start_line, data.start_column, data.end_line, data.end_column)
 
 
 if __name__ == '__main__':
