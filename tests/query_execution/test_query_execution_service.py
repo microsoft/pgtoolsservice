@@ -762,6 +762,27 @@ select * from t2
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
 
+    def test_batch_selections_do_block(self):
+        """Test that the query sets up batch objects with correct selection information for blocks containing statements"""
+        full_query = '''DO $$
+BEGIN
+RAISE NOTICE 'Hello world 1';
+RAISE NOTICE 'Hello world 2';
+END $$;
+select * from t1;'''
+
+        # If I build a query that contains a block that contains several statements
+        query = Query('test_uri', full_query)
+
+        # Then there is a batch for each top-level statement
+        self.assertEqual(len(query.batches), 2)
+
+        # And each batch should have the correct location information
+        expected_selections = [(0, 0, 4, 6), (5, 0, 5, 16)]
+        for index, batch in enumerate(query.batches):
+            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
+
+
 def get_execute_string_params() -> ExecuteStringParams:
     """Get a simple ExecutestringParams"""
     params = ExecuteStringParams()
