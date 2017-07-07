@@ -10,7 +10,7 @@ import tests.utils as utils
 
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
-from pgsqltoolsservice.hosting import (JSONRPCServer, ServiceProvider, RequestContext)
+from pgsqltoolsservice.hosting import (JSONRPCServer, ServiceProvider, RequestContext) # noqa
 from pgsqltoolsservice.object_explorer import ObjectExplorerService
 from pgsqltoolsservice.object_explorer.contracts import ExpandParameters
 from pgsqltoolsservice.utils import constants
@@ -31,7 +31,6 @@ class TestObjectExplorer(unittest.TestCase):
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
 
-        self.context: RequestContext = RequestContext()
         self.context: RequestContext = utils.MockRequestContext()
         self.oe_service: ObjectExplorerService = ObjectExplorerService()
 
