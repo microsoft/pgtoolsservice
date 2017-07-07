@@ -21,7 +21,10 @@ class TestTable(unittest.TestCase):
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
         props = []
-        colls = ['_columns', 'columns']
+        colls = [
+            '_columns', 'columns',
+            '_rules', 'rules'
+        ]
         utils.init_base(View, props, colls)
 
     def test_from_node_query(self):
@@ -60,3 +63,5 @@ class TestTable(unittest.TestCase):
         # Child objects
         self.assertIsInstance(view._columns, NodeCollection)
         self.assertIs(view.columns, view._columns)
+        self.assertIsInstance(view._rules, NodeCollection)
+        self.assertIs(view.rules, view._rules)

@@ -23,7 +23,8 @@ class TestTable(unittest.TestCase):
         props = []
         colls = [
             '_columns', 'columns',
-            '_indexes', 'indexes'
+            '_indexes', 'indexes',
+            '_rules', 'rules'
         ]
         utils.init_base(Table, props, colls)
 
@@ -45,6 +46,7 @@ class TestTable(unittest.TestCase):
         table = Table._from_node_query(mock_conn, **TABLE_ROW)
         table._columns.reset = mock.MagicMock()
         table._indexes.reset = mock.MagicMock()
+        table._rules.reset = mock.MagicMock()
 
         # If: I refresh a table object
         table.refresh()
@@ -52,6 +54,7 @@ class TestTable(unittest.TestCase):
         # Then: The child object node collections should have been reset
         table._columns.reset.assert_called_once()
         table._indexes.reset.assert_called_once()
+        table._rules.reset.assert_called_once()
 
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_table(self, table: Table, mock_conn: ServerConnection):
@@ -67,3 +70,5 @@ class TestTable(unittest.TestCase):
         self.assertIs(table.columns, table._columns)
         self.assertIsInstance(table._indexes, NodeCollection)
         self.assertIs(table.indexes, table._indexes)
+        self.assertIsInstance(table._rules, NodeCollection)
+        self.assertIs(table.rules, table._rules)
