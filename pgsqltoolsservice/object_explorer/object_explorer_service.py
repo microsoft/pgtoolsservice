@@ -3,18 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from datetime import datetime
 from typing import List
-from urllib.parse import quote 
-
-import psycopg2
-import psycopg2.errorcodes
-
+from urllib.parse import quote
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.object_explorer.contracts import (
-    CreateSessionParameters, CreateSessionResponse, CREATE_SESSION_REQUEST,
-    CloseSessionParameters, CLOSE_SESSION_REQUEST,
+    CreateSessionResponse, CREATE_SESSION_REQUEST,
+    CLOSE_SESSION_REQUEST,
     ExpandParameters, EXPAND_REQUEST,
     ExpandCompletedParameters, EXPAND_COMPLETED_METHOD,
     SessionCreatedParameters, SESSION_CREATED_METHOD,
@@ -23,9 +18,7 @@ from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import pgsqltoolsservice.utils as utils
 from pgsmo.objects.server.server import Server
 from pgsmo.objects.database.database import Database
-from pgsmo.objects.schema.schema import Schema
-from pgsmo.objects.table.table import Table
-from pgsmo.objects.view.view import View
+
 
 class ObjectExplorerService(object):
     """Service for browsing database objects"""
@@ -33,7 +26,6 @@ class ObjectExplorerService(object):
     def __init__(self):
         self._service_provider: ServiceProvider = None
         self._session_map: dict = dict()
-
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -60,7 +52,7 @@ class ObjectExplorerService(object):
 
     # REQUEST HANDLERS #####################################################
 
-    def _handle_create_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:
+    def _handle_create_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle a create object explorer session request"""
 
         # validate that input parameters are as expected
@@ -98,16 +90,14 @@ class ObjectExplorerService(object):
         request_context.send_response(CreateSessionResponse(session_id))
         request_context.send_notification(SESSION_CREATED_METHOD, response)
 
-
-    def _handle_close_session_request(self, request_context: RequestContext, params: CreateSessionParameters) -> None:
+    def _handle_close_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle close Object Explorer" sessions request"""
         request_context.send_response(True)
 
-        
     def _handle_refresh_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle refresh Object Explorer create node request"""
-        connection_details = self._session_map[params.session_id]
-
+        # connection_details = self._session_map[params.session_id]
+        request_context.send_response(True)
 
     def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle expand Object Explorer tree node request"""
@@ -123,43 +113,35 @@ class ObjectExplorerService(object):
         elif params.node_path == root_path + '/Tables':
             nodes = self._get_table_nodes(params.session_id, root_path)
         else:
-            nodes = self._get_folder_nodes(root_path)        
+            nodes = self._get_folder_nodes(root_path)
 
-        response = ExpandCompletedParameters()        
+        response = ExpandCompletedParameters()
         response.session_id = params.session_id
-        response.node_path = params.node_path 
+        response.node_path = params.node_path
         response.nodes = nodes
 
         request_context.send_response(True)
         request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
 
-    def _are_create_session_params_valid(self, params: CreateSessionParameters) -> bool:
-        return params != None and params.options != None and params.options['host'] != None
-
+    def _are_create_session_params_valid(self, params: ConnectionDetails) -> bool:
+        return params is not None and params.options is not None and params.options['host'] is not None
 
     def _get_root_path(self, connection_details: ConnectionDetails) -> str:
         return connection_details.server_name[0] + '/' + connection_details.database_name[0]
 
-
-    def _create_oe_connection(self, params: CreateSessionParameters, session_id: str) -> ConnectionDetails:
-        details = ConnectionDetails.from_data(params.options['host'], params.options['dbname'], 
-            params.options['user'], params.options)
+    def _create_oe_connection(self, params: ConnectionDetails, session_id: str) -> ConnectionDetails:
+        details = ConnectionDetails.from_data(params.options['host'], params.options['dbname'],
+                                              params.options['user'], params.options)
         connect_request = ConnectRequestParams(details, session_id)
 
         # Retrieve the connection service
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        if connection_service is None:
-            raise LookupError('Connection service could not be found')  # TODO: Localize
-        
         connection_service._connect(connect_request)
         return details
-
 
     def _get_database(self, session_id: str) -> Database:
         # Retrieve the connection service
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        if connection_service is None:
-            raise LookupError('Connection service could not be found')  # TODO: Localize
         conn = connection_service.get_connection(session_id, ConnectionType.DEFAULT)
 
         connection_details = self._session_map[session_id]
@@ -172,8 +154,7 @@ class ObjectExplorerService(object):
 
         return database
 
-
-    def _get_folder_nodes(self, root_path: str) -> List[NodeInfo]:        
+    def _get_folder_nodes(self, root_path: str) -> List[NodeInfo]:
         table_node = NodeInfo()
         table_node.label = 'Tables'
         table_node.isLeaf = False
@@ -185,8 +166,7 @@ class ObjectExplorerService(object):
         view_node.isLeaf = False
         view_node.node_path = root_path + '/Views'
         view_node.node_type = 'Folder'
-        return [ table_node, view_node ]
-
+        return [table_node, view_node]
 
     def _get_view_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
         database = self._get_database(session_id)
@@ -198,7 +178,7 @@ class ObjectExplorerService(object):
                 metadata.metadata_type_name = 'View'
                 metadata.name = cur_view.name
                 metadata.schema = cur_schema.name
-            
+
                 cur_node = NodeInfo()
                 cur_node.label = cur_schema.name + '.' + cur_view.name
                 cur_node.isLeaf = True
@@ -207,7 +187,6 @@ class ObjectExplorerService(object):
                 cur_node.metadata = metadata
                 node_list.append(cur_node)
         return node_list
-
 
     def _get_table_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
         database = self._get_database(session_id)
@@ -229,11 +208,10 @@ class ObjectExplorerService(object):
                 node_list.append(cur_node)
         return node_list
 
-
-    def _generate_uri(self, params: CreateSessionParameters) -> str:
+    def _generate_uri(self, params: ConnectionDetails) -> str:
         uri = 'objectexplorer://' + quote(params.options['host'])
-        if (params.options['dbname'] != None):
-            uri +=  ';' + 'databaseName=' + params.options['dbname']
-        if (params.options['user'] != None):   
-            uri +=  ';' + 'user=' + params.options['user']
+        if (params.options['dbname'] is not None):
+            uri += ';' + 'databaseName=' + params.options['dbname']
+        if (params.options['user'] is not None):
+            uri += ';' + 'user=' + params.options['user']
         return uri

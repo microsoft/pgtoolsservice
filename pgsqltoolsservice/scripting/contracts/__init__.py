@@ -6,4 +6,4 @@
 from pgsqltoolsservice.scripting.contracts.scriptas_request import (
     ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST)
 
-__all__ = [ 'ScriptAsParameters', 'ScriptAsResponse', 'SCRIPTAS_REQUEST' ]
+__all__ = ['ScriptAsParameters', 'ScriptAsResponse', 'SCRIPTAS_REQUEST']

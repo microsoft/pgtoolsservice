@@ -4,8 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType  # noqa
 import pgsqltoolsservice.utils as utils
+
 
 class GetDatabaseInfoParameters:
     @classmethod
@@ -16,8 +16,10 @@ class GetDatabaseInfoParameters:
         self.options: dict = None
         self.owner_uri: str = None
 
+
 class GetDatabaseInfoResponse:
     def __init__(self):
         self.error_messages: str = None
+
 
 GET_DATABASEINFO_REQUEST = IncomingMessageConfiguration('admin/getdatabaseinfo', GetDatabaseInfoParameters)

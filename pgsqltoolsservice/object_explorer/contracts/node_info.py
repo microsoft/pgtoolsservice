@@ -5,6 +5,7 @@
 
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 
+
 class NodeInfo(object):
     """Contract for information on the connected PostgreSQL server"""
 
@@ -15,5 +16,5 @@ class NodeInfo(object):
         self.node_sub_type: str = None
         self.node_status: str = None
         self.is_leaf: bool = True
-        self.metadata: ObjectMetadata = None
+        self.metadata: ObjectMetadata = ObjectMetadata()
         self.error_message: str = None

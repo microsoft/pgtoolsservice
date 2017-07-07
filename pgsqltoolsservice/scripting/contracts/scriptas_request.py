@@ -6,6 +6,7 @@
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
 
+
 class ScriptAsParameters:
     @classmethod
     def from_dict(cls, dictionary: dict):
@@ -21,7 +22,6 @@ class ScriptAsResponse:
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
-
 
     def __init__(self, owner_uri: str, script: str):
         self.owner_uri: str = owner_uri

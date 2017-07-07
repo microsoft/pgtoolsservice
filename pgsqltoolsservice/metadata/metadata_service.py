@@ -3,16 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from datetime import datetime
-
-import psycopg2
-import psycopg2.errorcodes
-
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
-from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.metadata.contracts import (
     MetadataListParameters, MetadataListResponse, METADATA_LIST_REQUEST)
-import pgsqltoolsservice.utils as utils
+
 
 class MetadataService(object):
     """Service for database metadata support"""

@@ -6,6 +6,7 @@
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
 
+
 class ExpandParameters:
     @classmethod
     def from_dict(cls, dictionary: dict):
@@ -13,7 +14,7 @@ class ExpandParameters:
 
     def __init__(self):
         self.session_id: str = None
-        self.node_path: str = None      
+        self.node_path: str = None
+
 
 EXPAND_REQUEST = IncomingMessageConfiguration('objectexplorer/expand', ExpandParameters)
-

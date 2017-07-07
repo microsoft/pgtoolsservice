@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.admin.admin_service import (AdminService)
+from pgsqltoolsservice.admin.admin_service import AdminService
 
 __all__ = [
     'AdminService'

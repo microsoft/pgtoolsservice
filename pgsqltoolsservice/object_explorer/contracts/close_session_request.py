@@ -6,6 +6,7 @@
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
 
+
 class CloseSessionParameters:
     @classmethod
     def from_dict(cls, dictionary: dict):
@@ -13,11 +14,12 @@ class CloseSessionParameters:
 
     def __init__(self):
         self.session_id: str = None
-        self.owner_uri = None
-        self.type = None
+        self.owner_uri: str = None
+        self.type: int = None
         self.options: dict = None
         self.server_name: str = None
         self.database_name: str = None
-        self.user_name: str = None        
+        self.user_name: str = None
+
 
 CLOSE_SESSION_REQUEST = IncomingMessageConfiguration('objectexplorer/closesession', CloseSessionParameters)

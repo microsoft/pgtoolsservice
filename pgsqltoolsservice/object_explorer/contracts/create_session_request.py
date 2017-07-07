@@ -5,23 +5,16 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.connection.contracts import ConnectionDetails
 
-class CreateSessionParameters:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
-
-    def __init__(self):
-        self.options: dict = None
 
 class CreateSessionResponse:
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
 
-
     def __init__(self, session_id):
         self.session_id: str = session_id
 
 
-CREATE_SESSION_REQUEST = IncomingMessageConfiguration('objectexplorer/createsession', CreateSessionParameters)
+CREATE_SESSION_REQUEST = IncomingMessageConfiguration('objectexplorer/createsession', ConnectionDetails)

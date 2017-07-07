@@ -16,7 +16,7 @@ from pgsmo.utils.querying import ServerConnection
 
 # MOCK CONNECTION ##########################################################
 def get_mock_columns(col_count: int) -> List[Column]:
-    return [Column(f'column{i}', None, 10, 10, None, None, True) for i in range(0, col_count+1)]
+    return [Column(f'column{i}', None, 10, 10, None, None, True) for i in range(0, col_count + 1)]
 
 
 def get_named_mock_columns(col_names: List[str]) -> List[Column]:
@@ -28,7 +28,7 @@ def get_mock_results(col_count: int=5, row_count: int=5) -> Tuple[List[Column], 
     cols = get_mock_columns(col_count)
     for i in range(0, len(cols)):
         # Add the column to the rows
-        for j in range(0, row_count+1):
+        for j in range(0, row_count + 1):
             if len(rows) >= j:
                 rows.append({})
 
