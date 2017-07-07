@@ -8,6 +8,7 @@ from typing import List
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.index import Index
 from pgsmo.objects.table_objects.rule import Rule
+from pgsmo.objects.table_objects.trigger import Trigger
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
@@ -50,6 +51,9 @@ class Table(node.NodeObject):
         self._rules: node.NodeCollection = node.NodeCollection(
             lambda: Rule.get_nodes_for_parent(self._conn, self._oid)
         )
+        self._triggers: node.NodeCollection = node.NodeCollection(
+            lambda: Trigger.get_nodes_for_parent(self._conn, self._oid)
+        )
 
     # PROPERTIES ###########################################################
     # -CHILD OBJECTS #######################################################
@@ -65,8 +69,13 @@ class Table(node.NodeObject):
     def rules(self) -> node.NodeCollection:
         return self._rules
 
+    @property
+    def triggers(self) -> node.NodeCollection:
+        return self._triggers
+
     # METHODS ##############################################################
     def refresh(self) -> None:
         self._columns.reset()
         self._indexes.reset()
         self._rules.reset()
+        self._triggers.reset()

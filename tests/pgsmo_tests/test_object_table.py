@@ -24,7 +24,8 @@ class TestTable(unittest.TestCase):
         colls = [
             '_columns', 'columns',
             '_indexes', 'indexes',
-            '_rules', 'rules'
+            '_rules', 'rules',
+            '_triggers', 'triggers'
         ]
         utils.init_base(Table, props, colls)
 
@@ -47,6 +48,7 @@ class TestTable(unittest.TestCase):
         table._columns.reset = mock.MagicMock()
         table._indexes.reset = mock.MagicMock()
         table._rules.reset = mock.MagicMock()
+        table._triggers.reset = mock.MagicMock()
 
         # If: I refresh a table object
         table.refresh()
@@ -55,6 +57,7 @@ class TestTable(unittest.TestCase):
         table._columns.reset.assert_called_once()
         table._indexes.reset.assert_called_once()
         table._rules.reset.assert_called_once()
+        table._triggers.reset.assert_called_once()
 
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_table(self, table: Table, mock_conn: ServerConnection):
@@ -72,3 +75,5 @@ class TestTable(unittest.TestCase):
         self.assertIs(table.indexes, table._indexes)
         self.assertIsInstance(table._rules, NodeCollection)
         self.assertIs(table.rules, table._rules)
+        self.assertIsInstance(table._triggers, NodeCollection)
+        self.assertIs(table.triggers, table._triggers)
