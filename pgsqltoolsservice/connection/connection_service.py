@@ -84,7 +84,7 @@ class ConnectionService:
         """
         Get a psycopg2 connection for the given owner URI and connection type
 
-        :raises RuntimeError: If there is no connection associated with the provided URI
+        :raises ValueError: If there is no connection associated with the provided URI
         """
         if owner_uri not in self.owner_to_connection_map:
             raise ValueError('No connection associated with given owner URI')
@@ -202,6 +202,9 @@ class ConnectionService:
             connection.close()
             return None
 
+        # Set autocommit mode so that users have control over transactions
+        connection.autocommit = True
+
         # The connection was not canceled, so add the connection and respond
         connection_info.add_connection(params.type, connection)
         return _build_connection_response(connection_info, params.type)
@@ -286,9 +289,7 @@ def _execute_query(connection, query):
     try:
         query_results = cursor.fetchall()
     except psycopg2.ProgrammingError:
-        connection.rollback()
         raise
-    connection.commit()
     return query_results
 
 

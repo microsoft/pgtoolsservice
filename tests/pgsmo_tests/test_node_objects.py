@@ -125,22 +125,21 @@ class TestNodeObject(unittest.TestCase):
 
     def test_get_nodes(self):
         # Setup:
-        # ... Create a mockup of a connection wrapper
+        # ... Create a mockup of a server connection with a mock executor
         version = (1, 1, 1)
 
         class MockConn:
             def __init__(self):
                 self.version = version
 
+        mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
+        mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
         mock_conn = MockConn()
+        mock_conn.execute_dict = mock_executor
 
         # ... Create a mock template renderer
         mock_render = mock.MagicMock(return_value="SQL")
         mock_template_path = mock.MagicMock(return_value="path")
-
-        # ... Create a mock query executor
-        mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
-        mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
 
         # ... Create a mock generator
         mock_output = {}
@@ -149,10 +148,9 @@ class TestNodeObject(unittest.TestCase):
         # ... Do the patching
         with mock.patch('pgsmo.objects.node_object.templating.render_template', mock_render, create=True):
             with mock.patch('pgsmo.objects.node_object.templating.get_template_path', mock_template_path, create=True):
-                with mock.patch('pgsmo.objects.node_object.querying.execute_dict', mock_executor, create=True):
-                    # If: I ask for a collection of nodes
-                    kwargs = {'arg1': 'something'}
-                    nodes = node.get_nodes(mock_conn, 'root', mock_generator, **kwargs)
+                # If: I ask for a collection of nodes
+                kwargs = {'arg1': 'something'}
+                nodes = node.get_nodes(mock_conn, 'root', mock_generator, **kwargs)
 
         # Then:
         # ... The template path should have been called once
@@ -162,7 +160,7 @@ class TestNodeObject(unittest.TestCase):
         mock_render.assert_called_once_with('path', **kwargs)
 
         # ... A query should have been executed
-        mock_executor.assert_called_once_with(mock_conn, 'SQL')
+        mock_executor.assert_called_once_with('SQL')
 
         # ... The generator should have been called twice with different object props
         mock_generator.assert_any_call(mock_conn, **mock_objs[0])

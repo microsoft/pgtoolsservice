@@ -3,6 +3,7 @@ psycopg2==2.7.1
 
 # PGToolsService Requirements
 inflection
+sqlparse
 
 # PGSMO Requirements
 jinja2
@@ -14,3 +15,4 @@ coverage
 autopep8
 flake8
 ptvsd==2.2.0
+python-dateutil
