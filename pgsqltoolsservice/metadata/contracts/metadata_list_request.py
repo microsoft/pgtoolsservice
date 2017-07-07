@@ -4,9 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata # noqa
 import pgsqltoolsservice.utils as utils
-from typing import List
+from typing import List # noqa
 
 
 class MetadataListParameters:
@@ -20,8 +20,7 @@ class MetadataListParameters:
 
 class MetadataListResponse:
     def __init__(self):
-        self.Metadata: List[ObjectMetadata] = List[ObjectMetadata]()
-        self.Metadata.append(ObjectMetadata())
+        self.Metadata: List[ObjectMetadata] = None
 
 
 METADATA_LIST_REQUEST = IncomingMessageConfiguration('metadata/list', MetadataListParameters)
