@@ -12,3 +12,4 @@ nosetests.xml
 .pylintrc
 .noseids
 *.log
+.mypy_cache/

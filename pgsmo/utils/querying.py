@@ -21,7 +21,7 @@ class ServerConnection:
 
         # Calculate the server version
         version_string = str(self._conn.server_version)
-        self._version: Tuple(int, int, int) = (
+        self._version: Tuple[int, int, int] = (
             int(version_string[:-4]),
             int(version_string[-4:-2]),
             int(version_string[-2:])
