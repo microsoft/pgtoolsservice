@@ -66,8 +66,7 @@ class NodeCollection:
             raise TypeError('Index must be either a string or int')
 
         # Load the items if they haven't been loaded
-        if self._items is None:
-            self._items = self._generator()
+        self._ensure_loaded()
 
         # Look up the desired item
         for item in self._items:
@@ -78,15 +77,22 @@ class NodeCollection:
         raise NameError('An item with the provided index does not exist')
 
     def __iter__(self):
-        # Load the items if they haven't been loaded
-        if self._items is None:
-            self._items = self._generator()
-
+        self._ensure_loaded()
         return self._items.__iter__()
+
+    def __len__(self):
+        # Load the items if they haven't been loaded
+        self._ensure_loaded()
+        return len(self._items)
 
     def reset(self) -> None:
         # Empty the items so that next iteration will reload the collection
         self._items = None
+
+    def _ensure_loaded(self) -> None:
+        # Load the items if they haven't been loaded
+        if self._items is None:
+            self._items = self._generator()
 
 
 T = TypeVar('T')

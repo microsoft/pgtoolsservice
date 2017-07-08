@@ -94,6 +94,17 @@ class TestNodeCollection(unittest.TestCase):
         # Then: The list should be equivalent to the list of objects
         self.assertListEqual(output, mock_objects)
 
+    def test_len(self):
+        # Setup: Create a mock generator and node collection
+        generator, mock_objects = _get_mock_generator()
+        node_collection = node.NodeCollection(generator)
+
+        # If: I ask for the length of the node collection
+        length = len(node_collection)
+
+        # Then: The length should be equal to the length of the objects
+        self.assertEqual(length, len(mock_objects))
+
     def test_reset(self):
         # Setup: Create a mock generator and node collection that has been loaded
         generator, mock_objects = _get_mock_generator()
