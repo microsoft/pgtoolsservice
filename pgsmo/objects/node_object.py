@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from typing import Callable, Dict, List, Optional, Union, TypeVar
 
 
@@ -11,7 +11,7 @@ import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
 
 
-class NodeObject:
+class NodeObject(metaclass=ABCMeta):
     @classmethod
     @abstractmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs):
