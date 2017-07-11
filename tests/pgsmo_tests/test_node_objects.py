@@ -79,7 +79,7 @@ class TestNodeCollection(unittest.TestCase):
         generator, mock_objects = _get_mock_generator()
         node_collection = node.NodeCollection(generator)
 
-        # If: I get an item that has a matching oid
+        # If: I get an item that has a matching name
         output = node_collection['b']
 
         # Then: The item I have should be the expected item
@@ -95,6 +95,17 @@ class TestNodeCollection(unittest.TestCase):
 
         # Then: The list should be equivalent to the list of objects
         self.assertListEqual(output, mock_objects)
+
+    def test_len(self):
+        # Setup: Create a mock generator and node collection
+        generator, mock_objects = _get_mock_generator()
+        node_collection = node.NodeCollection(generator)
+
+        # If: I ask for the length of the node collection
+        length = len(node_collection)
+
+        # Then: The length should be equal to the length of the objects
+        self.assertEqual(length, len(mock_objects))
 
     def test_reset(self):
         # Setup: Create a mock generator and node collection that has been loaded
@@ -113,8 +124,8 @@ class TestNodeCollection(unittest.TestCase):
 class TestNodeObject(unittest.TestCase):
     def test_init(self):
         # If: I create a node object
-        conn = {}
-        node_obj = node.NodeObject(conn, 'abc')
+        conn = ServerConnection(utils.MockConnection(None))
+        node_obj = MockNodeObject(conn, 'abc')
 
         # Then: The properties should be assigned as defined
         self.assertIsNone(node_obj._oid)
@@ -128,15 +139,9 @@ class TestNodeObject(unittest.TestCase):
     def test_get_nodes(self):
         # Setup:
         # ... Create a mockup of a server connection with a mock executor
-        version = (1, 1, 1)
-
-        class MockConn:
-            def __init__(self):
-                self.version = version
-
         mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
         mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
-        mock_conn = MockConn()
+        mock_conn = ServerConnection(utils.MockConnection(None, version="10101"))
         mock_conn.execute_dict = mock_executor
 
         # ... Create a mock template renderer
@@ -156,7 +161,7 @@ class TestNodeObject(unittest.TestCase):
 
         # Then:
         # ... The template path should have been called once
-        mock_template_path.assert_called_once_with('root', 'nodes.sql', version)
+        mock_template_path.assert_called_once_with('root', 'nodes.sql', (1, 1, 1))
 
         # ... The template renderer should have been called once
         mock_render.assert_called_once_with('path', **kwargs)
@@ -217,11 +222,22 @@ class TestNodeObject(unittest.TestCase):
         collection2.reset.assert_called_once()
 
 
+class MockNodeObject(node.NodeObject):
+    @classmethod
+    def _from_node_query(cls, conn: ServerConnection, **kwargs):
+        pass
+
+    def __init__(self, conn: ServerConnection, name: str):
+        super(MockNodeObject, self).__init__(conn, name)
+
+
 def _get_mock_generator():
-    mock_object1 = node.NodeObject(None, 'a')
+    conn = ServerConnection(utils.MockConnection(None))
+
+    mock_object1 = MockNodeObject(conn, 'a')
     mock_object1._oid = 123
 
-    mock_object2 = node.NodeObject(None, 'b')
+    mock_object2 = MockNodeObject(conn, 'b')
     mock_object2._oid = 456
 
     mock_objects = [mock_object1, mock_object2]

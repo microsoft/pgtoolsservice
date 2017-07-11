@@ -20,7 +20,16 @@ class TestTable(unittest.TestCase):
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
         props = []
-        colls = ['_columns', 'columns']
+        colls = [
+            '_check_constraints', 'check_constraints',
+            '_columns', 'columns',
+            '_exclusion_constraints', 'exclusion_constraints',
+            '_foreign_key_constraints', 'foreign_key_constraints',
+            '_index_constraints', 'index_constraints',
+            '_indexes', 'indexes',
+            '_rules', 'rules',
+            '_triggers', 'triggers'
+        ]
         utils.init_base(Table, props, colls)
 
     def test_from_node_query(self):
@@ -39,5 +48,19 @@ class TestTable(unittest.TestCase):
         utils.validate_node_object_props(table, mock_conn, TABLE_ROW['name'], TABLE_ROW['oid'])
 
         # Child objects
+        self.assertIsInstance(table._check_constraints, NodeCollection)
+        self.assertIs(table.check_constraints, table._check_constraints)
         self.assertIsInstance(table._columns, NodeCollection)
         self.assertIs(table.columns, table._columns)
+        self.assertIsInstance(table._exclusion_constraints, NodeCollection)
+        self.assertIs(table.exclusion_constraints, table._exclusion_constraints)
+        self.assertIsInstance(table._foreign_key_constraints, NodeCollection)
+        self.assertIs(table.foreign_key_constraints, table._foreign_key_constraints)
+        self.assertIsInstance(table._index_constraints, NodeCollection)
+        self.assertIs(table.index_constraints, table._index_constraints)
+        self.assertIsInstance(table._indexes, NodeCollection)
+        self.assertIs(table.indexes, table._indexes)
+        self.assertIsInstance(table._rules, NodeCollection)
+        self.assertIs(table.rules, table._rules)
+        self.assertIsInstance(table._triggers, NodeCollection)
+        self.assertIs(table.triggers, table._triggers)
