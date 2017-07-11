@@ -48,28 +48,28 @@ class Table(node.NodeObject):
         super(Table, self).__init__(conn, name)
 
         # Declare child items
-        self._check_constraints: node.NodeCollection = node.NodeCollection(
+        self._check_constraints: node.NodeCollection = self._register_child_collection(
             lambda: CheckConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._columns: node.NodeCollection = node.NodeCollection(
+        self._columns: node.NodeCollection = self._register_child_collection(
             lambda: Column.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._exclusion_constraints: node.NodeCollection = node.NodeCollection(
+        self._exclusion_constraints: node.NodeCollection = self._register_child_collection(
             lambda: ExclusionConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._foreign_key_constraints: node.NodeCollection = node.NodeCollection(
+        self._foreign_key_constraints: node.NodeCollection = self._register_child_collection(
             lambda: ForeignKeyConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._index_constraints: node.NodeCollection = node.NodeCollection(
+        self._index_constraints: node.NodeCollection = self._register_child_collection(
             lambda: IndexConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._indexes: node.NodeCollection = node.NodeCollection(
+        self._indexes: node.NodeCollection = self._register_child_collection(
             lambda: Index.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._rules: node.NodeCollection = node.NodeCollection(
+        self._rules: node.NodeCollection = self._register_child_collection(
             lambda: Rule.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._triggers: node.NodeCollection = node.NodeCollection(
+        self._triggers: node.NodeCollection = self._register_child_collection(
             lambda: Trigger.get_nodes_for_parent(self._conn, self._oid)
         )
 
@@ -106,14 +106,3 @@ class Table(node.NodeObject):
     @property
     def triggers(self) -> node.NodeCollection:
         return self._triggers
-
-    # METHODS ##############################################################
-    def refresh(self) -> None:
-        self._check_constraints.reset()
-        self._columns.reset()
-        self._exclusion_constraints.reset()
-        self._foreign_key_constraints.reset()
-        self._index_constraints.reset()
-        self._indexes.reset()
-        self._rules.reset()
-        self._triggers.reset()

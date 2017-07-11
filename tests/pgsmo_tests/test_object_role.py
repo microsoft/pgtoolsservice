@@ -34,12 +34,7 @@ class TestRole(unittest.TestCase):
 
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_role(self, role: Role, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        self.assertIs(role._conn, mock_conn)
-        self.assertEqual(role._oid, ROLE_ROW['oid'])
-        self.assertEqual(role.oid, ROLE_ROW['oid'])
-        self.assertEqual(role._name, ROLE_ROW['rolname'])
-        self.assertEqual(role.name, ROLE_ROW['rolname'])
+        utils.validate_node_object_props(role, mock_conn, ROLE_ROW['rolname'], ROLE_ROW['oid'])
 
         # Role-specific basic properties
         self.assertEqual(role._can_login, ROLE_ROW['rolcanlogin'])

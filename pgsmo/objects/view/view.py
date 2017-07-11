@@ -40,13 +40,13 @@ class View(node.NodeObject):
         super(View, self).__init__(conn, name)
 
         # Declare child items
-        self._columns: node.NodeCollection = node.NodeCollection(
+        self._columns: node.NodeCollection = self._register_child_collection(
             lambda: Column.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._rules: node.NodeCollection = node.NodeCollection(
+        self._rules: node.NodeCollection = self._register_child_collection(
             lambda: Rule.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._triggers: node.NodeCollection = node.NodeCollection(
+        self._triggers: node.NodeCollection = self._register_child_collection(
             lambda: Trigger.get_nodes_for_parent(self._conn, self._oid)
         )
 
@@ -63,9 +63,3 @@ class View(node.NodeObject):
     @property
     def triggers(self) -> node.NodeCollection:
         return self._triggers
-
-    # METHODS ##############################################################
-    def refresh(self) -> None:
-        self._columns.reset()
-        self._rules.reset()
-        self._triggers.reset()

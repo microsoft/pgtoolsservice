@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-import unittest.mock as mock
 
 from pgsmo.objects.database.database import Database
 from pgsmo.utils.querying import ServerConnection
@@ -62,29 +61,13 @@ class TestDatabase(unittest.TestCase):
         # Use the test helper for this method
         utils.get_nodes_for_parent_base(Database, DATABASE_ROW, Database.get_nodes_for_parent, self._validate_database)
 
-    # METHOD TESTS #########################################################
-    def test_refresh(self):
-        # Setup: Create a database object and overwrite the reset method of the child objects
-        db = Database(ServerConnection(utils.MockConnection(None, name=DATABASE_ROW['name'])), DATABASE_ROW['name'])
-        db._schemas.reset = mock.MagicMock()
-
-        # If: I refresh the database
-        db.refresh()
-
-        # Then: The mocks should have been called
-        db._schemas.reset.assert_called_once()
-
     # IMPLEMENTATION DETAILS ###############################################
     def _init_validation(self, obj: Database, is_connected: bool):
         self.assertEqual(obj._is_connected, is_connected)
 
     def _validate_database(self, db: Database, mock_conn: ServerConnection):
         # NodeObject basic properties
-        self.assertIs(db._conn, mock_conn)
-        self.assertEqual(db._oid, DATABASE_ROW['did'])
-        self.assertEqual(db.oid, DATABASE_ROW['did'])
-        self.assertEqual(db._name, DATABASE_ROW['name'])
-        self.assertEqual(db.name, DATABASE_ROW['name'])
+        utils.validate_node_object_props(db, mock_conn, DATABASE_ROW['name'], DATABASE_ROW['did'])
 
         # Database-specific basic properties
         self.assertEqual(db._tablespace, DATABASE_ROW['spcname'])

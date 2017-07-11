@@ -177,3 +177,15 @@ def validate_init(class_, name, mock_conn, obj, props: List[str], collections: L
     # ... Run the custom validation
     if custom_validation is not None:
         custom_validation(obj)
+
+
+def validate_node_object_props(obj: NodeObject, conn: ServerConnection, name: str, oid: int) -> None:
+    # Setup for test case calls
+    test_case = unittest.TestCase('__init__')
+
+    # NodeObject basic properties
+    test_case.assertIs(obj._conn, conn)
+    test_case.assertEqual(obj._oid, oid)
+    test_case.assertEqual(obj.oid, oid)
+    test_case.assertEqual(obj._name, name)
+    test_case.assertEqual(obj.name, name)

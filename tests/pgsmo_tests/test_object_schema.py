@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-import unittest.mock as mock
 
 from pgsmo.objects.node_object import NodeCollection
 from pgsmo.objects.schema.schema import Schema
@@ -34,28 +33,9 @@ class TestSchema(unittest.TestCase):
         # Use the test helper for this method
         utils.get_nodes_for_parent_base(Schema, SCHEMA_ROW, Schema.get_nodes_for_parent, self._validate_schema)
 
-    # METHOD TESTS #########################################################
-    def test_refresh(self):
-        # Setup: Create a schema object and mock up the node collection reset methods
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        schema = Schema._from_node_query(mock_conn, **SCHEMA_ROW)
-        schema._tables.reset = mock.MagicMock()
-        schema._views.reset = mock.MagicMock()
-
-        # If: I refresh a schema object
-        schema.refresh()
-
-        # Then: The child object node collections should have been reset
-        schema._tables.reset.assert_called_once()
-        schema._views.reset.assert_called_once()
-
+    # IMPLEMENTATION DETAILS ###############################################
     def _validate_schema(self, schema: Schema, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        self.assertIs(schema._conn, mock_conn)
-        self.assertEqual(schema._oid, SCHEMA_ROW['oid'])
-        self.assertEqual(schema.oid, SCHEMA_ROW['oid'])
-        self.assertEqual(schema._name, SCHEMA_ROW['name'])
-        self.assertEqual(schema.name, SCHEMA_ROW['name'])
+        utils.validate_node_object_props(schema, mock_conn, SCHEMA_ROW['name'], SCHEMA_ROW['oid'])
 
         # Schema-specific basic properties
         self.assertEqual(schema._can_create, SCHEMA_ROW['can_create'])

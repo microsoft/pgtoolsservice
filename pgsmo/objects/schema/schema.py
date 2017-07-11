@@ -51,13 +51,13 @@ class Schema(node.NodeObject):
         self._has_usage: Optional[bool] = None
 
         # Declare the child items
-        self._functions: node.NodeCollection = node.NodeCollection(
+        self._functions: node.NodeCollection = self._register_child_collection(
             lambda: Function.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._tables: node.NodeCollection = node.NodeCollection(
+        self._tables: node.NodeCollection = self._register_child_collection(
             lambda: Table.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._views: node.NodeCollection = node.NodeCollection(
+        self._views: node.NodeCollection = self._register_child_collection(
             lambda: View.get_nodes_for_parent(self._conn, self._oid)
         )
 
@@ -82,9 +82,3 @@ class Schema(node.NodeObject):
     @property
     def views(self) -> node.NodeCollection:
         return self._views
-
-    # METHODS ##############################################################
-    def refresh(self) -> None:
-        """Resets the internal collections of child objects"""
-        self._tables.reset()
-        self._views.reset()
