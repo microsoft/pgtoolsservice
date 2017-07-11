@@ -9,7 +9,7 @@ import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_column')
 
 
 class Column(node.NodeObject):

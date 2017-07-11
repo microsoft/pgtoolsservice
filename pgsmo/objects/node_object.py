@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from typing import Callable, Dict, List, Optional, Union, TypeVar
 
 
@@ -11,7 +11,7 @@ import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
 
 
-class NodeObject:
+class NodeObject(metaclass=ABCMeta):
     @classmethod
     @abstractmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs):
@@ -20,11 +20,13 @@ class NodeObject:
     def __init__(self, conn: querying.ServerConnection, name: str):
         # Define the state of the object
         self._conn: querying.ServerConnection = conn
+        self._child_collections: List[NodeCollection] = []
 
         # Declare node basic properties
         self._name: str = name
         self._oid: Optional[int] = None
 
+    # PROPERTIES ###########################################################
     @property
     def name(self) -> str:
         return self._name
@@ -32,6 +34,28 @@ class NodeObject:
     @property
     def oid(self) -> Optional[int]:
         return self._oid
+
+    # METHODS ##############################################################
+    def refresh(self) -> None:
+        """Refreshes and lazily loaded data"""
+        self._refresh_child_collections()
+
+    # PROTECTED HELPERS ####################################################
+    def _register_child_collection(self, generator: Callable) -> 'NodeCollection':
+        """
+        Creates a node collection for child objects and registers it with the list of child objects.
+        This is very useful for ensuring that all child collections are reset when refreshing.
+        :param generator: Callable for generating the list of nodes
+        :return: The created node collection
+        """
+        collection = NodeCollection(generator)
+        self._child_collections.append(collection)
+        return collection
+
+    def _refresh_child_collections(self) -> None:
+        """Iterates over the registered child collections and resets them"""
+        for collection in self._child_collections:
+            collection.reset()
 
 
 TNC = TypeVar('TNC')
@@ -66,8 +90,7 @@ class NodeCollection:
             raise TypeError('Index must be either a string or int')
 
         # Load the items if they haven't been loaded
-        if self._items is None:
-            self._items = self._generator()
+        self._ensure_loaded()
 
         # Look up the desired item
         for item in self._items:
@@ -78,15 +101,22 @@ class NodeCollection:
         raise NameError('An item with the provided index does not exist')
 
     def __iter__(self):
-        # Load the items if they haven't been loaded
-        if self._items is None:
-            self._items = self._generator()
-
+        self._ensure_loaded()
         return self._items.__iter__()
+
+    def __len__(self):
+        # Load the items if they haven't been loaded
+        self._ensure_loaded()
+        return len(self._items)
 
     def reset(self) -> None:
         # Empty the items so that next iteration will reload the collection
         self._items = None
+
+    def _ensure_loaded(self) -> None:
+        # Load the items if they haven't been loaded
+        if self._items is None:
+            self._items = self._generator()
 
 
 T = TypeVar('T')
