@@ -38,5 +38,7 @@ class Sequence(NodeObject):
         seq = cls(conn, kwargs['name'])
         seq._oid = kwargs['oid']
 
+        return seq
+
     def __init__(self, conn: querying.ServerConnection, name: str):
         super(Sequence, self).__init__(conn, name)

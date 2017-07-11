@@ -41,6 +41,7 @@ class TestSchema(unittest.TestCase):
         schema = Schema._from_node_query(mock_conn, **SCHEMA_ROW)
         schema._tables.reset = mock.MagicMock()
         schema._views.reset = mock.MagicMock()
+        schema._sequences.reset = mock.MagicMock()
 
         # If: I refresh a schema object
         schema.refresh()
@@ -48,6 +49,7 @@ class TestSchema(unittest.TestCase):
         # Then: The child object node collections should have been reset
         schema._tables.reset.assert_called_once()
         schema._views.reset.assert_called_once()
+        schema._sequences.reset.assert_called_once()
 
     def _validate_schema(self, schema: Schema, mock_conn: ServerConnection):
         # NodeObject basic properties
@@ -64,6 +66,8 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(schema.has_usage, SCHEMA_ROW['has_usage'])
 
         # Child objects
+        self.assertIsInstance(schema._sequences, NodeCollection)
+        self.assertIs(schema.sequences, schema._sequences)
         self.assertIsInstance(schema._tables, NodeCollection)
         self.assertIs(schema.tables, schema._tables)
         self.assertIsInstance(schema._views, NodeCollection)

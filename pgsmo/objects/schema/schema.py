@@ -8,6 +8,7 @@ from typing import List, Optional
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.functions.function import Function
+from pgsmo.objects.sequence import Sequence
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 import pgsmo.utils.querying as querying
@@ -54,6 +55,9 @@ class Schema(node.NodeObject):
         self._functions: node.NodeCollection = node.NodeCollection(
             lambda: Function.get_nodes_for_parent(self._conn, self._oid)
         )
+        self._sequences: node.NodeCollection = node.NodeCollection(
+            lambda: Sequence.get_nodes_for_parent(self._conn, self._oid)
+        )
         self._tables: node.NodeCollection = node.NodeCollection(
             lambda: Table.get_nodes_for_parent(self._conn, self._oid)
         )
@@ -76,6 +80,10 @@ class Schema(node.NodeObject):
         return self._functions
 
     @property
+    def sequences(self) -> node.NodeCollection:
+        return self._sequences
+
+    @property
     def tables(self) -> node.NodeCollection:
         return self._tables
 
@@ -86,5 +94,6 @@ class Schema(node.NodeObject):
     # METHODS ##############################################################
     def refresh(self) -> None:
         """Resets the internal collections of child objects"""
+        self._sequences.reset()
         self._tables.reset()
         self._views.reset()
