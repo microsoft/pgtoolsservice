@@ -33,9 +33,4 @@ class TestFunction(unittest.TestCase):
 
     # IMPLEMENTATION DETAILS ###############################################
     def _validate(self, obj: Sequence, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        self.assertIs(obj._conn, mock_conn)
-        self.assertEqual(obj._oid, NODE_ROW['oid'])
-        self.assertEqual(obj.oid, NODE_ROW['oid'])
-        self.assertEqual(obj._name, NODE_ROW['name'])
-        self.assertEqual(obj.name, NODE_ROW['name'])
+        utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
