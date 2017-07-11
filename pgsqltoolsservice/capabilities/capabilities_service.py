@@ -56,8 +56,9 @@ class CapabilitiesService:
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 special_value_type=ConnectionOption.SPECIAL_VALUE_DATABASE_NAME,
                 is_identity=True,
-                is_required=False,
-                group_name='Source'
+                is_required=True,
+                group_name='Source',
+                default_value='postgres'
             ),
             ConnectionOption(
                 name='user',
