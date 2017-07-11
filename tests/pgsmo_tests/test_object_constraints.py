@@ -5,7 +5,9 @@
 
 import unittest
 
-from pgsmo.objects.table_objects.constraints import Constraint, CheckConstraint, ExclusionConstraint, IndexConstraint
+from pgsmo.objects.table_objects.constraints import (
+    Constraint, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint
+)
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
 
@@ -19,7 +21,7 @@ NODE_ROW = {
 class TestConstraints(unittest.TestCase):
     """These tests are for all constraint classes"""
 
-    CONSTRAINT_CLASSES = [CheckConstraint, ExclusionConstraint, IndexConstraint]
+    CONSTRAINT_CLASSES = [CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint]
 
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
