@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-import unittest.mock as mock
 
 from pgsmo.objects.node_object import NodeCollection
 from pgsmo.objects.view.view import View

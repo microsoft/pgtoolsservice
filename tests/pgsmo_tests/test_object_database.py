@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-import unittest.mock as mock
 
 from pgsmo.objects.database.database import Database
 from pgsmo.utils.querying import ServerConnection
