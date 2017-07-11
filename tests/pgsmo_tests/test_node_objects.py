@@ -180,7 +180,7 @@ class TestNodeObject(unittest.TestCase):
     def test_register_child_collection(self):
         # Setup: Create a node object
         conn = ServerConnection(utils.MockConnection(None))
-        node_obj = node.NodeObject(conn, 'obj_name')
+        node_obj = MockNodeObject(conn, 'obj_name')
 
         # If: I register a child collection
         generator = mock.MagicMock()
@@ -206,7 +206,7 @@ class TestNodeObject(unittest.TestCase):
     def test_refresh(self):
         # Setup: Create a node object with a couple child collections
         conn = ServerConnection(utils.MockConnection(None))
-        node_obj = node.NodeObject(conn, 'obj_name')
+        node_obj = MockNodeObject(conn, 'obj_name')
         generator = mock.MagicMock()
         collection1 = node.NodeCollection(generator)
         collection1.reset = mock.MagicMock()
