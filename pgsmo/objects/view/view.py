@@ -6,7 +6,7 @@
 import os.path as path
 from typing import List
 
-from pgsmo.objects.column.column import Column
+from pgsmo.objects.table_objects import Column, Rule, Trigger
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
@@ -41,14 +41,31 @@ class View(node.NodeObject):
 
         # Declare child items
         self._columns: node.NodeCollection = node.NodeCollection(
-            lambda: Column.get_nodes_for_parent(self._conn, self.oid)
+            lambda: Column.get_nodes_for_parent(self._conn, self._oid)
+        )
+        self._rules: node.NodeCollection = node.NodeCollection(
+            lambda: Rule.get_nodes_for_parent(self._conn, self._oid)
+        )
+        self._triggers: node.NodeCollection = node.NodeCollection(
+            lambda: Trigger.get_nodes_for_parent(self._conn, self._oid)
         )
 
     # PROPERTIES ###########################################################
+    # -CHILD OBJECTS #######################################################
     @property
     def columns(self) -> node.NodeCollection:
         return self._columns
 
+    @property
+    def rules(self) -> node.NodeCollection:
+        return self._rules
+
+    @property
+    def triggers(self) -> node.NodeCollection:
+        return self._triggers
+
     # METHODS ##############################################################
     def refresh(self) -> None:
         self._columns.reset()
+        self._rules.reset()
+        self._triggers.reset()

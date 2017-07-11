@@ -21,7 +21,11 @@ class TestTable(unittest.TestCase):
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
         props = []
-        colls = ['_columns', 'columns']
+        colls = [
+            '_columns', 'columns',
+            '_rules', 'rules',
+            '_triggers', 'triggers'
+        ]
         utils.init_base(View, props, colls)
 
     def test_from_node_query(self):
@@ -39,14 +43,18 @@ class TestTable(unittest.TestCase):
     def test_refresh(self):
         # Setup: Create a table object and mock up the node collection reset method
         mock_conn = ServerConnection(utils.MockConnection(None))
-        table = View._from_node_query(mock_conn, **NODE_ROW)
-        table._columns.reset = mock.MagicMock()
+        view = View._from_node_query(mock_conn, **NODE_ROW)
+        view._columns.reset = mock.MagicMock()
+        view._rules.reset = mock.MagicMock()
+        view._triggers.reset = mock.MagicMock()
 
         # If: I refresh a table object
-        table.refresh()
+        view.refresh()
 
         # Then: The child object node collections should have been reset
-        table._columns.reset.assert_called_once()
+        view._columns.reset.assert_called_once()
+        view._rules.reset.assert_called_once()
+        view._triggers.reset.assert_called_once()
 
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_view(self, view: View, mock_conn: ServerConnection):
@@ -60,3 +68,7 @@ class TestTable(unittest.TestCase):
         # Child objects
         self.assertIsInstance(view._columns, NodeCollection)
         self.assertIs(view.columns, view._columns)
+        self.assertIsInstance(view._rules, NodeCollection)
+        self.assertIs(view.rules, view._rules)
+        self.assertIsInstance(view._triggers, NodeCollection)
+        self.assertIs(view.triggers, view._triggers)

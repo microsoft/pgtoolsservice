@@ -3,7 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo.objects.column.column import Column
+from pgsmo.objects.table_objects import (
+    CheckConstraint, Column, ExclusionConstraint, ForeignKeyConstraint, Index, IndexConstraint, Rule, Trigger
+)
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.schema.schema import Schema
@@ -12,11 +14,20 @@ from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 
 __all__ = [
+    'CheckConstraint',
+    'Column',
+    'ExclusionConstraint',
+    'ForeignKeyConstraint',
+    'Index',
+    'IndexConstraint',
+    'Rule',
+    'Trigger',
     'Database',
+    'Index',
     'Schema',
     'Server',
     'Role',
+    'Rule',
     'Table',
     'View',
-    'Column'
 ]
