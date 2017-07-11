@@ -90,4 +90,3 @@ class Schema(node.NodeObject):
     @property
     def views(self) -> node.NodeCollection:
         return self._views
-
