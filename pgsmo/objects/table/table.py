@@ -6,6 +6,9 @@
 from typing import List
 
 from pgsmo.objects.table_objects.column import Column
+from pgsmo.objects.table_objects.constraints import (
+    CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint
+)
 from pgsmo.objects.table_objects.index import Index
 from pgsmo.objects.table_objects.rule import Rule
 from pgsmo.objects.table_objects.trigger import Trigger
@@ -42,8 +45,20 @@ class Table(node.NodeObject):
         super(Table, self).__init__(conn, name)
 
         # Declare child items
+        self._check_constraints: node.NodeCollection = node.NodeCollection(
+            lambda: CheckConstraint.get_nodes_for_parent(self._conn, self._oid)
+        )
         self._columns: node.NodeCollection = node.NodeCollection(
             lambda: Column.get_nodes_for_parent(self._conn, self._oid)
+        )
+        self._exclusion_constraints: node.NodeCollection = node.NodeCollection(
+            lambda: ExclusionConstraint.get_nodes_for_parent(self._conn, self._oid)
+        )
+        self._foreign_key_constraints: node.NodeCollection = node.NodeCollection(
+            lambda: ForeignKeyConstraint.get_nodes_for_parent(self._conn, self._oid)
+        )
+        self._index_constraints: node.NodeCollection = node.NodeCollection(
+            lambda : IndexConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
         self._indexes: node.NodeCollection = node.NodeCollection(
             lambda: Index.get_nodes_for_parent(self._conn, self._oid)
@@ -58,8 +73,24 @@ class Table(node.NodeObject):
     # PROPERTIES ###########################################################
     # -CHILD OBJECTS #######################################################
     @property
+    def check_constraints(self) -> node.NodeCollection:
+        return self._check_constraints
+
+    @property
     def columns(self) -> node.NodeCollection:
         return self._columns
+
+    @property
+    def exclusion_constraints(self) -> node.NodeCollection:
+        return self._exclusion_constraints
+
+    @property
+    def foreign_key_constraints(self) -> node.NodeCollection:
+        return self._foreign_key_constraints
+
+    @property
+    def index_constraints(self) -> node.NodeCollection:
+        return self._index_constraints
 
     @property
     def indexes(self) -> node.NodeCollection:
@@ -75,7 +106,11 @@ class Table(node.NodeObject):
 
     # METHODS ##############################################################
     def refresh(self) -> None:
+        self._check_constraints.reset()
         self._columns.reset()
+        self._exclusion_constraints.reset()
+        self._foreign_key_constraints.reset()
+        self._index_constraints.reset()
         self._indexes.reset()
         self._rules.reset()
         self._triggers.reset()
