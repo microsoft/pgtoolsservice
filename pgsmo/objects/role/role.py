@@ -29,7 +29,12 @@ class Role(NodeObject):
         Creates a Role object from the result of a role node query
         :param conn: Connection that executed the role node query
         :param kwargs: Row from a role node query
-        :return: A Role instnace
+        Kwargs:
+            rolname str: Name of the role
+            oid int: Object ID of the role
+            rolcanlogin bool: Whether or not the role can login
+            rolsuper bool: Whether or not the role is a super user
+        :return: A Role instance
         """
         role = cls(conn, kwargs['rolname'])
 
