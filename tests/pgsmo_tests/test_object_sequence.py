@@ -15,7 +15,7 @@ NODE_ROW = {
 }
 
 
-class TestFunction(unittest.TestCase):
+class TestSequence(unittest.TestCase):
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
         utils.init_base(Sequence, [], [])

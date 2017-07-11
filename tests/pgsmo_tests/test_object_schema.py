@@ -23,7 +23,11 @@ class TestSchema(unittest.TestCase):
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
         props = ['_can_create', 'can_create', '_has_usage', 'has_usage']
-        collections = ['_tables', 'tables', '_views', 'views']
+        collections = [
+            '_sequences', 'sequences',
+            '_tables', 'tables',
+            '_views', 'views'
+        ]
         utils.init_base(Schema, props, collections)
 
     def test_from_node_query(self):
