@@ -35,27 +35,9 @@ class TestTable(unittest.TestCase):
             self._validate_table
         )
 
-    # METHOD TESTS #########################################################
-    def test_refresh(self):
-        # Setup: Create a table object and mock up the node collection reset method
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        table = Table._from_node_query(mock_conn, **TABLE_ROW)
-        table._columns.reset = mock.MagicMock()
-
-        # If: I refresh a table object
-        table.refresh()
-
-        # Then: The child object node collections should have been reset
-        table._columns.reset.assert_called_once()
-
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_table(self, table: Table, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        self.assertIs(table._conn, mock_conn)
-        self.assertEqual(table._oid, TABLE_ROW['oid'])
-        self.assertEqual(table.oid, TABLE_ROW['oid'])
-        self.assertEqual(table._name, TABLE_ROW['name'])
-        self.assertEqual(table.name, TABLE_ROW['name'])
+        utils.validate_node_object_props(table, mock_conn, TABLE_ROW['name'], TABLE_ROW['oid'])
 
         # Child objects
         self.assertIsInstance(table._columns, NodeCollection)

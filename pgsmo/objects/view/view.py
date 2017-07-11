@@ -40,7 +40,7 @@ class View(node.NodeObject):
         super(View, self).__init__(conn, name)
 
         # Declare child items
-        self._columns: node.NodeCollection = node.NodeCollection(
+        self._columns: node.NodeCollection = self._register_child_collection(
             lambda: Column.get_nodes_for_parent(self._conn, self.oid)
         )
 
@@ -48,7 +48,3 @@ class View(node.NodeObject):
     @property
     def columns(self) -> node.NodeCollection:
         return self._columns
-
-    # METHODS ##############################################################
-    def refresh(self) -> None:
-        self._columns.reset()

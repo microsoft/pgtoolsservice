@@ -57,9 +57,9 @@ class Database(node.NodeObject):
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-        self._schemas: Optional[node.NodeCollection] = None if not self._is_connected else node.NodeCollection(
-            lambda: Schema.get_nodes_for_parent(conn)
-        )
+        self._schemas = None
+        if self._is_connected:
+            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(conn))
 
     # PROPERTIES ###########################################################
     # TODO: Create setters for optional values
@@ -90,8 +90,3 @@ class Database(node.NodeObject):
 
     def delete(self):
         pass
-
-    def refresh(self):
-        """Resets the internal collection of child objects"""
-        if self._schemas is not None:
-            self._schemas.reset()

@@ -20,11 +20,13 @@ class NodeObject:
     def __init__(self, conn: querying.ServerConnection, name: str):
         # Define the state of the object
         self._conn: querying.ServerConnection = conn
+        self._child_collections: List[NodeCollection] = []
 
         # Declare node basic properties
         self._name: str = name
         self._oid: Optional[int] = None
 
+    # PROPERTIES ###########################################################
     @property
     def name(self) -> str:
         return self._name
@@ -32,6 +34,28 @@ class NodeObject:
     @property
     def oid(self) -> Optional[int]:
         return self._oid
+
+    # METHODS ##############################################################
+    def refresh(self) -> None:
+        """Refreshes and lazily loaded data"""
+        self._refresh_child_collections()
+
+    # PROTECTED HELPERS ####################################################
+    def _register_child_collection(self, generator: Callable) -> 'NodeCollection':
+        """
+        Creates a node collection for child objects and registers it with the list of child objects.
+        This is very useful for ensuring that all child collections are reset when refreshing.
+        :param generator: Callable for generating the list of nodes
+        :return: The created node collection
+        """
+        collection = NodeCollection(generator)
+        self._child_collections.append(collection)
+        return collection
+
+    def _refresh_child_collections(self) -> None:
+        """Iterates over the registered child collections and resets them"""
+        for collection in self._child_collections:
+            collection.reset()
 
 
 TNC = TypeVar('TNC')
