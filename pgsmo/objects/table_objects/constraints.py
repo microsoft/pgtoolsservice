@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional
+from typing import List
 
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying

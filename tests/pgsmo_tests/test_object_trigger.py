@@ -15,6 +15,7 @@ NODE_ROW = {
     'is_enable_trigger': True
 }
 
+
 class TestTrigger(unittest.TestCase):
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):

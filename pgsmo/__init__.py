@@ -21,13 +21,13 @@ __all__ = [
     'Index',
     'IndexConstraint',
     'Rule',
-    'Trigger'
+    'Trigger',
     'Database',
-    'Index'
+    'Index',
     'Schema',
     'Server',
     'Role',
-    'Rule'
+    'Rule',
     'Table',
     'View',
 ]

@@ -61,7 +61,7 @@ class Table(node.NodeObject):
             lambda: ForeignKeyConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
         self._index_constraints: node.NodeCollection = node.NodeCollection(
-            lambda : IndexConstraint.get_nodes_for_parent(self._conn, self._oid)
+            lambda: IndexConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
         self._indexes: node.NodeCollection = node.NodeCollection(
             lambda: Index.get_nodes_for_parent(self._conn, self._oid)
