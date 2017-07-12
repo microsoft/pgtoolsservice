@@ -11,7 +11,7 @@ import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, os.path.join('templates', 'functions'))
+TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_functions')
 
 
 class Function(node.NodeObject):
