@@ -23,7 +23,11 @@ class TestSchema(unittest.TestCase):
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
         props = ['_can_create', 'can_create', '_has_usage', 'has_usage']
-        collections = ['_tables', 'tables', '_views', 'views']
+        collections = [
+            '_sequences', 'sequences',
+            '_tables', 'tables',
+            '_views', 'views'
+        ]
         utils.init_base(Schema, props, collections)
 
     def test_from_node_query(self):
@@ -44,6 +48,8 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(schema.has_usage, SCHEMA_ROW['has_usage'])
 
         # Child objects
+        self.assertIsInstance(schema._sequences, NodeCollection)
+        self.assertIs(schema.sequences, schema._sequences)
         self.assertIsInstance(schema._tables, NodeCollection)
         self.assertIs(schema.tables, schema._tables)
         self.assertIsInstance(schema._views, NodeCollection)
