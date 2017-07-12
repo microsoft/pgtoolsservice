@@ -12,7 +12,7 @@ from pgsqltoolsservice.workspace.contracts import (
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
     DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, DidOpenTextDocumentParams,
     DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, DidCloseTextDocumentParams,
-    Configuration, PGSQLConfiguration, SQLConfiguration, Range
+    Configuration, Range
 )
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 from pgsqltoolsservice.workspace.workspace import Workspace

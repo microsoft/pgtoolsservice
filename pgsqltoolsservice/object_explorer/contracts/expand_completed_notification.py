@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List # noqa
-from pgsqltoolsservice.object_explorer.contracts.node_info import NodeInfo # noqa
+from typing import List  # noqa
+from pgsqltoolsservice.object_explorer.contracts.node_info import NodeInfo  # noqa
 
 
 class ExpandCompletedParameters:

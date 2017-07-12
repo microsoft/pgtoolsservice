@@ -10,7 +10,7 @@ import tests.utils as utils
 
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
-from pgsqltoolsservice.hosting import (JSONRPCServer, ServiceProvider, RequestContext) # noqa
+from pgsqltoolsservice.hosting import (JSONRPCServer, ServiceProvider, RequestContext)  # noqa
 from pgsqltoolsservice.object_explorer import ObjectExplorerService
 from pgsqltoolsservice.object_explorer.contracts import ExpandParameters
 from pgsqltoolsservice.utils import constants

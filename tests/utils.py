@@ -54,6 +54,7 @@ def get_mock_service_provider(service_map: dict = None) -> ServiceProvider:
     provider._is_initialized = True
     return provider
 
+
 class MockRequestContext(RequestContext):
     """Mock RequestContext object that allows service responses, notifications, and errors to be tested"""
 
