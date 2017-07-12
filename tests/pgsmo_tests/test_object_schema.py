@@ -26,6 +26,7 @@ class TestSchema(unittest.TestCase):
         collections = [
             '_collations', 'collations',
             '_functions', 'functions',
+            '_sequences', 'sequences',
             '_tables', 'tables',
             '_views', 'views'
         ]
@@ -53,6 +54,8 @@ class TestSchema(unittest.TestCase):
         self.assertIs(schema.collations, schema._collations)
         self.assertIsInstance(schema._functions, NodeCollection)
         self.assertIs(schema.functions, schema._functions)
+        self.assertIsInstance(schema._sequences, NodeCollection)
+        self.assertIs(schema.sequences, schema._sequences)
         self.assertIsInstance(schema._tables, NodeCollection)
         self.assertIs(schema.tables, schema._tables)
         self.assertIsInstance(schema._views, NodeCollection)
