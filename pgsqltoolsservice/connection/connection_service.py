@@ -21,6 +21,7 @@ from pgsqltoolsservice.connection.contracts import (
     LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
 )
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
+from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.utils.cancellation import CancellationToken
 
 
@@ -183,6 +184,10 @@ class ConnectionService:
 
         # Map the connection options to their psycopg2-specific options
         connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()}
+
+        # Use the default database if one was not provided
+        if 'dbname' not in connection_options or not connection_options['dbname']:
+            connection_options['dbname'] = self._service_provider[constants.WORKSPACE_SERVICE_NAME].pgsql_configuration.default_database
 
         # Connect using psycopg2
         try:

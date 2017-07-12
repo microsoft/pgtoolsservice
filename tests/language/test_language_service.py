@@ -81,8 +81,8 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: intellisense is disabled
         context: RequestContext = utils.MockRequestContext()
-        self.mock_workspace_service._configuration = SQLConfiguration()
-        self.mock_workspace_service._configuration.intellisense.enable_intellisense = False
+        self.mock_workspace_service._sql_configuration = SQLConfiguration()
+        self.mock_workspace_service._sql_configuration.intellisense.enable_intellisense = False
         service: LanguageService = self._init_service()
 
         # When: I request completion item
@@ -102,7 +102,7 @@ class TestLanguageService(unittest.TestCase):
         context: RequestContext = utils.MockRequestContext()
         config: SQLConfiguration = SQLConfiguration()
 
-        self.mock_workspace_service._configuration = config
+        self.mock_workspace_service._sql_configuration = config
         self.mock_workspace_service._workspace = Workspace()
         service: LanguageService = self._init_service()
 
@@ -131,8 +131,8 @@ class TestLanguageService(unittest.TestCase):
             }
         })
         context: RequestContext = utils.MockRequestContext()
-        self.mock_workspace_service._configuration = SQLConfiguration()
-        self.mock_workspace_service._configuration.intellisense.enable_intellisense = True
+        self.mock_workspace_service._sql_configuration = SQLConfiguration()
+        self.mock_workspace_service._sql_configuration.intellisense.enable_intellisense = True
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
         service: LanguageService = self._init_service()

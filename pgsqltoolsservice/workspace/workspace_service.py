@@ -12,7 +12,7 @@ from pgsqltoolsservice.workspace.contracts import (
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
     DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, DidOpenTextDocumentParams,
     DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, DidCloseTextDocumentParams,
-    SQLConfiguration, Range
+    PGSQLConfiguration, SQLConfiguration, Range
 )
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 from pgsqltoolsservice.workspace.workspace import Workspace
@@ -33,6 +33,7 @@ class WorkspaceService:
         # Create a workspace that will handle state for the session
         self._workspace = Workspace()
         self._configuration: SQLConfiguration = SQLConfiguration()
+        self._pgsql_configuration: PGSQLConfiguration = PGSQLConfiguration()
 
         # Setup callbacks for the various events we can receive
         self._config_change_callbacks: List[Callable[SQLConfiguration]] = []
@@ -58,6 +59,10 @@ class WorkspaceService:
     @property
     def configuration(self) -> SQLConfiguration:
         return self._configuration
+
+    @property
+    def pgsql_configuration(self) -> PGSQLConfiguration:
+        return self._pgsql_configuration
 
     @property
     def workspace(self) -> Workspace:
@@ -107,6 +112,7 @@ class WorkspaceService:
         :param params: Parameters from the notification
         """
         self._configuration = params.settings.sql
+        self._pgsql_configuration = params.settings.pgsql
         for callback in self._config_change_callbacks:
             callback(self._configuration)
 

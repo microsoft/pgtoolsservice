@@ -20,19 +20,17 @@ class SQLConfiguration:
     def __init__(self):
         self.intellisense: IntellisenseConfiguration = IntellisenseConfiguration()
 
-# TODO reenable this when there are PG-specific settings
-# class PGSQLConfiguration:
-#     """
-#     Configuration for PGSQL tool service
-#     """
-#     @classmethod
-#     def from_dict(cls, dictionary: dict):
-#         return utils.serialization.convert_from_dict(cls, dictionary,
-#                                                      ignore_extra_attributes=True,
-#                                                      intellisense=IntellisenseConfiguration)
 
-#     def __init__(self):
-#         self.intellisense: IntellisenseConfiguration = IntellisenseConfiguration()
+class PGSQLConfiguration:
+    """
+    Configuration for PGSQL tool service
+    """
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary, ignore_extra_attributes=True)
+
+    def __init__(self):
+        self.default_database: str = None
 
 
 class IntellisenseConfiguration:
@@ -57,11 +55,11 @@ class Configuration:
     """
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     sql=SQLConfiguration)
+        return utils.serialization.convert_from_dict(cls, dictionary, sql=SQLConfiguration, pgsql=PGSQLConfiguration)
 
     def __init__(self):
         self.sql = None
+        self.pgsql = None
 
 
 class DidChangeConfigurationParams:
