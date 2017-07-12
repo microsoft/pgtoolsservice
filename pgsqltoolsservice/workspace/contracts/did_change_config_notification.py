@@ -58,8 +58,8 @@ class Configuration:
         return utils.serialization.convert_from_dict(cls, dictionary, sql=SQLConfiguration, pgsql=PGSQLConfiguration)
 
     def __init__(self):
-        self.sql = None
-        self.pgsql = None
+        self.sql = SQLConfiguration()
+        self.pgsql = PGSQLConfiguration()
 
 
 class DidChangeConfigurationParams:

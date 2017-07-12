@@ -187,7 +187,7 @@ class ConnectionService:
 
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['dbname'] = self._service_provider[constants.WORKSPACE_SERVICE_NAME].pgsql_configuration.default_database
+            connection_options['dbname'] = self._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
 
         # Connect using psycopg2
         try:

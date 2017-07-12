@@ -12,7 +12,7 @@ from pgsqltoolsservice.workspace.contracts import (
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
     DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, DidOpenTextDocumentParams,
     DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, DidCloseTextDocumentParams,
-    PGSQLConfiguration, SQLConfiguration, Range
+    Configuration, PGSQLConfiguration, SQLConfiguration, Range
 )
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 from pgsqltoolsservice.workspace.workspace import Workspace
@@ -32,11 +32,10 @@ class WorkspaceService:
 
         # Create a workspace that will handle state for the session
         self._workspace = Workspace()
-        self._configuration: SQLConfiguration = SQLConfiguration()
-        self._pgsql_configuration: PGSQLConfiguration = PGSQLConfiguration()
+        self._configuration: Configuration = Configuration()
 
         # Setup callbacks for the various events we can receive
-        self._config_change_callbacks: List[Callable[SQLConfiguration]] = []
+        self._config_change_callbacks: List[Callable[Configuration]] = []
         self._text_change_callbacks: List[Callable[ScriptFile]] = []
         self._text_open_callbacks: List[Callable[ScriptFile]] = []
         self._text_close_callbacks: List[Callable[ScriptFile]] = []
@@ -57,12 +56,8 @@ class WorkspaceService:
 
     # PROPERTIES ###########################################################
     @property
-    def configuration(self) -> SQLConfiguration:
+    def configuration(self) -> Configuration:
         return self._configuration
-
-    @property
-    def pgsql_configuration(self) -> PGSQLConfiguration:
-        return self._pgsql_configuration
 
     @property
     def workspace(self) -> Workspace:
@@ -70,7 +65,7 @@ class WorkspaceService:
         return self._workspace
 
     # METHODS ##############################################################
-    def register_config_change_callback(self, task: Callable[[SQLConfiguration], None]) -> None:
+    def register_config_change_callback(self, task: Callable[[Configuration], None]) -> None:
         self._config_change_callbacks.append(task)
 
     def register_text_change_callback(self, task: Callable[[ScriptFile], None]) -> None:
@@ -111,8 +106,7 @@ class WorkspaceService:
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
         """
-        self._configuration = params.settings.sql
-        self._pgsql_configuration = params.settings.pgsql
+        self._configuration = params.settings
         for callback in self._config_change_callbacks:
             callback(self._configuration)
 

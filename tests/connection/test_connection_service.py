@@ -6,6 +6,7 @@
 """Test connection.ConnectionService"""
 
 import unittest
+from unittest import mock
 from unittest.mock import Mock
 
 import psycopg2
@@ -491,6 +492,64 @@ class TestConnectionService(unittest.TestCase):
         self.assertEqual(response.connection_summary.database_name, db_name)
         self.assertEqual(response.connection_summary.user_name, user)
         self.assertEqual(response.type, connection_type)
+
+    def test_default_database(self):
+        """Test that if no database is given, the default database is used"""
+        # Set up the connection params and default database name
+        default_db = 'test_db'
+        self.connection_service._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database = default_db
+        psycopg2.connect = Mock()
+        params: ConnectRequestParams = ConnectRequestParams.from_dict({
+            'ownerUri': 'someUri',
+            'type': ConnectionType.DEFAULT,
+            'connection': {
+                'options': {
+                    'user': 'postgres',
+                    'password': 'password',
+                    'host': 'myserver',
+                    'dbname': ''
+                }
+            }
+        })
+
+        # If I connect with an empty database name
+        with mock.patch('pgsqltoolsservice.connection.connection_service._build_connection_response'):
+            self.connection_service._connect(params)
+
+        # Then psycopg2's connect method was called with the default database
+        calls = psycopg2.connect.mock_calls
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][2]['dbname'], default_db)
+
+    def test_non_default_database(self):
+        """Test that if a database is given, the default database is not used"""
+        # Set up the connection params and default database name
+        default_db = 'test_db'
+        actual_db = 'postgres'
+        self.connection_service._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database = default_db
+        psycopg2.connect = Mock()
+        params: ConnectRequestParams = ConnectRequestParams.from_dict({
+            'ownerUri': 'someUri',
+            'type': ConnectionType.DEFAULT,
+            'connection': {
+                'options': {
+                    'user': 'postgres',
+                    'password': 'password',
+                    'host': 'myserver',
+                    'dbname': actual_db
+                }
+            }
+        })
+
+        # If I connect with an empty database name
+        with mock.patch('pgsqltoolsservice.connection.connection_service._build_connection_response'):
+            self.connection_service._connect(params)
+
+        # Then psycopg2's connect method was called with the default database
+        calls = psycopg2.connect.mock_calls
+        self.assertEqual(len(calls), 1)
+        self.assertNotEqual(calls[0][2]['dbname'], default_db)
+        self.assertEqual(calls[0][2]['dbname'], actual_db)
 
 
 class TestConnectionCancellation(unittest.TestCase):

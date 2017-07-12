@@ -60,7 +60,7 @@ class CapabilitiesService:
                 is_identity=True,
                 is_required=False,
                 group_name='Source',
-                default_value=workspace_service.pgsql_configuration.default_database
+                default_value=workspace_service.configuration.pgsql.default_database
             ),
             ConnectionOption(
                 name='user',
