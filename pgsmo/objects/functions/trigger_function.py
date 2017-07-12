@@ -7,7 +7,7 @@ from pgsmo.objects.functions.function_base import FunctionBase
 import pgsmo.utils.templating as templating
 
 
-class Function(FunctionBase):
+class TriggerFunction(FunctionBase):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_functions')
 
     @classmethod
