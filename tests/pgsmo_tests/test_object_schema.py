@@ -23,6 +23,7 @@ class TestSchema(unittest.TestCase):
     def test_init(self):
         props = ['_can_create', 'can_create', '_has_usage', 'has_usage']
         collections = [
+            '_collations', 'collations',
             '_functions', 'functions',
             '_sequences', 'sequences',
             '_tables', 'tables',
@@ -43,12 +44,11 @@ class TestSchema(unittest.TestCase):
         utils.validate_node_object_props(schema, mock_conn, SCHEMA_ROW['name'], SCHEMA_ROW['oid'])
 
         # Schema-specific basic properties
-        self.assertEqual(schema._can_create, SCHEMA_ROW['can_create'])
-        self.assertEqual(schema.can_create, SCHEMA_ROW['can_create'])
-        self.assertEqual(schema._has_usage, SCHEMA_ROW['has_usage'])
-        self.assertEqual(schema.has_usage, SCHEMA_ROW['has_usage'])
+        utils.assert_threeway_equals(SCHEMA_ROW['can_create'], schema.can_create, schema._can_create)
+        utils.assert_threeway_equals(SCHEMA_ROW['has_usage'], schema.has_usage, schema._has_usage)
 
         # Child objects
+        utils.assert_node_collection(schema.collations, schema._collations)
         utils.assert_node_collection(schema.functions, schema._functions)
         utils.assert_node_collection(schema.sequences, schema._sequences)
         utils.assert_node_collection(schema.tables, schema._tables)
