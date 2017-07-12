@@ -5,7 +5,6 @@
 
 import unittest
 
-from pgsmo.objects.node_object import NodeCollection
 from pgsmo.objects.schema.schema import Schema
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
@@ -24,8 +23,10 @@ class TestSchema(unittest.TestCase):
     def test_init(self):
         props = ['_can_create', 'can_create', '_has_usage', 'has_usage']
         collections = [
+            '_functions', 'functions',
             '_sequences', 'sequences',
             '_tables', 'tables',
+            '_trigger_functions', 'trigger_functions',
             '_views', 'views'
         ]
         utils.init_base(Schema, props, collections)
@@ -48,9 +49,8 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(schema.has_usage, SCHEMA_ROW['has_usage'])
 
         # Child objects
-        self.assertIsInstance(schema._sequences, NodeCollection)
-        self.assertIs(schema.sequences, schema._sequences)
-        self.assertIsInstance(schema._tables, NodeCollection)
-        self.assertIs(schema.tables, schema._tables)
-        self.assertIsInstance(schema._views, NodeCollection)
-        self.assertIs(schema.views, schema._views)
+        utils.assert_node_collection(schema.functions, schema._functions)
+        utils.assert_node_collection(schema.sequences, schema._sequences)
+        utils.assert_node_collection(schema.tables, schema._tables)
+        utils.assert_node_collection(schema.trigger_functions, schema._trigger_functions)
+        utils.assert_node_collection(schema.views, schema._views)

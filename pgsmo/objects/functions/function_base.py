@@ -21,7 +21,7 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
         :param scid: Object ID of the schema that owns the constraints
         :return: A list of FunctionBase objects (can be any of the FunctionBase subclasses)
         """
-        return node.get_nodes(conn, cls._template_path(), cls._from_node_query, scid=scid)
+        return node.get_nodes(conn, cls._template_path(conn), cls._from_node_query, scid=scid)
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'FunctionBase':
@@ -54,11 +54,6 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
         self._owner: Optional[str] = None
 
     # PROPERTIES ###########################################################
-    @classmethod
-    @abstractmethod
-    def _template_path(cls) -> str:
-        pass
-
     # -BASIC PROPERTIES ####################################################
     @property
     def description(self) -> Optional[str]:
@@ -71,3 +66,9 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     @property
     def owner(self) -> Optional[str]:
         return self._owner
+
+    # METHODS ##############################################################
+    @classmethod
+    @abstractmethod
+    def _template_path(cls, conn: querying.ServerConnection) -> str:
+        pass

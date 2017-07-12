@@ -97,6 +97,18 @@ class MockConnection(connection):
 
 
 # OBJECT TEST HELPERS ######################################################
+def assert_node_collection(prop: any, attrib: any):
+    test_case = unittest.TestCase('__init__')
+    test_case.assertIsInstance(attrib, NodeCollection)
+    test_case.assertIs(prop, attrib)
+
+
+def assert_threeway_equals(target: any, attrib: any, prop: any):
+    test_case = unittest.TestCase('__init__')
+    test_case.assertEqual(attrib, target)
+    test_case.assertEqual(prop, target)
+
+
 def get_nodes_for_parent_base(class_, data: dict, get_nodes_for_parent: Callable, validate_obj: Callable):
     # Setup: Create a mockup server connection
     mock_cur = MockCursor((get_named_mock_columns(list(data.keys())), [data for i in range(0, 6)]))
