@@ -12,7 +12,7 @@ WHERE
   c.relkind = 'v'
 {% if (vid and datlastsysoid) %}
     AND c.oid = {{vid}}::oid
-{% elif scid %}
+{% elif parent_id %}
     AND c.relnamespace = {{parent_id}}::oid
 ORDER BY
     c.relname
