@@ -49,12 +49,7 @@ class TestColumn(unittest.TestCase):
         self.assertEqual(obj.datatype, datatype)
 
     def _validate_column(self, obj: Column, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        self.assertIs(obj._conn, mock_conn)
-        self.assertEqual(obj._oid, COLUMN_ROW['oid'])
-        self.assertEqual(obj.oid, COLUMN_ROW['oid'])
-        self.assertEqual(obj._name, COLUMN_ROW['name'])
-        self.assertEqual(obj.name, COLUMN_ROW['name'])
+        utils.validate_node_object_props(obj, mock_conn, COLUMN_ROW['name'], COLUMN_ROW['oid'])
 
         # Column-specific basic properties
         self.assertEqual(obj._datatype, COLUMN_ROW['datatype'])

@@ -57,7 +57,7 @@ class Database(node.NodeObject):
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-        self._schemas = None
+        self._schemas: Optional[node.NodeCollection[Schema]] = None
         if self._is_connected:
             self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(conn))
 
@@ -78,7 +78,7 @@ class Database(node.NodeObject):
 
     # -CHILD OBJECTS #######################################################
     @property
-    def schemas(self) -> node.NodeCollection:
+    def schemas(self) -> node.NodeCollection[Schema]:
         return self._schemas
 
     # METHODS ##############################################################

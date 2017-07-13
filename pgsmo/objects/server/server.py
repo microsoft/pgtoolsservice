@@ -38,9 +38,15 @@ class Server:
         self._wal_paused: Optional[bool] = None
 
         # Declare the child objects
-        self._databases: NodeCollection = NodeCollection(lambda: Database.get_nodes_for_parent(self._conn))
-        self._roles: NodeCollection = NodeCollection(lambda: Role.get_nodes_for_parent(self._conn))
-        self._tablespaces: NodeCollection = NodeCollection(lambda: Tablespace.get_nodes_for_parent(self._conn))
+        self._databases: NodeCollection[Database] = NodeCollection(
+            lambda: Database.get_nodes_for_parent(self._conn)
+        )
+        self._roles: NodeCollection[Role] = NodeCollection(
+            lambda: Role.get_nodes_for_parent(self._conn)
+        )
+        self._tablespaces: NodeCollection[Tablespace] = NodeCollection(
+            lambda: Tablespace.get_nodes_for_parent(self._conn)
+        )
 
     # PROPERTIES ###########################################################
 
@@ -81,17 +87,17 @@ class Server:
 
     # -CHILD OBJECTS #######################################################
     @property
-    def databases(self) -> NodeCollection:
+    def databases(self) -> NodeCollection[Database]:
         """Databases that belong to the server"""
         return self._databases
 
     @property
-    def roles(self) -> NodeCollection:
+    def roles(self) -> NodeCollection[Role]:
         """Roles that belong to the server"""
         return self._roles
 
     @property
-    def tablespaces(self) -> NodeCollection:
+    def tablespaces(self) -> NodeCollection[Tablespace]:
         """Tablespaces defined for the server"""
         return self._tablespaces
 

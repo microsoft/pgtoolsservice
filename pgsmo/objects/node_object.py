@@ -4,7 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Dict, List, Optional, Union, TypeVar
+from collections import Iterator
+from typing import Callable, Dict, Generic, List, Optional, Union, TypeVar
 
 
 import pgsmo.utils.templating as templating
@@ -41,7 +42,9 @@ class NodeObject(metaclass=ABCMeta):
         self._refresh_child_collections()
 
     # PROTECTED HELPERS ####################################################
-    def _register_child_collection(self, generator: Callable) -> 'NodeCollection':
+    TRCC = TypeVar('TRCC')
+
+    def _register_child_collection(self, generator: Callable[[], List[TRCC]]) -> 'NodeCollection[TRCC]':
         """
         Creates a node collection for child objects and registers it with the list of child objects.
         This is very useful for ensuring that all child collections are reset when refreshing.
@@ -61,14 +64,14 @@ class NodeObject(metaclass=ABCMeta):
 TNC = TypeVar('TNC')
 
 
-class NodeCollection:
+class NodeCollection(Generic[TNC]):
     def __init__(self, generator: Callable[[], List[TNC]]):
         """
         Initializes a new collection of node objects.
         :param generator: A callable that returns a list of NodeObjects when called
         """
         self._generator: Callable[[], List[TNC]] = generator
-        self._items: Optional[List[NodeObject]] = None
+        self._items: Optional[List[TNC]] = None
 
     def __getitem__(self, index: Union[int, str]) -> TNC:
         """
@@ -93,6 +96,8 @@ class NodeCollection:
         self._ensure_loaded()
 
         # Look up the desired item
+        # noinspection PyTypeChecker
+        # - This should always be a list b/c _ensure_loaded will load the list if it is None
         for item in self._items:
             if lookup(item):
                 return item
@@ -100,11 +105,11 @@ class NodeCollection:
         # If we make it to here, an item with the given index does not exist
         raise NameError('An item with the provided index does not exist')
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         self._ensure_loaded()
         return self._items.__iter__()
 
-    def __len__(self):
+    def __len__(self) -> int:
         # Load the items if they haven't been loaded
         self._ensure_loaded()
         return len(self._items)

@@ -48,35 +48,35 @@ class Table(node.NodeObject):
         super(Table, self).__init__(conn, name)
 
         # Declare child items
-        self._check_constraints: node.NodeCollection = self._register_child_collection(
+        self._check_constraints: node.NodeCollection[CheckConstraint] = self._register_child_collection(
             lambda: CheckConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._columns: node.NodeCollection = self._register_child_collection(
+        self._columns: node.NodeCollection[Column] = self._register_child_collection(
             lambda: Column.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._exclusion_constraints: node.NodeCollection = self._register_child_collection(
+        self._exclusion_constraints: node.NodeCollection[ExclusionConstraint] = self._register_child_collection(
             lambda: ExclusionConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._foreign_key_constraints: node.NodeCollection = self._register_child_collection(
+        self._foreign_key_constraints: node.NodeCollection[ForeignKeyConstraint] = self._register_child_collection(
             lambda: ForeignKeyConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._index_constraints: node.NodeCollection = self._register_child_collection(
+        self._index_constraints: node.NodeCollection[IndexConstraint] = self._register_child_collection(
             lambda: IndexConstraint.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._indexes: node.NodeCollection = self._register_child_collection(
+        self._indexes: node.NodeCollection[Index] = self._register_child_collection(
             lambda: Index.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._rules: node.NodeCollection = self._register_child_collection(
+        self._rules: node.NodeCollection[Rule] = self._register_child_collection(
             lambda: Rule.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._triggers: node.NodeCollection = self._register_child_collection(
+        self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(
             lambda: Trigger.get_nodes_for_parent(self._conn, self._oid)
         )
 
     # PROPERTIES ###########################################################
     # -CHILD OBJECTS #######################################################
     @property
-    def check_constraints(self) -> node.NodeCollection:
+    def check_constraints(self) -> node.NodeCollection[CheckConstraint]:
         return self._check_constraints
 
     @property
@@ -84,25 +84,25 @@ class Table(node.NodeObject):
         return self._columns
 
     @property
-    def exclusion_constraints(self) -> node.NodeCollection:
+    def exclusion_constraints(self) -> node.NodeCollection[ExclusionConstraint]:
         return self._exclusion_constraints
 
     @property
-    def foreign_key_constraints(self) -> node.NodeCollection:
+    def foreign_key_constraints(self) -> node.NodeCollection[ForeignKeyConstraint]:
         return self._foreign_key_constraints
 
     @property
-    def index_constraints(self) -> node.NodeCollection:
+    def index_constraints(self) -> node.NodeCollection[IndexConstraint]:
         return self._index_constraints
 
     @property
-    def indexes(self) -> node.NodeCollection:
+    def indexes(self) -> node.NodeCollection[Index]:
         return self._indexes
 
     @property
-    def rules(self) -> node.NodeCollection:
+    def rules(self) -> node.NodeCollection[Rule]:
         return self._rules
 
     @property
-    def triggers(self) -> node.NodeCollection:
+    def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers

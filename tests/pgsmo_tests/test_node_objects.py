@@ -31,7 +31,8 @@ class TestNodeCollection(unittest.TestCase):
         # If: I ask for items with an invalid type for the index
         # Then: I should get an exception
         with self.assertRaises(TypeError):
-            node_collection[1.2]
+            # noinspection PyTypeChecker
+            obj = node_collection[1.2]
 
     def test_index_no_match_oid(self):
         # Setup: Create a mock generator and node collection
@@ -42,7 +43,7 @@ class TestNodeCollection(unittest.TestCase):
         # Then:
         # ... I should get an exception
         with self.assertRaises(NameError):
-            node_collection[789]
+            obj = node_collection[789]
 
         # ... The generator should have been called, tho
         generator.assert_called_once()
@@ -57,7 +58,7 @@ class TestNodeCollection(unittest.TestCase):
         # Then:
         # ... I should get an exception
         with self.assertRaises(NameError):
-            node_collection['c']
+            obj = node_collection['c']
 
         # ... The generator should have been called, tho
         generator.assert_called_once()
@@ -111,7 +112,7 @@ class TestNodeCollection(unittest.TestCase):
         # Setup: Create a mock generator and node collection that has been loaded
         generator, mock_objects = _get_mock_generator()
         node_collection = node.NodeCollection(generator)
-        node_collection[123]     # Force the collection to load
+        obj = node_collection[123]     # Force the collection to load
 
         # If: I reset the collection
         node_collection.reset()

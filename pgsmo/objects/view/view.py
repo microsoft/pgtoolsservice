@@ -40,26 +40,26 @@ class View(node.NodeObject):
         super(View, self).__init__(conn, name)
 
         # Declare child items
-        self._columns: node.NodeCollection = self._register_child_collection(
+        self._columns: node.NodeCollection[Column] = self._register_child_collection(
             lambda: Column.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._rules: node.NodeCollection = self._register_child_collection(
+        self._rules: node.NodeCollection[Rule] = self._register_child_collection(
             lambda: Rule.get_nodes_for_parent(self._conn, self._oid)
         )
-        self._triggers: node.NodeCollection = self._register_child_collection(
+        self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(
             lambda: Trigger.get_nodes_for_parent(self._conn, self._oid)
         )
 
     # PROPERTIES ###########################################################
     # -CHILD OBJECTS #######################################################
     @property
-    def columns(self) -> node.NodeCollection:
+    def columns(self) -> node.NodeCollection[Column]:
         return self._columns
 
     @property
-    def rules(self) -> node.NodeCollection:
+    def rules(self) -> node.NodeCollection[Rule]:
         return self._rules
 
     @property
-    def triggers(self) -> node.NodeCollection:
+    def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers

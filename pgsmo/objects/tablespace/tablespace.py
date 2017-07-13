@@ -46,7 +46,6 @@ class Tablespace(NodeObject):
         super(Tablespace, self).__init__(conn, name)
 
         # Declare basic properties
-        self._oid: Optional[int] = None
         self._owner: Optional[int] = None
 
     # PROPERTIES ###########################################################

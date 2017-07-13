@@ -15,7 +15,7 @@ TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
 class Sequence(NodeObject):
     @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection, schema_id: int) -> List['Role']:
+    def get_nodes_for_parent(cls, conn: querying.ServerConnection, schema_id: int) -> List['Sequence']:
         """
         Generates a list of sequences for a given schema.
         :param conn: Connection to use to lookup the sequences for a schema
