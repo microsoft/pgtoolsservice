@@ -9,7 +9,7 @@ SELECT conindid as oid,
     NOT convalidated as convalidated
 FROM pg_constraint ct
 WHERE contype='x' AND
-    conrelid = {{tid}}::oid
+    conrelid = {{parent_id}}::oid
 {% if exid %}
     AND conindid = {{exid}}::oid
 {% endif %}

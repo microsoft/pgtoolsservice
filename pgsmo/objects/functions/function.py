@@ -4,21 +4,15 @@
 # --------------------------------------------------------------------------------------------
 
 import os.path
-from typing import List, Optional
+from typing import Optional
 
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, os.path.join('templates', 'functions'))
-
-
 class Function(node.NodeObject):
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection, schema_id: int) -> List['Function']:
-        type_template_root = os.path.join(TEMPLATE_ROOT, conn.server_type)
-        return node.get_nodes(conn, type_template_root, cls._from_node_query, scid=schema_id)
+    TEMPLATE_ROOT = templating.get_template_root(__file__, os.path.join('templates', 'functions'))
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Function':
@@ -66,3 +60,8 @@ class Function(node.NodeObject):
     def owner(self) -> Optional[str]:
         """The name of the owner of the function"""
         return self._owner
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return os.path.join(cls.TEMPLATE_ROOT, conn.server_type)

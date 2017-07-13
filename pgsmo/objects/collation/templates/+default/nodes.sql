@@ -1,7 +1,7 @@
 SELECT c.oid, c.collname AS name
 FROM pg_collation c
-{% if scid %}
-WHERE c.collnamespace = {{scid}}::oid
+{% if parent_id %}
+WHERE c.collnamespace = {{parent_id}}::oid
 {% elif coid %}
 WHERE c.oid = {{coid}}::oid
 {% endif %}

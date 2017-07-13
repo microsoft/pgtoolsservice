@@ -21,11 +21,6 @@ TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
 class Schema(node.NodeObject):
     @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection) -> List['Schema']:
-        type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
-        return node.get_nodes(conn, type_template_root, cls._from_node_query)
-
-    @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Schema':
         """
         Creates an instance of a schema object from the results of a nodes query
@@ -54,19 +49,19 @@ class Schema(node.NodeObject):
 
         # Declare the child items
         self._collations: node.NodeCollection = self._register_child_collection(
-            lambda: Collation.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Collation.get_nodes_for_parent(self._conn, self)
         )
         self._functions: node.NodeCollection = self._register_child_collection(
-            lambda: Function.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Function.get_nodes_for_parent(self._conn, self)
         )
         self._sequences: node.NodeCollection = self._register_child_collection(
-            lambda: Sequence.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Sequence.get_nodes_for_parent(self._conn, self)
         )
         self._tables: node.NodeCollection = self._register_child_collection(
-            lambda: Table.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Table.get_nodes_for_parent(self._conn, self)
         )
         self._views: node.NodeCollection = self._register_child_collection(
-            lambda: View.get_nodes_for_parent(self._conn, self._oid)
+            lambda: View.get_nodes_for_parent(self._conn, self)
         )
 
     # PROPERTIES ###########################################################
@@ -98,3 +93,8 @@ class Schema(node.NodeObject):
     @property
     def views(self) -> node.NodeCollection:
         return self._views
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return path.join(TEMPLATE_ROOT, conn.server_type)

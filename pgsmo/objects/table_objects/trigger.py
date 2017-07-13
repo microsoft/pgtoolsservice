@@ -10,13 +10,8 @@ import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger')
-
-
 class Trigger(node.NodeObject):
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection, tid: int) -> List['Trigger']:
-        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, tid=tid)
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger')
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Trigger':
@@ -55,3 +50,8 @@ class Trigger(node.NodeObject):
     def is_enabled(self) -> Optional[bool]:
         """Whether or not the trigger is enabled"""
         return self._is_enabled
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT

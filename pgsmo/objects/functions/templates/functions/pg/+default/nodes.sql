@@ -14,8 +14,8 @@ WHERE
 {% if fnid %}
     AND pr.oid = {{ fnid|qtLiteral }}
 {% endif %}
-{% if scid %}
-    AND pronamespace = {{scid}}::oid
+{% if parent_id %}
+    AND pronamespace = {{parent_id}}::oid
 {% endif %}
     AND typname NOT IN ('trigger', 'event_trigger')
 ORDER BY

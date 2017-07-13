@@ -3,24 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional
+from typing import Optional
 
-from pgsmo.objects.node_object import NodeObject, get_nodes
+from pgsmo.objects.node_object import NodeObject
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-
 
 class Tablespace(NodeObject):
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection) -> List['Tablespace']:
-        """
-        Creates a list of tablespaces that belong to the server. Intended to be called by Server class
-        :param conn: Connection to a server to use to lookup the information
-        :return: List of tablespaces for the given server
-        """
-        return get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query)
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Tablespace':
@@ -54,3 +45,8 @@ class Tablespace(NodeObject):
     def owner(self) -> Optional[int]:
         """Object ID of the user that owns the tablespace"""
         return self._owner
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT

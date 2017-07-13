@@ -3,25 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional
+from typing import Optional
 
-from pgsmo.objects.node_object import NodeObject, get_nodes
+from pgsmo.objects.node_object import NodeObject
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-
-
 class Role(NodeObject):
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection) -> List['Role']:
-        """
-        Generates a list of roles for a given server. Intended to only be called by a Server object
-        :param conn: Connection to use to look up the roles for the server
-        :return: List of Role objects
-        """
-        return get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query)
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Role':
@@ -68,3 +58,8 @@ class Role(NodeObject):
     def super(self) -> Optional[bool]:
         """Whether or not the role is a super user"""
         return self._super
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT

@@ -11,14 +11,9 @@ import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
-
 
 class View(node.NodeObject):
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection, scid: int) -> List['View']:
-        type_template_root = path.join(TEMPLATE_ROOT, conn.server_type)
-        return node.get_nodes(conn, type_template_root, cls._from_node_query, scid=scid)
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'View':
@@ -41,13 +36,13 @@ class View(node.NodeObject):
 
         # Declare child items
         self._columns: node.NodeCollection[Column] = self._register_child_collection(
-            lambda: Column.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Column.get_nodes_for_parent(self._conn, self)
         )
         self._rules: node.NodeCollection[Rule] = self._register_child_collection(
-            lambda: Rule.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Rule.get_nodes_for_parent(self._conn, self)
         )
         self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(
-            lambda: Trigger.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Trigger.get_nodes_for_parent(self._conn, self)
         )
 
     # PROPERTIES ###########################################################
@@ -63,3 +58,8 @@ class View(node.NodeObject):
     @property
     def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT

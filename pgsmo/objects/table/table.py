@@ -20,13 +20,8 @@ import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-
-
 class Table(node.NodeObject):
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection, schema_id: int) -> List['Table']:
-        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, scid=schema_id)
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Table':
@@ -49,28 +44,28 @@ class Table(node.NodeObject):
 
         # Declare child items
         self._check_constraints: node.NodeCollection[CheckConstraint] = self._register_child_collection(
-            lambda: CheckConstraint.get_nodes_for_parent(self._conn, self._oid)
+            lambda: CheckConstraint.get_nodes_for_parent(self._conn, self)
         )
         self._columns: node.NodeCollection[Column] = self._register_child_collection(
-            lambda: Column.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Column.get_nodes_for_parent(self._conn, self)
         )
         self._exclusion_constraints: node.NodeCollection[ExclusionConstraint] = self._register_child_collection(
-            lambda: ExclusionConstraint.get_nodes_for_parent(self._conn, self._oid)
+            lambda: ExclusionConstraint.get_nodes_for_parent(self._conn, self)
         )
         self._foreign_key_constraints: node.NodeCollection[ForeignKeyConstraint] = self._register_child_collection(
-            lambda: ForeignKeyConstraint.get_nodes_for_parent(self._conn, self._oid)
+            lambda: ForeignKeyConstraint.get_nodes_for_parent(self._conn, self)
         )
         self._index_constraints: node.NodeCollection[IndexConstraint] = self._register_child_collection(
-            lambda: IndexConstraint.get_nodes_for_parent(self._conn, self._oid)
+            lambda: IndexConstraint.get_nodes_for_parent(self._conn, self)
         )
         self._indexes: node.NodeCollection[Index] = self._register_child_collection(
-            lambda: Index.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Index.get_nodes_for_parent(self._conn, self)
         )
         self._rules: node.NodeCollection[Rule] = self._register_child_collection(
-            lambda: Rule.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Rule.get_nodes_for_parent(self._conn, self)
         )
         self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(
-            lambda: Trigger.get_nodes_for_parent(self._conn, self._oid)
+            lambda: Trigger.get_nodes_for_parent(self._conn, self)
         )
 
     # PROPERTIES ###########################################################
@@ -106,3 +101,8 @@ class Table(node.NodeObject):
     @property
     def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT
