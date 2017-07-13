@@ -30,7 +30,7 @@ class PGSQLConfiguration:
         return utils.serialization.convert_from_dict(cls, dictionary, ignore_extra_attributes=True)
 
     def __init__(self):
-        self.default_database: str = None
+        self.default_database: str = 'postgres'
 
 
 class IntellisenseConfiguration:
