@@ -10,6 +10,8 @@ import unittest.mock as mock
 from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.capabilities.contracts import InitializeResult, CapabilitiesResult
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from pgsqltoolsservice.utils import constants
+from pgsqltoolsservice.workspace import WorkspaceService
 import tests.utils as utils
 
 
@@ -52,11 +54,14 @@ class TestCapabilitiesService(unittest.TestCase):
 
     # noinspection PyUnresolvedReferences
     def test_dmp_capabilities_request(self):
-        # Setup: Create a request context with mocked out send_* methods
+        # Setup: Create a request context with mocked out send_* methods and set up the capabilities service
         rc = utils.MockRequestContext()
+        capabilities_service = CapabilitiesService()
+        workspace_service = WorkspaceService()
+        capabilities_service._service_provider = utils.get_mock_service_provider({constants.WORKSPACE_SERVICE_NAME: workspace_service})
 
         # If: I request the dmp capabilities of this server
-        CapabilitiesService._handle_dmp_capabilities_request(rc, None)
+        capabilities_service._handle_dmp_capabilities_request(rc, None)
 
         # Then: A response should have been sent that is a Capabilities result
         rc.send_notification.assert_not_called()

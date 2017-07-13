@@ -4,9 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata # noqa
+from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata  # noqa
 import pgsqltoolsservice.utils as utils
-from typing import List # noqa
+from typing import List  # noqa
 
 
 class MetadataListParameters:
