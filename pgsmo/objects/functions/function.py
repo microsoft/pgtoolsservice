@@ -4,64 +4,15 @@
 # --------------------------------------------------------------------------------------------
 
 import os.path
-from typing import Optional
 
-import pgsmo.objects.node_object as node
+from pgsmo.objects.functions.function_base import FunctionBase
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-class Function(node.NodeObject):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, os.path.join('templates', 'functions'))
+class Function(FunctionBase):
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_functions')
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Function':
-        """
-        Creates a Function instance from the results of a node query
-        :param conn: The connection used to execute the node query
-        :param kwargs: A row from the node query
-        Kwargs:
-            oid int: Object ID of the function
-            name str: Signature of the function
-            lanname str: Name of the language the function is written in
-            funcowner str: Name of the owner of the function
-            description str: Description of the function
-        :return: A Function instance
-        """
-        func = cls(conn, kwargs['name'])
-        func._oid = kwargs['oid']
-        func._lanname = kwargs['lanname']
-        func._owner = kwargs['funcowner']
-        func._description = kwargs['description']
-
-        return func
-
-    def __init__(self, conn: querying.ServerConnection, name: str):
-        super(Function, self).__init__(conn, name)
-
-        # Declare the basic properties
-        self._description: Optional[str] = None
-        self._lanname: Optional[str] = None
-        self._owner: Optional[str] = None
-
-    # PROPERTIES ###########################################################
-    # -BASIC PROPERTIES ####################################################
-    @property
-    def description(self) -> Optional[str]:
-        """Description of the function"""
-        return self._description
-
-    @property
-    def language(self) -> Optional[str]:
-        """The name of the language the function was written in"""
-        return self._lanname
-
-    @property
-    def owner(self) -> Optional[str]:
-        """The name of the owner of the function"""
-        return self._owner
-
-    # IMPLEMENTATION DETAILS ###############################################
-    @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
+    def _template_root(cls, conn: querying.ServerConnection):
         return os.path.join(cls.TEMPLATE_ROOT, conn.server_type)

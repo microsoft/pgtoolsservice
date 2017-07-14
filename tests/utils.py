@@ -7,7 +7,7 @@ import logging
 import unittest.mock as mock
 import psycopg2
 
-from pgsqltoolsservice.hosting import NotificationContext, RequestContext
+from pgsqltoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
 
 
 def get_mock_notification_context() -> NotificationContext:
@@ -40,6 +40,19 @@ def get_mock_logger() -> logging.Logger:
     mock_logger.log = mock.MagicMock()
 
     return mock_logger
+
+
+def get_mock_service_provider(service_map: dict = None) -> ServiceProvider:
+    """
+    Generates a ServiceProvider with the given services
+
+    :param service_map: A dictionary mapping service names to services
+    """
+    provider = ServiceProvider(None, {}, get_mock_logger())
+    if service_map is not None:
+        provider._services = service_map
+    provider._is_initialized = True
+    return provider
 
 
 class MockRequestContext(RequestContext):

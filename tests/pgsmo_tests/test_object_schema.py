@@ -37,9 +37,10 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
             '_functions', 'functions',
             '_sequences', 'sequences',
             '_tables', 'tables',
+            '_trigger_functions', 'trigger_functions',
             '_views', 'views'
         ]
 
     @property
-    def node_query(self) -> dict:
+    def node_query(self):
         return TestSchema.NODE_ROW

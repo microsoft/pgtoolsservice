@@ -3,24 +3,21 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from abc import ABCMeta
 import unittest
 
 from pgsmo.objects.table_objects.constraints import (
-    Constraint, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint
+    CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint
 )
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class ConstraintTestBase(NodeObjectTestBase):
+class ConstraintTestBase(NodeObjectTestBase, metaclass=ABCMeta):
     NODE_ROW = {
         'convalidated': True,
         'name': 'constraint',
         'oid': 123
     }
-
-    @property
-    def class_for_test(self):
-        return Constraint
 
     @property
     def basic_properties(self):

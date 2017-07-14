@@ -94,3 +94,16 @@ class MockConnection(connection):
     @property
     def server_version(self):
         return self._server_version
+
+
+# OBJECT TEST HELPERS ######################################################
+def assert_node_collection(prop: any, attrib: any):
+    test_case = unittest.TestCase('__init__')
+    test_case.assertIsInstance(attrib, NodeCollection)
+    test_case.assertIs(prop, attrib)
+
+
+def assert_threeway_equals(target: any, attrib: any, prop: any):
+    test_case = unittest.TestCase('__init__')
+    test_case.assertEqual(attrib, target)
+    test_case.assertEqual(prop, target)

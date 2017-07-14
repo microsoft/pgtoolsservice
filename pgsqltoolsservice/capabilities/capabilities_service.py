@@ -14,6 +14,7 @@ from pgsqltoolsservice.capabilities.contracts import (
     InitializeResult, ServerCapabilities, TextDocumentSyncKind
 )
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
+from pgsqltoolsservice.utils import constants
 
 
 class CapabilitiesService:
@@ -28,8 +29,8 @@ class CapabilitiesService:
         self._service_provider.server.set_request_handler(CAPABILITIES_REQUEST, self._handle_dmp_capabilities_request)
         self._service_provider.server.set_request_handler(INITIALIZE_REQUEST, self._handle_initialize_request)
 
-    @staticmethod
     def _handle_dmp_capabilities_request(
+            self,
             request_context: RequestContext,
             params: Optional[CapabilitiesRequestParams]
     ) -> None:
@@ -38,6 +39,7 @@ class CapabilitiesService:
         :param request_context: Context of the request
         :param params: Parameters for the capabilities request
         """
+        workspace_service = self._service_provider[constants.WORKSPACE_SERVICE_NAME]
         conn_provider_opts = ConnectionProviderOptions([
             ConnectionOption(
                 name='host',
@@ -56,9 +58,9 @@ class CapabilitiesService:
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 special_value_type=ConnectionOption.SPECIAL_VALUE_DATABASE_NAME,
                 is_identity=True,
-                is_required=True,
+                is_required=False,
                 group_name='Source',
-                default_value='postgres'
+                default_value=workspace_service.configuration.pgsql.default_database
             ),
             ConnectionOption(
                 name='user',
