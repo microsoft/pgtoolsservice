@@ -30,14 +30,6 @@ class TestTable(unittest.TestCase):
     def test_from_node_query(self):
         utils.from_node_query_base(View, NODE_ROW, self._validate_view)
 
-    def test_from_nodes_for_parent(self):
-        utils.get_nodes_for_parent_base(
-            View,
-            NODE_ROW,
-            lambda conn: View.get_nodes_for_parent(conn, 0),
-            self._validate_view
-        )
-
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_view(self, view: View, mock_conn: ServerConnection):
         utils.validate_node_object_props(view, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])

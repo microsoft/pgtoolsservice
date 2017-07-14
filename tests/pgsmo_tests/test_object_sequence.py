@@ -23,14 +23,6 @@ class TestSequence(unittest.TestCase):
     def test_from_node_query(self):
         utils.from_node_query_base(Sequence, NODE_ROW, self._validate)
 
-    def test_from_nodes_for_parent(self):
-        utils.get_nodes_for_parent_base(
-            Sequence,
-            NODE_ROW,
-            lambda conn: Sequence.get_nodes_for_parent(conn, 0),
-            self._validate
-        )
-
     # IMPLEMENTATION DETAILS ###############################################
     def _validate(self, obj: Sequence, mock_conn: ServerConnection):
         utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])

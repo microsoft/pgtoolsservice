@@ -35,10 +35,6 @@ class TestSchema(unittest.TestCase):
     def test_from_node_query(self):
         utils.from_node_query_base(Schema, SCHEMA_ROW, self._validate_schema)
 
-    def test_from_nodes_for_parent(self):
-        # Use the test helper for this method
-        utils.get_nodes_for_parent_base(Schema, SCHEMA_ROW, Schema.get_nodes_for_parent, self._validate_schema)
-
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_schema(self, schema: Schema, mock_conn: ServerConnection):
         utils.validate_node_object_props(schema, mock_conn, SCHEMA_ROW['name'], SCHEMA_ROW['oid'])

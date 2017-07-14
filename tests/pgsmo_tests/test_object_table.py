@@ -35,14 +35,6 @@ class TestTable(unittest.TestCase):
     def test_from_node_query(self):
         utils.from_node_query_base(Table, TABLE_ROW, self._validate_table)
 
-    def test_from_nodes_for_parent(self):
-        utils.get_nodes_for_parent_base(
-            Table,
-            TABLE_ROW,
-            lambda conn: Table.get_nodes_for_parent(conn, 0),
-            self._validate_table
-        )
-
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_table(self, table: Table, mock_conn: ServerConnection):
         utils.validate_node_object_props(table, mock_conn, TABLE_ROW['name'], TABLE_ROW['oid'])

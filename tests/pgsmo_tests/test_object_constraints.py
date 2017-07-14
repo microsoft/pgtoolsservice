@@ -35,11 +35,6 @@ class TestConstraints(unittest.TestCase):
         for class_ in TestConstraints.CONSTRAINT_CLASSES:
             utils.from_node_query_base(class_, NODE_ROW, self._validate)
 
-    def test_get_nodes_for_parent(self):
-        for class_ in TestConstraints.CONSTRAINT_CLASSES:
-            get_nodes_for_parent = (lambda conn: class_.get_nodes_for_parent(conn, 10))
-            utils.get_nodes_for_parent_base(class_, NODE_ROW, get_nodes_for_parent, self._validate)
-
     # IMPLEMENTATION DETAILS
     def _validate(self, obj: Constraint, mock_conn: ServerConnection):
         utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])

@@ -38,11 +38,6 @@ class TestColumn(unittest.TestCase):
     def test_from_node_query(self):
         utils.from_node_query_base(Column, COLUMN_ROW, self._validate_column)
 
-    def test_get_nodes_for_parent(self):
-        # Use the test helper for this method
-        get_nodes_for_parent = (lambda conn: Column.get_nodes_for_parent(conn, 10))
-        utils.get_nodes_for_parent_base(Column, COLUMN_ROW, get_nodes_for_parent, self._validate_column)
-
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_init(self, obj: Column, datatype: str):
         self.assertEqual(obj._datatype, datatype)

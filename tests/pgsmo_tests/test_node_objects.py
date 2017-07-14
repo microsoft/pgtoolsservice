@@ -137,46 +137,87 @@ class TestNodeObject(unittest.TestCase):
 
         self.assertIs(node_obj._conn, conn)
 
-    def test_get_nodes(self):
+    def test_get_nodes_for_parent_no_parent(self):
         # Setup:
-        # ... Create a mockup of a server connection with a mock executor
-        mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
-        mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
-        mock_conn = ServerConnection(utils.MockConnection(None, version="10101"))
-        mock_conn.execute_dict = mock_executor
+        # ... Create a server connection that will return some mock node rows
+        mock_conn, mock_executor, mock_objs = _get_node_for_parents_mock_connection()
 
-        # ... Create a mock template renderer
+        # ... Create a mock _from_node generator (so we can validate calls)
+        mock_obj = {}
+        mock_from_node = mock.MagicMock(return_value=mock_obj)
+
+        # ... Create a mock template rendered
         mock_render = mock.MagicMock(return_value="SQL")
         mock_template_path = mock.MagicMock(return_value="path")
 
-        # ... Create a mock generator
-        mock_output = {}
-        mock_generator = mock.MagicMock(return_value=mock_output)
-
-        # ... Do the patching
-        with mock.patch('pgsmo.objects.node_object.templating.render_template', mock_render, create=True):
-            with mock.patch('pgsmo.objects.node_object.templating.get_template_path', mock_template_path, create=True):
-                # If: I ask for a collection of nodes
-                kwargs = {'arg1': 'something'}
-                nodes = node.get_nodes(mock_conn, 'root', mock_generator, **kwargs)
+        # ... Patch the template rendering, and the _from_node_query
+        patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
+        patch_template_path = 'pgsmo.objects.node_object.templating.get_template_path'
+        patch_from_node_query = 'tests.pgsmo_tests.test_node_objects.MockNodeObject._from_node_query'
+        with mock.patch(patch_render_template, mock_render, create=True):
+            with mock.patch(patch_template_path, mock_template_path, create=True):
+                with mock.patch(patch_from_node_query, mock_from_node, create=True):
+                    # If: I ask for a collection of nodes *without a parent object*
+                    nodes = MockNodeObject.get_nodes_for_parent(mock_conn, None)
 
         # Then:
-        # ... The template path should have been called once
-        mock_template_path.assert_called_once_with('root', 'nodes.sql', (1, 1, 1))
-
-        # ... The template renderer should have been called once
-        mock_render.assert_called_once_with('path', **kwargs)
+        # ... The template path and template renderer should have been called once
+        mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_conn.version)
+        mock_render.assert_called_once_with('path', **{})     # Params to the renderer should be empty
 
         # ... A query should have been executed
         mock_executor.assert_called_once_with('SQL')
 
-        # ... The generator should have been called twice with different object props
-        mock_generator.assert_any_call(mock_conn, **mock_objs[0])
-        mock_generator.assert_any_call(mock_conn, **mock_objs[1])
+        # ... The _from_node should have been called twice with the results of the query
+        mock_from_node.assert_any_call(mock_conn, **mock_objs[0])
+        mock_from_node.assert_any_call(mock_conn, **mock_objs[1])
 
-        # ... The output list of nodes should match what the generator created
+        # ... The output should be a list of objects the _from_node returned
         self.assertIsInstance(nodes, list)
-        self.assertListEqual(nodes, [mock_output, mock_output])
+        self.assertListEqual(nodes, [mock_obj, mock_obj])
+
+    def test_get_nodes_for_parent_with_parent(self):
+        # Setup:
+        # ... Create a server connection that will return some mock node rows
+        mock_conn, mock_executor, mock_objs = _get_node_for_parents_mock_connection()
+
+        # ... Create a mock _from_node generator (so we can validate calls)
+        mock_obj = {}
+        mock_from_node = mock.MagicMock(return_value=mock_obj)
+
+        # ... Create a mock template rendered
+        mock_render = mock.MagicMock(return_value="SQL")
+        mock_template_path = mock.MagicMock(return_value="path")
+
+        # ... Create an object that will be the parent of these nodes
+        parent = MockNodeObject(mock_conn, 'parent')
+        parent._oid = 123
+
+        # ... Patch the template rendering, and the _from_node_query
+        patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
+        patch_template_path = 'pgsmo.objects.node_object.templating.get_template_path'
+        patch_from_node_query = 'tests.pgsmo_tests.test_node_objects.MockNodeObject._from_node_query'
+        with mock.patch(patch_render_template, mock_render, create=True):
+            with mock.patch(patch_template_path, mock_template_path, create=True):
+                with mock.patch(patch_from_node_query, mock_from_node, create=True):
+                    # If: I ask for a collection of nodes *with a parent object*
+                    nodes = MockNodeObject.get_nodes_for_parent(mock_conn, parent)
+
+        # Then:
+        # ... The template path and template renderer should have been called once
+        mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_conn.version)
+        mock_render.assert_called_once_with('path', **{'parent_id': 123})
+
+        # ... A query should have been executed
+        mock_executor.assert_called_once_with('SQL')
+
+        # ... The _from_node should have been called twice with the results of the query
+        mock_from_node.assert_any_call(mock_conn, **mock_objs[0])
+        mock_from_node.assert_any_call(mock_conn, **mock_objs[1])
+
+        # ... The output should be a list of objects the _from_node returned
+        self.assertIsInstance(nodes, list)
+        self.assertListEqual(nodes, [mock_obj, mock_obj])
 
     def test_register_child_collection(self):
         # Setup: Create a node object
@@ -230,6 +271,19 @@ class MockNodeObject(node.NodeObject):
 
     def __init__(self, conn: ServerConnection, name: str):
         super(MockNodeObject, self).__init__(conn, name)
+
+    @classmethod
+    def _template_root(cls, conn: ServerConnection):
+        return 'template_root'
+
+def _get_node_for_parents_mock_connection():
+    # ... Create a mockup of a server connection with a mock executor
+    mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
+    mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
+    mock_conn = ServerConnection(utils.MockConnection(None, version="10101"))
+    mock_conn.execute_dict = mock_executor
+
+    return mock_conn, mock_executor, mock_objs
 
 
 def _get_mock_generator():

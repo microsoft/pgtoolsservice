@@ -28,10 +28,6 @@ class TestRole(unittest.TestCase):
     def test_from_node_query(self):
         utils.from_node_query_base(Role, ROLE_ROW, self._validate_role)
 
-    def test_get_nodes_for_parent(self):
-        # Use the test helper
-        utils.get_nodes_for_parent_base(Role, ROLE_ROW, Role.get_nodes_for_parent, self._validate_role)
-
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_role(self, role: Role, mock_conn: ServerConnection):
         utils.validate_node_object_props(role, mock_conn, ROLE_ROW['rolname'], ROLE_ROW['oid'])

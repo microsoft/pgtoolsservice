@@ -57,10 +57,6 @@ class TestDatabase(unittest.TestCase):
     def test_from_node_query(self):
         utils.from_node_query_base(Database, DATABASE_ROW, self._validate_database)
 
-    def test_get_nodes_for_parent(self):
-        # Use the test helper for this method
-        utils.get_nodes_for_parent_base(Database, DATABASE_ROW, Database.get_nodes_for_parent, self._validate_database)
-
     # IMPLEMENTATION DETAILS ###############################################
     def _init_validation(self, obj: Database, is_connected: bool):
         self.assertEqual(obj._is_connected, is_connected)
