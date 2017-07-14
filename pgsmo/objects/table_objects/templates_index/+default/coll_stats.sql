@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT
     indexrelname AS {{ conn|qtIdent(_('Index name')) }},
     idx_scan AS {{ conn|qtIdent(_('Index scans')) }},
