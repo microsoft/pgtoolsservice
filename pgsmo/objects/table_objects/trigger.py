@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional
+from typing import Optional
 
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying

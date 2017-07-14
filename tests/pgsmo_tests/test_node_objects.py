@@ -32,7 +32,7 @@ class TestNodeCollection(unittest.TestCase):
         # Then: I should get an exception
         with self.assertRaises(TypeError):
             # noinspection PyTypeChecker
-            obj = node_collection[1.2]
+            obj = node_collection[1.2]      # noqa
 
     def test_index_no_match_oid(self):
         # Setup: Create a mock generator and node collection
@@ -43,7 +43,7 @@ class TestNodeCollection(unittest.TestCase):
         # Then:
         # ... I should get an exception
         with self.assertRaises(NameError):
-            obj = node_collection[789]
+            obj = node_collection[789]      # noqa
 
         # ... The generator should have been called, tho
         generator.assert_called_once()
@@ -58,7 +58,7 @@ class TestNodeCollection(unittest.TestCase):
         # Then:
         # ... I should get an exception
         with self.assertRaises(NameError):
-            obj = node_collection['c']
+            obj = node_collection['c']      # noqa
 
         # ... The generator should have been called, tho
         generator.assert_called_once()
@@ -112,7 +112,7 @@ class TestNodeCollection(unittest.TestCase):
         # Setup: Create a mock generator and node collection that has been loaded
         generator, mock_objects = _get_mock_generator()
         node_collection = node.NodeCollection(generator)
-        obj = node_collection[123]     # Force the collection to load
+        obj = node_collection[123]     # noqa
 
         # If: I reset the collection
         node_collection.reset()
@@ -260,7 +260,9 @@ class TestNodeObject(unittest.TestCase):
         node_obj.refresh()
 
         # Then: The child collections should have been reset
+        # noinspection PyUnresolvedReferences
         collection1.reset.assert_called_once()
+        # noinspection PyUnresolvedReferences
         collection2.reset.assert_called_once()
 
 

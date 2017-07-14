@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import os.path as path
-from typing import List, Optional
+from typing import Optional
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.collation import Collation

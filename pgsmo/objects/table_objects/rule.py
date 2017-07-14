@@ -3,8 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
-
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating

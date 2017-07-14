@@ -3,8 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
-
 from pgsmo.objects.table_objects import (
     Column,
     CheckConstraint,

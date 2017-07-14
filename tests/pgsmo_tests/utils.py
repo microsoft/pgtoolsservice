@@ -3,15 +3,14 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, List, Optional, Tuple
+from typing import List, Optional, Tuple
 import unittest
 import unittest.mock as mock
 
 from psycopg2 import DatabaseError
 from psycopg2.extensions import Column, connection
 
-from pgsmo.objects.node_object import NodeObject, NodeCollection
-from pgsmo.utils.querying import ServerConnection
+from pgsmo.objects.node_object import NodeCollection
 
 
 # MOCK CONNECTION ##########################################################
