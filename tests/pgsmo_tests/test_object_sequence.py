@@ -6,23 +6,27 @@
 import unittest
 
 from pgsmo.objects.sequence import Sequence
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'name',
-    'oid': 123
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestSequence(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        utils.init_base(Sequence, [], [])
+class TestSequence(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'rulename',
+        'oid': 123
+    }
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Sequence, NODE_ROW, self._validate)
+    @property
+    def class_for_test(self):
+        return Sequence
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate(self, obj: Sequence, mock_conn: ServerConnection):
-        utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
+    @property
+    def basic_properties(self):
+        return {}
+
+    @property
+    def collections(self):
+        return []
+
+    @property
+    def node_query(self) -> dict:
+        return TestSequence.NODE_ROW

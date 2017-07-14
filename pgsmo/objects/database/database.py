@@ -30,7 +30,7 @@ class Database(node.NodeObject):
         :return: Instance of the Database
         """
         db = cls(conn, kwargs['name'])
-        db._oid = kwargs['did']
+        db._oid = kwargs['oid']
         db._tablespace = kwargs['spcname']
         db._allow_conn = kwargs['datallowconn']
         db._can_create = kwargs['cancreate']

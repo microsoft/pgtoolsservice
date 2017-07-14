@@ -6,23 +6,27 @@
 import unittest
 
 from pgsmo.objects.collation import Collation
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'collation',
-    'oid': 123
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestCollation(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        utils.init_base(Collation, [], [])
+class TestCollation(NodeObjectTestBase, unittest.TestCase):
+    NODE_QUERY = {
+        'name': 'collation',
+        'oid': 123
+    }
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Collation, NODE_ROW, self._validate)
+    @property
+    def class_for_test(self):
+        return Collation
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate(self, obj: Collation, mock_conn: ServerConnection):
-        utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
+    @property
+    def basic_properties(self):
+        return {}
+
+    @property
+    def collections(self):
+        return []
+
+    @property
+    def node_query(self) -> dict:
+        return TestCollation.NODE_QUERY

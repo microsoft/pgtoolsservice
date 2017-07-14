@@ -6,75 +6,85 @@
 import unittest
 
 from pgsmo.objects.database.database import Database
+from pgsmo.objects.node_object import NodeCollection
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
 
-DATABASE_ROW = {
-    'name': 'dbname',
-    'did': 123,
-    'spcname': 'primary',
-    'datallowconn': True,
-    'cancreate': True,
-    'owner': 10
-}
 
+class TestDatabase(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'dbname',
+        'oid': 123,
+        'spcname': 'primary',
+        'datallowconn': True,
+        'cancreate': True,
+        'owner': 10
+    }
 
-class TestDatabase(unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return Database
+
+    @property
+    def basic_properties(self):
+        return {
+            'tablespace': TestDatabase.NODE_ROW['spcname'],
+            '_tablespace': TestDatabase.NODE_ROW['spcname'],
+            'allow_conn': TestDatabase.NODE_ROW['datallowconn'],
+            '_allow_conn': TestDatabase.NODE_ROW['datallowconn'],
+            'can_create': TestDatabase.NODE_ROW['cancreate'],
+            '_can_create': TestDatabase.NODE_ROW['cancreate'],
+            '_owner_oid': TestDatabase.NODE_ROW['owner']
+        }
+
+    @property
+    def collections(self):
+        """
+        Although a db has collections under it, we return none here b/c we will be performing
+        custom validation of the collections based on whether or not the DB is connected
+        """
+        return []
+
+    @property
+    def node_query(self) -> dict:
+        return TestDatabase.NODE_ROW
+
     # CONSTRUCTION TESTS ###################################################
+    def test_init(self):
+        """Overriding to prevent using default init testing"""
+        pass
+
     def test_init_connected(self):
-        props = [
-            '_tablespace', 'tablespace',
-            '_allow_conn', 'allow_conn',
-            '_can_create', 'can_create',
-            '_owner_oid'
-        ]
-        colls = ['_schemas', 'schemas']     # When connected, these are actually defined
+        # If: I create a DB that is connected
         name = 'dbname'
         mock_conn = ServerConnection(utils.MockConnection(None, name=name))
         db = Database(mock_conn, name)
-        utils.validate_init(
-            Database, name, mock_conn, db, props, colls,
-            lambda obj: self._init_validation(obj, True)
-        )
 
-    def test_init_disconnected(self):
-        props = [
-            '_tablespace', 'tablespace',
-            '_allow_conn', 'allow_conn',
-            '_can_create', 'can_create',
-            '_owner_oid',
-            '_schemas', 'schemas'   # When not connected we want these to be set to None
-        ]
-        colls = []
+        # Then:
+        # ... Default validation should pass
+        self._init_validation(db, mock_conn, name)
+
+        # ... The database should be connected
+        self.assertTrue(db._is_connected)
+
+        # ... The schema node collection should be defined
+        self.assertIsInstance(db._schemas, NodeCollection)
+        self.assertIs(db.schemas, db._schemas)
+
+    def test_init_not_connected(self):
+        # If: I create a DB that is connected
         name = 'dbname'
-        mock_conn = ServerConnection(utils.MockConnection(None, name='notconnected'))
+        mock_conn = ServerConnection(utils.MockConnection(None, name='not_connected'))
         db = Database(mock_conn, name)
-        utils.validate_init(
-            Database, name, mock_conn, db, props, colls,
-            lambda obj: self._init_validation(obj, False)
-        )
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Database, DATABASE_ROW, self._validate_database)
+        # Then:
+        # ... Default validation should pass
+        self._init_validation(db, mock_conn, name)
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def _init_validation(self, obj: Database, is_connected: bool):
-        self.assertEqual(obj._is_connected, is_connected)
-
-    def _validate_database(self, db: Database, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        utils.validate_node_object_props(db, mock_conn, DATABASE_ROW['name'], DATABASE_ROW['did'])
-
-        # Database-specific basic properties
-        self.assertEqual(db._tablespace, DATABASE_ROW['spcname'])
-        self.assertEqual(db.tablespace, DATABASE_ROW['spcname'])
-        self.assertEqual(db._allow_conn, DATABASE_ROW['datallowconn'])
-        self.assertEqual(db.allow_conn, DATABASE_ROW['datallowconn'])
-        self.assertEqual(db._can_create, DATABASE_ROW['cancreate'])
-        self.assertEqual(db.can_create, DATABASE_ROW['cancreate'])
-        self.assertEqual(db._owner_oid, DATABASE_ROW['owner'])
-
-        # Child objects
+        # ... The database should be connected
         self.assertFalse(db._is_connected)
+
+        # ... The schema node collection should not be defined
         self.assertIsNone(db._schemas)
         self.assertIsNone(db.schemas)

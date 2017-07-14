@@ -20,13 +20,13 @@ class Role(NodeObject):
         :param conn: Connection that executed the role node query
         :param kwargs: Row from a role node query
         Kwargs:
-            rolname str: Name of the role
+            name str: Name of the role
             oid int: Object ID of the role
             rolcanlogin bool: Whether or not the role can login
             rolsuper bool: Whether or not the role is a super user
         :return: A Role instance
         """
-        role = cls(conn, kwargs['rolname'])
+        role = cls(conn, kwargs['name'])
 
         # Define values from node query
         role._oid = kwargs['oid']

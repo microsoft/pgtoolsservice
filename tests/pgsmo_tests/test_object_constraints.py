@@ -8,37 +8,55 @@ import unittest
 from pgsmo.objects.table_objects.constraints import (
     Constraint, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint
 )
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'convalidated': True,
-    'name': 'constraint',
-    'oid': 123
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestConstraints(unittest.TestCase):
-    """These tests are for all constraint classes"""
+class ConstraintTestBase(NodeObjectTestBase):
+    NODE_ROW = {
+        'convalidated': True,
+        'name': 'constraint',
+        'oid': 123
+    }
 
-    CONSTRAINT_CLASSES = [CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint]
+    @property
+    def class_for_test(self):
+        return Constraint
 
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        for class_ in TestConstraints.CONSTRAINT_CLASSES:
-            props = [
-                '_convalidated', 'convalidated',
-            ]
-            utils.init_base(class_, props, [])
+    @property
+    def basic_properties(self):
+        return {
+            '_convalidated': ConstraintTestBase.NODE_ROW['convalidated'],
+            'convalidated': ConstraintTestBase.NODE_ROW['convalidated']
+        }
 
-    def test_from_node_query(self):
-        for class_ in TestConstraints.CONSTRAINT_CLASSES:
-            utils.from_node_query_base(class_, NODE_ROW, self._validate)
+    @property
+    def collections(self):
+        return []
 
-    # IMPLEMENTATION DETAILS
-    def _validate(self, obj: Constraint, mock_conn: ServerConnection):
-        utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
+    @property
+    def node_query(self) -> dict:
+        return ConstraintTestBase.NODE_ROW
 
-        # Constraint specific basic properties
-        self.assertEqual(obj._convalidated, NODE_ROW['convalidated'])
-        self.assertEqual(obj.convalidated, NODE_ROW['convalidated'])
+
+class TestCheckConstraint(ConstraintTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return CheckConstraint
+
+
+class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return ExclusionConstraint
+
+
+class TestForeignKeyConstraint(ConstraintTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return ForeignKeyConstraint
+
+
+class TestIndexConstraint(ConstraintTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return IndexConstraint

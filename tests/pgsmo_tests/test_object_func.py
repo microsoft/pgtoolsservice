@@ -6,40 +6,37 @@
 import unittest
 
 from pgsmo.objects.functions.function import Function
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'funcname(arg1 int)',
-    'oid': 123,
-    'description': 'func description',
-    'lanname': 'sql',
-    'funcowner': 'postgres'
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestFunction(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        props = [
-            '_description', 'description',
-            '_lanname', 'language',
-            '_owner', 'owner'
-        ]
-        colls = []
-        utils.init_base(Function, props, colls)
+class TestFunction(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'funcname(arg1 int)',
+        'oid': 123,
+        'description': 'func description',
+        'lanname': 'sql',
+        'funcowner': 'postgres'
+    }
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Function, NODE_ROW, self._validate)
+    @property
+    def class_for_test(self):
+        return Function
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate(self, obj: Function, mock_conn: ServerConnection):
-        utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
+    @property
+    def basic_properties(self):
+        return {
+            'description': TestFunction.NODE_ROW['description'],
+            '_description': TestFunction.NODE_ROW['description'],
+            'language': TestFunction.NODE_ROW['lanname'],
+            '_lanname': TestFunction.NODE_ROW['lanname'],
+            'owner': TestFunction.NODE_ROW['funcowner'],
+            '_owner': TestFunction.NODE_ROW['funcowner']
+        }
 
-        # Function basic properties
-        self.assertEqual(obj._description, NODE_ROW['description'])
-        self.assertEqual(obj.description, NODE_ROW['description'])
-        self.assertEqual(obj._lanname, NODE_ROW['lanname'])
-        self.assertEqual(obj.language, NODE_ROW['lanname'])
-        self.assertEqual(obj._owner, NODE_ROW['funcowner'])
-        self.assertEqual(obj.owner, NODE_ROW['funcowner'])
+    @property
+    def collections(self):
+        return []
+
+    @property
+    def node_query(self) -> dict:
+        return TestFunction.NODE_ROW

@@ -6,25 +6,27 @@
 import unittest
 
 from pgsmo.objects.table_objects.index import Index
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'idxname',
-    'oid': 123
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestIndex(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        props = []
-        colls = []
-        utils.init_base(Index, props, colls)
+class TestIndex(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'idxname',
+        'oid': 123
+    }
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Index, NODE_ROW, self._validate)
+    @property
+    def class_for_test(self):
+        return Index
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate(self, obj: Index, mock_conn: ServerConnection):
-        utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
+    @property
+    def basic_properties(self):
+        return {}
+
+    @property
+    def collections(self):
+        return []
+
+    @property
+    def node_query(self) -> dict:
+        return TestIndex.NODE_ROW

@@ -276,6 +276,7 @@ class MockNodeObject(node.NodeObject):
     def _template_root(cls, conn: ServerConnection):
         return 'template_root'
 
+
 def _get_node_for_parents_mock_connection():
     # ... Create a mockup of a server connection with a mock executor
     mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]

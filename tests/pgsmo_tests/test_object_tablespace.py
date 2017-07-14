@@ -6,29 +6,32 @@
 import unittest
 
 from pgsmo.objects.tablespace.tablespace import Tablespace
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'test',
-    'oid': 123,
-    'owner': 10
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestTablespace(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        props = ['owner', '_owner']
-        utils.init_base(Tablespace, props, [])
+class TestTablespace(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'test',
+        'oid': 123,
+        'owner': 10
+    }
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Tablespace, NODE_ROW, self._validate_tablespace)
+    @property
+    def class_for_test(self):
+        return Tablespace
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate_tablespace(self, obj: Tablespace, mock_conn: ServerConnection):
-        utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
+    @property
+    def basic_properties(self):
+        return {
+            'owner': TestTablespace.NODE_ROW['owner'],
+            '_owner': TestTablespace.NODE_ROW['owner']
 
-        # Tablespace-specific properties
-        self.assertEqual(obj._owner, NODE_ROW['owner'])
-        self.assertEqual(obj.owner, NODE_ROW['owner'])
+        }
+
+    @property
+    def collections(self):
+        return []
+
+    @property
+    def node_query(self) -> dict:
+        return TestTablespace.NODE_ROW

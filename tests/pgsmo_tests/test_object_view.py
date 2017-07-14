@@ -5,39 +5,32 @@
 
 import unittest
 
-from pgsmo.objects.node_object import NodeCollection
 from pgsmo.objects.view.view import View
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'viewname',
-    'oid': 123
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestTable(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        props = []
-        colls = [
+class TestView(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'viewname',
+        'oid': 123
+    }
+
+    @property
+    def class_for_test(self):
+        return View
+
+    @property
+    def basic_properties(self):
+        return {}
+
+    @property
+    def collections(self):
+        return [
             '_columns', 'columns',
             '_rules', 'rules',
             '_triggers', 'triggers'
         ]
-        utils.init_base(View, props, colls)
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(View, NODE_ROW, self._validate_view)
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate_view(self, view: View, mock_conn: ServerConnection):
-        utils.validate_node_object_props(view, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
-
-        # Child objects
-        self.assertIsInstance(view._columns, NodeCollection)
-        self.assertIs(view.columns, view._columns)
-        self.assertIsInstance(view._rules, NodeCollection)
-        self.assertIs(view.rules, view._rules)
-        self.assertIsInstance(view._triggers, NodeCollection)
-        self.assertIs(view.triggers, view._triggers)
+    @property
+    def node_query(self) -> dict:
+        return TestView.NODE_ROW

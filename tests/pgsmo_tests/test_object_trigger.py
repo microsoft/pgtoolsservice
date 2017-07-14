@@ -6,29 +6,31 @@
 import unittest
 
 from pgsmo.objects.table_objects import Trigger
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'idxname',
-    'oid': 123,
-    'is_enable_trigger': True
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestTrigger(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        props = ['_is_enabled', 'is_enabled']
-        utils.init_base(Trigger, props, [])
+class TestTrigger(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'triggername',
+        'oid': 123,
+        'is_enable_trigger': True
+    }
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Trigger, NODE_ROW, self._validate)
+    @property
+    def class_for_test(self):
+        return Trigger
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate(self, obj: Trigger, mock_conn: ServerConnection):
-        utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
+    @property
+    def basic_properties(self):
+        return {
+            '_is_enabled': TestTrigger.NODE_ROW['is_enable_trigger'],
+            'is_enabled': TestTrigger.NODE_ROW['is_enable_trigger']
+        }
 
-        # Trigger-specific properties
-        self.assertEqual(obj._is_enabled, NODE_ROW['is_enable_trigger'])
-        self.assertEqual(obj.is_enabled, NODE_ROW['is_enable_trigger'])
+    @property
+    def collections(self):
+        return []
+
+    @property
+    def node_query(self) -> dict:
+        return TestTrigger.NODE_ROW

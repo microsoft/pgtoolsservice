@@ -5,7 +5,7 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT
-	r.oid, r.rolname, r.rolcanlogin, r.rolsuper
+	r.oid, r.rolname as name, r.rolcanlogin, r.rolsuper
 FROM
 	pg_roles r
 {% if rid %}
