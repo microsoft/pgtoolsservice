@@ -8,7 +8,7 @@ from typing import List, Optional
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.collation import Collation
-from pgsmo.objects.functions.function import Function
+from pgsmo.objects.functions import Function, TriggerFunction
 from pgsmo.objects.sequence import Sequence
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
@@ -65,6 +65,9 @@ class Schema(node.NodeObject):
         self._tables: node.NodeCollection = self._register_child_collection(
             lambda: Table.get_nodes_for_parent(self._conn, self._oid)
         )
+        self._trigger_functions = self._register_child_collection(
+            lambda: TriggerFunction.get_nodes_for_parent(self._conn, self._oid)
+        )
         self._views: node.NodeCollection = self._register_child_collection(
             lambda: View.get_nodes_for_parent(self._conn, self._oid)
         )
@@ -94,6 +97,10 @@ class Schema(node.NodeObject):
     @property
     def tables(self) -> node.NodeCollection:
         return self._tables
+
+    @property
+    def trigger_functions(self) -> node.NodeCollection:
+        return self._trigger_functions
 
     @property
     def views(self) -> node.NodeCollection:

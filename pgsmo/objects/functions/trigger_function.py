@@ -3,12 +3,16 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo.objects.functions.function import Function
-from pgsmo.objects.functions.function_base import FunctionBase
-from pgsmo.objects.functions.trigger_function import TriggerFunction
+import os.path as path
 
-__all__ = [
-    'Function',
-    'FunctionBase',
-    'TriggerFunction'
-]
+from pgsmo.objects.functions.function_base import FunctionBase
+import pgsmo.utils.querying as querying
+import pgsmo.utils.templating as templating
+
+
+class TriggerFunction(FunctionBase):
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger_funcs')
+
+    @classmethod
+    def _template_path(cls, conn: querying.ServerConnection):
+        return path.join(cls.TEMPLATE_ROOT, conn.server_type)

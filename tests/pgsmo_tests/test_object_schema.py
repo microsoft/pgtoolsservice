@@ -5,7 +5,6 @@
 
 import unittest
 
-from pgsmo.objects.node_object import NodeCollection
 from pgsmo.objects.schema.schema import Schema
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
@@ -28,6 +27,7 @@ class TestSchema(unittest.TestCase):
             '_functions', 'functions',
             '_sequences', 'sequences',
             '_tables', 'tables',
+            '_trigger_functions', 'trigger_functions',
             '_views', 'views'
         ]
         utils.init_base(Schema, props, collections)
@@ -44,19 +44,13 @@ class TestSchema(unittest.TestCase):
         utils.validate_node_object_props(schema, mock_conn, SCHEMA_ROW['name'], SCHEMA_ROW['oid'])
 
         # Schema-specific basic properties
-        self.assertEqual(schema._can_create, SCHEMA_ROW['can_create'])
-        self.assertEqual(schema.can_create, SCHEMA_ROW['can_create'])
-        self.assertEqual(schema._has_usage, SCHEMA_ROW['has_usage'])
-        self.assertEqual(schema.has_usage, SCHEMA_ROW['has_usage'])
+        utils.assert_threeway_equals(SCHEMA_ROW['can_create'], schema.can_create, schema._can_create)
+        utils.assert_threeway_equals(SCHEMA_ROW['has_usage'], schema.has_usage, schema._has_usage)
 
         # Child objects
-        self.assertIsInstance(schema._collations, NodeCollection)
-        self.assertIs(schema.collations, schema._collations)
-        self.assertIsInstance(schema._functions, NodeCollection)
-        self.assertIs(schema.functions, schema._functions)
-        self.assertIsInstance(schema._sequences, NodeCollection)
-        self.assertIs(schema.sequences, schema._sequences)
-        self.assertIsInstance(schema._tables, NodeCollection)
-        self.assertIs(schema.tables, schema._tables)
-        self.assertIsInstance(schema._views, NodeCollection)
-        self.assertIs(schema.views, schema._views)
+        utils.assert_node_collection(schema.collations, schema._collations)
+        utils.assert_node_collection(schema.functions, schema._functions)
+        utils.assert_node_collection(schema.sequences, schema._sequences)
+        utils.assert_node_collection(schema.tables, schema._tables)
+        utils.assert_node_collection(schema.trigger_functions, schema._trigger_functions)
+        utils.assert_node_collection(schema.views, schema._views)
