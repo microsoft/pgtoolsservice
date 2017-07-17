@@ -3,9 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta, abstractmethod
-from typing import Callable, Dict, List, Optional, Union, TypeVar
 
+from abc import ABCMeta, abstractmethod
+from typing import Callable, Dict, List, Optional, Union, TypeVar, KeysView, ItemsView
 
 import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
@@ -21,6 +21,8 @@ class NodeObject(metaclass=ABCMeta):
         # Define the state of the object
         self._conn: querying.ServerConnection = conn
         self._child_collections: List[NodeCollection] = []
+        self._property_collections: List[NodeLazyPropertyCollection] = []
+        # self._property_collection: NodeLazyPropertyCollection = self._register_property_collection()
 
         # Declare node basic properties
         self._name: str = name
@@ -34,6 +36,10 @@ class NodeObject(metaclass=ABCMeta):
     @property
     def oid(self) -> Optional[int]:
         return self._oid
+
+    # @property
+    # def _properties(self) -> NodeLazyPropertyCollection:
+    #     return self._property_collection
 
     # METHODS ##############################################################
     def refresh(self) -> None:
@@ -52,11 +58,84 @@ class NodeObject(metaclass=ABCMeta):
         self._child_collections.append(collection)
         return collection
 
+    def _register_property_collection(self, generator: Callable[[], Dict[str, Union[str, int]]]):
+        """
+        Creates a property collection for extended properties, etc, and registers with the list of
+        property collections.
+        :param generator: The generator for the property collection
+        :return: The created property collection
+        """
+        collection = NodeLazyPropertyCollection(generator)
+        self._property_collections.append(collection)
+        return collection
+
+    # PRIVATE HELPERS ######################################################
+    # def _property_generator(self) -> Dict[str, Union[str, int]]:
+    #     """
+    #
+    #     :return:
+    #     """
+
     def _refresh_child_collections(self) -> None:
-        """Iterates over the registered child collections and resets them"""
+        """Iterates over the registered child collections and property collections and resets them"""
         for collection in self._child_collections:
             collection.reset()
 
+        for collection in self._property_collections:
+            collection.reset()
+
+
+class NodeLazyPropertyCollection:
+    def __init__(self, generator: Callable[[], Dict[str, Union[str, int, bool]]]):
+        """
+        Initializes a new lazy property collection with a generator to call when looking up the properties
+        :param generator: A callable that returns a dictionary of properties when called
+        """
+        self._generator: Callable[[], Dict[str, Union[str, int, bool]]] = generator
+        self._items: Optional[Dict[str, Union[str, int, bool]]] = None
+
+    def __getitem__(self, index: str) -> any:
+        """
+        Searches for a property and returns it. If the collection of properties hasn't been loaded,
+        load it.
+        :param item: The index of the item to get from the property collection
+        :raises TypeError: If index is not a string
+        :raises NameError: If an item with the provided index does not exist
+        :return: The value of the item in the property collection
+        """
+        # Make sure we have a valid index
+        if not isinstance(index, str):
+            raise TypeError('Index must be a string')
+
+        # Load the items if they haven't been loaded
+        self._ensure_loaded()
+
+        return self._items[index]
+
+    def __iter__(self):
+        self._ensure_loaded()
+        return self._items.__iter__()
+
+    def __len__(self):
+        self._ensure_loaded()
+        return len(self._items)
+
+    def items(self) -> ItemsView[str, Union[str, int, bool]]:
+        self._ensure_loaded()
+        return self._items.items()
+
+    def keys(self) -> KeysView[str]:
+        self._ensure_loaded()
+        return self._items.keys()
+
+    def reset(self) -> None:
+        # Empty the items so that the next request will reload the collection
+        self._items = None
+
+    def _ensure_loaded(self) -> None:
+        # Load the items if they haven't been loaded
+        if self._items is None:
+            self._items = self._generator()
 
 TNC = TypeVar('TNC')
 
