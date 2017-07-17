@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional, Union             # noqa
+from typing import List, Optional               # noqa
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.schema.schema import Schema
@@ -50,21 +50,20 @@ class Database(node.NodeObject):
         super(Database, self).__init__(conn, name)
         self._is_connected: bool = conn.dsn_parameters.get('dbname') == name
 
-        # Declare the basic properties
-        self._tablespace_name: Optional[str] = None
+        # Declare the optional parameters
+        self._tablespace: Optional[str] = None
         self._allow_conn: Optional[bool] = None
         self._can_create: Optional[bool] = None
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
         self._schemas = None
-        self._full_properties = None
         if self._is_connected:
             self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(conn))
-            self._full_properties = self._register_property_collection(self._full_properties_generator)
 
     # PROPERTIES ###########################################################
-    # -BASIC PROPERTIES
+    # TODO: Create setters for optional values
+
     @property
     def allow_conn(self) -> bool:
         return self._allow_conn
@@ -74,61 +73,8 @@ class Database(node.NodeObject):
         return self._can_create
 
     @property
-    def tablespace_name(self) -> Optional[str]:
-        return self._tablespace_name
-
-    # -FULL OBJECT PROPERTIES ##############################################
-    @property
-    def acl(self) -> Optional[str]:
-        return self._get_full_property('acl')
-
-    @property
-    def character_type(self) -> Optional[str]:
-        return self._get_full_property('datctype')
-
-    @property
-    def collation(self) -> Optional[str]:
-        return self._get_full_property('datcollate')
-
-    @property
-    def comments(self) -> Optional[str]:
-        return self._get_full_property('comments')
-
-    @property
-    def connection_limit(self) -> Optional[int]:
-        return self._get_full_property('datconnlimit')
-
-    @property
-    def default_tablespace_name(self) -> Optional[str]:
-        return self._get_full_property('default_tablespace')
-
-    @property
-    def encoding(self) -> Optional[str]:
-        return self._get_full_property('encoding')
-
-    @property
-    def function_acl(self) -> Optional[str]:
-        return self._get_full_property('funcacl')
-
-    @property
-    def is_template(self) -> Optional[bool]:
-        return self._get_full_property('is_template')
-
-    @property
-    def owner_name(self) -> Optional[str]:
-        return self._get_full_property('datowner')
-
-    @property
-    def sequence_acl(self) -> Optional[str]:
-        return self._get_full_property('seqacl')
-
-    @property
-    def table_acl(self) -> Optional[str]:
-        return self._get_full_property('tblacl')
-
-    @property
-    def tablespace_oid(self) -> Optional[int]:
-        return self._get_full_property('spcoid')
+    def tablespace(self) -> str:
+        return self._tablespace
 
     # -CHILD OBJECTS #######################################################
     @property
@@ -144,23 +90,3 @@ class Database(node.NodeObject):
 
     def delete(self):
         pass
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _full_properties_generator(self):
-        """
-        Looks up full properties of an object using the properties.sql template
-        :return:
-        """
-        sql = templating.render_template(
-            templating.get_template_path(TEMPLATE_ROOT, 'properties.sql', self._conn.version),
-            did=self._oid
-        )
-        cols, rows = self._conn.execute_dict(sql)
-
-        if len(rows) > 0:
-            return rows[0]
-        else:
-            return None
-
-    def _get_full_property(self, property_name: str) -> Optional[Union[str, int, bool]]:
-        return self._full_properties[property_name] if self._is_connected else None
