@@ -79,6 +79,14 @@ class Database(node.NodeObject):
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
+    def acl(self) -> Optional[str]:
+        return self._get_full_property('acl')
+
+    @property
+    def character_type(self) -> Optional[str]:
+        return self._get_full_property('datctype')
+
+    @property
     def collation(self) -> Optional[str]:
         return self._get_full_property('datcollate')
 
