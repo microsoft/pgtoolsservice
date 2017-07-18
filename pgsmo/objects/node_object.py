@@ -91,8 +91,15 @@ class NodeLazyPropertyCollection:
         Initializes a new lazy property collection with a generator to call when looking up the properties
         :param generator: A callable that returns a dictionary of properties when called
         """
-        self._generator: Callable[[], Dict[str, Union[str, int, bool]]] = generator
-        self._items: Optional[Dict[str, Union[str, int, bool]]] = None
+        self._generator: Callable[[], Dict[str, Optional[Union[str, int, bool]]]] = generator
+        self._items_impl: Optional[Dict[str, Optional[Union[str, int, bool]]]] = None
+
+    @property
+    def _items(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        """Property that ensures properties are loaded before returning the properties"""
+        if self._items_impl is None:
+            self._items_impl = self._generator()
+        return self._items_impl
 
     def __getitem__(self, index: str) -> any:
         """
@@ -107,35 +114,23 @@ class NodeLazyPropertyCollection:
         if not isinstance(index, str):
             raise TypeError('Index must be a string')
 
-        # Load the items if they haven't been loaded
-        self._ensure_loaded()
-
         return self._items[index]
 
     def __iter__(self):
-        self._ensure_loaded()
         return self._items.__iter__()
 
     def __len__(self):
-        self._ensure_loaded()
         return len(self._items)
 
     def items(self) -> ItemsView[str, Union[str, int, bool]]:
-        self._ensure_loaded()
         return self._items.items()
 
     def keys(self) -> KeysView[str]:
-        self._ensure_loaded()
         return self._items.keys()
 
     def reset(self) -> None:
         # Empty the items so that the next request will reload the collection
-        self._items = None
-
-    def _ensure_loaded(self) -> None:
-        # Load the items if they haven't been loaded
-        if self._items is None:
-            self._items = self._generator()
+        self._items_impl = None
 
 
 TNC = TypeVar('TNC')

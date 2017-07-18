@@ -136,10 +136,35 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
         # Then:
         # ... Internal state should be appropriately setup
         self.assertIs(prop_collection._generator, generator)
-        self.assertIsNone(prop_collection._items)
+        self.assertIsNone(prop_collection._items_impl)
 
         # ... The generator should not have been called
         generator.assert_not_called()
+
+    def test_items_loaded(self):
+        # Setup: Create a mock generator, property collection and mock that it's loaded
+        generator = mock.MagicMock()
+        prop_collection = node.NodeLazyPropertyCollection(generator)
+        prop_collection._items_impl = {}
+
+        # If: I look at the list of items after they
+        output = prop_collection._items
+
+        # Then: The generator should not have been called
+        generator.assert_not_called()
+        self.assertIs(output, prop_collection._items_impl)
+
+    def test_items_not_loaded(self):
+        # Setup: Create a mock generator, property collection
+        generator = mock.MagicMock(return_value={})
+        prop_collection = node.NodeLazyPropertyCollection(generator)
+
+        # If: I look at the list of items after they
+        output = prop_collection._items
+
+        # Then: The generator should have been called
+        generator.assert_called_once()
+        self.assertIs(output, prop_collection._items_impl)
 
     def test_index_bad_type(self):
         # Setup: Create a mock generator and property collection
@@ -147,9 +172,13 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
         prop_collection = node.NodeLazyPropertyCollection(generator)
 
         # If: I ask for items with an invalid type for the index
-        # Then: I should get an exception
+        # Then:
+        # ... I should get an exception
         with self.assertRaises(TypeError):
             prop_collection[1.2]
+
+        # ... The generator should not have been called
+        generator.assert_not_called()
 
     def test_index_no_match_oid(self):
         # Setup: Create a mock generator and property collection
@@ -233,7 +262,7 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
 
         # Then:
         # ... The item collection should be none
-        self.assertIsNone(prop_collection._items)
+        self.assertIsNone(prop_collection._items_impl)
 
 
 class TestNodeObject(unittest.TestCase):
