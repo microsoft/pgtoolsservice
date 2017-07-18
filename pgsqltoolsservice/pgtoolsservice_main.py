@@ -5,6 +5,7 @@
 
 import io
 import logging
+import os
 import sys
 
 import ptvsd
@@ -24,7 +25,10 @@ from pgsqltoolsservice.workspace import WorkspaceService
 if __name__ == '__main__':
     # Create the output logger
     logger = logging.getLogger('pgsqltoolsservice')
-    handler = logging.FileHandler('pgsqltoolsservice.log')
+    try:
+        handler = logging.FileHandler(os.path.join(os.path.dirname(sys.argv[0]), 'pgsqltoolsservice.log'))
+    except Exception:
+        handler = logging.NullHandler()
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
