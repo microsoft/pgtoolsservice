@@ -57,4 +57,3 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
         # ... The datatype property should be set
         self.assertEqual(obj.datatype, datatype)
         self.assertEqual(obj._datatype, datatype)
-
