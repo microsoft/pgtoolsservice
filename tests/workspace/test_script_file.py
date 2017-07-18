@@ -125,7 +125,7 @@ class TestScriptFile(unittest.TestCase):
     def test_get_text_in_range_start_of_line(self):
         """Test that get_text_in_range works when the cursor is at the start of a line"""
         sf = self._get_test_script_file()
-    
+
         # If I get text from a range that covers the entire first line and ends on the second line before any text
         params = Range.from_data(0, 0, 1, 0)
         result = sf.get_text_in_range(params)
