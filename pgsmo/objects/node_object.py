@@ -58,7 +58,7 @@ class NodeObject(metaclass=ABCMeta):
         self._child_collections.append(collection)
         return collection
 
-    def _register_property_collection(self, generator: Callable[[], Dict[str, Union[str, int]]]):
+    def _register_property_collection(self, generator: Callable[[], Dict[str, Optional[Union[str, int, bool]]]]):
         """
         Creates a property collection for extended properties, etc, and registers with the list of
         property collections.
@@ -86,7 +86,7 @@ class NodeObject(metaclass=ABCMeta):
 
 
 class NodeLazyPropertyCollection:
-    def __init__(self, generator: Callable[[], Dict[str, Union[str, int, bool]]]):
+    def __init__(self, generator: Callable[[], Dict[str, Optional[Union[str, int, bool]]]]):
         """
         Initializes a new lazy property collection with a generator to call when looking up the properties
         :param generator: A callable that returns a dictionary of properties when called
