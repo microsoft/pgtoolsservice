@@ -50,7 +50,7 @@ class TestNodeCollection(unittest.TestCase):
         self.assertIs(output, node_collection._items_impl)
 
         # ... Make sure the generator has not been called
-        generator.assert_not_called()
+        generator.assert_called_once()
 
     def test_index_bad_type(self):
         # Setup: Create a mock generator and node collection
