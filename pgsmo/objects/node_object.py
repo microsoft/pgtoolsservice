@@ -104,7 +104,17 @@ class NodeCollection(Generic[TNC]):
         :param generator: A callable that returns a list of NodeObjects when called
         """
         self._generator: Callable[[], List[TNC]] = generator
-        self._items: Optional[List[TNC]] = None
+        self._items_impl: Optional[List[TNC]] = None
+
+    @property
+    def _items(self) -> List[TNC]:
+        # Load the items if they haven't been loaded
+        if self._items_impl is None:
+            self._items_impl = self._generator()
+
+        # noinspection PyTypeChecker
+        # - This should always be a list b/c _ensure_loaded will load the list if it is None
+        return self._items_impl
 
     def __getitem__(self, index: Union[int, str]) -> TNC:
         """
@@ -125,12 +135,8 @@ class NodeCollection(Generic[TNC]):
         else:
             raise TypeError('Index must be either a string or int')
 
-        # Load the items if they haven't been loaded
-        self._ensure_loaded()
-
         # Look up the desired item
-        # noinspection PyTypeChecker
-        # - This should always be a list b/c _ensure_loaded will load the list if it is None
+
         for item in self._items:
             if lookup(item):
                 return item
@@ -139,19 +145,12 @@ class NodeCollection(Generic[TNC]):
         raise NameError('An item with the provided index does not exist')
 
     def __iter__(self) -> Iterator:
-        self._ensure_loaded()
         return self._items.__iter__()
 
     def __len__(self) -> int:
         # Load the items if they haven't been loaded
-        self._ensure_loaded()
         return len(self._items)
 
     def reset(self) -> None:
         # Empty the items so that next iteration will reload the collection
-        self._items = None
-
-    def _ensure_loaded(self) -> None:
-        # Load the items if they haven't been loaded
-        if self._items is None:
-            self._items = self._generator()
+        self._items_impl = None

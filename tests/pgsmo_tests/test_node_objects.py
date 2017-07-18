@@ -21,7 +21,32 @@ class TestNodeCollection(unittest.TestCase):
 
         # Then: The internal properties should be set properly
         self.assertIs(node_collection._generator, generator)
-        self.assertIsNone(node_collection._items)
+        self.assertIsNone(node_collection._items_impl)
+
+    def test_items_loaded(self):
+        # Setup: Create a mock generator and node collection, mock that it's loaded
+        generator = mock.MagicMock()
+        node_collection = node.NodeCollection(generator)
+        node_collection._items_impl = {}
+
+        # If: I access the items property
+        output = node_collection._items
+
+        # Then: The generator should not have been called
+        generator.assert_not_called()
+        self.assertIs(output, node_collection._items_impl)
+
+    def test_items_not_loaded(self):
+        # Setup: Create a mock generator and node collection
+        generator = mock.MagicMock(return_value={})
+        node_collection = node.NodeCollection(generator)
+
+        # If: I access the items property
+        output = node_collection._items
+
+        # Then: The generator should have been called
+        generator.assert_called_once()
+        self.assertIs(output, node_collection._items_impl)
 
     def test_index_bad_type(self):
         # Setup: Create a mock generator and node collection
@@ -45,10 +70,6 @@ class TestNodeCollection(unittest.TestCase):
         with self.assertRaises(NameError):
             obj = node_collection[789]      # noqa
 
-        # ... The generator should have been called, tho
-        generator.assert_called_once()
-        self.assertIs(node_collection._items, mock_objects)
-
     def test_index_no_match_name(self):
         # Setup: Create a mock generator and node collection
         generator, mock_objects = _get_mock_generator()
@@ -59,10 +80,6 @@ class TestNodeCollection(unittest.TestCase):
         # ... I should get an exception
         with self.assertRaises(NameError):
             obj = node_collection['c']      # noqa
-
-        # ... The generator should have been called, tho
-        generator.assert_called_once()
-        self.assertIs(node_collection._items, mock_objects)
 
     def test_index_match_oid(self):
         # Setup: Create a mock generator and node collection
@@ -119,7 +136,7 @@ class TestNodeCollection(unittest.TestCase):
 
         # Then:
         # ... The item collection should be none
-        self.assertIsNone(node_collection._items)
+        self.assertIsNone(node_collection._items_impl)
 
 
 class TestNodeObject(unittest.TestCase):
