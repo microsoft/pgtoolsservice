@@ -273,7 +273,7 @@ class TestWorkspaceService(unittest.TestCase):
         # Retrieve the full text of the file and make sure it matches
         selection_range = Range(Position(1, 1), Position(2, 4))
         result_text = workspace_service.get_text(file_uri, selection_range)
-        self.assertEqual(result_text, os.linesep.join(['ine 2 content', ' line']))
+        self.assertEqual(result_text, os.linesep.join(['ine 2 content', ' lin']))
 
     # IMPLEMENTATION DETAILS ###############################################
 
