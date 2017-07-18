@@ -137,6 +137,7 @@ class NodeLazyPropertyCollection:
         if self._items is None:
             self._items = self._generator()
 
+
 TNC = TypeVar('TNC')
 
 
