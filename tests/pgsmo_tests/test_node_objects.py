@@ -297,7 +297,10 @@ class TestNodeObject(unittest.TestCase):
         self.assertEqual(node_obj.name, 'abc')
 
         self.assertListEqual(node_obj._child_collections, [])
-        self.assertListEqual(node_obj._property_collections, [])
+        self.assertEqual(len(node_obj._property_collections), 1)
+
+        self.assertIsInstance(node_obj._full_properties, node.NodeLazyPropertyCollection)
+        self.assertEqual(node_obj._full_properties._generator, node_obj._property_generator)
 
         self.assertIs(node_obj._conn, conn)
 
@@ -424,14 +427,14 @@ class TestNodeObject(unittest.TestCase):
         self.assertIs(collection1._generator, generator)
 
         # ... The collection should be added to the list of registered collections
-        self.assertEqual(len(node_obj._property_collections), 1)
+        self.assertEqual(len(node_obj._property_collections), 2)
         self.assertIn(collection1, node_obj._property_collections)
 
         # If: I add another one
         collection2 = node_obj._register_property_collection(generator)
 
         # Then: The collection should be appended to the list of registered collections
-        self.assertEqual(len(node_obj._property_collections), 2)
+        self.assertEqual(len(node_obj._property_collections), 3)
         self.assertIn(collection1, node_obj._property_collections)
         self.assertIn(collection2, node_obj._property_collections)
 

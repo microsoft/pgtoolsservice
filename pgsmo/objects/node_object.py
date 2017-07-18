@@ -50,7 +50,7 @@ class NodeObject(metaclass=ABCMeta):
         self._conn: querying.ServerConnection = conn
         self._child_collections: List[NodeCollection] = []
         self._property_collections: List[NodeLazyPropertyCollection] = []
-        # self._property_collection: NodeLazyPropertyCollection = self._register_property_collection()
+        self._full_properties: NodeLazyPropertyCollection = self._register_property_collection(self._property_generator)
 
         # Declare node basic properties
         self._name: str = name
@@ -64,10 +64,6 @@ class NodeObject(metaclass=ABCMeta):
     @property
     def oid(self) -> Optional[int]:
         return self._oid
-
-    # @property
-    # def _properties(self) -> NodeLazyPropertyCollection:
-    #     return self._property_collection
 
     # METHODS ##############################################################
     def refresh(self) -> None:
@@ -105,11 +101,21 @@ class NodeObject(metaclass=ABCMeta):
         return collection
 
     # PRIVATE HELPERS ######################################################
-    # def _property_generator(self) -> Dict[str, Union[str, int]]:
-    #     """
-    #
-    #     :return:
-    #     """
+    def _property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        template_root = self._template_root(self._conn)
+
+        # Setup the parameters for the query
+        template_vars = {'oid': self._oid}
+
+        # Render and execute the template
+        sql = templating.render_template(
+            templating.get_template_path(template_root, 'properties.sql', conn.version),
+            **template_vars
+        )
+        cols, rows = self._conn.execute_dict(sql)
+
+        if len(rows) > 0:
+            return rows[0]
 
     def _refresh_child_collections(self) -> None:
         """Iterates over the registered child collections and property collections and resets them"""
