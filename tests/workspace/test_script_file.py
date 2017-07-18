@@ -85,7 +85,7 @@ class TestScriptFile(unittest.TestCase):
         result = sf.get_lines_in_range(params)
 
         # Then: I should get a set of lines with the expected result
-        expected_result = ['ef', 'ghij', 'kl']
+        expected_result = ['ef', 'ghij', 'k']
         self.assertEqual(result, expected_result)
 
     def test_get_lines_in_range_invalid_start(self):
@@ -119,7 +119,19 @@ class TestScriptFile(unittest.TestCase):
         result = sf.get_text_in_range(params)
 
         # Then: I should get a set of lines with the expected result
-        expected_result = os.linesep.join(['ef', 'ghij', 'kl'])
+        expected_result = os.linesep.join(['ef', 'ghij', 'k'])
+        self.assertEqual(result, expected_result)
+
+    def test_get_text_in_range_start_of_line(self):
+        """Test that get_text_in_range works when the cursor is at the start of a line"""
+        sf = self._get_test_script_file()
+
+        # If I get text from a range that covers the entire first line and ends on the second line before any text
+        params = Range.from_data(0, 0, 1, 0)
+        result = sf.get_text_in_range(params)
+
+        # Then I should get the first line and a line with no content as the result
+        expected_result = os.linesep.join(['abc', ''])
         self.assertEqual(result, expected_result)
 
     # VALIDATE POSITION TESTS ##############################################

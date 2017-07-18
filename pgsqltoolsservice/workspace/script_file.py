@@ -130,7 +130,7 @@ class ScriptFile:
             # If the line we're looking at is not the beginning or end, select entire line,
             # otherwise, trim the unselected part of the line
             start_column: int = buffer_range.start.character if line == buffer_range.start.line else 0
-            end_column: int = buffer_range.end.character + 1 if line == buffer_range.end.line else len(current_line)
+            end_column: int = buffer_range.end.character if line == buffer_range.end.line else len(current_line)
 
             output.append(current_line[start_column:end_column])
         return output
