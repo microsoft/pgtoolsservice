@@ -3,50 +3,49 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from abc import ABCMeta
 import unittest
 
-from pgsmo.objects.functions import Function, FunctionBase, TriggerFunction
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'funcname(arg1 int)',
-    'oid': 123,
-    'description': 'func description',
-    'lanname': 'sql',
-    'funcowner': 'postgres'
-}
+from pgsmo.objects.functions import Function, TriggerFunction
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestFunctions(unittest.TestCase):
-    """These tests are for all function classes"""
+class FunctionsTestBase(NodeObjectTestBase, metaclass=ABCMeta):
+    NODE_ROW = {
+        'name': 'funcname(arg1 int)',
+        'oid': 123,
+        'description': 'func description',
+        'lanname': 'sql',
+        'funcowner': 'postgres'
+    }
 
-    CONSTRAINT_CLASSES = [Function, TriggerFunction]
+    @property
+    def basic_properties(self):
+        return {
+            'description': FunctionsTestBase.NODE_ROW['description'],
+            '_description': FunctionsTestBase.NODE_ROW['description'],
+            'language_name': FunctionsTestBase.NODE_ROW['lanname'],
+            '_language_name': FunctionsTestBase.NODE_ROW['lanname'],
+            'owner': FunctionsTestBase.NODE_ROW['funcowner'],
+            '_owner': FunctionsTestBase.NODE_ROW['funcowner']
+        }
 
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        for class_ in TestFunctions.CONSTRAINT_CLASSES:
-            props = [
-                '_description', 'description',
-                'language_name', '_lanname',
-                'owner', '_owner'
-            ]
-            utils.init_base(class_, props, [])
+    @property
+    def collections(self):
+        return []
 
-    def test_from_node_query(self):
-        for class_ in TestFunctions.CONSTRAINT_CLASSES:
-            utils.from_node_query_base(class_, NODE_ROW, self._validate)
+    @property
+    def node_query(self):
+        return FunctionsTestBase.NODE_ROW
 
-    def test_get_nodes_for_parent(self):
-        for class_ in TestFunctions.CONSTRAINT_CLASSES:
-            get_nodes_for_parent = (lambda conn: class_.get_nodes_for_parent(conn, 10))
-            utils.get_nodes_for_parent_base(class_, NODE_ROW, get_nodes_for_parent, self._validate)
 
-    # IMPLEMENTATION DETAILS
-    def _validate(self, obj: FunctionBase, mock_conn: ServerConnection):
-        utils.validate_node_object_props(obj, mock_conn, NODE_ROW['name'], NODE_ROW['oid'])
+class TestFunction(FunctionsTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return Function
 
-        # Constraint specific basic properties
-        utils.assert_threeway_equals(NODE_ROW['description'], obj.description, obj._description)
-        utils.assert_threeway_equals(NODE_ROW['lanname'], obj.language_name, obj._lanname)
-        utils.assert_threeway_equals(NODE_ROW['funcowner'], obj.owner, obj.owner)
+
+class TestTriggerFunction(FunctionsTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return TriggerFunction

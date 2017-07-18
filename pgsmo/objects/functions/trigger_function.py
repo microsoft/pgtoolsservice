@@ -14,5 +14,5 @@ class TriggerFunction(FunctionBase):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger_funcs')
 
     @classmethod
-    def _template_path(cls, conn: querying.ServerConnection):
+    def _template_root(cls, conn: querying.ServerConnection):
         return path.join(cls.TEMPLATE_ROOT, conn.server_type)

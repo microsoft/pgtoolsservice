@@ -6,23 +6,33 @@
 import unittest
 
 from pgsmo.objects.schema.schema import Schema
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-SCHEMA_ROW = {
-    'name': 'schema',
-    'oid': 123,
-    'can_create': True,
-    'has_usage': True
-}
+class TestSchema(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'schema',
+        'oid': 123,
+        'can_create': True,
+        'has_usage': True
+    }
 
+    @property
+    def class_for_test(self):
+        return Schema
 
-class TestSchema(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        props = ['_can_create', 'can_create', '_has_usage', 'has_usage']
-        collections = [
+    @property
+    def basic_properties(self):
+        return {
+            'can_create': TestSchema.NODE_ROW['can_create'],
+            '_can_create': TestSchema.NODE_ROW['can_create'],
+            'has_usage': TestSchema.NODE_ROW['has_usage'],
+            '_has_usage': TestSchema.NODE_ROW['has_usage']
+        }
+
+    @property
+    def collections(self):
+        return [
             '_collations', 'collations',
             '_functions', 'functions',
             '_sequences', 'sequences',
@@ -30,27 +40,7 @@ class TestSchema(unittest.TestCase):
             '_trigger_functions', 'trigger_functions',
             '_views', 'views'
         ]
-        utils.init_base(Schema, props, collections)
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Schema, SCHEMA_ROW, self._validate_schema)
-
-    def test_from_nodes_for_parent(self):
-        # Use the test helper for this method
-        utils.get_nodes_for_parent_base(Schema, SCHEMA_ROW, Schema.get_nodes_for_parent, self._validate_schema)
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate_schema(self, schema: Schema, mock_conn: ServerConnection):
-        utils.validate_node_object_props(schema, mock_conn, SCHEMA_ROW['name'], SCHEMA_ROW['oid'])
-
-        # Schema-specific basic properties
-        utils.assert_threeway_equals(SCHEMA_ROW['can_create'], schema.can_create, schema._can_create)
-        utils.assert_threeway_equals(SCHEMA_ROW['has_usage'], schema.has_usage, schema._has_usage)
-
-        # Child objects
-        utils.assert_node_collection(schema.collations, schema._collations)
-        utils.assert_node_collection(schema.functions, schema._functions)
-        utils.assert_node_collection(schema.sequences, schema._sequences)
-        utils.assert_node_collection(schema.tables, schema._tables)
-        utils.assert_node_collection(schema.trigger_functions, schema._trigger_functions)
-        utils.assert_node_collection(schema.views, schema._views)
+    @property
+    def node_query(self):
+        return TestSchema.NODE_ROW

@@ -3,52 +3,57 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from abc import ABCMeta
 import unittest
 
 from pgsmo.objects.table_objects.constraints import (
-    Constraint, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint
+    CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint
 )
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'convalidated': True,
-    'name': 'constraint',
-    'oid': 123
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestConstraints(unittest.TestCase):
-    """These tests are for all constraint classes"""
+class ConstraintTestBase(NodeObjectTestBase, metaclass=ABCMeta):
+    NODE_ROW = {
+        'convalidated': True,
+        'name': 'constraint',
+        'oid': 123
+    }
 
-    CONSTRAINT_CLASSES = [CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint]
+    @property
+    def basic_properties(self):
+        return {
+            '_convalidated': ConstraintTestBase.NODE_ROW['convalidated'],
+            'convalidated': ConstraintTestBase.NODE_ROW['convalidated']
+        }
 
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        for class_ in TestConstraints.CONSTRAINT_CLASSES:
-            props = [
-                '_convalidated', 'convalidated',
-            ]
-            utils.init_base(class_, props, [])
+    @property
+    def collections(self):
+        return []
 
-    def test_from_node_query(self):
-        for class_ in TestConstraints.CONSTRAINT_CLASSES:
-            utils.from_node_query_base(class_, NODE_ROW, self._validate)
+    @property
+    def node_query(self) -> dict:
+        return ConstraintTestBase.NODE_ROW
 
-    def test_get_nodes_for_parent(self):
-        for class_ in TestConstraints.CONSTRAINT_CLASSES:
-            get_nodes_for_parent = (lambda conn: class_.get_nodes_for_parent(conn, 10))
-            utils.get_nodes_for_parent_base(class_, NODE_ROW, get_nodes_for_parent, self._validate)
 
-    # IMPLEMENTATION DETAILS
-    def _validate(self, obj: Constraint, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        self.assertIs(obj._conn, mock_conn)
-        self.assertEqual(obj._oid, NODE_ROW['oid'])
-        self.assertEqual(obj.oid, NODE_ROW['oid'])
-        self.assertEqual(obj._name, NODE_ROW['name'])
-        self.assertEqual(obj.name, NODE_ROW['name'])
+class TestCheckConstraint(ConstraintTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return CheckConstraint
 
-        # Constraint specific basic properties
-        self.assertEqual(obj._convalidated, NODE_ROW['convalidated'])
-        self.assertEqual(obj.convalidated, NODE_ROW['convalidated'])
+
+class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return ExclusionConstraint
+
+
+class TestForeignKeyConstraint(ConstraintTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return ForeignKeyConstraint
+
+
+class TestIndexConstraint(ConstraintTestBase, unittest.TestCase):
+    @property
+    def class_for_test(self):
+        return IndexConstraint

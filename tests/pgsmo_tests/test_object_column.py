@@ -8,58 +8,52 @@ import unittest
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
-
-COLUMN_ROW = {
-    'name': 'abc',
-    'datatype': 'character',
-    'oid': 123,
-    'has_default_val': True,
-    'not_null': True
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestColumn(unittest.TestCase):
+class TestColumn(NodeObjectTestBase, unittest.TestCase):
+    NODE_QUERY = {
+        'name': 'abc',
+        'datatype': 'character',
+        'oid': 123,
+        'has_default_val': True,
+        'not_null': True
+    }
+
+    @property
+    def class_for_test(self):
+        return Column
+
+    @property
+    def basic_properties(self):
+        return {
+            'has_default_value': self.node_query['has_default_val'],
+            '_has_default_value': self.node_query['has_default_val'],
+            'not_null': self.node_query['not_null'],
+            '_not_null': self.node_query['not_null']
+        }
+
+    @property
+    def collections(self):
+        return []
+
+    @property
+    def node_query(self):
+        return TestColumn.NODE_QUERY
+
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
-        props = [
-            'has_default_value', '_has_default_value',
-            'not_null', '_not_null'
-        ]
-        colls = []
+        """Tests __init__, overrides default test b/c column init takes additional param"""
+        # If: I create an instance of the Column class
         name = 'column'
         datatype = 'character'
         mock_conn = ServerConnection(utils.MockConnection(None))
         obj = Column(mock_conn, name, datatype)
-        utils.validate_init(
-            Column, name, mock_conn, obj, props, colls,
-            lambda obj: self._validate_init(obj, datatype)
-        )
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Column, COLUMN_ROW, self._validate_column)
+        # Then:
+        # ... The standard object tests should pass
+        self._init_validation(obj, mock_conn, name)
 
-    def test_get_nodes_for_parent(self):
-        # Use the test helper for this method
-        get_nodes_for_parent = (lambda conn: Column.get_nodes_for_parent(conn, 10))
-        utils.get_nodes_for_parent_base(Column, COLUMN_ROW, get_nodes_for_parent, self._validate_column)
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate_init(self, obj: Column, datatype: str):
-        self.assertEqual(obj._datatype, datatype)
+        # ... The datatype property should be set
         self.assertEqual(obj.datatype, datatype)
-
-    def _validate_column(self, obj: Column, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        self.assertIs(obj._conn, mock_conn)
-        self.assertEqual(obj._oid, COLUMN_ROW['oid'])
-        self.assertEqual(obj.oid, COLUMN_ROW['oid'])
-        self.assertEqual(obj._name, COLUMN_ROW['name'])
-        self.assertEqual(obj.name, COLUMN_ROW['name'])
-
-        # Column-specific basic properties
-        self.assertEqual(obj._datatype, COLUMN_ROW['datatype'])
-        self.assertEqual(obj.datatype, COLUMN_ROW['datatype'])
-        self.assertEqual(obj._has_default_value, COLUMN_ROW['has_default_val'])
-        self.assertEqual(obj.has_default_value, COLUMN_ROW['has_default_val'])
-        self.assertEqual(obj._not_null, COLUMN_ROW['not_null'])
-        self.assertEqual(obj.not_null, COLUMN_ROW['not_null'])
+        self.assertEqual(obj._datatype, datatype)

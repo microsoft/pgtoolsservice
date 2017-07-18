@@ -3,20 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
-
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-
-
 class Collation(node.NodeObject):
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection, schema_id: int) -> List['Collation']:
-        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, scid=schema_id)
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Collation':
@@ -36,3 +29,8 @@ class Collation(node.NodeObject):
 
     def __init__(self, conn: querying.ServerConnection, name: str):
         super(Collation, self).__init__(conn, name)
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT

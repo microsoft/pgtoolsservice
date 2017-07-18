@@ -3,20 +3,16 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional               # noqa
+from typing import Optional               # noqa
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-
 
 class Database(node.NodeObject):
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection) -> List['Database']:
-        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, last_system_oid=0)
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Database':
@@ -34,7 +30,7 @@ class Database(node.NodeObject):
         :return: Instance of the Database
         """
         db = cls(conn, kwargs['name'])
-        db._oid = kwargs['did']
+        db._oid = kwargs['oid']
         db._tablespace = kwargs['spcname']
         db._allow_conn = kwargs['datallowconn']
         db._can_create = kwargs['cancreate']
@@ -57,9 +53,9 @@ class Database(node.NodeObject):
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-        self._schemas = None
+        self._schemas: Optional[node.NodeCollection[Schema]] = None
         if self._is_connected:
-            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(conn))
+            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(conn, self))
 
     # PROPERTIES ###########################################################
     # TODO: Create setters for optional values
@@ -78,7 +74,7 @@ class Database(node.NodeObject):
 
     # -CHILD OBJECTS #######################################################
     @property
-    def schemas(self) -> node.NodeCollection:
+    def schemas(self) -> node.NodeCollection[Schema]:
         return self._schemas
 
     # METHODS ##############################################################
@@ -90,3 +86,8 @@ class Database(node.NodeObject):
 
     def delete(self):
         pass
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT

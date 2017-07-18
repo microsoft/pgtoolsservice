@@ -3,20 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
-
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_rule')
-
-
 class Rule(node.NodeObject):
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection, tid: int) -> List['Rule']:
-        return node.get_nodes(conn, TEMPLATE_ROOT, cls._from_node_query, tid=tid)
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_rule')
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Rule':
@@ -42,4 +35,7 @@ class Rule(node.NodeObject):
         """
         super(Rule, self).__init__(conn, name)
 
-    # PROPERTIES ###########################################################
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT

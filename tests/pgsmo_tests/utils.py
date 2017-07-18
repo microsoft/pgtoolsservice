@@ -3,15 +3,14 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, List, Optional, Tuple
+from typing import List, Optional, Tuple
 import unittest
 import unittest.mock as mock
 
 from psycopg2 import DatabaseError
 from psycopg2.extensions import Column, connection
 
-from pgsmo.objects.node_object import NodeObject, NodeCollection
-from pgsmo.utils.querying import ServerConnection
+from pgsmo.objects.node_object import NodeCollection
 
 
 # MOCK CONNECTION ##########################################################
@@ -107,97 +106,3 @@ def assert_threeway_equals(target: any, attrib: any, prop: any):
     test_case = unittest.TestCase('__init__')
     test_case.assertEqual(attrib, target)
     test_case.assertEqual(prop, target)
-
-
-def get_nodes_for_parent_base(class_, data: dict, get_nodes_for_parent: Callable, validate_obj: Callable):
-    # Setup: Create a mockup server connection
-    mock_cur = MockCursor((get_named_mock_columns(list(data.keys())), [data for i in range(0, 6)]))
-    mock_conn = ServerConnection(MockConnection(mock_cur))
-
-    # ... Create a mock template renderer
-    mock_render = mock.MagicMock(return_value="SQL")
-    mock_template_path = mock.MagicMock(return_value="path")
-
-    # ... Create a testcase for calling asserts with
-    test_case = unittest.TestCase('__init__')
-
-    # ... Patch the templating
-    with mock.patch(class_.__module__ + '.templating.render_template', mock_render, create=True):
-        with mock.patch(class_.__module__ + '.templating.get_template_path', mock_template_path, create=True):
-            # If: ask for a collection of nodes
-            output = get_nodes_for_parent(mock_conn)
-
-            # Then:
-            # ... The output should be a list of objects
-            test_case.assertIsInstance(output, list)
-
-            for obj in output:
-                # ... The object must be the class that was passed in
-                test_case.assertIsInstance(obj, class_)
-
-                # ... Call the validator on the object
-                validate_obj(obj, mock_conn)
-
-
-def from_node_query_base(class_, data: dict, validate_obj: Callable):
-    # If: I create a new object from a node row
-    mock_conn = ServerConnection(MockConnection(None))
-    obj = class_._from_node_query(mock_conn, **data)
-
-    # Then:
-    # ... The returned object must be an instance of the class
-    test_case = unittest.TestCase('__init__')
-    test_case.assertIsInstance(obj, NodeObject)
-    test_case.assertIsInstance(obj, class_)
-
-    # ... Call the validation function
-    validate_obj(obj, mock_conn)
-
-
-def init_base(class_, props: List[str], collections: List[str], custom_validation: Callable=None):
-    # If: I create an instance of the provided class
-    mock_conn = ServerConnection(MockConnection(None))
-    name = 'test'
-    obj = class_(mock_conn, name)
-
-    validate_init(class_, name, mock_conn, obj, props, collections, custom_validation)
-
-
-def validate_init(class_, name, mock_conn, obj, props: List[str], collections: List[str],
-                  custom_validation: Callable=None):
-    # Then:
-    # ... The object must be of the type that was provided
-    test_case = unittest.TestCase('__init__')
-    test_case.assertIsInstance(obj, NodeObject)
-    test_case.assertIsInstance(obj, class_)
-
-    # ... The NodeObject basic properties should be set up appropriately
-    test_case.assertIs(obj._conn, mock_conn)
-    test_case.assertEqual(obj._name, name)
-    test_case.assertEqual(obj.name, name)
-    test_case.assertIsNone(obj._oid)
-    test_case.assertIsNone(obj.oid)
-
-    # ... The rest of the properties should be none
-    for prop in props:
-        test_case.assertIsNone(getattr(obj, prop))
-
-    # ... The child properties should be assigned to node collections
-    for coll in collections:
-        test_case.assertIsInstance(getattr(obj, coll), NodeCollection)
-
-    # ... Run the custom validation
-    if custom_validation is not None:
-        custom_validation(obj)
-
-
-def validate_node_object_props(obj: NodeObject, conn: ServerConnection, name: str, oid: int) -> None:
-    # Setup for test case calls
-    test_case = unittest.TestCase('__init__')
-
-    # NodeObject basic properties
-    test_case.assertIs(obj._conn, conn)
-    test_case.assertEqual(obj._oid, oid)
-    test_case.assertEqual(obj.oid, oid)
-    test_case.assertEqual(obj._name, name)
-    test_case.assertEqual(obj.name, name)

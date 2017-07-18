@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT
     pr.oid, pr.xmin, pr.*, pr.prosrc AS prosrc_c,
     pr.proname AS name, pg_get_function_result(pr.oid) AS prorettypename,

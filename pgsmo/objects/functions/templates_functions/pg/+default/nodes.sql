@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT
     pr.oid, pr.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(pr.oid), '') || ')' as name,
     lanname, pg_get_userbyid(proowner) as funcowner, description
@@ -14,8 +20,8 @@ WHERE
 {% if fnid %}
     AND pr.oid = {{ fnid|qtLiteral }}
 {% endif %}
-{% if scid %}
-    AND pronamespace = {{scid}}::oid
+{% if parent_id %}
+    AND pronamespace = {{parent_id}}::oid
 {% endif %}
     AND typname NOT IN ('trigger', 'event_trigger')
 ORDER BY

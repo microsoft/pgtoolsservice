@@ -17,7 +17,7 @@ FROM pg_attribute att
   LEFT OUTER JOIN pg_namespace ns ON ns.oid=cs.relnamespace
   LEFT OUTER JOIN pg_index pi ON pi.indrelid=att.attrelid AND indisprimary
 WHERE
-    att.attrelid = {{ tid|qtLiteral }}::oid
+    att.attrelid = {{ parent_id|qtLiteral }}::oid
 {% if clid %}
     AND att.attnum = {{ clid|qtLiteral }}
 {% endif %}

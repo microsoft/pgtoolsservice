@@ -5,14 +5,15 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT
-    db.oid as did, db.datname as name, ta.spcname as spcname, db.datallowconn,
+    db.oid as oid, db.datname as name, ta.spcname as spcname, db.datallowconn,
     has_database_privilege(db.oid, 'CREATE') as cancreate, datdba as owner
 FROM
     pg_database db
     LEFT OUTER JOIN pg_tablespace ta ON db.dattablespace = ta.oid
-WHERE {% if did %}
-db.oid = {{ did|qtLiteral }}::OID{% else %}
-db.oid > {{ last_system_oid }}::OID
+{% if did %}
+WHERE db.oid = {{ did|qtLiteral }}::OID
+{% elif last_system_oid %}
+WHERE db.oid > {{ last_system_oid }}::OID
 {% endif %}
 
 ORDER BY datname;
