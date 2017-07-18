@@ -57,3 +57,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
         # ... The datatype property should be set
         self.assertEqual(obj.datatype, datatype)
         self.assertEqual(obj._datatype, datatype)
+
+    def test_full_properties(self):
+        """Tests properties, overrides default test b/c column init takes additional param"""
+        pass

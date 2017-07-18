@@ -58,8 +58,6 @@ class Database(node.NodeObject):
             self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(conn, self))
 
     # PROPERTIES ###########################################################
-    # TODO: Create setters for optional values
-
     @property
     def allow_conn(self) -> bool:
         return self._allow_conn

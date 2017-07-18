@@ -109,7 +109,7 @@ class NodeObject(metaclass=ABCMeta):
 
         # Render and execute the template
         sql = templating.render_template(
-            templating.get_template_path(template_root, 'properties.sql', conn.version),
+            templating.get_template_path(template_root, 'properties.sql', self._conn.version),
             **template_vars
         )
         cols, rows = self._conn.execute_dict(sql)
