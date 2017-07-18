@@ -6,38 +6,27 @@
 import unittest
 
 from pgsmo.objects.table_objects.rule import Rule
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'rulename',
-    'oid': 123
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestIndex(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        props = []
-        colls = []
-        utils.init_base(Rule, props, colls)
+class TestRule(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'rulename',
+        'oid': 123
+    }
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Rule, NODE_ROW, self._validate)
+    @property
+    def class_for_test(self):
+        return Rule
 
-    def test_from_nodes_for_parent(self):
-        utils.get_nodes_for_parent_base(
-            Rule,
-            NODE_ROW,
-            lambda conn: Rule.get_nodes_for_parent(conn, 0),
-            self._validate
-        )
+    @property
+    def basic_properties(self):
+        return {}
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate(self, obj: Rule, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        self.assertIs(obj._conn, mock_conn)
-        self.assertEqual(obj._oid, NODE_ROW['oid'])
-        self.assertEqual(obj.oid, NODE_ROW['oid'])
-        self.assertEqual(obj._name, NODE_ROW['name'])
-        self.assertEqual(obj.name, NODE_ROW['name'])
+    @property
+    def collections(self):
+        return []
+
+    @property
+    def node_query(self) -> dict:
+        return TestRule.NODE_ROW

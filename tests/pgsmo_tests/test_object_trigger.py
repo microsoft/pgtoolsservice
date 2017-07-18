@@ -6,42 +6,31 @@
 import unittest
 
 from pgsmo.objects.table_objects import Trigger
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
-
-NODE_ROW = {
-    'name': 'idxname',
-    'oid': 123,
-    'is_enable_trigger': True
-}
+from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestTrigger(unittest.TestCase):
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        props = ['_is_enabled', 'is_enabled']
-        utils.init_base(Trigger, props, [])
+class TestTrigger(NodeObjectTestBase, unittest.TestCase):
+    NODE_ROW = {
+        'name': 'triggername',
+        'oid': 123,
+        'is_enable_trigger': True
+    }
 
-    def test_from_node_query(self):
-        utils.from_node_query_base(Trigger, NODE_ROW, self._validate)
+    @property
+    def class_for_test(self):
+        return Trigger
 
-    def test_from_nodes_for_parent(self):
-        utils.get_nodes_for_parent_base(
-            Trigger,
-            NODE_ROW,
-            lambda conn: Trigger.get_nodes_for_parent(conn, 0),
-            self._validate
-        )
+    @property
+    def basic_properties(self):
+        return {
+            '_is_enabled': TestTrigger.NODE_ROW['is_enable_trigger'],
+            'is_enabled': TestTrigger.NODE_ROW['is_enable_trigger']
+        }
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def _validate(self, obj: Trigger, mock_conn: ServerConnection):
-        # NodeObject basic properties
-        self.assertIs(obj._conn, mock_conn)
-        self.assertEqual(obj._oid, NODE_ROW['oid'])
-        self.assertEqual(obj.oid, NODE_ROW['oid'])
-        self.assertEqual(obj._name, NODE_ROW['name'])
-        self.assertEqual(obj.name, NODE_ROW['name'])
+    @property
+    def collections(self):
+        return []
 
-        # Trigger-specific properties
-        self.assertEqual(obj._is_enabled, NODE_ROW['is_enable_trigger'])
-        self.assertEqual(obj.is_enabled, NODE_ROW['is_enable_trigger'])
+    @property
+    def node_query(self) -> dict:
+        return TestTrigger.NODE_ROW

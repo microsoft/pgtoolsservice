@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta, abstractmethod
-from typing import List, Optional
+from abc import ABCMeta
+from typing import Optional
 
 import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
@@ -12,16 +12,6 @@ import pgsmo.utils.querying as querying
 
 class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     """Base class for Functions. Provides basic properties for all Function types"""
-
-    @classmethod
-    def get_nodes_for_parent(cls, conn: querying.ServerConnection, scid: int) -> List['FunctionBase']:
-        """
-        Generates a list of functions by executing nodes.sql
-        :param conn: The connection to use to execute the nodes query
-        :param scid: Object ID of the schema that owns the constraints
-        :return: A list of FunctionBase objects (can be any of the FunctionBase subclasses)
-        """
-        return node.get_nodes(conn, cls._template_path(conn), cls._from_node_query, scid=scid)
 
     @classmethod
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'FunctionBase':
@@ -39,7 +29,7 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
         """
         func = cls(conn, kwargs['name'])
         func._oid = kwargs['oid']
-        func._lanname = kwargs['lanname']
+        func._language_name = kwargs['lanname']
         func._owner = kwargs['funcowner']
         func._description = kwargs['description']
 
@@ -50,7 +40,7 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
 
         # Declare the basic properties
         self._description: Optional[str] = None
-        self._lanname: Optional[str] = None
+        self._language_name: Optional[str] = None
         self._owner: Optional[str] = None
 
     # PROPERTIES ###########################################################
@@ -61,14 +51,8 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
 
     @property
     def language_name(self) -> Optional[str]:
-        return self._lanname
+        return self._language_name
 
     @property
     def owner(self) -> Optional[str]:
         return self._owner
-
-    # METHODS ##############################################################
-    @classmethod
-    @abstractmethod
-    def _template_path(cls, conn: querying.ServerConnection) -> str:
-        pass

@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 {% import 'macros/functions/security.macros' as SECLABEL %}
 {% import 'macros/functions/privilege.macros' as PRIVILEGE %}
 {% import 'macros/functions/variable.macros' as VARIABLE %}{% if data %}

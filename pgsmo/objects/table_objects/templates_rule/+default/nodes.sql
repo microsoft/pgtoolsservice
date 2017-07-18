@@ -10,8 +10,8 @@ SELECT
 FROM
     pg_rewrite rw
 WHERE
-{% if tid %}
-    rw.ev_class = {{ tid }}
+{% if parent_id %}
+    rw.ev_class = {{ parent_id }}
 {% elif rid %}
     rw.oid = {{ rid }}
 {% endif %}
