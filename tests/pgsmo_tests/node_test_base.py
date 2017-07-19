@@ -33,9 +33,17 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         pass
 
     @property
+    def full_properties(self) -> Mapping[str, str]:
+        return {}
+
+    @property
     @abstractmethod
     def node_query(self) -> dict:
         pass
+
+    @property
+    def property_query(self) -> dict:
+        return {}
 
     # TEST METHODS #########################################################
     def test_from_node_query(self):
@@ -66,6 +74,21 @@ class NodeObjectTestBase(metaclass=ABCMeta):
 
         # ... Call the validation function
         self._custom_validate_from_node(obj, mock_conn)
+
+    def test_full_properties(self):
+        # Setup:
+        # NOTE: We're *not* mocking out the template rendering b/c this will verify that there's a template
+        # ... Create a mock query execution that will return the properties
+        mock_exec_dict = mock.MagicMock(return_value=([], [self.property_query]))
+
+        # ... Create an instance of the class
+        mock_conn = ServerConnection(utils.MockConnection(None))
+        mock_conn.execute_dict = mock_exec_dict
+        name = 'test'
+        class_ = self.class_for_test
+        obj = class_(mock_conn, name)
+
+        self._full_properties_helper(obj, mock_conn)
 
     def test_init(self):
         # If: I create an instance of the provided class
@@ -134,3 +157,17 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # ... The child properties should be assigned to node collections
         for coll in self.collections:
             test_case.assertIsInstance(getattr(obj, coll), NodeCollection)
+
+        # We won't test the full properties here because it'll run the generator
+        # and setting up the mocking is annoying in this case
+
+    def _full_properties_helper(self, obj, mock_conn: ServerConnection):
+        # If: I retrieve all the values in the full properties
+        # Then:
+        # ... The properties based on the properties query should be available
+        for prop, key in self.full_properties.items():
+            NodeObjectTestBase.test_case.assertEqual(getattr(obj, prop), self.property_query[key])
+
+        # ... The generator should have been called once
+        if len(self.full_properties) > 1:
+            mock_conn.execute_dict.assert_called_once()

@@ -5,8 +5,7 @@
 
 from abc import ABCMeta, abstractmethod
 from collections import Iterator
-from typing import Callable, Generic, List, Optional, Union, TypeVar
-
+from typing import Callable, Dict, Generic, List, Optional, Union, TypeVar, KeysView, ItemsView
 
 import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
@@ -50,6 +49,8 @@ class NodeObject(metaclass=ABCMeta):
         # Define the state of the object
         self._conn: querying.ServerConnection = conn
         self._child_collections: List[NodeCollection] = []
+        self._property_collections: List[NodeLazyPropertyCollection] = []
+        self._full_properties: NodeLazyPropertyCollection = self._register_property_collection(self._property_generator)
 
         # Declare node basic properties
         self._name: str = name
@@ -69,6 +70,11 @@ class NodeObject(metaclass=ABCMeta):
         """Refreshes and lazily loaded data"""
         self._refresh_child_collections()
 
+    @classmethod
+    @abstractmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        pass
+
     # PROTECTED HELPERS ####################################################
     TRCC = TypeVar('TRCC')
 
@@ -83,15 +89,89 @@ class NodeObject(metaclass=ABCMeta):
         self._child_collections.append(collection)
         return collection
 
-    def _refresh_child_collections(self) -> None:
-        """Iterates over the registered child collections and resets them"""
-        for collection in self._child_collections:
-            collection.reset()
+    def _register_property_collection(self, generator: Callable[[], Dict[str, Optional[Union[str, int, bool]]]]):
+        """
+        Creates a property collection for extended properties, etc, and registers with the list of
+        property collections.
+        :param generator: The generator for the property collection
+        :return: The created property collection
+        """
+        collection = NodeLazyPropertyCollection(generator)
+        self._property_collections.append(collection)
+        return collection
 
-    @classmethod
-    @abstractmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
-        pass
+    # PRIVATE HELPERS ######################################################
+    def _property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        template_root = self._template_root(self._conn)
+
+        # Setup the parameters for the query
+        template_vars = {'oid': self._oid}
+
+        # Render and execute the template
+        sql = templating.render_template(
+            templating.get_template_path(template_root, 'properties.sql', self._conn.version),
+            **template_vars
+        )
+        cols, rows = self._conn.execute_dict(sql)
+
+        if len(rows) > 0:
+            return rows[0]
+
+    def _refresh_child_collections(self) -> None:
+        """Iterates over the registered child collections and property collections and resets them"""
+        for node_collection in self._child_collections:
+            node_collection.reset()
+
+        for prop_collection in self._property_collections:
+            prop_collection.reset()
+
+
+class NodeLazyPropertyCollection:
+    def __init__(self, generator: Callable[[], Dict[str, Optional[Union[str, int, bool]]]]):
+        """
+        Initializes a new lazy property collection with a generator to call when looking up the properties
+        :param generator: A callable that returns a dictionary of properties when called
+        """
+        self._generator: Callable[[], Dict[str, Optional[Union[str, int, bool]]]] = generator
+        self._items_impl: Optional[Dict[str, Optional[Union[str, int, bool]]]] = None
+
+    @property
+    def _items(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        """Property that ensures properties are loaded before returning the properties"""
+        if self._items_impl is None:
+            self._items_impl = self._generator()
+        return self._items_impl
+
+    def __getitem__(self, index: str) -> any:
+        """
+        Searches for a property and returns it. If the collection of properties hasn't been loaded,
+        load it.
+        :param item: The index of the item to get from the property collection
+        :raises TypeError: If index is not a string
+        :raises NameError: If an item with the provided index does not exist
+        :return: The value of the item in the property collection
+        """
+        # Make sure we have a valid index
+        if not isinstance(index, str):
+            raise TypeError('Index must be a string')
+
+        return self._items[index]
+
+    def __iter__(self):
+        return self._items.__iter__()
+
+    def __len__(self):
+        return len(self._items)
+
+    def items(self) -> ItemsView[str, Union[str, int, bool]]:
+        return self._items.items()
+
+    def keys(self) -> KeysView[str]:
+        return self._items.keys()
+
+    def reset(self) -> None:
+        # Empty the items so that the next request will reload the collection
+        self._items_impl = None
 
 
 TNC = TypeVar('TNC')
