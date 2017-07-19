@@ -43,7 +43,7 @@ class CapabilitiesService:
         conn_provider_opts = ConnectionProviderOptions([
             ConnectionOption(
                 name='host',
-                display_name='Server Name',
+                display_name='Server name',
                 description='Name of the PostgreSQL instance',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 special_value_type=ConnectionOption.SPECIAL_VALUE_SERVER_NAME,
@@ -53,7 +53,7 @@ class CapabilitiesService:
             ),
             ConnectionOption(
                 name='dbname',
-                display_name='Database Name',
+                display_name='Database name',
                 description='The name of the initial catalog or database in the data source',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 special_value_type=ConnectionOption.SPECIAL_VALUE_DATABASE_NAME,
@@ -64,7 +64,7 @@ class CapabilitiesService:
             ),
             ConnectionOption(
                 name='user',
-                display_name='User Name',
+                display_name='User name',
                 description='Indicates the user ID to be used when connecting to the data source',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 special_value_type=ConnectionOption.SPECIAL_VALUE_USER_NAME,
@@ -84,7 +84,7 @@ class CapabilitiesService:
             ),
             ConnectionOption(
                 name='hostaddr',
-                display_name='Host IP Address',
+                display_name='Host IP address',
                 description='IP address of the server',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='Server'
@@ -98,7 +98,7 @@ class CapabilitiesService:
             ),
             ConnectionOption(
                 name='connectTimeout',
-                display_name='Connect Timeout',
+                display_name='Connect timeout',
                 description='Seconds to wait before timing out when connecting',
                 value_type=ConnectionOption.VALUE_TYPE_NUMBER,
                 group_name='Client',
@@ -106,21 +106,21 @@ class CapabilitiesService:
             ),
             ConnectionOption(
                 name='clientEncoding',
-                display_name='Client Encoding',
+                display_name='Client encoding',
                 description='The client encoding for the connection',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='Client'
             ),
             ConnectionOption(
                 name='options',
-                display_name='Command-Line Options',
+                display_name='Command-line options',
                 description='Command-line options to send to the server when the connection starts',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='Server'
             ),
             ConnectionOption(
                 name='applicationName',
-                display_name='Application Name',
+                display_name='Application name',
                 description='Value for the "application_name" configuration parameter',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='Client',
@@ -128,7 +128,7 @@ class CapabilitiesService:
             ),
             ConnectionOption(
                 name='sslmode',
-                display_name='SSL Mode',
+                display_name='SSL mode',
                 description='The SSL mode to use when connecting',
                 value_type=ConnectionOption.VALUE_TYPE_CATEGORY,
                 group_name='SSL',
@@ -144,49 +144,49 @@ class CapabilitiesService:
             ),
             ConnectionOption(
                 name='sslcompression',
-                display_name='Use SSL Compression',
+                display_name='Use SSL compression',
                 description='Whether to compress SSL connections',
                 value_type=ConnectionOption.VALUE_TYPE_BOOLEAN,
                 group_name='SSL'
             ),
             ConnectionOption(
                 name='sslcert',
-                display_name='SSL Certificate Filename',
+                display_name='SSL certificate filename',
                 description='The filename of the SSL certificate to use',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='SSL'
             ),
             ConnectionOption(
                 name='sslkey',
-                display_name='SSL Key Filename',
+                display_name='SSL key filename',
                 description='The filename of the key to use for the SSL certificate',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='SSL'
             ),
             ConnectionOption(
                 name='sslrootcert',
-                display_name='SSL Root Certificate Filename',
+                display_name='SSL root certificate filename',
                 description='The filename of the SSL root CA certificate to use',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='SSL'
             ),
             ConnectionOption(
                 name='sslcrl',
-                display_name='SSL CRL Filename',
+                display_name='SSL CRL filename',
                 description='The filename of the SSL certificate revocation list to use',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='SSL'
             ),
             ConnectionOption(
                 name='requirepeer',
-                display_name='Require Peer',
+                display_name='Require peer',
                 description='The required username of the server process',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='Server'
             ),
             ConnectionOption(
                 name='service',
-                display_name='Service Name',
+                display_name='Service name',
                 description='The service name in pg_service.conf to use for connection parameters',
                 value_type=ConnectionOption.VALUE_TYPE_STRING,
                 group_name='Client'
