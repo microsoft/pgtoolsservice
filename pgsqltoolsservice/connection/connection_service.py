@@ -7,10 +7,11 @@
 disconnect and holds the current connection, if one is present"""
 
 import threading
-from typing import Dict, Tuple  # noqa
+from typing import Dict, Optional, Tuple  # noqa
 import uuid
 
 import psycopg2
+import psycopg2.extensions as ppg2_extensions
 
 from pgsqltoolsservice.connection.contracts import (
     CANCEL_CONNECT_REQUEST, CancelConnectParams,
@@ -32,9 +33,9 @@ class ConnectionInfo(object):
         self.owner_uri: str = owner_uri
         self.details: ConnectionDetails = details
         self.connection_id: str = str(uuid.uuid4())
-        self._connection_map: dict = {}
+        self._connection_map: Dict[ConnectionType, ppg2_extensions.connection] = {}
 
-    def get_connection(self, connection_type: ConnectionType):
+    def get_connection(self, connection_type: ConnectionType) -> Optional[ppg2_extensions.connection]:
         """Get the connection associated with the given connection type, or return None"""
         return self._connection_map.get(connection_type)
 
@@ -42,7 +43,7 @@ class ConnectionInfo(object):
         """Get all connections held by this object"""
         return self._connection_map.values()
 
-    def add_connection(self, connection_type: ConnectionType, connection):
+    def add_connection(self, connection_type: ConnectionType, connection: ppg2_extensions.connection):
         """Add a connection to the connection map, associated with the given connection type"""
         self._connection_map[connection_type] = connection
 
@@ -66,7 +67,7 @@ class ConnectionService:
     """Manage a single connection, including the ability to connect/disconnect"""
 
     def __init__(self):
-        self.owner_to_connection_map = {}
+        self.owner_to_connection_map: Dict[str, ConnectionInfo] = {}
         self.owner_to_thread_map = {}
         self._service_provider = None
         self._cancellation_map: Dict[Tuple[str, ConnectionType], CancellationToken] = {}
@@ -144,7 +145,20 @@ class ConnectionService:
         connection_info.add_connection(params.type, connection)
         return _build_connection_response(connection_info, params.type)
 
-    def get_connection(self, owner_uri: str, connection_type: ConnectionType):
+    def disconnect(self, owner_uri: str, connection_type: Optional[ConnectionType]) -> bool:
+        """
+        Closes a single connection or all connections that belong to an owner URI based on the
+        connection type provided
+        :param owner_uri: URI of the connection to lookup and disconnect
+        :param connection_type: The connection type to disconnect, may be omitted to close all
+            connections for the owner URI
+        :return: True if the connections were successfully disconnected, false otherwise
+        """
+        # Look up the connection to disconnect
+        connection_info = self.owner_to_connection_map.get(owner_uri)
+        return self._close_connections(connection_info, connection_type) if connection_info is not None else False
+
+    def get_connection(self, owner_uri: str, connection_type: ConnectionType) -> Optional[ppg2_extensions.connection]:
         """
         Get a psycopg2 connection for the given owner URI and connection type
 
@@ -173,11 +187,7 @@ class ConnectionService:
 
     def handle_disconnect_request(self, request_context: RequestContext, params: DisconnectRequestParams) -> None:
         """Close a connection in response to an incoming disconnection request"""
-        connection_info = self.owner_to_connection_map.get(params.owner_uri)
-        if connection_info is None:
-            request_context.send_response(False)
-        else:
-            request_context.send_response(self._close_connections(connection_info, params.type))
+        request_context.send_response(self.disconnect(params.owner_uri, params.type))
 
     def handle_list_databases(self, request_context: RequestContext, params: ListDatabasesParams):
         """List all databases on the server that the given URI has a connection to"""
