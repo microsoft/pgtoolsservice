@@ -3,8 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
+import threading
+from typing import Dict, List, Optional
 from urllib.parse import quote
+
+from psycopg2.extensions import connection as ppg2_connection
+
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.object_explorer.contracts import (
@@ -25,27 +29,17 @@ class ObjectExplorerService(object):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
-        self._session_map: dict = dict()
+        self._session_map: Dict[str, 'ObjectExplorerSession'] = {}
+        self._session_lock: threading.Lock = threading.Lock()
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
 
         # Register the request handlers with the server
-        self._service_provider.server.set_request_handler(
-            CREATE_SESSION_REQUEST, self._handle_create_session_request
-        )
-
-        self._service_provider.server.set_request_handler(
-            CLOSE_SESSION_REQUEST, self._handle_close_session_request
-        )
-
-        self._service_provider.server.set_request_handler(
-            EXPAND_REQUEST, self._handle_expand_request
-        )
-
-        self._service_provider.server.set_request_handler(
-            REFRESH_REQUEST, self._handle_refresh_request
-        )
+        self._service_provider.server.set_request_handler(CREATE_SESSION_REQUEST, self._handle_create_session_request)
+        self._service_provider.server.set_request_handler(CLOSE_SESSION_REQUEST, self._handle_close_session_request)
+        self._service_provider.server.set_request_handler(EXPAND_REQUEST, self._handle_expand_request)
+        self._service_provider.server.set_request_handler(REFRESH_REQUEST, self._handle_refresh_request)
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Object Explorer service successfully initialized')
@@ -54,11 +48,45 @@ class ObjectExplorerService(object):
 
     def _handle_create_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle a create object explorer session request"""
+        # Step 1: Create the session
+        try:
+            # Make sure we have the appropriate session params
+            utils.validate.is_not_none('params', params)
 
-        # validate that input parameters are as expected
-        if not self._are_create_session_params_valid(params):
-            request_context.send_response(None)
-            return
+            # Generate the session ID and create/store the session
+            session_id = self._generate_session_uri(params)
+            session = ObjectExplorerSession()
+
+            with self._session_lock:
+                if session_id in self._session_map:
+                    # TODO: Localize
+                    raise NameError(f'Object explorer session for {session_id} already exists!')
+
+                self._session_map[session_id] = session
+
+            # Respond that the session was created
+            response = CreateSessionResponse(session_id)
+            request_context.send_response(response)
+
+        except Exception as e:
+            request_context.send_error(e)
+
+        # Step 2: Connect the session and lookup the root node
+
+
+
+        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        connect_params = ConnectRequestParams(params, session_id, ConnectionType.OBJECT_EXLPORER)
+        connection_details = conn_service.connect(connect_params)
+
+        if connection_details is None:
+            # TODO: Localize
+            raise RuntimeError('Failed to connect for object explorer instance')
+
+        connection = conn_service.get_connection(session_id, ConnectionType.OBJECT_EXLPORER)
+
+
+
 
         # generate a session id and create a dedicated Object Explorer connection
         session_id = self._generate_uri(params)
@@ -129,16 +157,6 @@ class ObjectExplorerService(object):
     def _get_root_path(self, connection_details: ConnectionDetails) -> str:
         return connection_details.server_name[0] + '/' + connection_details.database_name[0]
 
-    def _create_oe_connection(self, params: ConnectionDetails, session_id: str) -> ConnectionDetails:
-        details = ConnectionDetails.from_data(params.options['host'], params.options['dbname'],
-                                              params.options['user'], params.options)
-        connect_request = ConnectRequestParams(details, session_id)
-
-        # Retrieve the connection service
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        connection_service._connect(connect_request)
-        return details
-
     def _get_database(self, session_id: str) -> Database:
         # Retrieve the connection service
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
@@ -208,10 +226,52 @@ class ObjectExplorerService(object):
                 node_list.append(cur_node)
         return node_list
 
-    def _generate_uri(self, params: ConnectionDetails) -> str:
-        uri = 'objectexplorer://' + quote(params.options['host'])
-        if (params.options['dbname'] is not None):
-            uri += ';' + 'databaseName=' + params.options['dbname']
-        if (params.options['user'] is not None):
-            uri += ';' + 'user=' + params.options['user']
-        return uri
+    # PRIVATE HELPERS ######################################################
+    def initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
+        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+
+        try:
+            # Step 1: Connect with the provided connection details
+            connect_request = ConnectRequestParams(session.id, session.connection_details, ConnectionType.OBJECT_EXLPORER)
+            connect_result = conn_service.connect(connect_request)
+            if connect_result is None:
+                request_context.send_notification()
+        except Exception as e:
+            # Return a notification that an error occurred
+            response = SessionCreatedParameters()
+            response.success = False
+            response.session_id = session.id
+            response.root_node = None
+            response.error_message = f'Failed to initialize object explorer session: {e}'    # TODO Localize
+
+            request_context.send_notification(SESSION_CREATED_METHOD, response)
+
+            # Attempt to clean up the connection
+            if session.connection is not None:
+                conn_service.disconnect
+
+
+
+    @staticmethod
+    def _generate_session_uri(params: ConnectionDetails) -> str:
+        # Make sure the required params are provided
+        utils.validate.is_not_none_or_whitespace('params.server_name', params.server_name)
+        utils.validate.is_not_none_or_whitespace('params.user_name', params.user_name)
+        utils.validate.is_not_none_or_whitespace('params.database_name', params.database_name)
+
+        # Generates a session ID that will function as the base URI for the session
+        host = quote(params.server_name)
+        user = quote(params.user_name)
+        db = quote(params.database_name)
+
+        return f'objectexplorer://{user}@{host}:{db}/'
+
+
+class ObjectExplorerSession:
+    def __init__(self, session_id: str, params: ConnectionDetails):
+        self.connection: Optional[ppg2_connection] = None
+        self.connection_details: ConnectionDetails = params
+        self.id: str = session_id
+        self.is_ready: bool = False
+        self.create_task: Optional[threading.Thread] = None
+        self.expand_task: Optional[threading.Thread] = None
