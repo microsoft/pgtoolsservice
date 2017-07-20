@@ -58,7 +58,7 @@ class TestConnectionService(unittest.TestCase):
 
         # Set up the connection service and call its connect method with the supported options
 
-        response = self.connection_service._connect(params)
+        response = self.connection_service.connect(params)
 
         # Verify that psycopg2's connection method was called and that the
         # response has a connection id, indicating success.
@@ -96,7 +96,7 @@ class TestConnectionService(unittest.TestCase):
 
         # Set up the connection service and call its connect method with the
         # supported options
-        response = self.connection_service._connect(
+        response = self.connection_service.connect(
             ConnectRequestParams(connection_details, connection_uri, connection_type))
 
         # Verify that the response's serverInfo.isCloud attribute is set correctly
@@ -140,7 +140,7 @@ class TestConnectionService(unittest.TestCase):
         })
 
         # Connect with different options, and verify that disconnect was called
-        self.connection_service._connect(params)
+        self.connection_service.connect(params)
         mock_connection.close.assert_called_once()
 
     def test_same_options_uses_existing_connection(self):
@@ -172,7 +172,7 @@ class TestConnectionService(unittest.TestCase):
                 'options': old_connection_details.options
             }
         })
-        response = self.connection_service._connect(params)
+        response = self.connection_service.connect(params)
         mock_connection.close.assert_not_called()
         psycopg2.connect.assert_not_called()
         self.assertIsNotNone(response.connection_id)
@@ -190,7 +190,7 @@ class TestConnectionService(unittest.TestCase):
                 }
             }
         })
-        response = self.connection_service._connect(params)
+        response = self.connection_service.connect(params)
         # The response should not have a connection ID and should contain the error message
         self.assertIsNone(response.connection_id)
         self.assertEqual(response.error_message, error_message)
@@ -298,7 +298,7 @@ class TestConnectionService(unittest.TestCase):
         # Setup: Create a mock request context to handle output
         rc = utils.MockRequestContext()
         connect_response = ConnectionCompleteParams()
-        self.connection_service._connect = Mock(return_value=connect_response)
+        self.connection_service.connect = Mock(return_value=connect_response)
 
         # If: I make a request to connect
         params: ConnectRequestParams = ConnectRequestParams.from_dict({
@@ -322,7 +322,7 @@ class TestConnectionService(unittest.TestCase):
 
         # Then:
         # ... Connect should have been called once
-        self.connection_service._connect.assert_called_once_with(params)
+        self.connection_service.connect.assert_called_once_with(params)
 
         # ... A True should have been sent as the response to the request
         rc.send_response.assert_called_once_with(True)
@@ -404,7 +404,7 @@ class TestConnectionService(unittest.TestCase):
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         # Open the connection
-        self.connection_service._connect(ConnectRequestParams(connection_details, connection_uri, connection_type))
+        self.connection_service.connect(ConnectRequestParams(connection_details, connection_uri, connection_type))
 
         # Get the connection
         connection = self.connection_service.get_connection(connection_uri, connection_type)
@@ -514,7 +514,7 @@ class TestConnectionService(unittest.TestCase):
 
         # If I connect with an empty database name
         with mock.patch('pgsqltoolsservice.connection.connection_service._build_connection_response'):
-            self.connection_service._connect(params)
+            self.connection_service.connect(params)
 
         # Then psycopg2's connect method was called with the default database
         calls = psycopg2.connect.mock_calls
@@ -543,7 +543,7 @@ class TestConnectionService(unittest.TestCase):
 
         # If I connect with an empty database name
         with mock.patch('pgsqltoolsservice.connection.connection_service._build_connection_response'):
-            self.connection_service._connect(params)
+            self.connection_service.connect(params)
 
         # Then psycopg2's connect method was called with the default database
         calls = psycopg2.connect.mock_calls
@@ -589,7 +589,7 @@ class TestConnectionCancellation(unittest.TestCase):
     def test_connecting_sets_cancellation_token(self):
         """Test that a cancellation token is set before a connection thread attempts to connect"""
         # If I attempt to connect
-        response = self.connection_service._connect(self.connect_params)
+        response = self.connection_service.connect(self.connect_params)
 
         # Then the cancellation token should have been set and should not have been canceled
         self.assertEqual(len(self.token_store), 1)
@@ -605,7 +605,7 @@ class TestConnectionCancellation(unittest.TestCase):
         psycopg2.connect = Mock(side_effect=Exception())
 
         # If I attempt to connect
-        response = self.connection_service._connect(self.connect_params)
+        response = self.connection_service.connect(self.connect_params)
 
         # Then the cancellation token should have been cleared when the connection failed
         self.assertIsNotNone(response.error_message)
@@ -622,13 +622,13 @@ class TestConnectionCancellation(unittest.TestCase):
             """Mock connection method to store the current cancellation token, and kick off another connection"""
             mock_connection = self._mock_connect()
             psycopg2.connect.side_effect = old_mock_connect
-            self.connection_service._connect(self.connect_params)
+            self.connection_service.connect(self.connect_params)
             return mock_connection
 
         psycopg2.connect.side_effect = first_mock_connect
 
         # If I attempt to connect, and then kick off a new connection while connecting
-        response = self.connection_service._connect(self.connect_params)
+        response = self.connection_service.connect(self.connect_params)
 
         # Then the connection should have been canceled and returned none
         self.assertIsNone(response)
@@ -657,7 +657,7 @@ class TestConnectionCancellation(unittest.TestCase):
         psycopg2.connect.side_effect = override_mock_connect
 
         # If I attempt to connect, and the cancellation token gets updated while connecting
-        response = self.connection_service._connect(self.connect_params)
+        response = self.connection_service.connect(self.connect_params)
 
         # Then the connection should have been canceled and returned none
         self.assertIsNone(response)

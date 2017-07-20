@@ -26,7 +26,7 @@ class TestObjectExplorer(unittest.TestCase):
     def setUp(self) -> None:
         """Handle common initialization tasks for Object Explorer tests"""
         self.mock_connection_service = ConnectionService()
-        self.mock_connection_service._connect = mock.MagicMock()
+        self.mock_connection_service.connect = mock.MagicMock()
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
