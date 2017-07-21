@@ -105,3 +105,7 @@ class Schema(node.NodeObject):
     @classmethod
     def _template_root(cls, conn: querying.ServerConnection) -> str:
         return path.join(TEMPLATE_ROOT, conn.server_type)
+
+    @classmethod
+    def get_type(self) -> str:
+        return "schema"

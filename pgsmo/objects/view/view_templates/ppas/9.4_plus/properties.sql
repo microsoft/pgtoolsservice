@@ -5,13 +5,13 @@
  # This software is released under the PostgreSQL Licence
  #}
 {# ========================== Fetch View Properties ========================= #}
-{% if (vid and datlastsysoid) or scid %}
+{% if (oid and datlastsysoid) or scid %}
 SELECT
     c.oid,
     c.xmin,
     c.relkind,
     description AS comment,
-    (CASE WHEN length(spc.spcname) > 0 THEN spc.spcname ELSE 'pg_default' END) as spcname,
+    (CASE WHEN length(spcname) > 0 THEN spcname ELSE 'pg_default' END) as spcname,
     c.relname AS name,
     c.reltablespace AS spcoid,
     nsp.nspname AS schema,
@@ -20,8 +20,8 @@ SELECT
     array_to_string(c.relacl::text[], ', ') AS acl,
     pg_get_viewdef(c.oid, true) AS definition,
     {# ===== Checks if it is system view ===== #}
-    {% if vid and datlastsysoid %}
-    CASE WHEN {{vid}} <= {{datlastsysoid}} THEN True ELSE False END AS system_view,
+    {% if oid and datlastsysoid %}
+    CASE WHEN {{oid}} <= {{datlastsysoid}} THEN True ELSE False END AS system_view,
     {% endif %}
     (SELECT
         array_agg(provider || '=' || label)
@@ -49,8 +49,8 @@ LEFT OUTER JOIN pg_class tst ON tst.oid = c.reltoastrelid
                 AND (bpchar(r.ev_type) = '1'::bpchar)) )))
             AND (c.relkind = 'v'::char)
           )
-{% if (vid and datlastsysoid) %}
-    AND c.oid = {{vid}}::oid
+{% if (oid and datlastsysoid) %}
+    AND c.oid = {{oid}}::oid
 {% elif scid %}
     AND c.relnamespace = {{scid}}::oid
 ORDER BY

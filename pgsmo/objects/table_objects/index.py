@@ -39,3 +39,7 @@ class Index(node.NodeObject):
     @classmethod
     def _template_root(cls, conn: querying.ServerConnection) -> str:
         return cls.TEMPLATE_ROOT
+
+    @classmethod
+    def get_type(self):
+        return "index"

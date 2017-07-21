@@ -6,7 +6,6 @@
 from abc import ABCMeta, abstractmethod
 from collections import Iterator
 from typing import Callable, Dict, Generic, List, Optional, Union, TypeVar, KeysView, ItemsView
-
 import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
 
@@ -75,6 +74,11 @@ class NodeObject(metaclass=ABCMeta):
     def _template_root(cls, conn: querying.ServerConnection) -> str:
         pass
 
+    @classmethod
+    @abstractmethod
+    def get_type(self) -> str:
+        pass
+
     # PROTECTED HELPERS ####################################################
     TRCC = TypeVar('TRCC')
 
@@ -101,11 +105,17 @@ class NodeObject(metaclass=ABCMeta):
         return collection
 
     # PRIVATE HELPERS ######################################################
+    def _get_template_vars(self):
+        template_vars = {'oid': self._oid}
+        if (self.get_type() == "view"):
+            template_vars = {'scid': self._oid, 'spcname': ''}
+        return template_vars
+
     def _property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
         template_root = self._template_root(self._conn)
 
         # Setup the parameters for the query
-        template_vars = {'oid': self._oid}
+        template_vars = self._get_template_vars()
 
         # Render and execute the template
         sql = templating.render_template(

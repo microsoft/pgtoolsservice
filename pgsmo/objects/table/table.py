@@ -105,6 +105,11 @@ class Table(node.NodeObject):
     def _template_root(cls, conn: querying.ServerConnection) -> str:
         return cls.TEMPLATE_ROOT
 
+    @classmethod
+    def get_type(self) -> str:
+        """ Returns the type of object """
+        return "table"
+
     # HELPER METHODS #######################################################
 
     def create_query_data(self, connection: querying.ServerConnection) -> dict:
