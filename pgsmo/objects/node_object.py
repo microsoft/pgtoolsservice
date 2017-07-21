@@ -173,9 +173,7 @@ class NodeLazyPropertyCollection:
         # Empty the items so that the next request will reload the collection
         self._items_impl = None
 
-
 TNC = TypeVar('TNC')
-
 
 class NodeCollection(Generic[TNC]):
     def __init__(self, generator: Callable[[], List[TNC]]):

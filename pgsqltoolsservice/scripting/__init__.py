@@ -4,5 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
+from pgsqltoolsservice.scripting.scripter import Scripter
 
-__all__ = ['ScriptingService']
+__all__ = ['ScriptingService', 'Scripter']

@@ -6,6 +6,13 @@
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
 
+class ScriptOperation:
+    Select = 0
+    Create = 1
+    Insert = 2
+    Update = 3
+    Delete = 4
+
 
 class ScriptAsParameters:
     @classmethod
@@ -14,9 +21,8 @@ class ScriptAsParameters:
 
     def __init__(self):
         self.owner_uri: str = None
-        self.operation: int = None
+        self.operation: ScriptOperation = None
         self.metadata: ObjectMetadata = None
-
 
 class ScriptAsResponse:
     @classmethod

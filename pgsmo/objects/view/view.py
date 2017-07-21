@@ -56,6 +56,50 @@ class View(node.NodeObject):
     def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers
 
+    @property
+    def schema(self):
+        return self._full_properties["schema"]
+
+    @property
+    def definition(self):
+        return self._full_properties["definition"]
+
+    @property
+    def owner(self):
+        return self._full_properties["owner"]
+
+    @property
+    def comment(self):
+        return self._full_properties["comment"]
+
+    # HELPER METHODS #######################################################
+
+    def create_query_data(self, connection: querying.ServerConnection) -> dict:
+
+        data = {"data": {
+            "name": self._name,
+            "schema": self.schema,
+            "definition": self.definition,
+            "owner": self.owner,
+            "comment": self.comment
+        }}
+        return data
+
+    # METHODS ##############################################################
+
+    def create(self, connection: querying.ServerConnection):
+        data = self.create_query_data(connection)
+        template_root = self._template_root(connection)
+        template_path = templating.get_template_path(template_root, 'create.sql', connection.version)
+        create_template = templating.render_template(template_path, **data)
+        return create_template
+
+    def update(self):
+        pass
+
+    def delete(self):
+        pass
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, conn: querying.ServerConnection) -> str:

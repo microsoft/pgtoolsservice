@@ -10,8 +10,8 @@ from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
-
 class Database(node.NodeObject):
+
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
@@ -45,6 +45,8 @@ class Database(node.NodeObject):
         """
         super(Database, self).__init__(conn, name)
         self._is_connected: bool = conn.dsn_parameters.get('dbname') == name
+        self._version = conn.version
+        self._connection = conn
 
         # Declare the optional parameters
         self._tablespace: Optional[str] = None
@@ -70,14 +72,86 @@ class Database(node.NodeObject):
     def tablespace(self) -> str:
         return self._tablespace
 
+    @property
+    def oid(self) -> Optional[int]:
+        return self._oid
+
+    @property
+    def encoding(self) -> str:
+        try:
+            encoding = self._full_properties['encoding']
+        except:
+            encoding = ""
+        return encoding
+
+    @property 
+    def template(self) -> str:
+        try:
+            template = self._full_properties['template']
+        except:
+            template = ""
+        return template
+
+    @property 
+    def datcollate(self):
+        try:
+            datcollate = self._full_properties['datcollate']
+        except:
+            datcollate = ""
+        return datcollate
+
+    @property
+    def datctype(self):
+        try:
+            datctype = self._full_properties['datctype']
+        except:
+            datctype = ""
+        return datctype
+
+    @property
+    def spcname(self):
+        try:
+            spcname = self._full_properties['spcname']
+        except:
+            spcname = ""
+        return spcname
+
+    @property
+    def datconnlimit(self):
+        try:
+            datconnlimit = self._full_properties['datconnlimit']
+        except:
+            datconnlimit = ""
+        return datconnlimit
+
     # -CHILD OBJECTS #######################################################
     @property
     def schemas(self) -> node.NodeCollection[Schema]:
         return self._schemas
 
+    # HELPER METHODS #######################################################
+
+    def create_query_data(self, connection: querying.ServerConnection) -> dict:
+
+        data = {"data": {
+            "name": self.name,
+            "encoding": self.encoding,
+            "template": self.template,
+            "datcollate": self.datcollate,
+            "datctype": self.datctype,
+            "datconnlimit": self.datconnlimit,
+            "spcname": self.spcname
+        }}
+        return data
+
     # METHODS ##############################################################
-    def create(self):
-        pass
+
+    def create(self, connection: querying.ServerConnection):
+        data = self.create_query_data(connection)
+        template_root = self._template_root(connection)
+        template_path = templating.get_template_path(template_root, 'create.sql', connection.version)
+        create_template = templating.render_template(template_path, **data)
+        return create_template
 
     def update(self):
         pass

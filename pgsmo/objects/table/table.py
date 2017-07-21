@@ -17,8 +17,8 @@ import pgsmo.objects.node_object as node
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
-
 class Table(node.NodeObject):
+
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
@@ -104,3 +104,27 @@ class Table(node.NodeObject):
     @classmethod
     def _template_root(cls, conn: querying.ServerConnection) -> str:
         return cls.TEMPLATE_ROOT
+
+    # HELPER METHODS #######################################################
+
+    def create_query_data(self, connection: querying.ServerConnection) -> dict:
+
+        data = {"data": {
+
+        }}
+        return data
+
+    # METHODS ##############################################################
+
+    def create(self, connection: querying.ServerConnection):
+        data = self.create_query_data(connection)
+        template_root = self._template_root(connection)
+        template_path = templating.get_template_path(template_root, 'create.sql', connection.version)
+        create_template = templating.render_template(template_path, **data)
+        return create_template
+
+    def update(self):
+        pass
+
+    def delete(self):
+        pass

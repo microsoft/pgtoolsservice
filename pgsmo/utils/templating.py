@@ -95,8 +95,8 @@ def render_template(template_path: str, **context) -> str:
         TEMPLATE_ENVIRONMENTS[path] = new_env
 
     env = TEMPLATE_ENVIRONMENTS[path]
-    return env.get_template(filename).render(context)
-
+    to_render = env.get_template(filename)
+    return to_render.render(context)
 
 def render_template_string(source, **context):
     """
