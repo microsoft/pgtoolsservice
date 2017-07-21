@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 from collections import Iterator
 from typing import Callable, Dict, Generic, List, Optional, Union, TypeVar, KeysView, ItemsView
 
+from pgsmo.objects.server import server as s
 import pgsmo.utils.templating as templating
 
 
@@ -14,7 +15,7 @@ class NodeObject(metaclass=ABCMeta):
     @classmethod
     def get_nodes_for_parent(
             cls,
-            root_server,
+            root_server: 's.Server',
             parent_obj: Optional['NodeObject']
     ) -> List['NodeObject']:
         """
@@ -35,19 +36,18 @@ class NodeObject(metaclass=ABCMeta):
             templating.get_template_path(template_root, 'nodes.sql', root_server.version),
             **template_vars
         )
-        cols, rows = root_server.execute_dict(sql)
+        cols, rows = root_server.connection.execute_dict(sql)
 
         return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
 
     @classmethod
     @abstractmethod
-    def _from_node_query(cls, root_server, parent: Optional['NodeObject'], **kwargs) -> 'NodeObject':
+    def _from_node_query(cls, root_server: 's.Server', **kwargs) -> 'NodeObject':
         pass
 
-    def __init__(self, root_server, parent: Optional['NodeObject'], name: str):
+    def __init__(self, root_server, name: str):
         # Define the state of the object
         self._server = root_server
-        self._parent_node: Optional['NodeObject'] = parent
 
         self._child_collections: List[NodeCollection] = []
         self._property_collections: List[NodeLazyPropertyCollection] = []
@@ -66,8 +66,9 @@ class NodeObject(metaclass=ABCMeta):
     def oid(self) -> Optional[int]:
         return self._oid
 
-    def parent(self) -> Optional['NodeObject']:
-        return self._parent_node
+    @property
+    def server(self) -> 's.Server':
+        return self._server
 
     # METHODS ##############################################################
     def refresh(self) -> None:
@@ -76,7 +77,7 @@ class NodeObject(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def _template_root(cls, root_server) -> str:
+    def _template_root(cls, root_server: 's.Server') -> str:
         pass
 
     # PROTECTED HELPERS ####################################################
