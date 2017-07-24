@@ -99,22 +99,21 @@ class View(node.NodeObject):
 
     # METHODS ##############################################################
 
-    def create(self, connection: querying.ServerConnection) -> str:
-        data = self.create_query_data(connection)
+    def script(self, connection: querying.ServerConnection, action: str) -> str:
+        """ Function to retrieve scripts for an operation """
         template_root = self._template_root(connection)
-        template_path = templating.get_template_path(template_root, 'create.sql', connection.version)
-        create_template = templating.render_template(template_path, **data)
-        return create_template
-
-    def delete(self, connection: querying.ServerConnection) -> str:
-        data = self.delete_query_data(connection)
-        template_root = self._template_root(connection)
-        template_path = templating.get_template_path(template_root, 'delete.sql', connection.version)
-        delete_template = templating.render_template(template_path, **data)
-        return delete_template
-
-    def update(self):
-        pass
+        if (action == "create"):
+            data = self.create_query_data(connection)
+            query_file = "create.sql"
+        elif (action == "delete"):
+            data = self.delete_query_data(connection)
+            query_file = "delete.sql"
+        elif (action == "update"):
+            data = self.update_query_data(connection)
+            query_file = "update.sql"
+        template_path = templating.get_template_path(template_root, query_file, connection.version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod

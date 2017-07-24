@@ -61,7 +61,7 @@ class Scripter(object):
             database = self.server.databases[database_name]
 
             # get the create script
-            script = database.create(self.connection)
+            script = database.script(self.connection, "create")
             return script
         except:
             # need to handle exceptions well
@@ -76,7 +76,7 @@ class Scripter(object):
             view = parent_schema.views[view_name]
             
             # get the create script
-            script = view.create(self.connection)
+            script = view.script(self.connection, "create")
             return script
         except: 
             return None
@@ -88,7 +88,7 @@ class Scripter(object):
             table = self._find_table(metadata)
 
             # get the create script
-            script = table.create(self.connection)
+            script = table.script(self.connection, "create")
             return script
         except: 
             return None
@@ -98,7 +98,7 @@ class Scripter(object):
         """ Get delete script for table """
         try:
             table = self._find_table(metadata)
-            script = table.delete(self.connection)
+            script = table.script(self.connection, "delete")
             return script
         except:
             return None
@@ -112,7 +112,7 @@ class Scripter(object):
             view = parent_schema.views[view_name]
             
             # get the create script
-            script = view.delete(self.connection)
+            script = view.script(self.connection, "delete")
             return script
         except: 
             return None
@@ -125,7 +125,35 @@ class Scripter(object):
             database = self.server.databases[database_name]
 
             # get the create script
-            script = database.delete(self.connection)
+            script = database.script(self.connection, "delete")
+            return script
+        except:
+            return None
+
+    # UPDATE ##################################################################
+
+    def get_table_update_script(self, metadata) -> str:
+        """ Get update script for tables """
+        try:
+            # get table from server
+            table = self._find_table(metadata)
+
+            # get the create script
+            script = table.script(self.connection, "update")
+            return script
+        except:
+            return None
+
+    def get_view_update_script(self, metadata) -> str:   
+        """ Get update date script for view """
+        try:
+            # get view from server
+            view_name = metadata["name"]
+            parent_schema = self._find_schema(metadata)
+            view = parent_schema.views[view_name]
+            
+            # get the create script
+            script = view.script(self.connection, "update")
             return script
         except:
             return None

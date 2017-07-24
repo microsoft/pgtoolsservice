@@ -60,15 +60,7 @@ class ScriptingService(object):
 
     def script_as_insert(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for insert operations """
-        # convert connection to ServiceConnection Wrapper
-        connection = querying.ServerConnection(connection)
-        scripter = Scripter(connection)
-        if (metadata["metadataTypeName"] == 'Database'):
-            return scripter.get_database_insert_script(metadata)
-        elif (metadata["metadataTypeName"] == 'View'):
-            return scripter.get_view_insert_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Table'):
-            return scripter.get_table_insert_script(metadata)
+        return
 
     def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
@@ -77,18 +69,26 @@ class ScriptingService(object):
         return scripter.script_as_select(connection, metadata)
     
     def script_as_update(self, connection, metadata: ObjectMetadata) -> str:
-        return None
+        """ Function to get script for update operations """
+        connection = querying.ServerConnection(connection)
+        scripter = Scripter(connection)
+        metadataType = metadata["metadataTypeName"]
+        if (metadataType == 'View'):
+            return scripter.get_view_update_script(metadata)
+        elif (metadataType == 'Table'):
+            return scripter.get_table_update_script(metadata)
 
     def script_as_delete(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for insert operations """
         # convert connection to ServiceConnection Wrapper
         connection = querying.ServerConnection(connection)
         scripter = Scripter(connection)
-        if (metadata["metadataTypeName"] == 'Database'):
+        metadataType = metadata["metadataTypeName"]
+        if (metadataType == 'Database'):
             return scripter.get_database_delete_script(metadata)
-        elif (metadata["metadataTypeName"] == 'View'):
+        elif (metadataType == 'View'):
             return scripter.get_view_delete_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Table'):
+        elif (metadataType == 'Table'):
             return scripter.get_table_delete_script(metadata)
 
     def _scripting_operation(self, scripting_operation: ScriptOperation, connection, metadata: ObjectMetadata) -> None:
