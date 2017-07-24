@@ -38,16 +38,17 @@ class NodeObject(metaclass=ABCMeta):
         )
         cols, rows = root_server.connection.execute_dict(sql)
 
-        return [cls._from_node_query(root_server, **row) for row in rows]
+        return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
 
     @classmethod
     @abstractmethod
-    def _from_node_query(cls, root_server: 's.Server', **kwargs) -> 'NodeObject':
+    def _from_node_query(cls, root_server: 's.Server', parent: 'NodeObject', **kwargs) -> 'NodeObject':
         pass
 
-    def __init__(self, root_server, name: str):
+    def __init__(self, root_server, parent: Optional['NodeObject'], name: str):
         # Define the state of the object
-        self._server = root_server
+        self._server: 's.Server' = root_server
+        self._parent: Optional['NodeObject'] = parent
 
         self._child_collections: List[NodeCollection] = []
         self._property_collections: List[NodeLazyPropertyCollection] = []
@@ -65,6 +66,10 @@ class NodeObject(metaclass=ABCMeta):
     @property
     def oid(self) -> Optional[int]:
         return self._oid
+
+    @property
+    def parent(self) -> Optional['NodeObject']:
+        return self._parent
 
     @property
     def server(self) -> 's.Server':
