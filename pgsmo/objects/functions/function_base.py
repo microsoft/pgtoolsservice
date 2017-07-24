@@ -7,17 +7,17 @@ from abc import ABCMeta
 from typing import Optional
 
 import pgsmo.objects.node_object as node
-import pgsmo.utils.querying as querying
+from pgsmo.objects.server import server as s
 
 
 class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     """Base class for Functions. Provides basic properties for all Function types"""
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'FunctionBase':
+    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'FunctionBase':
         """
         Creates a Function instance from the results of a node query
-        :param conn: The connection used to execute the node query
+        :param server: Server that owns the function
         :param kwargs: A row from the node query
         Kwargs:
             oid int: Object ID of the function
@@ -27,7 +27,7 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
             description str: Description of the function
         :return: A Function instance
         """
-        func = cls(conn, kwargs['name'])
+        func = cls(server, kwargs['name'])
         func._oid = kwargs['oid']
         func._language_name = kwargs['lanname']
         func._owner = kwargs['funcowner']
@@ -35,8 +35,8 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
 
         return func
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
-        super(FunctionBase, self).__init__(conn, name)
+    def __init__(self, server: 's.Server', name: str):
+        super(FunctionBase, self).__init__(server, name)
 
         # Declare the basic properties
         self._description: Optional[str] = None

@@ -38,13 +38,13 @@ class Server:
 
         # Declare the child objects
         self._databases: NodeCollection[Database] = NodeCollection(
-            lambda: Database.get_nodes_for_parent(self._conn, None)
+            lambda: Database.get_nodes_for_parent(self, None)
         )
         self._roles: NodeCollection[Role] = NodeCollection(
-            lambda: Role.get_nodes_for_parent(self._conn, None)
+            lambda: Role.get_nodes_for_parent(self, None)
         )
         self._tablespaces: NodeCollection[Tablespace] = NodeCollection(
-            lambda: Tablespace.get_nodes_for_parent(self._conn, None)
+            lambda: Tablespace.get_nodes_for_parent(self, None)
         )
 
     # PROPERTIES ###########################################################

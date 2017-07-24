@@ -19,7 +19,7 @@ class Database(node.NodeObject):
     def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
-        :param conn: Connection used to generate the db info query
+        :param conn: Server that owns the database
         :param kwargs: Optional parameters for the database. Values that can be provided:
         Kwargs:
             did int: Object ID of the database
@@ -56,7 +56,7 @@ class Database(node.NodeObject):
         # Declare the child items
         self._schemas: Optional[node.NodeCollection[Schema]] = None
         if self._is_connected:
-            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(conn, self))
+            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
 
     # PROPERTIES ###########################################################
     @property
