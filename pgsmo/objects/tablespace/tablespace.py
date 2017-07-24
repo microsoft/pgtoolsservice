@@ -6,7 +6,7 @@
 from typing import Optional
 
 from pgsmo.objects.node_object import NodeObject
-from pgsmo.objects.server import server as s
+from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 

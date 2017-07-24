@@ -7,7 +7,7 @@ from abc import ABCMeta
 from typing import Optional
 
 import pgsmo.objects.node_object as node
-from pgsmo.objects.server import server as s
+from pgsmo.objects.server import server as s    # noqa
 
 
 class FunctionBase(node.NodeObject, metaclass=ABCMeta):

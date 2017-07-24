@@ -6,7 +6,7 @@
 import os.path
 
 from pgsmo.objects.functions.function_base import FunctionBase
-from pgsmo.objects.server import server as s
+from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 

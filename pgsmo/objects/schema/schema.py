@@ -10,7 +10,7 @@ import pgsmo.objects.node_object as node
 from pgsmo.objects.collation import Collation
 from pgsmo.objects.functions import Function, TriggerFunction
 from pgsmo.objects.sequence import Sequence
-from pgsmo.objects.server import server as s
+from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 import pgsmo.utils.templating as templating

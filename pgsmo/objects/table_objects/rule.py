@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import pgsmo.objects.node_object as node
-from pgsmo.objects.server import server as s
+from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 

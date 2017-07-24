@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from collections import Iterator
 from typing import Callable, Dict, Generic, List, Optional, Union, TypeVar, KeysView, ItemsView
 
-from pgsmo.objects.server import server as s
+from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
