@@ -16,7 +16,7 @@ class Database(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Database':
+    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -40,7 +40,7 @@ class Database(node.NodeObject):
 
         return db
 
-    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+    def __init__(self, server: 's.Server', parent: None, name: str):
         """
         Initializes a new instance of a database
         :param server: Server that owns the database.

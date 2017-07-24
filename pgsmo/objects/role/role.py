@@ -14,7 +14,7 @@ class Role(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject,  **kwargs) -> 'Role':
+    def _from_node_query(cls, server: 's.Server', parent: None,  **kwargs) -> 'Role':
         """
         Creates a Role object from the result of a role node query
         :param server: Server that owns the role
@@ -36,7 +36,7 @@ class Role(NodeObject):
 
         return role
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: 's.Server', parent: None, name: str):
         """
         Initializes internal state of a Role object
         :param server: Server that owns the role

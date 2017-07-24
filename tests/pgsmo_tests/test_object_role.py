@@ -37,3 +37,7 @@ class TestRole(NodeObjectTestBase, unittest.TestCase):
     @property
     def node_query(self) -> dict:
         return TestRole.NODE_ROW
+
+    @property
+    def parent_expected_to_be_none(self) -> bool:
+        return True

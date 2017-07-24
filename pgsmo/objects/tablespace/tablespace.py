@@ -14,7 +14,7 @@ class Tablespace(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Tablespace':
+    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Tablespace':
         """
         Creates a tablespace from a row of a nodes query result
         :param server: Server that owns the tablespace
@@ -29,7 +29,7 @@ class Tablespace(NodeObject):
 
         return tablespace
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: 's.Server', parent: None, name: str):
         """
         Initializes internal state of a Role object
         :param server: Server that owns the tablespace

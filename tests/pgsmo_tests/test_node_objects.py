@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional
 import unittest
 import unittest.mock as mock
 
@@ -194,7 +193,8 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
         # Then:
         # ... I should get an exception
         with self.assertRaises(TypeError):
-            prop_collection[1.2]
+            # noinspection PyTypeChecker
+            obj = prop_collection[1.2]      # noqa
 
         # ... The generator should not have been called
         generator.assert_not_called()
@@ -208,7 +208,7 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
         # Then:
         # ... I should get an exception
         with self.assertRaises(KeyError):
-            prop_collection['does_not_exist']
+            obj = prop_collection['does_not_exist']     # noqa
 
         # ... The generator should have been called, tho
         generator.assert_called_once()
@@ -274,7 +274,7 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
         # Setup: Create a mock generator and property collection and force it to load
         generator, mock_results = _get_mock_property_generator()
         prop_collection = node.NodeLazyPropertyCollection(generator)
-        prop_collection['prop1']    # Force the collection to load
+        obj = prop_collection['prop1']    # Force the collection to load    # noqa
 
         # If: I reset the collection
         prop_collection.reset()
@@ -288,8 +288,8 @@ class TestNodeObject(unittest.TestCase):
     def test_init(self):
         # If: I create a node object
         server = Server(utils.MockConnection(None))
-        parent = MockNodeObject(server, None, 'parent')
-        node_obj = MockNodeObject(server, parent, 'abc')
+        parent = utils.MockNodeObject(server, None, 'parent')
+        node_obj = utils.MockNodeObject(server, parent, 'abc')
 
         # Then: The properties should be assigned as defined
         utils.assert_threeway_equals(None, node_obj._oid, node_obj.oid)
@@ -319,12 +319,12 @@ class TestNodeObject(unittest.TestCase):
         # ... Patch the template rendering, and the _from_node_query
         patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
         patch_template_path = 'pgsmo.objects.node_object.templating.get_template_path'
-        patch_from_node_query = 'tests.pgsmo_tests.test_node_objects.MockNodeObject._from_node_query'
+        patch_from_node_query = 'tests.pgsmo_tests.utils.MockNodeObject._from_node_query'
         with mock.patch(patch_render_template, mock_render, create=True):
             with mock.patch(patch_template_path, mock_template_path, create=True):
                 with mock.patch(patch_from_node_query, mock_from_node, create=True):
                     # If: I ask for a collection of nodes *without a parent object*
-                    nodes = MockNodeObject.get_nodes_for_parent(mock_server, None)
+                    nodes = utils.MockNodeObject.get_nodes_for_parent(mock_server, None)
 
         # Then:
         # ... The template path and template renderer should have been called once
@@ -356,18 +356,18 @@ class TestNodeObject(unittest.TestCase):
         mock_template_path = mock.MagicMock(return_value="path")
 
         # ... Create an object that will be the parent of these nodes
-        parent = MockNodeObject(mock_server, None, 'parent')
+        parent = utils.MockNodeObject(mock_server, None, 'parent')
         parent._oid = 123
 
         # ... Patch the template rendering, and the _from_node_query
         patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
         patch_template_path = 'pgsmo.objects.node_object.templating.get_template_path'
-        patch_from_node_query = 'tests.pgsmo_tests.test_node_objects.MockNodeObject._from_node_query'
+        patch_from_node_query = 'tests.pgsmo_tests.utils.MockNodeObject._from_node_query'
         with mock.patch(patch_render_template, mock_render, create=True):
             with mock.patch(patch_template_path, mock_template_path, create=True):
                 with mock.patch(patch_from_node_query, mock_from_node, create=True):
                     # If: I ask for a collection of nodes *with a parent object*
-                    nodes = MockNodeObject.get_nodes_for_parent(mock_server, parent)
+                    nodes = utils.MockNodeObject.get_nodes_for_parent(mock_server, parent)
 
         # Then:
         # ... The template path and template renderer should have been called once
@@ -388,7 +388,7 @@ class TestNodeObject(unittest.TestCase):
     def test_register_child_collection(self):
         # Setup: Create a node object
         server = Server(utils.MockConnection(None))
-        node_obj = MockNodeObject(server, None, 'obj_name')
+        node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         # If: I register a child collection
         generator = mock.MagicMock()
@@ -414,7 +414,7 @@ class TestNodeObject(unittest.TestCase):
     def test_register_property_collection(self):
         # Setup: Create a node object
         server = Server(utils.MockConnection(None))
-        node_obj = MockNodeObject(server, None, 'obj_name')
+        node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         # If: I register a property collection
         generator = mock.MagicMock()
@@ -441,7 +441,7 @@ class TestNodeObject(unittest.TestCase):
         # Setup:
         # ... Create a node object
         server = Server(utils.MockConnection(None))
-        node_obj = MockNodeObject(server, None, 'obj_name')
+        node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         # ... Add a couple child collections
         node_generator = mock.MagicMock()
@@ -471,19 +471,6 @@ class TestNodeObject(unittest.TestCase):
         props2.reset.assert_called_once()
 
 
-class MockNodeObject(node.NodeObject):
-    @classmethod
-    def _from_node_query(cls, root_server: Server, parent: Optional[node.NodeObject], **kwargs):
-        pass
-
-    def __init__(self, root_server: Server, parent: Optional[node.NodeObject], name: str):
-        super(MockNodeObject, self).__init__(root_server, parent, name)
-
-    @classmethod
-    def _template_root(cls, root_server: Server):
-        return 'template_root'
-
-
 def _get_node_for_parents_mock_connection():
     # ... Create a mockup of a server connection with a mock executor
     mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
@@ -497,10 +484,10 @@ def _get_node_for_parents_mock_connection():
 def _get_mock_node_generator():
     conn = utils.MockConnection(None)
 
-    mock_object1 = MockNodeObject(conn, None, 'a')
+    mock_object1 = utils.MockNodeObject(conn, None, 'a')
     mock_object1._oid = 123
 
-    mock_object2 = MockNodeObject(conn, None, 'b')
+    mock_object2 = utils.MockNodeObject(conn, None, 'b')
     mock_object2._oid = 456
 
     mock_objects = [mock_object1, mock_object2]

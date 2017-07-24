@@ -33,6 +33,8 @@ class Constraint(node.NodeObject, metaclass=ABCMeta):
         return constraint
 
     def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+        if parent is None:
+            raise ValueError('Constraint parent cannot be None')
         super(Constraint, self).__init__(server, parent, name)
 
         # Declare constraint-specific basic properties

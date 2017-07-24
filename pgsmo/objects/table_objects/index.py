@@ -35,6 +35,8 @@ class Index(node.NodeObject):
         :param parent: Parent object of the index. Should be Table/View
         :param name: Name of the index
         """
+        if parent is None:
+            raise ValueError('Index parent cannot be None')
         super(Index, self).__init__(server, parent, name)
 
     # IMPLEMENTATION DETAILS ###############################################

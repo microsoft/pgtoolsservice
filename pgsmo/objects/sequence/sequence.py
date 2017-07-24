@@ -29,6 +29,8 @@ class Sequence(NodeObject):
         return seq
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+        if parent is None:
+            raise ValueError('Sequence parent cannot be None')
         super(Sequence, self).__init__(server, parent, name)
 
     # IMPLEMENTATION DETAILS ###############################################

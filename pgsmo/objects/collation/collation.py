@@ -29,6 +29,8 @@ class Collation(node.NodeObject):
         return collation
 
     def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+        if parent is None:
+            raise ValueError('Collation parent cannot be None')
         super(Collation, self).__init__(server, parent, name)
 
     # IMPLEMENTATION DETAILS ###############################################

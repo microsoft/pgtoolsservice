@@ -6,7 +6,6 @@
 import unittest
 
 from pgsmo.objects.table_objects.column import Column
-from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
@@ -47,12 +46,13 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
         # If: I create an instance of the Column class
         name = 'column'
         datatype = 'character'
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        obj = Column(mock_conn, name, datatype)
+        mock_server = utils.Server(utils.MockConnection(None))
+        mock_parent = utils.MockNodeObject(mock_server, None, 'parent')
+        obj = Column(mock_server, mock_parent, name, datatype)
 
         # Then:
         # ... The standard object tests should pass
-        self._init_validation(obj, mock_conn, name)
+        self._init_validation(obj, mock_server, mock_parent, name)
 
         # ... The datatype property should be set
         self.assertEqual(obj.datatype, datatype)

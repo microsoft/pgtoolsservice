@@ -25,7 +25,7 @@ class Server:
         :param conn: psycopg2 connection
         """
         # Everything we know about the server will be based on the connection
-        self._conn = utils.querying.ServerConnection(conn)
+        self._conn: utils.querying.ServerConnection = utils.querying.ServerConnection(conn)
 
         # Declare the server properties
         props = self._conn.dsn_parameters
@@ -50,7 +50,7 @@ class Server:
     # PROPERTIES ###########################################################
 
     @property
-    def connection(self):
+    def connection(self) -> utils.querying.ServerConnection:
         """Connection to the server/db that this object will use"""
         return self._conn
 

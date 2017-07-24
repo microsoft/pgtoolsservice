@@ -50,6 +50,10 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
     def node_query(self) -> dict:
         return TestDatabase.NODE_ROW
 
+    @property
+    def parent_expected_to_be_none(self) -> bool:
+        return True
+
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
         """Overriding to prevent using default init testing"""
@@ -58,12 +62,12 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
     def test_init_connected(self):
         # If: I create a DB that is connected
         name = 'dbname'
-        mock_conn = Server(utils.MockConnection(None, name=name))
-        db = Database(mock_conn, name)
+        mock_server = Server(utils.MockConnection(None, name=name))
+        db = Database(mock_server, None, name)
 
         # Then:
         # ... Default validation should pass
-        self._init_validation(db, mock_conn, name)
+        self._init_validation(db, mock_server, None, name)
 
         # ... The database should be connected
         self.assertTrue(db._is_connected)
@@ -76,11 +80,11 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         # If: I create a DB that is connected
         name = 'dbname'
         mock_conn = Server(utils.MockConnection(None, name='not_connected'))
-        db = Database(mock_conn, name)
+        db = Database(mock_conn, None, name)
 
         # Then:
         # ... Default validation should pass
-        self._init_validation(db, mock_conn, name)
+        self._init_validation(db, mock_conn, None, name)
 
         # ... The database should be connected
         self.assertFalse(db._is_connected)
