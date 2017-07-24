@@ -11,7 +11,7 @@ from typing import Dict, Optional, Tuple  # noqa
 import uuid
 
 import psycopg2
-import psycopg2.extensions as ppg2_extensions
+import psycopg2.extensions
 
 from pgsqltoolsservice.connection.contracts import (
     CANCEL_CONNECT_REQUEST, CancelConnectParams,
@@ -33,9 +33,9 @@ class ConnectionInfo(object):
         self.owner_uri: str = owner_uri
         self.details: ConnectionDetails = details
         self.connection_id: str = str(uuid.uuid4())
-        self._connection_map: Dict[ConnectionType, ppg2_extensions.connection] = {}
+        self._connection_map: Dict[ConnectionType, psycopg2.extensions.connection] = {}
 
-    def get_connection(self, connection_type: ConnectionType) -> Optional[ppg2_extensions.connection]:
+    def get_connection(self, connection_type: ConnectionType) -> Optional[psycopg2.extensions.connection]:
         """Get the connection associated with the given connection type, or return None"""
         return self._connection_map.get(connection_type)
 
@@ -43,7 +43,7 @@ class ConnectionInfo(object):
         """Get all connections held by this object"""
         return self._connection_map.values()
 
-    def add_connection(self, connection_type: ConnectionType, connection: ppg2_extensions.connection):
+    def add_connection(self, connection_type: ConnectionType, connection: psycopg2.extensions.connection):
         """Add a connection to the connection map, associated with the given connection type"""
         self._connection_map[connection_type] = connection
 
@@ -158,7 +158,7 @@ class ConnectionService:
         connection_info = self.owner_to_connection_map.get(owner_uri)
         return self._close_connections(connection_info, connection_type) if connection_info is not None else False
 
-    def get_connection(self, owner_uri: str, connection_type: ConnectionType) -> Optional[ppg2_extensions.connection]:
+    def get_connection(self, owner_uri: str, connection_type: ConnectionType) -> Optional[psycopg2.extensions.connection]:
         """
         Get a psycopg2 connection for the given owner URI and connection type
 
