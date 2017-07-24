@@ -38,7 +38,9 @@ class Scripter(object):
         except:
             return None
 
-    # SCRIPTING METHODS #######################################################
+    ############################ SCRIPTING METHODS ############################
+    
+    # CREATE ##################################################################
 
     def get_database_create_script(self, metadata) -> str:
         """ Get create script for databases """
@@ -80,5 +82,29 @@ class Scripter(object):
         except: 
             return None
 
+    # SELECT #################################################################
 
-    
+    def get_table_select_script(self, metadata) -> str:
+        """ Get select script for tables """
+        return 
+
+    def get_database_select_script(self, metadata) -> str:
+        """ Get select script for databases """
+        return
+
+    def get_view_select_script(self, metadata) -> str:
+        """ Get select script for views """
+        return
+
+    # INSERT ##################################################################
+    def get_table_insert_script(self, metadata) -> str:
+        """ Get insert script for table """
+        return 
+
+    def get_view_insert_script(self, metadata) -> str:
+        """ Get insert script for view """
+        return 
+
+    def get_database_insert_script(self, metadata) -> str:
+        """ Get insert script for databases """
+        return

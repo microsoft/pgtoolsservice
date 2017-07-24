@@ -58,10 +58,32 @@ class ScriptingService(object):
         elif (metadata["metadataTypeName"] == 'Table'):
             return scripter.get_table_create_script(metadata)
 
+    def script_as_insert(self, connection, metadata: ObjectMetadata) -> str:
+        """ Function to get script for insert operations """
+        # convert connection to ServiceConnection Wrapper
+        connection = querying.ServerConnection(connection)
+        scripter = Scripter(connection)
+        if (metadata["metadataTypeName"] == 'Database'):
+            return scripter.get_database_insert_script(metadata)
+        elif (metadata["metadataTypeName"] == 'View'):
+            return scripter.get_view_insert_script(metadata)
+        elif (metadata["metadataTypeName"] == 'Table'):
+            return scripter.get_table_insert_script(metadata)
+
+    def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
+        """ Function to get script for select operations """
+        schema = metadata["schema"]
+        name = metadata["name"]
+        # wrap quotes only around objects with all small letters
+        name = '"' + name + '"' if name.islower() else name
+        script = "SELECT *\nFROM " + schema + '.' + name + '\nLIMIT 1000\n'
+        return script
+
+
     def _scripting_operation(self, scripting_operation: ScriptOperation, connection, metadata: ObjectMetadata) -> None:
         """Helper function to get the correct script based on operation"""
         if (scripting_operation == ScriptOperation.Select):
-            return self.script_as_create(connection, metadata)
+            return self.script_as_select(connection, metadata)
         elif (scripting_operation == ScriptOperation.Create):
             return self.script_as_create(connection, metadata)
         elif (scripting_operation == ScriptOperation.Insert):
