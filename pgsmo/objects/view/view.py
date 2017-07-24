@@ -85,19 +85,35 @@ class View(node.NodeObject):
         }}
         return data
 
+    def delete_query_data(self, connection: querying.ServerConnection) -> dict:
+        data = {"data": {
+
+        }}
+        return data
+
+    def update_query_data(self, connection: querying.ServerConnection) -> dict:
+        data = {"data": {
+
+        }}
+        return data
+
     # METHODS ##############################################################
 
-    def create(self, connection: querying.ServerConnection):
+    def create(self, connection: querying.ServerConnection) -> str:
         data = self.create_query_data(connection)
         template_root = self._template_root(connection)
         template_path = templating.get_template_path(template_root, 'create.sql', connection.version)
         create_template = templating.render_template(template_path, **data)
         return create_template
 
-    def update(self):
-        pass
+    def delete(self, connection: querying.ServerConnection) -> str:
+        data = self.delete_query_data(connection)
+        template_root = self._template_root(connection)
+        template_path = templating.get_template_path(template_root, 'delete.sql', connection.version)
+        delete_template = templating.render_template(template_path, **data)
+        return delete_template
 
-    def delete(self):
+    def update(self):
         pass
 
     # IMPLEMENTATION DETAILS ###############################################

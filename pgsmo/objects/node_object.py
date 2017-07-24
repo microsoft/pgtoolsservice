@@ -108,7 +108,11 @@ class NodeObject(metaclass=ABCMeta):
     def _get_template_vars(self):
         template_vars = {'oid': self._oid}
         if (self.get_type() == "view"):
-            template_vars = {'scid': self._oid, 'spcname': ''}
+            template_vars = {'vid': self._oid, 'spcname': ''}
+        elif (self.get_type() == "table"):
+            template_vars = {'oid': self._oid}
+        elif (self.get_type() == "database"):
+            template_vars = {'did': self._oid}
         return template_vars
 
     def _property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:

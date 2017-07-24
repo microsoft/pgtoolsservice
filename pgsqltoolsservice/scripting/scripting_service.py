@@ -72,13 +72,24 @@ class ScriptingService(object):
 
     def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
-        schema = metadata["schema"]
-        name = metadata["name"]
-        # wrap quotes only around objects with all small letters
-        name = '"' + name + '"' if name.islower() else name
-        script = "SELECT *\nFROM " + schema + '.' + name + '\nLIMIT 1000\n'
-        return script
+        connection = querying.ServerConnection(connection)
+        scripter = Scripter(connection)
+        return scripter.script_as_select(connection, metadata)
+    
+    def script_as_update(self, connection, metadata: ObjectMetadata) -> str:
+        return None
 
+    def script_as_delete(self, connection, metadata: ObjectMetadata) -> str:
+        """ Function to get script for insert operations """
+        # convert connection to ServiceConnection Wrapper
+        connection = querying.ServerConnection(connection)
+        scripter = Scripter(connection)
+        if (metadata["metadataTypeName"] == 'Database'):
+            return scripter.get_database_delete_script(metadata)
+        elif (metadata["metadataTypeName"] == 'View'):
+            return scripter.get_view_delete_script(metadata)
+        elif (metadata["metadataTypeName"] == 'Table'):
+            return scripter.get_table_delete_script(metadata)
 
     def _scripting_operation(self, scripting_operation: ScriptOperation, connection, metadata: ObjectMetadata) -> None:
         """Helper function to get the correct script based on operation"""
@@ -94,12 +105,3 @@ class ScriptingService(object):
             return self.script_as_delete(connection, metadata)
         else:
             return None
-    
-    def script_as_insert(self, connection, metadata: ObjectMetadata) -> str:
-        return None
-    
-    def script_as_update(self, connection, metadata: ObjectMetadata) -> str:
-        return None
-
-    def script_as_delete(self, connection, metadata: ObjectMetadata) -> str:
-        return None

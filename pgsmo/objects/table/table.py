@@ -100,6 +100,10 @@ class Table(node.NodeObject):
     def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers
 
+    @property
+    def schema(self) -> str:
+        return self._full_properties["schema"]
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, conn: querying.ServerConnection) -> str:
@@ -110,26 +114,51 @@ class Table(node.NodeObject):
         """ Returns the type of object """
         return "table"
 
-    # HELPER METHODS #######################################################
+    # QUERY DATA BUILDING METHODS #######################################################
 
     def create_query_data(self, connection: querying.ServerConnection) -> dict:
-
+        """ Provides data input for create script """
         data = {"data": {
 
         }}
         return data
 
-    # METHODS ##############################################################
+    def delete_query_data(self, connection: querying.ServerConnection) -> dict:
+        """ Provides data input for delete script """
+        data = {"data": {
+            "name": self.name
+        }}
+        return data
 
-    def create(self, connection: querying.ServerConnection):
+    def update_query_data(self, connection: querying.ServerConnection) -> dict:
+        """ Provides data input for update script """
+        data = {"data": {
+            "name": self.name
+        }}
+        return data
+
+    # SCRIPTING METHODS ##############################################################
+
+    def create(self, connection: querying.ServerConnection) -> str:
+        """ Function to return a create script for a table """
         data = self.create_query_data(connection)
         template_root = self._template_root(connection)
         template_path = templating.get_template_path(template_root, 'create.sql', connection.version)
         create_template = templating.render_template(template_path, **data)
         return create_template
 
-    def update(self):
-        pass
+    def delete(self, connection: querying.ServerConnection) -> str:
+        """ Function to return a delete script for table """
+        data = self.delete_query_data(connection)
+        template_root = self._template_root(connection)
+        template_path = templating.get_template_path(template_root, 'delete.sql', connection.version)
+        delete_template = templating.render_template(template_path, **data)
+        return delete_template
 
-    def delete(self):
-        pass
+    def update(self, connection: querying.ServerConnection) -> str:
+        """ Function to return an update script for table """
+        data = self.update_query_data(connection)
+        template_root = self._template_root(connection)
+        template_path = templating.get_template_path(template_root, 'update.sql', connection.version)
+        update_template = templating.render_template(template_path, **data)
+        return update_template

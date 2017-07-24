@@ -42,8 +42,8 @@ FROM pg_database db
     LEFT OUTER JOIN pg_shdescription descr ON (
         db.oid=descr.objoid AND descr.classoid='pg_database'::regclass
     )
-WHERE {% if oid %}
-db.oid = {{ oid|qtLiteral }}::OID{% else %}{% if name %}
+WHERE {% if did %}
+db.oid = {{ did|qtLiteral }}::OID{% else %}{% if name %}
 db.datname = {{ name|qtLiteral }}::text{% else %}
 db.oid > {{ last_system_oid|qtLiteral }}::OID
 {% endif %}{% endif %}
