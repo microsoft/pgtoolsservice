@@ -7,10 +7,11 @@
 disconnect and holds the current connection, if one is present"""
 
 import threading
-from typing import Dict, Tuple  # noqa
+from typing import Dict, Optional, Tuple  # noqa
 import uuid
 
 import psycopg2
+import psycopg2.extensions
 
 from pgsqltoolsservice.connection.contracts import (
     CANCEL_CONNECT_REQUEST, CancelConnectParams,
@@ -32,9 +33,9 @@ class ConnectionInfo(object):
         self.owner_uri: str = owner_uri
         self.details: ConnectionDetails = details
         self.connection_id: str = str(uuid.uuid4())
-        self._connection_map: dict = {}
+        self._connection_map: Dict[ConnectionType, psycopg2.extensions.connection] = {}
 
-    def get_connection(self, connection_type: ConnectionType):
+    def get_connection(self, connection_type: ConnectionType) -> Optional[psycopg2.extensions.connection]:
         """Get the connection associated with the given connection type, or return None"""
         return self._connection_map.get(connection_type)
 
@@ -42,7 +43,7 @@ class ConnectionInfo(object):
         """Get all connections held by this object"""
         return self._connection_map.values()
 
-    def add_connection(self, connection_type: ConnectionType, connection):
+    def add_connection(self, connection_type: ConnectionType, connection: psycopg2.extensions.connection):
         """Add a connection to the connection map, associated with the given connection type"""
         self._connection_map[connection_type] = connection
 
@@ -66,7 +67,7 @@ class ConnectionService:
     """Manage a single connection, including the ability to connect/disconnect"""
 
     def __init__(self):
-        self.owner_to_connection_map = {}
+        self.owner_to_connection_map: Dict[str, ConnectionInfo] = {}
         self.owner_to_thread_map = {}
         self._service_provider = None
         self._cancellation_map: Dict[Tuple[str, ConnectionType], CancellationToken] = {}
@@ -81,78 +82,8 @@ class ConnectionService:
         self._service_provider.server.set_request_handler(LIST_DATABASES_REQUEST, self.handle_list_databases)
         self._service_provider.server.set_request_handler(CANCEL_CONNECT_REQUEST, self.handle_cancellation_request)
 
-    def get_connection(self, owner_uri: str, connection_type: ConnectionType):
-        """
-        Get a psycopg2 connection for the given owner URI and connection type
-
-        :raises ValueError: If there is no connection associated with the provided URI
-        """
-        if owner_uri not in self.owner_to_connection_map:
-            raise ValueError('No connection associated with given owner URI')
-        connection_info = self.owner_to_connection_map[owner_uri]
-        if not connection_info.has_connection(connection_type):
-            self._connect(ConnectRequestParams(connection_info.details, owner_uri, connection_type))
-        return connection_info.get_connection(connection_type)
-
-    # REQUEST HANDLERS #####################################################
-    def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
-        """Kick off a connection in response to an incoming connection request"""
-        thread = threading.Thread(
-            target=self._connect_and_respond,
-            args=(request_context, params)
-        )
-        thread.daemon = True
-        thread.start()
-        self.owner_to_thread_map[params.owner_uri] = thread
-
-        request_context.send_response(True)
-
-    def handle_disconnect_request(self, request_context: RequestContext, params: DisconnectRequestParams) -> None:
-        """Close a connection in response to an incoming disconnection request"""
-        connection_info = self.owner_to_connection_map.get(params.owner_uri)
-        if connection_info is None:
-            request_context.send_response(False)
-        else:
-            request_context.send_response(self._close_connections(connection_info, params.type))
-
-    def handle_list_databases(self, request_context: RequestContext, params: ListDatabasesParams):
-        """List all databases on the server that the given URI has a connection to"""
-        connection = None
-        try:
-            connection = self.get_connection(params.owner_uri, ConnectionType.DEFAULT)
-        except ValueError as err:
-            request_context.send_error(str(err))
-            return
-        query_results = None
-        try:
-            query_results = _execute_query(connection, 'SELECT datname FROM pg_database WHERE datistemplate = false;')
-        except psycopg2.ProgrammingError as err:
-            if self._service_provider is not None and self._service_provider.logger is not None:
-                self._service_provider.logger.exception('Error listing databases')
-            request_context.send_error(str(err))
-            return
-        database_names = [result[0] for result in query_results]
-        request_context.send_response(ListDatabasesResponse(database_names))
-
-    def handle_cancellation_request(self, request_context: RequestContext, params: CancelConnectParams) -> None:
-        """Cancel a connection attempt in response to a cancellation request"""
-        cancellation_key = (params.owner_uri, params.type)
-        with self._cancellation_lock:
-            connection_found = cancellation_key in self._cancellation_map
-            if connection_found:
-                self._cancellation_map[cancellation_key].cancel()
-        request_context.send_response(connection_found)
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
-        """Open a connection and fire the connection complete notification"""
-        response = self._connect(params)
-
-        # Send the connection complete response unless the connection was canceled
-        if response is not None:
-            request_context.send_notification(CONNECTION_COMPLETE_METHOD, response)
-
-    def _connect(self, params: ConnectRequestParams):
+    # PUBLIC METHODS #######################################################
+    def connect(self, params: ConnectRequestParams):
         """
         Open a connection using the given connection information.
 
@@ -213,6 +144,87 @@ class ConnectionService:
         # The connection was not canceled, so add the connection and respond
         connection_info.add_connection(params.type, connection)
         return _build_connection_response(connection_info, params.type)
+
+    def disconnect(self, owner_uri: str, connection_type: Optional[ConnectionType]) -> bool:
+        """
+        Closes a single connection or all connections that belong to an owner URI based on the
+        connection type provided
+        :param owner_uri: URI of the connection to lookup and disconnect
+        :param connection_type: The connection type to disconnect, may be omitted to close all
+            connections for the owner URI
+        :return: True if the connections were successfully disconnected, false otherwise
+        """
+        # Look up the connection to disconnect
+        connection_info = self.owner_to_connection_map.get(owner_uri)
+        return self._close_connections(connection_info, connection_type) if connection_info is not None else False
+
+    def get_connection(self, owner_uri: str, connection_type: ConnectionType) -> Optional[psycopg2.extensions.connection]:
+        """
+        Get a psycopg2 connection for the given owner URI and connection type
+
+        :raises ValueError: If there is no connection associated with the provided URI
+        """
+        connection_info = self.owner_to_connection_map.get(owner_uri)
+        if connection_info is None:
+            raise ValueError('No connection associated with given owner URI')
+
+        if not connection_info.has_connection(connection_type):
+            self.connect(ConnectRequestParams(connection_info.details, owner_uri, connection_type))
+        return connection_info.get_connection(connection_type)
+
+    # REQUEST HANDLERS #####################################################
+    def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
+        """Kick off a connection in response to an incoming connection request"""
+        thread = threading.Thread(
+            target=self._connect_and_respond,
+            args=(request_context, params)
+        )
+        thread.daemon = True
+        thread.start()
+        self.owner_to_thread_map[params.owner_uri] = thread
+
+        request_context.send_response(True)
+
+    def handle_disconnect_request(self, request_context: RequestContext, params: DisconnectRequestParams) -> None:
+        """Close a connection in response to an incoming disconnection request"""
+        request_context.send_response(self.disconnect(params.owner_uri, params.type))
+
+    def handle_list_databases(self, request_context: RequestContext, params: ListDatabasesParams):
+        """List all databases on the server that the given URI has a connection to"""
+        connection = None
+        try:
+            connection = self.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+        except ValueError as err:
+            request_context.send_error(str(err))
+            return
+        query_results = None
+        try:
+            query_results = _execute_query(connection, 'SELECT datname FROM pg_database WHERE datistemplate = false;')
+        except psycopg2.ProgrammingError as err:
+            if self._service_provider is not None and self._service_provider.logger is not None:
+                self._service_provider.logger.exception('Error listing databases')
+            request_context.send_error(str(err))
+            return
+        database_names = [result[0] for result in query_results]
+        request_context.send_response(ListDatabasesResponse(database_names))
+
+    def handle_cancellation_request(self, request_context: RequestContext, params: CancelConnectParams) -> None:
+        """Cancel a connection attempt in response to a cancellation request"""
+        cancellation_key = (params.owner_uri, params.type)
+        with self._cancellation_lock:
+            connection_found = cancellation_key in self._cancellation_map
+            if connection_found:
+                self._cancellation_map[cancellation_key].cancel()
+        request_context.send_response(connection_found)
+
+    # IMPLEMENTATION DETAILS ###############################################
+    def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
+        """Open a connection and fire the connection complete notification"""
+        response = self.connect(params)
+
+        # Send the connection complete response unless the connection was canceled
+        if response is not None:
+            request_context.send_notification(CONNECTION_COMPLETE_METHOD, response)
 
     @staticmethod
     def _close_connections(connection_info: ConnectionInfo, connection_type=None):
@@ -290,7 +302,6 @@ def _execute_query(connection, query):
     """
     cursor = connection.cursor()
     cursor.execute(query)
-    query_results = None
     try:
         query_results = cursor.fetchall()
     except psycopg2.ProgrammingError:

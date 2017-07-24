@@ -136,7 +136,7 @@ class ObjectExplorerService(object):
 
         # Retrieve the connection service
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        connection_service._connect(connect_request)
+        connection_service.connect(connect_request)
         return details
 
     def _get_database(self, session_id: str) -> Database:
