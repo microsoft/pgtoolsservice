@@ -14,10 +14,11 @@ class Constraint(node.NodeObject, metaclass=ABCMeta):
     """Base class for constraints. Provides basic properties for all constraints"""
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'Constraint':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Constraint':
         """
         Creates a constraint from the results of a node query for any constraint
         :param server: Server that owns the constraint
+        :param parent: Parent object of the constraint. Should be Table/View
         :param kwargs: A row from a constraint nodes query
         Kwargs:
             name str: Name of the constraint
@@ -25,14 +26,14 @@ class Constraint(node.NodeObject, metaclass=ABCMeta):
             convalidated bool: ? TODO: Figure out what this value means
         :return: An instance of a constraint
         """
-        constraint = cls(server, kwargs['name'])
+        constraint = cls(server, parent, kwargs['name'])
         constraint._oid = kwargs['oid']
         constraint._convalidated = kwargs['convalidated']
 
         return constraint
 
-    def __init__(self, server: 's.Server', name: str):
-        super(Constraint, self).__init__(server, name)
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+        super(Constraint, self).__init__(server, parent, name)
 
         # Declare constraint-specific basic properties
         self._convalidated = None

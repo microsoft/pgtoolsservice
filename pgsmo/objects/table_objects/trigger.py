@@ -14,10 +14,11 @@ class Trigger(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'Trigger':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Trigger':
         """
         Creates a new Trigger object based on the results of a nodes query
         :param server: Server that owns the trigger
+        :param parent: Parent object of the Trigger. Should be Table/View
         :param kwargs: Parameters for the trigger
         Kwargs:
             oid int: Object ID of the trigger
@@ -25,7 +26,7 @@ class Trigger(node.NodeObject):
             is_enable_trigger bool: Whether or not the trigger is enabled
         :return: Instance of a Trigger
         """
-        trigger = cls(server, kwargs['name'])
+        trigger = cls(server, parent, kwargs['name'])
         trigger._oid = kwargs['oid']
 
         # Basic properties
@@ -33,13 +34,14 @@ class Trigger(node.NodeObject):
 
         return trigger
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
         """
         Initializes a new instance of a trigger
         :param server: Connection the trigger belongs to
+        :param parent: Parent object of the trigger. Should be Table/View
         :param name: Name of the trigger
         """
-        super(Trigger, self).__init__(server, name)
+        super(Trigger, self).__init__(server, parent, name)
 
         # Declare Trigger-specific basic properties
         self._is_enabled: Optional[bool] = None

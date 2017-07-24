@@ -14,10 +14,11 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     """Base class for Functions. Provides basic properties for all Function types"""
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'FunctionBase':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'FunctionBase':
         """
         Creates a Function instance from the results of a node query
         :param server: Server that owns the function
+        :param parent: Parent object of the function
         :param kwargs: A row from the node query
         Kwargs:
             oid int: Object ID of the function
@@ -27,7 +28,7 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
             description str: Description of the function
         :return: A Function instance
         """
-        func = cls(server, kwargs['name'])
+        func = cls(server, parent, kwargs['name'])
         func._oid = kwargs['oid']
         func._language_name = kwargs['lanname']
         func._owner = kwargs['funcowner']
@@ -35,8 +36,8 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
 
         return func
 
-    def __init__(self, server: 's.Server', name: str):
-        super(FunctionBase, self).__init__(server, name)
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+        super(FunctionBase, self).__init__(server, parent, name)
 
         # Declare the basic properties
         self._description: Optional[str] = None

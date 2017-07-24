@@ -13,23 +13,24 @@ class View(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'View':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'View':
         """
         Creates a view object from the results of a node query
         :param server: Server that owns the view
+        :param parent: Object that is the parent of the view. Should be a Schema
         :param kwargs: A row from the nodes query
         Kwargs:
             name str: Name of the view
             oid int: Object ID of the view
         :return: A view instance
         """
-        view = cls(server, kwargs['name'])
+        view = cls(server, parent, kwargs['name'])
         view._oid = kwargs['oid']
 
         return view
 
-    def __init__(self, server: 's.Server', name: str):
-        super(View, self).__init__(server, name)
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+        super(View, self).__init__(server, parent, name)
 
         # Declare child items
         self._columns: node.NodeCollection[Column] = self._register_child_collection(

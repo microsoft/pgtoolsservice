@@ -22,23 +22,24 @@ class Table(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'Table':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Table':
         """
         Creates a table instance from the results of a node query
         :param server: Server that owns the table
+        :param parent: Parent object of the table. Should be a Schema
         :param kwargs: A row from the node query
         Kwargs:
             oid int: Object ID of the table
             name str: Name of the table
         :return: A table instance
         """
-        table = cls(server, kwargs['name'])
+        table = cls(server, parent, kwargs['name'])
         table._oid = kwargs['oid']
 
         return table
 
-    def __init__(self, server: 's.Server', name: str):
-        super(Table, self).__init__(server, name)
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+        super(Table, self).__init__(server, parent, name)
 
         # Declare child items
         self._check_constraints: node.NodeCollection[CheckConstraint] = self._register_child_collection(

@@ -14,10 +14,11 @@ class Column(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_column')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'Column':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Column':
         """
         Creates a new Column object based on the the results from the column nodes query
         :param server: Server that owns the column
+        :param parent: Parent object of the column. Should be a Table/View
         :param kwargs: Optional parameters for the column
         Kwargs:
             name str: Name of the column
@@ -27,21 +28,22 @@ class Column(node.NodeObject):
             has_default_value bool: Whether or not the column has a default value constraint
         :return: Instance of the Column
         """
-        col = cls(server, kwargs['name'], kwargs['datatype'])
+        col = cls(server, parent, kwargs['name'], kwargs['datatype'])
         col._oid = kwargs['oid']
         col._has_default_value = kwargs['has_default_val']
         col._not_null = kwargs['not_null']
 
         return col
 
-    def __init__(self, server: 's.Server', name: str, datatype: str):
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str, datatype: str):
         """
         Initializes a new instance of a Column
         :param server: Connection to the server/database that this object will belong to
+        :param parent: Parent object of the column, should be a Table/View
         :param name: Name of the column
         :param datatype: Type of the column
         """
-        super(Column, self).__init__(server, name)
+        super(Column, self).__init__(server, parent, name)
         self._datatype: str = datatype
 
         # Declare the optional parameters

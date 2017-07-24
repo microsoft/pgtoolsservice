@@ -16,10 +16,11 @@ class Database(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Database':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
-        :param conn: Server that owns the database
+        :param server: Server that owns the database
+        :param parent: Parent object of the database. Should always be None
         :param kwargs: Optional parameters for the database. Values that can be provided:
         Kwargs:
             did int: Object ID of the database
@@ -30,7 +31,7 @@ class Database(node.NodeObject):
             owner int: Object ID of the user that owns the database
         :return: Instance of the Database
         """
-        db = cls(conn, kwargs['name'])
+        db = cls(server, parent, kwargs['name'])
         db._oid = kwargs['oid']
         db._tablespace = kwargs['spcname']
         db._allow_conn = kwargs['datallowconn']
@@ -39,12 +40,18 @@ class Database(node.NodeObject):
 
         return db
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
         """
         Initializes a new instance of a database
+        :param server: Server that owns the database.
+        :param parent: Parent object of the database. Should always be None
         :param name: Name of the database
         """
-        super(Database, self).__init__(server, name)
+        # Verify that the parent object is None
+        if parent is not None:
+            raise ValueError('Database parent must be none')
+
+        super(Database, self).__init__(server, parent, name)
         self._is_connected: bool = server.maintenance_db == name
 
         # Declare the optional parameters

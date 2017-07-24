@@ -14,27 +14,32 @@ class Tablespace(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'Tablespace':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Tablespace':
         """
         Creates a tablespace from a row of a nodes query result
         :param server: Server that owns the tablespace
+        :param parent: Parent object of the tablespace. Must be None
         :param kwargs: Row from a node query for a list of
         :return: A Tablespace instance
         """
-        tablespace = cls(server, kwargs['name'])
+        tablespace = cls(server, parent, kwargs['name'])
 
         tablespace._oid = kwargs['oid']
         tablespace._owner = kwargs['owner']
 
         return tablespace
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
         """
         Initializes internal state of a Role object
         :param server: Server that owns the tablespace
+        :param parent: Parent object of the tablespace. Must be None
         :param name: Name of the role
         """
-        super(Tablespace, self).__init__(server, name)
+        if parent is not None:
+            raise ValueError('Tablespace cannot have a parent node')
+
+        super(Tablespace, self).__init__(server, parent, name)
 
         # Declare basic properties
         self._owner: Optional[int] = None

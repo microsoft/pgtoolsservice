@@ -14,10 +14,11 @@ class Role(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'Role':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject,  **kwargs) -> 'Role':
         """
         Creates a Role object from the result of a role node query
         :param server: Server that owns the role
+        :param parent: Parent object of the role
         :param kwargs: Row from a role node query
         Kwargs:
             name str: Name of the role
@@ -26,7 +27,7 @@ class Role(NodeObject):
             rolsuper bool: Whether or not the role is a super user
         :return: A Role instance
         """
-        role = cls(server, kwargs['name'])
+        role = cls(server, parent, kwargs['name'])
 
         # Define values from node query
         role._oid = kwargs['oid']
@@ -35,13 +36,17 @@ class Role(NodeObject):
 
         return role
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
         """
         Initializes internal state of a Role object
         :param server: Server that owns the role
+        :param parent: Parent object of the role, should always be None
         :param name: Name of the role
         """
-        super(Role, self).__init__(server, name)
+        if parent is not None:
+            raise ValueError('Role object cannot have parent object')
+
+        super(Role, self).__init__(server, parent, name)
 
         # Declare basic properties
         self._can_login: Optional[bool] = None

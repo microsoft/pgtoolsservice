@@ -21,10 +21,11 @@ TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
 class Schema(node.NodeObject):
     @classmethod
-    def _from_node_query(cls, server: 's.Server', **kwargs) -> 'Schema':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Schema':
         """
         Creates an instance of a schema object from the results of a nodes query
         :param server: Server that owns the schema
+        :param parent: Parent object of the schema. Should be a Database
         :param kwargs: A row from the nodes query
         Kwargs:
             name str: Name of the schema
@@ -33,15 +34,15 @@ class Schema(node.NodeObject):
             has_usage bool: Whether or not the schema can be used(?)
         :return:
         """
-        schema = cls(server, kwargs['name'])
+        schema = cls(server, parent, kwargs['name'])
         schema._oid = kwargs['oid']
         schema._can_create = kwargs['can_create']
         schema._has_usage = kwargs['has_usage']
 
         return schema
 
-    def __init__(self, server: 's.Server', name: str):
-        super(Schema, self).__init__(server, name)
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+        super(Schema, self).__init__(server, parent, name)
 
         # Declare the optional parameters
         self._can_create: Optional[bool] = None
@@ -61,7 +62,7 @@ class Schema(node.NodeObject):
             lambda: Table.get_nodes_for_parent(self._server, self)
         )
         self._trigger_functions = self._register_child_collection(
-            lambda: TriggerFunction.get_nodes_for_parent(self._server, self._oid)
+            lambda: TriggerFunction.get_nodes_for_parent(self._server, self)
         )
         self._views: node.NodeCollection = self._register_child_collection(
             lambda: View.get_nodes_for_parent(self._server, self)
