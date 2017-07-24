@@ -38,7 +38,7 @@ class NodeObject(metaclass=ABCMeta):
         )
         cols, rows = root_server.connection.execute_dict(sql)
 
-        return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
+        return [cls._from_node_query(root_server, **row) for row in rows]
 
     @classmethod
     @abstractmethod

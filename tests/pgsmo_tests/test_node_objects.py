@@ -7,6 +7,7 @@ import unittest
 import unittest.mock as mock
 
 import pgsmo.objects.node_object as node
+from pgsmo.objects.server.server import Server
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
 
@@ -286,8 +287,8 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
 class TestNodeObject(unittest.TestCase):
     def test_init(self):
         # If: I create a node object
-        conn = ServerConnection(utils.MockConnection(None))
-        node_obj = MockNodeObject(conn, 'abc')
+        server = Server(utils.MockConnection(None))
+        node_obj = MockNodeObject(server, 'abc')
 
         # Then: The properties should be assigned as defined
         self.assertIsNone(node_obj._oid)
@@ -302,12 +303,12 @@ class TestNodeObject(unittest.TestCase):
         self.assertIsInstance(node_obj._full_properties, node.NodeLazyPropertyCollection)
         self.assertEqual(node_obj._full_properties._generator, node_obj._property_generator)
 
-        self.assertIs(node_obj._conn, conn)
+        utils.assert_threeway_equals(server, node_obj._server, node_obj.server)
 
     def test_get_nodes_for_parent_no_parent(self):
         # Setup:
         # ... Create a server connection that will return some mock node rows
-        mock_conn, mock_executor, mock_objs = _get_node_for_parents_mock_connection()
+        mock_server, mock_executor, mock_objs = _get_node_for_parents_mock_connection()
 
         # ... Create a mock _from_node generator (so we can validate calls)
         mock_obj = {}
@@ -325,19 +326,19 @@ class TestNodeObject(unittest.TestCase):
             with mock.patch(patch_template_path, mock_template_path, create=True):
                 with mock.patch(patch_from_node_query, mock_from_node, create=True):
                     # If: I ask for a collection of nodes *without a parent object*
-                    nodes = MockNodeObject.get_nodes_for_parent(mock_conn, None)
+                    nodes = MockNodeObject.get_nodes_for_parent(mock_server, None)
 
         # Then:
         # ... The template path and template renderer should have been called once
-        mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_conn.version)
+        mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_server.version)
         mock_render.assert_called_once_with('path', **{})     # Params to the renderer should be empty
 
         # ... A query should have been executed
         mock_executor.assert_called_once_with('SQL')
 
         # ... The _from_node should have been called twice with the results of the query
-        mock_from_node.assert_any_call(mock_conn, **mock_objs[0])
-        mock_from_node.assert_any_call(mock_conn, **mock_objs[1])
+        mock_from_node.assert_any_call(mock_server, **mock_objs[0])
+        mock_from_node.assert_any_call(mock_server, **mock_objs[1])
 
         # ... The output should be a list of objects the _from_node returned
         self.assertIsInstance(nodes, list)
@@ -346,7 +347,7 @@ class TestNodeObject(unittest.TestCase):
     def test_get_nodes_for_parent_with_parent(self):
         # Setup:
         # ... Create a server connection that will return some mock node rows
-        mock_conn, mock_executor, mock_objs = _get_node_for_parents_mock_connection()
+        mock_server, mock_executor, mock_objs = _get_node_for_parents_mock_connection()
 
         # ... Create a mock _from_node generator (so we can validate calls)
         mock_obj = {}
@@ -357,7 +358,7 @@ class TestNodeObject(unittest.TestCase):
         mock_template_path = mock.MagicMock(return_value="path")
 
         # ... Create an object that will be the parent of these nodes
-        parent = MockNodeObject(mock_conn, 'parent')
+        parent = MockNodeObject(mock_server, 'parent')
         parent._oid = 123
 
         # ... Patch the template rendering, and the _from_node_query
@@ -368,19 +369,19 @@ class TestNodeObject(unittest.TestCase):
             with mock.patch(patch_template_path, mock_template_path, create=True):
                 with mock.patch(patch_from_node_query, mock_from_node, create=True):
                     # If: I ask for a collection of nodes *with a parent object*
-                    nodes = MockNodeObject.get_nodes_for_parent(mock_conn, parent)
+                    nodes = MockNodeObject.get_nodes_for_parent(mock_server, parent)
 
         # Then:
         # ... The template path and template renderer should have been called once
-        mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_conn.version)
+        mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_server.version)
         mock_render.assert_called_once_with('path', **{'parent_id': 123})
 
         # ... A query should have been executed
         mock_executor.assert_called_once_with('SQL')
 
         # ... The _from_node should have been called twice with the results of the query
-        mock_from_node.assert_any_call(mock_conn, **mock_objs[0])
-        mock_from_node.assert_any_call(mock_conn, **mock_objs[1])
+        mock_from_node.assert_any_call(mock_server, **mock_objs[0])
+        mock_from_node.assert_any_call(mock_server, **mock_objs[1])
 
         # ... The output should be a list of objects the _from_node returned
         self.assertIsInstance(nodes, list)
@@ -388,8 +389,8 @@ class TestNodeObject(unittest.TestCase):
 
     def test_register_child_collection(self):
         # Setup: Create a node object
-        conn = ServerConnection(utils.MockConnection(None))
-        node_obj = MockNodeObject(conn, 'obj_name')
+        server = Server(utils.MockConnection(None))
+        node_obj = MockNodeObject(server, 'obj_name')
 
         # If: I register a child collection
         generator = mock.MagicMock()
@@ -414,8 +415,8 @@ class TestNodeObject(unittest.TestCase):
 
     def test_register_property_collection(self):
         # Setup: Create a node object
-        conn = ServerConnection(utils.MockConnection(None))
-        node_obj = MockNodeObject(conn, 'obj_name')
+        server = Server(utils.MockConnection(None))
+        node_obj = MockNodeObject(server, 'obj_name')
 
         # If: I register a property collection
         generator = mock.MagicMock()
@@ -441,8 +442,8 @@ class TestNodeObject(unittest.TestCase):
     def test_refresh(self):
         # Setup:
         # ... Create a node object
-        conn = ServerConnection(utils.MockConnection(None))
-        node_obj = MockNodeObject(conn, 'obj_name')
+        server = Server(utils.MockConnection(None))
+        node_obj = MockNodeObject(server, 'obj_name')
 
         # ... Add a couple child collections
         node_generator = mock.MagicMock()
@@ -474,14 +475,14 @@ class TestNodeObject(unittest.TestCase):
 
 class MockNodeObject(node.NodeObject):
     @classmethod
-    def _from_node_query(cls, conn: ServerConnection, **kwargs):
+    def _from_node_query(cls, root_server: Server, **kwargs):
         pass
 
-    def __init__(self, conn: ServerConnection, name: str):
-        super(MockNodeObject, self).__init__(conn, name)
+    def __init__(self, root_server: Server, name: str):
+        super(MockNodeObject, self).__init__(root_server, name)
 
     @classmethod
-    def _template_root(cls, conn: ServerConnection):
+    def _template_root(cls, root_server: Server):
         return 'template_root'
 
 
@@ -489,14 +490,14 @@ def _get_node_for_parents_mock_connection():
     # ... Create a mockup of a server connection with a mock executor
     mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
     mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
-    mock_conn = ServerConnection(utils.MockConnection(None, version="10101"))
-    mock_conn.execute_dict = mock_executor
+    mock_server = Server(utils.MockConnection(None, version="10101"))
+    mock_server.connection.execute_dict = mock_executor
 
-    return mock_conn, mock_executor, mock_objs
+    return mock_server, mock_executor, mock_objs
 
 
 def _get_mock_node_generator():
-    conn = ServerConnection(utils.MockConnection(None))
+    conn = utils.MockConnection(None)
 
     mock_object1 = MockNodeObject(conn, 'a')
     mock_object1._oid = 123

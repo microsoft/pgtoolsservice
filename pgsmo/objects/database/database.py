@@ -6,6 +6,7 @@
 from typing import Optional               # noqa
 
 import pgsmo.objects.node_object as node
+from pgsmo.objects.server import server as s
 from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
@@ -38,13 +39,13 @@ class Database(node.NodeObject):
 
         return db
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
+    def __init__(self, server: 's.Server', name: str):
         """
         Initializes a new instance of a database
         :param name: Name of the database
         """
-        super(Database, self).__init__(conn, name)
-        self._is_connected: bool = conn.dsn_parameters.get('dbname') == name
+        super(Database, self).__init__(server, name)
+        self._is_connected: bool = server.maintenance_db == name
 
         # Declare the optional parameters
         self._tablespace: Optional[str] = None
