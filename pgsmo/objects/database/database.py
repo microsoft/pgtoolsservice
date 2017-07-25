@@ -6,6 +6,7 @@
 from typing import Optional               # noqa
 
 import pgsmo.objects.node_object as node
+from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
@@ -15,10 +16,11 @@ class Database(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Database':
+    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
-        :param conn: Connection used to generate the db info query
+        :param server: Server that owns the database
+        :param parent: Parent object of the database. Should always be None
         :param kwargs: Optional parameters for the database. Values that can be provided:
         Kwargs:
             did int: Object ID of the database
@@ -29,7 +31,7 @@ class Database(node.NodeObject):
             owner int: Object ID of the user that owns the database
         :return: Instance of the Database
         """
-        db = cls(conn, kwargs['name'])
+        db = cls(server, kwargs['name'])
         db._oid = kwargs['oid']
         db._tablespace = kwargs['spcname']
         db._allow_conn = kwargs['datallowconn']
@@ -38,13 +40,14 @@ class Database(node.NodeObject):
 
         return db
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
+    def __init__(self, server: 's.Server', name: str):
         """
         Initializes a new instance of a database
+        :param server: Server that owns the database.
         :param name: Name of the database
         """
-        super(Database, self).__init__(conn, name)
-        self._is_connected: bool = conn.dsn_parameters.get('dbname') == name
+        super(Database, self).__init__(server, None, name)
+        self._is_connected: bool = server.maintenance_db == name
 
         # Declare the optional parameters
         self._tablespace: Optional[str] = None
@@ -55,7 +58,7 @@ class Database(node.NodeObject):
         # Declare the child items
         self._schemas: Optional[node.NodeCollection[Schema]] = None
         if self._is_connected:
-            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(conn, self))
+            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
 
     # PROPERTIES ###########################################################
     @property

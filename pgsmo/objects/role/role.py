@@ -6,7 +6,7 @@
 from typing import Optional
 
 from pgsmo.objects.node_object import NodeObject
-import pgsmo.utils.querying as querying
+from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
 
 
@@ -14,10 +14,11 @@ class Role(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Role':
+    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Role':
         """
         Creates a Role object from the result of a role node query
-        :param conn: Connection that executed the role node query
+        :param server: Server that owns the role
+        :param parent: Parent object of the role
         :param kwargs: Row from a role node query
         Kwargs:
             name str: Name of the role
@@ -26,7 +27,7 @@ class Role(NodeObject):
             rolsuper bool: Whether or not the role is a super user
         :return: A Role instance
         """
-        role = cls(conn, kwargs['name'])
+        role = cls(server, kwargs['name'])
 
         # Define values from node query
         role._oid = kwargs['oid']
@@ -35,13 +36,13 @@ class Role(NodeObject):
 
         return role
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
+    def __init__(self, server: 's.Server', name: str):
         """
         Initializes internal state of a Role object
-        :param conn: Connection that executed the role node query
+        :param server: Server that owns the role
         :param name: Name of the role
         """
-        super(Role, self).__init__(conn, name)
+        super(Role, self).__init__(server, None, name)
 
         # Declare basic properties
         self._can_login: Optional[bool] = None
@@ -61,5 +62,5 @@ class Role(NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
+    def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
