@@ -5,12 +5,12 @@
 
 from abc import ABCMeta, abstractmethod
 import os.path
-from typing import List, Mapping
+from typing import Callable, List, Mapping, Type
 import unittest
 import unittest.mock as mock
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.utils.querying import ServerConnection
+from pgsmo.objects.server.server import Server
 import tests.pgsmo_tests.utils as utils
 
 
@@ -24,7 +24,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def class_for_test(self):
+    def class_for_test(self) -> Type[NodeObject]:
         pass
 
     @property
@@ -37,6 +37,11 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         return {}
 
     @property
+    def init_lambda(self) -> Callable[[], NodeObject]:
+        class_ = self.class_for_test
+        return lambda server, parent, name: class_(server, parent, name)
+
+    @property
     @abstractmethod
     def node_query(self) -> dict:
         pass
@@ -45,35 +50,37 @@ class NodeObjectTestBase(metaclass=ABCMeta):
     def property_query(self) -> dict:
         return {}
 
+    @property
+    def parent_expected_to_be_none(self) -> bool:
+        return False
+
     # TEST METHODS #########################################################
     def test_from_node_query(self):
-        # If: I create a new object from a node row
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        obj = self.class_for_test._from_node_query(mock_conn, **self.node_query)
+        # If: I create a new object from a node row with the expected parent type
+        mock_server = Server(utils.MockConnection(None))
+        mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
+        obj = self.class_for_test._from_node_query(mock_server, mock_parent, **self.node_query)
 
         # Then:
         # ... The returned object must be an instance of the class
-        NodeObjectTestBase.test_case = unittest.TestCase('__init__')
-        NodeObjectTestBase.test_case.assertIsInstance(obj, NodeObject)
-        NodeObjectTestBase.test_case.assertIsInstance(obj, self.class_for_test)
+        NodeObjectTestBase.unittest.assertIsInstance(obj, NodeObject)
+        NodeObjectTestBase.unittest.assertIsInstance(obj, self.class_for_test)
 
         # ... Validate the node object properties
-        NodeObjectTestBase.test_case.assertIs(obj._conn, mock_conn)
-        NodeObjectTestBase.test_case.assertEqual(obj._oid, self.node_query['oid'])
-        NodeObjectTestBase.test_case.assertEqual(obj.oid, self.node_query['oid'])
-        NodeObjectTestBase.test_case.assertEqual(obj._name, self.node_query['name'])
-        NodeObjectTestBase.test_case.assertEqual(obj.name, self.node_query['name'])
+        utils.assert_threeway_equals(mock_server, obj._server, obj.server)
+        utils.assert_threeway_equals(self.node_query['oid'], obj._oid, obj.oid)
+        utils.assert_threeway_equals(self.node_query['name'], obj._name, obj.name)
 
         # ... Validate the basic properties
         for attr, value in self.basic_properties.items():
-            NodeObjectTestBase.test_case.assertEqual(getattr(obj, attr), value)
+            NodeObjectTestBase.unittest.assertEqual(getattr(obj, attr), value)
 
         # ... Validate the collections
         for attr in self.collections:
-            NodeObjectTestBase.test_case.assertIsInstance(getattr(obj, attr), NodeCollection)
+            NodeObjectTestBase.unittest.assertIsInstance(getattr(obj, attr), NodeCollection)
 
         # ... Call the validation function
-        self._custom_validate_from_node(obj, mock_conn)
+        self._custom_validate_from_node(obj, mock_server)
 
     def test_full_properties(self):
         # Setup:
@@ -82,35 +89,36 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         mock_exec_dict = mock.MagicMock(return_value=([], [self.property_query]))
 
         # ... Create an instance of the class
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        mock_conn.execute_dict = mock_exec_dict
+        mock_server = Server(utils.MockConnection(None))
+        mock_server.connection.execute_dict = mock_exec_dict
+        mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
         name = 'test'
-        class_ = self.class_for_test
-        obj = class_(mock_conn, name)
+        obj = self.init_lambda(mock_server, mock_parent, name)
 
-        self._full_properties_helper(obj, mock_conn)
+        self._full_properties_helper(obj, mock_server)
 
     def test_init(self):
         # If: I create an instance of the provided class
-        mock_conn = ServerConnection(utils.MockConnection(None))
+        mock_server = Server(utils.MockConnection(None))
+        mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
         name = 'test'
-        class_ = self.class_for_test
-        obj = class_(mock_conn, name)
+        obj = self.init_lambda(mock_server, mock_parent, name)
 
         # Then:
         # ... Perform the init validation
-        self._init_validation(obj, mock_conn, name)
+        # noinspection PyTypeChecker
+        self._init_validation(obj, mock_server, mock_parent, name)
 
-        # ... Call the custom validation funtion
-        self._custom_validate_init(obj, mock_conn)
+        # ... Call the custom validation function
+        self._custom_validate_init(obj, mock_server)
 
     def test_template_path_pg(self):
         # Setup: Create a mock connection that has PG as the server type
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        mock_conn._ServerConnection__server_type = mock.MagicMock(return_value='pg')
+        mock_server = Server(utils.MockConnection(None))
+        mock_server._ServerConnection__server_type = mock.MagicMock(return_value='pg')
 
         # If: I ask for the template path of the class
-        path = self.class_for_test._template_root(mock_conn)
+        path = self.class_for_test._template_root(mock_server)
 
         # Then: The path should be a string that exists
         NodeObjectTestBase.unittest.assertIsInstance(path, str)
@@ -119,14 +127,16 @@ class NodeObjectTestBase(metaclass=ABCMeta):
     # TODO: Add test for PPAS server type when we support it
 
     # CUSTOM TEST LOGIC ####################################################
-    def _custom_validate_from_node(self, obj, mock_conn: ServerConnection):
+    @staticmethod
+    def _custom_validate_from_node(obj, mock_server: Server):
         """
         Can be overridden in child classes to add custom validation to _from_node_query tests after
         the standard validation is performed.
         """
         pass
 
-    def _custom_validate_init(self, obj, mock_conn: ServerConnection):
+    @staticmethod
+    def _custom_validate_init(obj, mock_server: Server):
         """
         Can be overridden in child classes to add custom vaidation to __init__ tests after the
         standard validation is performed.
@@ -134,7 +144,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         pass
 
     # PROTECTED HELPERS ####################################################
-    def _init_validation(self, obj, mock_conn: ServerConnection, name: str):
+    def _init_validation(self, obj: NodeObject, mock_server: Server, mock_parent: NodeObject, name: str):
         """
         Default init validation that can be reused in overrides of test_init
         """
@@ -144,11 +154,10 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         test_case.assertIsInstance(obj, self.class_for_test)
 
         # ... The NodeObject basic properties should be set up appropriately
-        test_case.assertIs(obj._conn, mock_conn)
-        test_case.assertEqual(obj._name, name)
-        test_case.assertEqual(obj.name, name)
-        test_case.assertIsNone(obj._oid)
-        test_case.assertIsNone(obj.oid)
+        utils.assert_threeway_equals(mock_server, obj._server, obj.server)
+        utils.assert_threeway_equals(None, obj._oid, obj.oid)
+        utils.assert_threeway_equals(name, obj._name, obj.name)
+        utils.assert_threeway_equals(mock_parent, obj._parent, obj.parent)
 
         # ... The rest of the properties should be none
         for prop in self.basic_properties.keys():
@@ -161,13 +170,13 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # We won't test the full properties here because it'll run the generator
         # and setting up the mocking is annoying in this case
 
-    def _full_properties_helper(self, obj, mock_conn: ServerConnection):
+    def _full_properties_helper(self, obj, mock_server: Server):
         # If: I retrieve all the values in the full properties
         # Then:
         # ... The properties based on the properties query should be available
         for prop, key in self.full_properties.items():
-            NodeObjectTestBase.test_case.assertEqual(getattr(obj, prop), self.property_query[key])
+            NodeObjectTestBase.unittest.assertEqual(getattr(obj, prop), self.property_query[key])
 
         # ... The generator should have been called once
         if len(self.full_properties) > 1:
-            mock_conn.execute_dict.assert_called_once()
+            mock_server.connection.execute_dict.assert_called_once()
