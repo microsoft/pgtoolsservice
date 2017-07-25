@@ -33,7 +33,7 @@ class DisasterRecoveryService:
 
     def handle_backup_request(self, request_context: RequestContext, params: BackupParams) -> None:
         """Respond to disasterrecovery/backup requests by performing a backup"""
-        connection_info: ConnectionInfo = self._service_provider[constants.CONNECTION_SERVICE_NAME].get_connection_info(params.owner_uri)
+        connection_info: ConnectionInfo = self._service_provider[constants.CONNECTION_SERVICE_NAME].owner_to_connection_map[params.owner_uri]
         host = connection_info.details.options['host']
         database = connection_info.details.options['dbname']
         task = Task('Backup', f'Host: {host}, Database: {database}', constants.PROVIDER_NAME, host, database, request_context,  # TODO: Localize
