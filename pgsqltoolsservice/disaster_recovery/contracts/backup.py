@@ -13,7 +13,6 @@ import pgsqltoolsservice.utils as utils
 
 class DefaultDatabaseInfoParams:
     """Parameters for the requests that involve a database"""
-    # TODO: Move this probably
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
