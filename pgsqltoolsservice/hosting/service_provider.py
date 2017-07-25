@@ -25,7 +25,7 @@ class ServiceProvider:
     def server(self) -> JSONRPCServer:
         return self._server
 
-    def __getitem__(self, item: str) -> any:
+    def __getitem__(self, item: str):
         """
         If the service exists, it is returned by its lookup key
         :param item: Key for looking up the service

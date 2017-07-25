@@ -260,7 +260,13 @@ class JSONRPCServer:
             else:
                 # Use the complex deserializer
                 deserialized_object = handler.class_.from_dict(message.message_params)
-            handler.handler(request_context, deserialized_object)
+            try:
+                handler.handler(request_context, deserialized_object)
+            except Exception:
+                error_message = f'Unhandled exception while handling request method {message.message_method}'
+                request_context.send_error(error_message)
+                if self._logger is not None:
+                    self._logger.exception(error_message)
         elif message.message_type is JSONRPCMessageType.Notification:
             if self._logger is not None:
                 self._logger.info('Received notification method=%s', message.message_method)
@@ -281,7 +287,12 @@ class JSONRPCServer:
             else:
                 # Use the complex deserializer
                 deserialized_object = handler.class_.from_dict(message.message_params)
-            handler.handler(notification_context, deserialized_object)
+            try:
+                handler.handler(notification_context, deserialized_object)
+            except Exception:
+                error_message = f'Unhandled exception while handling notification method {message.message_method}'
+                if self._logger is not None:
+                    self._logger.exception(error_message)
         else:
             # If this happens we have a serious issue with the JSON RPC reader
             if self._logger is not None:

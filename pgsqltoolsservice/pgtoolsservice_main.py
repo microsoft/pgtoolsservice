@@ -13,6 +13,7 @@ import ptvsd
 from pgsqltoolsservice.admin import AdminService
 from pgsqltoolsservice.capabilities import CapabilitiesService
 from pgsqltoolsservice.connection import ConnectionService
+from pgsqltoolsservice.disaster_recovery.disaster_recovery_service import DisasterRecoveryService
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
 from pgsqltoolsservice.language import LanguageService
 from pgsqltoolsservice.metadata import MetadataService
@@ -68,6 +69,7 @@ if __name__ == '__main__':
         constants.ADMIN_SERVICE_NAME: AdminService,
         constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
         constants.CONNECTION_SERVICE_NAME: ConnectionService,
+        constants.DISASTER_RECOVERY_SERVICE_NAME: DisasterRecoveryService,
         constants.LANGUAGE_SERVICE_NAME: LanguageService,
         constants.METADATA_SERVICE_NAME: MetadataService,
         constants.OBJECT_EXPLORER_NAME: ObjectExplorerService,

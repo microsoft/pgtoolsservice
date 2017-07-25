@@ -94,6 +94,16 @@ class ConnectionService:
             self._connect(ConnectRequestParams(connection_info.details, owner_uri, connection_type))
         return connection_info.get_connection(connection_type)
 
+    def get_connection_info(self, owner_uri: str) -> ConnectionInfo:
+        """
+        Get the connection info for a given owner_uri
+
+        :raises ValueError: If there is no connection associated with the provided URI
+        """
+        if owner_uri not in self.owner_to_connection_map:
+            raise ValueError('No connection associated with given owner URI')
+        return self.owner_to_connection_map[owner_uri]
+
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Kick off a connection in response to an incoming connection request"""
