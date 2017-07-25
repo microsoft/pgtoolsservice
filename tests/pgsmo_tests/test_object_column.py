@@ -5,9 +5,10 @@
 
 import unittest
 
+from pgsmo.objects.server.server import Server
 from pgsmo.objects.table_objects.column import Column
-import tests.pgsmo_tests.utils as utils
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
+import tests.pgsmo_tests.utils as utils
 
 
 class TestColumn(NodeObjectTestBase, unittest.TestCase):
@@ -29,7 +30,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             'has_default_value': self.node_query['has_default_val'],
             '_has_default_value': self.node_query['has_default_val'],
             'not_null': self.node_query['not_null'],
-            '_not_null': self.node_query['not_null']
+            '_not_null': self.node_query['not_null'],
         }
 
     @property
@@ -37,27 +38,20 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
         return []
 
     @property
+    def init_lambda(self):
+        return lambda server, parent, name: Column(server, parent, name, 'character')
+
+    @property
     def node_query(self):
         return TestColumn.NODE_QUERY
 
-    # CONSTRUCTION TESTS ###################################################
-    def test_init(self):
-        """Tests __init__, overrides default test b/c column init takes additional param"""
-        # If: I create an instance of the Column class
-        name = 'column'
-        datatype = 'character'
-        mock_server = utils.Server(utils.MockConnection(None))
-        mock_parent = utils.MockNodeObject(mock_server, None, 'parent')
-        obj = Column(mock_server, mock_parent, name, datatype)
+    # CUSTOM VALIDATION ####################################################
+    @staticmethod
+    def _custom_validate_from_node(obj, mock_server: Server):
+        # Make sure that the datatype value is set
+        utils.assert_threeway_equals('character', obj._datatype, obj.datatype)
 
-        # Then:
-        # ... The standard object tests should pass
-        self._init_validation(obj, mock_server, mock_parent, name)
-
-        # ... The datatype property should be set
-        self.assertEqual(obj.datatype, datatype)
-        self.assertEqual(obj._datatype, datatype)
-
-    def test_full_properties(self):
-        """Tests properties, overrides default test b/c column init takes additional param"""
-        pass
+    @staticmethod
+    def _custom_validate_init(obj, mock_server: Server):
+        # Make sure that the datatype value is set
+        utils.assert_threeway_equals('character', obj._datatype, obj.datatype)

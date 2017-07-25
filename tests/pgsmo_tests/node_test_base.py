@@ -5,7 +5,7 @@
 
 from abc import ABCMeta, abstractmethod
 import os.path
-from typing import List, Mapping, Type
+from typing import Callable, List, Mapping, Type
 import unittest
 import unittest.mock as mock
 
@@ -37,6 +37,11 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         return {}
 
     @property
+    def init_lambda(self) -> Callable[[], NodeObject]:
+        class_ = self.class_for_test
+        return lambda server, parent, name: class_(server, parent, name)
+
+    @property
     @abstractmethod
     def node_query(self) -> dict:
         pass
@@ -50,7 +55,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         return False
 
     # TEST METHODS #########################################################
-    def test_from_node_query_valid_parent(self):
+    def test_from_node_query(self):
         # If: I create a new object from a node row with the expected parent type
         mock_server = Server(utils.MockConnection(None))
         mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
@@ -77,15 +82,6 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # ... Call the validation function
         self._custom_validate_from_node(obj, mock_server)
 
-    def test_from_node_query_invalid_parent(self):
-        # If: I create a new object from a node row with an unexpected parent type
-        mock_server = Server(utils.MockConnection(None))
-        mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if self.parent_expected_to_be_none else None
-
-        # Then: I should get an exception
-        with NodeObjectTestBase.unittest.assertRaises(ValueError):
-            obj = self.class_for_test._from_node_query(mock_server, mock_parent, **self.node_query)     # noqa
-
     def test_full_properties(self):
         # Setup:
         # NOTE: We're *not* mocking out the template rendering b/c this will verify that there's a template
@@ -97,8 +93,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         mock_server.connection.execute_dict = mock_exec_dict
         mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
         name = 'test'
-        class_ = self.class_for_test
-        obj = class_(mock_server, mock_parent, name)
+        obj = self.init_lambda(mock_server, mock_parent, name)
 
         self._full_properties_helper(obj, mock_server)
 
@@ -107,11 +102,11 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         mock_server = Server(utils.MockConnection(None))
         mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
         name = 'test'
-        class_ = self.class_for_test
-        obj = class_(mock_server, mock_parent, name)
+        obj = self.init_lambda(mock_server, mock_parent, name)
 
         # Then:
         # ... Perform the init validation
+        # noinspection PyTypeChecker
         self._init_validation(obj, mock_server, mock_parent, name)
 
         # ... Call the custom validation function

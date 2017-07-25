@@ -62,7 +62,7 @@ class Server:
     @property
     def in_recovery(self) -> Optional[bool]:
         """Whether or not the server is in recovery mode. If None, value was not loaded from server"""
-        return self._recovery_props['inrecovery']
+        return self._recovery_props.get('inrecovery')
 
     @property
     def maintenance_db(self) -> str:
@@ -87,7 +87,7 @@ class Server:
     @property
     def wal_paused(self) -> Optional[bool]:
         """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
-        return self._recovery_props['isreplaypaused']
+        return self._recovery_props.get('isreplaypaused')
 
     # -CHILD OBJECTS #######################################################
     @property
@@ -116,8 +116,3 @@ class Server:
         cols, rows = self._conn.execute_dict(recovery_check_sql)
         if len(rows) > 0:
             return rows[0]
-        else:
-            return {
-                'inrecovery': None,
-                'isreplaypaused': None
-            }

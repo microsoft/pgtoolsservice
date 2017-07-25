@@ -31,7 +31,7 @@ class Database(node.NodeObject):
             owner int: Object ID of the user that owns the database
         :return: Instance of the Database
         """
-        db = cls(server, parent, kwargs['name'])
+        db = cls(server, kwargs['name'])
         db._oid = kwargs['oid']
         db._tablespace = kwargs['spcname']
         db._allow_conn = kwargs['datallowconn']
@@ -40,18 +40,13 @@ class Database(node.NodeObject):
 
         return db
 
-    def __init__(self, server: 's.Server', parent: None, name: str):
+    def __init__(self, server: 's.Server', name: str):
         """
         Initializes a new instance of a database
         :param server: Server that owns the database.
-        :param parent: Parent object of the database. Should always be None
         :param name: Name of the database
         """
-        # Verify that the parent object is None
-        if parent is not None:
-            raise ValueError('Database parent must be none')
-
-        super(Database, self).__init__(server, parent, name)
+        super(Database, self).__init__(server, None, name)
         self._is_connected: bool = server.maintenance_db == name
 
         # Declare the optional parameters

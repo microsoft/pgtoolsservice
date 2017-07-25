@@ -22,24 +22,20 @@ class Tablespace(NodeObject):
         :param kwargs: Row from a node query for a list of
         :return: A Tablespace instance
         """
-        tablespace = cls(server, parent, kwargs['name'])
+        tablespace = cls(server, kwargs['name'])
 
         tablespace._oid = kwargs['oid']
         tablespace._owner = kwargs['owner']
 
         return tablespace
 
-    def __init__(self, server: 's.Server', parent: None, name: str):
+    def __init__(self, server: 's.Server', name: str):
         """
         Initializes internal state of a Role object
         :param server: Server that owns the tablespace
-        :param parent: Parent object of the tablespace. Must be None
         :param name: Name of the role
         """
-        if parent is not None:
-            raise ValueError('Tablespace cannot have a parent node')
-
-        super(Tablespace, self).__init__(server, parent, name)
+        super(Tablespace, self).__init__(server, None, name)
 
         # Declare basic properties
         self._owner: Optional[int] = None

@@ -39,8 +39,6 @@ class Table(node.NodeObject):
         return table
 
     def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
-        if parent is None:
-            raise ValueError('Table parent cannot be None')
         super(Table, self).__init__(server, parent, name)
 
         # Declare child items

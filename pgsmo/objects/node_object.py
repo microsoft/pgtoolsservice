@@ -112,17 +112,17 @@ class NodeObject(metaclass=ABCMeta):
 
     # PRIVATE HELPERS ######################################################
     def _property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
-        template_root = self._template_root(self._conn)
+        template_root = self._template_root(self._server)
 
         # Setup the parameters for the query
         template_vars = {'oid': self._oid}
 
         # Render and execute the template
         sql = templating.render_template(
-            templating.get_template_path(template_root, 'properties.sql', self._conn.version),
+            templating.get_template_path(template_root, 'properties.sql', self._server.version),
             **template_vars
         )
-        cols, rows = self._conn.execute_dict(sql)
+        cols, rows = self._server.connection.execute_dict(sql)
 
         if len(rows) > 0:
             return rows[0]
@@ -167,11 +167,14 @@ class NodeLazyPropertyCollection:
 
         return self._items[index]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         return self._items.__iter__()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._items)
+
+    def get(self, item: str, default: Optional[Union[str, int, bool]]=None) -> Optional[Union[str, int, bool]]:
+        return self._items.get(item, default)
 
     def items(self) -> ItemsView[str, Union[str, int, bool]]:
         return self._items.items()

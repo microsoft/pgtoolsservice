@@ -32,6 +32,10 @@ class TestTablespace(NodeObjectTestBase, unittest.TestCase):
         return []
 
     @property
+    def init_lambda(self):
+        return lambda server, parent, name: Tablespace(server, name)
+
+    @property
     def node_query(self) -> dict:
         return TestTablespace.NODE_ROW
 

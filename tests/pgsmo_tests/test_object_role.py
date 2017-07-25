@@ -35,6 +35,10 @@ class TestRole(NodeObjectTestBase, unittest.TestCase):
         return []
 
     @property
+    def init_lambda(self):
+        return lambda server, parent, name: Role(server, name)
+
+    @property
     def node_query(self) -> dict:
         return TestRole.NODE_ROW
 

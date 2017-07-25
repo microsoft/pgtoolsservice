@@ -35,8 +35,6 @@ class Rule(node.NodeObject):
         :param parent: Parent object of the rule. Should be Table/View
         :param name: Name of the rule
         """
-        if parent is None:
-            raise ValueError('Rule parent cannot be None')
         super(Rule, self).__init__(server, parent, name)
 
     # IMPLEMENTATION DETAILS ###############################################

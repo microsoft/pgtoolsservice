@@ -225,6 +225,39 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
         # Then: The item should be the expected item
         self.assertEqual(output, mock_objects['prop1'])
 
+    def test_get_no_match_no_default(self):
+        # Setup: Create a mock generator and property collection
+        generator, mock_objects = _get_mock_property_generator()
+        prop_collection = node.NodeLazyPropertyCollection(generator)
+
+        # If: I get an item that doesn't exist and do not provide a default
+        output = prop_collection.get('does_not_exist')
+
+        # Then: dict.get default should be returned
+        self.assertEqual(output, prop_collection._items.get('does_not_exist'))
+
+    def test_get_no_match_with_default(self):
+        # Setup: Create a mock generator and property collection
+        generator, mock_objects = _get_mock_property_generator()
+        prop_collection = node.NodeLazyPropertyCollection(generator)
+
+        # If: I get an item that doesn't exist and provide a default
+        output = prop_collection.get('does_not_exist', 'default')
+
+        # Then: dict.get default should be returned
+        self.assertEqual(output, prop_collection._items.get('does_not_exist', 'default'))
+
+    def test_get_has_match(self):
+        # Setup: Create a mock generator and property collection
+        generator, mock_objects = _get_mock_property_generator()
+        prop_collection = node.NodeLazyPropertyCollection(generator)
+
+        # If: I get an item that does exist
+        output = prop_collection.get('prop1')
+
+        # Then: dict.get default should be returned
+        self.assertEqual(output, prop_collection._items.get('prop1'))
+
     def test_iterator(self):
         # Setup: Create a mock generator and property collection
         generator, mock_results = _get_mock_property_generator()

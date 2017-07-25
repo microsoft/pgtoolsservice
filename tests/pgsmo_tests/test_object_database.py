@@ -47,6 +47,10 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         return []
 
     @property
+    def init_lambda(self):
+        return lambda server, parent, name: Database(server, name)
+
+    @property
     def node_query(self) -> dict:
         return TestDatabase.NODE_ROW
 
@@ -63,7 +67,7 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         # If: I create a DB that is connected
         name = 'dbname'
         mock_server = Server(utils.MockConnection(None, name=name))
-        db = Database(mock_server, None, name)
+        db = Database(mock_server, name)
 
         # Then:
         # ... Default validation should pass
@@ -80,7 +84,7 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         # If: I create a DB that is connected
         name = 'dbname'
         mock_conn = Server(utils.MockConnection(None, name='not_connected'))
-        db = Database(mock_conn, None, name)
+        db = Database(mock_conn, name)
 
         # Then:
         # ... Default validation should pass

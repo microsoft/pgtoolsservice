@@ -43,8 +43,6 @@ class Column(node.NodeObject):
         :param name: Name of the column
         :param datatype: Type of the column
         """
-        if parent is None:
-            raise ValueError('Column parent cannot be None')
         super(Column, self).__init__(server, parent, name)
         self._datatype: str = datatype
 

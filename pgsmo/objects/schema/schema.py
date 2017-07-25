@@ -42,8 +42,6 @@ class Schema(node.NodeObject):
         return schema
 
     def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
-        if parent is None:
-            raise ValueError('Schema parent cannot be None')
         super(Schema, self).__init__(server, parent, name)
 
         # Declare the optional parameters

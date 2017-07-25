@@ -30,8 +30,6 @@ class View(node.NodeObject):
         return view
 
     def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
-        if parent is None:
-            raise ValueError('View parent cannot be None')
         super(View, self).__init__(server, parent, name)
 
         # Declare child items

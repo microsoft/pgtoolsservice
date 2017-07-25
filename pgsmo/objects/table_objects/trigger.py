@@ -41,8 +41,6 @@ class Trigger(node.NodeObject):
         :param parent: Parent object of the trigger. Should be Table/View
         :param name: Name of the trigger
         """
-        if parent is None:
-            raise ValueError('Trigger parent cannot be None')
         super(Trigger, self).__init__(server, parent, name)
 
         # Declare Trigger-specific basic properties
