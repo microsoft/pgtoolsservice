@@ -5,6 +5,7 @@
 
 """Test the disaster recovery service"""
 
+import os.path
 import sys
 import unittest
 from unittest import mock
@@ -47,25 +48,25 @@ class TestDisasterRecoveryService(unittest.TestCase):
         old_platform = sys.platform
         try:
             # Override sys.argv[0] to simulate running the code directly from source
-            sys.argv[0] = '/Users/mairvine/code/pgsqltoolsservice/pgsqltoolsservice/pgtoolsservice_main.py'
+            sys.argv[0] = os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pgtoolsservice_main.py')
 
             # If I get the executable path on Mac
             sys.platform = 'darwin'
             path = disaster_recovery_service._get_pg_exe_path('pg_dump')
             # Then the path uses the mac directory and does not have a trailing .exe
-            self.assertEqual(path, '/Users/mairvine/code/pgsqltoolsservice/pgsqltoolsservice/pg_exes/mac/bin/pg_dump')
+            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/mac/bin/pg_dump'))
 
             # If I get the executable path on Linux
             sys.platform = 'linux'
             path = disaster_recovery_service._get_pg_exe_path('pg_dump')
             # Then the path uses the linux directory and does not have a trailing .exe
-            self.assertEqual(path, '/Users/mairvine/code/pgsqltoolsservice/pgsqltoolsservice/pg_exes/linux/bin/pg_dump')
+            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/linux/bin/pg_dump'))
 
             # If I get the executable path on Windows
             sys.platform = 'win32'
             path = disaster_recovery_service._get_pg_exe_path('pg_dump')
             # Then the path uses the win directory and does have a trailing .exe
-            self.assertEqual(path, '/Users/mairvine/code/pgsqltoolsservice/pgsqltoolsservice/pg_exes/win/bin/pg_dump.exe')
+            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/win/bin/pg_dump.exe'))
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
@@ -77,25 +78,25 @@ class TestDisasterRecoveryService(unittest.TestCase):
         old_platform = sys.platform
         try:
             # Override sys.argv[0] to simulate running the code from a cx_freeze build
-            sys.argv[0] = '/Users/mairvine/code/pgsqltoolsservice/build/pgtoolsservice/pgtoolsservice_main'
+            sys.argv[0] = os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pgtoolsservice_main')
 
             # If I get the executable path on Mac
             sys.platform = 'darwin'
             path = disaster_recovery_service._get_pg_exe_path('pg_dump')
             # Then the path uses the mac directory and does not have a trailing .exe
-            self.assertEqual(path, '/Users/mairvine/code/pgsqltoolsservice/build/pgtoolsservice/pg_exes/mac/bin/pg_dump')
+            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/mac/bin/pg_dump'))
 
             # If I get the executable path on Linux
             sys.platform = 'linux'
             path = disaster_recovery_service._get_pg_exe_path('pg_dump')
             # Then the path uses the linux directory and does not have a trailing .exe
-            self.assertEqual(path, '/Users/mairvine/code/pgsqltoolsservice/build/pgtoolsservice/pg_exes/linux/bin/pg_dump')
+            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/linux/bin/pg_dump'))
 
             # If I get the executable path on Windows
             sys.platform = 'win32'
             path = disaster_recovery_service._get_pg_exe_path('pg_dump')
             # Then the path uses the win directory and does have a trailing .exe
-            self.assertEqual(path, '/Users/mairvine/code/pgsqltoolsservice/build/pgtoolsservice/pg_exes/win/bin/pg_dump.exe')
+            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/win/bin/pg_dump.exe'))
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform

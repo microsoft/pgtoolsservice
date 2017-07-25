@@ -102,4 +102,3 @@ class TestTasks(unittest.TestCase):
         # Then the task's status is properly marked as failed and the status message shows the error
         self.assertIs(task.status, TaskStatus.FAILED)
         self.assertEqual(task.status_message, exception_message)
-
