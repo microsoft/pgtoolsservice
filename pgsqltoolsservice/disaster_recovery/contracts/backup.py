@@ -21,12 +21,6 @@ class DefaultDatabaseInfoParams:
         self.owner_uri: str = None
 
 
-class BackupConfigInfo:
-    """Provides database info for backup"""
-    def __init__(self):
-        pass
-
-
 class BackupParams:
     """Parameters for a backup request"""
     @classmethod
