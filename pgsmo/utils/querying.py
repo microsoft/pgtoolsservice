@@ -39,11 +39,6 @@ class ServerConnection:
         return self._dsn_parameters
 
     @property
-    def server_type(self) -> str:
-        """Server type for distinguishing between standard PG and PG supersets"""
-        return 'pg'                 # TODO: Determine if a server is PPAS or PG
-
-    @property
     def version(self) -> Tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
         return self._version

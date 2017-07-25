@@ -6,7 +6,7 @@
 from typing import Optional
 
 import pgsmo.objects.node_object as node
-import pgsmo.utils.querying as querying
+from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
@@ -14,10 +14,11 @@ class Trigger(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger')
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Trigger':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Trigger':
         """
         Creates a new Trigger object based on the results of a nodes query
-        :param conn: Connection used to execute the nodes query
+        :param server: Server that owns the trigger
+        :param parent: Parent object of the Trigger. Should be Table/View
         :param kwargs: Parameters for the trigger
         Kwargs:
             oid int: Object ID of the trigger
@@ -25,7 +26,7 @@ class Trigger(node.NodeObject):
             is_enable_trigger bool: Whether or not the trigger is enabled
         :return: Instance of a Trigger
         """
-        trigger = cls(conn, kwargs['name'])
+        trigger = cls(server, parent, kwargs['name'])
         trigger._oid = kwargs['oid']
 
         # Basic properties
@@ -33,13 +34,14 @@ class Trigger(node.NodeObject):
 
         return trigger
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
         """
         Initializes a new instance of a trigger
-        :param conn: Connection the trigger belongs to
+        :param server: Connection the trigger belongs to
+        :param parent: Parent object of the trigger. Should be Table/View
         :param name: Name of the trigger
         """
-        super(Trigger, self).__init__(conn, name)
+        super(Trigger, self).__init__(server, parent, name)
 
         # Declare Trigger-specific basic properties
         self._is_enabled: Optional[bool] = None
@@ -53,5 +55,5 @@ class Trigger(node.NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
+    def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT

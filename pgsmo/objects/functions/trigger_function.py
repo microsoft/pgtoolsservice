@@ -6,7 +6,7 @@
 import os.path as path
 
 from pgsmo.objects.functions.function_base import FunctionBase
-import pgsmo.utils.querying as querying
+from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
 
 
@@ -14,5 +14,5 @@ class TriggerFunction(FunctionBase):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger_funcs')
 
     @classmethod
-    def _template_root(cls, conn: querying.ServerConnection):
-        return path.join(cls.TEMPLATE_ROOT, conn.server_type)
+    def _template_root(cls, server: 's.Server'):
+        return path.join(cls.TEMPLATE_ROOT, server.server_type)

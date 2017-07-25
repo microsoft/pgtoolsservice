@@ -24,7 +24,6 @@ class TestServerConnection(unittest.TestCase):
         expected_dict = {'dbname': 'postgres', 'host': 'localhost', 'port': '25565'}
         self.assertDictEqual(server_conn._dsn_parameters, expected_dict)
         self.assertDictEqual(server_conn.dsn_parameters, expected_dict)
-        self.assertEqual('pg', server_conn.server_type)
         self.assertTupleEqual((10, 2, 16), server_conn.version)
 
     def test_execute_dict_success(self):
