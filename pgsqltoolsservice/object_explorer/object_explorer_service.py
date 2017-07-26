@@ -84,7 +84,18 @@ class ObjectExplorerService(object):
 
     def _handle_close_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle close Object Explorer" sessions request"""
-        request_context.send_response(True)
+        try:
+            utils.validate.is_not_none('params', params)
+
+            # Generate the session ID and try to remove the session
+            session_id = self._generate_session_uri(params)
+            session = self._session_map.pop(session_id, None)
+
+            request_context.send_response(session is not None)
+        except Exception as e:
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.error('Failed to close OE session: {e}')
+            request_context.send_response(False)
 
     def _handle_refresh_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle refresh Object Explorer create node request"""
