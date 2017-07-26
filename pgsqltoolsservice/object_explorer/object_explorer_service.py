@@ -24,6 +24,18 @@ from pgsmo.objects.server.server import Server
 from pgsmo.objects.database.database import Database
 
 
+class ObjectExplorerSession:
+    def __init__(self, session_id: str, params: ConnectionDetails):
+        self.connection: Optional[ppg2_connection] = None
+        self.connection_details: ConnectionDetails = params
+        self.id: str = session_id
+        self.is_ready: bool = False
+        self.server: Optional[Server] = None
+
+        self.init_task: Optional[threading.Thread] = None
+        self.expand_task: Optional[threading.Thread] = None
+
+
 class ObjectExplorerService(object):
     """Service for browsing database objects"""
 
@@ -259,15 +271,3 @@ class ObjectExplorerService(object):
         db = quote(params.database_name)
 
         return f'objectexplorer://{user}@{host}:{db}/'
-
-
-class ObjectExplorerSession:
-    def __init__(self, session_id: str, params: ConnectionDetails):
-        self.connection: Optional[ppg2_connection] = None
-        self.connection_details: ConnectionDetails = params
-        self.id: str = session_id
-        self.is_ready: bool = False
-        self.server: Optional[Server] = None
-
-        self.init_task: Optional[threading.Thread] = None
-        self.expand_task: Optional[threading.Thread] = None

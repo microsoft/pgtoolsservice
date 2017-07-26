@@ -4,8 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 """Module for testing the object explorer service"""
+import re
 import unittest
 import unittest.mock as mock
+import urllib.parse as url_parse
 import tests.utils as utils
 
 from pgsqltoolsservice.connection import ConnectionService
@@ -18,10 +20,73 @@ from pgsqltoolsservice.utils import constants
 
 class TestObjectExplorer(unittest.TestCase):
     """Methods for testing the object explorer service"""
-
     TEST_HOST = 'testhost'
     TEST_DBNAME = 'testdb'
     TEST_USER = 'testuser'
+
+    def test_init(self) -> None:
+        # If: I create a new OE service
+        oe = ObjectExplorerService()
+
+        # Then:
+        # ... The service should have its internal state initialized
+        self.assertIsNone(oe._service_provider)
+        self.assertDictEqual(oe._session_map, {})
+        self.assertIsNotNone(oe._session_lock)
+
+    def test_register(self):
+        # Setup:
+        # ... Create a mock service provider
+        server: JSONRPCServer = JSONRPCServer(None, None)
+        server.set_notification_handler = mock.MagicMock()
+        server.set_request_handler = mock.MagicMock()
+        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
+
+        # If: I register a OE service
+        oe = ObjectExplorerService()
+        oe.register(sp)
+
+        # Then:
+        # ... The service should have registered its request handlers
+        server.set_request_handler.assert_called()
+        server.set_notification_handler.assert_not_called()
+
+        # ... The service provider should have been stored
+        self.assertIs(oe._service_provider, sp)
+
+    def test_generate_uri_missing_params(self):
+        # Setup: Create the parameter sets that will be missing a param each
+        params = [
+            ConnectionDetails.from_data(None, self.TEST_DBNAME, self.TEST_USER, {}),
+            ConnectionDetails.from_data(self.TEST_HOST, None, self.TEST_USER, {}),
+            ConnectionDetails.from_data(self.TEST_HOST, self.TEST_DBNAME, None, {})
+        ]
+
+        for param_set in params:
+            # If: I generate a session URI from params that are missing a value
+            # Then: I should get an exception
+            with self.assertRaises(Exception):
+                ObjectExplorerService._generate_session_uri(param_set)
+
+    def test_generate_uri_valid_params(self):
+        # If: I generate a session URI from a valid connection details object
+        param = ConnectionDetails.from_data(self.TEST_HOST, self.TEST_DBNAME, self.TEST_USER, {})
+        output = ObjectExplorerService._generate_session_uri(param)
+
+        # Then: The output should be a properly formed URI
+        parse_result = url_parse.urlparse(output)
+        self.assertEqual(parse_result.scheme, 'objectexplorer')
+        self.assertTrue(parse_result.netloc)
+
+        re_match = re.match('(?P<username>\w+)@(?P<host>\w+):(?P<db_name>\w+)', parse_result.netloc)
+        self.assertIsNotNone(re_match)
+        self.assertEqual(re_match.group('username'), self.TEST_USER)
+        self.assertEqual(re_match.group('host'), self.TEST_HOST)
+        self.assertEqual(re_match.group('db_name'), self.TEST_DBNAME)
+
+    # OLD STUFF
+
+
 
     def setUp(self) -> None:
         """Handle common initialization tasks for Object Explorer tests"""
@@ -39,10 +104,6 @@ class TestObjectExplorer(unittest.TestCase):
             constants.CONNECTION_SERVICE_NAME: self.mock_connection_service,
             constants.OBJECT_EXPLORER_NAME: self.oe_service}
         self.service_provider.initialize()
-
-    def _get_test_root_path_uri(self) -> str:
-        """Returns the Object Explorer test root path URI"""
-        return TestObjectExplorer.TEST_HOST + '/' + TestObjectExplorer.TEST_DBNAME
 
     def test_oe_create_session_with_valid_params(self) -> str:
         """Test creating an Object Explorer session"""
@@ -97,7 +158,3 @@ class TestObjectExplorer(unittest.TestCase):
         params: ConnectionDetails = ConnectionDetails()
         self.oe_service._handle_close_session_request(self.context, params)
         self.context.send_response.asssert_called_once()
-
-
-if __name__ == '__main__':
-    unittest.main()
