@@ -107,11 +107,12 @@ class ObjectExplorerService(object):
 
         # the below dispatch switch block needs to be replaced with some type of look map so it can
         # easily scale to all the different types of items that may be in the OE tree (TODO: karlb 7/5/2017)
-        nodes: List[NodeInfo] = None
         if params.node_path == root_path + '/Views':
             nodes = self._get_view_nodes(params.session_id, root_path)
         elif params.node_path == root_path + '/Tables':
             nodes = self._get_table_nodes(params.session_id, root_path)
+        elif params.node_path == root_path + '/Functions':
+            nodes = self._get_function_nodes(params.session_id, root_path)
         else:
             nodes = self._get_folder_nodes(root_path)
 
@@ -155,6 +156,12 @@ class ObjectExplorerService(object):
         return database
 
     def _get_folder_nodes(self, root_path: str) -> List[NodeInfo]:
+        function_node = NodeInfo()
+        function_node.label = 'Functions'
+        function_node.isLeaf = False
+        function_node.node_path = root_path + '/Functions'
+        function_node.node_type = 'Folder'
+
         table_node = NodeInfo()
         table_node.label = 'Tables'
         table_node.isLeaf = False
@@ -166,7 +173,28 @@ class ObjectExplorerService(object):
         view_node.isLeaf = False
         view_node.node_path = root_path + '/Views'
         view_node.node_type = 'Folder'
-        return [table_node, view_node]
+
+        return [function_node, table_node, view_node]
+
+    def _get_function_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
+        database = self._get_database(session_id)
+        node_list: List[NodeInfo] = []
+        for schema in database.schemas:
+            for func in schema.functions:
+                metadata = ObjectMetadata()
+                metadata.metadata_type = 0
+                metadata.metadata_type_name = 'Function'
+                metadata.name = func.name
+                metadata.schema = schema.name
+
+                node = NodeInfo()
+                node.label = f'{schema.name}.{func.name}'
+                node.isLeaf = True
+                node.node_path = f'{root_path}/Functions/{node.label}'
+                node.node_type = 'Function'
+                node.metadata = metadata
+                node_list.append(node)
+        return node_list
 
     def _get_view_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
         database = self._get_database(session_id)
