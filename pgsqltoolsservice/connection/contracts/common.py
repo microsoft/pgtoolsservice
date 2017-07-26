@@ -26,8 +26,8 @@ class ConnectionDetails:
     def from_data(cls, server_name: str, database_name: str, user_name: str, opts: dict):
         obj = cls()
         obj.user_name = user_name
-        obj.database_name = database_name,
-        obj.server_name = server_name,
+        obj.database_name = database_name
+        obj.server_name = server_name
         obj.options = opts
         return obj
 
