@@ -66,7 +66,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             sys.platform = 'win32'
             path = disaster_recovery_service._get_pg_exe_path('pg_dump')
             # Then the path uses the win directory and does have a trailing .exe
-            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/win/bin/pg_dump.exe'))
+            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/win/pg_dump.exe'))
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
@@ -96,7 +96,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             sys.platform = 'win32'
             path = disaster_recovery_service._get_pg_exe_path('pg_dump')
             # Then the path uses the win directory and does have a trailing .exe
-            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/win/bin/pg_dump.exe'))
+            self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/win/pg_dump.exe'))
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform

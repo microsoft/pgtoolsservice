@@ -73,7 +73,7 @@ def _get_pg_exe_path(exe_name: str) -> str:
     base_location = os.path.join(os.path.dirname(sys.argv[0]), 'pg_exes')
     platform = sys.platform
     if platform == 'win32':
-        return os.path.join(base_location, 'win', 'bin', exe_name + '.exe')
+        return os.path.join(base_location, 'win', exe_name + '.exe')
     elif platform == 'darwin':
         return os.path.join(base_location, 'mac', 'bin', exe_name)
     else:
