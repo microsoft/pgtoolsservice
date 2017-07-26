@@ -55,8 +55,9 @@ class ObjectExplorerService(object):
 
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params)
-            session = ObjectExplorerSession()
+            session = ObjectExplorerSession(session_id, params)
 
+            # Add the session to session map in a lock to prevent race conditions between check and add
             with self._session_lock:
                 if session_id in self._session_map:
                     # TODO: Localize
@@ -70,53 +71,16 @@ class ObjectExplorerService(object):
 
         except Exception as e:
             request_context.send_error(e)
+            return
 
-        # Step 2: Connect the session and lookup the root node
-
-
-
-        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        connect_params = ConnectRequestParams(params, session_id, ConnectionType.OBJECT_EXLPORER)
-        connection_details = conn_service.connect(connect_params)
-
-        if connection_details is None:
-            # TODO: Localize
-            raise RuntimeError('Failed to connect for object explorer instance')
-
-        connection = conn_service.get_connection(session_id, ConnectionType.OBJECT_EXLPORER)
-
-
-
-
-        # generate a session id and create a dedicated Object Explorer connection
-        session_id = self._generate_uri(params)
-        connection_details = self._create_oe_connection(params, session_id)
-        self._session_map[session_id] = connection_details
-
-        # create database node metadata object
-        dbname = params.options['dbname']
-        metadata = ObjectMetadata()
-        metadata.metadata_type = 0
-        metadata.metadata_type_name = 'Database'
-        metadata.name = dbname
-        metadata.schema = None
-
-        # create database tree node
-        node = NodeInfo()
-        node.label = dbname
-        node.isLeaf = False
-        node.node_path = self._get_root_path(connection_details)
-        node.node_type = 'Database'
-        node.metadata = metadata
-
-        # create response notification notification
-        response = SessionCreatedParameters()
-        response.session_id = session_id
-        response.root_node = node
-
-        # send request return code and session created notification
-        request_context.send_response(CreateSessionResponse(session_id))
-        request_context.send_notification(SESSION_CREATED_METHOD, response)
+        # Step 2: Connect the session and lookup the root node asynchronously
+        try:
+            session.init_task = threading.Thread(target=self._initialize_session(request_context, session))
+            session.init_task.setDaemon(False)
+            session.init_task.start()
+        except Exception as e:
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.error(f'Failed to start OE init task: {e}')
 
     def _handle_close_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle close Object Explorer" sessions request"""
@@ -150,9 +114,6 @@ class ObjectExplorerService(object):
 
         request_context.send_response(True)
         request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
-
-    def _are_create_session_params_valid(self, params: ConnectionDetails) -> bool:
-        return params is not None and params.options is not None and params.options['host'] is not None
 
     def _get_root_path(self, connection_details: ConnectionDetails) -> str:
         return connection_details.server_name[0] + '/' + connection_details.database_name[0]
@@ -227,7 +188,7 @@ class ObjectExplorerService(object):
         return node_list
 
     # PRIVATE HELPERS ######################################################
-    def initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
+    def _initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
 
         try:
@@ -235,7 +196,32 @@ class ObjectExplorerService(object):
             connect_request = ConnectRequestParams(session.id, session.connection_details, ConnectionType.OBJECT_EXLPORER)
             connect_result = conn_service.connect(connect_request)
             if connect_result is None:
-                request_context.send_notification()
+                raise RuntimeError('Connection was cancelled during connect')   # TODO Localize
+            if connect_result.error_message is not None:
+                raise RuntimeError(connect_result.error_message)
+
+            # Step 2: Store the connection in the session
+            connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
+            session.connection = connection
+
+            # Step 3: Create the PGSMO Server object for the session and create the root node for the server
+            session.server = Server(connection)
+            metadata = ObjectMetadata.from_data(0, 'Database', session.connection_details.database_name)
+            node = NodeInfo()
+            node.label = session.connection_details.database_name
+            node.isLeaf = False
+            node.node_path = session.id
+            node.node_type = 'Database'
+            node.metadata = metadata
+
+            # Step 4: Send the completion notification to the server
+            response = SessionCreatedParameters()
+            response.success = True
+            response.session_id = session.id
+            response.root_node = node
+            response.error_message = None
+            request_context.send_notification(SESSION_CREATED_METHOD, response)
+
         except Exception as e:
             # Return a notification that an error occurred
             response = SessionCreatedParameters()
@@ -243,14 +229,11 @@ class ObjectExplorerService(object):
             response.session_id = session.id
             response.root_node = None
             response.error_message = f'Failed to initialize object explorer session: {e}'    # TODO Localize
-
             request_context.send_notification(SESSION_CREATED_METHOD, response)
 
             # Attempt to clean up the connection
             if session.connection is not None:
-                conn_service.disconnect
-
-
+                conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
 
     @staticmethod
     def _generate_session_uri(params: ConnectionDetails) -> str:
@@ -273,5 +256,7 @@ class ObjectExplorerSession:
         self.connection_details: ConnectionDetails = params
         self.id: str = session_id
         self.is_ready: bool = False
-        self.create_task: Optional[threading.Thread] = None
+        self.server: Optional[Server] = None
+
+        self.init_task: Optional[threading.Thread] = None
         self.expand_task: Optional[threading.Thread] = None
