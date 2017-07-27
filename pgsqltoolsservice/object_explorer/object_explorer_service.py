@@ -148,12 +148,7 @@ class ObjectExplorerService(object):
         connection_details = self._session_map[session_id]
         dbname = connection_details.database_name[0]
         server = Server(conn)
-        database = None
-        for cur_db in server.databases:
-            if cur_db.name == dbname:
-                database = cur_db
-
-        return database
+        return server.databases[dbname]
 
     def _get_folder_nodes(self, root_path: str) -> List[NodeInfo]:
         function_node = NodeInfo()

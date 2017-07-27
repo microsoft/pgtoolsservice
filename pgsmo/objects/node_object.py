@@ -27,7 +27,7 @@ class NodeObject(metaclass=ABCMeta):
         template_root = cls._template_root(conn)
 
         # Only include a parent ID if a parent was provided
-        template_vars = {}
+        template_vars = {}      # TODO: Allow configuring show/hide system objects
         if parent_obj is not None:
             template_vars['parent_id'] = parent_obj._oid
 
