@@ -82,17 +82,19 @@ class ObjectExplorerService(object):
             request_context.send_response(response)
 
         except Exception as e:
-            request_context.send_error(e)
+            request_context.send_error(str(e))
             return
 
         # Step 2: Connect the session and lookup the root node asynchronously
         try:
-            session.init_task = threading.Thread(target=self._initialize_session(request_context, session))
+            session.init_task = threading.Thread(target=self._initialize_session, args=(request_context, session))
             session.init_task.setDaemon(False)
             session.init_task.start()
         except Exception as e:
+            message = f'Failed to start OE init task: {str(e)}'     # TODO: Localize
             if self._service_provider.logger is not None:
-                self._service_provider.logger.error(f'Failed to start OE init task: {e}')
+                self._service_provider.logger.error(message)
+            self._session_created_error(request_context, session, message)
 
     def _handle_close_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle close Object Explorer" sessions request"""
@@ -106,7 +108,7 @@ class ObjectExplorerService(object):
             request_context.send_response(session is not None)
         except Exception as e:
             if self._service_provider.logger is not None:
-                self._service_provider.logger.error('Failed to close OE session: {e}')
+                self._service_provider.logger.error(f'Failed to close OE session: {str(e)}')
             request_context.send_response(False)
 
     def _handle_refresh_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
@@ -216,7 +218,11 @@ class ObjectExplorerService(object):
 
         try:
             # Step 1: Connect with the provided connection details
-            connect_request = ConnectRequestParams(session.id, session.connection_details, ConnectionType.OBJECT_EXLPORER)
+            connect_request = ConnectRequestParams(
+                session.id,
+                session.connection_details,
+                ConnectionType.OBJECT_EXLPORER
+            )
             connect_result = conn_service.connect(connect_request)
             if connect_result is None:
                 raise RuntimeError('Connection was cancelled during connect')   # TODO Localize
@@ -232,7 +238,7 @@ class ObjectExplorerService(object):
             metadata = ObjectMetadata.from_data(0, 'Database', session.connection_details.database_name)
             node = NodeInfo()
             node.label = session.connection_details.database_name
-            node.isLeaf = False
+            node.is_leaf = False
             node.node_path = session.id
             node.node_type = 'Database'
             node.metadata = metadata
@@ -245,18 +251,29 @@ class ObjectExplorerService(object):
             response.error_message = None
             request_context.send_notification(SESSION_CREATED_METHOD, response)
 
+            # Mark the session as complete
+            session.is_ready = True
+
         except Exception as e:
             # Return a notification that an error occurred
-            response = SessionCreatedParameters()
-            response.success = False
-            response.session_id = session.id
-            response.root_node = None
-            response.error_message = f'Failed to initialize object explorer session: {e}'    # TODO Localize
-            request_context.send_notification(SESSION_CREATED_METHOD, response)
+            message = f'Failed to initialize object explorer session: {str(e)}'  # TODO Localize
+            self._session_created_error(request_context, session, message)
 
             # Attempt to clean up the connection
             if session.connection is not None:
                 conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+
+    def _session_created_error(self, request_context: RequestContext, session: ObjectExplorerSession, message: str):
+        # Create error notification
+        response = SessionCreatedParameters()
+        response.success = False
+        response.session_id = session.id
+        response.root_node = None
+        response.error_message = message
+        request_context.send_notification(SESSION_CREATED_METHOD, response)
+
+        # Clean up the session from the session map
+        self._session_map.pop(session.id)
 
     @staticmethod
     def _generate_session_uri(params: ConnectionDetails) -> str:

@@ -61,6 +61,7 @@ class RequestFlowValidator:
         self.request_context.send_response = mock.MagicMock(side_effect=self._received_response_callback)
         self.request_context.send_error = mock.MagicMock(side_effect=self._received_error_callback)
 
+    # METHODS ##############################################################
     def add_expected_error(self, expected_type: type, validation: TValidation=None) -> 'RequestFlowValidator':
         expected_error = ExpectedMessage(JSONRPCMessageType.ResponseError, None, expected_type, validation)
         self._expected_messages.append(expected_error)
@@ -83,7 +84,7 @@ class RequestFlowValidator:
 
     def validate(self):
         # Iterate over the two lists in sync to to see if they are the same
-        for i in range(0, max([len(self._expected_messages), self._received_messages])):
+        for i in range(0, max([len(self._expected_messages), len(self._received_messages)])):
             # Step 0) Make sure both messages exist
             if i >= len(self._expected_messages):
                 raise Exception(
@@ -115,8 +116,16 @@ class RequestFlowValidator:
             if expected.validation is not None:
                 expected.validation(received.param)
 
+    # BASIC VALIDATION LOGIC ###############################################
+    @staticmethod
+    def basic_error_validation(param: ReceivedError) -> None:
+        # Make sure there is a message received
+        test_case = unittest.TestCase('__init__')
+        test_case.assertIsNotNone(param.message)
+        test_case.assertNotEqual(param.message.strip(), '')
+
     # IMPLEMENTATION DETAILS ###############################################
-    def _received_error_callback(self, message: str, data: any, code: int):
+    def _received_error_callback(self, message: str, data: any=None, code: int=0):
         error = ReceivedError(code, message, data)
         received_message = ReceivedMessage(JSONRPCMessageType.ResponseError, None, error, type(data))
         self._received_messages.append(received_message)
