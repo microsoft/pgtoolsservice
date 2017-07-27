@@ -169,7 +169,7 @@ class ObjectExplorerService(object):
         view_node.node_path = root_path + '/Views'
         view_node.node_type = 'Folder'
 
-        return [function_node, table_node, view_node]
+        return [table_node, view_node, function_node]
 
     def _get_function_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
         database = self._get_database(session_id)
