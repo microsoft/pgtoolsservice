@@ -55,7 +55,7 @@ class ObjectExplorerService(object):
 
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params)
-            session = ObjectExplorerSession(session_id, params)
+            session: ObjectExplorerSession = ObjectExplorerSession(session_id, params)
 
             # Add the session to session map in a lock to prevent race conditions between check and add
             with self._session_lock:
@@ -147,8 +147,8 @@ class ObjectExplorerService(object):
         try:
             # Step 1: Connect with the provided connection details
             connect_request = ConnectRequestParams(
-                session.id,
                 session.connection_details,
+                session.id,
                 ConnectionType.OBJECT_EXLPORER
             )
             connect_result = conn_service.connect(connect_request)
@@ -192,6 +192,9 @@ class ObjectExplorerService(object):
                 conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
 
     def _session_created_error(self, request_context: RequestContext, session: ObjectExplorerSession, message: str):
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.warning(f'OE service errored while creating session: {message}')
+
         # Create error notification
         response = SessionCreatedParameters()
         response.success = False
@@ -203,8 +206,10 @@ class ObjectExplorerService(object):
         # Clean up the session from the session map
         self._session_map.pop(session.id)
 
-    @staticmethod
-    def _expand_node_error(request_context: RequestContext, params: ExpandParameters, message: str):
+    def _expand_node_error(self, request_context: RequestContext, params: ExpandParameters, message: str):
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.warning(f'OE service errored while expanding node: {message}')
+
         response = ExpandCompletedParameters(params.session_id, params.node_path)
         response.error_message = f'Failed to expand node: {message}'    # TODO: Localize
 
@@ -213,13 +218,13 @@ class ObjectExplorerService(object):
     @staticmethod
     def _generate_session_uri(params: ConnectionDetails) -> str:
         # Make sure the required params are provided
-        utils.validate.is_not_none_or_whitespace('params.server_name', params.server_name)
-        utils.validate.is_not_none_or_whitespace('params.user_name', params.user_name)
-        utils.validate.is_not_none_or_whitespace('params.database_name', params.database_name)
+        utils.validate.is_not_none_or_whitespace('params.server_name', params.options.get('host'))
+        utils.validate.is_not_none_or_whitespace('params.user_name', params.options.get('user'))
+        utils.validate.is_not_none_or_whitespace('params.database_name', params.options.get('dbname'))
 
         # Generates a session ID that will function as the base URI for the session
-        host = quote(params.server_name)
-        user = quote(params.user_name)
-        db = quote(params.database_name)
+        host = quote(params.options['host'])
+        user = quote(params.options['user'])
+        db = quote(params.options['dbname'])
 
         return f'objectexplorer://{user}@{host}:{db}/'

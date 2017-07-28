@@ -29,7 +29,7 @@ class Folder:
 class RoutingTarget:
     TNodeGenerator = TypeVar(Optional[Callable[[str, ObjectExplorerSession, dict], List[NodeInfo]]])
 
-    def __init__(self, folders: Optional(List[Folder]), node_generator: TNodeGenerator):
+    def __init__(self, folders: Optional[List[Folder]], node_generator: TNodeGenerator):
         self.folders: List[Folder] = folders or []
         self.node_generator = node_generator
 
@@ -42,7 +42,7 @@ class RoutingTarget:
         :return: A list of NodeInfo
         """
         # Start by adding the static folders
-        folder_nodes = [folder.as_node for folder in self.folders]
+        folder_nodes = [folder.as_node(current_path) for folder in self.folders]
 
         # Execute the node generator to generate the non-static nodes and add them after the folders
         if self.node_generator is not None:
@@ -69,7 +69,7 @@ def _functions(current_path: str, session: ObjectExplorerSession, match_params: 
             node = NodeInfo()
             node.label = function.name
             node.isLeaf = True
-            node.node_path = urljoin(current_path, function.oid)
+            node.node_path = urljoin(current_path, str(function.oid))
             node.node_type = 'ScalarValuedFunction'
             node.metadata = metadata
             node_list.append(node)
@@ -90,7 +90,7 @@ def _tables(current_path: str, session: ObjectExplorerSession, match_params: dic
             cur_node = NodeInfo()
             cur_node.label = f'{schema.name}.{table.name}'
             cur_node.isLeaf = True
-            cur_node.node_path = urljoin(current_path, table.oid)
+            cur_node.node_path = urljoin(current_path, str(table.oid))
             cur_node.node_type = 'Table'
             cur_node.metadata = metadata
             node_list.append(cur_node)
@@ -111,7 +111,7 @@ def _views(current_path: str, session: ObjectExplorerSession, match_params: dict
             cur_node = NodeInfo()
             cur_node.label = f'{schema.name}.{view.name}'
             cur_node.isLeaf = True
-            cur_node.node_path = urljoin(current_path, view.oid)
+            cur_node.node_path = urljoin(current_path, str(view.oid))
             cur_node.node_type = 'View'
             cur_node.metadata = metadata
             node_list.append(cur_node)
@@ -126,9 +126,9 @@ ROUTING_TABLE = {
         [Folder('Tables', 'tables'), Folder('Views', 'views'), Folder('Functions', 'functions')],
         None
     ),
-    re.compile('^/functions/$'): RoutingTarget(None, _functions),
-    re.compile('^/tables/$'): RoutingTarget(None, _tables),
-    re.compile('^/views/$'): RoutingTarget(None, _views)
+    re.compile('^/functions/?$'): RoutingTarget(None, _functions),
+    re.compile('^/tables/?$'): RoutingTarget(None, _tables),
+    re.compile('^/views/?$'): RoutingTarget(None, _views)
 }
 
 
