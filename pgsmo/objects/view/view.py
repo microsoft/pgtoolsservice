@@ -85,18 +85,18 @@ class View(node.NodeObject):
     @property
     def security_barrier(self):
         return self._full_properties.get("security_barrier", "")
-    
+
     # HELPER METHODS #######################################################
 
     def create_query_data(self) -> dict:
         data = {
             "data": {
-            "name": self.name,
-            "schema": self.parent_name,
-            "definition": self.definition,
-            "check_option": self.check_option,
-            "security_barrier": self.security_barrier
-        }}
+                "name": self.name,
+                "schema": self.parent_name,
+                "definition": self.definition,
+                "check_option": self.check_option,
+                "security_barrier": self.security_barrier
+            }}
         return data
 
     def delete_query_data(self) -> dict:
@@ -142,5 +142,3 @@ class View(node.NodeObject):
             'scid': self.parent.oid
         }
         return template_vars
-    
-

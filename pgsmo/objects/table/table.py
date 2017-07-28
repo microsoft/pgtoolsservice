@@ -18,6 +18,7 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
 
+
 class Table(node.NodeObject):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
@@ -118,7 +119,7 @@ class Table(node.NodeObject):
     def like_relation(self):
         return self._full_properties.get("like_relation", "")
 
-    @property 
+    @property
     def primary_key(self):
         return self._full_properties.get("primary_key", "")
 
@@ -193,7 +194,7 @@ class Table(node.NodeObject):
     @property
     def relacl(self):
         return self._full_properties.get("relacl", "")
-    
+
     @property
     def seclabels(self):
         return self._full_properties.get("seclabels", "")
@@ -201,7 +202,7 @@ class Table(node.NodeObject):
     @property
     def relhasoids(self):
         return self._full_properties.get("relhasoids", "")
-    
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
@@ -212,7 +213,7 @@ class Table(node.NodeObject):
             'tid': self.oid,
             'scid': self.parent_id,
             'did': self.parent.parent_id,
-            'datlastsysoid': 0 # temporary until implemented
+            'datlastsysoid': 0  # temporary until implemented
         }
         return template_vars
 

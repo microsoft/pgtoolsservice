@@ -31,8 +31,11 @@ class MockNodeObject(NodeObject):
         pass
 
 # MOCK CONNECTION ##########################################################
+
+
 def get_mock_columns(col_count: int) -> List[Column]:
     return [Column(f'column{i}', None, 10, 10, None, None, True) for i in range(0, col_count + 1)]
+
 
 def get_named_mock_columns(col_names: List[str]) -> List[Column]:
     return [Column(x, None, 10, 10, None, None, True) for x in col_names]

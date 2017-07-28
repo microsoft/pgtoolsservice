@@ -6,6 +6,7 @@
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
 
+
 class ScriptOperation:
     Select = 0
     Create = 1
@@ -23,6 +24,7 @@ class ScriptAsParameters:
         self.owner_uri: str = None
         self.operation: ScriptOperation = None
         self.metadata: ObjectMetadata = None
+
 
 class ScriptAsResponse:
     @classmethod

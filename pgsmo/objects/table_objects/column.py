@@ -74,4 +74,3 @@ class Column(node.NodeObject):
             'tid': self.parent_id
         }
         return template_vars
-        

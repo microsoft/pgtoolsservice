@@ -98,6 +98,7 @@ def render_template(template_path: str, **context) -> str:
     to_render = env.get_template(filename)
     return to_render.render(context)
 
+
 def render_template_string(source, **context):
     """
     Renders a template from the given template source string with the given context. Template variables will be

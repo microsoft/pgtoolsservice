@@ -3,16 +3,16 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsmo.utils.querying as querying
 from pgsmo.objects.server.server import Server
 
 
 class Scripter(object):
     """Service for retrieving operation scripts"""
-    def __init__(self, conn: querying.ServerConnection):
-        # retrieve psycopg2 connection to get server
+
+    def __init__(self, conn):
+        # get server from psycopg2 connection
         self.connection = conn
-        self.server = Server(conn.connection)
+        self.server = Server(conn)
 
     # HELPER METHODS ##########################################################
 
@@ -25,7 +25,7 @@ class Scripter(object):
             for db in databases:
                 parent_schema = db.schemas[table_schema]
                 return parent_schema
-        except:
+        except BaseException:
             return None
 
     def _find_table(self, metadata):
@@ -35,11 +35,11 @@ class Scripter(object):
             parent_schema = self._find_schema(metadata)
             for table in parent_schema.tables:
                 return parent_schema.tables[table_name]
-        except:
+        except BaseException:
             return None
 
-    ############################ SCRIPTING METHODS ############################
-    
+    # SCRIPTING METHODS ############################
+
     # SELECT ##################################################################
 
     def script_as_select(self, connection, metadata) -> str:
@@ -63,7 +63,7 @@ class Scripter(object):
             # get the create script
             script = database.script(self.connection, "create")
             return script
-        except:
+        except BaseException:
             # need to handle exceptions well
             return None
 
@@ -74,11 +74,11 @@ class Scripter(object):
             view_name = metadata["name"]
             parent_schema = self._find_schema(metadata)
             view = parent_schema.views[view_name]
-            
+
             # get the create script
             script = view.script(self.connection, "create")
             return script
-        except: 
+        except BaseException:
             return None
 
     def get_table_create_script(self, metadata) -> str:
@@ -90,7 +90,7 @@ class Scripter(object):
             # get the create script
             script = table.script(self.connection, "create")
             return script
-        except: 
+        except BaseException:
             return None
 
     # DELETE ##################################################################
@@ -100,7 +100,7 @@ class Scripter(object):
             table = self._find_table(metadata)
             script = table.script(self.connection, "delete")
             return script
-        except:
+        except BaseException:
             return None
 
     def get_view_delete_script(self, metadata) -> str:
@@ -110,11 +110,11 @@ class Scripter(object):
             view_name = metadata["name"]
             parent_schema = self._find_schema(metadata)
             view = parent_schema.views[view_name]
-            
+
             # get the create script
             script = view.script(self.connection, "delete")
             return script
-        except: 
+        except BaseException:
             return None
 
     def get_database_delete_script(self, metadata) -> str:
@@ -127,7 +127,7 @@ class Scripter(object):
             # get the create script
             script = database.script(self.connection, "delete")
             return script
-        except:
+        except BaseException:
             return None
 
     # UPDATE ##################################################################
@@ -141,19 +141,19 @@ class Scripter(object):
             # get the create script
             script = table.script(self.connection, "update")
             return script
-        except:
+        except BaseException:
             return None
 
-    def get_view_update_script(self, metadata) -> str:   
+    def get_view_update_script(self, metadata) -> str:
         """ Get update date script for view """
         try:
             # get view from server
             view_name = metadata["name"]
             parent_schema = self._find_schema(metadata)
             view = parent_schema.views[view_name]
-            
+
             # get the create script
             script = view.script(self.connection, "update")
             return script
-        except:
+        except BaseException:
             return None

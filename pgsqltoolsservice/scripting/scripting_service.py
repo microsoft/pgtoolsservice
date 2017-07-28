@@ -11,7 +11,7 @@ from pgsqltoolsservice.connection.contracts import (
     ConnectionType)
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from pgsqltoolsservice.utils import constants
-import pgsmo.utils.querying as querying
+
 
 class ScriptingService(object):
     """Service for scripting database objects"""
@@ -38,7 +38,7 @@ class ScriptingService(object):
             scripting_operation = params.operation
             connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
             connection = connection_service.get_connection(
-                params.owner_uri, ConnectionType.QUERY)            
+                params.owner_uri, ConnectionType.DEFAULT)
             script = self._scripting_operation(scripting_operation, connection, metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:
@@ -48,8 +48,6 @@ class ScriptingService(object):
 
     def script_as_create(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for create operations """
-        # convert connection to ServiceConnection Wrapper
-        connection = querying.ServerConnection(connection)
         scripter = Scripter(connection)
         if (metadata["metadataTypeName"] == 'Database'):
             return scripter.get_database_create_script(metadata)
@@ -64,13 +62,11 @@ class ScriptingService(object):
 
     def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
-        connection = querying.ServerConnection(connection)
         scripter = Scripter(connection)
         return scripter.script_as_select(connection, metadata)
-    
+
     def script_as_update(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for update operations """
-        connection = querying.ServerConnection(connection)
         scripter = Scripter(connection)
         metadataType = metadata["metadataTypeName"]
         if (metadataType == 'View'):
@@ -80,8 +76,6 @@ class ScriptingService(object):
 
     def script_as_delete(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for insert operations """
-        # convert connection to ServiceConnection Wrapper
-        connection = querying.ServerConnection(connection)
         scripter = Scripter(connection)
         metadataType = metadata["metadataTypeName"]
         if (metadataType == 'Database'):

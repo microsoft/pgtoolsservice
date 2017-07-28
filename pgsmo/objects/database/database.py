@@ -11,6 +11,7 @@ from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
+
 class Database(node.NodeObject):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
@@ -78,11 +79,11 @@ class Database(node.NodeObject):
     def encoding(self) -> str:
         return self._get_property("encoding")
 
-    @property 
+    @property
     def template(self) -> str:
         return self._get_property("template")
 
-    @property 
+    @property
     def datcollate(self):
         return self._get_property("datcollate")
 
@@ -127,13 +128,13 @@ class Database(node.NodeObject):
         template_vars = {'did': self.oid}
         return template_vars
 
-    # HELPER METHODS #######################################################    
+    # HELPER METHODS #######################################################
 
     def _get_property(self, property_name: str) -> str:
         try:
             prop = self._full_properties[property_name]
             return prop
-        except:
+        except BaseException:
             return ""
 
     # QUERY INPUT METHODS ##################################################
@@ -151,10 +152,9 @@ class Database(node.NodeObject):
         return data
 
     def _delete_query_data(self) -> dict:
-        """ Return the data input for delete query """    
+        """ Return the data input for delete query """
         data = {
             "did": self._oid,
             "datname": self._name
         }
         return data
-

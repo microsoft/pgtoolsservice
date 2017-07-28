@@ -48,6 +48,7 @@ class Constraint(node.NodeObject, metaclass=ABCMeta):
         template_vars = {'oid': self.oid}
         return template_vars
 
+
 class CheckConstraint(Constraint):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_check')
 
