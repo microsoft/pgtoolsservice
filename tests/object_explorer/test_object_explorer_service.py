@@ -281,54 +281,56 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertIs(oe._session_map[session_uri].server, mock_server)
         self.assertTrue(oe._session_map[session_uri].is_ready)
 
+    # CLOSE SESSION ########################################################
+
     # OLD STUFF
 
 
 
-    def setUp(self) -> None:
-        """Handle common initialization tasks for Object Explorer tests"""
-        self.mock_connection_service = ConnectionService()
-        self.mock_connection_service.connect = mock.MagicMock()
-        server: JSONRPCServer = JSONRPCServer(None, None)
-        server.set_notification_handler = mock.MagicMock()
-        server.set_request_handler = mock.MagicMock()
-
-        self.context: RequestContext = utils.MockRequestContext()
-        self.oe_service: ObjectExplorerService = ObjectExplorerService()
-
-        self.service_provider: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
-        self.service_provider._services = {
-            constants.CONNECTION_SERVICE_NAME: self.mock_connection_service,
-            constants.OBJECT_EXPLORER_NAME: self.oe_service}
-        self.service_provider.initialize()
-
-    def test_oe_expand_session_with_invalid_params(self) -> str:
-        """Test expanding Object Explorer session"""
-        session_id = self.test_oe_create_session_with_valid_params()
-        # send and validate request
-        params: ExpandParameters = ExpandParameters()
-        params.session_id = session_id
-        params.root_node = self._get_test_root_path_uri()
-        self.oe_service._handle_expand_request(self.context, params)
-        self.context.send_response.asssert_called_once()
-
-    def test_oe_refresh_session_with_invalid_params(self) -> str:
-        """Test refreshing an Object Explorer session"""
-        session_id = self.test_oe_create_session_with_valid_params()
-        # send and validate request
-        params: ExpandParameters = ExpandParameters()
-        params.session_id = session_id
-        params.root_node = self._get_test_root_path_uri()
-        self.oe_service._handle_refresh_request(self.context, params)
-        self.context.send_response.asssert_called_once()
-
-    def test_oe_close_session_with_invalid_params(self) -> str:
-        """Test closing an Object Explorer session"""
-        self.test_oe_create_session_with_valid_params()
-        # send and validate request
-        params: ConnectionDetails = ConnectionDetails()
-        self.oe_service._handle_close_session_request(self.context, params)
-        self.context.send_response.asssert_called_once()
+    # def setUp(self) -> None:
+    #     """Handle common initialization tasks for Object Explorer tests"""
+    #     self.mock_connection_service = ConnectionService()
+    #     self.mock_connection_service.connect = mock.MagicMock()
+    #     server: JSONRPCServer = JSONRPCServer(None, None)
+    #     server.set_notification_handler = mock.MagicMock()
+    #     server.set_request_handler = mock.MagicMock()
+    #
+    #     self.context: RequestContext = utils.MockRequestContext()
+    #     self.oe_service: ObjectExplorerService = ObjectExplorerService()
+    #
+    #     self.service_provider: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
+    #     self.service_provider._services = {
+    #         constants.CONNECTION_SERVICE_NAME: self.mock_connection_service,
+    #         constants.OBJECT_EXPLORER_NAME: self.oe_service}
+    #     self.service_provider.initialize()
+    #
+    # def test_oe_expand_session_with_invalid_params(self) -> str:
+    #     """Test expanding Object Explorer session"""
+    #     session_id = self.test_oe_create_session_with_valid_params()
+    #     # send and validate request
+    #     params: ExpandParameters = ExpandParameters()
+    #     params.session_id = session_id
+    #     params.root_node = self._get_test_root_path_uri()
+    #     self.oe_service._handle_expand_request(self.context, params)
+    #     self.context.send_response.asssert_called_once()
+    #
+    # def test_oe_refresh_session_with_invalid_params(self) -> str:
+    #     """Test refreshing an Object Explorer session"""
+    #     session_id = self.test_oe_create_session_with_valid_params()
+    #     # send and validate request
+    #     params: ExpandParameters = ExpandParameters()
+    #     params.session_id = session_id
+    #     params.root_node = self._get_test_root_path_uri()
+    #     self.oe_service._handle_refresh_request(self.context, params)
+    #     self.context.send_response.asssert_called_once()
+    #
+    # def test_oe_close_session_with_invalid_params(self) -> str:
+    #     """Test closing an Object Explorer session"""
+    #     self.test_oe_create_session_with_valid_params()
+    #     # send and validate request
+    #     params: ConnectionDetails = ConnectionDetails()
+    #     self.oe_service._handle_close_session_request(self.context, params)
+    #     self.context.send_response.asssert_called_once()
 
     # IMPLEMENTATION DETAILS ###############################################
     def _validate_error(self, param: SessionCreatedParameters, session_uri: str) -> None:

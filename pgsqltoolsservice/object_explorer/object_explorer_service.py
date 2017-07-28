@@ -4,36 +4,24 @@
 # --------------------------------------------------------------------------------------------
 
 import threading
-from typing import Dict, List, Optional
+from typing import Dict
 from urllib.parse import quote
 
-from psycopg2.extensions import connection as ppg2_connection
-
+from pgsmo import Server
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.object_explorer.contracts import (
-    CreateSessionResponse, CREATE_SESSION_REQUEST,
+    NodeInfo,
+    CreateSessionResponse, CREATE_SESSION_REQUEST, SessionCreatedParameters, SESSION_CREATED_METHOD,
     CLOSE_SESSION_REQUEST,
     ExpandParameters, EXPAND_REQUEST,
     ExpandCompletedParameters, EXPAND_COMPLETED_METHOD,
-    SessionCreatedParameters, SESSION_CREATED_METHOD,
-    REFRESH_REQUEST, NodeInfo)
+    REFRESH_REQUEST
+)
+from pgsqltoolsservice.object_explorer.routing import route_request
+from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import pgsqltoolsservice.utils as utils
-from pgsmo.objects.server.server import Server
-from pgsmo.objects.database.database import Database
-
-
-class ObjectExplorerSession:
-    def __init__(self, session_id: str, params: ConnectionDetails):
-        self.connection: Optional[ppg2_connection] = None
-        self.connection_details: ConnectionDetails = params
-        self.id: str = session_id
-        self.is_ready: bool = False
-        self.server: Optional[Server] = None
-
-        self.init_task: Optional[threading.Thread] = None
-        self.expand_task: Optional[threading.Thread] = None
 
 
 class ObjectExplorerService(object):
@@ -118,101 +106,41 @@ class ObjectExplorerService(object):
 
     def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle expand Object Explorer tree node request"""
+        # Step 1: Find the session
+        try:
+            utils.validate.is_not_none('params', params)
+            utils.validate.is_not_none_or_whitespace('params.node_path', params.node_path)
+            utils.validate.is_not_none_or_whitespace('params.session_id', params.session_id)
 
-        connection_details = self._session_map[params.session_id]
-        root_path = self._get_root_path(connection_details)
+            session = self._session_map.get(params.session_id)
+            if session is None:
+                raise ValueError(f'OE session with ID {params.session_id} does not exist')   # TODO: Localize
 
-        # the below dispatch switch block needs to be replaced with some type of look map so it can
-        # easily scale to all the different types of items that may be in the OE tree (TODO: karlb 7/5/2017)
-        nodes: List[NodeInfo] = None
-        if params.node_path == root_path + '/Views':
-            nodes = self._get_view_nodes(params.session_id, root_path)
-        elif params.node_path == root_path + '/Tables':
-            nodes = self._get_table_nodes(params.session_id, root_path)
-        else:
-            nodes = self._get_folder_nodes(root_path)
+            request_context.send_response(True)
+        except Exception as e:
+            request_context.send_error(f'Failed to expand node: {str(e)}')  # TODO: Localize
+            return
 
-        response = ExpandCompletedParameters()
-        response.session_id = params.session_id
-        response.node_path = params.node_path
-        response.nodes = nodes
-
-        request_context.send_response(True)
-        request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
-
-    def _get_root_path(self, connection_details: ConnectionDetails) -> str:
-        return connection_details.server_name[0] + '/' + connection_details.database_name[0]
-
-    def _get_database(self, session_id: str) -> Database:
-        # Retrieve the connection service
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        conn = connection_service.get_connection(session_id, ConnectionType.DEFAULT)
-
-        connection_details = self._session_map[session_id]
-        dbname = connection_details.database_name[0]
-        server = Server(conn)
-        database = None
-        for cur_db in server.databases:
-            if cur_db.name == dbname:
-                database = cur_db
-
-        return database
-
-    def _get_folder_nodes(self, root_path: str) -> List[NodeInfo]:
-        table_node = NodeInfo()
-        table_node.label = 'Tables'
-        table_node.isLeaf = False
-        table_node.node_path = root_path + '/Tables'
-        table_node.node_type = 'Folder'
-
-        view_node = NodeInfo()
-        view_node.label = 'Views'
-        view_node.isLeaf = False
-        view_node.node_path = root_path + '/Views'
-        view_node.node_type = 'Folder'
-        return [table_node, view_node]
-
-    def _get_view_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
-        database = self._get_database(session_id)
-        node_list: List[NodeInfo] = []
-        for cur_schema in database.schemas:
-            for cur_view in cur_schema.views:
-                metadata = ObjectMetadata()
-                metadata.metadata_type = 0
-                metadata.metadata_type_name = 'View'
-                metadata.name = cur_view.name
-                metadata.schema = cur_schema.name
-
-                cur_node = NodeInfo()
-                cur_node.label = cur_schema.name + '.' + cur_view.name
-                cur_node.isLeaf = True
-                cur_node.node_path = root_path + '/Views/' + cur_node.label
-                cur_node.node_type = 'View'
-                cur_node.metadata = metadata
-                node_list.append(cur_node)
-        return node_list
-
-    def _get_table_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
-        database = self._get_database(session_id)
-        node_list: List[NodeInfo] = []
-        for cur_schema in database.schemas:
-            for cur_table in cur_schema.tables:
-                metadata = ObjectMetadata()
-                metadata.metadata_type = 0
-                metadata.metadata_type_name = 'Table'
-                metadata.name = cur_table.name
-                metadata.schema = cur_schema.name
-
-                cur_node = NodeInfo()
-                cur_node.label = cur_schema.name + '.' + cur_table.name
-                cur_node.isLeaf = True
-                cur_node.node_path = root_path + '/Tables/' + cur_node.label
-                cur_node.node_type = 'Table'
-                cur_node.metadata = metadata
-                node_list.append(cur_node)
-        return node_list
+        # Step 2: Start a task for expanding the node
+        try:
+            expand_task = threading.Thread(target=self._expand_node, args=(request_context, params, session))
+            expand_task.setDaemon(False)
+            expand_task.start()
+            session.expand_tasks.append(expand_task)
+        except Exception as e:
+            self._expand_node_error(request_context, params, str(e))
 
     # PRIVATE HELPERS ######################################################
+    def _expand_node(self, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession):
+        try:
+            response = ExpandCompletedParameters(session.id, params.node_path)
+            response.node_path = params.node_path
+            response.nodes = route_request(session, params.node_path)
+
+            request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
+        except Exception as e:
+            self._expand_node_error(request_context, params, str(e))
+
     def _initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
 
@@ -274,6 +202,13 @@ class ObjectExplorerService(object):
 
         # Clean up the session from the session map
         self._session_map.pop(session.id)
+
+    @staticmethod
+    def _expand_node_error(request_context: RequestContext, params: ExpandParameters, message: str):
+        response = ExpandCompletedParameters(params.session_id, params.node_path)
+        response.error_message = f'Failed to expand node: {message}'    # TODO: Localize
+
+        request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
 
     @staticmethod
     def _generate_session_uri(params: ConnectionDetails) -> str:
