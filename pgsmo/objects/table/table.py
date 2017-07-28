@@ -22,6 +22,7 @@ import pgsmo.utils.querying as querying
 class Table(node.NodeObject):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    utils = querying.ConnectionUtils()
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Table':
@@ -217,9 +218,28 @@ class Table(node.NodeObject):
         }
         return template_vars
 
+    # SCRIPTING METHODS ##############################################################
+    def script(self, connection, action: str) -> str:
+        """ Function to retrieve scripts for an operation """
+        template_root = self._template_root(connection)
+        if (action == "create"):
+            data = self._create_query_data()
+            query_file = "create.sql"
+        elif (action == "delete"):
+            data = self._delete_query_data()
+            query_file = "delete.sql"
+        elif (action == "update"):
+            data = self._update_query_data()
+            query_file = "update.sql"
+        connection_version = self.utils.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    # HELPER METHODS ####################################################################
     # QUERY DATA BUILDING METHODS #######################################################
 
-    def create_query_data(self) -> dict:
+    def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         data = {"data": {
             "name": self.name,
@@ -239,7 +259,7 @@ class Table(node.NodeObject):
         }}
         return data
 
-    def delete_query_data(self) -> dict:
+    def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
         data = {
             "data": {
@@ -249,7 +269,7 @@ class Table(node.NodeObject):
         }
         return data
 
-    def update_query_data(self) -> dict:
+    def _update_query_data(self) -> dict:
         """ Provides data input for update script """
         data = {"data": {
             "name": self.name,
@@ -271,21 +291,3 @@ class Table(node.NodeObject):
             "seclabels": self.seclabels
         }}
         return data
-
-    # SCRIPTING METHODS ##############################################################
-
-    def script(self, connection: querying.ServerConnection, action: str) -> str:
-        """ Function to retrieve scripts for an operation """
-        template_root = self._template_root(connection)
-        if (action == "create"):
-            data = self.create_query_data()
-            query_file = "create.sql"
-        elif (action == "delete"):
-            data = self.delete_query_data()
-            query_file = "delete.sql"
-        elif (action == "update"):
-            data = self.update_query_data()
-            query_file = "update.sql"
-        template_path = templating.get_template_path(template_root, query_file, connection.version)
-        script_template = templating.render_template(template_path, **data)
-        return script_template

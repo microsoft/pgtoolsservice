@@ -15,6 +15,7 @@ import pgsmo.utils.templating as templating
 class Database(node.NodeObject):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    utils = querying.ConnectionUtils()
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Database':
@@ -115,7 +116,8 @@ class Database(node.NodeObject):
         elif (action == "delete"):
             data = self._delete_query_data()
             query_file = "delete.sql"
-        template_path = templating.get_template_path(template_root, query_file, connection.version)
+        connection_version = self.utils.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
         script_template = templating.render_template(template_path, **data)
         return script_template
 

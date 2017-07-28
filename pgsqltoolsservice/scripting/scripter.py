@@ -48,7 +48,7 @@ class Scripter(object):
         name = metadata["name"]
         # wrap quotes only around objects with all small letters
         name = '"' + name + '"' if name.islower() else name
-        script = "SELECT *\nFROM " + schema + '.' + name + '\nLIMIT 1000\n'
+        script = f"SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n"
         return script
 
     # CREATE ##################################################################
