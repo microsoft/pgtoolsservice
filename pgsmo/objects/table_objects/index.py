@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import pgsmo.objects.node_object as node
-import pgsmo.utils.querying as querying
+from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
@@ -12,34 +12,36 @@ class Index(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_index')
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Index':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Index':
         """
         Creates a new Index object based on the results of a nodes query
-        :param conn: Connection used to execute the nodes query
+        :param server: Server that owns the index
+        :param parent: Parent object of the Index. Should be Table/View
         :param kwargs: Parameters for the index
         Kwargs:
             name str: The name of the index
             oid int: Object ID of the index
         :return: Instance of the Index
         """
-        idx = cls(conn, kwargs['name'])
+        idx = cls(server, parent, kwargs['name'])
         idx._oid = kwargs['oid']
 
         return idx
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
         """
         Initializes a new instance of an Index
-        :param conn: Connection to the server/database that this object will belong to
+        :param server: Server that owns the index
+        :param parent: Parent object of the index. Should be Table/View
         :param name: Name of the index
         """
-        super(Index, self).__init__(conn, name)
+        super(Index, self).__init__(server, parent, name)
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
+    def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
-    @classmethod
-    def get_type(self):
-        return "index"
+    def get_template_vars(self):
+        template_vars = {'oid': self.oid}
+        return template_vars

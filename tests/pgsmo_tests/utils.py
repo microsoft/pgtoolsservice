@@ -10,13 +10,29 @@ import unittest.mock as mock
 from psycopg2 import DatabaseError
 from psycopg2.extensions import Column, connection
 
-from pgsmo.objects.node_object import NodeCollection
+from pgsmo import Server
+from pgsmo.objects.node_object import NodeCollection, NodeObject
 
+
+# MOCK NODE OBJECT #########################################################
+class MockNodeObject(NodeObject):
+    @classmethod
+    def _from_node_query(cls, root_server: Server, parent: Optional[NodeObject], **kwargs):
+        pass
+
+    def __init__(self, root_server: Server, parent: Optional[NodeObject], name: str):
+        super(MockNodeObject, self).__init__(root_server, parent, name)
+
+    @classmethod
+    def _template_root(cls, root_server: Server):
+        return 'template_root'
+
+    def get_template_vars(self) -> str:
+        pass
 
 # MOCK CONNECTION ##########################################################
 def get_mock_columns(col_count: int) -> List[Column]:
     return [Column(f'column{i}', None, 10, 10, None, None, True) for i in range(0, col_count + 1)]
-
 
 def get_named_mock_columns(col_names: List[str]) -> List[Column]:
     return [Column(x, None, 10, 10, None, None, True) for x in col_names]

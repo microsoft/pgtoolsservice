@@ -25,7 +25,6 @@ class TestTablespace(NodeObjectTestBase, unittest.TestCase):
         return {
             'owner': TestTablespace.NODE_ROW['owner'],
             '_owner': TestTablespace.NODE_ROW['owner']
-
         }
 
     @property
@@ -33,5 +32,13 @@ class TestTablespace(NodeObjectTestBase, unittest.TestCase):
         return []
 
     @property
+    def init_lambda(self):
+        return lambda server, parent, name: Tablespace(server, name)
+
+    @property
     def node_query(self) -> dict:
         return TestTablespace.NODE_ROW
+
+    @property
+    def parent_expected_to_be_none(self) -> bool:
+        return True

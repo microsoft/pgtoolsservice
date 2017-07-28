@@ -3,13 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional, Tuple                # noqa
+from typing import Dict, Optional, Tuple                # noqa
 
 from psycopg2.extensions import connection
 
 from pgsmo.objects.database.database import Database
 
-from pgsmo.objects.node_object import NodeCollection
+from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import pgsmo.utils as utils
@@ -25,7 +25,7 @@ class Server:
         :param conn: psycopg2 connection
         """
         # Everything we know about the server will be based on the connection
-        self._conn = utils.querying.ServerConnection(conn)
+        self._conn: utils.querying.ServerConnection = utils.querying.ServerConnection(conn)
 
         # Declare the server properties
         props = self._conn.dsn_parameters
@@ -34,24 +34,23 @@ class Server:
         self._maintenance_db: str = props['dbname']
 
         # These properties will be defined later
-        self._in_recovery: Optional[bool] = None
-        self._wal_paused: Optional[bool] = None
+        self._recovery_props: NodeLazyPropertyCollection = NodeLazyPropertyCollection(self._fetch_recovery_state)
 
         # Declare the child objects
         self._databases: NodeCollection[Database] = NodeCollection(
-            lambda: Database.get_nodes_for_parent(self._conn, None)
+            lambda: Database.get_nodes_for_parent(self, None)
         )
         self._roles: NodeCollection[Role] = NodeCollection(
-            lambda: Role.get_nodes_for_parent(self._conn, None)
+            lambda: Role.get_nodes_for_parent(self, None)
         )
         self._tablespaces: NodeCollection[Tablespace] = NodeCollection(
-            lambda: Tablespace.get_nodes_for_parent(self._conn, None)
+            lambda: Tablespace.get_nodes_for_parent(self, None)
         )
 
     # PROPERTIES ###########################################################
 
     @property
-    def connection(self):
+    def connection(self) -> utils.querying.ServerConnection:
         """Connection to the server/db that this object will use"""
         return self._conn
 
@@ -63,7 +62,7 @@ class Server:
     @property
     def in_recovery(self) -> Optional[bool]:
         """Whether or not the server is in recovery mode. If None, value was not loaded from server"""
-        return self._in_recovery
+        return self._recovery_props.get('inrecovery')
 
     @property
     def maintenance_db(self) -> str:
@@ -81,9 +80,14 @@ class Server:
         return self._conn.version
 
     @property
+    def server_type(self) -> str:
+        """Server type for distinguishing between standard PG and PG supersets"""
+        return 'pg'  # TODO: Determine if a server is PPAS or PG
+
+    @property
     def wal_paused(self) -> Optional[bool]:
         """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
-        return self._wal_paused
+        return self._recovery_props.get('isreplaypaused')
 
     # -CHILD OBJECTS #######################################################
     @property
@@ -104,17 +108,11 @@ class Server:
     # METHODS ##############################################################
 
     # IMPLEMENTATION DETAILS ###############################################
-    # Commenting out until support for extended properties is added
-    # See https://github.com/Microsoft/carbon/issues/1342
-    # def _fetch_recovery_state(self) -> None:
-    #     recovery_check_sql = utils.templating.render_template(
-    #         utils.templating.get_template_path(TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)
-    #     )
-    #
-    #     cols, rows = self._conn.execute_dict(recovery_check_sql)
-    #     if len(rows) > 0:
-    #         self._in_recovery = rows[0]['inrecovery']
-    #         self._wal_paused = rows[0]['isreplaypaused']
-    #     else:
-    #         self._in_recovery = None
-    #         self._wal_paused = None
+    def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:
+        recovery_check_sql = utils.templating.render_template(
+            utils.templating.get_template_path(TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)
+        )
+
+        cols, rows = self._conn.execute_dict(recovery_check_sql)
+        if len(rows) > 0:
+            return rows[0]

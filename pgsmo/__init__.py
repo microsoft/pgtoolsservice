@@ -3,13 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+# NOTE: Server must be the first import, otherwise circular dependencies block proper importing
+from pgsmo.objects.server.server import Server
+
 from pgsmo.objects.table_objects import (
     CheckConstraint, Column, ExclusionConstraint, ForeignKeyConstraint, Index, IndexConstraint, Rule, Trigger
 )
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.schema.schema import Schema
-from pgsmo.objects.server.server import Server
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 

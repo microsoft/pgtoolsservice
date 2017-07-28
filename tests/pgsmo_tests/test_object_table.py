@@ -39,3 +39,7 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
     @property
     def node_query(self) -> dict:
         return TestTable.NODE_ROW
+
+    @property
+    def full_properties(self):
+        return {}

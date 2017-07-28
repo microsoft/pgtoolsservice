@@ -6,6 +6,7 @@
 from typing import Optional               # noqa
 
 import pgsmo.objects.node_object as node
+from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
@@ -15,10 +16,11 @@ class Database(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Database':
+    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
-        :param conn: Connection used to generate the db info query
+        :param server: Server that owns the database
+        :param parent: Parent object of the database. Should always be None
         :param kwargs: Optional parameters for the database. Values that can be provided:
         Kwargs:
             did int: Object ID of the database
@@ -29,7 +31,7 @@ class Database(node.NodeObject):
             owner int: Object ID of the user that owns the database
         :return: Instance of the Database
         """
-        db = cls(conn, kwargs['name'])
+        db = cls(server, kwargs['name'])
         db._oid = kwargs['oid']
         db._tablespace = kwargs['spcname']
         db._allow_conn = kwargs['datallowconn']
@@ -38,15 +40,15 @@ class Database(node.NodeObject):
 
         return db
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
+    def __init__(self, server: 's.Server', name: str):
         """
         Initializes a new instance of a database
+        :param server: Server that owns the database.
         :param name: Name of the database
         """
-        super(Database, self).__init__(conn, name)
-        self._is_connected: bool = conn.dsn_parameters.get('dbname') == name
-        self._version = conn.version
-        self._connection = conn
+
+        super(Database, self).__init__(server, None, name)
+        self._is_connected: bool = server.maintenance_db == name
 
         # Declare the optional parameters
         self._tablespace: Optional[str] = None
@@ -57,7 +59,7 @@ class Database(node.NodeObject):
         # Declare the child items
         self._schemas: Optional[node.NodeCollection[Schema]] = None
         if self._is_connected:
-            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(conn, self))
+            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
 
     # PROPERTIES ###########################################################
     @property
@@ -73,65 +75,69 @@ class Database(node.NodeObject):
         return self._tablespace
 
     @property
-    def oid(self) -> Optional[int]:
-        return self._oid
-
-    @property
     def encoding(self) -> str:
-        try:
-            encoding = self._full_properties['encoding']
-        except:
-            encoding = ""
-        return encoding
+        return self._get_property("encoding")
 
     @property 
     def template(self) -> str:
-        try:
-            template = self._full_properties['template']
-        except:
-            template = ""
-        return template
+        return self._get_property("template")
 
     @property 
     def datcollate(self):
-        try:
-            datcollate = self._full_properties['datcollate']
-        except:
-            datcollate = ""
-        return datcollate
+        return self._get_property("datcollate")
 
     @property
     def datctype(self):
-        try:
-            datctype = self._full_properties['datctype']
-        except:
-            datctype = ""
-        return datctype
+        return self._get_property("datctype")
 
     @property
     def spcname(self):
-        try:
-            spcname = self._full_properties['spcname']
-        except:
-            spcname = ""
-        return spcname
+        return self._get_property("spcname")
 
     @property
     def datconnlimit(self):
-        try:
-            datconnlimit = self._full_properties['datconnlimit']
-        except:
-            datconnlimit = ""
-        return datconnlimit
+        return self._get_property("datconnlimit")
 
     # -CHILD OBJECTS #######################################################
     @property
     def schemas(self) -> node.NodeCollection[Schema]:
         return self._schemas
 
-    # QUERY INPUT METHODS ##################################################
+    # METHODS ##############################################################
 
-    def create_query_data(self, connection: querying.ServerConnection) -> dict:
+    def script(self, connection: querying.ServerConnection, action: str) -> str:
+        """ Function to retrieve scripts for an operation """
+        template_root = self._template_root(connection)
+        if (action == "create"):
+            data = self._create_query_data()
+            query_file = "create.sql"
+        elif (action == "delete"):
+            data = self._delete_query_data()
+            query_file = "delete.sql"
+        template_path = templating.get_template_path(template_root, query_file, connection.version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, conn: querying.ServerConnection) -> str:
+        return cls.TEMPLATE_ROOT
+
+    def get_template_vars(self):
+        template_vars = {'did': self.oid}
+        return template_vars
+
+    # HELPER METHODS #######################################################    
+
+    def _get_property(self, property_name: str) -> str:
+        try:
+            prop = self._full_properties[property_name]
+            return prop
+        except:
+            return ""
+
+    # QUERY INPUT METHODS ##################################################
+    def _create_query_data(self) -> dict:
         """ Return the data input for create query """
         data = {"data": {
             "name": self.name,
@@ -144,7 +150,7 @@ class Database(node.NodeObject):
         }}
         return data
 
-    def delete_query_data(self, connection: querying.ServerConnection) -> dict:
+    def _delete_query_data(self) -> dict:
         """ Return the data input for delete query """    
         data = {
             "did": self._oid,
@@ -152,26 +158,3 @@ class Database(node.NodeObject):
         }
         return data
 
-    # METHODS ##############################################################
-
-    def script(self, connection: querying.ServerConnection, action: str) -> str:
-        """ Function to retrieve scripts for an operation """
-        template_root = self._template_root(connection)
-        if (action == "create"):
-            data = self.create_query_data(connection)
-            query_file = "create.sql"
-        elif (action == "delete"):
-            data = self.delete_query_data(connection)
-            query_file = "delete.sql"
-        template_path = templating.get_template_path(template_root, query_file, connection.version)
-        script_template = templating.render_template(template_path, **data)
-        return script_template
-
-    # IMPLEMENTATION DETAILS ###############################################
-    @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
-        return cls.TEMPLATE_ROOT
-
-    @classmethod
-    def get_type(self):
-        return "database"

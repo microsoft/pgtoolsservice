@@ -6,7 +6,7 @@
 from typing import Optional
 
 from pgsmo.objects.node_object import NodeObject
-import pgsmo.utils.querying as querying
+from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
@@ -14,27 +14,28 @@ class Tablespace(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Tablespace':
+    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Tablespace':
         """
         Creates a tablespace from a row of a nodes query result
-        :param conn: Connection to a server to use to lookup the information
+        :param server: Server that owns the tablespace
+        :param parent: Parent object of the tablespace. Must be None
         :param kwargs: Row from a node query for a list of
         :return: A Tablespace instance
         """
-        tablespace = cls(conn, kwargs['name'])
+        tablespace = cls(server, kwargs['name'])
 
         tablespace._oid = kwargs['oid']
         tablespace._owner = kwargs['owner']
 
         return tablespace
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
+    def __init__(self, server: 's.Server', name: str):
         """
         Initializes internal state of a Role object
-        :param conn: Connection that executed the role node query
+        :param server: Server that owns the tablespace
         :param name: Name of the role
         """
-        super(Tablespace, self).__init__(conn, name)
+        super(Tablespace, self).__init__(server, None, name)
 
         # Declare basic properties
         self._owner: Optional[int] = None
@@ -48,5 +49,9 @@ class Tablespace(NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
+    def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    def get_template_vars(self):
+        template_vars = {'oid': self.oid}
+        return template_vars

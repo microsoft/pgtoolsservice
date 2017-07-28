@@ -5,41 +5,43 @@
 
 from pgsmo.objects.table_objects import Column, Rule, Trigger
 import pgsmo.objects.node_object as node
-import pgsmo.utils.querying as querying
+from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
+import pgsmo.utils.querying as querying
 
 
 class View(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
 
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'View':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'View':
         """
         Creates a view object from the results of a node query
-        :param conn: Connection used to execute the nodes query
+        :param server: Server that owns the view
+        :param parent: Object that is the parent of the view. Should be a Schema
         :param kwargs: A row from the nodes query
         Kwargs:
             name str: Name of the view
             oid int: Object ID of the view
         :return: A view instance
         """
-        view = cls(conn, kwargs['name'])
+        view = cls(server, parent, kwargs['name'])
         view._oid = kwargs['oid']
 
         return view
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
-        super(View, self).__init__(conn, name)
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+        super(View, self).__init__(server, parent, name)
 
         # Declare child items
         self._columns: node.NodeCollection[Column] = self._register_child_collection(
-            lambda: Column.get_nodes_for_parent(self._conn, self)
+            lambda: Column.get_nodes_for_parent(self._server, self)
         )
         self._rules: node.NodeCollection[Rule] = self._register_child_collection(
-            lambda: Rule.get_nodes_for_parent(self._conn, self)
+            lambda: Rule.get_nodes_for_parent(self._server, self)
         )
         self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(
-            lambda: Trigger.get_nodes_for_parent(self._conn, self)
+            lambda: Trigger.get_nodes_for_parent(self._server, self)
         )
 
     # PROPERTIES ###########################################################
@@ -58,40 +60,54 @@ class View(node.NodeObject):
 
     @property
     def schema(self):
-        return self._full_properties["schema"]
+        return self._full_properties.get("schema", "")
 
     @property
     def definition(self):
-        return self._full_properties["definition"]
+        return self._full_properties.get("definition", "")
 
     @property
     def owner(self):
-        return self._full_properties["owner"]
+        return self._full_properties.get("owner", "")
 
     @property
     def comment(self):
-        return self._full_properties["comment"]
+        return self._full_properties.get("comment", "")
 
+    @property
+    def nspname(self):
+        return self._full_properties.get("nspname", "")
+
+    @property
+    def check_option(self):
+        return self._full_properties.get("check_option", "")
+
+    @property
+    def security_barrier(self):
+        return self._full_properties.get("security_barrier", "")
+    
     # HELPER METHODS #######################################################
 
-    def create_query_data(self, connection: querying.ServerConnection) -> dict:
-
-        data = {"data": {
-            "name": self._name,
-            "schema": self.schema,
+    def create_query_data(self) -> dict:
+        data = {
+            "data": {
+            "name": self.name,
+            "schema": self.parent_name,
             "definition": self.definition,
-            "owner": self.owner,
-            "comment": self.comment
+            "check_option": self.check_option,
+            "security_barrier": self.security_barrier
         }}
         return data
 
-    def delete_query_data(self, connection: querying.ServerConnection) -> dict:
-        data = {"data": {
-
-        }}
+    def delete_query_data(self) -> dict:
+        data = {
+            "vid": self._oid,
+            "name": self.name,
+            "nspname": self.nspname
+        }
         return data
 
-    def update_query_data(self, connection: querying.ServerConnection) -> dict:
+    def update_query_data(self) -> dict:
         data = {"data": {
 
         }}
@@ -103,23 +119,28 @@ class View(node.NodeObject):
         """ Function to retrieve scripts for an operation """
         template_root = self._template_root(connection)
         if (action == "create"):
-            data = self.create_query_data(connection)
+            data = self.create_query_data()
             query_file = "create.sql"
         elif (action == "delete"):
-            data = self.delete_query_data(connection)
+            data = self.delete_query_data()
             query_file = "delete.sql"
         elif (action == "update"):
-            data = self.update_query_data(connection)
+            data = self.update_query_data()
             query_file = "update.sql"
         template_path = templating.get_template_path(template_root, query_file, connection.version)
         script_template = templating.render_template(template_path, **data)
         return script_template
 
-    # IMPLEMENTATION DETAILS ###############################################
+    # IMPLEMENTATION DETAILS ################################################
     @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
+    def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
-    @classmethod
-    def get_type(self):
-        return "view"
+    def get_template_vars(self):
+        template_vars = {
+            'vid': self.oid,
+            'scid': self.parent.oid
+        }
+        return template_vars
+    
+

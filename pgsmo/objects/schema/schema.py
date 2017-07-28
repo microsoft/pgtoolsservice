@@ -10,9 +10,9 @@ import pgsmo.objects.node_object as node
 from pgsmo.objects.collation import Collation
 from pgsmo.objects.functions import Function, TriggerFunction
 from pgsmo.objects.sequence import Sequence
+from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
-import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
@@ -21,10 +21,11 @@ TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
 class Schema(node.NodeObject):
     @classmethod
-    def _from_node_query(cls, conn: querying.ServerConnection, **kwargs) -> 'Schema':
+    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Schema':
         """
         Creates an instance of a schema object from the results of a nodes query
-        :param conn: The connection used to execute the nodes query
+        :param server: Server that owns the schema
+        :param parent: Parent object of the schema. Should be a Database
         :param kwargs: A row from the nodes query
         Kwargs:
             name str: Name of the schema
@@ -33,15 +34,15 @@ class Schema(node.NodeObject):
             has_usage bool: Whether or not the schema can be used(?)
         :return:
         """
-        schema = cls(conn, kwargs['name'])
+        schema = cls(server, parent, kwargs['name'])
         schema._oid = kwargs['oid']
         schema._can_create = kwargs['can_create']
         schema._has_usage = kwargs['has_usage']
 
         return schema
 
-    def __init__(self, conn: querying.ServerConnection, name: str):
-        super(Schema, self).__init__(conn, name)
+    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+        super(Schema, self).__init__(server, parent, name)
 
         # Declare the optional parameters
         self._can_create: Optional[bool] = None
@@ -49,22 +50,22 @@ class Schema(node.NodeObject):
 
         # Declare the child items
         self._collations: node.NodeCollection = self._register_child_collection(
-            lambda: Collation.get_nodes_for_parent(self._conn, self)
+            lambda: Collation.get_nodes_for_parent(self._server, self)
         )
         self._functions: node.NodeCollection = self._register_child_collection(
-            lambda: Function.get_nodes_for_parent(self._conn, self)
+            lambda: Function.get_nodes_for_parent(self._server, self)
         )
         self._sequences: node.NodeCollection = self._register_child_collection(
-            lambda: Sequence.get_nodes_for_parent(self._conn, self)
+            lambda: Sequence.get_nodes_for_parent(self._server, self)
         )
         self._tables: node.NodeCollection = self._register_child_collection(
-            lambda: Table.get_nodes_for_parent(self._conn, self)
+            lambda: Table.get_nodes_for_parent(self._server, self)
         )
         self._trigger_functions = self._register_child_collection(
-            lambda: TriggerFunction.get_nodes_for_parent(self._conn, self._oid)
+            lambda: TriggerFunction.get_nodes_for_parent(self._server, self)
         )
         self._views: node.NodeCollection = self._register_child_collection(
-            lambda: View.get_nodes_for_parent(self._conn, self)
+            lambda: View.get_nodes_for_parent(self._server, self)
         )
 
     # PROPERTIES ###########################################################
@@ -103,9 +104,10 @@ class Schema(node.NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
-        return path.join(TEMPLATE_ROOT, conn.server_type)
+    def _template_root(cls, server: 's.Server') -> str:
+        return path.join(TEMPLATE_ROOT, server.server_type)
 
     @classmethod
-    def get_type(self) -> str:
-        return "schema"
+    def get_template_vars(self):
+        template_vars = {'scid': self.oid}
+        return template_vars
