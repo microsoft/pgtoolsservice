@@ -21,7 +21,7 @@ class Folder:
         node = NodeInfo()
         node.is_leaf = False
         node.label = self.label
-        node.node_path = urljoin(current_path, self.path)
+        node.node_path = urljoin(current_path, self.path + '/')
         node.node_type = 'Folder'
         return node
 
@@ -57,64 +57,80 @@ class RoutingTarget:
 
 def _functions(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     node_list: List[NodeInfo] = []
-    database = session.server.databases[session.server.maintenance_db]
-    for schema in database.schemas:
-        for function in schema.functions:
-            metadata = ObjectMetadata
-            metadata.metadata_type = 0
-            metadata.metadata_type_name = 'Function'
-            metadata.name = function.name
-            metadata.schema = schema.name
+    schema = session.server.databases[session.server.maintenance_db].schemas[int(match_params['scid'])]
+    for func in schema.functions:
+        metadata = ObjectMetadata
+        metadata.metadata_type = 0
+        metadata.metadata_type_name = 'Function'
+        metadata.name = func.name
+        metadata.schema = schema.name
 
-            node = NodeInfo()
-            node.label = function.name
-            node.isLeaf = True
-            node.node_path = urljoin(current_path, str(function.oid))
-            node.node_type = 'ScalarValuedFunction'
-            node.metadata = metadata
-            node_list.append(node)
+        node = NodeInfo()
+        node.label = func.name
+        node.isLeaf = True
+        node.node_path = urljoin(current_path, str(func.oid))
+        node.node_type = 'ScalarValuedFunction'
+        node.metadata = metadata
+        node_list.append(node)
     return node_list
 
 
 def _tables(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     node_list: List[NodeInfo] = []
+    schema = session.server.databases[session.server.maintenance_db].schemas[int(match_params['scid'])]
+    for table in schema.tables:
+        metadata = ObjectMetadata()
+        metadata.metadata_type = 0
+        metadata.metadata_type_name = 'Table'
+        metadata.name = table.name
+        metadata.schema = schema.name
+
+        cur_node = NodeInfo()
+        cur_node.label = table.name
+        cur_node.isLeaf = True
+        cur_node.node_path = urljoin(current_path, str(table.oid))
+        cur_node.node_type = 'Table'
+        cur_node.metadata = metadata
+        node_list.append(cur_node)
+    return node_list
+
+
+def _schemas(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    node_list: List[NodeInfo] = []
     database = session.server.databases[session.server.maintenance_db]
     for schema in database.schemas:
-        for table in schema.tables:
-            metadata = ObjectMetadata()
-            metadata.metadata_type = 0
-            metadata.metadata_type_name = 'Table'
-            metadata.name = table.name
-            metadata.schema = schema.name
+        metadata = ObjectMetadata()
+        metadata.metadata_type = 0
+        metadata.metadata_type_name = 'Schema'
+        metadata.schema = schema.name
 
-            cur_node = NodeInfo()
-            cur_node.label = f'{schema.name}.{table.name}'
-            cur_node.isLeaf = True
-            cur_node.node_path = urljoin(current_path, str(table.oid))
-            cur_node.node_type = 'Table'
-            cur_node.metadata = metadata
-            node_list.append(cur_node)
+        node = NodeInfo()
+        node.label = schema.name
+        node.isLeaf = False
+        node.node_path = urljoin(current_path, str(schema.oid) + '/')
+        node.node_type = 'Schema'
+        node.metadata = metadata
+        node_list.append(node)
     return node_list
 
 
 def _views(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     node_list: List[NodeInfo] = []
-    database = session.server.databases[session.server.maintenance_db]
-    for schema in database.schemas:
-        for view in schema.views:
-            metadata = ObjectMetadata()
-            metadata.metadata_type = 0
-            metadata.metadata_type_name = 'View'
-            metadata.name = view.name
-            metadata.schema = schema.name
+    schema = session.server.databases[session.server.maintenance_db].schemas[int(match_params['scid'])]
+    for view in schema.views:
+        metadata = ObjectMetadata()
+        metadata.metadata_type = 0
+        metadata.metadata_type_name = 'View'
+        metadata.name = view.name
+        metadata.schema = schema.name
 
-            cur_node = NodeInfo()
-            cur_node.label = f'{schema.name}.{view.name}'
-            cur_node.isLeaf = True
-            cur_node.node_path = urljoin(current_path, str(view.oid))
-            cur_node.node_type = 'View'
-            cur_node.metadata = metadata
-            node_list.append(cur_node)
+        cur_node = NodeInfo()
+        cur_node.label = view.name
+        cur_node.isLeaf = True
+        cur_node.node_path = urljoin(current_path, str(view.oid))
+        cur_node.node_type = 'View'
+        cur_node.metadata = metadata
+        node_list.append(cur_node)
     return node_list
 
 
@@ -123,12 +139,17 @@ def _views(current_path: str, session: ObjectExplorerSession, match_params: dict
 
 ROUTING_TABLE = {
     re.compile('^/$'): RoutingTarget(
+        [Folder('Schemas', 'schemas'), Folder('Roles', 'roles'), Folder('Tablesapces', 'tablespaces')],
+        None
+    ),
+    re.compile('^/schemas/$'): RoutingTarget(None, _schemas),
+    re.compile('^/schemas/(?P<scid>\d+)/$'): RoutingTarget(
         [Folder('Tables', 'tables'), Folder('Views', 'views'), Folder('Functions', 'functions')],
         None
     ),
-    re.compile('^/functions/?$'): RoutingTarget(None, _functions),
-    re.compile('^/tables/?$'): RoutingTarget(None, _tables),
-    re.compile('^/views/?$'): RoutingTarget(None, _views)
+    re.compile('^/schemas/(?P<scid>\d+)/functions/$'): RoutingTarget(None, _functions),
+    re.compile('^/schemas/(?P<scid>\d+)/tables/$'): RoutingTarget(None, _tables),
+    re.compile('^/schemas/(?P<scid>\d+)/views/$'): RoutingTarget(None, _views)
 }
 
 
