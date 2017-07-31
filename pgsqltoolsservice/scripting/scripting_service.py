@@ -63,7 +63,7 @@ class ScriptingService(object):
     def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
         scripter = Scripter(connection)
-        return scripter.script_as_select(connection, metadata)
+        return scripter.script_as_select(metadata)
 
     def script_as_update(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for update operations """

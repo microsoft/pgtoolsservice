@@ -42,7 +42,7 @@ class Scripter(object):
 
     # SELECT ##################################################################
 
-    def script_as_select(self, connection, metadata) -> str:
+    def script_as_select(self, metadata) -> str:
         """ Function to get script for select operations """
         schema = metadata["schema"]
         name = metadata["name"]

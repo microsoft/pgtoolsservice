@@ -8,6 +8,7 @@ import unittest.mock as mock
 import psycopg2
 
 from pgsqltoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
+from pgsqltoolsservice.scripting import Scripter
 
 
 def get_mock_notification_context() -> NotificationContext:
@@ -89,7 +90,7 @@ class MockConnection(object):
     def __init__(self, dsn_parameters=None, cursor=None):
         self.close = mock.Mock()
         self.dsn_parameters = dsn_parameters
-        self.server_version = '9.6.2'
+        self.server_version = '90602'
         self.cursor = mock.Mock(return_value=cursor)
         self.get_backend_pid = mock.Mock(return_value=0)
         self.notices = []
@@ -132,3 +133,10 @@ class MockCursor:
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
         raise psycopg2.DatabaseError()
+
+
+class MockScripter(Scripter):
+    """ Class used to mock the scripter class for testing """
+
+    def __init__(self, connection):
+        self.connection = connection
