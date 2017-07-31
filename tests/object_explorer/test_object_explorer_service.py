@@ -341,6 +341,8 @@ class TestObjectExplorer(unittest.TestCase):
         # ... The session should no longer be in the
         self.assertDictEqual(oe._session_map, {})
 
+    # EXPAND NODE
+
     # OLD STUFF
 
 
@@ -381,14 +383,7 @@ class TestObjectExplorer(unittest.TestCase):
     #     params.root_node = self._get_test_root_path_uri()
     #     self.oe_service._handle_refresh_request(self.context, params)
     #     self.context.send_response.asssert_called_once()
-    #
-    # def test_oe_close_session_with_invalid_params(self) -> str:
-    #     """Test closing an Object Explorer session"""
-    #     self.test_oe_create_session_with_valid_params()
-    #     # send and validate request
-    #     params: ConnectionDetails = ConnectionDetails()
-    #     self.oe_service._handle_close_session_request(self.context, params)
-    #     self.context.send_response.asssert_called_once()
+
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connection_details(self) -> Tuple[ConnectionDetails, str]:

@@ -16,13 +16,13 @@ from pgsqltoolsservice.object_explorer.contracts import NodeInfo
 class Folder:
     def __init__(self, label: str, path: str):
         self.label = label
-        self.path = path
+        self.path = path + '/'
 
     def as_node(self, current_path: str) -> NodeInfo:
         node: NodeInfo = NodeInfo()
         node.is_leaf = False
         node.label = self.label
-        node.node_path = urljoin(current_path, self.path + '/')
+        node.node_path = urljoin(current_path, self.path)
         node.node_type = 'Folder'
         return node
 
@@ -131,4 +131,4 @@ def route_request(session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
             return target.get_nodes(path, session, match.groupdict())
 
     # If we make it to here, there isn't a route that matches the path
-    raise RuntimeError(f'Path {path} does not have a matching OE route')  # TODO: Localize
+    raise ValueError(f'Path {path} does not have a matching OE route')  # TODO: Localize
