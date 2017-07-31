@@ -89,7 +89,7 @@ class View(node.NodeObject):
 
     # HELPER METHODS #######################################################
 
-    def create_query_data(self) -> dict:
+    def _create_query_data(self) -> dict:
         data = {
             "data": {
                 "name": self.name,
@@ -100,7 +100,7 @@ class View(node.NodeObject):
             }}
         return data
 
-    def delete_query_data(self) -> dict:
+    def _delete_query_data(self) -> dict:
         data = {
             "vid": self._oid,
             "name": self.name,
@@ -108,7 +108,7 @@ class View(node.NodeObject):
         }
         return data
 
-    def update_query_data(self) -> dict:
+    def _update_query_data(self) -> dict:
         data = {"data": {
 
         }}
@@ -120,13 +120,13 @@ class View(node.NodeObject):
         """ Function to retrieve scripts for an operation """
         template_root = self._template_root(connection)
         if (action == "create"):
-            data = self.create_query_data()
+            data = self._create_query_data()
             query_file = "create.sql"
         elif (action == "delete"):
-            data = self.delete_query_data()
+            data = self._delete_query_data()
             query_file = "delete.sql"
         elif (action == "update"):
-            data = self.update_query_data()
+            data = self._update_query_data()
             query_file = "update.sql"
         connection_version = self.utils.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)

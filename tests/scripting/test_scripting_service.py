@@ -10,11 +10,14 @@ from typing import List, Dict  # noqa
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.connection.contracts.common import ConnectionType
 from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from pgsqltoolsservice.hosting import (
+    JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+)
 import tests.utils as utils
-from pgsqltoolsservice.scripting import ScriptingService
-from pgsqltoolsservice.scripting.contracts.scriptas_request import ScriptOperation, ScriptAsParameters
-import pgsmo.utils.templating as Template
+from pgsqltoolsservice.scripting import ScriptingService, Scripter
+from pgsqltoolsservice.scripting.contracts.scriptas_request import (
+    ScriptOperation, ScriptAsParameters
+)
 import pgsmo.utils.querying as querying
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
@@ -32,7 +35,7 @@ class TestScriptingService(unittest.TestCase):
         Ran before each unit test.
         """
         self.cursor = utils.MockCursor(None)
-        self.connection = utils.MockConnection(cursor=self.cursor)
+        self.connection = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"}, cursor=self.cursor)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.service_provider = ServiceProvider(None, {})
@@ -101,15 +104,47 @@ class TestScriptingService(unittest.TestCase):
         mock_service._handle_scriptas_request(self.request_context, mock_params)
         self.assertTrue(self.success)
 
+    def test_scripting_operation(self):
+        """ Test _scripting_operation function """
+        # Set up mock objects
+        mock_service = ScriptingService()
+        operations = [ScriptOperation.Create, ScriptOperation.Select,
+                      ScriptOperation.Insert, ScriptOperation.Update,
+                      ScriptOperation.Delete]
+        objects = ["Database", "View", "Table"]
+
+        mock_service.script_as_select = mock.MagicMock()
+        mock_service.script_as_create = mock.MagicMock()
+        mock_service.script_as_update = mock.MagicMock()
+        mock_service.script_as_delete = mock.MagicMock()
+        mock_service.script_as_insert = mock.MagicMock()
+
+        # When called with various scripting operations and objects
+        for op in operations:
+            for obj in objects:
+                mock_service._scripting_operation(op, self.connection, {"metadataTypeName": obj})
+
+        # I should see calls being made for the different script operations
+        self.assertEqual(True, mock_service.script_as_select.called)
+        self.assertEqual(True, mock_service.script_as_create.called)
+        self.assertEqual(True, mock_service.script_as_update.called)
+        self.assertEqual(True, mock_service.script_as_insert.called)
+
+        # If I use an invalid script operation, I should get back none
+        for obj in objects:
+            check = mock_service._scripting_operation("bogus value", self.connection, {"metadataTypeName": obj})
+            self.assertIsNone(check)
+
     def test_script_as_select(self):
         """Test getting select script for all objects"""
         # Set up the service and the objects
-        scripter = utils.MockScripter(self.connection)
+        mock_connection = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
+        scripter = Scripter(mock_connection)
+        service = ScriptingService()
         metadata = {
             "schema": "public",
             "name": "foo"
         }
-        service = ScriptingService()
         service.script_as_select = mock.MagicMock(return_value=scripter.script_as_select(metadata))
 
         # If I try to get select script for any object
@@ -121,19 +156,35 @@ class TestScriptingService(unittest.TestCase):
     def test_script_as_create(self):
         """Test getting create script for all objects"""
         # Set up the service and the objects
-        scripter = utils.MockScripter(self.connection)
+        mock_scripter = Scripter(self.connection)
         service = ScriptingService()
 
         # Table
-        self._test_table_create_script(scripter, service)
+        self._test_table_create_script(mock_scripter, service)
 
         # View
-        self._test_view_create_script(scripter, service)
+        self._test_view_create_script(mock_scripter, service)
 
         # Database
-        self._test_database_create_script(scripter, service)
+        self._test_database_create_script(mock_scripter, service)
+
+    def test_script_as_delete(self):
+        """ Test getting delete script for all objects """
+        mock_scripter = Scripter(self.connection)
+        service = ScriptingService()
+
+        # Table
+        self._test_table_delete_script(mock_scripter, service)
+
+        # View
+        self._test_view_delete_script(mock_scripter, service)
+
+        # Database
+        self._test_database_delete_script(mock_scripter, service)
 
     # PRIVATE HELPER FUNCTIONS ####################################################
+
+    # CREATE SCRIPTS ##############################################################
 
     def assertNotNoneOrEmpty(self, result: str) -> bool:
         """Assertion to confirm a string to be not none or empty"""
@@ -142,7 +193,7 @@ class TestScriptingService(unittest.TestCase):
     def _success(self):
         self.success = True
 
-    def _test_table_create_script(self, service, scripter):
+    def _test_table_create_script(self, scripter, service):
         """ Helper function to test create script for tables """
         # Set up the mocks
         mock_table = Table(None, None, 'test')
@@ -150,9 +201,7 @@ class TestScriptingService(unittest.TestCase):
         def table_mock_fn(connection, operation: str):
             mock_table._template_root = mock.MagicMock(return_value=Table.TEMPLATE_ROOT)
             mock_table._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            connection_version = self.utils.get_server_version(connection)
-            mock_template = Template.get_template_path(mock_table._template_root(), f"{operation}.sql", connection_version)
-            result = Template.render_template(mock_template, **mock_table._create_query_data())
+            result = mock_table.script(connection, "create")
             return result
 
         def scripter_mock_fn():
@@ -166,9 +215,9 @@ class TestScriptingService(unittest.TestCase):
         result = service.script_as_create()
 
         # The result shouldn't be none or an empty string
-        self.assertIsNotNone(result)
+        self.assertNotNoneOrEmpty(result)
 
-    def _test_view_create_script(self, service, scripter):
+    def _test_view_create_script(self, scripter, service):
         """ Helper function to test create script for views """
         # Set up the mocks
         mock_view = View(None, None, 'test')
@@ -176,9 +225,7 @@ class TestScriptingService(unittest.TestCase):
         def view_mock_fn(connection, operation: str):
             mock_view._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
             mock_view._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            connection_version = self.utils.get_server_version(connection)
-            mock_template = Template.get_template_path(mock_view._template_root(), f"{operation}.sql", connection_version)
-            result = Template.render_template(mock_template, **mock_view._create_query_data())
+            result = mock_view.script(connection, "create")
             return result
 
         def scripter_mock_fn():
@@ -194,19 +241,16 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
 
-    def _test_database_create_script(self, service, scripter):
+    def _test_database_create_script(self, scripter, service):
         """ Helper function to test create script for views """
         # Set up the mocks
-        mock_connection = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
-        mock_server = Server(mock_connection)
+        mock_server = Server(self.connection)
         mock_database = Database(mock_server, 'test')
 
         def database_mock_fn(connection, operation: str):
             mock_database._template_root = mock.MagicMock(return_value=Database.TEMPLATE_ROOT)
-            mock_database._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
-            connection_version = self.utils.get_server_version(connection)
-            mock_template = Template.get_template_path(mock_database._template_root(), f"{operation}.sql", connection_version)
-            result = Template.render_template(mock_template, **mock_database._create_query_data())
+            mock_database._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_database.script(connection, "create")
             return result
 
         def scripter_mock_fn():
@@ -221,6 +265,81 @@ class TestScriptingService(unittest.TestCase):
 
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
+
+    # DELETE SCRIPTS ##############################################################
+
+    def _test_table_delete_script(self, scripter, service):
+        """ Helper function to test delete script for tables """
+        # Set up the mocks
+        mock_table = Table(None, None, 'test')
+
+        def table_mock_fn(connection, operation: str):
+            mock_table._template_root = mock.MagicMock(return_value=Table.TEMPLATE_ROOT)
+            mock_table._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_table.script(connection, "delete")
+            return result
+
+        def scripter_mock_fn():
+            mock_table.script = mock.MagicMock(return_value=table_mock_fn(self.connection, "delete"))
+            return mock_table.script()
+
+        scripter.get_table_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_table_delete_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_delete()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
+    def _test_view_delete_script(self, scripter, service):
+        """ Helper function to test delete script for views """
+        # Set up the mocks
+        mock_view = View(None, None, 'test')
+
+        def view_mock_fn(connection, operation: str):
+            mock_view._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
+            mock_view._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_view.script(connection, "delete")
+            return result
+
+        def scripter_mock_fn():
+            mock_view.script = mock.MagicMock(return_value=view_mock_fn(self.connection, "delete"))
+            return mock_view.script()
+
+        scripter.get_view_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_view_delete_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_delete()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
+    def _test_database_delete_script(self, scripter, service):
+        """ Helper function to test delete script for databases """
+        # Set up the mocks
+        mock_server = Server(self.connection)
+        mock_database = Database(mock_server, 'test')
+
+        def database_mock_fn(connection, operation: str):
+            mock_database._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
+            mock_database._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_database.script(connection, "delete")
+            return result
+
+        def scripter_mock_fn():
+            mock_database.script = mock.MagicMock(return_value=database_mock_fn(self.connection, "delete"))
+            return mock_database.script()
+
+        scripter.get_database_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_database_delete_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_delete()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
 
 
 if __name__ == '__main__':
