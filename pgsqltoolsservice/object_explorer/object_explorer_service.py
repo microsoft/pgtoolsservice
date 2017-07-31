@@ -92,12 +92,14 @@ class ObjectExplorerService(object):
             # Generate the session ID and try to remove the session
             session_id = self._generate_session_uri(params)
             session = self._session_map.pop(session_id, None)
+            # TODO: Dispose session (disconnect, etc)
 
             request_context.send_response(session is not None)
         except Exception as e:
+            message = f'Failed to close OE session: {str(e)}'
             if self._service_provider.logger is not None:
-                self._service_provider.logger.error(f'Failed to close OE session: {str(e)}')
-            request_context.send_response(False)
+                self._service_provider.logger.error(message)
+            request_context.send_error(message)
 
     def _handle_refresh_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle refresh Object Explorer create node request"""
@@ -143,6 +145,7 @@ class ObjectExplorerService(object):
 
     def _initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        connection = None
 
         try:
             # Step 1: Connect with the provided connection details
@@ -159,13 +162,12 @@ class ObjectExplorerService(object):
 
             # Step 2: Store the connection in the session
             connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
-            session.connection = connection
 
             # Step 3: Create the PGSMO Server object for the session and create the root node for the server
             session.server = Server(connection)
-            metadata = ObjectMetadata.from_data(0, 'Database', session.connection_details.database_name)
+            metadata = ObjectMetadata.from_data(0, 'Database', session.connection_details.options['dbname'])
             node = NodeInfo()
-            node.label = session.connection_details.database_name
+            node.label = session.connection_details.options['dbname']
             node.is_leaf = False
             node.node_path = session.id
             node.node_type = 'Database'
@@ -188,7 +190,7 @@ class ObjectExplorerService(object):
             self._session_created_error(request_context, session, message)
 
             # Attempt to clean up the connection
-            if session.connection is not None:
+            if connection is not None:
                 conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
 
     def _session_created_error(self, request_context: RequestContext, session: ObjectExplorerSession, message: str):

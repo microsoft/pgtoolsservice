@@ -12,7 +12,7 @@ import urllib.parse as url_parse
 
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionDetails, ConnectionCompleteParams
-from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, RequestContext  # noqa
+from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider  # noqa
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
 from pgsqltoolsservice.object_explorer.contracts import (
@@ -63,9 +63,9 @@ class TestObjectExplorer(unittest.TestCase):
     def test_generate_uri_missing_params(self):
         # Setup: Create the parameter sets that will be missing a param each
         params = [
-            ConnectionDetails.from_data(None, self.TEST_DBNAME, self.TEST_USER, {}),
-            ConnectionDetails.from_data(self.TEST_HOST, None, self.TEST_USER, {}),
-            ConnectionDetails.from_data(self.TEST_HOST, self.TEST_DBNAME, None, {})
+            ConnectionDetails.from_data(None, None, None, {'host': None, 'dbname': self.TEST_DBNAME, 'user': self.TEST_USER}),
+            ConnectionDetails.from_data(None, None, None, {'host': self.TEST_HOST, 'dbname': None, 'user': self.TEST_USER}),
+            ConnectionDetails.from_data(None, None, None, {'host': self.TEST_HOST, 'dbname': self.TEST_DBNAME, 'user': None})
         ]
 
         for param_set in params:
@@ -76,8 +76,8 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_generate_uri_valid_params(self):
         # If: I generate a session URI from a valid connection details object
-        param = ConnectionDetails.from_data(self.TEST_HOST, self.TEST_DBNAME, self.TEST_USER, {})
-        output = ObjectExplorerService._generate_session_uri(param)
+        params, session_uri = self._connection_details()
+        output = ObjectExplorerService._generate_session_uri(params)
 
         # Then: The output should be a properly formed URI
         parse_result = url_parse.urlparse(output)
@@ -95,7 +95,7 @@ class TestObjectExplorer(unittest.TestCase):
         # Setup: Create an OE service
         oe = ObjectExplorerService()
 
-        # If: I create an OE session for with missing params
+        # If: I create an OE session with missing params
         rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         oe._handle_create_session_request(rc.request_context, None)
 
@@ -114,7 +114,7 @@ class TestObjectExplorer(unittest.TestCase):
         # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
         #       scenarios in a different test
         rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
-        params = ConnectionDetails.from_data(self.TEST_HOST, self.TEST_DBNAME, None, {})
+        params = ConnectionDetails.from_data(None, None, None, {})
         oe._handle_create_session_request(rc.request_context, params)
 
         # Then:
@@ -127,8 +127,7 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_session_exists(self):
         # Setup: Create an OE service and pre-load a session
         oe = ObjectExplorerService()
-        params = ConnectionDetails.from_data(self.TEST_HOST, self.TEST_DBNAME, self.TEST_USER, {})
-        session_uri = oe._generate_session_uri(params)
+        params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
 
@@ -173,6 +172,60 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... The session should have been cleaned up
         self.assertDictEqual(oe._session_map, {})
+
+    def test_handle_create_session_successful(self):
+        # Setup:
+        # ... Create OE service with mock connection service that returns a successful connection response
+        mock_connection = {}
+        cs = ConnectionService()
+        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+        oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+
+        # ... Patch the PGSMO Server class
+        mock_server = {}
+        patch_method = mock.MagicMock(return_value=mock_server)
+        patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.Server'
+
+        # ... Create validation of success notification
+        def validate_success_notification(response: SessionCreatedParameters):
+            self.assertTrue(response.success)
+            self.assertEqual(response.session_id, session_uri)
+            self.assertIsNone(response.error_message)
+
+            self.assertIsInstance(response.root_node, NodeInfo)
+            self.assertEqual(response.root_node.label, self.TEST_DBNAME)
+            self.assertEqual(response.root_node.node_path, session_uri)
+            self.assertEqual(response.root_node.node_type, 'Database')
+            self.assertIsInstance(response.root_node.metadata, ObjectMetadata)
+            self.assertFalse(response.root_node.is_leaf)
+
+        # ... Create parameters, session, request context validator
+        params, session_uri = self._connection_details()
+        rc = RequestFlowValidator()
+        rc.add_expected_response(
+            CreateSessionResponse,
+            lambda param: self.assertEqual(param.session_id, session_uri)
+        )
+        rc.add_expected_notification(
+            SessionCreatedParameters,
+            SESSION_CREATED_METHOD,
+            validate_success_notification
+        )
+
+        # If: I create a session
+        with mock.patch(patch_path, patch_method):
+            oe._handle_create_session_request(rc.request_context, params)
+
+        # Then:
+        # ... Error notification should have been returned, session should be cleaned up from OE service
+        rc.validate()
+
+        # ... The session should still exist and should have connection and server setup
+        self.assertIn(session_uri, oe._session_map)
+        self.assertIs(oe._session_map[session_uri].server, mock_server)
+        self.assertTrue(oe._session_map[session_uri].is_ready)
 
     def test_init_session_cancelled_connection(self):
         # Setup:
@@ -226,62 +279,67 @@ class TestObjectExplorer(unittest.TestCase):
         rc.validate()
         self.assertDictEqual(oe._session_map, {})
 
-    def test_handle_create_session_successful(self):
-        # Setup:
-        # ... Create OE service with mock connection service that returns a successful connection response
-        mock_connection = {}
-        cs = ConnectionService()
-        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
-        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+    # CLOSE SESSION ########################################################
+
+    def test_handle_close_session_missing_params(self):
+        # Setup: Create an OE service
         oe = ObjectExplorerService()
-        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        oe._service_provider = utils.get_mock_service_provider({})
 
-        # ... Patch the PGSMO Server class
-        mock_server = {}
-        patch_method = mock.MagicMock(return_value=mock_server)
-        patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.Server'
+        # If: I close an OE session with missing params
+        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        oe._handle_close_session_request(rc.request_context, None)
 
-        # ... Create validation of success notification
-        def validate_success_notification(params: SessionCreatedParameters):
-            self.assertTrue(params.success)
-            self.assertEqual(params.session_id, session_uri)
-            self.assertIsNone(params.error_message)
-
-            self.assertIsInstance(params.root_node, NodeInfo)
-            self.assertEqual(params.root_node.label, self.TEST_DBNAME)
-            self.assertEqual(params.root_node.node_path, session_uri)
-            self.assertEqual(params.root_node.node_type, 'Database')
-            self.assertIsInstance(params.root_node.metadata, ObjectMetadata)
-            self.assertFalse(params.root_node.is_leaf)
-
-        # ... Create parameters, session, request context validator
-        params, session_uri = self._connection_details()
-        rc = RequestFlowValidator()
-        rc.add_expected_response(
-            CreateSessionResponse,
-            lambda param: self.assertEqual(param.session_id, session_uri)
-        )
-        rc.add_expected_notification(
-            SessionCreatedParameters,
-            SESSION_CREATED_METHOD,
-            validate_success_notification
-        )
-
-        # If: I create a session
-        with mock.patch(patch_path, patch_method):
-            oe._handle_create_session_request(rc.request_context, params)
-
-        # Then:
-        # ... Error notification should have been returned, session should be cleaned up from OE service
+        # Then: I should get an error response
         rc.validate()
 
-        # ... The session should still exist and should have connection and server setup
-        self.assertIn(session_uri, oe._session_map)
-        self.assertIs(oe._session_map[session_uri].connection, mock_connection)
-        self.assertIs(oe._session_map[session_uri].server, mock_server)
-        self.assertTrue(oe._session_map[session_uri].is_ready)
+    def test_handle_close_session_incomplete_params(self):
+        # Setup: Create an OE service
+        oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({})
 
-    # CLOSE SESSION ########################################################
+        # If: I close an OE session for with missing params
+        # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
+        #       scenarios in a different test
+        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        params = ConnectionDetails.from_data(None, None, None, {})
+        oe._handle_close_session_request(rc.request_context, params)
+
+        # Then:
+        # ... I should get an error response
+        rc.validate()
+
+    def test_handle_close_session_does_not_exist(self):
+        # Setup: Create an OE service
+        oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({})
+
+        # If: I close an OE session that doesn't exist
+        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
+        params, session_id = self._connection_details()
+        oe._handle_close_session_request(rc.request_context, params)
+
+        # Then: I should get a successful response
+        rc.validate()
+
+    def test_handle_close_session_successful(self):
+        # Setup: Create an OE service and add a session to it
+        oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({})
+        params, session_uri = self._connection_details()
+        session = ObjectExplorerSession(session_uri, params)
+        oe._session_map[session_uri] = session
+
+        # If: I close a session
+        rc = RequestFlowValidator().add_expected_response(bool, self.assertTrue)
+        oe._handle_close_session_request(rc.request_context, params)
+
+        # Then:
+        # ... I should get a successful response
+        rc.validate()
+
+        # ... The session should no longer be in the
+        self.assertDictEqual(oe._session_map, {})
 
     # OLD STUFF
 
@@ -333,16 +391,20 @@ class TestObjectExplorer(unittest.TestCase):
     #     self.context.send_response.asssert_called_once()
 
     # IMPLEMENTATION DETAILS ###############################################
+    def _connection_details(self) -> Tuple[ConnectionDetails, str]:
+        param = ConnectionDetails()
+        param.options = {
+            'host': self.TEST_HOST,
+            'dbname': self.TEST_DBNAME,
+            'user': self.TEST_USER
+        }
+        session_uri = ObjectExplorerService._generate_session_uri(param)
+
+        return param, session_uri
+
     def _validate_error(self, param: SessionCreatedParameters, session_uri: str) -> None:
         self.assertFalse(param.success)
         self.assertEqual(param.session_id, session_uri)
         self.assertIsNone(param.root_node)
         self.assertIsNotNone(param.error_message)
         self.assertNotEqual(param.error_message.strip(), '')
-
-    def _connection_details(self) -> Tuple[ConnectionDetails, str]:
-        params = ConnectionDetails.from_data(self.TEST_HOST, self.TEST_DBNAME, self.TEST_USER, {})
-        session_uri = ObjectExplorerService._generate_session_uri(params)
-
-        return params, session_uri
-
