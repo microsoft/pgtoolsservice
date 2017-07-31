@@ -42,4 +42,58 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def full_properties(self):
-        return {}
+        return {
+            "coll_inherits": "coll_inherits",
+            "typname": "typname",
+            "like_relation": "like_relation",
+            "primary_key": "primary_key",
+            "unique_constraint": "unique_constraint",
+            "foreign_key": "foreign_key",
+            "check_constraint": "check_constraint",
+            "exclude_constraint": "exclude_constraint",
+            "fillfactor": "fillfactor",
+            "spcname": "spcname",
+            "relowner": "relowner",
+            "cascade": "cascade",
+            "coll_inherits_added": "coll_inherits_added",
+            "coll_inherits_removed": "coll_inherits_removed",
+            "autovacuum_custom": "autovacuum_custom",
+            "autovacuum_enabled": "autovacuum_enabled",
+            "vacuum_table": "vacuum_table",
+            "toast_autovacuum": "toast_autovacuum",
+            "toast_autovacuum_enabled": "toast_autovacuum_enabled",
+            "vacuum_toast": "vacuum_toast",
+            "description": "description",
+            "relacl": "relacl",
+            "seclabels": "seclabels",
+            "relhasoids": "relhasoids"
+        }
+
+    @property
+    def property_query(self) -> dict:
+        return {
+            "coll_inherits": 0,
+            "typname": "test",
+            "like_relation": None,
+            "primary_key": 42,
+            "unique_constraint": None,
+            "foreign_key": 123,
+            "check_constraint": None,
+            "exclude_constraint": False,
+            "fillfactor": None,
+            "spcname": "test",
+            "relowner": "admin",
+            "cascade": False,
+            "coll_inherits_added": 0,
+            "coll_inherits_removed": 0,
+            "autovacuum_custom": None,
+            "autovacuum_enabled": True,
+            "vacuum_table": False,
+            "toast_autovacuum": None,
+            "toast_autovacuum_enabled": False,
+            "vacuum_toast": False,
+            "description": "generic description",
+            "relacl": None,
+            "seclabels": None,
+            "relhasoids": False
+        }
