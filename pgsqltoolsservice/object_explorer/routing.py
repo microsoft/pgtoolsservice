@@ -7,6 +7,7 @@ import re
 from typing import Callable, List, Optional, TypeVar
 from urllib.parse import urljoin, urlparse
 
+from pgsmo import NodeObject
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession
 from pgsqltoolsservice.object_explorer.contracts import NodeInfo
@@ -18,7 +19,7 @@ class Folder:
         self.path = path
 
     def as_node(self, current_path: str) -> NodeInfo:
-        node = NodeInfo()
+        node: NodeInfo = NodeInfo()
         node.is_leaf = False
         node.label = self.label
         node.node_path = urljoin(current_path, self.path + '/')
@@ -53,85 +54,41 @@ class RoutingTarget:
 
 
 # NODE GENERATORS ##########################################################
+def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: Optional[str]=None, is_leaf: bool=True) -> NodeInfo:
+    metadata = ObjectMetadata()
+    metadata.metadata_type = 0
+    metadata.metadata_type_name = type
+
+    node_info: NodeInfo = NodeInfo()
+    node_info.is_leaf = is_leaf
+    node_info.label = label if label is not None else node.name
+    node_info.metadata = metadata
+    node_info.node_type = node_type
+
+    trailing_slash = '' if is_leaf else '/'
+    node_info.node_path = urljoin(current_path, str(node.oid) + trailing_slash)
+
+    return node_info
 
 
 def _functions(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    node_list: List[NodeInfo] = []
-    schema = session.server.databases[session.server.maintenance_db].schemas[int(match_params['scid'])]
-    for func in schema.functions:
-        metadata = ObjectMetadata
-        metadata.metadata_type = 0
-        metadata.metadata_type_name = 'Function'
-        metadata.name = func.name
-        metadata.schema = schema.name
-
-        node = NodeInfo()
-        node.label = func.name
-        node.isLeaf = True
-        node.node_path = urljoin(current_path, str(func.oid))
-        node.node_type = 'ScalarValuedFunction'
-        node.metadata = metadata
-        node_list.append(node)
-    return node_list
+    funcs = session.server.databases[session.server.maintenance_db].schemas[int(match_params['scid'])].functions
+    return [_get_node_info(node, current_path, 'ScalarValuedFunction') for node in funcs]
 
 
 def _tables(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    node_list: List[NodeInfo] = []
-    schema = session.server.databases[session.server.maintenance_db].schemas[int(match_params['scid'])]
-    for table in schema.tables:
-        metadata = ObjectMetadata()
-        metadata.metadata_type = 0
-        metadata.metadata_type_name = 'Table'
-        metadata.name = table.name
-        metadata.schema = schema.name
-
-        cur_node = NodeInfo()
-        cur_node.label = table.name
-        cur_node.isLeaf = True
-        cur_node.node_path = urljoin(current_path, str(table.oid))
-        cur_node.node_type = 'Table'
-        cur_node.metadata = metadata
-        node_list.append(cur_node)
-    return node_list
+    tables = session.server.databases[session.server.maintenance_db].schemas[int(match_params['scid'])].tables
+    return [_get_node_info(node, current_path, 'Table') for node in tables]
 
 
 def _schemas(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    node_list: List[NodeInfo] = []
-    database = session.server.databases[session.server.maintenance_db]
-    for schema in database.schemas:
-        metadata = ObjectMetadata()
-        metadata.metadata_type = 0
-        metadata.metadata_type_name = 'Schema'
-        metadata.schema = schema.name
-
-        node = NodeInfo()
-        node.label = schema.name
-        node.isLeaf = False
-        node.node_path = urljoin(current_path, str(schema.oid) + '/')
-        node.node_type = 'Schema'
-        node.metadata = metadata
-        node_list.append(node)
-    return node_list
+    schemas = session.server.databases[session.server.maintenance_db].schemas
+    return [_get_node_info(node, current_path, 'Schema', is_leaf=False) for node in schemas]
 
 
 def _views(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    node_list: List[NodeInfo] = []
-    schema = session.server.databases[session.server.maintenance_db].schemas[int(match_params['scid'])]
-    for view in schema.views:
-        metadata = ObjectMetadata()
-        metadata.metadata_type = 0
-        metadata.metadata_type_name = 'View'
-        metadata.name = view.name
-        metadata.schema = schema.name
-
-        cur_node = NodeInfo()
-        cur_node.label = view.name
-        cur_node.isLeaf = True
-        cur_node.node_path = urljoin(current_path, str(view.oid))
-        cur_node.node_type = 'View'
-        cur_node.metadata = metadata
-        node_list.append(cur_node)
-    return node_list
+    views = session.server.databases[session.server.maintenance_db].schemas[int(match_params['scid'])].views
+    return [_get_node_info(node, current_path, 'View') for node in views]
 
 
 # ROUTING TABLE ############################################################
