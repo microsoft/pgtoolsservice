@@ -17,7 +17,8 @@ from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
 from pgsqltoolsservice.object_explorer.contracts import (
     NodeInfo,
-    CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD
+    CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
+    ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
 )
 from pgsqltoolsservice.utils import constants
 import tests.utils as utils
@@ -163,7 +164,7 @@ class TestObjectExplorer(unittest.TestCase):
             rc.add_expected_notification(
                 SessionCreatedParameters,
                 SESSION_CREATED_METHOD,
-                lambda param: self._validate_error(param, session_uri))
+                lambda param: self._validate_init_error(param, session_uri))
             oe._handle_create_session_request(rc.request_context, params)
 
         # Then:
@@ -244,7 +245,7 @@ class TestObjectExplorer(unittest.TestCase):
         rc.add_expected_notification(
             SessionCreatedParameters,
             SESSION_CREATED_METHOD,
-            lambda param: self._validate_error(param, session_uri))
+            lambda param: self._validate_init_error(param, session_uri))
         oe._initialize_session(rc.request_context, session)
 
         # Then:
@@ -271,7 +272,7 @@ class TestObjectExplorer(unittest.TestCase):
         rc.add_expected_notification(
             SessionCreatedParameters,
             SESSION_CREATED_METHOD,
-            lambda param: self._validate_error(param, session_uri))
+            lambda param: self._validate_init_error(param, session_uri))
         oe._initialize_session(rc.request_context, session)
 
         # Then:
@@ -341,11 +342,118 @@ class TestObjectExplorer(unittest.TestCase):
         # ... The session should no longer be in the
         self.assertDictEqual(oe._session_map, {})
 
-    # EXPAND NODE
+    # EXPAND NODE ##########################################################
+    def test_handle_expand_incomplete_params(self):
+        # Setup:
+        # ... Create an OE service
+        oe = ObjectExplorerService()
+
+        # ... Create a set of invalid parameters to test
+        param_sets = [
+            None,
+            ExpandParameters.from_dict({'session_id': None, 'node_path': '/'}),
+            ExpandParameters.from_dict({'session_id': 'session', 'node_path': None})
+        ]
+
+        for params in param_sets:
+            # If: I expand with an invalid set of parameters
+            rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+            oe._handle_expand_request(rc.request_context, params)
+
+            # Then: I should get an error response
+            rc.validate()
+
+    def test_handle_expand_no_session_match(self):
+        # Setup: Create an OE service
+        oe = ObjectExplorerService()
+
+        # If: I expand a node on a session that doesn't exist
+        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        params = ExpandParameters.from_dict({'session_id': 'session', 'node_path': None})
+        oe._handle_expand_request(rc.request_context, params)
+
+        # Then: I should get an error back
+        rc.validate()
+
+    def test_handle_expand_threading_fail(self):
+        # Setup: Create an OE service with a session preloaded
+        oe, session, session_uri = self._preloaded_oe_service()
+
+        # ... Patch the threading to throw
+        patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
+        patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.threading.Thread'
+        with mock.patch(patch_path, patch_mock):
+            # If: I expand a node (with threading that throws)
+            rc = RequestFlowValidator()
+            rc.add_expected_response(bool, self.assertTrue)
+            rc.add_expected_notification(
+                ExpandCompletedParameters,
+                EXPAND_COMPLETED_METHOD,
+                lambda param: self._validate_expand_error(param, session_uri, '/'))
+            params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
+            oe._handle_expand_request(rc.request_context, params)
+
+        # Then:
+        # ... The error notification should have been returned
+        rc.validate()
+
+        # ... The session should not have an expand task defined
+        self.assertListEqual(session.expand_tasks, [])
+
+    def test_handle_expand_exception_expanding(self):
+        # Setup: Create an OE service with a session preloaded
+        oe, session, session_uri = self._preloaded_oe_service()
+
+        # ... Patch the route_request to throw
+        # ... Patch the threading to throw
+        patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
+        patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.route_request'
+        with mock.patch(patch_path, patch_mock):
+            # If: I expand a node (with route_request that throws)
+            rc = RequestFlowValidator()
+            rc.add_expected_response(bool, self.assertTrue)
+            rc.add_expected_notification(
+                ExpandCompletedParameters,
+                EXPAND_COMPLETED_METHOD,
+                lambda param: self._validate_expand_error(param, session_uri, '/'))
+            params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
+            oe._handle_expand_request(rc.request_context, params)
+
+        # Then:
+        # ... An error notification should have been sent
+        rc.validate()
+
+        # ... The thread should be attached to the session
+        self.assertEqual(len(session.expand_tasks), 1)
+
+    def test_handle_expand_node_successful(self):
+        # Setup: Create an OE service with a session preloaded
+        oe, session, session_uri = self._preloaded_oe_service()
+
+        # ... Define validation for the return notification
+        def validate_success_notification(response: ExpandCompletedParameters):
+            self.assertIsNone(response.error_message)
+            self.assertEqual(response.session_id, session_uri)
+            self.assertEqual(response.node_path, '/')
+            self.assertIsInstance(response.nodes, list)
+            for node in response.nodes:
+                self.assertIsInstance(node, NodeInfo)
+
+        # If: I expand a node
+        rc = RequestFlowValidator()
+        rc.add_expected_response(bool, self.assertTrue)
+        rc.add_expected_notification(ExpandCompletedParameters, EXPAND_COMPLETED_METHOD, validate_success_notification)
+        params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
+        oe._handle_expand_request(rc.request_context, params)
+
+        # Then:
+        # ... I should have gotten a completed successfully message
+        rc.validate()
+
+        # ... The thread should be attached to the session
+        self.assertEqual(len(session.expand_tasks), 1)
 
     # OLD STUFF
-
-
 
     # def setUp(self) -> None:
     #     """Handle common initialization tasks for Object Explorer tests"""
@@ -364,16 +472,6 @@ class TestObjectExplorer(unittest.TestCase):
     #         constants.OBJECT_EXPLORER_NAME: self.oe_service}
     #     self.service_provider.initialize()
     #
-    # def test_oe_expand_session_with_invalid_params(self) -> str:
-    #     """Test expanding Object Explorer session"""
-    #     session_id = self.test_oe_create_session_with_valid_params()
-    #     # send and validate request
-    #     params: ExpandParameters = ExpandParameters()
-    #     params.session_id = session_id
-    #     params.root_node = self._get_test_root_path_uri()
-    #     self.oe_service._handle_expand_request(self.context, params)
-    #     self.context.send_response.asssert_called_once()
-    #
     # def test_oe_refresh_session_with_invalid_params(self) -> str:
     #     """Test refreshing an Object Explorer session"""
     #     session_id = self.test_oe_create_session_with_valid_params()
@@ -383,7 +481,6 @@ class TestObjectExplorer(unittest.TestCase):
     #     params.root_node = self._get_test_root_path_uri()
     #     self.oe_service._handle_refresh_request(self.context, params)
     #     self.context.send_response.asssert_called_once()
-
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connection_details(self) -> Tuple[ConnectionDetails, str]:
@@ -397,7 +494,22 @@ class TestObjectExplorer(unittest.TestCase):
 
         return param, session_uri
 
-    def _validate_error(self, param: SessionCreatedParameters, session_uri: str) -> None:
+    def _preloaded_oe_service(self) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
+        oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({})
+        conn_details, session_uri = self._connection_details()
+        session = ObjectExplorerSession(session_uri, conn_details)
+        oe._session_map[session_uri] = session
+
+        return oe, session, session_uri
+
+    def _validate_expand_error(self, param: ExpandCompletedParameters, session_uri: str, node_path: str) -> None:
+        self.assertIsNotNone(param.error_message)
+        self.assertEqual(param.session_id, session_uri)
+        self.assertEqual(param.node_path, node_path)
+        self.assertIsNone(param.nodes)
+
+    def _validate_init_error(self, param: SessionCreatedParameters, session_uri: str) -> None:
         self.assertFalse(param.success)
         self.assertEqual(param.session_id, session_uri)
         self.assertIsNone(param.root_node)

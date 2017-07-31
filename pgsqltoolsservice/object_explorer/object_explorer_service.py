@@ -79,10 +79,8 @@ class ObjectExplorerService(object):
             session.init_task.setDaemon(False)
             session.init_task.start()
         except Exception as e:
-            message = f'Failed to start OE init task: {str(e)}'     # TODO: Localize
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.error(message)
-            self._session_created_error(request_context, session, message)
+            # TODO: Localize
+            self._session_created_error(request_context, session, f'Failed to start OE init task: {str(e)}')
 
     def _handle_close_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle close Object Explorer" sessions request"""
