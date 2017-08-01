@@ -95,6 +95,7 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_missing_params(self):
         # Setup: Create an OE service
         oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({})
 
         # If: I create an OE session with missing params
         rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
@@ -110,6 +111,7 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_incomplete_params(self):
         # Setup: Create an OE service
         oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({})
 
         # If: I create an OE session for with missing params
         # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
@@ -128,6 +130,7 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_session_exists(self):
         # Setup: Create an OE service and pre-load a session
         oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({})
         params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
@@ -348,6 +351,7 @@ class TestObjectExplorer(unittest.TestCase):
         # Setup:
         # ... Create an OE service
         oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({})
 
         # ... Create a set of invalid parameters to test
         param_sets = [
@@ -367,6 +371,7 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_expand_no_session_match(self):
         # Setup: Create an OE service
         oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({})
 
         # If: I expand a node on a session that doesn't exist
         rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
