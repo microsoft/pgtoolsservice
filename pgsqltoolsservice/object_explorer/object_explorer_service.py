@@ -70,7 +70,10 @@ class ObjectExplorerService(object):
             request_context.send_response(response)
 
         except Exception as e:
-            request_context.send_error(str(e))
+            message = f'Failed to create OE session: {str(e)}'
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.error(message)
+            request_context.send_error(message)
             return
 
         # Step 2: Connect the session and lookup the root node asynchronously
@@ -90,11 +93,11 @@ class ObjectExplorerService(object):
             # Generate the session ID and try to remove the session
             session_id = self._generate_session_uri(params)
             session = self._session_map.pop(session_id, None)
-            # TODO: Dispose session (disconnect, etc)
+            # TODO: Dispose session (disconnect, etc) (see: https://github.com/Microsoft/carbon/issues/1541)
 
             request_context.send_response(session is not None)
         except Exception as e:
-            message = f'Failed to close OE session: {str(e)}'
+            message = f'Failed to close OE session: {str(e)}'   # TODO: Localize
             if self._service_provider.logger is not None:
                 self._service_provider.logger.error(message)
             request_context.send_error(message)
@@ -116,9 +119,15 @@ class ObjectExplorerService(object):
             if session is None:
                 raise ValueError(f'OE session with ID {params.session_id} does not exist')   # TODO: Localize
 
+            # TODO: Make sure that the session is ready before starting the expand request
+            # (see https://github.com/Microsoft/carbon/issues/1542)
+
             request_context.send_response(True)
         except Exception as e:
-            request_context.send_error(f'Failed to expand node: {str(e)}')  # TODO: Localize
+            message = f'Failed to expand node: {str(e)}'    # TODO: Localize
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.error(message)
+            request_context.send_error(message)
             return
 
         # Step 2: Start a task for expanding the node
@@ -134,7 +143,6 @@ class ObjectExplorerService(object):
     def _expand_node(self, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession):
         try:
             response = ExpandCompletedParameters(session.id, params.node_path)
-            response.node_path = params.node_path
             response.nodes = route_request(session, params.node_path)
 
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
@@ -158,7 +166,7 @@ class ObjectExplorerService(object):
             if connect_result.error_message is not None:
                 raise RuntimeError(connect_result.error_message)
 
-            # Step 2: Store the connection in the session
+            # Step 2: Get the connection to use for object explorer
             connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
 
             # Step 3: Create the PGSMO Server object for the session and create the root node for the server

@@ -12,10 +12,16 @@ class ExpandCompletedParameters:
     """Parameters to be sent back with a expand completed"""
 
     def __init__(self, session_id: str, node_path: str):
-        self.error_message: Optional[str] = None
+        """
+        Initialize parameters to return when an expand operation is completed
+        :param session_id: ID for the session that had an expanded
+        :param node_path: Path to the node that was expanded
+        """
         self.session_id: str = session_id
-        self.nodes: Optional[List[NodeInfo]] = None
         self.node_path: str = node_path
+
+        self.error_message: Optional[str] = None
+        self.nodes: Optional[List[NodeInfo]] = None
 
 
 EXPAND_COMPLETED_METHOD = 'objectexplorer/expandCompleted'
