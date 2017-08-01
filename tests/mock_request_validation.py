@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, List, Optional, TypeVar
+from typing import Callable, List, Optional, TypeVar    # noqa
 import unittest
 import unittest.mock as mock
 

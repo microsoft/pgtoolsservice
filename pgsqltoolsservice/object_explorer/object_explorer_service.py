@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import threading
-from typing import Dict
+from typing import Dict     # noqa
 from urllib.parse import quote
 
 from pgsmo import Server

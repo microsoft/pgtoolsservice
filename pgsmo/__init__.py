@@ -26,6 +26,7 @@ __all__ = [
     'IndexConstraint',
     'Database',
     'Index',
+    'NodeObject',
     'Role',
     'Rule',
     'Schema',

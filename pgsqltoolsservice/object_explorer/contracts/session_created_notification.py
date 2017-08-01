@@ -3,9 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional
+from typing import Optional     # noqa
 
-from pgsqltoolsservice.object_explorer.contracts.node_info import NodeInfo
+from pgsqltoolsservice.object_explorer.contracts.node_info import NodeInfo  # noqa
 
 
 class SessionCreatedParameters:

@@ -3,10 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import threading
-from typing import List, Optional
+import threading                    # noqa
+from typing import List, Optional   # noqa
 
-from pgsmo import Server
+from pgsmo import Server            # noqa
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
 
 
