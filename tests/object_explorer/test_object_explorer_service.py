@@ -218,6 +218,7 @@ class TestObjectExplorer(unittest.TestCase):
         # If: I create a session
         with mock.patch(patch_path, patch_method):
             oe._handle_create_session_request(rc.request_context, params)
+        oe._session_map[session_uri].init_task.join()
 
         # Then:
         # ... Error notification should have been returned, session should be cleaned up from OE service
@@ -418,6 +419,7 @@ class TestObjectExplorer(unittest.TestCase):
                 lambda param: self._validate_expand_error(param, session_uri, '/'))
             params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
             oe._handle_expand_request(rc.request_context, params)
+        session.expand_tasks[0].join()
 
         # Then:
         # ... An error notification should have been sent
@@ -445,6 +447,7 @@ class TestObjectExplorer(unittest.TestCase):
         rc.add_expected_notification(ExpandCompletedParameters, EXPAND_COMPLETED_METHOD, validate_success_notification)
         params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
         oe._handle_expand_request(rc.request_context, params)
+        session.expand_tasks[0].join()
 
         # Then:
         # ... I should have gotten a completed successfully message
