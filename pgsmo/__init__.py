@@ -6,6 +6,7 @@
 # NOTE: Server must be the first import, otherwise circular dependencies block proper importing
 from pgsmo.objects.server.server import Server
 
+from pgsmo.objects.node_object import NodeObject
 from pgsmo.objects.table_objects import (
     CheckConstraint, Column, ExclusionConstraint, ForeignKeyConstraint, Index, IndexConstraint, Rule, Trigger
 )
@@ -18,18 +19,19 @@ from pgsmo.objects.view.view import View
 __all__ = [
     'CheckConstraint',
     'Column',
+    'Database',
     'ExclusionConstraint',
     'ForeignKeyConstraint',
     'Index',
     'IndexConstraint',
-    'Rule',
-    'Trigger',
     'Database',
     'Index',
-    'Schema',
-    'Server',
+    'NodeObject',
     'Role',
     'Rule',
+    'Schema',
+    'Server',
     'Table',
-    'View',
+    'Trigger',
+    'View'
 ]

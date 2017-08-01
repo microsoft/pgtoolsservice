@@ -83,7 +83,7 @@ class ConnectionService:
         self._service_provider.server.set_request_handler(CANCEL_CONNECT_REQUEST, self.handle_cancellation_request)
 
     # PUBLIC METHODS #######################################################
-    def connect(self, params: ConnectRequestParams):
+    def connect(self, params: ConnectRequestParams) -> Optional[ConnectionCompleteParams]:
         """
         Open a connection using the given connection information.
 
@@ -255,7 +255,7 @@ class ConnectionService:
         return True
 
 
-def _build_connection_response(connection_info: ConnectionInfo, connection_type: ConnectionType):
+def _build_connection_response(connection_info: ConnectionInfo, connection_type: ConnectionType) -> ConnectionCompleteParams:
     """Build a connection complete response object"""
     connection = connection_info.get_connection(connection_type)
     dsn_parameters = connection.get_dsn_parameters()
@@ -265,7 +265,7 @@ def _build_connection_response(connection_info: ConnectionInfo, connection_type:
         database_name=dsn_parameters['dbname'],
         user_name=dsn_parameters['user'])
 
-    response = ConnectionCompleteParams()
+    response: ConnectionCompleteParams = ConnectionCompleteParams()
     response.connection_id = connection_info.connection_id
     response.connection_summary = connection_summary
     response.owner_uri = connection_info.owner_uri
@@ -275,9 +275,10 @@ def _build_connection_response(connection_info: ConnectionInfo, connection_type:
     return response
 
 
-def _build_connection_response_error(connection_info: ConnectionInfo, connection_type: ConnectionType, err):
+def _build_connection_response_error(connection_info: ConnectionInfo, connection_type: ConnectionType, err)\
+        -> ConnectionCompleteParams:
     """Build a connection complete response object"""
-    response: ConnectRequestParams = ConnectionCompleteParams()
+    response: ConnectionCompleteParams = ConnectionCompleteParams()
     response.owner_uri = connection_info.owner_uri
     response.type = connection_type
     response.messages = str(err)

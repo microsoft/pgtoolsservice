@@ -3,21 +3,25 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
+import threading
+from typing import Dict     # noqa
 from urllib.parse import quote
+
+from pgsmo import Server
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.object_explorer.contracts import (
-    CreateSessionResponse, CREATE_SESSION_REQUEST,
+    NodeInfo,
+    CreateSessionResponse, CREATE_SESSION_REQUEST, SessionCreatedParameters, SESSION_CREATED_METHOD,
     CLOSE_SESSION_REQUEST,
     ExpandParameters, EXPAND_REQUEST,
     ExpandCompletedParameters, EXPAND_COMPLETED_METHOD,
-    SessionCreatedParameters, SESSION_CREATED_METHOD,
-    REFRESH_REQUEST, NodeInfo)
+    REFRESH_REQUEST
+)
+from pgsqltoolsservice.object_explorer.routing import route_request
+from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import pgsqltoolsservice.utils as utils
-from pgsmo.objects.server.server import Server
-from pgsmo.objects.database.database import Database
 
 
 class ObjectExplorerService(object):
@@ -25,27 +29,17 @@ class ObjectExplorerService(object):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
-        self._session_map: dict = dict()
+        self._session_map: Dict[str, 'ObjectExplorerSession'] = {}
+        self._session_lock: threading.Lock = threading.Lock()
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
 
         # Register the request handlers with the server
-        self._service_provider.server.set_request_handler(
-            CREATE_SESSION_REQUEST, self._handle_create_session_request
-        )
-
-        self._service_provider.server.set_request_handler(
-            CLOSE_SESSION_REQUEST, self._handle_close_session_request
-        )
-
-        self._service_provider.server.set_request_handler(
-            EXPAND_REQUEST, self._handle_expand_request
-        )
-
-        self._service_provider.server.set_request_handler(
-            REFRESH_REQUEST, self._handle_refresh_request
-        )
+        self._service_provider.server.set_request_handler(CREATE_SESSION_REQUEST, self._handle_create_session_request)
+        self._service_provider.server.set_request_handler(CLOSE_SESSION_REQUEST, self._handle_close_session_request)
+        self._service_provider.server.set_request_handler(EXPAND_REQUEST, self._handle_expand_request)
+        self._service_provider.server.set_request_handler(REFRESH_REQUEST, self._handle_refresh_request)
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Object Explorer service successfully initialized')
@@ -54,45 +48,59 @@ class ObjectExplorerService(object):
 
     def _handle_create_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle a create object explorer session request"""
+        # Step 1: Create the session
+        try:
+            # Make sure we have the appropriate session params
+            utils.validate.is_not_none('params', params)
 
-        # validate that input parameters are as expected
-        if not self._are_create_session_params_valid(params):
-            request_context.send_response(None)
+            # Generate the session ID and create/store the session
+            session_id = self._generate_session_uri(params)
+            session: ObjectExplorerSession = ObjectExplorerSession(session_id, params)
+
+            # Add the session to session map in a lock to prevent race conditions between check and add
+            with self._session_lock:
+                if session_id in self._session_map:
+                    # TODO: Localize
+                    raise NameError(f'Object explorer session for {session_id} already exists!')
+
+                self._session_map[session_id] = session
+
+            # Respond that the session was created
+            response = CreateSessionResponse(session_id)
+            request_context.send_response(response)
+
+        except Exception as e:
+            message = f'Failed to create OE session: {str(e)}'
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.error(message)
+            request_context.send_error(message)
             return
 
-        # generate a session id and create a dedicated Object Explorer connection
-        session_id = self._generate_uri(params)
-        connection_details = self._create_oe_connection(params, session_id)
-        self._session_map[session_id] = connection_details
-
-        # create database node metadata object
-        dbname = params.options['dbname']
-        metadata = ObjectMetadata()
-        metadata.metadata_type = 0
-        metadata.metadata_type_name = 'Database'
-        metadata.name = dbname
-        metadata.schema = None
-
-        # create database tree node
-        node = NodeInfo()
-        node.label = dbname
-        node.isLeaf = False
-        node.node_path = self._get_root_path(connection_details)
-        node.node_type = 'Database'
-        node.metadata = metadata
-
-        # create response notification notification
-        response = SessionCreatedParameters()
-        response.session_id = session_id
-        response.root_node = node
-
-        # send request return code and session created notification
-        request_context.send_response(CreateSessionResponse(session_id))
-        request_context.send_notification(SESSION_CREATED_METHOD, response)
+        # Step 2: Connect the session and lookup the root node asynchronously
+        try:
+            session.init_task = threading.Thread(target=self._initialize_session, args=(request_context, session))
+            session.init_task.setDaemon(False)
+            session.init_task.start()
+        except Exception as e:
+            # TODO: Localize
+            self._session_created_error(request_context, session, f'Failed to start OE init task: {str(e)}')
 
     def _handle_close_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle close Object Explorer" sessions request"""
-        request_context.send_response(True)
+        try:
+            utils.validate.is_not_none('params', params)
+
+            # Generate the session ID and try to remove the session
+            session_id = self._generate_session_uri(params)
+            session = self._session_map.pop(session_id, None)
+            # TODO: Dispose session (disconnect, etc) (see: https://github.com/Microsoft/carbon/issues/1541)
+
+            request_context.send_response(session is not None)
+        except Exception as e:
+            message = f'Failed to close OE session: {str(e)}'   # TODO: Localize
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.error(message)
+            request_context.send_error(message)
 
     def _handle_refresh_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle refresh Object Explorer create node request"""
@@ -101,140 +109,130 @@ class ObjectExplorerService(object):
 
     def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle expand Object Explorer tree node request"""
+        # Step 1: Find the session
+        try:
+            utils.validate.is_not_none('params', params)
+            utils.validate.is_not_none_or_whitespace('params.node_path', params.node_path)
+            utils.validate.is_not_none_or_whitespace('params.session_id', params.session_id)
 
-        connection_details = self._session_map[params.session_id]
-        root_path = self._get_root_path(connection_details)
+            session = self._session_map.get(params.session_id)
+            if session is None:
+                raise ValueError(f'OE session with ID {params.session_id} does not exist')   # TODO: Localize
 
-        # the below dispatch switch block needs to be replaced with some type of look map so it can
-        # easily scale to all the different types of items that may be in the OE tree (TODO: karlb 7/5/2017)
-        if params.node_path == root_path + '/Views':
-            nodes = self._get_view_nodes(params.session_id, root_path)
-        elif params.node_path == root_path + '/Tables':
-            nodes = self._get_table_nodes(params.session_id, root_path)
-        elif params.node_path == root_path + '/Functions':
-            nodes = self._get_function_nodes(params.session_id, root_path)
-        else:
-            nodes = self._get_folder_nodes(root_path)
+            # TODO: Make sure that the session is ready before starting the expand request
+            # (see https://github.com/Microsoft/carbon/issues/1542)
 
-        response = ExpandCompletedParameters()
-        response.session_id = params.session_id
-        response.node_path = params.node_path
-        response.nodes = nodes
+            request_context.send_response(True)
+        except Exception as e:
+            message = f'Failed to expand node: {str(e)}'    # TODO: Localize
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.error(message)
+            request_context.send_error(message)
+            return
 
-        request_context.send_response(True)
+        # Step 2: Start a task for expanding the node
+        try:
+            expand_task = threading.Thread(target=self._expand_node, args=(request_context, params, session))
+            expand_task.setDaemon(False)
+            expand_task.start()
+            session.expand_tasks.append(expand_task)
+        except Exception as e:
+            self._expand_node_error(request_context, params, str(e))
+
+    # PRIVATE HELPERS ######################################################
+    def _expand_node(self, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession):
+        try:
+            response = ExpandCompletedParameters(session.id, params.node_path)
+            response.nodes = route_request(session, params.node_path)
+
+            request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
+        except Exception as e:
+            self._expand_node_error(request_context, params, str(e))
+
+    def _initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
+        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        connection = None
+
+        try:
+            # Step 1: Connect with the provided connection details
+            connect_request = ConnectRequestParams(
+                session.connection_details,
+                session.id,
+                ConnectionType.OBJECT_EXLPORER
+            )
+            connect_result = conn_service.connect(connect_request)
+            if connect_result is None:
+                raise RuntimeError('Connection was cancelled during connect')   # TODO Localize
+            if connect_result.error_message is not None:
+                raise RuntimeError(connect_result.error_message)
+
+            # Step 2: Get the connection to use for object explorer
+            connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
+
+            # Step 3: Create the PGSMO Server object for the session and create the root node for the server
+            session.server = Server(connection)
+            metadata = ObjectMetadata.from_data(0, 'Database', session.connection_details.options['dbname'])
+            node = NodeInfo()
+            node.label = session.connection_details.options['dbname']
+            node.is_leaf = False
+            node.node_path = session.id
+            node.node_type = 'Database'
+            node.metadata = metadata
+
+            # Step 4: Send the completion notification to the server
+            response = SessionCreatedParameters()
+            response.success = True
+            response.session_id = session.id
+            response.root_node = node
+            response.error_message = None
+            request_context.send_notification(SESSION_CREATED_METHOD, response)
+
+            # Mark the session as complete
+            session.is_ready = True
+
+        except Exception as e:
+            # Return a notification that an error occurred
+            message = f'Failed to initialize object explorer session: {str(e)}'  # TODO Localize
+            self._session_created_error(request_context, session, message)
+
+            # Attempt to clean up the connection
+            if connection is not None:
+                conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+
+    def _session_created_error(self, request_context: RequestContext, session: ObjectExplorerSession, message: str):
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.warning(f'OE service errored while creating session: {message}')
+
+        # Create error notification
+        response = SessionCreatedParameters()
+        response.success = False
+        response.session_id = session.id
+        response.root_node = None
+        response.error_message = message
+        request_context.send_notification(SESSION_CREATED_METHOD, response)
+
+        # Clean up the session from the session map
+        self._session_map.pop(session.id)
+
+    def _expand_node_error(self, request_context: RequestContext, params: ExpandParameters, message: str):
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.warning(f'OE service errored while expanding node: {message}')
+
+        response = ExpandCompletedParameters(params.session_id, params.node_path)
+        response.error_message = f'Failed to expand node: {message}'    # TODO: Localize
+
         request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
 
-    def _are_create_session_params_valid(self, params: ConnectionDetails) -> bool:
-        return params is not None and params.options is not None and params.options['host'] is not None
+    @staticmethod
+    def _generate_session_uri(params: ConnectionDetails) -> str:
+        # Make sure the required params are provided
+        utils.validate.is_not_none_or_whitespace('params.server_name', params.options.get('host'))
+        utils.validate.is_not_none_or_whitespace('params.user_name', params.options.get('user'))
+        utils.validate.is_not_none_or_whitespace('params.database_name', params.options.get('dbname'))
 
-    def _get_root_path(self, connection_details: ConnectionDetails) -> str:
-        return connection_details.server_name[0] + '/' + connection_details.database_name[0]
+        # Generates a session ID that will function as the base URI for the session
+        host = quote(params.options['host'])
+        user = quote(params.options['user'])
+        db = quote(params.options['dbname'])
 
-    def _create_oe_connection(self, params: ConnectionDetails, session_id: str) -> ConnectionDetails:
-        details = ConnectionDetails.from_data(params.options['host'], params.options['dbname'],
-                                              params.options['user'], params.options)
-        connect_request = ConnectRequestParams(details, session_id)
-
-        # Retrieve the connection service
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        connection_service.connect(connect_request)
-        return details
-
-    def _get_database(self, session_id: str) -> Database:
-        # Retrieve the connection service
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        conn = connection_service.get_connection(session_id, ConnectionType.DEFAULT)
-
-        connection_details = self._session_map[session_id]
-        dbname = connection_details.database_name[0]
-        server = Server(conn)
-        return server.databases[dbname]
-
-    def _get_folder_nodes(self, root_path: str) -> List[NodeInfo]:
-        function_node = NodeInfo()
-        function_node.label = 'Functions'
-        function_node.isLeaf = False
-        function_node.node_path = root_path + '/Functions'
-        function_node.node_type = 'Folder'
-
-        table_node = NodeInfo()
-        table_node.label = 'Tables'
-        table_node.isLeaf = False
-        table_node.node_path = root_path + '/Tables'
-        table_node.node_type = 'Folder'
-
-        view_node = NodeInfo()
-        view_node.label = 'Views'
-        view_node.isLeaf = False
-        view_node.node_path = root_path + '/Views'
-        view_node.node_type = 'Folder'
-
-        return [table_node, view_node, function_node]
-
-    def _get_function_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
-        database = self._get_database(session_id)
-        node_list: List[NodeInfo] = []
-        for schema in database.schemas:
-            for func in schema.functions:
-                metadata = ObjectMetadata()
-                metadata.metadata_type = 0
-                metadata.metadata_type_name = 'Function'
-                metadata.name = func.name
-                metadata.schema = schema.name
-
-                node = NodeInfo()
-                node.label = f'{schema.name}.{func.name}'
-                node.isLeaf = True
-                node.node_path = f'{root_path}/Functions/{node.label}'
-                node.node_type = 'Function'
-                node.metadata = metadata
-                node_list.append(node)
-        return node_list
-
-    def _get_view_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
-        database = self._get_database(session_id)
-        node_list: List[NodeInfo] = []
-        for cur_schema in database.schemas:
-            for cur_view in cur_schema.views:
-                metadata = ObjectMetadata()
-                metadata.metadata_type = 0
-                metadata.metadata_type_name = 'View'
-                metadata.name = cur_view.name
-                metadata.schema = cur_schema.name
-
-                cur_node = NodeInfo()
-                cur_node.label = cur_schema.name + '.' + cur_view.name
-                cur_node.isLeaf = True
-                cur_node.node_path = root_path + '/Views/' + cur_node.label
-                cur_node.node_type = 'View'
-                cur_node.metadata = metadata
-                node_list.append(cur_node)
-        return node_list
-
-    def _get_table_nodes(self, session_id: str, root_path: str) -> List[NodeInfo]:
-        database = self._get_database(session_id)
-        node_list: List[NodeInfo] = []
-        for cur_schema in database.schemas:
-            for cur_table in cur_schema.tables:
-                metadata = ObjectMetadata()
-                metadata.metadata_type = 0
-                metadata.metadata_type_name = 'Table'
-                metadata.name = cur_table.name
-                metadata.schema = cur_schema.name
-
-                cur_node = NodeInfo()
-                cur_node.label = cur_schema.name + '.' + cur_table.name
-                cur_node.isLeaf = True
-                cur_node.node_path = root_path + '/Tables/' + cur_node.label
-                cur_node.node_type = 'Table'
-                cur_node.metadata = metadata
-                node_list.append(cur_node)
-        return node_list
-
-    def _generate_uri(self, params: ConnectionDetails) -> str:
-        uri = 'objectexplorer://' + quote(params.options['host'])
-        if (params.options['dbname'] is not None):
-            uri += ';' + 'databaseName=' + params.options['dbname']
-        if (params.options['user'] is not None):
-            uri += ';' + 'user=' + params.options['user']
-        return uri
+        return f'objectexplorer://{user}@{host}:{db}/'
