@@ -133,10 +133,23 @@ def _tables(current_path: str, session: ObjectExplorerSession, match_params: dic
     return [_get_node_info(node, current_path, 'Table') for node in tables]
 
 
+def _roles(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """Function to generate a list of roles for a server"""
+    for role in session.server.roles:
+        node_type = "ServerLevelLogin" if role.can_login else "ServerLevelLogin_Disabled"
+        yield _get_node_info(role, current_path, node_type)
+
+
 def _schemas(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of NodeInfo for tables in a schema"""
     schemas = session.server.databases[session.server.maintenance_db].schemas
     return [_get_node_info(node, current_path, 'Schema', is_leaf=False) for node in schemas]
+
+
+def _tablespaces(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """Function to generate a list of tablespaces for a server"""
+    tablespaces = session.server.tablespaces
+    return [_get_node_info(node, current_path, 'Queue') for node in tablespaces]
 
 
 def _views(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -169,7 +182,9 @@ ROUTING_TABLE = {
     ),
     re.compile('^/schemas/(?P<scid>\d+)/functions/$'): RoutingTarget(None, _functions),
     re.compile('^/schemas/(?P<scid>\d+)/tables/$'): RoutingTarget(None, _tables),
-    re.compile('^/schemas/(?P<scid>\d+)/views/$'): RoutingTarget(None, _views)
+    re.compile('^/schemas/(?P<scid>\d+)/views/$'): RoutingTarget(None, _views),
+    re.compile('^/roles/$'): RoutingTarget(None, _roles),
+    re.compile('^/tablespaces/$'): RoutingTarget(None, _tablespaces)
 }
 
 
