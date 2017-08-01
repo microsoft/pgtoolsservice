@@ -22,7 +22,6 @@ class MockNodeObject(NodeObject):
 
     def __init__(self, root_server: Server, parent: Optional[NodeObject], name: str):
         super(MockNodeObject, self).__init__(root_server, parent, name)
-        self._parent = parent
 
     @classmethod
     def _template_root(cls, root_server: Server):

@@ -12,7 +12,6 @@ import pgsmo.utils.querying as querying
 
 class View(node.NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
-    utils = querying.ConnectionUtils()
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'View':
@@ -128,7 +127,7 @@ class View(node.NodeObject):
         elif (action == "update"):
             data = self._update_query_data()
             query_file = "update.sql"
-        connection_version = self.utils.get_server_version(connection)
+        connection_version = querying.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)
         script_template = templating.render_template(template_path, **data)
         return script_template

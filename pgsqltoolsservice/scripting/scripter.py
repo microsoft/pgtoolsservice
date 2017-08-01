@@ -14,30 +14,6 @@ class Scripter(object):
         self.connection = conn
         self.server = Server(conn)
 
-    # HELPER METHODS ##########################################################
-
-    def _find_schema(self, metadata):
-        """ Find the schema in the server to script as """
-        table_schema = metadata["schema"]
-        databases = self.server.databases
-        parent_schema = None
-        try:
-            for db in databases:
-                parent_schema = db.schemas[table_schema]
-                return parent_schema
-        except BaseException:
-            return None
-
-    def _find_table(self, metadata):
-        """ Find the table in the server to script as """
-        try:
-            table_name = metadata["name"]
-            parent_schema = self._find_schema(metadata)
-            for table in parent_schema.tables:
-                return parent_schema.tables[table_name]
-        except BaseException:
-            return None
-
     # SCRIPTING METHODS ############################
 
     # SELECT ##################################################################
@@ -47,7 +23,7 @@ class Scripter(object):
         schema = metadata["schema"]
         name = metadata["name"]
         # wrap quotes only around objects with all small letters
-        name = '"' + name + '"' if name.islower() else name
+        name = f'"{name}"' if name.islower() else name
         script = f"SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n"
         return script
 
@@ -63,7 +39,7 @@ class Scripter(object):
             # get the create script
             script = database.script(self.connection, "create")
             return script
-        except BaseException:
+        except Exception:
             # need to handle exceptions well
             return None
 
@@ -78,7 +54,7 @@ class Scripter(object):
             # get the create script
             script = view.script(self.connection, "create")
             return script
-        except BaseException:
+        except Exception:
             return None
 
     def get_table_create_script(self, metadata) -> str:
@@ -90,7 +66,7 @@ class Scripter(object):
             # get the create script
             script = table.script(self.connection, "create")
             return script
-        except BaseException:
+        except Exception:
             return None
 
     # DELETE ##################################################################
@@ -100,7 +76,7 @@ class Scripter(object):
             table = self._find_table(metadata)
             script = table.script(self.connection, "delete")
             return script
-        except BaseException:
+        except Exception:
             return None
 
     def get_view_delete_script(self, metadata) -> str:
@@ -114,7 +90,7 @@ class Scripter(object):
             # get the create script
             script = view.script(self.connection, "delete")
             return script
-        except BaseException:
+        except Exception:
             return None
 
     def get_database_delete_script(self, metadata) -> str:
@@ -127,7 +103,7 @@ class Scripter(object):
             # get the create script
             script = database.script(self.connection, "delete")
             return script
-        except BaseException:
+        except Exception:
             return None
 
     # UPDATE ##################################################################
@@ -141,7 +117,7 @@ class Scripter(object):
             # get the create script
             script = table.script(self.connection, "update")
             return script
-        except BaseException:
+        except Exception:
             return None
 
     def get_view_update_script(self, metadata) -> str:
@@ -155,5 +131,29 @@ class Scripter(object):
             # get the create script
             script = view.script(self.connection, "update")
             return script
-        except BaseException:
+        except Exception:
+            return None
+
+    # HELPER METHODS ##########################################################
+
+    def _find_schema(self, metadata):
+        """ Find the schema in the server to script as """
+        table_schema = metadata["schema"]
+        databases = self.server.databases
+        parent_schema = None
+        try:
+            for db in databases:
+                parent_schema = db.schemas[table_schema]
+                return parent_schema
+        except Exception:
+            return None
+
+    def _find_table(self, metadata):
+        """ Find the table in the server to script as """
+        try:
+            table_name = metadata["name"]
+            parent_schema = self._find_schema(metadata)
+            for table in parent_schema.tables:
+                return parent_schema.tables[table_name]
+        except Exception:
             return None

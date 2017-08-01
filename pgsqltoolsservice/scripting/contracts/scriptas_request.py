@@ -5,9 +5,11 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
+import enum
 
 
-class ScriptOperation:
+class ScriptOperation(enum.Enum):
+    """ Class that defines the various script operations """
     Select = 0
     Create = 1
     Insert = 2

@@ -85,17 +85,17 @@ class ScriptingService(object):
         elif (metadataType == 'Table'):
             return scripter.get_table_delete_script(metadata)
 
-    def _scripting_operation(self, scripting_operation: ScriptOperation, connection, metadata: ObjectMetadata) -> None:
+    def _scripting_operation(self, scripting_operation: int, connection, metadata: ObjectMetadata) -> None:
         """Helper function to get the correct script based on operation"""
-        if (scripting_operation == ScriptOperation.Select):
+        if (scripting_operation == ScriptOperation.Select.value):
             return self.script_as_select(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Create):
+        elif (scripting_operation == ScriptOperation.Create.value):
             return self.script_as_create(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Insert):
+        elif (scripting_operation == ScriptOperation.Insert.value):
             return self.script_as_insert(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Update):
+        elif (scripting_operation == ScriptOperation.Update.value):
             return self.script_as_update(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Delete):
+        elif (scripting_operation == ScriptOperation.Delete.value):
             return self.script_as_delete(connection, metadata)
         else:
             return None

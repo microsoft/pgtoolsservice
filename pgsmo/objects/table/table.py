@@ -22,7 +22,6 @@ import pgsmo.utils.querying as querying
 class Table(node.NodeObject):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-    utils = querying.ConnectionUtils()
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Table':
@@ -212,8 +211,8 @@ class Table(node.NodeObject):
     def get_template_vars(self):
         template_vars = {
             'tid': self.oid,
-            'scid': self.parent_id,
-            'did': self.parent.parent_id,
+            'scid': self.parent.oid,
+            'did': self.parent.parent.oid,
             'datlastsysoid': 0  # temporary until implemented
         }
         return template_vars
@@ -231,7 +230,7 @@ class Table(node.NodeObject):
         elif (action == "update"):
             data = self._update_query_data()
             query_file = "update.sql"
-        connection_version = self.utils.get_server_version(connection)
+        connection_version = querying.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)
         script_template = templating.render_template(template_path, **data)
         return script_template

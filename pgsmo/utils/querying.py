@@ -20,7 +20,7 @@ class ServerConnection:
         self._dsn_parameters = conn.get_dsn_parameters()
 
         # Calculate the server version
-        self._version = ConnectionUtils().get_server_version(conn)
+        self._version = get_server_version(conn)
 
     # PROPERTIES ###########################################################
     @property
@@ -65,14 +65,12 @@ class ServerConnection:
             cur.close()
 
 
-class ConnectionUtils:
+def get_server_version(connection) -> Tuple[int, int, int]:
     """ Util functions for psycopg2 connections """
-
-    def get_server_version(self, connection) -> Tuple[int, int, int]:
-        version_string = str(connection.server_version)
-        version_string: Tuple[int, int, int] = (
-            int(version_string[:-4]),
-            int(version_string[-4:-2]),
-            int(version_string[-2:])
-        )
-        return version_string
+    version_string = str(connection.server_version)
+    version_string: Tuple[int, int, int] = (
+        int(version_string[:-4]),
+        int(version_string[-4:-2]),
+        int(version_string[-2:])
+    )
+    return version_string

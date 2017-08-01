@@ -71,6 +71,6 @@ class Column(node.NodeObject):
     def get_template_vars(self):
         template_vars = {
             'clid': self.oid,
-            'tid': self.parent_id
+            'tid': self.parent.oid
         }
         return template_vars

@@ -18,7 +18,6 @@ from pgsqltoolsservice.scripting import ScriptingService, Scripter
 from pgsqltoolsservice.scripting.contracts.scriptas_request import (
     ScriptOperation, ScriptAsParameters
 )
-import pgsmo.utils.querying as querying
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 from pgsmo.objects.database.database import Database
@@ -54,10 +53,6 @@ class TestScriptingService(unittest.TestCase):
                 return self.connection
 
         self.connection_service.get_connection = mock.Mock(side_effect=connection_side_effect)
-        self.table_metadata = {"metadataTypeName": "Table"}
-        self.view_metadata = {"metadataTypeName": "View"}
-        self.database_metadata = {"metadataTypeName": "Database"}
-        self.utils = querying.ConnectionUtils()
         self.success = False
 
     def test_initialization(self):
@@ -122,7 +117,7 @@ class TestScriptingService(unittest.TestCase):
         # When called with various scripting operations and objects
         for op in operations:
             for obj in objects:
-                mock_service._scripting_operation(op, self.connection, {"metadataTypeName": obj})
+                mock_service._scripting_operation(op.value, self.connection, {"metadataTypeName": obj})
 
         # I should see calls being made for the different script operations
         self.assertEqual(True, mock_service.script_as_select.called)
