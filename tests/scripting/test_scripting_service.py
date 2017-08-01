@@ -249,7 +249,7 @@ class TestScriptingService(unittest.TestCase):
 
         def database_mock_fn(connection, operation: str):
             mock_database._template_root = mock.MagicMock(return_value=Database.TEMPLATE_ROOT)
-            mock_database._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            mock_database._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_database.script(connection, "create")
             return result
 

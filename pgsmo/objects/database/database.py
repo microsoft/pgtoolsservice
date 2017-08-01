@@ -78,27 +78,27 @@ class Database(node.NodeObject):
 
     @property
     def encoding(self) -> str:
-        return self._get_property("encoding")
+        return self._full_properties.get("encoding", "")
 
     @property
     def template(self) -> str:
-        return self._get_property("template")
+        return self._full_properties.get("template", "")
 
     @property
     def datcollate(self):
-        return self._get_property("datcollate")
+        return self._full_properties.get("datcollate", "")
 
     @property
     def datctype(self):
-        return self._get_property("datctype")
+        return self._full_properties.get("datctype", "")
 
     @property
     def spcname(self):
-        return self._get_property("spcname")
+        return self._full_properties.get("spcname", "")
 
     @property
     def datconnlimit(self):
-        return self._get_property("datconnlimit")
+        return self._full_properties.get("datconnlimit", "")
 
     # -CHILD OBJECTS #######################################################
     @property
@@ -131,13 +131,6 @@ class Database(node.NodeObject):
         return template_vars
 
     # HELPER METHODS #######################################################
-
-    def _get_property(self, property_name: str) -> str:
-        try:
-            prop = self._full_properties[property_name]
-            return prop
-        except BaseException:
-            return ""
 
     # QUERY INPUT METHODS ##################################################
     def _create_query_data(self) -> dict:
