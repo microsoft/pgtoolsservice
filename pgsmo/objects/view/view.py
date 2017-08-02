@@ -47,7 +47,7 @@ class View(node.NodeObject):
 
     # PROPERTIES ###########################################################
     @property
-    def get_extended_vars(self):
+    def extended_vars(self):
         template_vars = {
             'scid': self.parent.oid
         }

@@ -43,11 +43,6 @@ class Constraint(node.NodeObject, metaclass=ABCMeta):
     def convalidated(self):
         return self._convalidated
 
-    # IMPLEMENTATION DETAILS ###############################################
-    def get_template_vars(self):
-        template_vars = {'oid': self.oid}
-        return template_vars
-
 
 class CheckConstraint(Constraint):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_check')

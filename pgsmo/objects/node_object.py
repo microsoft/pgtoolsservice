@@ -76,13 +76,13 @@ class NodeObject(metaclass=ABCMeta):
         return self._server
 
     @property
-    def get_extended_vars(self) -> dict:
+    def extended_vars(self) -> dict:
         return {}
 
     @property
     def template_vars(self) -> str:
         template_vars = {"oid": self.oid}
-        extended_vars = self.get_extended_vars
+        extended_vars = self.extended_vars
         return {**template_vars, **extended_vars}
 
     # METHODS ##############################################################

@@ -65,10 +65,6 @@ class Database(node.NodeObject):
 
     # PROPERTIES ###########################################################
     @property
-    def get_extended_vars(self):
-        return {}
-
-    @property
     def allow_conn(self) -> bool:
         return self._allow_conn
 

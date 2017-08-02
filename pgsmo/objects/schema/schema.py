@@ -70,10 +70,6 @@ class Schema(node.NodeObject):
 
     # PROPERTIES ###########################################################
     @property
-    def get_extended_vars(self):
-        return {}
-
-    @property
     def can_create(self) -> Optional[bool]:
         return self._can_create
 

@@ -27,7 +27,8 @@ class MockNodeObject(NodeObject):
     def _template_root(cls, root_server: Server):
         return 'template_root'
 
-    def get_template_vars(self) -> str:
+    @property
+    def template_vars(self) -> str:
         pass
 
 # MOCK CONNECTION ##########################################################
