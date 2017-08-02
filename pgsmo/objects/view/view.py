@@ -8,6 +8,7 @@ import pgsmo.objects.node_object as node
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
+from pgsqltoolsservice.scripting.contracts import ScriptOperation
 
 
 class View(node.NodeObject):
@@ -89,6 +90,7 @@ class View(node.NodeObject):
     # HELPER METHODS #######################################################
 
     def _create_query_data(self) -> dict:
+        """ Provides data input for create script """
         data = {
             "data": {
                 "name": self.name,
@@ -100,6 +102,7 @@ class View(node.NodeObject):
         return data
 
     def _delete_query_data(self) -> dict:
+        """ Provides data input for delete script """
         data = {
             "vid": self._oid,
             "name": self.name,
@@ -108,6 +111,7 @@ class View(node.NodeObject):
         return data
 
     def _update_query_data(self) -> dict:
+        """ Provides data input for update script """
         data = {"data": {
 
         }}
@@ -115,18 +119,20 @@ class View(node.NodeObject):
 
     # METHODS ##############################################################
 
-    def script(self, connection, action: str) -> str:
+    def script(self, connection: querying.ServerConnection, action: ScriptOperation) -> str:
         """ Function to retrieve scripts for an operation """
         template_root = self._template_root(connection)
-        if (action == "create"):
+        if (action == ScriptOperation.Create):
             data = self._create_query_data()
             query_file = "create.sql"
-        elif (action == "delete"):
+        elif (action == ScriptOperation.Delete):
             data = self._delete_query_data()
             query_file = "delete.sql"
-        elif (action == "update"):
+        elif (action == ScriptOperation.Update):
             data = self._update_query_data()
             query_file = "update.sql"
+        else:
+            return "The action you provided is not supported with View object."
         connection_version = querying.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)
         script_template = templating.render_template(template_path, **data)

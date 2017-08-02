@@ -7,8 +7,7 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.scripting.scripter import Scripter
 from pgsqltoolsservice.scripting.contracts import (
     ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST, ScriptOperation)
-from pgsqltoolsservice.connection.contracts import (
-    ConnectionType)
+from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from pgsqltoolsservice.utils import constants
 
@@ -37,8 +36,7 @@ class ScriptingService(object):
             metadata = params.metadata
             scripting_operation = params.operation
             connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-            connection = connection_service.get_connection(
-                params.owner_uri, ConnectionType.DEFAULT)
+            connection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
             script = self._scripting_operation(scripting_operation, connection, metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:
@@ -85,7 +83,7 @@ class ScriptingService(object):
         elif (metadataType == 'Table'):
             return scripter.get_table_delete_script(metadata)
 
-    def _scripting_operation(self, scripting_operation: int, connection, metadata: ObjectMetadata) -> None:
+    def _scripting_operation(self, scripting_operation: int, connection, metadata: ObjectMetadata):
         """Helper function to get the correct script based on operation"""
         if (scripting_operation == ScriptOperation.Select.value):
             return self.script_as_select(connection, metadata)
@@ -98,4 +96,4 @@ class ScriptingService(object):
         elif (scripting_operation == ScriptOperation.Delete.value):
             return self.script_as_delete(connection, metadata)
         else:
-            return None
+            raise Exception("Scripting Operation not supported")

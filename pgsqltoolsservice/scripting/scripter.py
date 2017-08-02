@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsmo.objects.server.server import Server
+from pgsqltoolsservice.scripting.contracts import ScriptOperation
 
 
 class Scripter(object):
@@ -37,7 +38,7 @@ class Scripter(object):
             database = self.server.databases[database_name]
 
             # get the create script
-            script = database.script(self.connection, "create")
+            script = database.script(self.connection, ScriptOperation.Create)
             return script
         except Exception:
             # need to handle exceptions well
@@ -52,7 +53,7 @@ class Scripter(object):
             view = parent_schema.views[view_name]
 
             # get the create script
-            script = view.script(self.connection, "create")
+            script = view.script(self.connection, ScriptOperation.Create)
             return script
         except Exception:
             return None
@@ -64,7 +65,7 @@ class Scripter(object):
             table = self._find_table(metadata)
 
             # get the create script
-            script = table.script(self.connection, "create")
+            script = table.script(self.connection, ScriptOperation.Create)
             return script
         except Exception:
             return None
@@ -74,7 +75,7 @@ class Scripter(object):
         """ Get delete script for table """
         try:
             table = self._find_table(metadata)
-            script = table.script(self.connection, "delete")
+            script = table.script(self.connection, ScriptOperation.Delete)
             return script
         except Exception:
             return None
@@ -88,7 +89,7 @@ class Scripter(object):
             view = parent_schema.views[view_name]
 
             # get the create script
-            script = view.script(self.connection, "delete")
+            script = view.script(self.connection, ScriptOperation.Delete)
             return script
         except Exception:
             return None
@@ -101,7 +102,7 @@ class Scripter(object):
             database = self.server.databases[database_name]
 
             # get the create script
-            script = database.script(self.connection, "delete")
+            script = database.script(self.connection, ScriptOperation.Delete)
             return script
         except Exception:
             return None
@@ -115,7 +116,7 @@ class Scripter(object):
             table = self._find_table(metadata)
 
             # get the create script
-            script = table.script(self.connection, "update")
+            script = table.script(self.connection, ScriptOperation.Update)
             return script
         except Exception:
             return None
@@ -129,7 +130,7 @@ class Scripter(object):
             view = parent_schema.views[view_name]
 
             # get the create script
-            script = view.script(self.connection, "update")
+            script = view.script(self.connection, ScriptOperation.Update)
             return script
         except Exception:
             return None

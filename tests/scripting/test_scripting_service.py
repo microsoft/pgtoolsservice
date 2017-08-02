@@ -14,7 +14,8 @@ from pgsqltoolsservice.hosting import (
     JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 )
 import tests.utils as utils
-from pgsqltoolsservice.scripting import ScriptingService, Scripter
+from pgsqltoolsservice.scripting.scripter import Scripter
+from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 from pgsqltoolsservice.scripting.contracts.scriptas_request import (
     ScriptOperation, ScriptAsParameters
 )
@@ -125,10 +126,10 @@ class TestScriptingService(unittest.TestCase):
         self.assertEqual(True, mock_service.script_as_update.called)
         self.assertEqual(True, mock_service.script_as_insert.called)
 
-        # If I use an invalid script operation, I should get back none
+        # If I use an invalid script operation, I should get back an exception
         for obj in objects:
-            check = mock_service._scripting_operation("bogus value", self.connection, {"metadataTypeName": obj})
-            self.assertIsNone(check)
+            with self.assertRaises(Exception):
+                self.assertRaises(mock_service._scripting_operation("bogus value", self.connection, {"metadataTypeName": obj}))
 
     def test_script_as_select(self):
         """Test getting select script for all objects"""

@@ -72,10 +72,6 @@ class NodeObject(metaclass=ABCMeta):
         return self._parent
 
     @property
-    def parent_id(self):
-        return self._parent.oid
-
-    @property
     def parent_name(self) -> str:
         return self._parent.name
 
