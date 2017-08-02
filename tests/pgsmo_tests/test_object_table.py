@@ -53,7 +53,7 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
             "exclude_constraint": "exclude_constraint",
             "fillfactor": "fillfactor",
             "spcname": "spcname",
-            "relowner": "relowner",
+            "owner": "owner",
             "cascade": "cascade",
             "coll_inherits_added": "coll_inherits_added",
             "coll_inherits_removed": "coll_inherits_removed",
@@ -64,9 +64,9 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
             "toast_autovacuum_enabled": "toast_autovacuum_enabled",
             "vacuum_toast": "vacuum_toast",
             "description": "description",
-            "relacl": "relacl",
+            "acl": "acl",
             "seclabels": "seclabels",
-            "relhasoids": "relhasoids"
+            "hasoids": "hasoids"
         }
 
     @property
@@ -82,7 +82,7 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
             "exclude_constraint": False,
             "fillfactor": None,
             "spcname": "test",
-            "relowner": "admin",
+            "owner": "admin",
             "cascade": False,
             "coll_inherits_added": 0,
             "coll_inherits_removed": 0,
@@ -93,7 +93,7 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
             "toast_autovacuum_enabled": False,
             "vacuum_toast": False,
             "description": "generic description",
-            "relacl": None,
+            "acl": None,
             "seclabels": None,
-            "relhasoids": False
+            "hasoids": False
         }

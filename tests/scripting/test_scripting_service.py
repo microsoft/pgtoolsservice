@@ -24,6 +24,7 @@ from pgsmo.objects.view.view import View
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 
+
 """Module for testing the scripting service"""
 
 
@@ -201,7 +202,7 @@ class TestScriptingService(unittest.TestCase):
             return result
 
         def scripter_mock_fn():
-            mock_table.script = mock.MagicMock(return_value=table_mock_fn(self.connection, "create"))
+            mock_table.script = mock.MagicMock(return_value=table_mock_fn(self.connection, ScriptOperation.Create))
             return mock_table.script()
 
         scripter.get_table_create_script = mock.MagicMock(return_value=scripter_mock_fn())
@@ -225,7 +226,7 @@ class TestScriptingService(unittest.TestCase):
             return result
 
         def scripter_mock_fn():
-            mock_view.script = mock.MagicMock(return_value=view_mock_fn(self.connection, "create"))
+            mock_view.script = mock.MagicMock(return_value=view_mock_fn(self.connection, ScriptOperation.Create))
             return mock_view.script()
 
         scripter.get_view_create_script = mock.MagicMock(return_value=scripter_mock_fn())
@@ -250,7 +251,7 @@ class TestScriptingService(unittest.TestCase):
             return result
 
         def scripter_mock_fn():
-            mock_database.script = mock.MagicMock(return_value=database_mock_fn(self.connection, "create"))
+            mock_database.script = mock.MagicMock(return_value=database_mock_fn(self.connection, ScriptOperation.Create))
             return mock_database.script()
 
         scripter.get_database_create_script = mock.MagicMock(return_value=scripter_mock_fn())
@@ -276,7 +277,7 @@ class TestScriptingService(unittest.TestCase):
             return result
 
         def scripter_mock_fn():
-            mock_table.script = mock.MagicMock(return_value=table_mock_fn(self.connection, "delete"))
+            mock_table.script = mock.MagicMock(return_value=table_mock_fn(self.connection, ScriptOperation.Delete))
             return mock_table.script()
 
         scripter.get_table_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
@@ -300,7 +301,7 @@ class TestScriptingService(unittest.TestCase):
             return result
 
         def scripter_mock_fn():
-            mock_view.script = mock.MagicMock(return_value=view_mock_fn(self.connection, "delete"))
+            mock_view.script = mock.MagicMock(return_value=view_mock_fn(self.connection, ScriptOperation.Delete))
             return mock_view.script()
 
         scripter.get_view_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
@@ -325,7 +326,7 @@ class TestScriptingService(unittest.TestCase):
             return result
 
         def scripter_mock_fn():
-            mock_database.script = mock.MagicMock(return_value=database_mock_fn(self.connection, "delete"))
+            mock_database.script = mock.MagicMock(return_value=database_mock_fn(self.connection, ScriptOperation.Delete))
             return mock_database.script()
 
         scripter.get_database_delete_script = mock.MagicMock(return_value=scripter_mock_fn())

@@ -46,6 +46,13 @@ class View(node.NodeObject):
         )
 
     # PROPERTIES ###########################################################
+    @property
+    def get_extended_vars(self):
+        template_vars = {
+            'scid': self.parent.oid
+        }
+        return template_vars
+
     # -CHILD OBJECTS #######################################################
     @property
     def columns(self) -> node.NodeCollection[Column]:
@@ -94,7 +101,7 @@ class View(node.NodeObject):
         data = {
             "data": {
                 "name": self.name,
-                "schema": self.parent_name,
+                "schema": self.parent.name,
                 "definition": self.definition,
                 "check_option": self.check_option,
                 "security_barrier": self.security_barrier
@@ -142,10 +149,3 @@ class View(node.NodeObject):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-
-    def get_template_vars(self):
-        template_vars = {
-            'vid': self.oid,
-            'scid': self.parent.oid
-        }
-        return template_vars

@@ -72,12 +72,12 @@ class NodeObject(metaclass=ABCMeta):
         return self._parent
 
     @property
-    def parent_name(self) -> str:
-        return self._parent.name
-
-    @property
     def server(self) -> 's.Server':
         return self._server
+
+    @property
+    def get_extended_vars(self) -> dict:
+        return {}
 
     # METHODS ##############################################################
     def refresh(self) -> None:
@@ -89,9 +89,10 @@ class NodeObject(metaclass=ABCMeta):
     def _template_root(cls, root_server: 's.Server') -> str:
         pass
 
-    @abstractmethod
     def get_template_vars(self) -> str:
-        pass
+        template_vars = {"oid": self.oid}
+        extended_vars = self.get_extended_vars
+        return {**template_vars, **extended_vars}
 
     # PROTECTED HELPERS ####################################################
     TRCC = TypeVar('TRCC')

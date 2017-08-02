@@ -70,6 +70,10 @@ class Schema(node.NodeObject):
 
     # PROPERTIES ###########################################################
     @property
+    def get_extended_vars(self):
+        return {}
+
+    @property
     def can_create(self) -> Optional[bool]:
         return self._can_create
 
@@ -106,8 +110,3 @@ class Schema(node.NodeObject):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return path.join(TEMPLATE_ROOT, server.server_type)
-
-    @classmethod
-    def get_template_vars(self):
-        template_vars = {'scid': self.oid}
-        return template_vars

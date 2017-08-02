@@ -71,6 +71,15 @@ class Table(node.NodeObject):
         )
 
     # PROPERTIES ###########################################################
+    @property
+    def get_extended_vars(self):
+        template_vars = {
+            'scid': self.parent.oid,
+            'did': self.parent.parent.oid,
+            'datlastsysoid': 0  # temporary until implemented
+        }
+        return template_vars
+
     # -CHILD OBJECTS #######################################################
     @property
     def check_constraints(self) -> node.NodeCollection[CheckConstraint]:
@@ -103,10 +112,6 @@ class Table(node.NodeObject):
     @property
     def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers
-
-    @property
-    def schema(self):
-        return self.parent
 
     @property
     def coll_inherits(self):
@@ -149,8 +154,8 @@ class Table(node.NodeObject):
         return self._full_properties.get("spcname", "")
 
     @property
-    def relowner(self):
-        return self._full_properties.get("relowner", "")
+    def owner(self):
+        return self._full_properties.get("owner", "")
 
     @property
     def cascade(self):
@@ -193,30 +198,21 @@ class Table(node.NodeObject):
         return self._full_properties.get("description", "")
 
     @property
-    def relacl(self):
-        return self._full_properties.get("relacl", "")
+    def acl(self):
+        return self._full_properties.get("acl", "")
 
     @property
     def seclabels(self):
         return self._full_properties.get("seclabels", "")
 
     @property
-    def relhasoids(self):
-        return self._full_properties.get("relhasoids", "")
+    def hasoids(self):
+        return self._full_properties.get("hasoids", "")
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-
-    def get_template_vars(self):
-        template_vars = {
-            'tid': self.oid,
-            'scid': self.parent.oid,
-            'did': self.parent.parent.oid,
-            'datlastsysoid': 0  # temporary until implemented
-        }
-        return template_vars
 
     # SCRIPTING METHODS ##############################################################
     def script(self, connection: querying.ServerConnection, action: ScriptOperation) -> str:
@@ -256,8 +252,8 @@ class Table(node.NodeObject):
             "exclude_constraint": self.exclude_constraint,
             "fillfactor": self.fillfactor,
             "spcname": self.spcname,
-            "relowner": self.relowner,
-            "schema": self.parent_name
+            "relowner": self.owner,
+            "schema": self.parent.name
         }}
         return data
 
@@ -266,7 +262,7 @@ class Table(node.NodeObject):
         data = {
             "data": {
                 "name": self.name,
-                "schema": self.parent_name,
+                "schema": self.parent.name
             }, "cascade": self.cascade
         }
         return data
@@ -275,11 +271,11 @@ class Table(node.NodeObject):
         """ Provides data input for update script """
         data = {"data": {
             "name": self.name,
-            "schema": self.parent_name,
-            "relowner": self.relowner,
+            "schema": self.parent.name,
+            "relowner": self.owner,
             "coll_inherits_added": self.coll_inherits_added,
             "coll_inherits_removed": self.coll_inherits_removed,
-            "relhasoids": self.relhasoids,
+            "relhasoids": self.hasoids,
             "spcname": self.spcname,
             "fillfactor": self.fillfactor,
             "autovacuum_custom": self.autovacuum_custom,
@@ -289,7 +285,7 @@ class Table(node.NodeObject):
             "toast_autovacuum_enabled": self.toast_autovacuum_enabled,
             "vacuum_toast.changed": self.vacuum_toast.changed,
             "description": self.description,
-            "relacl": self.relacl,
+            "relacl": self.acl,
             "seclabels": self.seclabels
         }}
         return data

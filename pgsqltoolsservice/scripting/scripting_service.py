@@ -6,7 +6,8 @@
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.scripting.scripter import Scripter
 from pgsqltoolsservice.scripting.contracts import (
-    ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST, ScriptOperation)
+    ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST, ScriptOperation
+)
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from pgsqltoolsservice.utils import constants

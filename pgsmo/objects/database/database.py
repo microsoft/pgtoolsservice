@@ -65,6 +65,10 @@ class Database(node.NodeObject):
 
     # PROPERTIES ###########################################################
     @property
+    def get_extended_vars(self):
+        return {}
+
+    @property
     def allow_conn(self) -> bool:
         return self._allow_conn
 
@@ -127,10 +131,6 @@ class Database(node.NodeObject):
     @classmethod
     def _template_root(cls, conn: querying.ServerConnection) -> str:
         return cls.TEMPLATE_ROOT
-
-    def get_template_vars(self):
-        template_vars = {'did': self.oid}
-        return template_vars
 
     # HELPER METHODS #######################################################
 
