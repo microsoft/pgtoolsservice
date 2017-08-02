@@ -16,7 +16,3 @@ class TriggerFunction(FunctionBase):
     @classmethod
     def _template_root(cls, server: 's.Server'):
         return path.join(cls.TEMPLATE_ROOT, server.server_type)
-
-    def get_template_vars(self):
-        template_vars = {'oid': self.oid}
-        return template_vars

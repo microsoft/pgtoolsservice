@@ -79,6 +79,12 @@ class NodeObject(metaclass=ABCMeta):
     def get_extended_vars(self) -> dict:
         return {}
 
+    @property
+    def template_vars(self) -> str:
+        template_vars = {"oid": self.oid}
+        extended_vars = self.get_extended_vars
+        return {**template_vars, **extended_vars}
+
     # METHODS ##############################################################
     def refresh(self) -> None:
         """Refreshes and lazily loaded data"""
@@ -88,11 +94,6 @@ class NodeObject(metaclass=ABCMeta):
     @abstractmethod
     def _template_root(cls, root_server: 's.Server') -> str:
         pass
-
-    def get_template_vars(self) -> str:
-        template_vars = {"oid": self.oid}
-        extended_vars = self.get_extended_vars
-        return {**template_vars, **extended_vars}
 
     # PROTECTED HELPERS ####################################################
     TRCC = TypeVar('TRCC')
@@ -125,7 +126,7 @@ class NodeObject(metaclass=ABCMeta):
         template_root = self._template_root(self._server)
 
         # Setup the parameters for the query
-        template_vars = self.get_template_vars()
+        template_vars = self.template_vars
 
         # Render and execute the template
         sql = templating.render_template(

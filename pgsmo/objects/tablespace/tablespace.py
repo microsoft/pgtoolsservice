@@ -51,7 +51,3 @@ class Tablespace(NodeObject):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-
-    def get_template_vars(self):
-        template_vars = {'oid': self.oid}
-        return template_vars

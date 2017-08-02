@@ -94,6 +94,32 @@ class View(node.NodeObject):
     def security_barrier(self):
         return self._full_properties.get("security_barrier", "")
 
+    # METHODS ##############################################################
+
+    def script(self, connection: querying.ServerConnection, action: ScriptOperation) -> str:
+        """ Function to retrieve scripts for an operation """
+        template_root = self._template_root(connection)
+        if (action == ScriptOperation.Create):
+            data = self._create_query_data()
+            query_file = "create.sql"
+        elif (action == ScriptOperation.Delete):
+            data = self._delete_query_data()
+            query_file = "delete.sql"
+        elif (action == ScriptOperation.Update):
+            data = self._update_query_data()
+            query_file = "update.sql"
+        else:
+            return "The action you provided is not supported with View object."
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    # IMPLEMENTATION DETAILS ################################################
+    @classmethod
+    def _template_root(cls, server: 's.Server') -> str:
+        return cls.TEMPLATE_ROOT
+
     # HELPER METHODS #######################################################
 
     def _create_query_data(self) -> dict:
@@ -123,29 +149,3 @@ class View(node.NodeObject):
 
         }}
         return data
-
-    # METHODS ##############################################################
-
-    def script(self, connection: querying.ServerConnection, action: ScriptOperation) -> str:
-        """ Function to retrieve scripts for an operation """
-        template_root = self._template_root(connection)
-        if (action == ScriptOperation.Create):
-            data = self._create_query_data()
-            query_file = "create.sql"
-        elif (action == ScriptOperation.Delete):
-            data = self._delete_query_data()
-            query_file = "delete.sql"
-        elif (action == ScriptOperation.Update):
-            data = self._update_query_data()
-            query_file = "update.sql"
-        else:
-            return "The action you provided is not supported with View object."
-        connection_version = querying.get_server_version(connection)
-        template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, **data)
-        return script_template
-
-    # IMPLEMENTATION DETAILS ################################################
-    @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
