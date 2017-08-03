@@ -113,6 +113,27 @@ def _get_schema(session: ObjectExplorerSession, scid: any) -> Schema:
     return session.server.databases[session.server.maintenance_db].schemas[int(scid)]
 
 
+def _columns(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """Function to generate column NodeInfo for tables/views"""
+    schema = _get_schema(session, match_params['scid'])
+    parent_type = match_params.get('obj')
+    tid = int(match_params['tid'])
+    if parent_type == 'tables':
+        columns = schema.tables[tid].columns
+    elif parent_type == 'views':
+        columns = schema.views[tid].columns
+    else:
+        raise ValueError('Object type to retrieve columns for is invalid')  # TODO: Localize
+
+    for column in columns:
+        label = f'{column.name} ({column.datatype})'
+        yield _get_node_info(column, current_path, 'Column', label=label)
+
+
+def _constraints(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    return []
+
+
 def _functions(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for functions in a schema
@@ -123,6 +144,10 @@ def _functions(current_path: str, session: ObjectExplorerSession, match_params: 
     return [_get_node_info(node, current_path, 'ScalarValuedFunction') for node in funcs]
 
 
+def _indexes(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    return []
+
+
 def _tables(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for tables in a schema
@@ -130,7 +155,7 @@ def _tables(current_path: str, session: ObjectExplorerSession, match_params: dic
     * scid int: schema OID
     """
     tables = _get_schema(session, match_params['scid']).tables
-    return [_get_node_info(node, current_path, 'Table') for node in tables]
+    return [_get_node_info(node, current_path, 'Table', is_leaf=False) for node in tables]
 
 
 def _roles(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -182,6 +207,13 @@ ROUTING_TABLE = {
     ),
     re.compile('^/schemas/(?P<scid>\d+)/functions/$'): RoutingTarget(None, _functions),
     re.compile('^/schemas/(?P<scid>\d+)/tables/$'): RoutingTarget(None, _tables),
+    re.compile('^/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
+        [Folder('Columns', 'columns'), Folder('Constraints', 'constraints'), Folder('Indexes', 'indexes')],
+        None
+    ),
+    re.compile('^/schemas/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/columns/$'): RoutingTarget(None, _columns),
+    re.compile('^/schemas/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
+    re.compile('^/schemas/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
     re.compile('^/schemas/(?P<scid>\d+)/views/$'): RoutingTarget(None, _views),
     re.compile('^/roles/$'): RoutingTarget(None, _roles),
     re.compile('^/tablespaces/$'): RoutingTarget(None, _tablespaces)
