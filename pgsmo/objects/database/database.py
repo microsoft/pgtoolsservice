@@ -47,7 +47,7 @@ class Database(node.NodeObject):
         :param name: Name of the database
         """
         super(Database, self).__init__(server, None, name)
-        self._is_connected: bool = server.maintenance_db == name
+        self._is_connected: bool = server.maintenance_db_name == name
 
         # Declare the optional parameters
         self._tablespace: Optional[str] = None
