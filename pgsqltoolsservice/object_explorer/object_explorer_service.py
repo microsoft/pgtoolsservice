@@ -113,7 +113,7 @@ class ObjectExplorerService(object):
     # PRIVATE HELPERS ######################################################
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
         # Step 1: Find the session
-        session = self._get_node(request_context, params)
+        session = self._get_session(request_context, params)
         if session is None:
             return
 
@@ -144,7 +144,7 @@ class ObjectExplorerService(object):
 
         request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
 
-    def _get_node(self, request_context: RequestContext, params: ExpandParameters) -> Optional[ObjectExplorerSession]:
+    def _get_session(self, request_context: RequestContext, params: ExpandParameters) -> Optional[ObjectExplorerSession]:
         try:
             utils.validate.is_not_none('params', params)
             utils.validate.is_not_none_or_whitespace('params.node_path', params.node_path)
@@ -154,8 +154,8 @@ class ObjectExplorerService(object):
             if session is None:
                 raise ValueError(f'OE session with ID {params.session_id} does not exist')   # TODO: Localize
 
-            # TODO: Make sure that the session is ready before starting the expand request
-            # (see https://github.com/Microsoft/carbon/issues/1542)
+            if not session.is_ready:
+                raise ValueError(f'Object Explorer session with ID {params.session_id} is not ready, yet.')     # TODO: Localize
 
             request_context.send_response(True)
             return session
