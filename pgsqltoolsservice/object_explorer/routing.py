@@ -131,28 +131,54 @@ def _columns(current_path: str, session: ObjectExplorerSession, match_params: di
 
 
 def _constraints(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    return []
+    """Function to generate constraint NodeInfo for tables"""
+    table = _get_schema(session, match_params['scid']).tables[int(match_params['tid'])]
+    node_info = []
+    node_info.extend([_get_node_info(node, current_path, 'Constraint') for node in table.check_constraints])
+    node_info.extend([_get_node_info(node, current_path, 'Constraint') for node in table.exclusion_constraints])
+    node_info.extend([_get_node_info(node, current_path, 'Key_ForeignKey') for node in table.foreign_key_constraints])
+    node_info.extend([_get_node_info(node, current_path, 'Constraint') for node in table.index_constraints])
+
+    return sorted(node_info, key=lambda x: x.label)
 
 
 def _functions(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for functions in a schema
     Expected match_params:
-    * scid int: schema OID
+      scid int: schema OID
     """
     funcs = _get_schema(session, match_params['scid']).functions
     return [_get_node_info(node, current_path, 'ScalarValuedFunction') for node in funcs]
 
 
 def _indexes(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    return []
+    """
+    Function to generate index NodeInfo for tables
+    Expected match_params:
+      scid int: schema OID
+      tid int: table OID
+    """
+    indexes = _get_schema(session, match_params['scid']).tables[int(match_params['tid'])].indexes
+    for index in indexes:
+        attribs = ['Clustered' if index.is_clustered else 'Non-Clustered']
+        if index.is_primary:
+            node_type = 'Key_PrimaryKey'
+        elif index.is_unique:
+            node_type = 'Key_UniqueKey'
+            attribs.insert(0, 'Unique')
+        else:
+            node_type = 'Index'
+
+        attrib_str = '(' + ', '.join(attribs) + ')'
+        yield _get_node_info(index, current_path, node_type, label=f'{index.name} {attrib_str}')
 
 
 def _tables(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for tables in a schema
     Expected match_params:
-    * scid int: schema OID
+      scid int: schema OID
     """
     tables = _get_schema(session, match_params['scid']).tables
     return [_get_node_info(node, current_path, 'Table', is_leaf=False) for node in tables]
@@ -181,7 +207,7 @@ def _views(current_path: str, session: ObjectExplorerSession, match_params: dict
     """
     Function to generate a list of NodeInfo for views in a schema
     Expected match_params:
-    * scid int: schema OID
+      scid int: schema OID
     """
     views = _get_schema(session, match_params['scid']).views
     return [_get_node_info(node, current_path, 'View') for node in views]
@@ -212,8 +238,8 @@ ROUTING_TABLE = {
         None
     ),
     re.compile('^/schemas/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/columns/$'): RoutingTarget(None, _columns),
-    re.compile('^/schemas/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
-    re.compile('^/schemas/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
+    re.compile('^/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
+    re.compile('^/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
     re.compile('^/schemas/(?P<scid>\d+)/views/$'): RoutingTarget(None, _views),
     re.compile('^/roles/$'): RoutingTarget(None, _roles),
     re.compile('^/tablespaces/$'): RoutingTarget(None, _tablespaces)
