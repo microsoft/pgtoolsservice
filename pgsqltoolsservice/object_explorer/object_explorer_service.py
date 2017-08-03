@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import threading
-from typing import Dict     # noqa
+from typing import Dict, Optional     # noqa
 from urllib.parse import quote
 
 from pgsmo import Server
@@ -104,12 +104,47 @@ class ObjectExplorerService(object):
 
     def _handle_refresh_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle refresh Object Explorer create node request"""
-        # connection_details = self._session_map[params.session_id]
-        request_context.send_response(True)
+        self._expand_node_base(True, request_context, params)
 
     def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle expand Object Explorer tree node request"""
+        self._expand_node_base(False, request_context, params)
+
+    # PRIVATE HELPERS ######################################################
+    def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
         # Step 1: Find the session
+        session = self._get_node(request_context, params)
+        if session is None:
+            return
+
+        # Step 2: Start a task for expanding the node
+        try:
+            expand_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
+            expand_task.setDaemon(False)
+            expand_task.start()
+            session.expand_tasks.append(expand_task)
+        except Exception as e:
+            self._expand_node_error(request_context, params, str(e))
+
+    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession):
+        try:
+            response = ExpandCompletedParameters(session.id, params.node_path)
+            response.nodes = route_request(is_refresh, session, params.node_path)
+
+            request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
+        except Exception as e:
+            self._expand_node_error(request_context, params, str(e))
+
+    def _expand_node_error(self, request_context: RequestContext, params: ExpandParameters, message: str):
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.warning(f'OE service errored while expanding node: {message}')
+
+        response = ExpandCompletedParameters(params.session_id, params.node_path)
+        response.error_message = f'Failed to expand node: {message}'    # TODO: Localize
+
+        request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
+
+    def _get_node(self, request_context: RequestContext, params: ExpandParameters) -> Optional[ObjectExplorerSession]:
         try:
             utils.validate.is_not_none('params', params)
             utils.validate.is_not_none_or_whitespace('params.node_path', params.node_path)
@@ -123,31 +158,13 @@ class ObjectExplorerService(object):
             # (see https://github.com/Microsoft/carbon/issues/1542)
 
             request_context.send_response(True)
+            return session
         except Exception as e:
             message = f'Failed to expand node: {str(e)}'    # TODO: Localize
             if self._service_provider.logger is not None:
                 self._service_provider.logger.error(message)
             request_context.send_error(message)
             return
-
-        # Step 2: Start a task for expanding the node
-        try:
-            expand_task = threading.Thread(target=self._expand_node, args=(request_context, params, session))
-            expand_task.setDaemon(False)
-            expand_task.start()
-            session.expand_tasks.append(expand_task)
-        except Exception as e:
-            self._expand_node_error(request_context, params, str(e))
-
-    # PRIVATE HELPERS ######################################################
-    def _expand_node(self, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession):
-        try:
-            response = ExpandCompletedParameters(session.id, params.node_path)
-            response.nodes = route_request(session, params.node_path)
-
-            request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
-        except Exception as e:
-            self._expand_node_error(request_context, params, str(e))
 
     def _initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
@@ -213,15 +230,6 @@ class ObjectExplorerService(object):
 
         # Clean up the session from the session map
         self._session_map.pop(session.id)
-
-    def _expand_node_error(self, request_context: RequestContext, params: ExpandParameters, message: str):
-        if self._service_provider.logger is not None:
-            self._service_provider.logger.warning(f'OE service errored while expanding node: {message}')
-
-        response = ExpandCompletedParameters(params.session_id, params.node_path)
-        response.error_message = f'Failed to expand node: {message}'    # TODO: Localize
-
-        request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
 
     @staticmethod
     def _generate_session_uri(params: ConnectionDetails) -> str:

@@ -48,7 +48,7 @@ class RoutingTarget:
     """
     # Type alias for an optional callable that takes in a current path, session, and parameters
     # from the regular expression match and returns a list of NodeInfo objects.
-    TNodeGenerator = TypeVar(Optional[Callable[[str, ObjectExplorerSession, dict], List[NodeInfo]]])
+    TNodeGenerator = TypeVar(Optional[Callable[[bool, str, ObjectExplorerSession, dict], List[NodeInfo]]])
 
     def __init__(self, folders: Optional[List[Folder]], node_generator: TNodeGenerator):
         """
@@ -94,7 +94,7 @@ def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: O
     """
     metadata = ObjectMetadata()
     metadata.metadata_type = 0
-    metadata.metadata_type_name = type
+    metadata.metadata_type_name = type(node).name
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
@@ -110,17 +110,26 @@ def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: O
 
 def _get_schema(session: ObjectExplorerSession, scid: any) -> Schema:
     """Utility method to get a schema from the currently connect database"""
-    return session.server.databases[session.server.maintenance_db].schemas[int(scid)]
+    return session.server.maintenance_db.schemas[int(scid)]
 
 
-def _functions(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+TRefreshObject = TypeVar('NodeObject')
+
+
+def _get_obj_with_refresh(parent_obj: TRefreshObject, is_refresh: bool) -> TRefreshObject:
+    if is_refresh:
+        parent_obj.refresh()
+    return parent_obj
+
+
+def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for functions in a schema
     Expected match_params:
     * scid int: schema OID
     """
-    funcs = _get_schema(session, match_params['scid']).functions
-    return [_get_node_info(node, current_path, 'ScalarValuedFunction') for node in funcs]
+    parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
+    return [_get_node_info(node, current_path, 'ScalarValuedFunction') for node in parent_obj.functions]
 
 
 def _tables(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -133,20 +142,20 @@ def _tables(current_path: str, session: ObjectExplorerSession, match_params: dic
     return [_get_node_info(node, current_path, 'Table') for node in tables]
 
 
-def _schemas(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of NodeInfo for tables in a schema"""
-    schemas = session.server.databases[session.server.maintenance_db].schemas
-    return [_get_node_info(node, current_path, 'Schema', is_leaf=False) for node in schemas]
+    parent_obj = _get_obj_with_refresh(session.server.maintenance_db, is_refresh)
+    return [_get_node_info(node, current_path, 'Schema', is_leaf=False) for node in parent_obj]
 
 
-def _views(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for views in a schema
     Expected match_params:
     * scid int: schema OID
     """
-    views = _get_schema(session, match_params['scid']).views
-    return [_get_node_info(node, current_path, 'View') for node in views]
+    parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
+    return [_get_node_info(node, current_path, 'View') for node in parent_obj.views]
 
 
 # ROUTING TABLE ############################################################
@@ -176,9 +185,10 @@ ROUTING_TABLE = {
 # PUBLIC FUNCTIONS #########################################################
 
 
-def route_request(session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
+def route_request(is_refresh: bool, session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
     """
     Performs a lookup for a given expand request
+    :param is_refresh: Whether or not the request is a request to refresh or just expand
     :param session: Session that the expand is being performed on
     :param path: Path of the object to expand
     :return: List of nodes that result from the expansion
