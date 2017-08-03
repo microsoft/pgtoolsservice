@@ -122,7 +122,10 @@ class ObjectExplorerService(object):
             expand_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
             expand_task.setDaemon(False)
             expand_task.start()
-            session.expand_tasks.append(expand_task)
+            if is_refresh:
+                session.refresh_tasks.append(expand_task)
+            else:
+                session.expand_tasks.append(expand_task)
         except Exception as e:
             self._expand_node_error(request_context, params, str(e))
 

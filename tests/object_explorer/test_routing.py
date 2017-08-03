@@ -110,11 +110,11 @@ class TestObjectExplorerRouting(unittest.TestCase):
         # If: Ask to route a path without a route
         # Then: I should get an exception
         with self.assertRaises(ValueError):
-            routing.route_request(ObjectExplorerSession('session_id', ConnectionDetails()), '!/invalid!')
+            routing.route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '!/invalid!')
 
     def test_routing_match(self):
         # If: Ask to route a request that is valid
-        output = routing.route_request(ObjectExplorerSession('session_id', ConnectionDetails()), '/')
+        output = routing.route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '/')
 
         # Then: The output should be a list of nodes
         self.assertIsInstance(output, list)
