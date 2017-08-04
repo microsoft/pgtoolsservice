@@ -4,7 +4,7 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% if (vid and datlastsysoid) or scid %}
+{% if (oid and datlastsysoid) or scid %}
 SELECT
     c.oid,
     c.xmin,
@@ -18,8 +18,8 @@ SELECT
     nsp.nspname AS schema,
     array_to_string(c.relacl::text[], ', ') AS acl,
     {#=============Checks if it is system view================#}
-    {% if vid and datlastsysoid %}
-    CASE WHEN {{vid}} <= {{datlastsysoid}} THEN True ELSE False END AS system_view,
+    {% if oid and datlastsysoid %}
+    CASE WHEN {{oid}} <= {{datlastsysoid}} THEN True ELSE False END AS system_view,
     {% endif %}
     (SELECT
         array_agg(provider || '=' || label)
@@ -45,8 +45,8 @@ LEFT OUTER JOIN pg_description des ON (des.objoid=c.oid and des.objsubid=0 AND d
                 ) ))
            ) AND (c.relkind = 'v'::char)
           )
-{% if (vid and datlastsysoid) %}
-    AND c.oid = {{vid}}::oid
+{% if (oid and datlastsysoid) %}
+    AND c.oid = {{oid}}::oid
 {% elif scid %}
     AND c.relnamespace = {{scid}}::oid ORDER BY c.relname
 {% endif %}
