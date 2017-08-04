@@ -348,60 +348,58 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertDictEqual(oe._session_map, {})
 
     # EXPAND NODE ##########################################################
-    expand_method_lambda = lambda oe, rc, p: oe._handle_expand_request(rc, p)
-    expand_tasks_lambda = lambda s: s.expand_tasks
+    @staticmethod
+    def expand_method(oe: ObjectExplorerService, rc: RequestContext, p: ExpandParameters):
+        oe._handle_expand_request(rc, p)
+
+    @staticmethod
+    def expand_tasks(s: ObjectExplorerSession):
+        return s.expand_tasks
 
     def test_handle_expand_incomplete_params(self):
-        self._handle_er_incomplete_params(TestObjectExplorer.expand_method_lambda)
+        self._handle_er_incomplete_params(TestObjectExplorer.expand_method)
 
     def test_handle_expand_no_session_match(self):
-        self._handle_er_no_session_match(TestObjectExplorer.expand_method_lambda)
+        self._handle_er_no_session_match(TestObjectExplorer.expand_method)
 
     def test_handle_expand_session_not_ready(self):
-        self._handle_er_session_not_ready(TestObjectExplorer.expand_method_lambda)
+        self._handle_er_session_not_ready(TestObjectExplorer.expand_method)
 
     def test_handle_expand_threading_fail(self):
-        self._handle_er_threading_fail(TestObjectExplorer.expand_method_lambda)
+        self._handle_er_threading_fail(TestObjectExplorer.expand_method)
 
     def test_handle_expand_exception_expanding(self):
-        self._handle_er_exception_expanding(
-            TestObjectExplorer.expand_method_lambda,
-            TestObjectExplorer.expand_tasks_lambda
-        )
+        self._handle_er_exception_expanding(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
 
     def test_handle_expand_node_successful(self):
-        self._handle_er_node_successful(
-            TestObjectExplorer.expand_method_lambda,
-            TestObjectExplorer.expand_tasks_lambda
-        )
+        self._handle_er_node_successful(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
 
     # REFRESH NODE #########################################################
-    refresh_method_lambda = lambda oe, rc, p: oe._handle_refresh_request(rc, p)
-    refresh_tasks_lambda = lambda s: s.refresh_tasks
+    @staticmethod
+    def refresh_method(oe: ObjectExplorerService, rc: RequestContext, p: ExpandParameters):
+        oe._handle_refresh_request(rc, p)
+
+    @staticmethod
+    def refresh_tasks(s: ObjectExplorerSession):
+        return s.refresh_tasks
 
     def test_handle_refresh_incomplete_params(self):
-        self._handle_er_incomplete_params(TestObjectExplorer.refresh_method_lambda)
+        self._handle_er_incomplete_params(TestObjectExplorer.refresh_method)
 
     def test_handle_refresh_no_session_match(self):
-        self._handle_er_no_session_match(TestObjectExplorer.refresh_method_lambda)
+        self._handle_er_no_session_match(TestObjectExplorer.refresh_method)
 
     def test_handle_refresh_session_not_ready(self):
-        self._handle_er_session_not_ready(TestObjectExplorer.refresh_method_lambda)
+        self._handle_er_session_not_ready(TestObjectExplorer.refresh_method)
 
     def test_handle_refresh_threading_fail(self):
-        self._handle_er_threading_fail(TestObjectExplorer.refresh_method_lambda)
+        self._handle_er_threading_fail(TestObjectExplorer.refresh_method)
 
     def test_handle_refresh_exception_expanding(self):
-        self._handle_er_exception_expanding(
-            TestObjectExplorer.refresh_method_lambda,
-            TestObjectExplorer.refresh_tasks_lambda
-        )
+        self._handle_er_exception_expanding(TestObjectExplorer.refresh_method, TestObjectExplorer.refresh_tasks)
 
     def test_handle_refresh_node_successful(self):
-        self._handle_er_node_successful(
-            TestObjectExplorer.refresh_method_lambda,
-            TestObjectExplorer.refresh_tasks_lambda
-        )
+        self._handle_er_node_successful(TestObjectExplorer.refresh_method, TestObjectExplorer.refresh_tasks)
 
     # EXPAND/REFRESH NODE TEST BASES #######################################
     TEventHandler = TypeVar(Callable[[ObjectExplorerService, RequestContext, ExpandParameters], None])
