@@ -79,7 +79,8 @@ class RoutingTarget:
 
 
 # NODE GENERATORS ##########################################################
-def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: Optional[str]=None, is_leaf: bool=True) -> NodeInfo:
+def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: Optional[str]=None, is_leaf: bool=True,
+                   schema: Optional[str]=None) -> NodeInfo:
     """
     Utility method for generating a NodeInfo from a NodeObject
     :param node: NodeObject to convert into a NodeInfo.
@@ -94,7 +95,9 @@ def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: O
     """
     metadata = ObjectMetadata()
     metadata.metadata_type = 0
-    metadata.metadata_type_name = type
+    metadata.metadata_type_name = type(node).__name__
+    metadata.schema = schema
+    metadata.name = node.name
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
@@ -119,8 +122,9 @@ def _functions(current_path: str, session: ObjectExplorerSession, match_params: 
     Expected match_params:
     * scid int: schema OID
     """
-    funcs = _get_schema(session, match_params['scid']).functions
-    return [_get_node_info(node, current_path, 'ScalarValuedFunction') for node in funcs]
+    schema = _get_schema(session, match_params['scid'])
+    funcs = schema.functions
+    return [_get_node_info(node, current_path, 'ScalarValuedFunction', schema=schema.name) for node in funcs]
 
 
 def _tables(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -129,8 +133,9 @@ def _tables(current_path: str, session: ObjectExplorerSession, match_params: dic
     Expected match_params:
     * scid int: schema OID
     """
-    tables = _get_schema(session, match_params['scid']).tables
-    return [_get_node_info(node, current_path, 'Table') for node in tables]
+    schema = _get_schema(session, match_params['scid'])
+    tables = schema.tables
+    return [_get_node_info(node, current_path, 'Table', schema=schema.name) for node in tables]
 
 
 def _schemas(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -145,8 +150,9 @@ def _views(current_path: str, session: ObjectExplorerSession, match_params: dict
     Expected match_params:
     * scid int: schema OID
     """
-    views = _get_schema(session, match_params['scid']).views
-    return [_get_node_info(node, current_path, 'View') for node in views]
+    schema = _get_schema(session, match_params['scid'])
+    views = schema.views
+    return [_get_node_info(node, current_path, 'View', schema=schema.name) for node in views]
 
 
 # ROUTING TABLE ############################################################

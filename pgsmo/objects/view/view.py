@@ -8,7 +8,6 @@ import pgsmo.objects.node_object as node
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
-from pgsqltoolsservice.scripting.contracts import ScriptOperation
 
 
 class View(node.NodeObject):
@@ -96,20 +95,31 @@ class View(node.NodeObject):
 
     # METHODS ##############################################################
 
-    def script(self, connection: querying.ServerConnection, action: ScriptOperation) -> str:
-        """ Function to retrieve scripts for an operation """
+    def create_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve create scripts for a view """
         template_root = self._template_root(connection)
-        if (action == ScriptOperation.Create):
-            data = self._create_query_data()
-            query_file = "create.sql"
-        elif (action == ScriptOperation.Delete):
-            data = self._delete_query_data()
-            query_file = "delete.sql"
-        elif (action == ScriptOperation.Update):
-            data = self._update_query_data()
-            query_file = "update.sql"
-        else:
-            return "The action you provided is not supported with View object."
+        data = self._create_query_data()
+        query_file = "create.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    def delete_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve delete scripts for a view """
+        template_root = self._template_root(connection)
+        data = self._delete_query_data()
+        query_file = "delete.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    def update_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve update scripts for a view """
+        template_root = self._template_root(connection)
+        data = self._update_query_data()
+        query_file = "update.sql"
         connection_version = querying.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)
         script_template = templating.render_template(template_path, **data)

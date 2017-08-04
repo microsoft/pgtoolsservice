@@ -37,7 +37,7 @@ class ScriptingService(object):
             metadata = params.metadata
             scripting_operation = params.operation
             connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-            connection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+            connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
             script = self._scripting_operation(scripting_operation, connection, metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:

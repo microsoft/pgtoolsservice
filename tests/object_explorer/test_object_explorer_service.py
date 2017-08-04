@@ -16,7 +16,7 @@ from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider  # noqa
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
 from pgsqltoolsservice.object_explorer.contracts import (
-    NodeInfo,
+    NodeInfo, CloseSessionParameters,
     CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
     ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
 )
@@ -321,7 +321,9 @@ class TestObjectExplorer(unittest.TestCase):
 
         # If: I close an OE session that doesn't exist
         rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
-        params, session_id = self._connection_details()
+        session_id = self._connection_details()[1]
+        params = self._close_session_params()
+        params.session_id = session_id
         oe._handle_close_session_request(rc.request_context, params)
 
         # Then: I should get a successful response
@@ -331,9 +333,11 @@ class TestObjectExplorer(unittest.TestCase):
         # Setup: Create an OE service and add a session to it
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
-        params, session_uri = self._connection_details()
-        session = ObjectExplorerSession(session_uri, params)
-        oe._session_map[session_uri] = session
+        session_id = self._connection_details()[1]
+        params = self._close_session_params()
+        params.session_id = session_id
+        session = ObjectExplorerSession(session_id, params)
+        oe._session_map[session_id] = session
 
         # If: I close a session
         rc = RequestFlowValidator().add_expected_response(bool, self.assertTrue)
@@ -501,6 +505,12 @@ class TestObjectExplorer(unittest.TestCase):
         session_uri = ObjectExplorerService._generate_session_uri(param)
 
         return param, session_uri
+
+    def _close_session_params(self) -> CloseSessionParameters:
+        param = CloseSessionParameters()
+        param.database_name = self.TEST_DBNAME
+        param.user_name = self.TEST_USER
+        return param
 
     def _preloaded_oe_service(self) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
         oe = ObjectExplorerService()
