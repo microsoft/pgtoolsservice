@@ -59,9 +59,10 @@ class RoutingTarget:
         self.folders: List[Folder] = folders or []
         self.node_generator = node_generator
 
-    def get_nodes(self, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    def get_nodes(self, is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
         """
         Builds a list of NodeInfo that should be displayed under the current routing path
+        :param is_refresh: Whether or not the nodes should be refreshed before retrieval
         :param current_path: The requested node path
         :param session: OE Session that the lookup will be performed from
         :param match_params: The captures from the regex that this routing target is mapped from
@@ -72,14 +73,21 @@ class RoutingTarget:
 
         # Execute the node generator to generate the non-static nodes and add them after the folders
         if self.node_generator is not None:
-            nodes = self.node_generator(current_path, session, match_params)
+            nodes = self.node_generator(is_refresh, current_path, session, match_params)
             folder_nodes.extend(nodes)
 
         return folder_nodes
 
 
 # NODE GENERATORS ##########################################################
-def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: Optional[str]=None, is_leaf: bool=True) -> NodeInfo:
+def _get_node_info(
+        node: NodeObject,
+        current_path: str,
+        node_type: str,
+        label: Optional[str]=None,
+        is_leaf: bool=True,
+        schema: Optional[str]=None
+) -> NodeInfo:
     """
     Utility method for generating a NodeInfo from a NodeObject
     :param node: NodeObject to convert into a NodeInfo.
@@ -90,11 +98,14 @@ def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: O
     :param label: Overrides the node.name is provided, display name of the node displayed as-is
     :param is_leaf: Whether or not the node is a leaf. Default is true. If false, a trailing slash
                     will be added to the node path to indicate it behaves as a folder
+    :param schema: Optionally provides the name of the schema the object belongs to in the metadata
     :return: NodeInfo based on the NodeObject provided
     """
     metadata = ObjectMetadata()
     metadata.metadata_type = 0
     metadata.metadata_type_name = type(node).__name__
+    metadata.schema = schema
+    metadata.name = node.name
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
@@ -102,6 +113,7 @@ def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: O
     node_info.metadata = metadata
     node_info.node_type = node_type
 
+    # Build the path to the node. Trailing slash is added to indicate URI is a folder
     trailing_slash = '' if is_leaf else '/'
     node_info.node_path = urljoin(current_path, str(node.oid) + trailing_slash)
 
@@ -126,20 +138,23 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     """
     Function to generate a list of NodeInfo for functions in a schema
     Expected match_params:
-    * scid int: schema OID
+      scid int: schema OID
     """
     parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
-    return [_get_node_info(node, current_path, 'ScalarValuedFunction') for node in parent_obj.functions]
+    return [
+        _get_node_info(node, current_path, 'ScalarValuedFunction', schema=parent_obj.name)
+        for node in parent_obj.functions
+    ]
 
 
-def _tables(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for tables in a schema
     Expected match_params:
-    * scid int: schema OID
+      scid int: schema OID
     """
-    tables = _get_schema(session, match_params['scid']).tables
-    return [_get_node_info(node, current_path, 'Table') for node in tables]
+    parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
+    return [_get_node_info(node, current_path, 'Table', schema=parent_obj.name) for node in parent_obj.tables]
 
 
 def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -152,10 +167,10 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
     """
     Function to generate a list of NodeInfo for views in a schema
     Expected match_params:
-    * scid int: schema OID
+      scid int: schema OID
     """
     parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
-    return [_get_node_info(node, current_path, 'View') for node in parent_obj.views]
+    return [_get_node_info(node, current_path, 'View', schema=parent_obj.name) for node in parent_obj.views]
 
 
 # ROUTING TABLE ############################################################
@@ -201,7 +216,7 @@ def route_request(is_refresh: bool, session: ObjectExplorerSession, path: str) -
         match = route.match(path)
         if match is not None:
             # We have a match!
-            return target.get_nodes(path, session, match.groupdict())
+            return target.get_nodes(is_refresh, path, session, match.groupdict())
 
     # If we make it to here, there isn't a route that matches the path
     raise ValueError(f'Path {path} does not have a matching OE route')  # TODO: Localize

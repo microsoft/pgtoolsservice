@@ -71,5 +71,5 @@ FROM pg_class rel
   LEFT OUTER JOIN pg_class tst ON tst.oid = rel.reltoastrelid
   LEFT JOIN pg_type typ ON rel.reloftype=typ.oid
 WHERE rel.relkind IN ('r','s','t') AND rel.relnamespace = {{ scid }}::oid
-{% if tid %}  AND rel.oid = {{ tid }}::oid {% endif %}
+{% if oid %}  AND rel.oid = {{ oid }}::oid {% endif %}
 ORDER BY rel.relname;

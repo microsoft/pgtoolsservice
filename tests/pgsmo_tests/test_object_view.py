@@ -34,3 +34,27 @@ class TestView(NodeObjectTestBase, unittest.TestCase):
     @property
     def node_query(self) -> dict:
         return TestView.NODE_ROW
+
+    @property
+    def full_properties(self):
+        return {
+            "schema": "schema",
+            "definition": "definition",
+            "owner": "owner",
+            "comment": "comment",
+            "nspname": "nspname",
+            "check_option": "check_option",
+            "security_barrier": "security_barrier"
+        }
+
+    @property
+    def property_query(self) -> dict:
+        return {
+            "schema": "public",
+            "definition": None,
+            "owner": "admin",
+            "comment": "this is a comment",
+            "nspname": "test",
+            "check_option": False,
+            "security_barrier": None
+        }

@@ -4,13 +4,13 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/schemas/security.macros' as SECLABEL %}
-{% import 'macros/schemas/privilege.macros' as PRIVILEGE %}
+{% import 'macros/schemas_security.macros' as SECLABEL %}
+{% import 'macros/schemas_privilege.macros' as PRIVILEGE %}
 {% import 'macros/variable.macros' as VARIABLE %}
-{% import 'column/macros/security.macros' as COLUMN_SECLABEL %}
-{% import 'column/macros/privilege.macros' as COLUMN_PRIVILEGE %}
-{% import 'table/sql/macros/constraints.macro' as CONSTRAINTS %}
-{% import 'type/macros/get_full_type_sql_format.macros' as GET_TYPE %}
+{% import 'macros/column_security.macros' as COLUMN_SECLABEL %}
+{% import 'macros/column_privilege.macros' as COLUMN_PRIVILEGE %}
+{% import 'macros/constraints.macro' as CONSTRAINTS %}
+{% import 'macros/get_full_type_sql_format.macros' as GET_TYPE %}
 {#===========================================#}
 {#====== MAIN TABLE TEMPLATE STARTS HERE ======#}
 {#===========================================#}

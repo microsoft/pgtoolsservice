@@ -49,8 +49,8 @@ FROM
         (des.objoid=nsp.oid AND des.classoid='pg_namespace'::regclass)
     LEFT JOIN pg_roles r ON (r.oid = nsp.nspowner)
 WHERE
-    {% if scid %}
-    nsp.oid={{scid}}::oid AND
+    {% if oid %}
+    nsp.oid={{oid}}::oid AND
     {% else %}
     {% if show_sysobj %}
     nspname NOT LIKE E'pg\\_temp\\_%' AND
