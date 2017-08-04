@@ -13,6 +13,7 @@ import pgsmo.utils.templating as templating
 
 
 class Database(node.NodeObject):
+
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
@@ -46,6 +47,7 @@ class Database(node.NodeObject):
         :param server: Server that owns the database.
         :param name: Name of the database
         """
+
         super(Database, self).__init__(server, None, name)
         self._is_connected: bool = server.maintenance_db_name == name
 
@@ -73,22 +75,82 @@ class Database(node.NodeObject):
     def tablespace(self) -> str:
         return self._tablespace
 
+    @property
+    def encoding(self) -> str:
+        return self._full_properties.get("encoding", "")
+
+    @property
+    def template(self) -> str:
+        return self._full_properties.get("template", "")
+
+    @property
+    def datcollate(self):
+        return self._full_properties.get("datcollate", "")
+
+    @property
+    def datctype(self):
+        return self._full_properties.get("datctype", "")
+
+    @property
+    def spcname(self):
+        return self._full_properties.get("spcname", "")
+
+    @property
+    def datconnlimit(self):
+        return self._full_properties.get("datconnlimit", "")
+
     # -CHILD OBJECTS #######################################################
     @property
     def schemas(self) -> node.NodeCollection[Schema]:
         return self._schemas
 
     # METHODS ##############################################################
-    def create(self):
-        pass
 
-    def update(self):
-        pass
+    def create_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve create scripts for a database """
+        template_root = self._template_root(connection)
+        data = self._create_query_data()
+        query_file = "create.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
 
-    def delete(self):
-        pass
+    def delete_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve delete scripts for a database """
+        template_root = self._template_root(connection)
+        data = self._delete_query_data()
+        query_file = "delete.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, conn: querying.ServerConnection) -> str:
         return cls.TEMPLATE_ROOT
+
+    # HELPER METHODS #######################################################
+
+    # QUERY INPUT METHODS ##################################################
+    def _create_query_data(self) -> dict:
+        """ Return the data input for create query """
+        data = {"data": {
+            "name": self.name,
+            "encoding": self.encoding,
+            "template": self.template,
+            "datcollate": self.datcollate,
+            "datctype": self.datctype,
+            "datconnlimit": self.datconnlimit,
+            "spcname": self.spcname
+        }}
+        return data
+
+    def _delete_query_data(self) -> dict:
+        """ Return the data input for delete query """
+        data = {
+            "did": self._oid,
+            "datname": self._name
+        }
+        return data

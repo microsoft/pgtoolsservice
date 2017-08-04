@@ -16,9 +16,11 @@ from pgsmo.objects.table_objects import (
 import pgsmo.objects.node_object as node
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
+import pgsmo.utils.querying as querying
 
 
 class Table(node.NodeObject):
+
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
@@ -68,6 +70,15 @@ class Table(node.NodeObject):
         )
 
     # PROPERTIES ###########################################################
+    @property
+    def extended_vars(self):
+        template_vars = {
+            'scid': self.parent.oid,
+            'did': self.parent.parent.oid,
+            'datlastsysoid': 0  # temporary until implemented
+        }
+        return template_vars
+
     # -CHILD OBJECTS #######################################################
     @property
     def check_constraints(self) -> node.NodeCollection[CheckConstraint]:
@@ -101,7 +112,190 @@ class Table(node.NodeObject):
     def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers
 
+    @property
+    def coll_inherits(self):
+        return self._full_properties.get("coll_inherits", "")
+
+    @property
+    def typname(self):
+        return self._full_properties.get("typname", "")
+
+    @property
+    def like_relation(self):
+        return self._full_properties.get("like_relation", "")
+
+    @property
+    def primary_key(self):
+        return self._full_properties.get("primary_key", "")
+
+    @property
+    def unique_constraint(self):
+        return self._full_properties.get("unique_constraint", "")
+
+    @property
+    def foreign_key(self):
+        return self._full_properties.get("foreign_key", "")
+
+    @property
+    def check_constraint(self):
+        return self._full_properties.get("check_constraint", "")
+
+    @property
+    def exclude_constraint(self):
+        return self._full_properties.get("exclude_constraint", "")
+
+    @property
+    def fillfactor(self):
+        return self._full_properties.get("fillfactor", "")
+
+    @property
+    def spcname(self):
+        return self._full_properties.get("spcname", "")
+
+    @property
+    def owner(self):
+        return self._full_properties.get("owner", "")
+
+    @property
+    def cascade(self):
+        return self._full_properties.get("cascade", "")
+
+    @property
+    def coll_inherits_added(self):
+        return self._full_properties.get("coll_inherits_added", "")
+
+    @property
+    def coll_inherits_removed(self):
+        return self._full_properties.get("coll_inherits_removed", "")
+
+    @property
+    def autovacuum_custom(self):
+        return self._full_properties.get("autovacuum_custom", "")
+
+    @property
+    def autovacuum_enabled(self):
+        return self._full_properties.get("autovacuum_enabled", "")
+
+    @property
+    def vacuum_table(self):
+        return self._full_properties.get("vacuum_table", "")
+
+    @property
+    def toast_autovacuum(self):
+        return self._full_properties.get("toast_autovacuum", "")
+
+    @property
+    def toast_autovacuum_enabled(self):
+        return self._full_properties.get("toast_autovacuum_enabled", "")
+
+    @property
+    def vacuum_toast(self):
+        return self._full_properties.get("vacuum_toast", "")
+
+    @property
+    def description(self):
+        return self._full_properties.get("description", "")
+
+    @property
+    def acl(self):
+        return self._full_properties.get("acl", "")
+
+    @property
+    def seclabels(self):
+        return self._full_properties.get("seclabels", "")
+
+    @property
+    def hasoids(self):
+        return self._full_properties.get("hasoids", "")
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    # SCRIPTING METHODS ##############################################################
+    def create_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve create scripts for a table """
+        template_root = self._template_root(connection)
+        data = self._create_query_data()
+        query_file = "create.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    def delete_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve delete scripts for a table"""
+        template_root = self._template_root(connection)
+        data = self._delete_query_data()
+        query_file = "delete.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    def update_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve update scripts for a table"""
+        template_root = self._template_root(connection)
+        data = self._update_query_data()
+        query_file = "update.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    # HELPER METHODS ####################################################################
+    # QUERY DATA BUILDING METHODS #######################################################
+
+    def _create_query_data(self) -> dict:
+        """ Provides data input for create script """
+        data = {"data": {
+            "name": self.name,
+            "coll_inherits": self.coll_inherits,
+            "columns": self.columns,
+            "typname": self.typname,
+            "like_relation": self.like_relation,
+            "primary_key": self.primary_key,
+            "unique_constraint": self.unique_constraint,
+            "foreign_key": self.foreign_key,
+            "check_constraint": self.check_constraint,
+            "exclude_constraint": self.exclude_constraint,
+            "fillfactor": self.fillfactor,
+            "spcname": self.spcname,
+            "relowner": self.owner,
+            "schema": self.parent.name
+        }}
+        return data
+
+    def _delete_query_data(self) -> dict:
+        """ Provides data input for delete script """
+        data = {
+            "data": {
+                "name": self.name,
+                "schema": self.parent.name
+            }, "cascade": self.cascade
+        }
+        return data
+
+    def _update_query_data(self) -> dict:
+        """ Provides data input for update script """
+        data = {"data": {
+            "name": self.name,
+            "schema": self.parent.name,
+            "relowner": self.owner,
+            "coll_inherits_added": self.coll_inherits_added,
+            "coll_inherits_removed": self.coll_inherits_removed,
+            "relhasoids": self.hasoids,
+            "spcname": self.spcname,
+            "fillfactor": self.fillfactor,
+            "autovacuum_custom": self.autovacuum_custom,
+            "autovacuum_enabled": self.autovacuum_enabled,
+            "vacuum_table.changed": self.vacuum_table.changed,
+            "toast_autovacuum": self.toast_autovacuum,
+            "toast_autovacuum_enabled": self.toast_autovacuum_enabled,
+            "vacuum_toast.changed": self.vacuum_toast.changed,
+            "description": self.description,
+            "relacl": self.acl,
+            "seclabels": self.seclabels
+        }}
+        return data

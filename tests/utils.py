@@ -89,7 +89,7 @@ class MockConnection(object):
     def __init__(self, dsn_parameters=None, cursor=None):
         self.close = mock.Mock()
         self.dsn_parameters = dsn_parameters
-        self.server_version = '9.6.2'
+        self.server_version = '90602'
         self.cursor = mock.Mock(return_value=cursor)
         self.get_backend_pid = mock.Mock(return_value=0)
         self.notices = []

@@ -5,6 +5,16 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
+import enum
+
+
+class ScriptOperation(enum.Enum):
+    """ Class that defines the various script operations """
+    Select = 0
+    Create = 1
+    Insert = 2
+    Update = 3
+    Delete = 4
 
 
 class ScriptAsParameters:
@@ -14,7 +24,7 @@ class ScriptAsParameters:
 
     def __init__(self):
         self.owner_uri: str = None
-        self.operation: int = None
+        self.operation: ScriptOperation = None
         self.metadata: ObjectMetadata = None
 
 

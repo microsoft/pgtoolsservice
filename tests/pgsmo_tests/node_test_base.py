@@ -91,7 +91,8 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # ... Create an instance of the class
         mock_server = Server(utils.MockConnection(None))
         mock_server.connection.execute_dict = mock_exec_dict
-        mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
+        mock_grand_parent = utils.MockNodeObject(mock_server, None, 'grandparent') if not self.parent_expected_to_be_none else None
+        mock_parent = utils.MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
         name = 'test'
         obj = self.init_lambda(mock_server, mock_parent, name)
 

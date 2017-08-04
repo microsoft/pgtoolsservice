@@ -13,7 +13,7 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.object_explorer.contracts import (
     NodeInfo,
     CreateSessionResponse, CREATE_SESSION_REQUEST, SessionCreatedParameters, SESSION_CREATED_METHOD,
-    CLOSE_SESSION_REQUEST,
+    CloseSessionParameters, CLOSE_SESSION_REQUEST,
     ExpandParameters, EXPAND_REQUEST,
     ExpandCompletedParameters, EXPAND_COMPLETED_METHOD,
     REFRESH_REQUEST
@@ -85,14 +85,13 @@ class ObjectExplorerService(object):
             # TODO: Localize
             self._session_created_error(request_context, session, f'Failed to start OE init task: {str(e)}')
 
-    def _handle_close_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
+    def _handle_close_session_request(self, request_context: RequestContext, params: CloseSessionParameters) -> None:
         """Handle close Object Explorer" sessions request"""
         try:
             utils.validate.is_not_none('params', params)
 
-            # Generate the session ID and try to remove the session
-            session_id = self._generate_session_uri(params)
-            session = self._session_map.pop(session_id, None)
+            # Try to remove the session
+            session = self._session_map.pop(params.session_id, None)
             # TODO: Dispose session (disconnect, etc) (see: https://github.com/Microsoft/carbon/issues/1541)
 
             request_context.send_response(session is not None)
