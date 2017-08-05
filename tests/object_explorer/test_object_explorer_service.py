@@ -5,18 +5,19 @@
 
 """Module for testing the object explorer service"""
 import re
-from typing import Tuple
+import threading
+from typing import Callable, Tuple, TypeVar
 import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
 
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionDetails, ConnectionCompleteParams
-from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider  # noqa
+from pgsqltoolsservice.hosting import JSONRPCServer, RequestContext, ServiceProvider  # noqa
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
 from pgsqltoolsservice.object_explorer.contracts import (
-    NodeInfo,
+    NodeInfo, CloseSessionParameters,
     CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
     ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
 )
@@ -321,7 +322,9 @@ class TestObjectExplorer(unittest.TestCase):
 
         # If: I close an OE session that doesn't exist
         rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
-        params, session_id = self._connection_details()
+        session_id = self._connection_details()[1]
+        params = self._close_session_params()
+        params.session_id = session_id
         oe._handle_close_session_request(rc.request_context, params)
 
         # Then: I should get a successful response
@@ -331,9 +334,11 @@ class TestObjectExplorer(unittest.TestCase):
         # Setup: Create an OE service and add a session to it
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
-        params, session_uri = self._connection_details()
-        session = ObjectExplorerSession(session_uri, params)
-        oe._session_map[session_uri] = session
+        session_id = self._connection_details()[1]
+        params = self._close_session_params()
+        params.session_id = session_id
+        session = ObjectExplorerSession(session_id, params)
+        oe._session_map[session_id] = session
 
         # If: I close a session
         rc = RequestFlowValidator().add_expected_response(bool, self.assertTrue)
@@ -347,7 +352,65 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertDictEqual(oe._session_map, {})
 
     # EXPAND NODE ##########################################################
+    @staticmethod
+    def expand_method(oe: ObjectExplorerService, rc: RequestContext, p: ExpandParameters):
+        oe._handle_expand_request(rc, p)
+
+    @staticmethod
+    def expand_tasks(s: ObjectExplorerSession):
+        return s.expand_tasks
+
     def test_handle_expand_incomplete_params(self):
+        self._handle_er_incomplete_params(TestObjectExplorer.expand_method)
+
+    def test_handle_expand_no_session_match(self):
+        self._handle_er_no_session_match(TestObjectExplorer.expand_method)
+
+    def test_handle_expand_session_not_ready(self):
+        self._handle_er_session_not_ready(TestObjectExplorer.expand_method)
+
+    def test_handle_expand_threading_fail(self):
+        self._handle_er_threading_fail(TestObjectExplorer.expand_method)
+
+    def test_handle_expand_exception_expanding(self):
+        self._handle_er_exception_expanding(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
+
+    def test_handle_expand_node_successful(self):
+        self._handle_er_node_successful(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
+
+    # REFRESH NODE #########################################################
+    @staticmethod
+    def refresh_method(oe: ObjectExplorerService, rc: RequestContext, p: ExpandParameters):
+        oe._handle_refresh_request(rc, p)
+
+    @staticmethod
+    def refresh_tasks(s: ObjectExplorerSession):
+        return s.refresh_tasks
+
+    def test_handle_refresh_incomplete_params(self):
+        self._handle_er_incomplete_params(TestObjectExplorer.refresh_method)
+
+    def test_handle_refresh_no_session_match(self):
+        self._handle_er_no_session_match(TestObjectExplorer.refresh_method)
+
+    def test_handle_refresh_session_not_ready(self):
+        self._handle_er_session_not_ready(TestObjectExplorer.refresh_method)
+
+    def test_handle_refresh_threading_fail(self):
+        self._handle_er_threading_fail(TestObjectExplorer.refresh_method)
+
+    def test_handle_refresh_exception_expanding(self):
+        self._handle_er_exception_expanding(TestObjectExplorer.refresh_method, TestObjectExplorer.refresh_tasks)
+
+    def test_handle_refresh_node_successful(self):
+        self._handle_er_node_successful(TestObjectExplorer.refresh_method, TestObjectExplorer.refresh_tasks)
+
+    # EXPAND/REFRESH NODE TEST BASES #######################################
+    TEventHandler = TypeVar(Callable[[ObjectExplorerService, RequestContext, ExpandParameters], None])
+    TGetTask = TypeVar(Callable[[ObjectExplorerSession], threading.Thread])
+
+    @staticmethod
+    def _handle_er_incomplete_params(method: TEventHandler):
         # Setup:
         # ... Create an OE service
         oe = ObjectExplorerService()
@@ -363,12 +426,13 @@ class TestObjectExplorer(unittest.TestCase):
         for params in param_sets:
             # If: I expand with an invalid set of parameters
             rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
-            oe._handle_expand_request(rc.request_context, params)
+            method(oe, rc.request_context, params)
 
             # Then: I should get an error response
             rc.validate()
 
-    def test_handle_expand_no_session_match(self):
+    @staticmethod
+    def _handle_er_no_session_match(method: TEventHandler):
         # Setup: Create an OE service
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
@@ -376,12 +440,25 @@ class TestObjectExplorer(unittest.TestCase):
         # If: I expand a node on a session that doesn't exist
         rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         params = ExpandParameters.from_dict({'session_id': 'session', 'node_path': None})
-        oe._handle_expand_request(rc.request_context, params)
+        method(oe, rc.request_context, params)
 
         # Then: I should get an error back
         rc.validate()
 
-    def test_handle_expand_threading_fail(self):
+    def _handle_er_session_not_ready(self, method: TEventHandler):
+        # Setup: Create an OE service with a session that is not ready
+        oe, session, session_uri = self._preloaded_oe_service()
+        session.is_ready = False
+
+        # If: I expand a node on a session that isn't ready
+        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': None})
+        method(oe, rc.request_context, params)
+
+        # Then: I should get an error back
+        rc.validate()
+
+    def _handle_er_threading_fail(self, method: TEventHandler):
         # Setup: Create an OE service with a session preloaded
         oe, session, session_uri = self._preloaded_oe_service()
 
@@ -397,7 +474,7 @@ class TestObjectExplorer(unittest.TestCase):
                 EXPAND_COMPLETED_METHOD,
                 lambda param: self._validate_expand_error(param, session_uri, '/'))
             params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
-            oe._handle_expand_request(rc.request_context, params)
+            method(oe, rc.request_context, params)
 
         # Then:
         # ... The error notification should have been returned
@@ -405,8 +482,9 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... The session should not have an expand task defined
         self.assertListEqual(session.expand_tasks, [])
+        self.assertListEqual(session.refresh_tasks, [])
 
-    def test_handle_expand_exception_expanding(self):
+    def _handle_er_exception_expanding(self, method: TEventHandler, get_tasks: TGetTask):
         # Setup: Create an OE service with a session preloaded
         oe, session, session_uri = self._preloaded_oe_service()
 
@@ -423,17 +501,17 @@ class TestObjectExplorer(unittest.TestCase):
                 EXPAND_COMPLETED_METHOD,
                 lambda param: self._validate_expand_error(param, session_uri, '/'))
             params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
-            oe._handle_expand_request(rc.request_context, params)
-        session.expand_tasks[0].join()
+            method(oe, rc.request_context, params)
+        get_tasks(session)[0].join()
 
         # Then:
         # ... An error notification should have been sent
         rc.validate()
 
         # ... The thread should be attached to the session
-        self.assertEqual(len(session.expand_tasks), 1)
+        self.assertEqual(len(get_tasks(session)), 1)
 
-    def test_handle_expand_node_successful(self):
+    def _handle_er_node_successful(self, method: TEventHandler, get_tasks: TGetTask):
         # Setup: Create an OE service with a session preloaded
         oe, session, session_uri = self._preloaded_oe_service()
 
@@ -451,44 +529,15 @@ class TestObjectExplorer(unittest.TestCase):
         rc.add_expected_response(bool, self.assertTrue)
         rc.add_expected_notification(ExpandCompletedParameters, EXPAND_COMPLETED_METHOD, validate_success_notification)
         params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
-        oe._handle_expand_request(rc.request_context, params)
-        session.expand_tasks[0].join()
+        method(oe, rc.request_context, params)
+        get_tasks(session)[0].join()
 
         # Then:
         # ... I should have gotten a completed successfully message
         rc.validate()
 
         # ... The thread should be attached to the session
-        self.assertEqual(len(session.expand_tasks), 1)
-
-    # OLD STUFF
-
-    # def setUp(self) -> None:
-    #     """Handle common initialization tasks for Object Explorer tests"""
-    #     self.mock_connection_service = ConnectionService()
-    #     self.mock_connection_service.connect = mock.MagicMock()
-    #     server: JSONRPCServer = JSONRPCServer(None, None)
-    #     server.set_notification_handler = mock.MagicMock()
-    #     server.set_request_handler = mock.MagicMock()
-    #
-    #     self.context: RequestContext = utils.MockRequestContext()
-    #     self.oe_service: ObjectExplorerService = ObjectExplorerService()
-    #
-    #     self.service_provider: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
-    #     self.service_provider._services = {
-    #         constants.CONNECTION_SERVICE_NAME: self.mock_connection_service,
-    #         constants.OBJECT_EXPLORER_NAME: self.oe_service}
-    #     self.service_provider.initialize()
-    #
-    # def test_oe_refresh_session_with_invalid_params(self) -> str:
-    #     """Test refreshing an Object Explorer session"""
-    #     session_id = self.test_oe_create_session_with_valid_params()
-    #     # send and validate request
-    #     params: ExpandParameters = ExpandParameters()
-    #     params.session_id = session_id
-    #     params.root_node = self._get_test_root_path_uri()
-    #     self.oe_service._handle_refresh_request(self.context, params)
-    #     self.context.send_response.asssert_called_once()
+        self.assertEqual(len(get_tasks(session)), 1)
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connection_details(self) -> Tuple[ConnectionDetails, str]:
@@ -502,11 +551,18 @@ class TestObjectExplorer(unittest.TestCase):
 
         return param, session_uri
 
+    def _close_session_params(self) -> CloseSessionParameters:
+        param = CloseSessionParameters()
+        param.database_name = self.TEST_DBNAME
+        param.user_name = self.TEST_USER
+        return param
+
     def _preloaded_oe_service(self) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
         conn_details, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, conn_details)
+        session.is_ready = True
         oe._session_map[session_uri] = session
 
         return oe, session, session_uri

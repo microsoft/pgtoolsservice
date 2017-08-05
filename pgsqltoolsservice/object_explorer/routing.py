@@ -48,7 +48,7 @@ class RoutingTarget:
     """
     # Type alias for an optional callable that takes in a current path, session, and parameters
     # from the regular expression match and returns a list of NodeInfo objects.
-    TNodeGenerator = TypeVar(Optional[Callable[[str, ObjectExplorerSession, dict], List[NodeInfo]]])
+    TNodeGenerator = TypeVar(Optional[Callable[[bool, str, ObjectExplorerSession, dict], List[NodeInfo]]])
 
     def __init__(self, folders: Optional[List[Folder]], node_generator: TNodeGenerator):
         """
@@ -59,9 +59,10 @@ class RoutingTarget:
         self.folders: List[Folder] = folders or []
         self.node_generator = node_generator
 
-    def get_nodes(self, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    def get_nodes(self, is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
         """
         Builds a list of NodeInfo that should be displayed under the current routing path
+        :param is_refresh: Whether or not the nodes should be refreshed before retrieval
         :param current_path: The requested node path
         :param session: OE Session that the lookup will be performed from
         :param match_params: The captures from the regex that this routing target is mapped from
@@ -72,14 +73,21 @@ class RoutingTarget:
 
         # Execute the node generator to generate the non-static nodes and add them after the folders
         if self.node_generator is not None:
-            nodes = self.node_generator(current_path, session, match_params)
+            nodes = self.node_generator(is_refresh, current_path, session, match_params)
             folder_nodes.extend(nodes)
 
         return folder_nodes
 
 
 # NODE GENERATORS ##########################################################
-def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: Optional[str]=None, is_leaf: bool=True) -> NodeInfo:
+def _get_node_info(
+        node: NodeObject,
+        current_path: str,
+        node_type: str,
+        label: Optional[str]=None,
+        is_leaf: bool=True,
+        schema: Optional[str]=None
+) -> NodeInfo:
     """
     Utility method for generating a NodeInfo from a NodeObject
     :param node: NodeObject to convert into a NodeInfo.
@@ -90,11 +98,14 @@ def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: O
     :param label: Overrides the node.name is provided, display name of the node displayed as-is
     :param is_leaf: Whether or not the node is a leaf. Default is true. If false, a trailing slash
                     will be added to the node path to indicate it behaves as a folder
+    :param schema: Optionally provides the name of the schema the object belongs to in the metadata
     :return: NodeInfo based on the NodeObject provided
     """
     metadata = ObjectMetadata()
     metadata.metadata_type = 0
-    metadata.metadata_type_name = type
+    metadata.metadata_type_name = type(node).__name__
+    metadata.schema = schema
+    metadata.name = node.name
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
@@ -102,26 +113,42 @@ def _get_node_info(node: NodeObject, current_path: str, node_type: str, label: O
     node_info.metadata = metadata
     node_info.node_type = node_type
 
+    # Build the path to the node. Trailing slash is added to indicate URI is a folder
     trailing_slash = '' if is_leaf else '/'
     node_info.node_path = urljoin(current_path, str(node.oid) + trailing_slash)
 
     return node_info
 
 
+TRefreshObject = TypeVar('NodeObject')
+
+
+def _get_obj_with_refresh(parent_obj: TRefreshObject, is_refresh: bool) -> TRefreshObject:
+    if is_refresh:
+        parent_obj.refresh()
+    return parent_obj
+
+
 def _get_schema(session: ObjectExplorerSession, scid: any) -> Schema:
     """Utility method to get a schema from the currently connect database"""
-    return session.server.databases[session.server.maintenance_db].schemas[int(scid)]
+    return session.server.maintenance_db.schemas[int(scid)]
 
 
-def _columns(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """Function to generate column NodeInfo for tables/views"""
+def _columns(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate column NodeInfo for tables/views
+      scid int: schema OID
+      tid int: table or view OID
+    """
     schema = _get_schema(session, match_params['scid'])
     parent_type = match_params.get('obj')
     tid = int(match_params['tid'])
     if parent_type == 'tables':
-        columns = schema.tables[tid].columns
+        parent_obj = _get_obj_with_refresh(schema.tables[tid], is_refresh)
+        columns = parent_obj.columns
     elif parent_type == 'views':
-        columns = schema.views[tid].columns
+        parent_obj = _get_obj_with_refresh(schema.views[tid], is_refresh)
+        columns = parent_obj.columns
     else:
         raise ValueError('Object type to retrieve columns for is invalid')  # TODO: Localize
 
@@ -130,9 +157,13 @@ def _columns(current_path: str, session: ObjectExplorerSession, match_params: di
         yield _get_node_info(column, current_path, 'Column', label=label)
 
 
-def _constraints(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """Function to generate constraint NodeInfo for tables"""
-    table = _get_schema(session, match_params['scid']).tables[int(match_params['tid'])]
+def _constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate constraint NodeInfo for tables
+      scid int: schema OID
+      tid int: Table or View OID
+    """
+    table = _get_obj_with_refresh(_get_schema(session, match_params['scid']).tables[int(match_params['tid'])], is_refresh)
     node_info = []
     node_info.extend([_get_node_info(node, current_path, 'Constraint') for node in table.check_constraints])
     node_info.extend([_get_node_info(node, current_path, 'Constraint') for node in table.exclusion_constraints])
@@ -142,14 +173,17 @@ def _constraints(current_path: str, session: ObjectExplorerSession, match_params
     return sorted(node_info, key=lambda x: x.label)
 
 
-def _functions(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for functions in a schema
     Expected match_params:
       scid int: schema OID
     """
-    funcs = _get_schema(session, match_params['scid']).functions
-    return [_get_node_info(node, current_path, 'ScalarValuedFunction') for node in funcs]
+    parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
+    return [
+        _get_node_info(node, current_path, 'ScalarValuedFunction', schema=parent_obj.name)
+        for node in parent_obj.functions
+    ]
 
 
 def _indexes(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -174,43 +208,50 @@ def _indexes(current_path: str, session: ObjectExplorerSession, match_params: di
         yield _get_node_info(index, current_path, node_type, label=f'{index.name} {attrib_str}')
 
 
-def _tables(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for tables in a schema
     Expected match_params:
       scid int: schema OID
     """
-    tables = _get_schema(session, match_params['scid']).tables
-    return [_get_node_info(node, current_path, 'Table', is_leaf=False) for node in tables]
+    parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
+    return [
+        _get_node_info(node, current_path, 'Table', is_leaf=False, schema=parent_obj.name)
+        for node in parent_obj.tables
+    ]
 
 
-def _roles(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _roles(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of roles for a server"""
+    if is_refresh:
+        session.server.refresh()
     for role in session.server.roles:
         node_type = "ServerLevelLogin" if role.can_login else "ServerLevelLogin_Disabled"
         yield _get_node_info(role, current_path, node_type)
 
 
-def _schemas(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of NodeInfo for tables in a schema"""
-    schemas = session.server.databases[session.server.maintenance_db].schemas
-    return [_get_node_info(node, current_path, 'Schema', is_leaf=False) for node in schemas]
+    parent_obj = _get_obj_with_refresh(session.server.maintenance_db, is_refresh)
+    return [_get_node_info(node, current_path, 'Schema', is_leaf=False) for node in parent_obj]
 
 
-def _tablespaces(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of tablespaces for a server"""
+    if is_refresh:
+        session.server.refresh()
     tablespaces = session.server.tablespaces
     return [_get_node_info(node, current_path, 'Queue') for node in tablespaces]
 
 
-def _views(current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for views in a schema
     Expected match_params:
       scid int: schema OID
     """
-    views = _get_schema(session, match_params['scid']).views
-    return [_get_node_info(node, current_path, 'View') for node in views]
+    parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
+    return [_get_node_info(node, current_path, 'View', schema=parent_obj.name) for node in parent_obj.views]
 
 
 # ROUTING TABLE ############################################################
@@ -249,9 +290,10 @@ ROUTING_TABLE = {
 # PUBLIC FUNCTIONS #########################################################
 
 
-def route_request(session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
+def route_request(is_refresh: bool, session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
     """
     Performs a lookup for a given expand request
+    :param is_refresh: Whether or not the request is a request to refresh or just expand
     :param session: Session that the expand is being performed on
     :param path: Path of the object to expand
     :return: List of nodes that result from the expansion
@@ -264,7 +306,7 @@ def route_request(session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
         match = route.match(path)
         if match is not None:
             # We have a match!
-            return target.get_nodes(path, session, match.groupdict())
+            return target.get_nodes(is_refresh, path, session, match.groupdict())
 
     # If we make it to here, there isn't a route that matches the path
     raise ValueError(f'Path {path} does not have a matching OE route')  # TODO: Localize

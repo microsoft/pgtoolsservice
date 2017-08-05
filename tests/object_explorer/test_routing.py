@@ -64,7 +64,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
     def test_routing_target_get_nodes_empty(self):
         # If: I ask for nodes for an empty routing target
         rt = routing.RoutingTarget(None, None)
-        output = rt.get_nodes('/', ObjectExplorerSession('session_id', ConnectionDetails()), {})
+        output = rt.get_nodes(False, '/', ObjectExplorerSession('session_id', ConnectionDetails()), {})
 
         # Then: The results should be empty
         self.assertListEqual(output, [])
@@ -81,7 +81,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
         current_path = '/'
         match_params = {}
         session = ObjectExplorerSession('session_id', ConnectionDetails())
-        output = rt.get_nodes(current_path, session, match_params)
+        output = rt.get_nodes(False, current_path, session, match_params)
 
         # Then:
         # ... I should get back a list of nodes
@@ -95,7 +95,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
         self.assertIs(output[3], node2)
 
         # ... The node generator should have been called
-        node_generator.assert_called_once_with(current_path, session, match_params)
+        node_generator.assert_called_once_with(False, current_path, session, match_params)
 
     # ROUTING TABLE TESTS ##################################################
     def test_routing_table(self):
@@ -110,11 +110,11 @@ class TestObjectExplorerRouting(unittest.TestCase):
         # If: Ask to route a path without a route
         # Then: I should get an exception
         with self.assertRaises(ValueError):
-            routing.route_request(ObjectExplorerSession('session_id', ConnectionDetails()), '!/invalid!')
+            routing.route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '!/invalid!')
 
     def test_routing_match(self):
         # If: Ask to route a request that is valid
-        output = routing.route_request(ObjectExplorerSession('session_id', ConnectionDetails()), '/')
+        output = routing.route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '/')
 
         # Then: The output should be a list of nodes
         self.assertIsInstance(output, list)

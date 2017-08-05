@@ -27,8 +27,13 @@ class MockNodeObject(NodeObject):
     def _template_root(cls, root_server: Server):
         return 'template_root'
 
+    @property
+    def template_vars(self) -> str:
+        pass
 
 # MOCK CONNECTION ##########################################################
+
+
 def get_mock_columns(col_count: int) -> List[Column]:
     return [Column(f'column{i}', None, 10, 10, None, None, True) for i in range(0, col_count + 1)]
 

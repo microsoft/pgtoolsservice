@@ -7,6 +7,7 @@ from pgsmo.objects.table_objects import Column, Rule, Trigger
 import pgsmo.objects.node_object as node
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
+import pgsmo.utils.querying as querying
 
 
 class View(node.NodeObject):
@@ -44,6 +45,13 @@ class View(node.NodeObject):
         )
 
     # PROPERTIES ###########################################################
+    @property
+    def extended_vars(self):
+        template_vars = {
+            'scid': self.parent.oid
+        }
+        return template_vars
+
     # -CHILD OBJECTS #######################################################
     @property
     def columns(self) -> node.NodeCollection[Column]:
@@ -57,7 +65,97 @@ class View(node.NodeObject):
     def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers
 
-    # IMPLEMENTATION DETAILS ###############################################
+    @property
+    def schema(self):
+        return self._full_properties.get("schema", "")
+
+    @property
+    def definition(self):
+        return self._full_properties.get("definition", "")
+
+    @property
+    def owner(self):
+        return self._full_properties.get("owner", "")
+
+    @property
+    def comment(self):
+        return self._full_properties.get("comment", "")
+
+    @property
+    def nspname(self):
+        return self._full_properties.get("nspname", "")
+
+    @property
+    def check_option(self):
+        return self._full_properties.get("check_option", "")
+
+    @property
+    def security_barrier(self):
+        return self._full_properties.get("security_barrier", "")
+
+    # METHODS ##############################################################
+
+    def create_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve create scripts for a view """
+        template_root = self._template_root(connection)
+        data = self._create_query_data()
+        query_file = "create.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    def delete_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve delete scripts for a view """
+        template_root = self._template_root(connection)
+        data = self._delete_query_data()
+        query_file = "delete.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    def update_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve update scripts for a view """
+        template_root = self._template_root(connection)
+        data = self._update_query_data()
+        query_file = "update.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
+    # IMPLEMENTATION DETAILS ################################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    # HELPER METHODS #######################################################
+
+    def _create_query_data(self) -> dict:
+        """ Provides data input for create script """
+        data = {
+            "data": {
+                "name": self.name,
+                "schema": self.parent.name,
+                "definition": self.definition,
+                "check_option": self.check_option,
+                "security_barrier": self.security_barrier
+            }}
+        return data
+
+    def _delete_query_data(self) -> dict:
+        """ Provides data input for delete script """
+        data = {
+            "vid": self._oid,
+            "name": self.name,
+            "nspname": self.nspname
+        }
+        return data
+
+    def _update_query_data(self) -> dict:
+        """ Provides data input for update script """
+        data = {"data": {
+
+        }}
+        return data
