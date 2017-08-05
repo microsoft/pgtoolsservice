@@ -86,3 +86,23 @@ class TestServer(unittest.TestCase):
         # ... It must have come from the mock handler
         self.assertIs(maintenance_db, mock_db)
         obj._databases.__getitem__.assert_called_once_with('dbname')
+
+    def test_refresh(self):
+        # Setup:
+        # ... Create a server object that has a connection
+        obj = Server(utils.MockConnection(None))
+
+        # ... Mock out the reset methods on the various collections
+        obj.databases.reset = mock.MagicMock()
+        obj.roles.reset = mock.MagicMock()
+        obj.tablespaces.reset = mock.MagicMock()
+        obj._recovery_props.reset = mock.MagicMock()
+
+        # If: I refresh the server
+        obj.refresh()
+
+        # Then: The collections should have been reset
+        obj.databases.reset.assert_called_once()
+        obj.roles.reset.assert_called_once()
+        obj.tablespaces.reset.assert_called_once()
+        obj._recovery_props.reset.assert_called_once()
