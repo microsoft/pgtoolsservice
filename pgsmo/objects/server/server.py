@@ -31,7 +31,7 @@ class Server:
         props = self._conn.dsn_parameters
         self._host: str = props['host']
         self._port: int = int(props['port'])
-        self._maintenance_db: str = props['dbname']
+        self._maintenance_db_name: str = props['dbname']
 
         # These properties will be defined later
         self._recovery_props: NodeLazyPropertyCollection = NodeLazyPropertyCollection(self._fetch_recovery_state)
@@ -65,9 +65,9 @@ class Server:
         return self._recovery_props.get('inrecovery')
 
     @property
-    def maintenance_db(self) -> str:
-        """Name of the database this server's connection is attached to"""
-        return self._maintenance_db
+    def maintenance_db_name(self) -> str:
+        """Name of the database this server's connection is connected to"""
+        return self._maintenance_db_name
 
     @property
     def port(self) -> int:
@@ -94,6 +94,11 @@ class Server:
     def databases(self) -> NodeCollection[Database]:
         """Databases that belong to the server"""
         return self._databases
+
+    @property
+    def maintenance_db(self) -> Database:
+        """Database that this server's connection is connected to"""
+        return self._databases[self._maintenance_db_name]
 
     @property
     def roles(self) -> NodeCollection[Role]:

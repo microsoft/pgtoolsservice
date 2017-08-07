@@ -35,8 +35,8 @@ class TestServer(unittest.TestCase):
         self.assertEqual(server.host, host)
         self.assertEqual(server._port, int(port))
         self.assertEqual(server.port, int(port))
-        self.assertEqual(server._maintenance_db, dbname)
-        self.assertEqual(server.maintenance_db, dbname)
+        self.assertEqual(server._maintenance_db_name, dbname)
+        self.assertEqual(server.maintenance_db_name, dbname)
         self.assertTupleEqual(server.version, server._conn.version)
 
         # ... Recovery options should be a lazily loaded thing
@@ -67,3 +67,22 @@ class TestServer(unittest.TestCase):
         # ... The properties based on the properties should be availble
         self.assertEqual(obj.in_recovery, TestServer.CHECK_RECOVERY_ROW['inrecovery'])
         self.assertEqual(obj.wal_paused, TestServer.CHECK_RECOVERY_ROW['isreplaypaused'])
+
+    def test_maintenance_db(self):
+        # Setup:
+        # ... Create a server object that has a connection
+        obj = Server(utils.MockConnection(None, name='dbname'))
+
+        # ... Mock out the database lazy loader's indexer
+        mock_db = {}
+        mock_db_collection = mock.Mock()
+        mock_db_collection.__getitem__ = mock.MagicMock(return_value=mock_db)
+        obj._databases = mock_db_collection
+
+        # If: I retrieve the maintenance db for the server
+        maintenance_db = obj.maintenance_db
+
+        # Then:
+        # ... It must have come from the mock handler
+        self.assertIs(maintenance_db, mock_db)
+        obj._databases.__getitem__.assert_called_once_with('dbname')

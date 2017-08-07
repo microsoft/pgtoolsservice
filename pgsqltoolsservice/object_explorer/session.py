@@ -19,3 +19,4 @@ class ObjectExplorerSession:
 
         self.init_task: Optional[threading.Thread] = None
         self.expand_tasks: List[threading.Thread] = []
+        self.refresh_tasks: List[threading.Thread] = []
