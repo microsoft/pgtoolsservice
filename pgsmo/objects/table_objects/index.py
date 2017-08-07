@@ -58,10 +58,6 @@ class Index(node.NodeObject):
     def is_unique(self) -> Optional[bool]:
         return self._full_properties['indisunique']
 
-    @property
-    def extended_vars(self):
-        return {'tid': self.parent.oid}
-
     # IMPLEMENTATION DETAILS ###############################################
     @property
     def extended_vars(self):

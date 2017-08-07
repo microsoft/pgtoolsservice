@@ -78,6 +78,7 @@ class RoutingTarget:
 
         return folder_nodes
 
+
 # NODE GENERATOR HELPERS ###################################################
 def _get_node_info(
         node: NodeObject,
