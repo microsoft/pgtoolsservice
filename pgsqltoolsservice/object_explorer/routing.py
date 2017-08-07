@@ -4,10 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-from typing import Callable, List, Optional, TypeVar
+from typing import Callable, List, Optional, TypeVar, Union
 from urllib.parse import urljoin, urlparse
 
-from pgsmo import NodeObject, Schema
+from pgsmo import NodeObject, Schema, Table, View
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession
 from pgsqltoolsservice.object_explorer.contracts import NodeInfo
@@ -78,8 +78,7 @@ class RoutingTarget:
 
         return folder_nodes
 
-
-# NODE GENERATORS ##########################################################
+# NODE GENERATOR HELPERS ###################################################
 def _get_node_info(
         node: NodeObject,
         current_path: str,
@@ -134,25 +133,27 @@ def _get_schema(session: ObjectExplorerSession, scid: any) -> Schema:
     return session.server.maintenance_db.schemas[int(scid)]
 
 
+def _get_table_or_column(is_refresh: bool, session: ObjectExplorerSession, scid: any, parent_type: str, tid: any) -> Union[Table, View]:
+    schema = _get_schema(session, scid)
+    tid = int(tid)
+    if parent_type == 'tables':
+        return _get_obj_with_refresh(schema.tables[tid], is_refresh)
+    elif parent_type == 'views':
+        return _get_obj_with_refresh(schema.views[tid], is_refresh)
+    else
+        raise ValueError('Object type to retrieve nodes is invalid')  # TODO: Localize
+
+# NODE GENERATORS ##########################################################
+
 def _columns(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate column NodeInfo for tables/views
       scid int: schema OID
+      obj str: Type of the object to get columns from
       tid int: table or view OID
     """
-    schema = _get_schema(session, match_params['scid'])
-    parent_type = match_params.get('obj')
-    tid = int(match_params['tid'])
-    if parent_type == 'tables':
-        parent_obj = _get_obj_with_refresh(schema.tables[tid], is_refresh)
-        columns = parent_obj.columns
-    elif parent_type == 'views':
-        parent_obj = _get_obj_with_refresh(schema.views[tid], is_refresh)
-        columns = parent_obj.columns
-    else:
-        raise ValueError('Object type to retrieve columns for is invalid')  # TODO: Localize
-
-    for column in columns:
+    obj = _get_table_or_column(is_refresh, session, match_params['scid'], match_params['obj'], match_params['tid'])
+    for column in obj.columns:
         label = f'{column.name} ({column.datatype})'
         yield _get_node_info(column, current_path, 'Column', label=label)
 
@@ -228,6 +229,15 @@ def _roles(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
     for role in session.server.roles:
         node_type = "ServerLevelLogin" if role.can_login else "ServerLevelLogin_Disabled"
         yield _get_node_info(role, current_path, node_type)
+
+
+def _rules(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """Function to generate a list of rules for tables and views"""
+    obj = _get_table_or_column(is_refresh, session, match_params['scid'], match_params['obj'], match_params['tid'])
+
+    for rule in obj.rules:
+        label = f'{column.name} ({column.datatype})'
+        yield
 
 
 def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:

@@ -63,6 +63,10 @@ class Index(node.NodeObject):
         return {'tid': self.parent.oid}
 
     # IMPLEMENTATION DETAILS ###############################################
+    @property
+    def extended_vars(self):
+        return {'parent_oid': self.parent.oid}
+
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
