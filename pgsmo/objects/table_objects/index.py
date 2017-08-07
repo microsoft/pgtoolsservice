@@ -59,13 +59,16 @@ class Index(node.NodeObject):
         return self._full_properties['indisunique']
 
     @property
-    def extended_template_vars(self):
+    def extended_vars(self):
         return {'tid': self.parent.oid}
 
     # IMPLEMENTATION DETAILS ###############################################
     @property
     def extended_vars(self):
-        return {'parent_oid': self.parent.oid}
+        return {
+            'tid': self.parent.oid,                 # Table/view OID
+            'did': self.parent.parent.parent.oid    # Database OID
+        }
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
