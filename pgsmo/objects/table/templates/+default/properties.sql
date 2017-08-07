@@ -75,6 +75,6 @@ FROM (
 		LEFT OUTER JOIN pg_class tst ON tst.oid = rel.reltoastrelid
 
 	 WHERE rel.relkind IN ('r','s','t') AND rel.relnamespace = {{ scid }}
-	{% if tid %}  AND rel.oid = {{ tid }}::oid {% endif %}
+	{% if oid %}  AND rel.oid = {{ oid }}::oid {% endif %}
 ) AS TableInformation
  ORDER BY name

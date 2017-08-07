@@ -27,7 +27,7 @@ class NodeObject(metaclass=ABCMeta):
         template_root = cls._template_root(root_server)
 
         # Only include a parent ID if a parent was provided
-        template_vars = {}
+        template_vars = {}      # TODO: Allow configuring show/hide system objects
         if parent_obj is not None:
             template_vars['parent_id'] = parent_obj._oid
 
@@ -75,6 +75,16 @@ class NodeObject(metaclass=ABCMeta):
     def server(self) -> 's.Server':
         return self._server
 
+    @property
+    def extended_vars(self) -> dict:
+        return {}
+
+    @property
+    def template_vars(self) -> str:
+        template_vars = {"oid": self.oid}
+        extended_vars = self.extended_vars
+        return {**template_vars, **extended_vars}
+
     # METHODS ##############################################################
     def refresh(self) -> None:
         """Refreshes and lazily loaded data"""
@@ -111,11 +121,12 @@ class NodeObject(metaclass=ABCMeta):
         return collection
 
     # PRIVATE HELPERS ######################################################
+
     def _property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
         template_root = self._template_root(self._server)
 
         # Setup the parameters for the query
-        template_vars = {'oid': self._oid}
+        template_vars = self.template_vars
 
         # Render and execute the template
         sql = templating.render_template(

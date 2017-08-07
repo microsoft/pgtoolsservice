@@ -19,7 +19,7 @@ from pgsqltoolsservice.language import LanguageService
 from pgsqltoolsservice.metadata import MetadataService
 from pgsqltoolsservice.object_explorer import ObjectExplorerService
 from pgsqltoolsservice.query_execution import QueryExecutionService
-from pgsqltoolsservice.scripting import ScriptingService
+from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
 
