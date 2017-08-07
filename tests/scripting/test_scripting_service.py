@@ -23,6 +23,7 @@ from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
+from pgsmo.objects.schema.schema import Schema
 
 
 """Module for testing the scripting service"""
@@ -106,15 +107,13 @@ class TestScriptingService(unittest.TestCase):
         # Set up mock objects
         mock_service = ScriptingService()
         operations = [ScriptOperation.Create, ScriptOperation.Select,
-                      ScriptOperation.Insert, ScriptOperation.Update,
-                      ScriptOperation.Delete]
+                      ScriptOperation.Update, ScriptOperation.Delete]
         objects = ["Database", "View", "Table"]
 
         mock_service.script_as_select = mock.MagicMock()
         mock_service.script_as_create = mock.MagicMock()
         mock_service.script_as_update = mock.MagicMock()
         mock_service.script_as_delete = mock.MagicMock()
-        mock_service.script_as_insert = mock.MagicMock()
 
         # When called with various scripting operations and objects
         for op in operations:
@@ -125,7 +124,6 @@ class TestScriptingService(unittest.TestCase):
         self.assertEqual(True, mock_service.script_as_select.called)
         self.assertEqual(True, mock_service.script_as_create.called)
         self.assertEqual(True, mock_service.script_as_update.called)
-        self.assertEqual(True, mock_service.script_as_insert.called)
 
         # If I use an invalid script operation, I should get back an exception
         for obj in objects:
@@ -165,6 +163,9 @@ class TestScriptingService(unittest.TestCase):
         # Database
         self._test_database_create_script(mock_scripter, service)
 
+        # Schema
+        self._test_schema_create_script(mock_scripter, service)
+
     def test_script_as_delete(self):
         """ Test getting delete script for all objects """
         mock_scripter = Scripter(self.connection)
@@ -178,6 +179,9 @@ class TestScriptingService(unittest.TestCase):
 
         # Database
         self._test_database_delete_script(mock_scripter, service)
+
+        # Schema
+        self._test_schema_delete_script(mock_scripter, service)
 
     # PRIVATE HELPER FUNCTIONS ####################################################
 
@@ -263,6 +267,30 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
 
+    def _test_schema_create_script(self, scripter, service):
+        """ Helper function to test create script for schema """
+        # Set up the mocks
+        mock_schema = Schema(None, None, 'test')
+
+        def schema_mock_fn(connection):
+            mock_schema._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
+            mock_schema._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_schema.create_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_schema.create_script = mock.MagicMock(return_value=schema_mock_fn(self.connection))
+            return mock_schema.create_script()
+
+        scripter.get_schema_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_schema_create_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_create()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
     # DELETE SCRIPTS ##############################################################
 
     def _test_table_delete_script(self, scripter, service):
@@ -331,6 +359,30 @@ class TestScriptingService(unittest.TestCase):
 
         scripter.get_database_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
         service.script_as_delete = mock.MagicMock(return_value=scripter.get_database_delete_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_delete()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
+    def _test_schema_delete_script(self, scripter, service):
+        """ Helper function to test delete script for views """
+        # Set up the mocks
+        mock_schema = Schema(None, None, 'test')
+
+        def schema_mock_fn(connection):
+            mock_schema._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
+            mock_schema._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_schema.delete_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_schema.delete_script = mock.MagicMock(return_value=schema_mock_fn(self.connection))
+            return mock_schema.delete_script()
+
+        scripter.get_schema_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_schema_delete_script())
 
         # If I try to get select script for any object
         result = service.script_as_delete()

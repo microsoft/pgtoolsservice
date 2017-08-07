@@ -54,10 +54,8 @@ class ScriptingService(object):
             return scripter.get_view_create_script(metadata)
         elif (metadata["metadataTypeName"] == 'Table'):
             return scripter.get_table_create_script(metadata)
-
-    def script_as_insert(self, connection, metadata: ObjectMetadata) -> str:
-        """ Function to get script for insert operations """
-        return
+        elif (metadata["metadataTypeName"] == 'Schema'):
+            return scripter.get_schema_create_script(metadata)
 
     def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
@@ -83,6 +81,8 @@ class ScriptingService(object):
             return scripter.get_view_delete_script(metadata)
         elif (metadataType == 'Table'):
             return scripter.get_table_delete_script(metadata)
+        elif (metadataType == 'Schema'):
+            return scripter.get_schema_delete_script(metadata)
 
     def _scripting_operation(self, scripting_operation: int, connection, metadata: ObjectMetadata):
         """Helper function to get the correct script based on operation"""
@@ -90,8 +90,6 @@ class ScriptingService(object):
             return self.script_as_select(connection, metadata)
         elif (scripting_operation == ScriptOperation.Create.value):
             return self.script_as_create(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Insert.value):
-            return self.script_as_insert(connection, metadata)
         elif (scripting_operation == ScriptOperation.Update.value):
             return self.script_as_update(connection, metadata)
         elif (scripting_operation == ScriptOperation.Delete.value):

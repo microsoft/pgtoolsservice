@@ -44,3 +44,23 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
     @property
     def node_query(self):
         return TestSchema.NODE_ROW
+
+    @property
+    def _full_properties(self):
+        return {
+            "namespaceowner": "namespaceowner",
+            "description": "description",
+            "nspacl": "nspacl",
+            "seclabels": "seclabels",
+            "cascade": "cascade"
+        }
+
+    @property
+    def property_query(self):
+        return {
+            "namespaceowner": "admin",
+            "description": "test",
+            "nspacl": None,
+            "seclabels": None,
+            "cascade": False
+        }
