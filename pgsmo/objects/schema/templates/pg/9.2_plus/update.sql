@@ -4,9 +4,9 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/security.macros' as SECLABEL %}
-{% import 'macros/privilege.macros' as PRIVILEGE %}
-{% import 'macros/default_privilege.macros' as DEFAULT_PRIVILEGE %}
+{% import 'security.macros' as SECLABEL %}
+{% import 'privilege.macros' as PRIVILEGE %}
+{% import 'default_privilege.macros' as DEFAULT_PRIVILEGE %}
 {# Rename the schema #}
 {% if data.name and data.name != o_data.name %}
 ALTER SCHEMA {{ conn|qtIdent(o_data.name) }}

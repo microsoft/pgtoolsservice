@@ -34,7 +34,7 @@ class NodeObject(metaclass=ABCMeta):
         # Render and execute the template
         sql = templating.render_template(
             templating.get_template_path(template_root, 'nodes.sql', root_server.version),
-            **template_vars
+            paths_to_add=[cls._macro_root()], **template_vars
         )
         cols, rows = root_server.connection.execute_dict(sql)
 
@@ -80,6 +80,10 @@ class NodeObject(metaclass=ABCMeta):
         return {}
 
     @property
+    def macro_root(self) -> List[str]:
+        return []
+
+    @property
     def template_vars(self) -> str:
         template_vars = {"oid": self.oid}
         extended_vars = self.extended_vars
@@ -91,8 +95,11 @@ class NodeObject(metaclass=ABCMeta):
         self._refresh_child_collections()
 
     @classmethod
-    @abstractmethod
     def _template_root(cls, root_server: 's.Server') -> str:
+        pass
+
+    @classmethod
+    def _macro_root(cls) -> str:
         pass
 
     # PROTECTED HELPERS ####################################################

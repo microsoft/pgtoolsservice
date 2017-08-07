@@ -4,7 +4,7 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/catalogs.sql' as CATALOGS %}
+{% import 'catalogs.sql' as CATALOGS %}
 SELECT
     nsp.oid,
     nsp.nspname as name,

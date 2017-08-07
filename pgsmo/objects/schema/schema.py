@@ -18,6 +18,7 @@ import pgsmo.utils.querying as querying
 
 
 TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
 
 class Schema(node.NodeObject):
@@ -128,6 +129,10 @@ class Schema(node.NodeObject):
     def _template_root(cls, server: 's.Server') -> str:
         return path.join(TEMPLATE_ROOT, server.server_type)
 
+    @classmethod
+    def _macro_root(self) -> str:
+        return MACRO_ROOT
+
     # SCRIPTING METHODS ##############################################################
     def create_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve create scripts for a schema """
@@ -136,7 +141,7 @@ class Schema(node.NodeObject):
         query_file = "create.sql"
         connection_version = querying.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, **data)
+        script_template = templating.render_template(template_path, paths_to_add=self.macro_root, **data)
         return script_template
 
     def delete_script(self, connection: querying.ServerConnection) -> str:
