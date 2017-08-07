@@ -115,10 +115,6 @@ class TestScriptingService(unittest.TestCase):
         mock_service.script_as_update = mock.MagicMock()
         mock_service.script_as_delete = mock.MagicMock()
 
-        # When called with various scripting operations and objects
-        for op in operations:
-            for obj in objects:
-                mock_service._scripting_operation(op.value, self.connection, {"metadataTypeName": obj})
 
         # I should see calls being made for the different script operations
         self.assertEqual(True, mock_service.script_as_select.called)
