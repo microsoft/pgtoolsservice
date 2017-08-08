@@ -80,10 +80,6 @@ class NodeObject(metaclass=ABCMeta):
         return {}
 
     @property
-    def macro_root(self) -> List[str]:
-        return []
-
-    @property
     def template_vars(self) -> dict:
         template_vars = {"oid": self.oid}
         extended_vars = self.extended_vars
