@@ -135,33 +135,21 @@ class Schema(node.NodeObject):
     # SCRIPTING METHODS ##############################################################
     def create_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve create scripts for a schema """
-        template_root = self._template_root(self.server)
         data = self._create_query_data()
         query_file = "create.sql"
-        connection_version = querying.get_server_version(connection)
-        template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, **data)
-        return script_template
+        return self._get_template(connection, query_file, data)
 
     def delete_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve delete scripts for schema """
-        template_root = self._template_root(self.server)
         data = self._delete_query_data()
         query_file = "delete.sql"
-        connection_version = querying.get_server_version(connection)
-        template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, **data)
-        return script_template
+        return self._get_template(connection, query_file, data)
 
     def update_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve update scripts for schema """
-        template_root = self._template_root(self.server)
         data = self._update_query_data()
         query_file = "update.sql"
-        connection_version = querying.get_server_version(connection)
-        template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, **data)
-        return script_template
+        return self._get_template(connection, query_file, data)
 
     #  HELPER METHODS ######################################################
     def _create_query_data(self) -> dict:

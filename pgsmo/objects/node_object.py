@@ -9,6 +9,7 @@ from typing import Callable, Dict, Generic, List, Optional, Union, TypeVar, Keys
 
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
+import pgsmo.utils.querying as querying
 
 
 class NodeObject(metaclass=ABCMeta):
@@ -94,6 +95,14 @@ class NodeObject(metaclass=ABCMeta):
     @abstractmethod
     def _template_root(cls, root_server: 's.Server') -> str:
         pass
+
+    def _get_template(self, connection: querying.ServerConnection, query_file: str, data) -> str:
+        """ Helper function to render a template given data and query file """
+        template_root = self._template_root(connection)
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
 
     # PROTECTED HELPERS ####################################################
     TRCC = TypeVar('TRCC')
