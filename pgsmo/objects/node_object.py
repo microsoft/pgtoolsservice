@@ -127,7 +127,6 @@ class NodeObject(metaclass=ABCMeta):
 
         # Setup the parameters for the query
         template_vars = self.template_vars
-        template_vars.update(self.extended_vars)
 
         # Render and execute the template
         sql = templating.render_template(

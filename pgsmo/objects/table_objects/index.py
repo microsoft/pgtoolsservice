@@ -48,15 +48,15 @@ class Index(node.NodeObject):
     # -FULL OBJECT PROPERTIES ##############################################
     @property
     def is_clustered(self) -> Optional[bool]:
-        return self._full_properties['indisclustered']
+        return self._full_properties.get('indisclustered', '')
 
     @property
     def is_primary(self) -> Optional[bool]:
-        return self._full_properties['indisprimary']
+        return self._full_properties.get('indisprimary', '')
 
     @property
     def is_unique(self) -> Optional[bool]:
-        return self._full_properties['indisunique']
+        return self._full_properties.get('indisunique', '')
 
     # IMPLEMENTATION DETAILS ###############################################
     @property
