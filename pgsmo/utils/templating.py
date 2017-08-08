@@ -83,7 +83,7 @@ def render_template(template_path: str, paths_to_add=[], **context) -> str:
     if path not in TEMPLATE_ENVIRONMENTS:
         # Create the filesystem loader that will look in template folder FIRST
         template_root = os.path.dirname(os.path.dirname(template_path))
-        paths = [path, template_root] + paths_to_add
+        paths = [path, template_root] + (paths_to_add or None)
         loader: FileSystemLoader = FileSystemLoader(paths)
 
         # Create the environment and add the basic filters
