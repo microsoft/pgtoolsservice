@@ -58,6 +58,28 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
     def parent_expected_to_be_none(self) -> bool:
         return True
 
+    @property
+    def _full_properties(self):
+        return {
+            "encoding": "encoding",
+            "template": "template",
+            "datcollate": "datcollate",
+            "datctype": "datctype",
+            "spcname": "spcname",
+            "datconnlimit": "datconnlimit"
+        }
+
+    @property
+    def property_query(self):
+        return {
+            "encoding": "UTF8",
+            "template": None,
+            "datcollate": False,
+            "datctype": None,
+            "spcname": "test",
+            "datconnlimit": 0
+        }
+
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
         """Overriding to prevent using default init testing"""

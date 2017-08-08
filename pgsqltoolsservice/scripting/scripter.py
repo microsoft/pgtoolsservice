@@ -69,6 +69,18 @@ class Scripter(object):
         except Exception:
             return None
 
+    def get_schema_create_script(self, metadata) -> str:
+        """ Get create script for schema """
+        try:
+            # get schema from server
+            schema = self._find_schema(metadata)
+
+            # get the create script
+            script = schema.create_script(self.connection)
+            return script
+        except Exception:
+            return None
+
     # DELETE ##################################################################
     def get_table_delete_script(self, metadata) -> str:
         """ Get delete script for table """
@@ -87,7 +99,7 @@ class Scripter(object):
             parent_schema = self._find_schema(metadata)
             view = parent_schema.views[view_name]
 
-            # get the create script
+            # get the delete script
             script = view.delete_script(self.connection)
             return script
         except Exception:
@@ -100,8 +112,20 @@ class Scripter(object):
             database_name = metadata["name"]
             database = self.server.databases[database_name]
 
-            # get the create script
+            # get the delete script
             script = database.delete_script(self.connection)
+            return script
+        except Exception:
+            return None
+
+    def get_schema_delete_script(self, metadata) -> str:
+        """ Get delete script for schemas """
+        try:
+            # get schema from server
+            schema = self._find_schema(metadata)
+
+            # get the delete script
+            script = schema.delete_script(self.connection)
             return script
         except Exception:
             return None
@@ -130,6 +154,18 @@ class Scripter(object):
 
             # get the create script
             script = view.update_script(self.connection)
+            return script
+        except Exception:
+            return None
+
+    def get_schema_update_script(self, metadata) -> str:
+        """ Get update script for schemas """
+        try:
+            # get schema from server
+            schema = self._find_schema(metadata)
+
+            # get the delete script
+            script = schema.update_script(self.connection)
             return script
         except Exception:
             return None
