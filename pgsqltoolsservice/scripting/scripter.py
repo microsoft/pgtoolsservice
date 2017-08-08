@@ -158,6 +158,18 @@ class Scripter(object):
         except Exception:
             return None
 
+    def get_schema_update_script(self, metadata) -> str:
+        """ Get update script for schemas """
+        try:
+            # get schema from server
+            schema = self._find_schema(metadata)
+
+            # get the delete script
+            script = schema.update_script(self.connection)
+            return script
+        except Exception:
+            return None
+
     # HELPER METHODS ##########################################################
 
     def _find_schema(self, metadata):

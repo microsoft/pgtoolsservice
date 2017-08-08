@@ -123,6 +123,10 @@ class Schema(node.NodeObject):
     def cascade(self):
         return self._full_properties.get("cascade", "")
 
+    @property
+    def defacl(self):
+        return self._full_properties.get("defacl", "")
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
@@ -149,8 +153,18 @@ class Schema(node.NodeObject):
         script_template = templating.render_template(template_path, **data)
         return script_template
 
+    def update_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve update scripts for schema """
+        template_root = self._template_root(self.server)
+        data = self._update_query_data()
+        query_file = "update.sql"
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, **data)
+        return script_template
+
     #  HELPER METHODS ######################################################
-    def _create_query_data(self):
+    def _create_query_data(self) -> dict:
         """ Function that returns data for create script """
         data = {"data": {
             "name": self.name,
@@ -161,10 +175,28 @@ class Schema(node.NodeObject):
         }}
         return data
 
-    def _delete_query_data(self):
+    def _delete_query_data(self) -> dict:
         """ Function that returns data for delete script """
         data = {
             "name": self.name,
             "cascade": self.cascade
+        }
+        return data
+
+    def _update_query_data(self) -> dict:
+        """ Function that returns data for update script """
+        data = {
+            "data": {
+                "name": self.name,
+                "namespaceowner": self.namespaceowner,
+                "description": self.description,
+                "nspacl": self.nspacl,
+                "defacl": self.defacl,
+                "seclabels": self.seclabels
+            }, "o_data": {
+                "name": "",
+                "namespaceowner": "",
+                "description": ""
+            }
         }
         return data

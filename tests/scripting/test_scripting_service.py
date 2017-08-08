@@ -23,7 +23,7 @@ from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
-from pgsmo.objects.schema.schema import Schema
+from pgsmo.objects.schema.schema import Schema, TEMPLATE_ROOT
 
 
 """Module for testing the scripting service"""
@@ -183,6 +183,14 @@ class TestScriptingService(unittest.TestCase):
         # Schema
         self._test_schema_delete_script(mock_scripter, service)
 
+    def test_script_as_update(self):
+        """ Test getting update script for all objects """
+        mock_scripter = Scripter(self.connection)
+        service = ScriptingService()
+
+        # Schema
+        self._test_schema_update_script(mock_scripter, service)
+
     # PRIVATE HELPER FUNCTIONS ####################################################
 
     # CREATE SCRIPTS ##############################################################
@@ -273,7 +281,7 @@ class TestScriptingService(unittest.TestCase):
         mock_schema = Schema(None, None, 'test')
 
         def schema_mock_fn(connection):
-            mock_schema._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
+            mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
             mock_schema._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_schema.create_script(connection)
             return result
@@ -348,7 +356,7 @@ class TestScriptingService(unittest.TestCase):
         mock_database = Database(mock_server, 'test')
 
         def database_mock_fn(connection):
-            mock_database._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
+            mock_database._template_root = mock.MagicMock(return_value=Database.TEMPLATE_ROOT)
             mock_database._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_database.delete_script(connection)
             return result
@@ -367,12 +375,12 @@ class TestScriptingService(unittest.TestCase):
         self.assertNotNoneOrEmpty(result)
 
     def _test_schema_delete_script(self, scripter, service):
-        """ Helper function to test delete script for views """
+        """ Helper function to test delete script for schemas """
         # Set up the mocks
         mock_schema = Schema(None, None, 'test')
 
         def schema_mock_fn(connection):
-            mock_schema._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
+            mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
             mock_schema._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_schema.delete_script(connection)
             return result
@@ -386,6 +394,32 @@ class TestScriptingService(unittest.TestCase):
 
         # If I try to get select script for any object
         result = service.script_as_delete()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
+    # UPDATE SCRIPTS ##############################################################
+
+    def _test_schema_update_script(self, scripter, service):
+        """ Helper function to test update script for schemas """
+        # Set up the mocks
+        mock_schema = Schema(None, None, 'test')
+
+        def schema_mock_fn(connection):
+            mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
+            mock_schema._update_query_data = mock.MagicMock(return_value={"data": {"name": "test"}, "o_data": {"name": "test"}})
+            result = mock_schema.update_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_schema.update_script = mock.MagicMock(return_value=schema_mock_fn(self.connection))
+            return mock_schema.update_script()
+
+        scripter.get_schema_update_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_schema_update_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_update()
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)

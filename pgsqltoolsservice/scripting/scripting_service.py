@@ -70,6 +70,8 @@ class ScriptingService(object):
             return scripter.get_view_update_script(metadata)
         elif (metadataType == 'Table'):
             return scripter.get_table_update_script(metadata)
+        elif (metadataType == 'Schema'):
+            return scripter.get_schema_update_script(metadata)
 
     def script_as_delete(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for insert operations """
