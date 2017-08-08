@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import Optional
+
 import pgsmo.objects.node_object as node
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
@@ -37,7 +39,33 @@ class Index(node.NodeObject):
         """
         super(Index, self).__init__(server, parent, name)
 
+        # Full Object Properties
+        self._is_clustered: Optional[bool] = None
+        self._is_primary: Optional[bool] = None
+        self._is_unique: Optional[bool] = None
+
+    # PROPERTIES ###########################################################
+    # -FULL OBJECT PROPERTIES ##############################################
+    @property
+    def is_clustered(self) -> Optional[bool]:
+        return self._full_properties.get('indisclustered', '')
+
+    @property
+    def is_primary(self) -> Optional[bool]:
+        return self._full_properties.get('indisprimary', '')
+
+    @property
+    def is_unique(self) -> Optional[bool]:
+        return self._full_properties.get('indisunique', '')
+
     # IMPLEMENTATION DETAILS ###############################################
+    @property
+    def extended_vars(self):
+        return {
+            'tid': self.parent.oid,                 # Table/view OID
+            'did': self.parent.parent.parent.oid    # Database OID
+        }
+
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT

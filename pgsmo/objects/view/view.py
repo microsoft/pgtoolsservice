@@ -65,6 +65,7 @@ class View(node.NodeObject):
     def triggers(self) -> node.NodeCollection[Trigger]:
         return self._triggers
 
+    # FULL OBJECT PROPERTIES ###############################################
     @property
     def schema(self):
         return self._full_properties.get("schema", "")

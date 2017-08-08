@@ -111,6 +111,14 @@ class Server:
         return self._tablespaces
 
     # METHODS ##############################################################
+    def refresh(self) -> None:
+        # Reset child objects
+        self._databases.reset()
+        self._roles.reset()
+        self._tablespaces.reset()
+
+        # Reset property collections
+        self._recovery_props.reset()
 
     # IMPLEMENTATION DETAILS ###############################################
     def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:
