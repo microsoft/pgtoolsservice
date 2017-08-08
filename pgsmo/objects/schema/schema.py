@@ -134,7 +134,7 @@ class Schema(node.NodeObject):
         return path.join(TEMPLATE_ROOT, server.server_type)
 
     @classmethod
-    def _macro_root(self) -> str:
+    def _macro_root(cls) -> str:
         return MACRO_ROOT
 
     # SCRIPTING METHODS ##############################################################
