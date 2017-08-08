@@ -95,6 +95,7 @@ class NodeObject(metaclass=ABCMeta):
         self._refresh_child_collections()
 
     @classmethod
+    @abstractmethod
     def _template_root(cls, root_server: 's.Server') -> str:
         pass
 

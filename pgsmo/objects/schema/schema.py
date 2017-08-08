@@ -145,7 +145,7 @@ class Schema(node.NodeObject):
         query_file = "create.sql"
         connection_version = querying.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, paths_to_add=self.macro_root, **data)
+        script_template = templating.render_template(template_path, paths_to_add=[self._macro_root()], **data)
         return script_template
 
     def delete_script(self, connection: querying.ServerConnection) -> str:
@@ -165,7 +165,7 @@ class Schema(node.NodeObject):
         query_file = "update.sql"
         connection_version = querying.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, paths_to_add=self.macro_root, **data)
+        script_template = templating.render_template(template_path, paths_to_add=[self._macro_root()], **data)
         return script_template
 
     #  HELPER METHODS ######################################################
