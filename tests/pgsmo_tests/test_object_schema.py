@@ -52,7 +52,8 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
             "description": "description",
             "nspacl": "nspacl",
             "seclabels": "seclabels",
-            "cascade": "cascade"
+            "cascade": "cascade",
+            "defacl": "defacl"
         }
 
     @property
@@ -62,5 +63,6 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
             "description": "test",
             "nspacl": None,
             "seclabels": None,
-            "cascade": False
+            "cascade": False,
+            "defacl": None
         }

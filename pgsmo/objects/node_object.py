@@ -84,7 +84,7 @@ class NodeObject(metaclass=ABCMeta):
         return []
 
     @property
-    def template_vars(self) -> str:
+    def template_vars(self) -> dict:
         template_vars = {"oid": self.oid}
         extended_vars = self.extended_vars
         return {**template_vars, **extended_vars}
