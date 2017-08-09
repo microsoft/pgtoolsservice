@@ -72,12 +72,13 @@ class ConnectionProviderOptions:
         self.options: List[ConnectionOption] = options
 
 
-class DisasterRecoveryProviderOptions:
-    """Defines the options for the disaster recovery service"""
+class FeatureMetadataProvider:
+    """Defines a set of options that will be sent to the client"""
 
-    def __init__(self, backup_options: List[ServiceOption] = None, restore_options: List[ServiceOption] = None):
-        self.backup_options = backup_options
-        self.restore_options = restore_options
+    def __init__(self, enabled: bool, feature_name: str, options_metadata: List[ServiceOption]):
+        self.enabled = enabled
+        self.feature_name = feature_name
+        self.options_metadata = options_metadata
 
 
 class DMPServerCapabilities:
@@ -88,12 +89,12 @@ class DMPServerCapabilities:
                  provider_name: str,
                  provider_display_name: str,
                  connection_options: ConnectionProviderOptions,
-                 disaster_recovery_options: DisasterRecoveryProviderOptions):
+                 features: List[FeatureMetadataProvider]):
         self.protocol_version: str = protocol_version
         self.provider_name: str = provider_name
         self.provider_display_name: str = provider_display_name
         self.connection_provider: ConnectionProviderOptions = connection_options
-        self.disaster_recovery_provider: DisasterRecoveryProviderOptions = disaster_recovery_options
+        self.features: List[FeatureMetadataProvider] = features
 
 
 class CapabilitiesResult(object):

@@ -193,7 +193,7 @@ class CapabilitiesService:
                 group_name='Client'
             )
         ])
-        capabilities = DMPServerCapabilities('1.0', 'PGSQL', 'PostgreSQL', conn_provider_opts, BACKUP_OPTIONS)
+        capabilities = DMPServerCapabilities('1.0', 'PGSQL', 'PostgreSQL', conn_provider_opts, [BACKUP_OPTIONS])
         result = CapabilitiesResult(capabilities)
 
         # Send the response
