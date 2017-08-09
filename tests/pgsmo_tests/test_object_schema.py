@@ -46,7 +46,7 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
         return TestSchema.NODE_ROW
 
     @property
-    def _full_properties(self):
+    def full_properties(self):
         return {
             "namespaceowner": "namespaceowner",
             "description": "description",

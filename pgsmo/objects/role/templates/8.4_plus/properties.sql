@@ -16,7 +16,7 @@ SELECT
 	) rolmembership
 FROM
 	pg_roles r
-{% if rid %}
-WHERE r.oid = {{ rid|qtIdent }}::OID
+{% if oid %}
+WHERE r.oid = {{ oid|qtIdent }}::OID
 {% endif %}
 ORDER BY r.rolcanlogin, r.rolname

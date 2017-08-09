@@ -36,7 +36,7 @@ class TestView(NodeObjectTestBase, unittest.TestCase):
         return TestView.NODE_ROW
 
     @property
-    def _full_properties(self):
+    def full_properties(self):
         return {
             "schema": "schema",
             "definition": "definition",

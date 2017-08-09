@@ -5,7 +5,7 @@
 
 import os
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Callable
 
 from jinja2 import Environment, FileSystemLoader, Template
 from psycopg2.extensions import adapt
@@ -72,7 +72,7 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     raise ValueError(f'Template folder {template_root} does not contain {template_name}')
 
 
-def render_template(template_path: str, **context) -> str:
+def render_template(template_path: str, filters_to_add=None, **context) -> str:
     """
     Renders a template from the template folder with the given context.
     :param template_path: the path to the template to be rendered
@@ -93,7 +93,9 @@ def render_template(template_path: str, **context) -> str:
         new_env.filters['qtTypeIdent'] = qt_type_ident
 
         TEMPLATE_ENVIRONMENTS[path] = new_env
-
+    if (filters_to_add is not None):
+        for filter_name, function in filters_to_add.items():
+            TEMPLATE_ENVIRONMENTS[path].filters[filter_name] = function
     env = TEMPLATE_ENVIRONMENTS[path]
     to_render = env.get_template(filename)
     return to_render.render(context)
@@ -180,6 +182,23 @@ def qt_ident(conn, *args):
         res = ((res and res + '.') or '') + value
 
     return res
+
+
+def has_any(data, keys):
+    """
+    Checks any one of the keys present in the data given
+    """
+    if data is None and type(data) != dict:
+        return False
+
+    if keys is None and type(keys) != list:
+        return False
+
+    for key in keys:
+        if key in data:
+            return True
+
+    return False
 
 
 def needs_quoting(key, for_types):
