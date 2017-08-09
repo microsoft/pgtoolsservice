@@ -7,7 +7,7 @@
 disconnect and holds the current connection, if one is present"""
 
 import threading
-from typing import Dict, Optional, Tuple  # noqa
+from typing import Callable, Dict, List, Optional, Tuple  # noqa
 import uuid
 
 import psycopg2
@@ -72,6 +72,7 @@ class ConnectionService:
         self._service_provider = None
         self._cancellation_map: Dict[Tuple[str, ConnectionType], CancellationToken] = {}
         self._cancellation_lock: threading.Lock = threading.Lock()
+        self._on_connect_callbacks: List[Callable[ConnectionInfo]] = []
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -143,6 +144,7 @@ class ConnectionService:
 
         # The connection was not canceled, so add the connection and respond
         connection_info.add_connection(params.type, connection)
+        self._notify_on_connect(params.type, connection_info)
         return _build_connection_response(connection_info, params.type)
 
     def disconnect(self, owner_uri: str, connection_type: Optional[ConnectionType]) -> bool:
@@ -171,6 +173,9 @@ class ConnectionService:
         if not connection_info.has_connection(connection_type):
             self.connect(ConnectRequestParams(connection_info.details, owner_uri, connection_type))
         return connection_info.get_connection(connection_type)
+
+    def register_on_connect_callback(self, task: Callable[[ConnectionInfo], None]) -> None:
+        self._on_connect_callbacks.append(task)
 
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
@@ -225,6 +230,15 @@ class ConnectionService:
         # Send the connection complete response unless the connection was canceled
         if response is not None:
             request_context.send_notification(CONNECTION_COMPLETE_METHOD, response)
+
+    def _notify_on_connect(self, conn_type: ConnectionType, info: ConnectionInfo) -> None:
+        """
+        Sends a notification to any listeners that a new connection has been established.
+        Only sent if the connection is a new, defalt connection
+        """
+        if (conn_type == ConnectionType.DEFAULT):
+            for callback in self._on_connect_callbacks:
+                callback(info)
 
     @staticmethod
     def _close_connections(connection_info: ConnectionInfo, connection_type=None):
