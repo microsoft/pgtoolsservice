@@ -5,6 +5,7 @@
 
 """Test the language service"""
 
+import threading    # noqa
 from typing import List, Tuple, Optional
 import unittest
 from unittest import mock
