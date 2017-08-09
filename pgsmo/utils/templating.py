@@ -72,7 +72,7 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     raise ValueError(f'Template folder {template_root} does not contain {template_name}')
 
 
-def render_template(template_path: str, **context) -> str:
+def render_template(template_path: str, paths_to_add=None, **context) -> str:
     """
     Renders a template from the template folder with the given context.
     :param template_path: the path to the template to be rendered
@@ -84,6 +84,8 @@ def render_template(template_path: str, **context) -> str:
         # Create the filesystem loader that will look in template folder FIRST
         template_root = os.path.dirname(os.path.dirname(template_path))
         paths = [path, template_root]
+        if (paths_to_add is not None):
+            paths += paths_to_add
         loader: FileSystemLoader = FileSystemLoader(paths)
 
         # Create the environment and add the basic filters
