@@ -206,7 +206,7 @@ class TestConnectionService(unittest.TestCase):
         self.run_on_connect_callback(ConnectionType.EDIT, False)
         self.run_on_connect_callback(ConnectionType.INTELLISENSE, False)
         self.run_on_connect_callback(ConnectionType.QUERY, False)
-        
+
     def run_on_connect_callback(self, conn_type: ConnectionType, expect_callback: bool) -> None:
         """Inner function for callback tests that verifies expected behavior given different connection types"""
         callbacks = [MagicMock(), MagicMock()]
@@ -233,7 +233,7 @@ class TestConnectionService(unittest.TestCase):
 
         # Set up the connection service and call its connect method with the
         # supported options
-        response = self.connection_service.connect(
+        self.connection_service.connect(
             ConnectRequestParams(connection_details, connection_uri, connection_type))
         self.connection_service.get_connection(connection_uri, conn_type)
         # ... The mock config change callbacks should have been called
@@ -245,7 +245,7 @@ class TestConnectionService(unittest.TestCase):
                 self.assertEqual(callargs.owner_uri, connection_uri)
             else:
                 callback.assert_not_called()
-    
+
     def test_disconnect_single_type(self):
         """Test that the disconnect method calls close on a single open connection type when a type is given"""
         # Set up the test with mock data

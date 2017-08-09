@@ -5,7 +5,6 @@
 
 """Test the language service"""
 
-import threading
 from typing import List, Tuple, Optional
 import unittest
 from unittest import mock
@@ -202,7 +201,7 @@ class TestLanguageService(unittest.TestCase):
 
         def validate_success_notification(response: IntelliSenseReadyParams):
             self.assertEqual(response.owner_uri, conn_info.owner_uri)
-        
+
         # When: I notify of a connection complete for a given URI
         self.flow_validator.add_expected_notification(IntelliSenseReadyParams, INTELLISENSE_READY_NOTIFICATION, validate_success_notification)
         task: threading.Thread = service.on_connect(conn_info)
@@ -244,4 +243,3 @@ class TestLanguageService(unittest.TestCase):
         self.assertEqual(first.start.character, second.start.character)
         self.assertEqual(first.end.line, second.end.line)
         self.assertEqual(first.end.character, second.end.character)
-    

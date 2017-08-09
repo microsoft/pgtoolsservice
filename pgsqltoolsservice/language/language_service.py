@@ -51,7 +51,7 @@ class LanguageService:
         self._server.set_notification_handler(LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, self.handle_flavor_change)
 
         # Register internal service notification handlers
-        self._connection_service.register_on_connect_callback(self.on_connect) 
+        self._connection_service.register_on_connect_callback(self.on_connect)
 
     # REQUEST HANDLERS #####################################################
     def handle_completion_request(self, request_context: RequestContext, params: TextDocumentPosition) -> None:
@@ -130,4 +130,3 @@ class LanguageService:
         # TODO build the cache. For now, sending intellisense ready as a test
         response = IntelliSenseReadyParams.from_data(conn_info.owner_uri)
         self._server.send_notification(INTELLISENSE_READY_NOTIFICATION, response)
- 
