@@ -121,6 +121,19 @@ class JSONRPCServer:
         # Add the message to the output queue
         self._output_queue.put(message)
 
+    def send_notification(self, method, params):
+        """
+        Sends a notification, independent of any request
+        :param method: String name of the method for the notification
+        :param params: Data to send with the notification
+        """
+        # Create the message
+        message = JSONRPCMessage.create_notification(method, params)
+
+        # TODO: Add support for handlers for the responses
+        # Add the message to the output queue
+        self._output_queue.put(message)
+
     def set_request_handler(self, config, handler):
         """
         Sets the handler for a request with a given configuration

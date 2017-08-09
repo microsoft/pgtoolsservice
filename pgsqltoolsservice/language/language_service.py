@@ -6,6 +6,7 @@
     Language Service Implementation
 """
 from logging import Logger          # noqa
+import threading
 from typing import Callable, Set  # noqa
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
@@ -16,7 +17,8 @@ from pgsqltoolsservice.workspace.script_file import ScriptFile  # noqa
 from pgsqltoolsservice.language.contracts import (
     COMPLETION_REQUEST, CompletionItem,
     COMPLETION_RESOLVE_REQUEST,
-    LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams
+    LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams,
+    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams
 )
 from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
 from pgsqltoolsservice.language.text import TextUtilities
@@ -96,9 +98,9 @@ class LanguageService:
                 self._non_pgsql_uris.discard(params.uri)
 
     # SERVICE NOTIFICATION HANDLERS #####################################################
-    def on_connect(self, conn_info: ConnectionInfo) -> None:
+    def on_connect(self, conn_info: ConnectionInfo) -> threading.Thread:
         """Set up intellisense cache on connection to a new database"""
-        
+        return utils.thread.run_as_thread(self._build_intellisense_cache_thread, conn_info)
 
     # PROPERTIES ###########################################################
     @property
@@ -124,3 +126,8 @@ class LanguageService:
         """
         return uri not in self._non_pgsql_uris
 
+    def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
+        # TODO build the cache. For now, sending intellisense ready as a test
+        response = IntelliSenseReadyParams.from_data(conn_info.owner_uri)
+        self._server.send_notification(INTELLISENSE_READY_NOTIFICATION, response)
+ 
