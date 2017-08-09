@@ -187,8 +187,7 @@ class Scripter(object):
         """ Get update script for roles """
         try:
             # get roles from server
-            # role_name = metadata["name"]
-            role_name = "sa"
+            role_name = metadata["name"]
             role = self.server.roles[role_name]
 
             # get the create script
