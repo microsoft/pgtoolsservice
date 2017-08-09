@@ -10,6 +10,7 @@ from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
 import pgsmo.utils.querying as querying
 
+
 class Role(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -168,7 +169,7 @@ class Role(NodeObject):
 
     def _update_query_data(self):
         """ Gives the data object for update query """
-        return { 
+        return {
             "data": {
                 "rolname": self.name,
                 "rolcanlogin": self.can_login,

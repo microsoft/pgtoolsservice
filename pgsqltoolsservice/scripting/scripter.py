@@ -93,7 +93,6 @@ class Scripter(object):
             return script
         except:
             return None
-            
 
     # DELETE ##################################################################
     def get_table_delete_script(self, metadata) -> str:
@@ -196,7 +195,7 @@ class Scripter(object):
             script = role.update_script(self.connection)
             return script
         except:
-            return None            
+            return None
 
     # HELPER METHODS ##########################################################
 

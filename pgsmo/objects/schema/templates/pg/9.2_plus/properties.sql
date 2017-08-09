@@ -4,7 +4,7 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/catalogs.sql' as CATALOGS %}
+{% import 'catalogs.sql' as CATALOGS %}
 SELECT
     CASE
     WHEN (nspname LIKE E'pg\\_temp\\_%') THEN 1

@@ -18,6 +18,7 @@ import pgsmo.utils.querying as querying
 
 
 TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
 
 class Schema(node.NodeObject):
@@ -132,36 +133,28 @@ class Schema(node.NodeObject):
     def _template_root(cls, server: 's.Server') -> str:
         return path.join(TEMPLATE_ROOT, server.server_type)
 
+    @classmethod
+    def _macro_root(cls) -> str:
+        return MACRO_ROOT
+
     # SCRIPTING METHODS ##############################################################
     def create_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve create scripts for a schema """
-        template_root = self._template_root(self.server)
         data = self._create_query_data()
         query_file = "create.sql"
-        connection_version = querying.get_server_version(connection)
-        template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, **data)
-        return script_template
+        return self._get_template(connection, query_file, data, paths_to_add=[self._macro_root()])
 
     def delete_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve delete scripts for schema """
-        template_root = self._template_root(self.server)
         data = self._delete_query_data()
         query_file = "delete.sql"
-        connection_version = querying.get_server_version(connection)
-        template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, **data)
-        return script_template
+        return self._get_template(connection, query_file, data)
 
     def update_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve update scripts for schema """
-        template_root = self._template_root(self.server)
         data = self._update_query_data()
         query_file = "update.sql"
-        connection_version = querying.get_server_version(connection)
-        template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, **data)
-        return script_template
+        return self._get_template(connection, query_file, data, paths_to_add=[self._macro_root()])
 
     #  HELPER METHODS ######################################################
     def _create_query_data(self) -> dict:
