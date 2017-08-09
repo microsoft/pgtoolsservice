@@ -80,24 +80,31 @@ def render_template(template_path: str, paths_to_add=None, filters_to_add=None, 
     :return: The template rendered with the provided context
     """
     path, filename = os.path.split(template_path)
-    if path not in TEMPLATE_ENVIRONMENTS:
-        # Create the filesystem loader that will look in template folder FIRST
-        template_root = os.path.dirname(os.path.dirname(template_path))
-        paths = [path, template_root]
-        if (paths_to_add is not None):
-            paths += paths_to_add
-        loader: FileSystemLoader = FileSystemLoader(paths)
+    paths = [path]
+    if (paths_to_add is not None):
+        paths += paths_to_add
 
-        # Create the environment and add the basic filters
-        new_env: Environment = Environment(loader=loader)
-        new_env.filters['qtLiteral'] = qt_literal
-        new_env.filters['qtIdent'] = qt_ident
-        new_env.filters['qtTypeIdent'] = qt_type_ident
+    for path in paths:
+        if path not in TEMPLATE_ENVIRONMENTS:
+            # Create the filesystem loader that will look in template folder FIRST
+            template_root = os.path.dirname(os.path.dirname(template_path))
+            if (template_root not in TEMPLATE_ENVIRONMENTS):
+                paths.append(template_root)
+            loader: FileSystemLoader = FileSystemLoader(paths)
 
-        TEMPLATE_ENVIRONMENTS[path] = new_env
+            # Create the environment and add the basic filters
+            new_env: Environment = Environment(loader=loader)
+            new_env.filters['qtLiteral'] = qt_literal
+            new_env.filters['qtIdent'] = qt_ident
+            new_env.filters['qtTypeIdent'] = qt_type_ident
+
+            TEMPLATE_ENVIRONMENTS[path] = new_env
+            break
+
     if (filters_to_add is not None):
         for filter_name, function in filters_to_add.items():
             TEMPLATE_ENVIRONMENTS[path].filters[filter_name] = function
+
     env = TEMPLATE_ENVIRONMENTS[path]
     to_render = env.get_template(filename)
     return to_render.render(context)

@@ -42,3 +42,23 @@ class TestTablespace(NodeObjectTestBase, unittest.TestCase):
     @property
     def parent_expected_to_be_none(self) -> bool:
         return True
+
+    @property
+    def full_properties(self):
+        return {
+            "user": "user",
+            "location": "location",
+            "description": "description",
+            "options": "options",
+            "acl": "acl"
+        }
+
+    @property
+    def property_query(self):
+        return {
+            "user": "test",
+            "location": "some path",
+            "description": None,
+            "options": None,
+            "acl": None
+        }
