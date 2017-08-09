@@ -8,7 +8,7 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.tasks import Task, TaskStatus
+from pgsqltoolsservice.tasks import Task, TaskResult, TaskStatus
 from pgsqltoolsservice.utils import constants
 from tests import utils
 
@@ -18,7 +18,7 @@ class TestTasks(unittest.TestCase):
 
     def setUp(self):
         """Set up the data for tasks"""
-        self.mock_action = mock.Mock()
+        self.mock_action = mock.Mock(return_value=TaskResult(TaskStatus.SUCCEEDED))
         self.task_name = 'test_name'
         self.task_description = 'test_description'
         self.task_provider = constants.PROVIDER_NAME
