@@ -101,12 +101,13 @@ class NodeObject(metaclass=ABCMeta):
     def _macro_root(cls) -> str:
         pass
 
-    def _get_template(self, connection: querying.ServerConnection, query_file: str, data, paths_to_add=[]) -> str:
+    def _get_template(self, connection: querying.ServerConnection, query_file: str, data,
+                      paths_to_add=None, filters_to_add=None) -> str:
         """ Helper function to render a template given data and query file """
         template_root = self._template_root(connection)
         connection_version = querying.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)
-        script_template = templating.render_template(template_path, paths_to_add, **data)
+        script_template = templating.render_template(template_path, paths_to_add, filters_to_add, **data)
         return script_template
 
     # PROTECTED HELPERS ####################################################
