@@ -9,6 +9,7 @@ from logging import Logger          # noqa
 from typing import Callable, Set  # noqa
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
+from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
 from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition
 from pgsqltoolsservice.workspace import WorkspaceService
 from pgsqltoolsservice.workspace.script_file import ScriptFile  # noqa
@@ -42,10 +43,13 @@ class LanguageService:
         self._logger = service_provider.logger
         self._server = service_provider.server
 
-        # Register the handlers for when changes to the workspace occur
+        # Register request handlers
         self._server.set_request_handler(COMPLETION_REQUEST, self.handle_completion_request)
         self._server.set_request_handler(COMPLETION_RESOLVE_REQUEST, self.handle_completion_resolve_request)
         self._server.set_notification_handler(LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, self.handle_flavor_change)
+
+        # Register internal service notification handlers
+        self._connection_service.register_on_connect_callback(self.on_connect) 
 
     # REQUEST HANDLERS #####################################################
     def handle_completion_request(self, request_context: RequestContext, params: TextDocumentPosition) -> None:
@@ -91,10 +95,19 @@ class LanguageService:
             else:
                 self._non_pgsql_uris.discard(params.uri)
 
+    # SERVICE NOTIFICATION HANDLERS #####################################################
+    def on_connect(self, conn_info: ConnectionInfo) -> None:
+        """Set up intellisense cache on connection to a new database"""
+        
+
     # PROPERTIES ###########################################################
     @property
     def _workspace_service(self) -> WorkspaceService:
         return self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
+
+    @property
+    def _connection_service(self) -> ConnectionService:
+        return self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
 
     @property
     def should_lowercase(self) -> bool:
@@ -110,3 +123,4 @@ class LanguageService:
         Checks if this URI can be treated as a PGSQL candidate for processing or should be skipped
         """
         return uri not in self._non_pgsql_uris
+

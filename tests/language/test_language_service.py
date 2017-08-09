@@ -27,6 +27,7 @@ from pgsqltoolsservice.workspace import (
 from pgsqltoolsservice.workspace.contracts import (
     Range
 )
+from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
 import tests.utils as utils
 
 
@@ -40,8 +41,10 @@ class TestLanguageService(unittest.TestCase):
         self.mock_server = JSONRPCServer(None, None)
         self.mock_server.set_request_handler = self.mock_server_set_request
         self.mock_workspace_service = WorkspaceService()
+        self.mock_connection_service = ConnectionService()
         self.mock_service_provider = ServiceProvider(self.mock_server, {}, None)
         self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
+        self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
         self.mock_service_provider._is_initialized = True
         self.default_text_position = TextDocumentPosition.from_dict({
             'text_document': {
@@ -60,7 +63,12 @@ class TestLanguageService(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        provider: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
+        provider: ServiceProvider = ServiceProvider(server, {
+            constants.CONNECTION_SERVICE_NAME: ConnectionService
+        }, utils.get_mock_logger())
+        provider._is_initialized = True
+        conn_service: ConnectionService = provider[constants.CONNECTION_SERVICE_NAME]
+        self.assertEqual(0, len(conn_service._on_connect_callbacks))
 
         # If: I register a language service
         service: LanguageService = LanguageService()
@@ -70,6 +78,7 @@ class TestLanguageService(unittest.TestCase):
         # ... The notifications should have been registered
         server.set_notification_handler.assert_called()
         server.set_request_handler.assert_called()
+        self.assertEqual(1, len(conn_service._on_connect_callbacks))
 
         # ... The service provider should have been stored
         self.assertIs(service._service_provider, provider)  # noqa
