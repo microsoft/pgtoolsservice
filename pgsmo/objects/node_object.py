@@ -35,7 +35,7 @@ class NodeObject(metaclass=ABCMeta):
         # Render and execute the template
         sql = templating.render_template(
             templating.get_template_path(template_root, 'nodes.sql', root_server.version),
-            paths_to_add=[cls._macro_root()],
+            paths_to_add=cls._macro_root(),
             **template_vars
         )
         cols, rows = root_server.connection.execute_dict(sql)
@@ -99,12 +99,12 @@ class NodeObject(metaclass=ABCMeta):
 
     @classmethod
     def _macro_root(cls) -> str:
-        pass
+        return None
 
     def _get_template(self, connection: querying.ServerConnection, query_file: str, data,
                       paths_to_add=None, filters_to_add=None) -> str:
         """ Helper function to render a template given data and query file """
-        template_root = self._template_root(connection)
+        template_root = self._template_root(self.server)
         connection_version = querying.get_server_version(connection)
         template_path = templating.get_template_path(template_root, query_file, connection_version)
         script_template = templating.render_template(template_path, paths_to_add, filters_to_add, **data)

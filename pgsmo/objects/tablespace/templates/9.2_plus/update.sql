@@ -5,9 +5,9 @@
  # This software is released under the PostgreSQL Licence
  #}
 {### SQL to update tablespace object ###}
-{% import 'macros/security.macros' as SECLABEL %}
-{% import 'macros/variable.macros' as VARIABLE %}
-{% import 'macros/privilege.macros' as PRIVILEGE %}
+{% import 'security.macros' as SECLABEL %}
+{% import 'variable.macros' as VARIABLE %}
+{% import 'privilege.macros' as PRIVILEGE %}
 {% if data %}
 {# ==== To update tablespace name ==== #}
 {% if data.name and data.name != o_data.name %}
