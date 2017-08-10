@@ -415,6 +415,23 @@ class JSONRPCServerTests(unittest.TestCase):
         self.assertEqual(request.message_method, 'test/test')
         self.assertDictEqual(request.message_params, {'test': 'test'})
 
+    def test_notification_enqueued(self):
+        # Setup: Create empty io streams
+        input_stream = io.BytesIO()
+        output_stream = io.BytesIO()
+
+        # If: I submit an outbound request
+        test_client = JSONRPCServer(input_stream, output_stream)
+        test_client.send_notification('test/test', {'test': 'test'})
+
+        # Then:
+        # ... There should be one request in the outbound queue
+        request = test_client._output_queue.get()
+
+        # ... The queued message should match the request we sent
+        self.assertEqual(request.message_method, 'test/test')
+        self.assertDictEqual(request.message_params, {'test': 'test'})
+
     def test_reads_message(self):
         # Setup:
         # ... Create an input stream with a single message
