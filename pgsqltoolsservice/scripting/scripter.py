@@ -29,6 +29,8 @@ class Scripter(object):
 
     # CREATE ##################################################################
 
+    # Database
+
     def get_database_create_script(self, metadata) -> str:
         """ Get create script for databases """
         try:
@@ -42,6 +44,8 @@ class Scripter(object):
         except Exception:
             # need to handle exceptions well
             return None
+
+    # View
 
     def get_view_create_script(self, metadata) -> str:
         """ Get create script for views """
@@ -57,6 +61,8 @@ class Scripter(object):
         except Exception:
             return None
 
+    # Table
+
     def get_table_create_script(self, metadata) -> str:
         """ Get create script for tables """
         try:
@@ -68,6 +74,22 @@ class Scripter(object):
             return script
         except Exception:
             return None
+
+    # Tablespace
+
+    def get_tablespace_create_script(self, metadata) -> str:
+        try:
+            # get tablespace
+            tablespace_name = metadata["name"]
+            tablespace = self.server.tablespaces[tablespace_name]
+
+            # get create script
+            script = tablespace.create_script(self.connection)
+            return script
+        except Exception:
+            return None
+
+    # Schema
 
     def get_schema_create_script(self, metadata) -> str:
         """ Get create script for schema """
@@ -95,6 +117,9 @@ class Scripter(object):
             return None
 
     # DELETE ##################################################################
+
+    # Table
+
     def get_table_delete_script(self, metadata) -> str:
         """ Get delete script for table """
         try:
@@ -103,6 +128,8 @@ class Scripter(object):
             return script
         except Exception:
             return None
+
+    # View
 
     def get_view_delete_script(self, metadata) -> str:
         """ Get delete script for view """
@@ -118,6 +145,8 @@ class Scripter(object):
         except Exception:
             return None
 
+    # Database
+
     def get_database_delete_script(self, metadata) -> str:
         """ Get delete script for databases """
         try:
@@ -131,6 +160,8 @@ class Scripter(object):
         except Exception:
             return None
 
+    # Schema
+
     def get_schema_delete_script(self, metadata) -> str:
         """ Get delete script for schemas """
         try:
@@ -143,7 +174,24 @@ class Scripter(object):
         except Exception:
             return None
 
+    # Tablespace
+
+    def get_tablespace_delete_script(self, metadata) -> str:
+        """ Get delete script for tablespaces """
+        try:
+            # get tablespace from server
+            tablespace_name = metadata["name"]
+            tablespace = self.server.tablespaces[tablespace_name]
+
+            # get the delete script
+            script = tablespace.delete_script(self.connection)
+            return script
+        except Exception:
+            return None
+
     # UPDATE ##################################################################
+
+    # Table
 
     def get_table_update_script(self, metadata) -> str:
         """ Get update script for tables """
@@ -156,6 +204,8 @@ class Scripter(object):
             return script
         except Exception:
             return None
+
+    # View
 
     def get_view_update_script(self, metadata) -> str:
         """ Get update date script for view """
@@ -171,6 +221,8 @@ class Scripter(object):
         except Exception:
             return None
 
+    # Schema
+
     def get_schema_update_script(self, metadata) -> str:
         """ Get update script for schemas """
         try:
@@ -183,6 +235,8 @@ class Scripter(object):
         except Exception:
             return None
 
+    # Role
+
     def get_role_update_script(self, metadata) -> str:
         """ Get update script for roles """
         try:
@@ -193,7 +247,22 @@ class Scripter(object):
             # get the create script
             script = role.update_script(self.connection)
             return script
-        except:
+        except Exception:
+            return None
+
+    # Tablespace
+
+    def get_tablespace_update_script(self, metadata) -> str:
+        """ Get update script for tablespaces """
+        try:
+            # get tablespace from server
+            tablespace_name = metadata["name"]
+            tablespace = self.server.tablespaces[tablespace_name]
+
+            # get the delete script
+            script = tablespace.update_script(self.connection)
+            return script
+        except Exception:
             return None
 
     # HELPER METHODS ##########################################################

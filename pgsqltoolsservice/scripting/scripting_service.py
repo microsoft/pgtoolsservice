@@ -48,16 +48,19 @@ class ScriptingService(object):
     def script_as_create(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for create operations """
         scripter = Scripter(connection)
-        if (metadata["metadataTypeName"] == 'Database'):
+        metadataType = metadata["metadataTypeName"]
+        if (metadataType == 'Database'):
             return scripter.get_database_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'View'):
+        elif (metadataType == 'View'):
             return scripter.get_view_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Table'):
+        elif (metadataType == 'Table'):
             return scripter.get_table_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Schema'):
+        elif (metadataType == 'Schema'):
             return scripter.get_schema_create_script(metadata)
-        elif (metadata["metdataTypeName"] == 'Role'):
+        elif (metadataType == 'Role'):
             return scripter.get_role_create_script(metadata)
+        elif (metadataType == 'Tablespace'):
+            return scripter.get_tablespace_create_script(metadata)
 
     def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
@@ -74,6 +77,8 @@ class ScriptingService(object):
             return scripter.get_table_update_script(metadata)
         elif (metadataType == 'Schema'):
             return scripter.get_schema_update_script(metadata)
+        elif (metadataType == 'Tablespace'):
+            return scripter.get_tablespace_update_script(metadata)
 
     def script_as_delete(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for insert operations """
@@ -87,6 +92,8 @@ class ScriptingService(object):
             return scripter.get_table_delete_script(metadata)
         elif (metadataType == 'Schema'):
             return scripter.get_schema_delete_script(metadata)
+        elif (metadataType == 'Tablespace'):
+            return scripter.get_tablespace_delete_script(metadata)
 
     def _scripting_operation(self, scripting_operation: int, connection, metadata: ObjectMetadata):
         """Helper function to get the correct script based on operation"""
