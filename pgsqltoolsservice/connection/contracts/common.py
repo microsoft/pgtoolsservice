@@ -54,3 +54,4 @@ class ConnectionType(enum.Enum):
     EDIT = 'Edit'
     QUERY_CANCEL = 'QueryCancel'
     OBJECT_EXLPORER = 'ObjectExplorer'
+    INTELLISENSE = 'Intellisense'

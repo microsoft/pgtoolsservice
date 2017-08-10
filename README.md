@@ -48,6 +48,7 @@ You can set configuration options in Carbon to let you attach the remote debugge
     "pgsql.useDebugSource": true,
     "pgsql.enableStartupDebugging": true
 ```
+If you get "ptvsd module not found" error - ensure you have python 3 or above installed and user environment variable "path" pointing to latest python scripts. For eg. on a windows machine path value looks like "< path to current useraccount >\APPDATA\LOCAL\PROGRAMS\PYTHON\PYTHON36\SCRIPTS\".
 
 ### Example Inputs
 ```
