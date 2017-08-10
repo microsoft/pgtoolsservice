@@ -72,7 +72,7 @@ class ConnectionService:
         self._service_provider = None
         self._cancellation_map: Dict[Tuple[str, ConnectionType], CancellationToken] = {}
         self._cancellation_lock: threading.Lock = threading.Lock()
-        self._on_connect_callbacks: List[Callable[ConnectionInfo]] = []
+        self._on_connect_callbacks: List[Callable[[ConnectionInfo], None]] = []
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
