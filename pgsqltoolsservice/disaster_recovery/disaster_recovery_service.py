@@ -37,7 +37,6 @@ class DisasterRecoveryService:
 
         :param request_context: The request context
         :param params: The BackupParams object for this request
-        :raises ValueError: If there is no connection open for the URI given as part of params
         """
         connection_info: ConnectionInfo = self._service_provider[constants.CONNECTION_SERVICE_NAME].get_connection_info(params.owner_uri)
         if connection_info is None:
