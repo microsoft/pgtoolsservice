@@ -8,6 +8,7 @@ from typing import Optional
 from pgsmo.objects.node_object import NodeObject
 from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
+import pgsmo.utils.querying as querying
 
 
 class Role(NodeObject):
@@ -60,7 +61,124 @@ class Role(NodeObject):
         """Whether or not the role is a super user"""
         return self._super
 
+    @property
+    def createdb(self):
+        return self._full_properties.get("createdb", "")
+
+    @property
+    def createrole(self):
+        return self._full_properties.get("createrole", "")
+
+    @property
+    def inherit(self):
+        return self._full_properties.get("inherit", "")
+
+    @property
+    def replication(self):
+        return self._full_properties.get("replication", "")
+
+    @property
+    def connlimit(self):
+        return self._full_properties.get("connlimit", "")
+
+    @property
+    def validuntil(self):
+        return self._full_properties.get("validuntil", "")
+
+    @property
+    def password(self):
+        return self._full_properties.get("password", "")
+
+    @property
+    def catupdate(self):
+        return self._full_properties.get("catupdate", "")
+
+    @property
+    def members(self):
+        return self._full_properties.get("members", "")
+
+    @property
+    def admins(self):
+        return self._full_properties.get("admins", "")
+
+    @property
+    def variables(self):
+        return self._full_properties.get("variables", "")
+
+    @property
+    def description(self):
+        return self._full_properties.get("description", "")
+
+    @property
+    def revoked_admins(self):
+        return self._full_properties.get("revoked_admins", "")
+
+    @property
+    def revoked(self):
+        return self._full_properties.get("revoked", "")
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    # SCRIPTING METHODS ####################################################
+
+    def create_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve create scripts for a role """
+        data = self._create_query_data()
+        query_file = "create.sql"
+        return self._get_template(connection, query_file, data)
+
+    def update_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve create scripts for a role """
+        data = self._update_query_data()
+        query_file = "update.sql"
+        filters = {'hasAny': templating.has_any}
+        return self._get_template(connection, query_file, data, filters_to_add=filters)
+
+    # HELPER METHODS ##################################################################
+
+    def _create_query_data(self):
+        """ Gives the data object for create query """
+        return {"data": {
+            "rolcanlogin": self.can_login,
+            "rolsuper": self.super,
+            "rolcreatedb": self.createdb,
+            "rolcreaterole": self.createrole,
+            "rolinherit": self.inherit,
+            "rolreplication": self.replication,
+            "rolconnlimit": self.connlimit,
+            "rolvaliduntil": self.validuntil,
+            "rolpassword": self.password,
+            "rolcatupdate": self.catupdate,
+            "rolname": self.name,
+            "members": self.members,
+            "admins": self.admins,
+            "variables": self.variables,
+            "description": self.description
+        }}
+
+    def _update_query_data(self):
+        """ Gives the data object for update query """
+        return {
+            "data": {
+                "rolname": self.name,
+                "rolcanlogin": self.can_login,
+                "rolsuper": self.super,
+                "rolcreatedb": self.createdb,
+                "rolcreaterole": self.createrole,
+                "rolinherit": self.inherit,
+                "rolreplication": self.replication,
+                "rolconnlimit": self.connlimit,
+                "rolvaliduntil": self.validuntil,
+                "rolpassword": self.password,
+                "rolcatupdate": self.catupdate,
+                "revoked_admins": self.revoked_admins,
+                "revoked": self.revoked,
+                "admins": self.admins,
+                "members": self.members,
+                "variables": self.variables,
+                "description": self.description
+            }, "rolCanLogin": self.can_login
+        }

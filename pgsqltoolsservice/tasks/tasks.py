@@ -24,6 +24,13 @@ class TaskStatus(enum.Enum):
     CANCELED = 5
 
 
+class TaskResult:
+    """Class representing the result of a task execution"""
+    def __init__(self, status: TaskStatus, error_message: str = None):
+        self.status = status
+        self.error_message = error_message
+
+
 class Task:
     """Class representing a single task handled by the task service"""
 
@@ -53,8 +60,8 @@ class Task:
         """Run the given action, updating the task's status as needed"""
         self._set_status(TaskStatus.IN_PROGRESS)
         try:
-            self._action()
-            self._set_status(TaskStatus.SUCCEEDED)
+            task_result: TaskResult = self._action()
+            self._set_status(task_result.status, task_result.error_message)
         except Exception as e:
             self._set_status(TaskStatus.FAILED, str(e))
 

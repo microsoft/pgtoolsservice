@@ -90,7 +90,7 @@ class JSONRPCReader:
 
             # Uncomment for verbose logging
             # if self._logger is not None:
-                # self._logger.debug(f'{content[0]}')
+            #     self._logger.debug(f'{content[0]}')
 
             return JSONRPCMessage.from_dictionary(json.loads(content[0]))
         except ValueError as ve:

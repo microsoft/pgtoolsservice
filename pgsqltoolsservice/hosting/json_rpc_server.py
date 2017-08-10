@@ -121,6 +121,19 @@ class JSONRPCServer:
         # Add the message to the output queue
         self._output_queue.put(message)
 
+    def send_notification(self, method, params):
+        """
+        Sends a notification, independent of any request
+        :param method: String name of the method for the notification
+        :param params: Data to send with the notification
+        """
+        # Create the message
+        message = JSONRPCMessage.create_notification(method, params)
+
+        # TODO: Add support for handlers for the responses
+        # Add the message to the output queue
+        self._output_queue.put(message)
+
     def set_request_handler(self, config, handler):
         """
         Sets the handler for a request with a given configuration
@@ -263,10 +276,10 @@ class JSONRPCServer:
             try:
                 handler.handler(request_context, deserialized_object)
             except Exception:
-                error_message = f'Unhandled exception while handling request method {message.message_method}'
-                request_context.send_error(error_message)
+                error_message = f'Unhandled exception while handling request method {message.message_method}'  # TODO: Localize
                 if self._logger is not None:
                     self._logger.exception(error_message)
+                request_context.send_error(error_message, code=-32603)
         elif message.message_type is JSONRPCMessageType.Notification:
             if self._logger is not None:
                 self._logger.info('Received notification method=%s', message.message_method)

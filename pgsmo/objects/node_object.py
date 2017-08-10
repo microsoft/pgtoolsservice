@@ -9,6 +9,7 @@ from typing import Callable, Dict, Generic, List, Optional, Union, TypeVar, Keys
 
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
+import pgsmo.utils.querying as querying
 
 
 class NodeObject(metaclass=ABCMeta):
@@ -34,6 +35,7 @@ class NodeObject(metaclass=ABCMeta):
         # Render and execute the template
         sql = templating.render_template(
             templating.get_template_path(template_root, 'nodes.sql', root_server.version),
+            paths_to_add=cls._macro_root(),
             **template_vars
         )
         cols, rows = root_server.connection.execute_dict(sql)
@@ -80,7 +82,7 @@ class NodeObject(metaclass=ABCMeta):
         return {}
 
     @property
-    def template_vars(self) -> str:
+    def template_vars(self) -> dict:
         template_vars = {"oid": self.oid}
         extended_vars = self.extended_vars
         return {**template_vars, **extended_vars}
@@ -94,6 +96,19 @@ class NodeObject(metaclass=ABCMeta):
     @abstractmethod
     def _template_root(cls, root_server: 's.Server') -> str:
         pass
+
+    @classmethod
+    def _macro_root(cls) -> str:
+        return None
+
+    def _get_template(self, connection: querying.ServerConnection, query_file: str, data,
+                      paths_to_add=None, filters_to_add=None) -> str:
+        """ Helper function to render a template given data and query file """
+        template_root = self._template_root(self.server)
+        connection_version = querying.get_server_version(connection)
+        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        script_template = templating.render_template(template_path, paths_to_add, filters_to_add, **data)
+        return script_template
 
     # PROTECTED HELPERS ####################################################
     TRCC = TypeVar('TRCC')
