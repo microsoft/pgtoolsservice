@@ -53,44 +53,24 @@ class ScriptingService(object):
     def _scripting_operation(self, scripting_operation: int, connection, metadata: ObjectMetadata):
         """Helper function to get the correct script based on operation"""
         try:
-            if (scripting_operation == ScriptOperation.Select.value):
-                return self.script_as_select(connection, metadata)
-            script_map = self._script_map(connection)
-            object_type = metadata["metadataTypeName"]
-            return script_map[object_type][scripting_operation](metadata)
+            script_map = self._script_map(connection, metadata)
+            return script_map[scripting_operation]
         except Exception:
+            object_type = metadata["metadataTypeName"]
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(f'{ScriptOperation(scripting_operation)} failed for {object_type}')
             return "Scripting Operation not supported"
 
-    def _script_map(self, connection) -> dict:
+    def _script_map(self, connection, metadata) -> dict:
         """ Maps every object and operation to the correct script function """
         scripter = Scripter(connection)
         create = ScriptOperation.Create.value
         delete = ScriptOperation.Delete.value
         update = ScriptOperation.Update.value
+        select = ScriptOperation.Select.value
         return {
-            "Table": {
-                create: scripter.get_table_create_script,
-                delete: scripter.get_table_delete_script,
-                update: scripter.get_table_update_script
-            },
-            "View": {
-                create: scripter.get_view_create_script,
-                delete: scripter.get_view_delete_script,
-                update: scripter.get_view_update_script
-            },
-            "Schema": {
-                create: scripter.get_schema_create_script,
-                delete: scripter.get_schema_delete_script,
-                update: scripter.get_schema_update_script
-            },
-            "Database": {
-                create: scripter.get_database_create_script,
-                delete: scripter.get_database_delete_script,
-            },
-            "Role": {
-                create: scripter.get_role_create_script,
-                update: scripter.get_role_update_script
-            }
+            create: scripter.get_create_script(metadata),
+            delete: scripter.get_delete_script(metadata),
+            update: scripter.get_delete_script(metadata),
+            select: self.script_as_select(connection, metadata)
         }
