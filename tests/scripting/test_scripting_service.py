@@ -123,10 +123,8 @@ class TestScriptingService(unittest.TestCase):
             for obj in objects:
                 mock_service._scripting_operation(op.value, self.connection, {"metadataTypeName": obj})
 
-        # I should see calls being made for the different script operations
+        # I should see calls being made for the select script operation
         self.assertEqual(True, mock_service.script_as_select.called)
-        self.assertEqual(True, mock_service.script_as_create.called)
-        self.assertEqual(True, mock_service.script_as_update.called)
 
         # If I use an invalid script operation, I should get back an exception
         for obj in objects:
