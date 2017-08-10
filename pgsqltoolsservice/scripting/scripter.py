@@ -81,6 +81,19 @@ class Scripter(object):
         except Exception:
             return None
 
+    def get_role_create_script(self, metadata) -> str:
+        """ Get create script for role """
+        try:
+            # get roles from server
+            role_name = metadata["name"]
+            role = self.server.roles[role_name]
+
+            # get the create script
+            script = role.create_script(self.connection)
+            return script
+        except:
+            return None
+
     # DELETE ##################################################################
     def get_table_delete_script(self, metadata) -> str:
         """ Get delete script for table """
@@ -168,6 +181,19 @@ class Scripter(object):
             script = schema.update_script(self.connection)
             return script
         except Exception:
+            return None
+
+    def get_role_update_script(self, metadata) -> str:
+        """ Get update script for roles """
+        try:
+            # get roles from server
+            role_name = metadata["name"]
+            role = self.server.roles[role_name]
+
+            # get the create script
+            script = role.update_script(self.connection)
+            return script
+        except:
             return None
 
     # HELPER METHODS ##########################################################

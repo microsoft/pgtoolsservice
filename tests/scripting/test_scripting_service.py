@@ -19,11 +19,14 @@ from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 from pgsqltoolsservice.scripting.contracts.scriptas_request import (
     ScriptOperation, ScriptAsParameters
 )
+
+# OBJECT IMPORTS
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from pgsmo.objects.schema.schema import Schema, TEMPLATE_ROOT
+from pgsmo.objects.role.role import Role
 
 
 """Module for testing the scripting service"""
@@ -108,7 +111,7 @@ class TestScriptingService(unittest.TestCase):
         mock_service = ScriptingService()
         operations = [ScriptOperation.Create, ScriptOperation.Select,
                       ScriptOperation.Update, ScriptOperation.Delete]
-        objects = ["Database", "View", "Table"]
+        objects = ["Database", "View", "Table", "Schema", "Role"]
 
         mock_service.script_as_select = mock.MagicMock()
         mock_service.script_as_create = mock.MagicMock()
@@ -166,6 +169,9 @@ class TestScriptingService(unittest.TestCase):
         # Schema
         self._test_schema_create_script(mock_scripter, service)
 
+        # Role
+        self._test_role_create_script(mock_scripter, service)
+
     def test_script_as_delete(self):
         """ Test getting delete script for all objects """
         mock_scripter = Scripter(self.connection)
@@ -190,6 +196,9 @@ class TestScriptingService(unittest.TestCase):
 
         # Schema
         self._test_schema_update_script(mock_scripter, service)
+
+        # Role
+        self._test_role_update_script(mock_scripter, service)
 
     # PRIVATE HELPER FUNCTIONS ####################################################
 
@@ -292,6 +301,30 @@ class TestScriptingService(unittest.TestCase):
 
         scripter.get_schema_create_script = mock.MagicMock(return_value=scripter_mock_fn())
         service.script_as_create = mock.MagicMock(return_value=scripter.get_schema_create_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_create()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
+    def _test_role_create_script(self, scripter, service):
+        """ Helper function to test create script for schema """
+        # Set up the mocks
+        mock_role = Role(None, 'test')
+
+        def role_mock_fn(connection):
+            mock_role._template_root = mock.MagicMock(return_value=Role.TEMPLATE_ROOT)
+            mock_role._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_role.create_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_role.create_script = mock.MagicMock(return_value=role_mock_fn(self.connection))
+            return mock_role.create_script()
+
+        scripter.get_role_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_role_create_script())
 
         # If I try to get select script for any object
         result = service.script_as_create()
@@ -417,6 +450,30 @@ class TestScriptingService(unittest.TestCase):
 
         scripter.get_schema_update_script = mock.MagicMock(return_value=scripter_mock_fn())
         service.script_as_update = mock.MagicMock(return_value=scripter.get_schema_update_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_update()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
+    def _test_role_update_script(self, scripter, service):
+        """ Helper function to test update script for schemas """
+        # Set up the mocks
+        mock_role = Role(None, 'test')
+
+        def role_mock_fn(connection):
+            mock_role._template_root = mock.MagicMock(return_value=Role.TEMPLATE_ROOT)
+            mock_role._update_query_data = mock.MagicMock(return_value={"data": {"name": "test"}, "o_data": {"name": "test"}})
+            result = mock_role.update_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_role.update_script = mock.MagicMock(return_value=role_mock_fn(self.connection))
+            return mock_role.update_script()
+
+        scripter.get_role_update_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_role_update_script())
 
         # If I try to get select script for any object
         result = service.script_as_update()

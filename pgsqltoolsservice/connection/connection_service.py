@@ -177,6 +177,10 @@ class ConnectionService:
     def register_on_connect_callback(self, task: Callable[[ConnectionInfo], None]) -> None:
         self._on_connect_callbacks.append(task)
 
+    def get_connection_info(self, owner_uri: str) -> ConnectionInfo:
+        """Get the ConnectionInfo object for the given owner URI, or None if there is no connection"""
+        return self.owner_to_connection_map.get(owner_uri)
+
     # REQUEST HANDLERS #####################################################
     def handle_connect_request(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
         """Kick off a connection in response to an incoming connection request"""

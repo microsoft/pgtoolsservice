@@ -602,6 +602,29 @@ class TestConnectionService(unittest.TestCase):
         self.assertNotEqual(calls[0][2]['dbname'], default_db)
         self.assertEqual(calls[0][2]['dbname'], actual_db)
 
+    def test_get_connection_info(self):
+        """Test that get_connection_info returns the ConnectionInfo object corresponding to a connection"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+
+        # Insert a ConnectionInfo object into the connection service's map
+        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_info = ConnectionInfo(connection_uri, connection_details)
+        self.connection_service.owner_to_connection_map[connection_uri] = connection_info
+
+        # Get the connection info
+        actual_connection_info = self.connection_service.get_connection_info(connection_uri)
+        self.assertIs(actual_connection_info, connection_info)
+
+    def test_get_connection_info_no_connection(self):
+        """Test that get_connection_info returns None when there is no connection for the given owner URI"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+
+        # Get the connection info
+        actual_connection_info = self.connection_service.get_connection_info(connection_uri)
+        self.assertIsNone(actual_connection_info)
+
 
 class TestConnectionCancellation(unittest.TestCase):
     """Methods for testing connection cancellation requests"""
