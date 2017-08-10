@@ -109,6 +109,8 @@ class TestScriptingService(unittest.TestCase):
         """ Test _scripting_operation function """
         # Set up mock objects
         mock_service = ScriptingService()
+        mock_service._service_provider = mock.MagicMock()
+        mock_service._service_provider.logger.exception = mock.MagicMock()
         operations = [ScriptOperation.Create, ScriptOperation.Select,
                       ScriptOperation.Update, ScriptOperation.Delete]
         objects = ["Database", "View", "Table", "Schema", "Role"]
