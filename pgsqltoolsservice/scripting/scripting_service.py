@@ -59,6 +59,8 @@ class ScriptingService(object):
             object_type = metadata["metadataTypeName"]
             return script_map[object_type][scripting_operation](metadata)
         except Exception:
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception(f'{ScriptOperation(scripting_operation)} failed for {object_type}')
             return "Scripting Operation not supported"
 
     def _script_map(self, connection) -> dict:
