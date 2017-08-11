@@ -52,7 +52,7 @@ class Scripter(object):
             object_type = metadata["metadataTypeName"]
             obj = self._get_object(object_type, metadata)
 
-            # get the create script
+            # get the delete script
             script = obj.delete_script(self.connection)
             return script
         except Exception:
@@ -60,14 +60,14 @@ class Scripter(object):
 
     # UPDATE ##################################################################
 
-    def get_table_update_script(self, metadata) -> str:
+    def get_update_script(self, metadata) -> str:
         """ Get update script for tables """
         try:
             # get object from server
             object_type = metadata["metadataTypeName"]
             obj = self._get_object(object_type, metadata)
 
-            # get the create script
+            # get the update script
             script = obj.update_script(self.connection)
             return script
         except Exception:
@@ -122,6 +122,15 @@ class Scripter(object):
             role_name = metadata["name"]
             role = self.server.roles[role_name]
             return role
+        except Exception:
+            return None
+
+    def _find_sequence(self, metadata):
+        """ Find a sequence in the server """
+        try:
+            sequence_name = metadata["name"]
+            sequence = self.server.sequences[sequence_name]
+            return sequence
         except Exception:
             return None
 

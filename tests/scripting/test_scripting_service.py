@@ -28,7 +28,7 @@ from pgsmo.objects.server.server import Server
 from pgsmo.objects.schema.schema import Schema, TEMPLATE_ROOT
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
-
+from pgsmo.objects.sequence.sequence import Sequence
 
 """Module for testing the scripting service"""
 
@@ -173,6 +173,9 @@ class TestScriptingService(unittest.TestCase):
         # Role
         self._test_role_create_script(mock_scripter, service)
 
+        # Sequence
+        self._test_sequence_create_script(mock_scripter, service)
+
         # Tablespace
         self._test_tablespace_create_script(mock_scripter, service)
 
@@ -196,6 +199,9 @@ class TestScriptingService(unittest.TestCase):
         # Tablespace
         self._test_tablespace_delete_script(mock_scripter, service)
 
+        # Sequence
+        self._test_sequence_delete_script(mock_scripter, service)
+
     def test_script_as_update(self):
         """ Test getting update script for all objects """
         mock_scripter = Scripter(self.connection)
@@ -209,6 +215,9 @@ class TestScriptingService(unittest.TestCase):
 
         # Tablespace
         self._test_tablespace_update_script(mock_scripter, service)
+
+        # Sequence
+        self._test_sequence_update_script(mock_scripter, service)
 
     # PRIVATE HELPER FUNCTIONS ####################################################
 
