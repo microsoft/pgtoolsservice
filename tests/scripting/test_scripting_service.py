@@ -597,7 +597,7 @@ class TestScriptingService(unittest.TestCase):
         self.assertNotNoneOrEmpty(result)
 
     def _test_tablespace_update_script(self, scripter, service):
-        """ Helper function to test update script for schemas """
+        """ Helper function to test update script for tablespace """
         # Set up the mocks
         mock_tablespace = Tablespace(None, 'test')
 
@@ -627,7 +627,7 @@ class TestScriptingService(unittest.TestCase):
 
         def sequence_mock_fn(connection):
             mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
-            mock_sequence._update_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            mock_sequence._update_query_data = mock.MagicMock(return_value={"data": {"name": "newname"}, "o_data": {"name": "oldname", "schema": "testschema"}})
             result = mock_sequence.update_script(connection)
             return result
 

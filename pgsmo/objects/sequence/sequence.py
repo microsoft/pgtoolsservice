@@ -74,6 +74,14 @@ class Sequence(NodeObject):
     def cascade(self):
         return self._full_properties.get("cascade", "")
 
+    @property
+    def seqowner(self):
+        return self._full_properties.get("seqowner", "")
+
+    @property
+    def comment(self):
+        return self._full_properties.get("comment", "")
+
     # SCRIPTING METHODS ####################################################
 
     def create_script(self, connection: querying.ServerConnection) -> str:
@@ -112,17 +120,25 @@ class Sequence(NodeObject):
 
     def _update_query_data(self):
         """ Gives the data object for update query """
-        return {"data": {
-            "schema": self.schema,
-            "name": self.name,
-            "cycled": self.cycled,
-            "increment": self.increment,
-            "start": self.start,
-            "current_value": self.current_value,
-            "minimum": self.minimum,
-            "maximum": self.maximum,
-            "cache": self.cache
-        }}
+        return {
+            "data": {
+                "schema": self.schema,
+                "name": self.name,
+                "cycled": self.cycled,
+                "increment": self.increment,
+                "start": self.start,
+                "current_value": self.current_value,
+                "minimum": self.minimum,
+                "maximum": self.maximum,
+                "cache": self.cache
+            },
+            "o_data": {
+                "schema": self.schema,
+                "name": self.name,
+                "seqowner": self.seqowner,
+                "comment": self.comment
+            }
+        }
 
     def _delete_query_data(self):
         """ Gives the data object for update query """
