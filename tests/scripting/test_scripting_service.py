@@ -627,7 +627,8 @@ class TestScriptingService(unittest.TestCase):
 
         def sequence_mock_fn(connection):
             mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
-            mock_sequence._update_query_data = mock.MagicMock(return_value={"data": {"name": "newname"}, "o_data": {"name": "oldname", "schema": "testschema"}})
+            mock_sequence._update_query_data = mock.MagicMock(return_value={"data": {"name": "newname", "schema": "newschema", "seqowner": "newowner"},
+                                                                            "o_data": {"name": "oldname", "schema": "testschema", "seqowner": "oldowner"}})
             result = mock_sequence.update_script(connection)
             return result
 
