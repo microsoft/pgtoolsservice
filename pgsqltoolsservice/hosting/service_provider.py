@@ -47,7 +47,9 @@ class ServiceProvider:
         if self._is_initialized:
             raise RuntimeError('Service provider cannot be initialized more than once')
 
+        # Set initialized true before calling register, as otherwise services can't look each
+        # other up. This is important since services can register callbacks with each other
+        self._is_initialized = True
+
         for service_key in self._services:
             self._services[service_key].register(self)
-
-        self._is_initialized = True

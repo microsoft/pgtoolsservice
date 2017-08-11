@@ -29,71 +29,53 @@ class Scripter(object):
 
     # CREATE ##################################################################
 
-    def get_database_create_script(self, metadata) -> str:
-        """ Get create script for databases """
+    def get_create_script(self, metadata) -> str:
+        """ Get create script for all objects """
         try:
-            # get database from server
-            database_name = metadata["name"]
-            database = self.server.databases[database_name]
+            # get object from server
+            object_type = metadata["metadataTypeName"]
+            obj = self._get_object(object_type, metadata)
 
             # get the create script
-            script = database.create_script(self.connection)
+            script = obj.create_script(self.connection)
+
             return script
         except Exception:
             # need to handle exceptions well
             return None
 
-    def get_view_create_script(self, metadata) -> str:
-        """ Get create script for views """
+    # DELETE ##################################################################
+    def get_delete_script(self, metadata) -> str:
+        """ Get delete script for all objects """
         try:
-            # get view from server
-            view_name = metadata["name"]
-            parent_schema = self._find_schema(metadata)
-            view = parent_schema.views[view_name]
+            # get object from server
+            object_type = metadata["metadataTypeName"]
+            obj = self._get_object(object_type, metadata)
 
             # get the create script
-            script = view.create_script(self.connection)
+            script = obj.delete_script(self.connection)
             return script
         except Exception:
             return None
 
-    def get_table_create_script(self, metadata) -> str:
-        """ Get create script for tables """
+    # UPDATE ##################################################################
+
+    def get_table_update_script(self, metadata) -> str:
+        """ Get update script for tables """
         try:
-            # get table from server
-            table = self._find_table(metadata)
+            # get object from server
+            object_type = metadata["metadataTypeName"]
+            obj = self._get_object(object_type, metadata)
 
             # get the create script
-            script = table.create_script(self.connection)
+            script = obj.update_script(self.connection)
             return script
         except Exception:
             return None
 
-    def get_schema_create_script(self, metadata) -> str:
-        """ Get create script for schema """
-        try:
-            # get schema from server
-            schema = self._find_schema(metadata)
+    # HELPER METHODS ##########################################################
 
-            # get the create script
-            script = schema.create_script(self.connection)
-            return script
-        except Exception:
-            return None
-
-    def get_role_create_script(self, metadata) -> str:
-        """ Get create script for role """
-        try:
-            # get roles from server
-            role_name = metadata["name"]
-            role = self.server.roles[role_name]
-
-            # get the create script
-            script = role.create_script(self.connection)
-            return script
-        except:
-            return None
-
+<<<<<<< HEAD
     def get_sequence_create_script(self, metadata) -> str:
         """ Get create script for sequence """
         try:
@@ -110,33 +92,36 @@ class Scripter(object):
     # DELETE ##################################################################
     def get_table_delete_script(self, metadata) -> str:
         """ Get delete script for table """
+=======
+    def _find_schema(self, metadata):
+        """ Find the schema in the server to script as """
+        table_schema = metadata["schema"]
+        databases = self.server.databases
+        parent_schema = None
+>>>>>>> 4e5ca05a5c0a543cc370ec0d48425eece10b718e
         try:
-            table = self._find_table(metadata)
-            script = table.delete_script(self.connection)
-            return script
+            for db in databases:
+                parent_schema = db.schemas[table_schema]
+                return parent_schema
         except Exception:
             return None
 
-    def get_view_delete_script(self, metadata) -> str:
-        """ Get delete script for view """
+    def _find_table(self, metadata):
+        """ Find the table in the server to script as """
         try:
-            # get view from server
-            view_name = metadata["name"]
+            table_name = metadata["name"]
             parent_schema = self._find_schema(metadata)
-            view = parent_schema.views[view_name]
-
-            # get the delete script
-            script = view.delete_script(self.connection)
-            return script
+            for table in parent_schema.tables:
+                return parent_schema.tables[table_name]
         except Exception:
             return None
 
-    def get_database_delete_script(self, metadata) -> str:
-        """ Get delete script for databases """
+    def _find_database(self, metadata):
+        """ Find a database in the server """
         try:
-            # get database from server
             database_name = metadata["name"]
             database = self.server.databases[database_name]
+<<<<<<< HEAD
 
             # get the delete script
             script = database.delete_script(self.connection)
@@ -180,41 +165,28 @@ class Scripter(object):
             # get the create script
             script = table.update_script(self.connection)
             return script
+=======
+            return database
+>>>>>>> 4e5ca05a5c0a543cc370ec0d48425eece10b718e
         except Exception:
             return None
 
-    def get_view_update_script(self, metadata) -> str:
-        """ Get update date script for view """
+    def _find_view(self, metadata):
+        """ Find a view in the server """
         try:
-            # get view from server
             view_name = metadata["name"]
             parent_schema = self._find_schema(metadata)
             view = parent_schema.views[view_name]
-
-            # get the create script
-            script = view.update_script(self.connection)
-            return script
+            return view
         except Exception:
             return None
 
-    def get_schema_update_script(self, metadata) -> str:
-        """ Get update script for schemas """
+    def _find_role(self, metadata):
+        """ Find a role in the server """
         try:
-            # get schema from server
-            schema = self._find_schema(metadata)
-
-            # get the delete script
-            script = schema.update_script(self.connection)
-            return script
-        except Exception:
-            return None
-
-    def get_role_update_script(self, metadata) -> str:
-        """ Get update script for roles """
-        try:
-            # get roles from server
             role_name = metadata["name"]
             role = self.server.roles[role_name]
+<<<<<<< HEAD
 
             # get the create script
             script = role.update_script(self.connection)
@@ -246,15 +218,19 @@ class Scripter(object):
             for db in databases:
                 parent_schema = db.schemas[table_schema]
                 return parent_schema
+=======
+            return role
+>>>>>>> 4e5ca05a5c0a543cc370ec0d48425eece10b718e
         except Exception:
             return None
 
-    def _find_table(self, metadata):
-        """ Find the table in the server to script as """
-        try:
-            table_name = metadata["name"]
-            parent_schema = self._find_schema(metadata)
-            for table in parent_schema.tables:
-                return parent_schema.tables[table_name]
-        except Exception:
-            return None
+    def _get_object(self, object_type: str, metadata):
+        """ Retrieve a given object """
+        object_map = {
+            "Table": self._find_table,
+            "Schema": self._find_schema,
+            "Database": self._find_database,
+            "View": self._find_view,
+            "Role": self._find_role
+        }
+        return object_map[object_type](metadata)
