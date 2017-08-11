@@ -5,6 +5,7 @@
 
 """Test the language service"""
 
+import threading    # noqa
 from typing import List, Tuple, Optional
 import unittest
 from unittest import mock
@@ -18,7 +19,8 @@ from pgsqltoolsservice.hosting import (     # noqa
 )
 from pgsqltoolsservice.language import LanguageService
 from pgsqltoolsservice.language.contracts import (
-    LanguageFlavorChangeParams, CompletionItem, CompletionItemKind
+    LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
+    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams
 )
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import (
@@ -27,6 +29,9 @@ from pgsqltoolsservice.workspace import (
 from pgsqltoolsservice.workspace.contracts import (
     Range
 )
+from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
+from pgsqltoolsservice.connection.contracts import ConnectionDetails
+from tests.mock_request_validation import RequestFlowValidator
 import tests.utils as utils
 
 
@@ -36,12 +41,15 @@ class TestLanguageService(unittest.TestCase):
     def setUp(self):
         """Constructor"""
         self.default_uri = 'file://my.sql'
+        self.flow_validator = RequestFlowValidator()
         self.mock_server_set_request = mock.MagicMock()
         self.mock_server = JSONRPCServer(None, None)
         self.mock_server.set_request_handler = self.mock_server_set_request
         self.mock_workspace_service = WorkspaceService()
+        self.mock_connection_service = ConnectionService()
         self.mock_service_provider = ServiceProvider(self.mock_server, {}, None)
         self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
+        self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
         self.mock_service_provider._is_initialized = True
         self.default_text_position = TextDocumentPosition.from_dict({
             'text_document': {
@@ -60,7 +68,12 @@ class TestLanguageService(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        provider: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
+        provider: ServiceProvider = ServiceProvider(server, {
+            constants.CONNECTION_SERVICE_NAME: ConnectionService
+        }, utils.get_mock_logger())
+        provider._is_initialized = True
+        conn_service: ConnectionService = provider[constants.CONNECTION_SERVICE_NAME]
+        self.assertEqual(0, len(conn_service._on_connect_callbacks))
 
         # If: I register a language service
         service: LanguageService = LanguageService()
@@ -70,6 +83,7 @@ class TestLanguageService(unittest.TestCase):
         # ... The notifications should have been registered
         server.set_notification_handler.assert_called()
         server.set_request_handler.assert_called()
+        self.assertEqual(1, len(conn_service._on_connect_callbacks))
 
         # ... The service provider should have been stored
         self.assertIs(service._service_provider, provider)  # noqa
@@ -178,10 +192,34 @@ class TestLanguageService(unittest.TestCase):
         # Then: the service is updated to allow intellisense
         self.assertTrue(service.is_pgsql_uri(mssqql_params.uri))
 
+    def test_on_connect_sends_notification(self):
+        """
+        Test that the service sends an intellisense ready notification after handling an on connect notification from the connection service
+        """
+        # If: I create a new language service
+        service: LanguageService = self._init_service_with_flow_validator()
+        conn_info = ConnectionInfo('file://msuri.sql', ConnectionDetails())
+
+        def validate_success_notification(response: IntelliSenseReadyParams):
+            self.assertEqual(response.owner_uri, conn_info.owner_uri)
+
+        # When: I notify of a connection complete for a given URI
+        self.flow_validator.add_expected_notification(IntelliSenseReadyParams, INTELLISENSE_READY_NOTIFICATION, validate_success_notification)
+        task: threading.Thread = service.on_connect(conn_info)
+        task.join()
+
+        # Then:
+        # an intellisense ready notification should be sent for that URI
+        self.flow_validator.validate()
+
     def _init_service(self) -> LanguageService:
         service = LanguageService()
         service.register(self.mock_service_provider)
         return service
+
+    def _init_service_with_flow_validator(self) -> LanguageService:
+        self.mock_server.send_notification = self.flow_validator.request_context.send_notification
+        return self._init_service()
 
     def _get_test_workspace(self, script_file: bool=True, buffer: str='') -> Tuple[Workspace, Optional[ScriptFile]]:
         workspace: Workspace = Workspace()

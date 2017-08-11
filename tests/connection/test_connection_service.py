@@ -7,7 +7,7 @@
 
 import unittest
 from unittest import mock
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 
 import psycopg2
 
@@ -194,6 +194,57 @@ class TestConnectionService(unittest.TestCase):
         # The response should not have a connection ID and should contain the error message
         self.assertIsNone(response.connection_id)
         self.assertEqual(response.error_message, error_message)
+
+    def test_register_on_connect_callback(self):
+        """Tests that callbacks are added to a list of callbacks as expected"""
+        callback = MagicMock()
+        self.connection_service.register_on_connect_callback(callback)
+        self.assertListEqual(self.connection_service._on_connect_callbacks, [callback])
+
+    def test_on_connect_backs_called_on_connect(self):
+        self.run_on_connect_callback(ConnectionType.DEFAULT, True)
+        self.run_on_connect_callback(ConnectionType.EDIT, False)
+        self.run_on_connect_callback(ConnectionType.INTELLISENSE, False)
+        self.run_on_connect_callback(ConnectionType.QUERY, False)
+
+    def run_on_connect_callback(self, conn_type: ConnectionType, expect_callback: bool) -> None:
+        """Inner function for callback tests that verifies expected behavior given different connection types"""
+        callbacks = [MagicMock(), MagicMock()]
+        for callback in callbacks:
+            self.connection_service.register_on_connect_callback(callback)
+
+        # Set up the parameters for the connection
+        connection_uri = 'someuri'
+        connection_details = ConnectionDetails()
+        connection_details.options = {
+            'user': 'postgres@myserver',
+            'password': 'password',
+            'host': f'myserver',
+            'dbname': 'postgres'}
+        connection_type = conn_type
+
+        # Set up the mock connection for psycopg2's connect method to return
+        mock_connection = MockConnection(dsn_parameters={
+            'host': f'myserver',
+            'dbname': 'postgres',
+            'user': 'postgres@myserver'
+        })
+        psycopg2.connect = Mock(return_value=mock_connection)
+
+        # Set up the connection service and call its connect method with the
+        # supported options
+        self.connection_service.connect(
+            ConnectRequestParams(connection_details, connection_uri, connection_type))
+        self.connection_service.get_connection(connection_uri, conn_type)
+        # ... The mock config change callbacks should have been called
+        for callback in callbacks:
+            if (expect_callback):
+                callback.assert_called_once()
+                # Verify call args match expected
+                callargs: ConnectionInfo = callback.call_args[0][0]
+                self.assertEqual(callargs.owner_uri, connection_uri)
+            else:
+                callback.assert_not_called()
 
     def test_disconnect_single_type(self):
         """Test that the disconnect method calls close on a single open connection type when a type is given"""
@@ -550,6 +601,29 @@ class TestConnectionService(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertNotEqual(calls[0][2]['dbname'], default_db)
         self.assertEqual(calls[0][2]['dbname'], actual_db)
+
+    def test_get_connection_info(self):
+        """Test that get_connection_info returns the ConnectionInfo object corresponding to a connection"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+
+        # Insert a ConnectionInfo object into the connection service's map
+        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_info = ConnectionInfo(connection_uri, connection_details)
+        self.connection_service.owner_to_connection_map[connection_uri] = connection_info
+
+        # Get the connection info
+        actual_connection_info = self.connection_service.get_connection_info(connection_uri)
+        self.assertIs(actual_connection_info, connection_info)
+
+    def test_get_connection_info_no_connection(self):
+        """Test that get_connection_info returns None when there is no connection for the given owner URI"""
+        # Set up the test with mock data
+        connection_uri = 'someuri'
+
+        # Get the connection info
+        actual_connection_info = self.connection_service.get_connection_info(connection_uri)
+        self.assertIsNone(actual_connection_info)
 
 
 class TestConnectionCancellation(unittest.TestCase):

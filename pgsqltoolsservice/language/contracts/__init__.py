@@ -13,10 +13,14 @@ from pgsqltoolsservice.language.contracts.completion import (
     COMPLETION_REQUEST, CompletionItem, CompletionItemKind,
     COMPLETION_RESOLVE_REQUEST
 )
+from pgsqltoolsservice.language.contracts.intellisense_ready import (
+    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams
+)
 
 __all__ = [
     'TextEdit',
     'COMPLETION_REQUEST', 'CompletionItem', 'CompletionItemKind',
     'COMPLETION_RESOLVE_REQUEST',
-    'LANGUAGE_FLAVOR_CHANGE_NOTIFICATION', 'LanguageFlavorChangeParams'
+    'LANGUAGE_FLAVOR_CHANGE_NOTIFICATION', 'LanguageFlavorChangeParams',
+    'INTELLISENSE_READY_NOTIFICATION', 'IntelliSenseReadyParams'
 ]

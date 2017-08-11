@@ -41,7 +41,7 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
         return TestTable.NODE_ROW
 
     @property
-    def _full_properties(self):
+    def full_properties(self):
         return {
             "coll_inherits": "coll_inherits",
             "typname": "typname",

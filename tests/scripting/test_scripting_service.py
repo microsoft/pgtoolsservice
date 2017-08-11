@@ -19,11 +19,15 @@ from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 from pgsqltoolsservice.scripting.contracts.scriptas_request import (
     ScriptOperation, ScriptAsParameters
 )
+
+# OBJECT IMPORTS
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from pgsmo.objects.schema.schema import Schema, TEMPLATE_ROOT
+from pgsmo.objects.role.role import Role
+from pgsmo.objects.tablespace.tablespace import Tablespace
 
 
 """Module for testing the scripting service"""
@@ -106,9 +110,11 @@ class TestScriptingService(unittest.TestCase):
         """ Test _scripting_operation function """
         # Set up mock objects
         mock_service = ScriptingService()
+        mock_service._service_provider = mock.MagicMock()
+        mock_service._service_provider.logger.exception = mock.MagicMock()
         operations = [ScriptOperation.Create, ScriptOperation.Select,
                       ScriptOperation.Update, ScriptOperation.Delete]
-        objects = ["Database", "View", "Table"]
+        objects = ["Database", "View", "Table", "Schema", "Role"]
 
         mock_service.script_as_select = mock.MagicMock()
         mock_service.script_as_create = mock.MagicMock()
@@ -120,10 +126,8 @@ class TestScriptingService(unittest.TestCase):
             for obj in objects:
                 mock_service._scripting_operation(op.value, self.connection, {"metadataTypeName": obj})
 
-        # I should see calls being made for the different script operations
+        # I should see calls being made for the select script operation
         self.assertEqual(True, mock_service.script_as_select.called)
-        self.assertEqual(True, mock_service.script_as_create.called)
-        self.assertEqual(True, mock_service.script_as_update.called)
 
         # If I use an invalid script operation, I should get back an exception
         for obj in objects:
@@ -166,6 +170,12 @@ class TestScriptingService(unittest.TestCase):
         # Schema
         self._test_schema_create_script(mock_scripter, service)
 
+        # Role
+        self._test_role_create_script(mock_scripter, service)
+
+        # Tablespace
+        self._test_tablespace_create_script(mock_scripter, service)
+
     def test_script_as_delete(self):
         """ Test getting delete script for all objects """
         mock_scripter = Scripter(self.connection)
@@ -183,6 +193,9 @@ class TestScriptingService(unittest.TestCase):
         # Schema
         self._test_schema_delete_script(mock_scripter, service)
 
+        # Tablespace
+        self._test_tablespace_delete_script(mock_scripter, service)
+
     def test_script_as_update(self):
         """ Test getting update script for all objects """
         mock_scripter = Scripter(self.connection)
@@ -190,6 +203,12 @@ class TestScriptingService(unittest.TestCase):
 
         # Schema
         self._test_schema_update_script(mock_scripter, service)
+
+        # Role
+        self._test_role_update_script(mock_scripter, service)
+
+        # Tablespace
+        self._test_tablespace_update_script(mock_scripter, service)
 
     # PRIVATE HELPER FUNCTIONS ####################################################
 
@@ -217,8 +236,8 @@ class TestScriptingService(unittest.TestCase):
             mock_table.create_script = mock.MagicMock(return_value=table_mock_fn(self.connection))
             return mock_table.create_script()
 
-        scripter.get_table_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_table_create_script())
+        scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_create_script())
 
         # If I try to get select script for any object
         result = service.script_as_create()
@@ -241,8 +260,8 @@ class TestScriptingService(unittest.TestCase):
             mock_view.create_script = mock.MagicMock(return_value=view_mock_fn(self.connection))
             return mock_view.create_script()
 
-        scripter.get_view_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_view_create_script())
+        scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_create_script())
 
         # If I try to get select script for any object
         result = service.script_as_create()
@@ -266,8 +285,8 @@ class TestScriptingService(unittest.TestCase):
             mock_database.create_script = mock.MagicMock(return_value=database_mock_fn(self.connection))
             return mock_database.create_script()
 
-        scripter.get_database_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_database_create_script())
+        scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_create_script())
 
         # If I try to get select script for any object
         result = service.script_as_create()
@@ -290,8 +309,56 @@ class TestScriptingService(unittest.TestCase):
             mock_schema.create_script = mock.MagicMock(return_value=schema_mock_fn(self.connection))
             return mock_schema.create_script()
 
-        scripter.get_schema_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_schema_create_script())
+        scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_create_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_create()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
+    def _test_role_create_script(self, scripter, service):
+        """ Helper function to test create script for schema """
+        # Set up the mocks
+        mock_role = Role(None, 'test')
+
+        def role_mock_fn(connection):
+            mock_role._template_root = mock.MagicMock(return_value=Role.TEMPLATE_ROOT)
+            mock_role._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_role.create_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_role.create_script = mock.MagicMock(return_value=role_mock_fn(self.connection))
+            return mock_role.create_script()
+
+        scripter.get_role_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_create_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_create()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
+    def _test_tablespace_create_script(self, scripter, service):
+        """ Helper function to test create script for schema """
+        # Set up the mocks
+        mock_tablespace = Tablespace(None, 'test')
+
+        def tablespace_mock_fn(connection):
+            mock_tablespace._template_root = mock.MagicMock(return_value=Tablespace.TEMPLATE_ROOT)
+            mock_tablespace._create_query_data = mock.MagicMock(return_value={"data": {"name": "test", "spclocation": None}})
+            result = mock_tablespace.create_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_tablespace.create_script = mock.MagicMock(return_value=tablespace_mock_fn(self.connection))
+            return mock_tablespace.create_script()
+
+        scripter.get_tablespace_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_tablespace_create_script())
 
         # If I try to get select script for any object
         result = service.script_as_create()
@@ -316,8 +383,8 @@ class TestScriptingService(unittest.TestCase):
             mock_table.delete_script = mock.MagicMock(return_value=table_mock_fn(self.connection))
             return mock_table.delete_script()
 
-        scripter.get_table_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_table_delete_script())
+        scripter.get_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_delete_script())
 
         # If I try to get select script for any object
         result = service.script_as_delete()
@@ -340,8 +407,8 @@ class TestScriptingService(unittest.TestCase):
             mock_view.delete_script = mock.MagicMock(return_value=view_mock_fn(self.connection))
             return mock_view.delete_script()
 
-        scripter.get_view_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_view_delete_script())
+        scripter.get_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_delete_script())
 
         # If I try to get select script for any object
         result = service.script_as_delete()
@@ -365,8 +432,8 @@ class TestScriptingService(unittest.TestCase):
             mock_database.delete_script = mock.MagicMock(return_value=database_mock_fn(self.connection))
             return mock_database.delete_script()
 
-        scripter.get_database_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_database_delete_script())
+        scripter.get_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_delete_script())
 
         # If I try to get select script for any object
         result = service.script_as_delete()
@@ -389,8 +456,32 @@ class TestScriptingService(unittest.TestCase):
             mock_schema.delete_script = mock.MagicMock(return_value=schema_mock_fn(self.connection))
             return mock_schema.delete_script()
 
-        scripter.get_schema_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_schema_delete_script())
+        scripter.get_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_delete_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_delete()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
+    def _test_tablespace_delete_script(self, scripter, service):
+        """ Helper function to test delete script for schemas """
+        # Set up the mocks
+        mock_tablespace = Tablespace(None, 'test')
+
+        def tablespace_mock_fn(connection):
+            mock_tablespace._template_root = mock.MagicMock(return_value=Tablespace.TEMPLATE_ROOT)
+            mock_tablespace._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_tablespace.delete_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_tablespace.delete_script = mock.MagicMock(return_value=tablespace_mock_fn(self.connection))
+            return mock_tablespace.delete_script()
+
+        scripter.get_tablespace_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_tablespace_delete_script())
 
         # If I try to get select script for any object
         result = service.script_as_delete()
@@ -415,8 +506,56 @@ class TestScriptingService(unittest.TestCase):
             mock_schema.update_script = mock.MagicMock(return_value=schema_mock_fn(self.connection))
             return mock_schema.update_script()
 
-        scripter.get_schema_update_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_update = mock.MagicMock(return_value=scripter.get_schema_update_script())
+        scripter.get_update_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_update_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_update()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
+    def _test_role_update_script(self, scripter, service):
+        """ Helper function to test update script for schemas """
+        # Set up the mocks
+        mock_role = Role(None, 'test')
+
+        def role_mock_fn(connection):
+            mock_role._template_root = mock.MagicMock(return_value=Role.TEMPLATE_ROOT)
+            mock_role._update_query_data = mock.MagicMock(return_value={"data": {"name": "test"}, "o_data": {"name": "test"}})
+            result = mock_role.update_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_role.update_script = mock.MagicMock(return_value=role_mock_fn(self.connection))
+            return mock_role.update_script()
+
+        scripter.get_update_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_update_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_update()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
+    def _test_tablespace_update_script(self, scripter, service):
+        """ Helper function to test update script for schemas """
+        # Set up the mocks
+        mock_tablespace = Tablespace(None, 'test')
+
+        def tablespace_mock_fn(connection):
+            mock_tablespace._template_root = mock.MagicMock(return_value=Tablespace.TEMPLATE_ROOT)
+            mock_tablespace._update_query_data = mock.MagicMock(return_value={"data": {"name": "test"}, "o_data": {"name": "test"}})
+            result = mock_tablespace.update_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_tablespace.update_script = mock.MagicMock(return_value=tablespace_mock_fn(self.connection))
+            return mock_tablespace.update_script()
+
+        scripter.get_tablespace_update_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_tablespace_update_script())
 
         # If I try to get select script for any object
         result = service.script_as_update()

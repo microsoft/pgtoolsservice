@@ -25,7 +25,7 @@ class ServiceProvider:
     def server(self) -> JSONRPCServer:
         return self._server
 
-    def __getitem__(self, item: str) -> any:
+    def __getitem__(self, item: str):
         """
         If the service exists, it is returned by its lookup key
         :param item: Key for looking up the service
@@ -47,7 +47,9 @@ class ServiceProvider:
         if self._is_initialized:
             raise RuntimeError('Service provider cannot be initialized more than once')
 
+        # Set initialized true before calling register, as otherwise services can't look each
+        # other up. This is important since services can register callbacks with each other
+        self._is_initialized = True
+
         for service_key in self._services:
             self._services[service_key].register(self)
-
-        self._is_initialized = True

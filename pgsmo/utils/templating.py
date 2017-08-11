@@ -72,7 +72,7 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     raise ValueError(f'Template folder {template_root} does not contain {template_name}')
 
 
-def render_template(template_path: str, paths_to_add=None, **context) -> str:
+def render_template(template_path: str, paths_to_add=None, filters_to_add=None, **context) -> str:
     """
     Renders a template from the template folder with the given context.
     :param template_path: the path to the template to be rendered
@@ -80,21 +80,30 @@ def render_template(template_path: str, paths_to_add=None, **context) -> str:
     :return: The template rendered with the provided context
     """
     path, filename = os.path.split(template_path)
-    if path not in TEMPLATE_ENVIRONMENTS:
-        # Create the filesystem loader that will look in template folder FIRST
-        template_root = os.path.dirname(os.path.dirname(template_path))
-        paths = [path, template_root]
-        if (paths_to_add is not None):
-            paths += paths_to_add
-        loader: FileSystemLoader = FileSystemLoader(paths)
+    paths = [path]
+    if (paths_to_add is not None):
+        paths += paths_to_add
 
-        # Create the environment and add the basic filters
-        new_env: Environment = Environment(loader=loader)
-        new_env.filters['qtLiteral'] = qt_literal
-        new_env.filters['qtIdent'] = qt_ident
-        new_env.filters['qtTypeIdent'] = qt_type_ident
+    for path in paths:
+        if path not in TEMPLATE_ENVIRONMENTS:
+            # Create the filesystem loader that will look in template folder FIRST
+            template_root = os.path.dirname(os.path.dirname(template_path))
+            if (template_root not in TEMPLATE_ENVIRONMENTS):
+                paths.append(template_root)
+            loader: FileSystemLoader = FileSystemLoader(paths)
 
-        TEMPLATE_ENVIRONMENTS[path] = new_env
+            # Create the environment and add the basic filters
+            new_env: Environment = Environment(loader=loader)
+            new_env.filters['qtLiteral'] = qt_literal
+            new_env.filters['qtIdent'] = qt_ident
+            new_env.filters['qtTypeIdent'] = qt_type_ident
+
+            TEMPLATE_ENVIRONMENTS[path] = new_env
+            break
+
+    if (filters_to_add is not None):
+        for filter_name, function in filters_to_add.items():
+            TEMPLATE_ENVIRONMENTS[path].filters[filter_name] = function
 
     env = TEMPLATE_ENVIRONMENTS[path]
     to_render = env.get_template(filename)
@@ -182,6 +191,23 @@ def qt_ident(conn, *args):
         res = ((res and res + '.') or '') + value
 
     return res
+
+
+def has_any(data, keys):
+    """
+    Checks any one of the keys present in the data given
+    """
+    if data is None and type(data) != dict:
+        return False
+
+    if keys is None and type(keys) != list:
+        return False
+
+    for key in keys:
+        if key in data:
+            return True
+
+    return False
 
 
 def needs_quoting(key, for_types):

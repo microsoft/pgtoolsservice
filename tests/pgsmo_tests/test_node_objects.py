@@ -362,7 +362,7 @@ class TestNodeObject(unittest.TestCase):
         # Then:
         # ... The template path and template renderer should have been called once
         mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_server.version)
-        mock_render.assert_called_once_with('path', paths_to_add=[None], **{})     # Params to the renderer should be empty
+        mock_render.assert_called_once_with('path', paths_to_add=None, **{})     # Params to the renderer should be empty
 
         # ... A query should have been executed
         mock_executor.assert_called_once_with('SQL')
@@ -405,7 +405,7 @@ class TestNodeObject(unittest.TestCase):
         # Then:
         # ... The template path and template renderer should have been called once
         mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_server.version)
-        mock_render.assert_called_once_with('path', **{'parent_id': 123}, paths_to_add=[None])
+        mock_render.assert_called_once_with('path', **{'parent_id': 123}, paths_to_add=None)
 
         # ... A query should have been executed
         mock_executor.assert_called_once_with('SQL')

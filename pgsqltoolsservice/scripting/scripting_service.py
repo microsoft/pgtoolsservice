@@ -45,56 +45,32 @@ class ScriptingService(object):
 
     # HELPER FUNCTIONS ######################################################
 
-    def script_as_create(self, connection, metadata: ObjectMetadata) -> str:
-        """ Function to get script for create operations """
-        scripter = Scripter(connection)
-        if (metadata["metadataTypeName"] == 'Database'):
-            return scripter.get_database_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'View'):
-            return scripter.get_view_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Table'):
-            return scripter.get_function_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Schema'):
-            return scripter.get_schema_create_script(metadata)
-
     def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
         scripter = Scripter(connection)
         return scripter.script_as_select(metadata)
 
-    def script_as_update(self, connection, metadata: ObjectMetadata) -> str:
-        """ Function to get script for update operations """
-        scripter = Scripter(connection)
-        metadataType = metadata["metadataTypeName"]
-        if (metadataType == 'View'):
-            return scripter.get_view_update_script(metadata)
-        elif (metadataType == 'Table'):
-            return scripter.get_table_update_script(metadata)
-        elif (metadataType == 'Schema'):
-            return scripter.get_schema_update_script(metadata)
-
-    def script_as_delete(self, connection, metadata: ObjectMetadata) -> str:
-        """ Function to get script for insert operations """
-        scripter = Scripter(connection)
-        metadataType = metadata["metadataTypeName"]
-        if (metadataType == 'Database'):
-            return scripter.get_database_delete_script(metadata)
-        elif (metadataType == 'View'):
-            return scripter.get_view_delete_script(metadata)
-        elif (metadataType == 'Table'):
-            return scripter.get_table_delete_script(metadata)
-        elif (metadataType == 'Schema'):
-            return scripter.get_schema_delete_script(metadata)
-
     def _scripting_operation(self, scripting_operation: int, connection, metadata: ObjectMetadata):
         """Helper function to get the correct script based on operation"""
-        if (scripting_operation == ScriptOperation.Select.value):
-            return self.script_as_select(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Create.value):
-            return self.script_as_create(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Update.value):
-            return self.script_as_update(connection, metadata)
-        elif (scripting_operation == ScriptOperation.Delete.value):
-            return self.script_as_delete(connection, metadata)
-        else:
-            raise Exception("Scripting Operation not supported")
+        try:
+            script_map = self._script_map(connection, metadata)
+            return script_map[scripting_operation]
+        except Exception:
+            object_type = metadata["metadataTypeName"]
+            if self._service_provider.logger is not None:
+                self._service_provider.logger.exception(f'{ScriptOperation(scripting_operation)} failed for {object_type}')
+            return "Scripting Operation not supported"
+
+    def _script_map(self, connection, metadata) -> dict:
+        """ Maps every object and operation to the correct script function """
+        scripter = Scripter(connection)
+        create = ScriptOperation.Create.value
+        delete = ScriptOperation.Delete.value
+        update = ScriptOperation.Update.value
+        select = ScriptOperation.Select.value
+        return {
+            create: scripter.get_create_script(metadata),
+            delete: scripter.get_delete_script(metadata),
+            update: scripter.get_delete_script(metadata),
+            select: self.script_as_select(connection, metadata)
+        }
