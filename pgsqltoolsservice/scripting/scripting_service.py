@@ -45,25 +45,6 @@ class ScriptingService(object):
 
     # HELPER FUNCTIONS ######################################################
 
-<<<<<<< HEAD
-    def script_as_create(self, connection, metadata: ObjectMetadata) -> str:
-        """ Function to get script for create operations """
-        scripter = Scripter(connection)
-        if (metadata["metadataTypeName"] == 'Database'):
-            return scripter.get_database_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'View'):
-            return scripter.get_view_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Table'):
-            return scripter.get_table_create_script(metadata)
-        elif (metadata["metadataTypeName"] == 'Schema'):
-            return scripter.get_schema_create_script(metadata)
-        elif (metadata["metdataTypeName"] == 'Role'):
-            return scripter.get_role_create_script(metadata)
-        elif (metadata["metdataTypeName"] == 'Sequence'):
-            return scripter.get_sequence_create_script(metadata)
-
-=======
->>>>>>> 4e5ca05a5c0a543cc370ec0d48425eece10b718e
     def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
         scripter = Scripter(connection)

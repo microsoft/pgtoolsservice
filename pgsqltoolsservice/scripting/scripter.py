@@ -75,30 +75,11 @@ class Scripter(object):
 
     # HELPER METHODS ##########################################################
 
-<<<<<<< HEAD
-    def get_sequence_create_script(self, metadata) -> str:
-        """ Get create script for sequence """
-        try:
-            # get sequences from server
-            sequencename = metadata["name"]
-            sequence = self.server.sequences[sequencename]
-
-            # get the create script
-            script = sequence.create_script(self.connection)
-            return script
-        except Exception:
-            return None
-
-    # DELETE ##################################################################
-    def get_table_delete_script(self, metadata) -> str:
-        """ Get delete script for table """
-=======
     def _find_schema(self, metadata):
         """ Find the schema in the server to script as """
         table_schema = metadata["schema"]
         databases = self.server.databases
         parent_schema = None
->>>>>>> 4e5ca05a5c0a543cc370ec0d48425eece10b718e
         try:
             for db in databases:
                 parent_schema = db.schemas[table_schema]
@@ -121,53 +102,7 @@ class Scripter(object):
         try:
             database_name = metadata["name"]
             database = self.server.databases[database_name]
-<<<<<<< HEAD
-
-            # get the delete script
-            script = database.delete_script(self.connection)
-            return script
-        except Exception:
-            return None
-
-    def get_schema_delete_script(self, metadata) -> str:
-        """ Get delete script for schemas """
-        try:
-            # get schema from server
-            schema = self._find_schema(metadata)
-
-            # get the delete script
-            script = schema.delete_script(self.connection)
-            return script
-        except Exception:
-            return None
-
-    def get_sequence_delete_script(self, metadata) -> str:
-        """ Get delete script for sequence """
-        try:
-            # get sequences from server
-            sequencename = metadata["name"]
-            sequence = self.server.sequences[sequencename]
-
-            # get the delete script
-            script = sequence.delete_script(self.connection)
-            return script
-        except Exception:
-            return None
-
-    # UPDATE ##################################################################
-
-    def get_table_update_script(self, metadata) -> str:
-        """ Get update script for tables """
-        try:
-            # get table from server
-            table = self._find_table(metadata)
-
-            # get the create script
-            script = table.update_script(self.connection)
-            return script
-=======
             return database
->>>>>>> 4e5ca05a5c0a543cc370ec0d48425eece10b718e
         except Exception:
             return None
 
@@ -186,41 +121,7 @@ class Scripter(object):
         try:
             role_name = metadata["name"]
             role = self.server.roles[role_name]
-<<<<<<< HEAD
-
-            # get the create script
-            script = role.update_script(self.connection)
-            return script
-        except:
-            return None
-
-    def get_sequence_update_script(self, metadata) -> str:
-        """ Get update script for sequence """
-        try:
-            # get sequences from server
-            sequence_name = metadata["name"]
-            sequence = self.server.sequences[sequence_name]
-
-            # get the update script
-            script = sequence.update_script(self.connection)
-            return script
-        except Exception:
-            return None
-
-    # HELPER METHODS ##########################################################
-
-    def _find_schema(self, metadata):
-        """ Find the schema in the server to script as """
-        table_schema = metadata["schema"]
-        databases = self.server.databases
-        parent_schema = None
-        try:
-            for db in databases:
-                parent_schema = db.schemas[table_schema]
-                return parent_schema
-=======
             return role
->>>>>>> 4e5ca05a5c0a543cc370ec0d48425eece10b718e
         except Exception:
             return None
 
