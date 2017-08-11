@@ -30,6 +30,7 @@ class BackupParams:
     def __init__(self):
         self.owner_uri: str = None
         self.backup_info: BackupInfo = None
+        self.is_scripting: bool = None
 
 
 class BackupInfo:

@@ -64,9 +64,9 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams) -> Ta
                     f'--username={connection_info.details.options["user"]}']
     pg_dump_process = subprocess.Popen(pg_dump_args, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     # pg_dump will prompt for the password, so send it via stdin. This call will block until the process exits.
-    pg_dump_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
+    _, stderr = pg_dump_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
     if pg_dump_process.returncode != 0:
-        return TaskResult(TaskStatus.FAILED, str(pg_dump_process.stderr.read()))
+        return TaskResult(TaskStatus.FAILED, str(stderr, 'utf-8'))
     return TaskResult(TaskStatus.SUCCEEDED)
 
 
