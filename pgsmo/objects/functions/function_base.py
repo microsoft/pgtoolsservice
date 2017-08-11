@@ -7,11 +7,15 @@ from abc import ABCMeta
 from typing import Optional
 
 import pgsmo.objects.node_object as node
+import pgsmo.utils.querying as querying
+import pgsmo.utils.templating as templating
 from pgsmo.objects.server import server as s    # noqa
 
 
 class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     """Base class for Functions. Provides basic properties for all Function types"""
+
+    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'FunctionBase':
@@ -45,6 +49,15 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
         self._owner: Optional[str] = None
 
     # PROPERTIES ###########################################################
+    @property
+    def extended_vars(self):
+        template_vars = {
+            'scid': self.parent.oid,
+            'did': self.parent.parent.oid,
+            'datlastsysoid': 0  # temporary until implemented
+        }
+        return template_vars
+
     # -BASIC PROPERTIES ####################################################
     @property
     def description(self) -> Optional[str]:
@@ -57,3 +70,186 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     @property
     def owner(self) -> Optional[str]:
         return self._owner
+
+    @property
+    def arguments(self) -> Optional[list]:
+        return self._full_properties.get("arguments")
+
+    @property
+    def proretset(self):
+        return self._full_properties.get("proretset")
+
+    @property
+    def prorettypename(self):
+        return self._full_properties.get("prorettypename")
+
+    @property
+    def procost(self):
+        return self._full_properties.get("procost")
+
+    @property
+    def provolatile(self):
+        return self._full_properties.get("provolatile")
+
+    @property
+    def proleakproof(self):
+        return self._full_properties.get("proleakproof")
+
+    @property
+    def proisstrict(self):
+        return self._full_properties.get("proisstrict")
+
+    @property
+    def prosecdef(self):
+        return self._full_properties.get("prosecdef")
+
+    @property
+    def proiswindow(self):
+        return self._full_properties.get("proiswindow")
+
+    @property
+    def proparallel(self):
+        return self._full_properties.get("proparallel")
+
+    @property
+    def prorows(self):
+        return self._full_properties.get("prorows")
+
+    @property
+    def variables(self):
+        return self._full_properties.get("variables")
+
+    @property
+    def probin(self):
+        return self._full_properties.get("probin")
+
+    @property
+    def prosrc_c(self):
+        return self._full_properties.get("prosrc_c")
+
+    @property
+    def prosrc(self):
+        return self._full_properties.get("prosrc")
+
+    @property
+    def func_args_without(self):
+        return self._full_properties.get("func_args_without")
+
+    @property
+    def acl(self):
+        return self._full_properties.get("acl")
+
+    @property
+    def seclabels(self):
+        return self._full_properties.get("seclabels")
+
+    @property
+    def change_func(self):
+        return self._full_properties.get("change_func")
+
+    @property
+    def merged_variables(self):
+        return self._full_properties.get("merged_variables")
+
+    @property
+    def cascade(self):
+        return self._full_properties.get("cascade")
+
+    # SCRIPTING METHODS ##############################################################
+    def create_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve create scripts for a functions """
+        data = self._create_query_data()
+        query_file = "create.sql"
+        return self._get_template(connection, query_file, data, paths_to_add=[self.MACRO_ROOT])
+
+    def delete_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve delete scripts for a functions"""
+        data = self._delete_query_data()
+        query_file = "delete.sql"
+        return self._get_template(connection, query_file, data)
+
+    def update_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve update scripts for a functions"""
+        data = self._update_query_data()
+        query_file = "update.sql"
+        return self._get_template(connection, query_file, data, paths_to_add=[self.MACRO_ROOT])
+
+    def _create_query_data(self) -> dict:
+        """ Provides data input for create script """
+        data = {"data": {
+            "name": self.name,
+            "pronamespace": self.parent.name,
+            "arguments": self.arguments,
+            "proretset": self.proretset,
+            "prorettypename": self.prorettypename,
+            "lanname": self.language_name,
+            "procost": self.procost,
+            "provolatile": self.provolatile,
+            "proleakproof": self.proleakproof,
+            "proisstrict": self.proisstrict,
+            "prosecdef": self.prosecdef,
+            "proiswindow": self.proiswindow,
+            "proparallel": self.proparallel,
+            "prorows": self.prorows,
+            "variables": self.variables,
+            "probin": self.probin,
+            "prosrc_c": self.prosrc_c,
+            "prosrc": self.prosrc,
+            "funcowner": self.owner,
+            "func_args_without": self.func_args_without,
+            "description": self.description,
+            "acl": self.acl,
+            "seclabels": self.seclabels
+        }}
+        return data
+
+    def _delete_query_data(self) -> dict:
+        """ Provides data input for delete script """
+        data = {
+            "scid": self.parent.oid,
+            "fnid": self.oid,
+            "cascade": self.cascade,
+        }
+        return data
+
+    def _update_query_data(self) -> dict:
+        """ Function that returns data for update script """
+        data = {
+            "data": {
+                "name": self.name,
+                "pronamespace": self.parent.name,
+                "arguments": self.arguments,
+                "lanname": self.language_name,
+                "procost": self.procost,
+                "provolatile": self.provolatile,
+                "proisstrict": self.proisstrict,
+                "prosecdef": self.prosecdef,
+                "proiswindow": self.proiswindow,
+                "prorows": self.prorows,
+                "variables": self.variables,
+                "probin": self.probin,
+                "prosrc": self.prosrc,
+                "funcowner": self.owner,
+                "description": self.description,
+                "acl": self.acl,
+                "seclabels": self.seclabels,
+                "change_func": self.change_func,
+                "merged_variables": self.merged_variables
+            },
+            "o_data": {
+                "name": "",
+                "pronamespace": "",
+                "proargtypenames": "",
+                "lanname": "",
+                "provolatile": "",
+                "proisstrict": "",
+                "prosecdef": "",
+                "proiswindow": "",
+                "procost": "",
+                "prorows": "",
+                "probin": "",
+                "prosrc_c": "",
+                "prosrc": ""
+            }
+        }
+        return data

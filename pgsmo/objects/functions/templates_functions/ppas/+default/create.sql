@@ -4,9 +4,9 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/functions/security.macros' as SECLABEL %}
-{% import 'macros/functions/privilege.macros' as PRIVILEGE %}
-{% import 'macros/functions/variable.macros' as VARIABLE %}
+{% import 'ecurity.macros' as SECLABEL %}
+{% import 'privilege.macros' as PRIVILEGE %}
+{% import 'variable.macros' as VARIABLE %}
 {% set is_columns = [] %}
 {% if data %}
 {% if query_for == 'sql_panel' and func_def is defined %}

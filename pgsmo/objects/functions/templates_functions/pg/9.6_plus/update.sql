@@ -4,9 +4,9 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/functions/security.macros' as SECLABEL %}
-{% import 'macros/functions/privilege.macros' as PRIVILEGE %}
-{% import 'macros/functions/variable.macros' as VARIABLE %}{% if data %}
+{% import 'security.macros' as SECLABEL %}
+{% import 'privilege.macros' as PRIVILEGE %}
+{% import 'variable.macros' as VARIABLE %}{% if data %}
 {% set name = o_data.name %}
 {% if data.name %}
 {% if data.name != o_data.name %}
