@@ -26,6 +26,7 @@ class TaskStatus(enum.Enum):
 
 class TaskResult:
     """Class representing the result of a task execution"""
+
     def __init__(self, status: TaskStatus, error_message: str = None):
         self.status = status
         self.error_message = error_message
