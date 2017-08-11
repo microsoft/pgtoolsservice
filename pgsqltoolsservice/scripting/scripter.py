@@ -44,17 +44,6 @@ class Scripter(object):
             # need to handle exceptions well
             return None
 
-    def get_function_create_script(self, metadata) -> str:
-        """ Get create script for function """
-        try:
-            # get function from server
-            function = self._find_function(metadata)
-            # get the create script
-            script = function.create_script(self.connection)
-            return script
-        except Exception:
-            return None
-
     # DELETE ##################################################################
     def get_delete_script(self, metadata) -> str:
         """ Get delete script for all objects """
@@ -63,7 +52,7 @@ class Scripter(object):
             object_type = metadata["metadataTypeName"]
             obj = self._get_object(object_type, metadata)
 
-            # get the create script
+            # get the delete script
             script = obj.delete_script(self.connection)
             return script
         except Exception:
@@ -71,14 +60,14 @@ class Scripter(object):
 
     # UPDATE ##################################################################
 
-    def get_table_update_script(self, metadata) -> str:
+    def get_update_script(self, metadata) -> str:
         """ Get update script for tables """
         try:
             # get object from server
             object_type = metadata["metadataTypeName"]
             obj = self._get_object(object_type, metadata)
 
-            # get the create script
+            # get the update script
             script = obj.update_script(self.connection)
             return script
         except Exception:
@@ -111,14 +100,12 @@ class Scripter(object):
     def _find_function(self, metadata):
         """ Find the function in the server to script as """
         try:
-            #function_name = metadata["name"]
-            function_name = 'CarbonAddress()'
+            function_name = metadata["name"]
             parent_schema = self._find_schema(metadata)
-            for function in parent_schema.functions:
-                return parent_schema.functions[function_name]
+            return parent_schema.functions[function_name]
         except Exception:
             return None
-        
+
     def _find_database(self, metadata):
         """ Find a database in the server """
         try:
@@ -154,6 +141,7 @@ class Scripter(object):
             "Schema": self._find_schema,
             "Database": self._find_database,
             "View": self._find_view,
-            "Role": self._find_role
+            "Role": self._find_role,
+            "Function": self._find_function
         }
         return object_map[object_type](metadata)

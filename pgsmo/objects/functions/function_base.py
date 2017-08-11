@@ -12,7 +12,6 @@ import pgsmo.utils.templating as templating
 from pgsmo.objects.server import server as s    # noqa
 
 
-
 class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     """Base class for Functions. Provides basic properties for all Function types"""
 
@@ -58,7 +57,7 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
             'datlastsysoid': 0  # temporary until implemented
         }
         return template_vars
-    
+
     # -BASIC PROPERTIES ####################################################
     @property
     def description(self) -> Optional[str]:
@@ -70,45 +69,103 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
 
     @property
     def owner(self) -> Optional[str]:
-        return self._owner   
+        return self._owner
 
-    def getExtendedProperties(self, propertyName: str, default = None):
-        """ Function to get properties """
-        return self._full_properties.get(propertyName, default)
-
+    # SCRIPTING METHODS ##############################################################
     def create_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve create scripts for a functions """
-
         data = self._create_query_data()
         query_file = "create.sql"
         return self._get_template(connection, query_file, data, paths_to_add=[self.MACRO_ROOT])
 
+    def delete_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve delete scripts for a functions"""
+        data = self._delete_query_data()
+        query_file = "delete.sql"
+        return self._get_template(connection, query_file, data)
+
+    def update_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve update scripts for a functions"""
+        data = self._update_query_data()
+        query_file = "update.sql"
+        return self._get_template(connection, query_file, data, paths_to_add=[self.MACRO_ROOT])
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         data = {"data": {
-            "name": self.getExtendedProperties("name"),
+            "name": self._full_properties.get("name"),
             "pronamespace": self.parent.name,
-            "arguments": self.getExtendedProperties("arguments", []),
-            "proretset": self.getExtendedProperties("proretset"),
-            "prorettypename" : self.getExtendedProperties("prorettypename"),
+            "arguments": self._full_properties.get("arguments", []),
+            "proretset": self._full_properties.get("proretset"),
+            "prorettypename": self._full_properties.get("prorettypename"),
             "lanname": self.language_name,
-            "procost": self.getExtendedProperties("procost"),
-            "provolatile": self.getExtendedProperties("provolatile"),
-            "proleakproof": self.getExtendedProperties("proleakproof"),
-            "proisstrict": self.getExtendedProperties("proisstrict"),
-            "prosecdef": self.getExtendedProperties("prosecdef"),
-            "proiswindow": self.getExtendedProperties("proiswindow"),
-            "proparallel": self.getExtendedProperties("proiswindow"),
-            "prorows": self.getExtendedProperties("proiswindow"),
-            "variables": self.getExtendedProperties("variables"),
-            "probin": self.getExtendedProperties("probin"),
-            "prosrc_c": self.getExtendedProperties("prosrc_c"),
-            "prosrc": self.getExtendedProperties("prosrc"),
+            "procost": self._full_properties.get("procost"),
+            "provolatile": self._full_properties.get("provolatile"),
+            "proleakproof": self._full_properties.get("proleakproof"),
+            "proisstrict": self._full_properties.get("proisstrict"),
+            "prosecdef": self._full_properties.get("prosecdef"),
+            "proiswindow": self._full_properties.get("proiswindow"),
+            "proparallel": self._full_properties.get("proiswindow"),
+            "prorows": self._full_properties.get("proiswindow"),
+            "variables": self._full_properties.get("variables"),
+            "probin": self._full_properties.get("probin"),
+            "prosrc_c": self._full_properties.get("prosrc_c"),
+            "prosrc": self._full_properties.get("prosrc"),
             "funcowner": self.owner,
-            "func_args_without": self.getExtendedProperties("func_args_without", ""),
+            "func_args_without": self._full_properties.get("func_args_without", ""),
             "description": self.description,
-            "acl": self.getExtendedProperties("acl"),
-            "seclabels": self.getExtendedProperties("seclabels")
+            "acl": self._full_properties.get("acl"),
+            "seclabels": self._full_properties.get("seclabels")
         }}
+        return data
+
+    def _delete_query_data(self) -> dict:
+        """ Provides data input for delete script """
+        data = {
+            "scid": self.extended_vars['scid'],
+            "fnid": self.extended_vars['fnid'],
+            "cascade": self._full_properties.get("cascade", ""),
+        }
+        return data
+
+    def _update_query_data(self) -> dict:
+        """ Function that returns data for update script """
+        data = {
+            "data": {
+                "name": self._full_properties.get("name"),
+                "pronamespace": self.parent.name,
+                "arguments": self._full_properties.get("arguments", []),
+                "lanname": self.language_name,
+                "procost": self._full_properties.get("procost"),
+                "provolatile": self._full_properties.get("provolatile"),
+                "proisstrict": self._full_properties.get("proisstrict"),
+                "prosecdef": self._full_properties.get("prosecdef"),
+                "proiswindow": self._full_properties.get("proiswindow"),
+                "prorows": self._full_properties.get("proiswindow"),
+                "variables": self._full_properties.get("variables"),
+                "probin": self._full_properties.get("probin"),
+                "prosrc": self._full_properties.get("prosrc"),
+                "funcowner": self.owner,
+                "description": self.description,
+                "acl": self._full_properties.get("acl"),
+                "seclabels": self._full_properties.get("seclabels"),
+                "change_func": self._full_properties.get("change_func"),
+                "merged_variables": self._full_properties.get("merged_variables")
+            },
+            "o_data": {
+                "name": "",
+                "pronamespace": "",
+                "proargtypenames": "",
+                "lanname": "",
+                "provolatile": "",
+                "proisstrict": "",
+                "prosecdef": "",
+                "proiswindow": "",
+                "procost": "",
+                "prorows": "",
+                "probin": "",
+                "prosrc_c": "",
+                "prosrc": ""
+            }
+        }
         return data

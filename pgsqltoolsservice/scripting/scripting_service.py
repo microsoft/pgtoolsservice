@@ -15,7 +15,7 @@ from pgsqltoolsservice.utils import constants
 
 class ScriptingService(object):
     """Service for scripting database objects"""
-    
+
     def __init__(self):
         self._service_provider: ServiceProvider = None
 
@@ -71,6 +71,6 @@ class ScriptingService(object):
         return {
             create: scripter.get_create_script(metadata),
             delete: scripter.get_delete_script(metadata),
-            update: scripter.get_delete_script(metadata),
+            update: scripter.get_update_script(metadata),
             select: self.script_as_select(connection, metadata)
         }

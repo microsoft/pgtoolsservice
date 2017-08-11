@@ -149,11 +149,9 @@ class NodeObject(metaclass=ABCMeta):
             **template_vars
         )
         cols, rows = self._server.connection.execute_dict(sql)
-        try:
-            if len(rows) > 0:
-                return rows[0]
-        except Exception as err:
-            logging.getLogger('pgsqltoolsservice').debug(err)
+
+        if len(rows) > 0:
+            return rows[0]
 
     def _refresh_child_collections(self) -> None:
         """Iterates over the registered child collections and property collections and resets them"""
