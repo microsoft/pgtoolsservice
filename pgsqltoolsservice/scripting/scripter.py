@@ -20,8 +20,8 @@ class Scripter(object):
 
     def script_as_select(self, metadata) -> str:
         """ Function to get script for select operations """
-        schema = metadata["schema"]
-        name = metadata["name"]
+        schema = metadata.schema
+        name = metadata.name
         # wrap quotes only around objects with all small letters
         name = f'"{name}"' if name.islower() else name
         script = f"SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n"
@@ -33,7 +33,7 @@ class Scripter(object):
         """ Get create script for all objects """
         try:
             # get object from server
-            object_type = metadata["metadataTypeName"]
+            object_type = metadata.metadata_type_name
             obj = self._get_object(object_type, metadata)
 
             # get the create script
@@ -49,7 +49,7 @@ class Scripter(object):
         """ Get delete script for all objects """
         try:
             # get object from server
-            object_type = metadata["metadataTypeName"]
+            object_type = metadata.metadata_type_name
             obj = self._get_object(object_type, metadata)
 
             # get the delete script
@@ -64,7 +64,7 @@ class Scripter(object):
         """ Get update script for tables """
         try:
             # get object from server
-            object_type = metadata["metadataTypeName"]
+            object_type = metadata.metadata_type_name
             obj = self._get_object(object_type, metadata)
 
             # get the update script
@@ -77,7 +77,7 @@ class Scripter(object):
 
     def _find_schema(self, metadata):
         """ Find the schema in the server to script as """
-        table_schema = metadata["schema"]
+        table_schema = metadata.schema
         databases = self.server.databases
         parent_schema = None
         try:
@@ -90,7 +90,7 @@ class Scripter(object):
     def _find_table(self, metadata):
         """ Find the table in the server to script as """
         try:
-            table_name = metadata["name"]
+            table_name = metadata.name
             parent_schema = self._find_schema(metadata)
             for table in parent_schema.tables:
                 return parent_schema.tables[table_name]
@@ -109,7 +109,7 @@ class Scripter(object):
     def _find_database(self, metadata):
         """ Find a database in the server """
         try:
-            database_name = metadata["name"]
+            database_name = metadata.name
             database = self.server.databases[database_name]
             return database
         except Exception:
@@ -118,7 +118,7 @@ class Scripter(object):
     def _find_view(self, metadata):
         """ Find a view in the server """
         try:
-            view_name = metadata["name"]
+            view_name = metadata.name
             parent_schema = self._find_schema(metadata)
             view = parent_schema.views[view_name]
             return view
@@ -128,7 +128,7 @@ class Scripter(object):
     def _find_role(self, metadata):
         """ Find a role in the server """
         try:
-            role_name = metadata["name"]
+            role_name = metadata.name
             role = self.server.roles[role_name]
             return role
         except Exception:
