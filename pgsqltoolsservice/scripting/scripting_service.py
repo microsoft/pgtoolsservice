@@ -58,6 +58,8 @@ class ScriptingService(object):
             return scripter.get_schema_create_script(metadata)
         elif (metadata["metdataTypeName"] == 'Role'):
             return scripter.get_role_create_script(metadata)
+        elif (metadata["metdataTypeName"] == 'Sequence'):
+            return scripter.get_sequence_create_script(metadata)
 
     def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """

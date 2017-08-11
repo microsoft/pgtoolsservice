@@ -94,6 +94,19 @@ class Scripter(object):
         except:
             return None
 
+    def get_sequence_create_script(self, metadata) -> str:
+        """ Get create script for sequence """
+        try:
+            # get sequences from server
+            sequencename = metadata["name"]
+            sequence = self.server.sequences[role_name]
+
+            # get the create script
+            script = sequence.create_script(self.connection)
+            return script
+        except Exception:
+            return None    
+
     # DELETE ##################################################################
     def get_table_delete_script(self, metadata) -> str:
         """ Get delete script for table """
@@ -142,6 +155,19 @@ class Scripter(object):
             return script
         except Exception:
             return None
+
+    def get_sequence_delete_script(self, metadata) -> str:
+        """ Get delete script for sequence """
+        try:
+            # get sequences from server
+            sequencename = metadata["name"]
+            sequence = self.server.sequences[role_name]
+
+            # get the delete script
+            script = sequence.delete_script(self.connection)
+            return script
+        except Exception:
+            return None 
 
     # UPDATE ##################################################################
 
@@ -195,6 +221,19 @@ class Scripter(object):
             return script
         except:
             return None
+
+    def get_sequence_update_script(self, metadata) -> str:
+        """ Get update script for sequence """
+        try:
+            # get sequences from server
+            sequence_name = metadata["name"]
+            sequence = self.server.sequences[sequence_name]
+
+            # get the update script
+            script = sequence.update_script(self.connection)
+            return script
+        except Exception:
+            return None 
 
     # HELPER METHODS ##########################################################
 
