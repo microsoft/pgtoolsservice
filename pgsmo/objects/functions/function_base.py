@@ -71,6 +71,90 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     def owner(self) -> Optional[str]:
         return self._owner
 
+    @property
+    def arguments(self) -> Optional[list]:
+        return self._full_properties.get("arguments")
+
+    @property
+    def proretset(self):
+        return self._full_properties.get("proretset")
+
+    @property
+    def prorettypename(self):
+        return self._full_properties.get("prorettypename")
+
+    @property
+    def procost(self):
+        return self._full_properties.get("procost")
+
+    @property
+    def provolatile(self):
+        return self._full_properties.get("provolatile")
+
+    @property
+    def proleakproof(self):
+        return self._full_properties.get("proleakproof")
+
+    @property
+    def proisstrict(self):
+        return self._full_properties.get("proisstrict")
+
+    @property
+    def prosecdef(self):
+        return self._full_properties.get("prosecdef")
+
+    @property
+    def proiswindow(self):
+        return self._full_properties.get("proiswindow")
+
+    @property
+    def proparallel(self):
+        return self._full_properties.get("proparallel")
+
+    @property
+    def prorows(self):
+        return self._full_properties.get("prorows")
+
+    @property
+    def variables(self):
+        return self._full_properties.get("variables")
+
+    @property
+    def probin(self):
+        return self._full_properties.get("probin")
+
+    @property
+    def prosrc_c(self):
+        return self._full_properties.get("prosrc_c")
+
+    @property
+    def prosrc(self):
+        return self._full_properties.get("prosrc")
+
+    @property
+    def func_args_without(self):
+        return self._full_properties.get("func_args_without")
+
+    @property
+    def acl(self):
+        return self._full_properties.get("acl")
+
+    @property
+    def seclabels(self):
+        return self._full_properties.get("seclabels")
+
+    @property
+    def change_func(self):
+        return self._full_properties.get("change_func")
+
+    @property
+    def merged_variables(self):
+        return self._full_properties.get("merged_variables")
+
+    @property
+    def cascade(self):
+        return self._full_properties.get("cascade")
+
     # SCRIPTING METHODS ##############################################################
     def create_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve create scripts for a functions """
@@ -93,38 +177,38 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         data = {"data": {
-            "name": self._full_properties.get("name"),
+            "name": self.name,
             "pronamespace": self.parent.name,
-            "arguments": self._full_properties.get("arguments", []),
-            "proretset": self._full_properties.get("proretset"),
-            "prorettypename": self._full_properties.get("prorettypename"),
+            "arguments": self.arguments,
+            "proretset": self.proretset,
+            "prorettypename": self.prorettypename,
             "lanname": self.language_name,
-            "procost": self._full_properties.get("procost"),
-            "provolatile": self._full_properties.get("provolatile"),
-            "proleakproof": self._full_properties.get("proleakproof"),
-            "proisstrict": self._full_properties.get("proisstrict"),
-            "prosecdef": self._full_properties.get("prosecdef"),
-            "proiswindow": self._full_properties.get("proiswindow"),
-            "proparallel": self._full_properties.get("proiswindow"),
-            "prorows": self._full_properties.get("proiswindow"),
-            "variables": self._full_properties.get("variables"),
-            "probin": self._full_properties.get("probin"),
-            "prosrc_c": self._full_properties.get("prosrc_c"),
-            "prosrc": self._full_properties.get("prosrc"),
+            "procost": self.procost,
+            "provolatile": self.provolatile,
+            "proleakproof": self.proleakproof,
+            "proisstrict": self.proisstrict,
+            "prosecdef": self.prosecdef,
+            "proiswindow": self.proiswindow,
+            "proparallel": self.proparallel,
+            "prorows": self.prorows,
+            "variables": self.variables,
+            "probin": self.probin,
+            "prosrc_c": self.prosrc_c,
+            "prosrc": self.prosrc,
             "funcowner": self.owner,
-            "func_args_without": self._full_properties.get("func_args_without", ""),
+            "func_args_without": self.func_args_without,
             "description": self.description,
-            "acl": self._full_properties.get("acl"),
-            "seclabels": self._full_properties.get("seclabels")
+            "acl": self.acl,
+            "seclabels": self.seclabels
         }}
         return data
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
         data = {
-            "scid": self.extended_vars['scid'],
-            "fnid": self.extended_vars['fnid'],
-            "cascade": self._full_properties.get("cascade", ""),
+            "scid": self.parent.oid,
+            "fnid": self.oid,
+            "cascade": self.cascade,
         }
         return data
 
@@ -132,25 +216,25 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
         """ Function that returns data for update script """
         data = {
             "data": {
-                "name": self._full_properties.get("name"),
+                "name": self.name,
                 "pronamespace": self.parent.name,
-                "arguments": self._full_properties.get("arguments", []),
+                "arguments": self.arguments,
                 "lanname": self.language_name,
-                "procost": self._full_properties.get("procost"),
-                "provolatile": self._full_properties.get("provolatile"),
-                "proisstrict": self._full_properties.get("proisstrict"),
-                "prosecdef": self._full_properties.get("prosecdef"),
-                "proiswindow": self._full_properties.get("proiswindow"),
-                "prorows": self._full_properties.get("proiswindow"),
-                "variables": self._full_properties.get("variables"),
-                "probin": self._full_properties.get("probin"),
-                "prosrc": self._full_properties.get("prosrc"),
+                "procost": self.procost,
+                "provolatile": self.provolatile,
+                "proisstrict": self.proisstrict,
+                "prosecdef": self.prosecdef,
+                "proiswindow": self.proiswindow,
+                "prorows": self.prorows,
+                "variables": self.variables,
+                "probin": self.probin,
+                "prosrc": self.prosrc,
                 "funcowner": self.owner,
                 "description": self.description,
-                "acl": self._full_properties.get("acl"),
-                "seclabels": self._full_properties.get("seclabels"),
-                "change_func": self._full_properties.get("change_func"),
-                "merged_variables": self._full_properties.get("merged_variables")
+                "acl": self.acl,
+                "seclabels": self.seclabels,
+                "change_func": self.change_func,
+                "merged_variables": self.merged_variables
             },
             "o_data": {
                 "name": "",
