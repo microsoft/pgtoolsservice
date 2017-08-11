@@ -81,6 +81,17 @@ class Scripter(object):
         except Exception:
             return None
 
+    def get_function_create_script(self, metadata) -> str:
+        """ Get create script for function """
+        try:
+            # get function from server
+            function = self._find_function(metadata)
+            # get the create script
+            script = function.create_script(self.connection)
+            return script
+        except Exception:
+            return None
+
     # DELETE ##################################################################
     def get_table_delete_script(self, metadata) -> str:
         """ Get delete script for table """
@@ -191,5 +202,16 @@ class Scripter(object):
             parent_schema = self._find_schema(metadata)
             for table in parent_schema.tables:
                 return parent_schema.tables[table_name]
+        except Exception:
+            return None
+
+    def _find_function(self, metadata):
+        """ Find the function in the server to script as """
+        try:
+            #function_name = metadata["name"]
+            function_name = 'CarbonAddress()'
+            parent_schema = self._find_schema(metadata)
+            for function in parent_schema.functions:
+                return parent_schema.functions[function_name]
         except Exception:
             return None

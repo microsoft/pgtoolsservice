@@ -7,11 +7,16 @@ from abc import ABCMeta
 from typing import Optional
 
 import pgsmo.objects.node_object as node
+import pgsmo.utils.querying as querying
+import pgsmo.utils.templating as templating
 from pgsmo.objects.server import server as s    # noqa
+
 
 
 class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     """Base class for Functions. Provides basic properties for all Function types"""
+
+    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'FunctionBase':
@@ -45,6 +50,15 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
         self._owner: Optional[str] = None
 
     # PROPERTIES ###########################################################
+    @property
+    def extended_vars(self):
+        template_vars = {
+            'scid': self.parent.oid,
+            'did': self.parent.parent.oid,
+            'datlastsysoid': 0  # temporary until implemented
+        }
+        return template_vars
+    
     # -BASIC PROPERTIES ####################################################
     @property
     def description(self) -> Optional[str]:
@@ -56,4 +70,45 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
 
     @property
     def owner(self) -> Optional[str]:
-        return self._owner
+        return self._owner   
+
+    def getExtendedProperties(self, propertyName: str, default = None):
+        """ Function to get properties """
+        return self._full_properties.get(propertyName, default)
+
+    def create_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve create scripts for a functions """
+
+        data = self._create_query_data()
+        query_file = "create.sql"
+        return self._get_template(connection, query_file, data, paths_to_add=[self.MACRO_ROOT])
+
+
+    def _create_query_data(self) -> dict:
+        """ Provides data input for create script """
+        data = {"data": {
+            "name": self.getExtendedProperties("name"),
+            "pronamespace": self.parent.name,
+            "arguments": self.getExtendedProperties("arguments", []),
+            "proretset": self.getExtendedProperties("proretset"),
+            "prorettypename" : self.getExtendedProperties("prorettypename"),
+            "lanname": self.language_name,
+            "procost": self.getExtendedProperties("procost"),
+            "provolatile": self.getExtendedProperties("provolatile"),
+            "proleakproof": self.getExtendedProperties("proleakproof"),
+            "proisstrict": self.getExtendedProperties("proisstrict"),
+            "prosecdef": self.getExtendedProperties("prosecdef"),
+            "proiswindow": self.getExtendedProperties("proiswindow"),
+            "proparallel": self.getExtendedProperties("proiswindow"),
+            "prorows": self.getExtendedProperties("proiswindow"),
+            "variables": self.getExtendedProperties("variables"),
+            "probin": self.getExtendedProperties("probin"),
+            "prosrc_c": self.getExtendedProperties("prosrc_c"),
+            "prosrc": self.getExtendedProperties("prosrc"),
+            "funcowner": self.owner,
+            "func_args_without": self.getExtendedProperties("func_args_without", ""),
+            "description": self.description,
+            "acl": self.getExtendedProperties("acl"),
+            "seclabels": self.getExtendedProperties("seclabels")
+        }}
+        return data

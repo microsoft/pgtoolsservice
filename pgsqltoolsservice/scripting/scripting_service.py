@@ -15,7 +15,7 @@ from pgsqltoolsservice.utils import constants
 
 class ScriptingService(object):
     """Service for scripting database objects"""
-
+    
     def __init__(self):
         self._service_provider: ServiceProvider = None
 
@@ -53,7 +53,7 @@ class ScriptingService(object):
         elif (metadata["metadataTypeName"] == 'View'):
             return scripter.get_view_create_script(metadata)
         elif (metadata["metadataTypeName"] == 'Table'):
-            return scripter.get_table_create_script(metadata)
+            return scripter.get_function_create_script(metadata)
         elif (metadata["metadataTypeName"] == 'Schema'):
             return scripter.get_schema_create_script(metadata)
 
