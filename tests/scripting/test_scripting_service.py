@@ -112,7 +112,7 @@ class TestScriptingService(unittest.TestCase):
         mock_service = ScriptingService()
         operations = [ScriptOperation.Create, ScriptOperation.Select,
                       ScriptOperation.Update, ScriptOperation.Delete]
-        objects = ["Database", "View", "Table", "Schema", "Role","Sequence"]
+        objects = ["Database", "View", "Table", "Schema", "Role", "Sequence"]
 
         mock_service.script_as_select = mock.MagicMock()
         mock_service.script_as_create = mock.MagicMock()
@@ -345,7 +345,7 @@ class TestScriptingService(unittest.TestCase):
     def _test_sequence_create_script(self, scripter, service):
         """ Helper function to test create script for sequence """
         # Set up the mocks
-        mock_sequence = Sequence(None,None,'test')
+        mock_sequence = Sequence(None, None, 'test')
 
         def sequence_mock_fn(connection):
             mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
@@ -542,7 +542,7 @@ class TestScriptingService(unittest.TestCase):
     def _test_sequence_update_script(self, scripter, service):
         """ Helper function to test update script for sequence """
         # Set up the mocks
-        mock_sequence = Sequence(None,None,'test')
+        mock_sequence = Sequence(None, None, 'test')
 
         def sequence_mock_fn(connection):
             mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
@@ -561,7 +561,7 @@ class TestScriptingService(unittest.TestCase):
         result = service.script_as_update()
 
         # The result shouldn't be none or an empty string
-        self.assertIsNotNone(result)        
+        self.assertIsNotNone(result)
 
 
 if __name__ == '__main__':

@@ -99,13 +99,13 @@ class Scripter(object):
         try:
             # get sequences from server
             sequencename = metadata["name"]
-            sequence = self.server.sequences[role_name]
+            sequence = self.server.sequences[sequencename]
 
             # get the create script
             script = sequence.create_script(self.connection)
             return script
         except Exception:
-            return None    
+            return None
 
     # DELETE ##################################################################
     def get_table_delete_script(self, metadata) -> str:
@@ -161,13 +161,13 @@ class Scripter(object):
         try:
             # get sequences from server
             sequencename = metadata["name"]
-            sequence = self.server.sequences[role_name]
+            sequence = self.server.sequences[sequencename]
 
             # get the delete script
             script = sequence.delete_script(self.connection)
             return script
         except Exception:
-            return None 
+            return None
 
     # UPDATE ##################################################################
 
@@ -233,7 +233,7 @@ class Scripter(object):
             script = sequence.update_script(self.connection)
             return script
         except Exception:
-            return None 
+            return None
 
     # HELPER METHODS ##########################################################
 

@@ -57,7 +57,7 @@ class Sequence(NodeObject):
     @property
     def current_value(self):
         return self._full_properties.get("current_value", "")
-    
+
     @property
     def minimum(self):
         return self._full_properties.get("minimum", "")
@@ -72,7 +72,7 @@ class Sequence(NodeObject):
 
     @property
     def cascade(self):
-        return self._full_properties.get("cascade", "")    
+        return self._full_properties.get("cascade", "")
 
     # SCRIPTING METHODS ####################################################
 
@@ -92,7 +92,7 @@ class Sequence(NodeObject):
         """ Function to retrieve delete scripts for a sequence"""
         data = self._delete_query_data()
         query_file = "delete.sql"
-        return self._get_template(connection, query_file, data)    
+        return self._get_template(connection, query_file, data)
 
     # HELPER METHODS ##################################################################
 
