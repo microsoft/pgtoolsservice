@@ -29,6 +29,7 @@ from pgsmo.objects.schema.schema import Schema, TEMPLATE_ROOT
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
 from pgsmo.objects.sequence.sequence import Sequence
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsmo.objects.functions import Function
 
 """Module for testing the scripting service"""
@@ -88,10 +89,9 @@ class TestScriptingService(unittest.TestCase):
     def test_handle_scriptas_request(self):
         """ Test _handle_scriptas_request function """
         mock_service = ScriptingService()
-        metadata = {
-            "schema": "public",
-            "name": "foo"
-        }
+        metadata = ObjectMetadata()
+        metadata.schema = "public"
+        metadata.name = "test"
         params = {
             "metadata": metadata,
             "operation": ScriptOperation.Select,
@@ -141,10 +141,9 @@ class TestScriptingService(unittest.TestCase):
         mock_connection = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
         scripter = Scripter(mock_connection)
         service = ScriptingService()
-        metadata = {
-            "schema": "public",
-            "name": "foo"
-        }
+        metadata = ObjectMetadata()
+        metadata.schema = "public"
+        metadata.name = "test"
         service.script_as_select = mock.MagicMock(return_value=scripter.script_as_select(metadata))
 
         # If I try to get select script for any object
