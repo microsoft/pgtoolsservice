@@ -139,6 +139,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         mock_pg_path = 'mock/pg_dump'
         mock_process = mock.Mock()
         mock_process.returncode = 0
+        mock_process.communicate = mock.Mock(return_value=(b'', b''))
         with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path',
                         new=mock.Mock(return_value=mock_pg_path)) as mock_get_path, \
                 mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)) as mock_popen:
@@ -164,6 +165,22 @@ class TestDisasterRecoveryService(unittest.TestCase):
                 self.assertIn(expected_arg, actual_args)
             # And the task returns a successful result
             self.assertIs(task_result.status, TaskStatus.SUCCEEDED)
+
+    def test_perform_backup_fails(self):
+        """Test that the perform_backup method handles failures by recording pg_dump's stderr output and marking the task failed"""
+        mock_pg_path = 'mock/pg_dump'
+        mock_process = mock.Mock()
+        mock_process.returncode = 1
+        test_error_message = b'test error message'
+        mock_process.communicate = mock.Mock(return_value=(b'', test_error_message))
+        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path',
+                        new=mock.Mock(return_value=mock_pg_path)), mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)):
+            # If I perform a backup where pg_dump fails
+            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params)
+            # Then the task returns a failed result
+            self.assertIs(task_result.status, TaskStatus.FAILED)
+            # And the task contains the error message from pg_dump's stderr
+            self.assertEqual(task_result.error_message, str(test_error_message, 'utf-8'))
 
     def test_perform_backup_no_exe(self):
         """Test that the perform_backup task fails when the pg_dump exe is not found"""
