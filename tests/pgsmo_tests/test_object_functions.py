@@ -31,6 +31,33 @@ class FunctionsTestBase(NodeObjectTestBase, metaclass=ABCMeta):
         }
 
     @property
+    def full_properties(self):
+        return {
+            "arguments": "arguments",
+            "proretset": "proretset",
+            "prorettypename": "prorettypename",
+            "procost": "procost",
+            "provolatile": "provolatile",
+            "proleakproof": "proleakproof",
+            "proisstrict": "proisstrict",
+            "prosecdef": "prosecdef",
+            "proiswindow": "proiswindow",
+            "proparallel": "proparallel",
+            "prorows": "prorows",
+            "variables": "variables",
+            "probin": "probin",
+            "prosrc_c": "prosrc_c",
+            "prosrc": "prosrc",
+            "func_args_without": "func_args_without",
+            "acl": "acl",
+            "seclabels": "seclabels"
+        }
+
+    @property
+    def property_query(self) -> dict:
+        return self.full_properties
+
+    @property
     def collections(self):
         return []
 

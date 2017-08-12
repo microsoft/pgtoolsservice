@@ -97,6 +97,15 @@ class Scripter(object):
         except Exception:
             return None
 
+    def _find_function(self, metadata):
+        """ Find the function in the server to script as """
+        try:
+            function_name = metadata["name"]
+            parent_schema = self._find_schema(metadata)
+            return parent_schema.functions[function_name]
+        except Exception:
+            return None
+
     def _find_database(self, metadata):
         """ Find a database in the server """
         try:
@@ -141,6 +150,7 @@ class Scripter(object):
             "Schema": self._find_schema,
             "Database": self._find_database,
             "View": self._find_view,
-            "Role": self._find_role
+            "Role": self._find_role,
+            "Function": self._find_function
         }
         return object_map[object_type](metadata)

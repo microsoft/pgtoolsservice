@@ -121,9 +121,9 @@ class Tablespace(NodeObject):
             "description": self.description,
             "spcoptions": self.options,
             "spcacl": self.acl
-            }, "o_data": {
-                "name": "",
-                "spcuser": "",
-                "description": ""
-            }
+        }, "o_data": {
+            "name": "",
+            "spcuser": "",
+            "description": ""
+        }
         }
