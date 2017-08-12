@@ -205,7 +205,7 @@ class TestScriptingService(unittest.TestCase):
 
         # Sequence
         self._test_sequence_delete_script(mock_scripter, service)
-        
+
         # Function
         self._test_function_delete_script(mock_scripter, service)
 
@@ -225,7 +225,7 @@ class TestScriptingService(unittest.TestCase):
 
         # Sequence
         self._test_sequence_update_script(mock_scripter, service)
-        
+
         # Function
         self._test_function_update_script(mock_scripter, service)
 
@@ -402,7 +402,13 @@ class TestScriptingService(unittest.TestCase):
 
         scripter.get_sequence_create_script = mock.MagicMock(return_value=scripter_mock_fn())
         service.script_as_create = mock.MagicMock(return_value=scripter.get_sequence_create_script())
-        
+
+        # If I try to get select script for any object
+        result = service.script_as_create()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
     def _test_function_create_script(self, scripter, service):
         """ Helper function to test create script for function """
         # Set up the mocks
@@ -574,7 +580,7 @@ class TestScriptingService(unittest.TestCase):
 
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
-        
+
     def _test_function_delete_script(self, scripter, service):
         """ Helper function to test delete script for Function """
         # Set up the mocks
@@ -692,6 +698,9 @@ class TestScriptingService(unittest.TestCase):
 
         scripter.get_sequence_update_script = mock.MagicMock(return_value=scripter_mock_fn())
         service.script_as_update = mock.MagicMock(return_value=scripter.get_sequence_update_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_update()
 
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
