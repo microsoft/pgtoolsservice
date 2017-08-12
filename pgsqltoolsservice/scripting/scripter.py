@@ -134,6 +134,15 @@ class Scripter(object):
         except Exception:
             return None
 
+    def _find_sequence(self, metadata):
+        """ Find a sequence in the server """
+        try:
+            sequence_name = metadata["name"]
+            sequence = self.server.sequences[sequence_name]
+            return sequence
+        except Exception:
+            return None
+
     def _get_object(self, object_type: str, metadata):
         """ Retrieve a given object """
         object_map = {
