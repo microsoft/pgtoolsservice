@@ -30,3 +30,31 @@ class TestSequence(NodeObjectTestBase, unittest.TestCase):
     @property
     def node_query(self) -> dict:
         return TestSequence.NODE_ROW
+
+    @property
+    def full_properties(self):
+        return {
+            "schema": "schema",
+            "cycled": "cycled",
+            "increment": "increment",
+            "start": "start",
+            "current_value": "current_value",
+            "minimum": "minimum",
+            "maximum": "maximum",
+            "cache": "cache",
+            "cascade": "cascade"
+        }
+
+    @property
+    def property_query(self) -> dict:
+        return {
+            "schema": "public",
+            "cycled": False,
+            "increment": 1,
+            "start": 1,
+            "current_value": None,
+            "minimum": 1,
+            "maximum": 100,
+            "cache": 1,
+            "cascade": None
+        }

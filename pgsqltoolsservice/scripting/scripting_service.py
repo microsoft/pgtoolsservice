@@ -56,7 +56,7 @@ class ScriptingService(object):
             script_map = self._script_map(connection, metadata)
             return script_map[scripting_operation]
         except Exception:
-            object_type = metadata["metadataTypeName"]
+            object_type = metadata.metadata_type_name
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(f'{ScriptOperation(scripting_operation)} failed for {object_type}')
             return "Scripting Operation not supported"
@@ -71,6 +71,6 @@ class ScriptingService(object):
         return {
             create: scripter.get_create_script(metadata),
             delete: scripter.get_delete_script(metadata),
-            update: scripter.get_delete_script(metadata),
+            update: scripter.get_update_script(metadata),
             select: self.script_as_select(connection, metadata)
         }

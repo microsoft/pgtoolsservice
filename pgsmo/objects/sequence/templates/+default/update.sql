@@ -4,9 +4,10 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/schemas/security.macros' as SECLABEL %}
-{% import 'macros/schemas/privilege.macros' as PRIVILEGE %}
+{% import 'macros/security.macros' as SECLABEL %}
+{% import 'macros/privilege.macros' as PRIVILEGE %}
 {% if data %}
+{% if o_data %}
 {% if data.name != o_data.name %}
 ALTER SEQUENCE {{ conn|qtIdent(o_data.schema, o_data.name) }}
     RENAME TO {{ conn|qtIdent(data.name) }};
@@ -95,6 +96,7 @@ COMMENT ON SEQUENCE {{ seqname }}
 {% for priv in data.relacl.added %}
 {{ PRIVILEGE.SET(conn, 'SEQUENCE', priv.grantee, data.name, priv.without_grant, priv.with_grant, schema) }}
 {% endfor %}
+{% endif %}
 {% endif %}
 {% endif %}
 {% endif %}
