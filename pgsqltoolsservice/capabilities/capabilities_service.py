@@ -13,6 +13,7 @@ from pgsqltoolsservice.capabilities.contracts import (
     InitializeRequestParams,
     InitializeResult, ServerCapabilities, TextDocumentSyncKind
 )
+from pgsqltoolsservice.disaster_recovery import BACKUP_OPTIONS
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
 
@@ -192,7 +193,7 @@ class CapabilitiesService:
                 group_name='Client'
             )
         ])
-        capabilities = DMPServerCapabilities('1.0', 'PGSQL', 'PostgreSQL', conn_provider_opts)
+        capabilities = DMPServerCapabilities('1.0', 'PGSQL', 'PostgreSQL', conn_provider_opts, [BACKUP_OPTIONS])
         result = CapabilitiesResult(capabilities)
 
         # Send the response

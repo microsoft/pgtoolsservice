@@ -69,6 +69,30 @@ class TestCapabilitiesService(unittest.TestCase):
         rc.send_response.assert_called_once()
         self.assertIsInstance(rc.send_response.mock_calls[0][1][0], CapabilitiesResult)
 
+    def test_dmp_capabilities_have_backup_options(self):
+        """Test that the capabilities returned for a DMP capabilities request include backup options"""
+        # Setup: Create a request context with mocked out send_* methods and set up the capabilities service
+        rc = utils.MockRequestContext()
+        capabilities_service = CapabilitiesService()
+        workspace_service = WorkspaceService()
+        capabilities_service._service_provider = utils.get_mock_service_provider({constants.WORKSPACE_SERVICE_NAME: workspace_service})
+
+        # If: I request the dmp capabilities of this server
+        capabilities_service._handle_dmp_capabilities_request(rc, None)
+
+        # Then: The response should include backup capabilities
+        rc.send_response.assert_called_once()
+        capabilities_result = rc.send_response.mock_calls[0][1][0]
+        features = capabilities_result.capabilities.features
+        backup_options_list = [feature for feature in features if feature.feature_name == 'backup']
+        # There should be exactly one feature containing backup options
+        self.assertEqual(len(backup_options_list), 1)
+        backup_options = backup_options_list[0]
+        # The backup options should be enabled
+        self.assertTrue(backup_options.enabled)
+        # And the backup options should contain at least 1 option
+        self.assertGreater(len(backup_options.options_metadata), 0)
+
 
 if __name__ == '__main__':
     unittest.main()

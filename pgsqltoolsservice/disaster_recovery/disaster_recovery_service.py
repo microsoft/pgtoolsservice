@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 
+from pgsqltoolsservice.capabilities.contracts import CategoryValue, FeatureMetadataProvider, ServiceOption
 from pgsqltoolsservice.connection import ConnectionInfo
 from pgsqltoolsservice.disaster_recovery.contracts.backup import BACKUP_CONFIG_INFO_REQUEST, BACKUP_REQUEST, BackupParams, DefaultDatabaseInfoParams
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
@@ -98,3 +99,44 @@ def _get_pg_exe_path(exe_name: str) -> str:
     if not os.path.exists(path):
         raise ValueError(f'Could not find executable file {path}')  # TODO: Localize
     return path
+
+
+BACKUP_OPTIONS = FeatureMetadataProvider(
+    True,
+    'backup',
+    [
+        ServiceOption(
+            name='type',
+            display_name='Backup type',
+            description='The type of backup to perform',
+            value_type=ServiceOption.VALUE_TYPE_CATEGORY,
+            is_required=True,
+            category_values=[
+                # TODO mairvine 8/14/17: Uncomment these options once backup choice is supported
+                # See https://github.com/Microsoft/carbon#1432
+                # # CategoryValue(
+                # #     display_name='pg_dump/pg_restore (.dump)',
+                # #     name='dump'
+                # # ),
+                # # CategoryValue(
+                # #     display_name='Directory',
+                # #     name='directory'
+                # # ),
+                # # CategoryValue(
+                # #     display_name='Archive (.tar)',
+                # #     name='tar'
+                # # ),
+                CategoryValue(
+                    display_name='Plain text (.sql)',
+                    name='sql'
+                ),
+            ],
+            default_value='sql'
+        ),
+        ServiceOption(
+            name='path',
+            display_name='Output path',
+            description='The path to the backup file/directory that will be produced',
+            value_type=ServiceOption.VALUE_TYPE_STRING,
+            is_required=True
+        )])
