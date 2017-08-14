@@ -112,18 +112,20 @@ BACKUP_OPTIONS = FeatureMetadataProvider(
             value_type=ServiceOption.VALUE_TYPE_CATEGORY,
             is_required=True,
             category_values=[
-                CategoryValue(
-                    display_name='pg_dump/pg_restore (.dump)',
-                    name='dump'
-                ),
-                CategoryValue(
-                    display_name='Directory',
-                    name='directory'
-                ),
-                CategoryValue(
-                    display_name='Archive (.tar)',
-                    name='tar'
-                ),
+                # TODO mairvine 8/14/17: Uncomment these options once backup choice is supported
+                # See https://github.com/Microsoft/carbon#1432
+                # # CategoryValue(
+                # #     display_name='pg_dump/pg_restore (.dump)',
+                # #     name='dump'
+                # # ),
+                # # CategoryValue(
+                # #     display_name='Directory',
+                # #     name='directory'
+                # # ),
+                # # CategoryValue(
+                # #     display_name='Archive (.tar)',
+                # #     name='tar'
+                # # ),
                 CategoryValue(
                     display_name='Plain text (.sql)',
                     name='sql'
