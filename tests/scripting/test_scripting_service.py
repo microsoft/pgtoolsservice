@@ -28,11 +28,8 @@ from pgsmo.objects.server.server import Server
 from pgsmo.objects.schema.schema import Schema, TEMPLATE_ROOT
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
-<<<<<<< HEAD
-=======
 from pgsmo.objects.sequence.sequence import Sequence
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
->>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
 from pgsmo.objects.functions import Function
 
 """Module for testing the scripting service"""
@@ -118,11 +115,7 @@ class TestScriptingService(unittest.TestCase):
         mock_service._service_provider.logger.exception = mock.MagicMock()
         operations = [ScriptOperation.Create, ScriptOperation.Select,
                       ScriptOperation.Update, ScriptOperation.Delete]
-<<<<<<< HEAD
-        objects = ["Database", "View", "Table", "Schema", "Role", "Function"]
-=======
         objects = ["Database", "View", "Table", "Schema", "Role", "Sequence", "Function"]
->>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
 
         mock_service.script_as_select = mock.MagicMock()
         mock_service.script_as_create = mock.MagicMock()
@@ -209,12 +202,9 @@ class TestScriptingService(unittest.TestCase):
         # Tablespace
         self._test_tablespace_delete_script(mock_scripter, service)
 
-<<<<<<< HEAD
-=======
         # Sequence
         self._test_sequence_delete_script(mock_scripter, service)
 
->>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
         # Function
         self._test_function_delete_script(mock_scripter, service)
 
@@ -232,12 +222,9 @@ class TestScriptingService(unittest.TestCase):
         # Tablespace
         self._test_tablespace_update_script(mock_scripter, service)
 
-<<<<<<< HEAD
-=======
         # Sequence
         self._test_sequence_update_script(mock_scripter, service)
 
->>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
         # Function
         self._test_function_update_script(mock_scripter, service)
 
@@ -397,8 +384,6 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
 
-<<<<<<< HEAD
-=======
     def _test_sequence_create_script(self, scripter, service):
         """ Helper function to test create script for sequence """
         # Set up the mocks
@@ -423,7 +408,6 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
 
->>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
     def _test_function_create_script(self, scripter, service):
         """ Helper function to test create script for function """
         # Set up the mocks
@@ -572,8 +556,6 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
 
-<<<<<<< HEAD
-=======
     def _test_sequence_delete_script(self, scripter, service):
         """ Helper function to test delete script for sequence """
         # Set up the mocks
@@ -598,7 +580,6 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
 
->>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
     def _test_function_delete_script(self, scripter, service):
         """ Helper function to test delete script for Function """
         # Set up the mocks
@@ -698,8 +679,6 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
 
-<<<<<<< HEAD
-=======
     def _test_sequence_update_script(self, scripter, service):
         """ Helper function to test update script for sequence """
         # Set up the mocks
@@ -725,7 +704,6 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
 
->>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
     def _test_function_update_script(self, scripter, service):
         """ Helper function to test update script for schemas """
         # Set up the mocks

@@ -20,6 +20,7 @@ from pgsqltoolsservice.metadata import MetadataService
 from pgsqltoolsservice.object_explorer import ObjectExplorerService
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
+from pgsqltoolsservice.edit_data.edit_data_service import EditDataService
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
 
@@ -76,6 +77,7 @@ if __name__ == '__main__':
         constants.QUERY_EXECUTION_SERVICE_NAME: QueryExecutionService,
         constants.SCRIPTING_SERVICE_NAME: ScriptingService,
         constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
+        constants.EDIT_DATA_SERVICE_NAME: EditDataService,
     }
     service_box = ServiceProvider(server, services, logger)
     service_box.initialize()
