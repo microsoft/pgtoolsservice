@@ -75,6 +75,13 @@ class Scripter(object):
 
     # HELPER METHODS ##########################################################
 
+    def _get_schema_from_db(self, schema_name, databases):
+        try:
+            schema = databases[schema_name]
+            return schema
+        except NameError:
+            return None
+
     def _find_schema(self, metadata):
         """ Find the schema in the server to script as """
         schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
@@ -83,7 +90,7 @@ class Scripter(object):
         try:
             for db in databases:
                 if db.schemas is not None:
-                    parent_schema = db.schemas.__getitem__(schema_name)
+                    parent_schema = self._get_schema_from_db(schema_name, db.schemas)
                     if parent_schema is not None:
                         return parent_schema
         except Exception:
