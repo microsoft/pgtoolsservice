@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-import logging
+
 import unittest
 from unittest import mock
 from typing import List, Dict  # noqa
@@ -444,7 +444,11 @@ class TestScriptingService(unittest.TestCase):
         mock_collation = Collation(None, None, 'test')
 
         def collation_mock_fn(connection):
+<<<<<<< HEAD
             mock_collation._template_root = mock.MagicMock(return_value=Collation.TEMPLATE_ROOT)
+=======
+            mock_collation._template_root = mock.MagicMock(return_value=Table.TEMPLATE_ROOT)
+>>>>>>> 1cb4056282ace6cd4227cafae27ef70ddc5bb4f5
             mock_collation._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_collation.create_script(connection)
             return result
