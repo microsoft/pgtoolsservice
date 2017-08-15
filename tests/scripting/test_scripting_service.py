@@ -2,7 +2,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-
 import unittest
 from unittest import mock
 from typing import List, Dict  # noqa
@@ -31,6 +30,7 @@ from pgsmo.objects.tablespace.tablespace import Tablespace
 from pgsmo.objects.sequence.sequence import Sequence
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsmo.objects.functions import Function
+from pgsmo.objects.collation import Collation
 
 """Module for testing the scripting service"""
 
@@ -432,6 +432,29 @@ class TestScriptingService(unittest.TestCase):
 
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
+
+    def _test_collation_create_script(self, scripter, service):
+        """ Helper function to test create script for collation """
+        # Set up the mocks
+        mock_collation = Collation(None, None, 'test')
+
+        def collation_mock_fn(connection):
+            mock_collation._template_root = mock.MagicMock(return_value=Table.TEMPLATE_ROOT)
+            mock_collation._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_collation.create_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_collation.create_script = mock.MagicMock(return_value=collation_mock_fn(self.connection))
+            return mock_collation.create_script()
+
+        scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_create_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_create()
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
 
     # DELETE SCRIPTS ##############################################################
 

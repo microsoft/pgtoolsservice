@@ -6,6 +6,7 @@
 import pgsmo.objects.node_object as node
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
+import pgsmo.utils.querying as querying
 
 
 class Collation(node.NodeObject):
@@ -35,3 +36,42 @@ class Collation(node.NodeObject):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    # -BASIC PROPERTIES ####################################################
+    @property
+    def owner(self):
+        return self._full_properties.get("owner", "")
+    def schema(self):
+        return self._full_properties.get("schema", "")
+    def description(self):
+        return self._full_properties.get("description", "")
+    def lc_collate(self):
+        return self._full_properties.get("lc_collate", "")
+    def lc_type(self):
+        return self._full_properties.get("lc_type", "")
+    def locale(self):
+        return self._full_properties.get("locale", "")
+    def copy_collation(self):
+        return self._full_properties.get("copy_collation", "")
+
+    # SCRIPTING METHODS ##############################################################
+    def create_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve create scripts for a table """
+        data = self._create_query_data()
+        query_file = "create.sql"
+        return self._get_template(connection, query_file, data)
+
+    def _create_query_data(self) -> dict:
+        """ Provides data input for create script """
+        data = {"data": {
+            "name": self.name,
+            "pronamespace": self.parent.name,
+            "owner": self.owner,
+            "schema": self.schema,
+            "description": self.description,
+            "lc_collate": self.lc_collate,
+            "lc_type": self.lc_type,
+            "locale": self.locale,
+            "copy_collation": self.copy_collation           
+        }}
+        return data
