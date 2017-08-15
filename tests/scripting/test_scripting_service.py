@@ -236,6 +236,9 @@ class TestScriptingService(unittest.TestCase):
         # Function
         self._test_function_update_script(mock_scripter, service)
 
+        # Collation
+        self._test_collation_update_script(mock_scripter, service)
+
     # PRIVATE HELPER FUNCTIONS ####################################################
 
     # CREATE SCRIPTS ##############################################################
@@ -785,6 +788,32 @@ class TestScriptingService(unittest.TestCase):
 
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
+
+    def _test_collation_update_script(self, scripter, service):
+        """ Helper function to test update script for collation """
+        # Set up the mocks
+        mock_collation = Collation(None, None, 'test')
+
+        def collation_mock_fn(connection):
+            mock_collation._template_root = mock.MagicMock(return_value=Collation.TEMPLATE_ROOT)
+            mock_collation._update_query_data = mock.MagicMock(return_value={"data": {"name": "newname", "schema": "newschema"},
+                                                                            "o_data": {"name": "oldname", "schema": "testschema"}})
+            result = mock_collation.update_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_collation.update_script = mock.MagicMock(return_value=collation_mock_fn(self.connection))
+            return mock_collation.update_script()
+
+        scripter.get_collation_update_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_collation_update_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_update()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
 
 
 if __name__ == '__main__':

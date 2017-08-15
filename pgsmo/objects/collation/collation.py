@@ -65,7 +65,7 @@ class Collation(node.NodeObject):
     @property
     def copy_collation(self):
         return self._full_properties.get("copy_collation", "")
-        
+
     @property
     def cascade(self):
         return self._full_properties.get("cascade", "")    
@@ -82,6 +82,12 @@ class Collation(node.NodeObject):
         data = self._delete_query_data()
         query_file = "delete.sql"
         return self._get_template(connection, query_file, data)    
+
+    def update_script(self, connection: querying.ServerConnection) -> str:
+        """ Function to retrieve update scripts for a collation"""
+        data = self._update_query_data()
+        query_file = "update.sql"
+        return self._get_template(connection, query_file, data)
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
@@ -107,3 +113,22 @@ class Collation(node.NodeObject):
             }, "cascade": self.cascade
         }
         return data
+
+    def _update_query_data(self) -> dict:
+        """ Provides data input for update script """
+        data = {"data": {
+            "name": self.name,
+            "owner": self.owner,
+            "description": self.description,            
+            "schema": self.schema
+        },
+            "o_data": {
+                "name": "",
+                "owner": "",                
+                "description": "",
+                "schema": ""
+            }
+        }
+        return data
+
+    
