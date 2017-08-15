@@ -34,7 +34,7 @@ class ScriptingService(object):
 
     def _handle_scriptas_request(self, request_context: RequestContext, params: ScriptAsParameters) -> None:
         try:
-            metadata = params.metadata
+            metadata = self._get_metadata(params.metadata)
             scripting_operation = params.operation
             connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
             connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
@@ -45,7 +45,14 @@ class ScriptingService(object):
 
     # HELPER FUNCTIONS ######################################################
 
-    def script_as_select(self, connection, metadata: ObjectMetadata) -> str:
+    def _get_metadata(self, metadata: dict) -> ObjectMetadata:
+        metadata_type = metadata.get("metadataType", "")
+        metadata_type_name = metadata.get("metadataTypeName", "")
+        name = metadata.get("name", "")
+        schema = metadata.get("schema", "")
+        return ObjectMetadata.from_data(metadata_type, metadata_type_name, name, schema)
+
+    def _script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
         scripter = Scripter(connection)
         return scripter.script_as_select(metadata)
@@ -72,5 +79,5 @@ class ScriptingService(object):
             create: scripter.get_create_script(metadata),
             delete: scripter.get_delete_script(metadata),
             update: scripter.get_update_script(metadata),
-            select: self.script_as_select(connection, metadata)
+            select: self._script_as_select(connection, metadata)
         }
