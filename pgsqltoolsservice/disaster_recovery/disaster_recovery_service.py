@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 
+from pgsqltoolsservice.capabilities.contracts import CategoryValue, FeatureMetadataProvider, ServiceOption
 from pgsqltoolsservice.connection import ConnectionInfo
 from pgsqltoolsservice.disaster_recovery.contracts.backup import BACKUP_CONFIG_INFO_REQUEST, BACKUP_REQUEST, BackupParams, DefaultDatabaseInfoParams
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
@@ -64,9 +65,9 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams) -> Ta
                     f'--username={connection_info.details.options["user"]}']
     pg_dump_process = subprocess.Popen(pg_dump_args, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     # pg_dump will prompt for the password, so send it via stdin. This call will block until the process exits.
-    pg_dump_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
+    _, stderr = pg_dump_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
     if pg_dump_process.returncode != 0:
-        return TaskResult(TaskStatus.FAILED, str(pg_dump_process.stderr.read()))
+        return TaskResult(TaskStatus.FAILED, str(stderr, 'utf-8'))
     return TaskResult(TaskStatus.SUCCEEDED)
 
 
@@ -98,3 +99,44 @@ def _get_pg_exe_path(exe_name: str) -> str:
     if not os.path.exists(path):
         raise ValueError(f'Could not find executable file {path}')  # TODO: Localize
     return path
+
+
+BACKUP_OPTIONS = FeatureMetadataProvider(
+    True,
+    'backup',
+    [
+        ServiceOption(
+            name='type',
+            display_name='Backup type',
+            description='The type of backup to perform',
+            value_type=ServiceOption.VALUE_TYPE_CATEGORY,
+            is_required=True,
+            category_values=[
+                # TODO mairvine 8/14/17: Uncomment these options once backup choice is supported
+                # See https://github.com/Microsoft/carbon#1432
+                # # CategoryValue(
+                # #     display_name='pg_dump/pg_restore (.dump)',
+                # #     name='dump'
+                # # ),
+                # # CategoryValue(
+                # #     display_name='Directory',
+                # #     name='directory'
+                # # ),
+                # # CategoryValue(
+                # #     display_name='Archive (.tar)',
+                # #     name='tar'
+                # # ),
+                CategoryValue(
+                    display_name='Plain text (.sql)',
+                    name='sql'
+                ),
+            ],
+            default_value='sql'
+        ),
+        ServiceOption(
+            name='path',
+            display_name='Output path',
+            description='The path to the backup file/directory that will be produced',
+            value_type=ServiceOption.VALUE_TYPE_STRING,
+            is_required=True
+        )])

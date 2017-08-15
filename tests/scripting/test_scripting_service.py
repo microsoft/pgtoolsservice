@@ -28,6 +28,11 @@ from pgsmo.objects.server.server import Server
 from pgsmo.objects.schema.schema import Schema, TEMPLATE_ROOT
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
+<<<<<<< HEAD
+=======
+from pgsmo.objects.sequence.sequence import Sequence
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata
+>>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
 from pgsmo.objects.functions import Function
 
 """Module for testing the scripting service"""
@@ -87,10 +92,9 @@ class TestScriptingService(unittest.TestCase):
     def test_handle_scriptas_request(self):
         """ Test _handle_scriptas_request function """
         mock_service = ScriptingService()
-        metadata = {
-            "schema": "public",
-            "name": "foo"
-        }
+        metadata = ObjectMetadata()
+        metadata.schema = "public"
+        metadata.name = "test"
         params = {
             "metadata": metadata,
             "operation": ScriptOperation.Select,
@@ -114,7 +118,11 @@ class TestScriptingService(unittest.TestCase):
         mock_service._service_provider.logger.exception = mock.MagicMock()
         operations = [ScriptOperation.Create, ScriptOperation.Select,
                       ScriptOperation.Update, ScriptOperation.Delete]
+<<<<<<< HEAD
         objects = ["Database", "View", "Table", "Schema", "Role", "Function"]
+=======
+        objects = ["Database", "View", "Table", "Schema", "Role", "Sequence", "Function"]
+>>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
 
         mock_service.script_as_select = mock.MagicMock()
         mock_service.script_as_create = mock.MagicMock()
@@ -140,10 +148,9 @@ class TestScriptingService(unittest.TestCase):
         mock_connection = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
         scripter = Scripter(mock_connection)
         service = ScriptingService()
-        metadata = {
-            "schema": "public",
-            "name": "foo"
-        }
+        metadata = ObjectMetadata()
+        metadata.schema = "public"
+        metadata.name = "test"
         service.script_as_select = mock.MagicMock(return_value=scripter.script_as_select(metadata))
 
         # If I try to get select script for any object
@@ -173,6 +180,9 @@ class TestScriptingService(unittest.TestCase):
         # Role
         self._test_role_create_script(mock_scripter, service)
 
+        # Sequence
+        self._test_sequence_create_script(mock_scripter, service)
+
         # Tablespace
         self._test_tablespace_create_script(mock_scripter, service)
 
@@ -199,6 +209,12 @@ class TestScriptingService(unittest.TestCase):
         # Tablespace
         self._test_tablespace_delete_script(mock_scripter, service)
 
+<<<<<<< HEAD
+=======
+        # Sequence
+        self._test_sequence_delete_script(mock_scripter, service)
+
+>>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
         # Function
         self._test_function_delete_script(mock_scripter, service)
 
@@ -216,6 +232,12 @@ class TestScriptingService(unittest.TestCase):
         # Tablespace
         self._test_tablespace_update_script(mock_scripter, service)
 
+<<<<<<< HEAD
+=======
+        # Sequence
+        self._test_sequence_update_script(mock_scripter, service)
+
+>>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
         # Function
         self._test_function_update_script(mock_scripter, service)
 
@@ -328,7 +350,7 @@ class TestScriptingService(unittest.TestCase):
         self.assertIsNotNone(result)
 
     def _test_role_create_script(self, scripter, service):
-        """ Helper function to test create script for schema """
+        """ Helper function to test create script for role """
         # Set up the mocks
         mock_role = Role(None, 'test')
 
@@ -375,6 +397,33 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
 
+<<<<<<< HEAD
+=======
+    def _test_sequence_create_script(self, scripter, service):
+        """ Helper function to test create script for sequence """
+        # Set up the mocks
+        mock_sequence = Sequence(None, None, 'test')
+
+        def sequence_mock_fn(connection):
+            mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
+            mock_sequence._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_sequence.create_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_sequence.create_script = mock.MagicMock(return_value=sequence_mock_fn(self.connection))
+            return mock_sequence.create_script()
+
+        scripter.get_sequence_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_sequence_create_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_create()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
+>>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
     def _test_function_create_script(self, scripter, service):
         """ Helper function to test create script for function """
         # Set up the mocks
@@ -523,6 +572,33 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
 
+<<<<<<< HEAD
+=======
+    def _test_sequence_delete_script(self, scripter, service):
+        """ Helper function to test delete script for sequence """
+        # Set up the mocks
+        mock_sequence = Sequence(None, None, 'test')
+
+        def sequence_mock_fn(connection):
+            mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
+            mock_sequence._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_sequence.delete_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_sequence.delete_script = mock.MagicMock(return_value=sequence_mock_fn(self.connection))
+            return mock_sequence.delete_script()
+
+        scripter.get_sequence_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_sequence_delete_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_delete()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
+>>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
     def _test_function_delete_script(self, scripter, service):
         """ Helper function to test delete script for Function """
         # Set up the mocks
@@ -599,7 +675,7 @@ class TestScriptingService(unittest.TestCase):
         self.assertNotNoneOrEmpty(result)
 
     def _test_tablespace_update_script(self, scripter, service):
-        """ Helper function to test update script for schemas """
+        """ Helper function to test update script for tablespace """
         # Set up the mocks
         mock_tablespace = Tablespace(None, 'test')
 
@@ -622,6 +698,34 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
 
+<<<<<<< HEAD
+=======
+    def _test_sequence_update_script(self, scripter, service):
+        """ Helper function to test update script for sequence """
+        # Set up the mocks
+        mock_sequence = Sequence(None, None, 'test')
+
+        def sequence_mock_fn(connection):
+            mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
+            mock_sequence._update_query_data = mock.MagicMock(return_value={"data": {"name": "newname", "schema": "newschema", "seqowner": "newowner"},
+                                                                            "o_data": {"name": "oldname", "schema": "testschema", "seqowner": "oldowner"}})
+            result = mock_sequence.update_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_sequence.update_script = mock.MagicMock(return_value=sequence_mock_fn(self.connection))
+            return mock_sequence.update_script()
+
+        scripter.get_sequence_update_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_sequence_update_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_update()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
+>>>>>>> a78550463c35f6cc82877f36a6c774caadbbbb4f
     def _test_function_update_script(self, scripter, service):
         """ Helper function to test update script for schemas """
         # Set up the mocks
