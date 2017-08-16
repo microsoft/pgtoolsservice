@@ -41,19 +41,19 @@ class Collation(node.NodeObject):
     @property
     def owner(self):
         return self._full_properties.get("owner", "")
-    
+
     @property
     def schema(self):
         return self._full_properties.get("schema")
-    
+
     @property
     def description(self):
         return self._full_properties.get("description", "")
-    
+
     @property
     def lc_collate(self):
         return self._full_properties.get("lc_collate", "")
-    
+
     @property
     def lc_type(self):
         return self._full_properties.get("lc_type", "")
@@ -61,15 +61,15 @@ class Collation(node.NodeObject):
     @property
     def locale(self):
         return self._full_properties.get("locale", "")
-    
+
     @property
     def copy_collation(self):
         return self._full_properties.get("copy_collation", "")
 
     @property
     def cascade(self):
-        return self._full_properties.get("cascade", "")    
-   
+        return self._full_properties.get("cascade", "")
+
     # SCRIPTING METHODS ##############################################################
     def create_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve create scripts for a collation """
@@ -81,7 +81,7 @@ class Collation(node.NodeObject):
         """ Function to retrieve delete scripts for a collation"""
         data = self._delete_query_data()
         query_file = "delete.sql"
-        return self._get_template(connection, query_file, data)    
+        return self._get_template(connection, query_file, data)
 
     def update_script(self, connection: querying.ServerConnection) -> str:
         """ Function to retrieve update scripts for a collation"""
@@ -103,7 +103,7 @@ class Collation(node.NodeObject):
             "lc_collate": self.lc_collate,
             "lc_type": self.lc_type,
             "locale": self.locale,
-            "copy_collation": self.copy_collation           
+            "copy_collation": self.copy_collation
         }}
         return data
 
@@ -122,16 +122,14 @@ class Collation(node.NodeObject):
         data = {"data": {
             "name": self.name,
             "owner": self.owner,
-            "description": self.description,            
+            "description": self.description,
             "schema": self.schema
         },
             "o_data": {
                 "name": "",
-                "owner": "",                
+                "owner": "",
                 "description": "",
                 "schema": ""
             }
         }
         return data
-
-    

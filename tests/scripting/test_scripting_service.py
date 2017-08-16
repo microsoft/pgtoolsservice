@@ -664,7 +664,6 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
 
-
     # UPDATE SCRIPTS ##############################################################
 
     def _test_schema_update_script(self, scripter, service):
@@ -797,7 +796,7 @@ class TestScriptingService(unittest.TestCase):
         def collation_mock_fn(connection):
             mock_collation._template_root = mock.MagicMock(return_value=Collation.TEMPLATE_ROOT)
             mock_collation._update_query_data = mock.MagicMock(return_value={"data": {"name": "newname", "schema": "newschema"},
-                                                                            "o_data": {"name": "oldname", "schema": "testschema"}})
+                                                                             "o_data": {"name": "oldname", "schema": "testschema"}})
             result = mock_collation.update_script(connection)
             return result
 
@@ -814,7 +813,5 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
 
-
-
-if __name__ == '__main__':
-    unittest.main()
+    if __name__ == '__main__':
+        unittest.main()
