@@ -31,6 +31,8 @@ from pgsmo.objects.tablespace.tablespace import Tablespace
 from pgsmo.objects.sequence.sequence import Sequence
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsmo.objects.functions import Function
+from pgsmo.objects.collation import Collation
+
 
 """Module for testing the scripting service"""
 
@@ -183,6 +185,9 @@ class TestScriptingService(unittest.TestCase):
         # Function
         self._test_function_create_script(mock_scripter, service)
 
+        # Collation
+        self._test_collation_create_script(mock_scripter, service)
+
     def test_script_as_delete(self):
         """ Test getting delete script for all objects """
         mock_scripter = Scripter(self.connection)
@@ -209,6 +214,9 @@ class TestScriptingService(unittest.TestCase):
         # Function
         self._test_function_delete_script(mock_scripter, service)
 
+        # Collation
+        self._test_collation_delete_script(mock_scripter, service)
+
     def test_script_as_update(self):
         """ Test getting update script for all objects """
         mock_scripter = Scripter(self.connection)
@@ -228,6 +236,9 @@ class TestScriptingService(unittest.TestCase):
 
         # Function
         self._test_function_update_script(mock_scripter, service)
+
+        # Collation
+        self._test_collation_update_script(mock_scripter, service)
 
     # PRIVATE HELPER FUNCTIONS ####################################################
 
@@ -434,6 +445,29 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertIsNotNone(result)
 
+    def _test_collation_create_script(self, scripter, service):
+        """ Helper function to test create script for collation """
+        # Set up the mocks
+        mock_collation = Collation(None, None, 'test')
+
+        def collation_mock_fn(connection):
+            mock_collation._template_root = mock.MagicMock(return_value=Collation.TEMPLATE_ROOT)
+            mock_collation._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
+            result = mock_collation.create_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_collation.create_script = mock.MagicMock(return_value=collation_mock_fn(self.connection))
+            return mock_collation.create_script()
+
+        scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_create_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_create()
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
     # DELETE SCRIPTS ##############################################################
 
     def _test_table_delete_script(self, scripter, service):
@@ -606,6 +640,31 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
 
+    def _test_collation_delete_script(self, scripter, service):
+        """ Helper function to test delete script for Function """
+        # Set up the mocks
+        mock_server = Server(self.connection)
+        mock_collation = Collation(mock_server, None, 'test')
+
+        def collation_mock_fn(connection):
+            mock_collation._template_root = mock.MagicMock(return_value=Collation.TEMPLATE_ROOT)
+            mock_collation._delete_query_data = mock.MagicMock(return_value={"data": {"name": "TestCollation"}})
+            result = mock_collation.delete_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_collation.delete_script = mock.MagicMock(return_value=collation_mock_fn(self.connection))
+            return mock_collation.delete_script()
+
+        scripter.get_collation_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_collation_delete_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_delete()
+
+        # The result shouldn't be none or an empty string
+        self.assertNotNoneOrEmpty(result)
+
     # UPDATE SCRIPTS ##############################################################
 
     def _test_schema_update_script(self, scripter, service):
@@ -730,6 +789,30 @@ class TestScriptingService(unittest.TestCase):
         # The result shouldn't be none or an empty string
         self.assertNotNoneOrEmpty(result)
 
+    def _test_collation_update_script(self, scripter, service):
+        """ Helper function to test update script for collation """
+        # Set up the mocks
+        mock_collation = Collation(None, None, 'test')
 
-if __name__ == '__main__':
-    unittest.main()
+        def collation_mock_fn(connection):
+            mock_collation._template_root = mock.MagicMock(return_value=Collation.TEMPLATE_ROOT)
+            mock_collation._update_query_data = mock.MagicMock(return_value={"data": {"name": "newname", "schema": "newschema"},
+                                                                             "o_data": {"name": "oldname", "schema": "testschema"}})
+            result = mock_collation.update_script(connection)
+            return result
+
+        def scripter_mock_fn():
+            mock_collation.update_script = mock.MagicMock(return_value=collation_mock_fn(self.connection))
+            return mock_collation.update_script()
+
+        scripter.get_collation_update_script = mock.MagicMock(return_value=scripter_mock_fn())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_collation_update_script())
+
+        # If I try to get select script for any object
+        result = service.script_as_update()
+
+        # The result shouldn't be none or an empty string
+        self.assertIsNotNone(result)
+
+    if __name__ == '__main__':
+        unittest.main()
