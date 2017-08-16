@@ -72,7 +72,7 @@ class Collation(node.NodeObject):
    
     # SCRIPTING METHODS ##############################################################
     def create_script(self, connection: querying.ServerConnection) -> str:
-        """ Function to retrieve create scripts for a table """
+        """ Function to retrieve create scripts for a collation """
         data = self._create_query_data()
         query_file = "create.sql"
         return self._get_template(connection, query_file, data)
@@ -88,6 +88,9 @@ class Collation(node.NodeObject):
         data = self._update_query_data()
         query_file = "update.sql"
         return self._get_template(connection, query_file, data)
+
+    # HELPER METHODS ####################################################################
+    # QUERY DATA BUILDING METHODS #######################################################
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
