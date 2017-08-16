@@ -44,7 +44,7 @@ class Collation(node.NodeObject):
     
     @property
     def schema(self):
-        return self._full_properties.get("schema", "")
+        return self._full_properties.get("schema")
     
     @property
     def description(self):
