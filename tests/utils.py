@@ -42,6 +42,8 @@ def get_mock_logger() -> logging.Logger:
     return mock_logger
 
 
+# PLEASE USE SERVICEPROVIDERMOCK from tests/mocks/service_provider_mock. #
+# This mock will be deprecated #
 def get_mock_service_provider(service_map: dict = None) -> ServiceProvider:
     """
     Generates a ServiceProvider with the given services
