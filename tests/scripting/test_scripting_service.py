@@ -119,23 +119,24 @@ class TestScriptingService(unittest.TestCase):
                       ScriptOperation.Update, ScriptOperation.Delete]
         objects = ["Database", "View", "Table", "Schema", "Role", "Sequence", "Function"]
 
-        mock_service.script_as_select = mock.MagicMock()
-        mock_service.script_as_create = mock.MagicMock()
-        mock_service.script_as_update = mock.MagicMock()
-        mock_service.script_as_delete = mock.MagicMock()
+        mock_service._script_map = mock.MagicMock()
 
         # When called with various scripting operations and objects
+        metadata = ObjectMetadata()
+        metadata.schema = "public"
         for op in operations:
             for obj in objects:
-                mock_service._scripting_operation(op.value, self.connection, {"metadataTypeName": obj})
+                metadata.metadata_type_name = obj
+                mock_service._scripting_operation(op.value, self.connection, metadata)
 
         # I should see calls being made for the select script operation
-        self.assertEqual(True, mock_service.script_as_select.called)
+        self.assertEqual(True, mock_service._script_map.called)
 
         # If I use an invalid script operation, I should get back an exception
         for obj in objects:
+            metadata.metadata_type_name = obj
             with self.assertRaises(Exception):
-                self.assertRaises(mock_service._scripting_operation("bogus value", self.connection, {"metadataTypeName": obj}))
+                self.assertRaises(mock_service._scripting_operation("bogus value", self.connection, metadata))
 
     def test_script_as_select(self):
         """Test getting select script for all objects"""
