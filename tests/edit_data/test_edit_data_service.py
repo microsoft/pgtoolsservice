@@ -17,6 +17,7 @@ class TestEditDataService(unittest.TestCase):
         self._service_under_test.register(self._service_provider)
 
     def test_initialization(self):
+        """ Just a construct for now. Will add to it as we build further """
         pass
 
     def test_register_should_initlialize_states(self):

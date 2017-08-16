@@ -5,6 +5,6 @@
 
 
 class DataEditorSession():
-
+    """ This class will hold the logic to maintain the edit session and handle the operations """
     def __init__(self):
         pass

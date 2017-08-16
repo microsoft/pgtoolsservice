@@ -8,6 +8,7 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.edit_data.contracts import (
    INITIALIZE_EDIT_REQUEST, InitializeEditParams,  EditSubsetParams, EDIT_SUBSET_REQUEST
 )
+from pgsqltoolsservice.utils import constants
 
 
 class EditDataService(object):
@@ -30,7 +31,7 @@ class EditDataService(object):
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
-        self._query_execution_service = self._service_provider.__getitem__('query_execution')
+        self._query_execution_service = self._service_provider[constants.QUERY_EXECUTION_SERVICE_NAME]
         self._logger = service_provider.logger
 
         for action in self._service_action_mapping:

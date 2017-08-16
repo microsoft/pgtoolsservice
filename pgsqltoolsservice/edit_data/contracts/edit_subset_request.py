@@ -14,7 +14,7 @@ class EditSubsetParams():
         return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
-        self.owner_uri = None
+        self.owner_uri: str = None
         self.rows_start_index: int = None
         self.rows_count: int = None
 
