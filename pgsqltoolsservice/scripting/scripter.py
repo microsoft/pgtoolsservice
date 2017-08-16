@@ -75,15 +75,24 @@ class Scripter(object):
 
     # HELPER METHODS ##########################################################
 
+    def _get_schema_from_db(self, schema_name, databases):
+        try:
+            schema = databases[schema_name]
+            return schema
+        except NameError:
+            return None
+
     def _find_schema(self, metadata):
         """ Find the schema in the server to script as """
-        table_schema = metadata.schema
+        schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
         databases = self.server.databases
         parent_schema = None
         try:
             for db in databases:
-                parent_schema = db.schemas[table_schema]
-                return parent_schema
+                if db.schemas is not None:
+                    parent_schema = self._get_schema_from_db(schema_name, db.schemas)
+                    if parent_schema is not None:
+                        return parent_schema
         except Exception:
             return None
 
@@ -100,7 +109,7 @@ class Scripter(object):
     def _find_function(self, metadata):
         """ Find the function in the server to script as """
         try:
-            function_name = metadata["name"]
+            function_name = metadata.name
             parent_schema = self._find_schema(metadata)
             return parent_schema.functions[function_name]
         except Exception:
@@ -137,7 +146,7 @@ class Scripter(object):
     def _find_sequence(self, metadata):
         """ Find a sequence in the server """
         try:
-            sequence_name = metadata["name"]
+            sequence_name = metadata.name
             sequence = self.server.sequences[sequence_name]
             return sequence
         except Exception:
