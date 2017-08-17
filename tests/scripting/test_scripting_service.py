@@ -96,7 +96,7 @@ class TestScriptingService(unittest.TestCase):
         metadata.name = "test"
         params = {
             "metadata": metadata,
-            "operation": ScriptOperation.Select,
+            "operation": ScriptOperation.SELECT,
             "owner_uri": "test_uri"
         }
 
@@ -115,8 +115,8 @@ class TestScriptingService(unittest.TestCase):
         mock_service = ScriptingService()
         mock_service._service_provider = mock.MagicMock()
         mock_service._service_provider.logger.exception = mock.MagicMock()
-        operations = [ScriptOperation.Create, ScriptOperation.Select,
-                      ScriptOperation.Update, ScriptOperation.Delete]
+        operations = [ScriptOperation.CREATE, ScriptOperation.SELECT,
+                      ScriptOperation.UPDATE, ScriptOperation.DELETE]
         objects = ["Database", "View", "Table", "Schema", "Role", "Sequence", "Function"]
 
         mock_service._script_map = mock.MagicMock()
