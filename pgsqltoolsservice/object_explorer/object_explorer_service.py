@@ -40,6 +40,7 @@ class ObjectExplorerService(object):
         self._service_provider.server.set_request_handler(CLOSE_SESSION_REQUEST, self._handle_close_session_request)
         self._service_provider.server.set_request_handler(EXPAND_REQUEST, self._handle_expand_request)
         self._service_provider.server.set_request_handler(REFRESH_REQUEST, self._handle_refresh_request)
+        self._service_provider.server.add_shutdown_handler(self._handle_shutdown)
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Object Explorer service successfully initialized')
@@ -110,6 +111,17 @@ class ObjectExplorerService(object):
     def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle expand Object Explorer tree node request"""
         self._expand_node_base(False, request_context, params)
+
+    def _handle_shutdown(self) -> None:
+        """Close all OE sessions when service is shutdown"""
+        self._service_provider.logger.info('Closing all the OE sessions')
+        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        for key, session in self._session_map.items():
+            connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+            if connect_result:
+                self._service_provider.logger.info('Closed the session with Id: ' + session.id)
+            else:
+                self._service_provider.logger.info('Could not close the session with Id: ' + session.id)
 
     # PRIVATE HELPERS ######################################################
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):

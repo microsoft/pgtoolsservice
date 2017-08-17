@@ -359,6 +359,47 @@ class TestObjectExplorer(unittest.TestCase):
         # ... The session should no longer be in the
         self.assertDictEqual(oe._session_map, {})
 
+    # SHUTDOWN NODE #########################################################
+
+    def test_handle_shutdown_successfulWithSessions(self):
+        # Setup: Create an OE service and add a session to it
+        cs = ConnectionService()
+        oe = ObjectExplorerService()
+        params, session_uri = self._connection_details()
+        session = ObjectExplorerSession(session_uri, params)
+        oe._session_map[session_uri] = session
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        cs.disconnect = mock.MagicMock(return_value=True)
+
+        # shutdown the session
+        oe._handle_shutdown()
+        oe._service_provider.logger.info.assert_called_with('Closed the session with Id: objectexplorer://testuser@testhost:testdb/')
+
+    def test_handle_shutdown_UnsuccessfulWithSessions(self):
+        # Setup: Create an OE service and add a session to it
+        cs = ConnectionService()
+        oe = ObjectExplorerService()
+        params, session_uri = self._connection_details()
+        session = ObjectExplorerSession(session_uri, params)
+        oe._session_map[session_uri] = session
+        cs.disconnect = mock.MagicMock(return_value=False)
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+
+        # shutdown the session
+        oe._handle_shutdown()
+        oe._service_provider.logger.info.assert_called_with('Could not close the session with Id: objectexplorer://testuser@testhost:testdb/')
+
+    def test_handle_shutdown_successfulNoSessions(self):
+        # Setup: Create an OE service and add no session to it
+        cs = ConnectionService()
+        oe = ObjectExplorerService()
+        cs.disconnect = mock.MagicMock(return_value=True)
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+
+        # shutdown the session
+        oe._handle_shutdown()
+        oe._service_provider.logger.info.assert_called_with('Closing all the OE sessions')
+
     # EXPAND NODE ##########################################################
     @staticmethod
     def expand_method(oe: ObjectExplorerService, rc: RequestContext, p: ExpandParameters):
