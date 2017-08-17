@@ -92,8 +92,10 @@ class ObjectExplorerService(object):
 
             # Try to remove the session
             session = self._session_map.pop(params.session_id, None)
-            # TODO: Dispose session (disconnect, etc) (see: https://github.com/Microsoft/carbon/issues/1541)
-
+            conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+            connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+            if not connect_result:
+                raise RuntimeError('Connection could not be disconnected')   # TODO Localize
             request_context.send_response(session is not None)
         except Exception as e:
             message = f'Failed to close OE session: {str(e)}'   # TODO: Localize

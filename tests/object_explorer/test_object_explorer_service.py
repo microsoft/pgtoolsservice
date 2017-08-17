@@ -315,13 +315,18 @@ class TestObjectExplorer(unittest.TestCase):
         # ... I should get an error response
         rc.validate()
 
-    def test_handle_close_session_does_not_exist(self):
+    def test_handle_close_session__unsuccessful(self):
         # Setup: Create an OE service
+        cs = ConnectionService()
         oe = ObjectExplorerService()
-        oe._service_provider = utils.get_mock_service_provider({})
+        params, session_uri = self._connection_details()
+        session = ObjectExplorerSession(session_uri, params)
+        oe._session_map[session_uri] = session
+        cs.disconnect = mock.MagicMock(return_value=False)
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
         # If: I close an OE session that doesn't exist
-        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
+        rc = RequestFlowValidator().add_expected_error(type(None))
         session_id = self._connection_details()[1]
         params = self._close_session_params()
         params.session_id = session_id
@@ -332,16 +337,19 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_handle_close_session_successful(self):
         # Setup: Create an OE service and add a session to it
+        cs = ConnectionService()
         oe = ObjectExplorerService()
-        oe._service_provider = utils.get_mock_service_provider({})
-        session_id = self._connection_details()[1]
-        params = self._close_session_params()
-        params.session_id = session_id
-        session = ObjectExplorerSession(session_id, params)
-        oe._session_map[session_id] = session
+        params, session_uri = self._connection_details()
+        session = ObjectExplorerSession(session_uri, params)
+        oe._session_map[session_uri] = session
+        cs.disconnect = mock.MagicMock(return_value=True)
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
         # If: I close a session
         rc = RequestFlowValidator().add_expected_response(bool, self.assertTrue)
+        session_id = self._connection_details()[1]
+        params = self._close_session_params()
+        params.session_id = session_id
         oe._handle_close_session_request(rc.request_context, params)
 
         # Then:
