@@ -12,8 +12,9 @@ class ScriptOperation(enum.Enum):
     """ Class that defines the various script operations """
     Select = 0
     Create = 1
-    Update = 2
-    Delete = 3
+    Insert = 2
+    Update = 3
+    Delete = 4
 
 
 class ScriptAsParameters:
