@@ -343,7 +343,7 @@ class TestObjectExplorer(unittest.TestCase):
         params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
-        cs.disconnect = mock.MagicMock.side_effect = Exception("test")
+        cs.disconnect = mock.MagicMock.side_effect = Exception()
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
         # If: I close an OE session that doesn't exist
