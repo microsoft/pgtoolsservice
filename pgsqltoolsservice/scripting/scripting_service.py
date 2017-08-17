@@ -71,10 +71,10 @@ class ScriptingService(object):
     def _script_map(self, connection, metadata) -> dict:
         """ Maps every object and operation to the correct script function """
         scripter = Scripter(connection)
-        create = ScriptOperation.Create.value
-        delete = ScriptOperation.Delete.value
-        update = ScriptOperation.Update.value
-        select = ScriptOperation.Select.value
+        create = ScriptOperation.CREATE.value
+        delete = ScriptOperation.DELETE.value
+        update = ScriptOperation.UPDATE.value
+        select = ScriptOperation.SELECT.value
         return {
             create: scripter.get_create_script(metadata),
             delete: scripter.get_delete_script(metadata),
