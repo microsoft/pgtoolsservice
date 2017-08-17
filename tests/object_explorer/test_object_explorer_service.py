@@ -315,6 +315,24 @@ class TestObjectExplorer(unittest.TestCase):
         # ... I should get an error response
         rc.validate()
 
+    def test_handle_close_session_nosession(self):
+        # Setup: Create an OE service
+        cs = ConnectionService()
+        oe = ObjectExplorerService()
+        params, session_uri = self._connection_details()
+        cs.disconnect = mock.MagicMock(return_value=False)
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+
+        # If: I close an OE session that doesn't exist
+        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
+        session_id = self._connection_details()[1]
+        params = self._close_session_params()
+        params.session_id = session_id
+        oe._handle_close_session_request(rc.request_context, params)
+
+        # Then: I should get a successful response
+        rc.validate()
+
     def test_handle_close_session_unsuccessful(self):
         # Setup: Create an OE service
         cs = ConnectionService()

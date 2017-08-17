@@ -101,7 +101,9 @@ class ObjectExplorerService(object):
                         self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
                     request_context.send_response(False)
                 else:
-                    request_context.send_response(session is not None)
+                    request_context.send_response(True)
+            else:
+                request_context.send_response(False)
 
         except Exception as e:
             message = f'Failed to close OE session: {str(e)}'   # TODO: Localize
