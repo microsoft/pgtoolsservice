@@ -45,11 +45,17 @@ class TestDisasterRecoveryService(unittest.TestCase):
         self.request_context = utils.MockRequestContext()
         self.backup_path = 'mock/pg_dump'
         self.backup_type = 'sql'
+        self.data_only = False
+        self.no_owner = True
+        self.schema = 'test_schema'
         self.params = BackupParams.from_dict({
             'ownerUri': self.test_uri,
             'backupInfo': {
                 'type': self.backup_type,
-                'path': self.backup_path
+                'path': self.backup_path,
+                'data_only': self.data_only,
+                'no_owner': self.no_owner,
+                'schema': self.schema
             }
         })
 
@@ -143,12 +149,16 @@ class TestDisasterRecoveryService(unittest.TestCase):
                 '--format=p',
                 f'--dbname={self.dbname}',
                 f'--host={self.host}',
-                f'--username={self.username}'
+                f'--username={self.username}',
+                '--no-owner',
+                f'--schema={self.schema}'
             ]
             actual_args = mock_popen.call_args[0][0]
             self.assertEqual(actual_args[0], mock_pg_path)
+            pg_dump_flags = actual_args[1:]
             for expected_arg in expected_args:
-                self.assertIn(expected_arg, actual_args)
+                self.assertIn(expected_arg, pg_dump_flags)
+            self.assertEqual(len(expected_args), len(pg_dump_flags))
             # And the task returns a successful result
             self.assertIs(task_result.status, TaskStatus.SUCCEEDED)
 
