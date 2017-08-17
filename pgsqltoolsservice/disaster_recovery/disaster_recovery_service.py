@@ -272,14 +272,6 @@ BACKUP_OPTIONS = FeatureMetadataProvider(
             group_name='Advanced'
         ),
         ServiceOption(
-            name='binaryUpgrade',
-            display_name='Binary upgrade',
-            description='???',
-            value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
-            is_required=False,
-            group_name='Advanced'
-        ),
-        ServiceOption(
             name='columnInserts',
             display_name='Column inserts',
             description='Dump data as INSERT commands with column names',

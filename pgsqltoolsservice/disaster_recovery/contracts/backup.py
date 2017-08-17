@@ -49,7 +49,6 @@ class BackupInfo:
         self.table: str = None
         self.exclude_table: str = None
         self.no_privileges: bool = None
-        self.binary_upgrade: bool = None
         self.column_inserts: bool = None
         self.disable_dollar_quoting: bool = None
         self.disable_triggers: bool = None
