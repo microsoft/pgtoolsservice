@@ -93,14 +93,15 @@ class ObjectExplorerService(object):
 
             # Try to remove the session
             session = self._session_map.pop(params.session_id, None)
-            conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-            connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
-            if not connect_result:
-                if self._service_provider.logger is not None:
-                    self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
-                request_context.send_response(False)
-            else:
-                request_context.send_response(session is not None)
+            if session is not None:
+                conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+                connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+                if not connect_result:
+                    if self._service_provider.logger is not None:
+                        self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
+                    request_context.send_response(False)
+                else:
+                    request_context.send_response(session is not None)
 
         except Exception as e:
             message = f'Failed to close OE session: {str(e)}'   # TODO: Localize
