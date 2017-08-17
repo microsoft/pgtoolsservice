@@ -315,7 +315,7 @@ class TestObjectExplorer(unittest.TestCase):
         # ... I should get an error response
         rc.validate()
 
-    def test_handle_close_session__unsuccessful(self):
+    def test_handle_close_session_unsuccessful(self):
         # Setup: Create an OE service
         cs = ConnectionService()
         oe = ObjectExplorerService()
@@ -323,6 +323,27 @@ class TestObjectExplorer(unittest.TestCase):
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
         cs.disconnect = mock.MagicMock(return_value=False)
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+
+        # If: I close an OE session that doesn't exist
+        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
+        session_id = self._connection_details()[1]
+        params = self._close_session_params()
+        params.session_id = session_id
+        oe._handle_close_session_request(rc.request_context, params)
+
+        # Then: I should get a successful response
+        rc.validate()
+        oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id: objectexplorer://testuser@testhost:testdb/')
+
+    def test_handle_close_session_throwsException(self):
+        # Setup: Create an OE service
+        cs = ConnectionService()
+        oe = ObjectExplorerService()
+        params, session_uri = self._connection_details()
+        session = ObjectExplorerSession(session_uri, params)
+        oe._session_map[session_uri] = session
+        cs.disconnect = mock.MagicMock.side_effect = Exception("test")
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
         # If: I close an OE session that doesn't exist
@@ -334,6 +355,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # Then: I should get a successful response
         rc.validate()
+        oe._service_provider.logger.error.assert_called_with('Failed to close OE session: \'Exception\' object is not callable')
 
     def test_handle_close_session_successful(self):
         # Setup: Create an OE service and add a session to it
@@ -373,7 +395,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # shutdown the session
         oe._handle_shutdown()
-        oe._service_provider.logger.info.assert_called_with('Closed the session with Id: objectexplorer://testuser@testhost:testdb/')
+        oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')
 
     def test_handle_shutdown_UnsuccessfulWithSessions(self):
         # Setup: Create an OE service and add a session to it
@@ -387,7 +409,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # shutdown the session
         oe._handle_shutdown()
-        oe._service_provider.logger.info.assert_called_with('Could not close the session with Id: objectexplorer://testuser@testhost:testdb/')
+        oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id: objectexplorer://testuser@testhost:testdb/')
 
     def test_handle_shutdown_successfulNoSessions(self):
         # Setup: Create an OE service and add no session to it
