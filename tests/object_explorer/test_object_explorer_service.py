@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 """Module for testing the object explorer service"""
-import time
 import re
 import threading
 from typing import Callable, Tuple, TypeVar
@@ -645,16 +644,18 @@ class TestObjectExplorer(unittest.TestCase):
             for node in response.nodes:
                 self.assertIsInstance(node, NodeInfo)
 
-        def myfunc():
-            time.sleep(2)
+        def myfunc(e):
+            while not e.isSet():
+                pass
 
         # If: I expand a node
         rc = RequestFlowValidator()
         rc.add_expected_response(bool, self.assertTrue)
         params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
-        testtask = threading.Thread(target=myfunc)
-        session.expand_tasks[session.id + params.node_path] = testtask
-        session.refresh_tasks[session.id + params.node_path] = testtask
+        testevent = threading.Event()
+        testtask = threading.Thread(target=myfunc, args=(testevent,))
+        session.expand_tasks[params.node_path] = testtask
+        session.refresh_tasks[params.node_path] = testtask
         testtask.start()
         method(oe, rc.request_context, params)
 
@@ -664,8 +665,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... The thread should be attached to the session
         self.assertEqual(len(get_tasks(session)), 1)
-        if testtask.isAlive():
-            testtask._is_stopped = True
+        testevent.set()
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connection_details(self) -> Tuple[ConnectionDetails, str]:
