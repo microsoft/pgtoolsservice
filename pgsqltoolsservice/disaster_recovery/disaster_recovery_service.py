@@ -15,6 +15,7 @@ import inflection
 from pgsqltoolsservice.capabilities.contracts import CategoryValue, FeatureMetadataProvider, ServiceOption
 from pgsqltoolsservice.connection import ConnectionInfo
 from pgsqltoolsservice.disaster_recovery.contracts.backup import BACKUP_REQUEST, BackupParams, BackupType
+from pgsqltoolsservice.disaster_recovery.contracts.restore import RESTORE_REQUEST, RestoreParams
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.tasks import Task, TaskResult, TaskStatus
@@ -32,6 +33,7 @@ class DisasterRecoveryService:
 
         # Register the handlers for the service
         self._service_provider.server.set_request_handler(BACKUP_REQUEST, self.handle_backup_request)
+        self._service_provider.server.set_request_handler(RESTORE_REQUEST, self.handle_restore_request)
 
     def handle_backup_request(self, request_context: RequestContext, params: BackupParams) -> None:
         """
@@ -51,6 +53,20 @@ class DisasterRecoveryService:
         request_context.send_response({})
         task.start()
 
+    def handle_restore_request(self, request_context: RequestContext, params: RestoreParams) -> None:
+        """
+        Respond to disasterrecovery/restore requests by performing a restore
+        """
+        connection_info: ConnectionInfo = self._service_provider[constants.CONNECTION_SERVICE_NAME].get_connection_info(params.owner_uri)
+        if connection_info is None:
+            request_context.send_error('No connection corresponding to the given owner URI')  # TODO: Localize
+            return
+        host = connection_info.details.options['host']
+        database = connection_info.details.options['dbname']
+        task = Task('Restore', f'Host: {host}, Database: {database}', constants.PROVIDER_NAME, host, database, request_context,  # TODO: Localize
+                    lambda _: None)
+        request_context.send_response({})
+        task.start()
 
 def _perform_backup(connection_info: ConnectionInfo, params: BackupParams) -> TaskResult:
     """Call out to pg_dump to do a backup"""
@@ -424,3 +440,16 @@ _BACKUP_FORMAT_MAP = {
     BackupType.PLAIN_TEXT: 'p',
     BackupType.TAR: 't'
 }
+
+
+RESTORE_OPTIONS = FeatureMetadataProvider(
+    True,
+    'Restore',
+    [
+        ServiceOption(
+            name='path',
+            display_name='Backup file path',
+            description='The path to the backup file/directory to be used for restore',
+            value_type=ServiceOption.VALUE_TYPE_STRING,
+            is_required=True
+        )])
