@@ -13,7 +13,7 @@ from unittest import mock
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
 from pgsqltoolsservice.disaster_recovery import disaster_recovery_service, DisasterRecoveryService
-from pgsqltoolsservice.disaster_recovery.contracts.backup import BackupParams, DefaultDatabaseInfoParams
+from pgsqltoolsservice.disaster_recovery.contracts.backup import BackupParams
 from pgsqltoolsservice.tasks import TaskStatus
 from pgsqltoolsservice.utils import constants
 from tests import utils
@@ -44,12 +44,18 @@ class TestDisasterRecoveryService(unittest.TestCase):
         # Create backup parameters for the tests
         self.request_context = utils.MockRequestContext()
         self.backup_path = 'mock/pg_dump'
+        self.backup_type = 'sql'
+        self.data_only = False
+        self.no_owner = True
+        self.schema = 'test_schema'
         self.params = BackupParams.from_dict({
             'ownerUri': self.test_uri,
             'backupInfo': {
-                'ownerUri': self.test_uri,
-                'databaseName': self.dbname,
-                'backup_path_list': [self.backup_path]
+                'type': self.backup_type,
+                'path': self.backup_path,
+                'data_only': self.data_only,
+                'no_owner': self.no_owner,
+                'schema': self.schema
             }
         })
 
@@ -120,20 +126,6 @@ class TestDisasterRecoveryService(unittest.TestCase):
         with mock.patch('os.path.exists', new=mock.Mock(return_value=False)), self.assertRaises(ValueError):
             disaster_recovery_service._get_pg_exe_path('not_pg_dump')
 
-    def test_handle_backup_config_info_request(self):
-        """Test that handle_backup_config_info_request sends back a hardcoded response"""
-        # Set up the parameters for the test
-        request_context = utils.MockRequestContext()
-        params = DefaultDatabaseInfoParams()
-
-        # If I call handle_backup_config_info_request
-        disaster_recovery_service.handle_backup_config_info_request(request_context, params)
-
-        # Then a hardcoded response was sent
-        self.assertEqual(
-            request_context.last_response_params,
-            {'backupConfigInfo': {'lastBackupLocations': [], 'defaultNewBackupFolder': '', 'recoveryModel': 'Simple', 'backupEncryptors': []}})
-
     def test_perform_backup(self):
         """Test that the perform_backup method passes the correct parameters to pg_dump"""
         mock_pg_path = 'mock/pg_dump'
@@ -157,12 +149,16 @@ class TestDisasterRecoveryService(unittest.TestCase):
                 '--format=p',
                 f'--dbname={self.dbname}',
                 f'--host={self.host}',
-                f'--username={self.username}'
+                f'--username={self.username}',
+                '--no-owner',
+                f'--schema={self.schema}'
             ]
             actual_args = mock_popen.call_args[0][0]
             self.assertEqual(actual_args[0], mock_pg_path)
+            pg_dump_flags = actual_args[1:]
             for expected_arg in expected_args:
-                self.assertIn(expected_arg, actual_args)
+                self.assertIn(expected_arg, pg_dump_flags)
+            self.assertEqual(len(expected_args), len(pg_dump_flags))
             # And the task returns a successful result
             self.assertIs(task_result.status, TaskStatus.SUCCEEDED)
 
