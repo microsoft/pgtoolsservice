@@ -64,13 +64,18 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams) -> Ta
                     f'--dbname={connection_info.details.options["dbname"]}',
                     f'--host={connection_info.details.options["host"]}',
                     f'--username={connection_info.details.options["user"]}']
+    # Add the rest of the options automatically
     for option, value in params.backup_info.__dict__.items():
+        # If the option was already handled above, or is not set, then don't add it to the arguments
         if option == 'type' or option == 'path' or value is None or value is False:
             continue
+        # Replace underscores with dashes in the option name
         key_name = inflection.dasherize(option)
         if value is True:
+            # The option is a boolean flag, so just add the option
             pg_dump_args.append(f'--{key_name}')
         else:
+            # The option has a value, so add the flag with its value
             pg_dump_args.append(f'--{key_name}={value}')
 
     pg_dump_process = subprocess.Popen(pg_dump_args, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -104,6 +109,9 @@ def _get_pg_exe_path(exe_name: str) -> str:
     return path
 
 
+# These options are handled in the _perform_backup method above. A few have special case handling, but most are handled automatically by using the option's
+# name as the flag name, and the setting as the value. The BackupInfo contract has a field corresponding to each option.
+# TODO: Localize the display names and descriptions
 BACKUP_OPTIONS = FeatureMetadataProvider(
     True,
     'backup',

@@ -40,6 +40,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(list_result.test_string, test_object.list[0].test_string)
         for key in test_object.dict:
             self.assertIn(key, result.dict)  # TODO: Update once dicts are converted correctly
+        self.assertEqual(len(test_object.dict), len(result.dict))
         self.assertEqual(result.enum, test_object.enum)
 
 
