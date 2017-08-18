@@ -13,7 +13,8 @@ import psycopg2
 from dateutil import parser
 
 from pgsqltoolsservice.connection import (ConnectionService, ConnectionInfo)
-from pgsqltoolsservice.query_execution.query_execution_service import QueryExecutionService, CANCELATION_QUERY, NO_QUERY_MESSAGE
+from pgsqltoolsservice.query_execution.query_execution_service import (QueryExecutionService, 
+    CANCELATION_QUERY, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
 from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData, ExecuteRequestParamsBase)
 from pgsqltoolsservice.utils import constants
@@ -29,7 +30,6 @@ import tests.utils as utils
 from pgsqltoolsservice.connection.contracts import ConnectionType, ConnectionDetails
 from pgsqltoolsservice.query_execution.contracts.common import SubsetResult
 import uuid
-from pgsqltoolsservice.query_execution.contracts.internal import ExecuteRequestWorkerArgs
 
 
 class TestQueryService(unittest.TestCase):
@@ -689,22 +689,19 @@ class TestQueryService(unittest.TestCase):
 
         mock_rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
         new_owner_uri = str(uuid.uuid4())
+        query = Query(new_owner_uri, '')
+        rows = mock_rows
+        batch = Batch('', 0, SelectionData())
+        result_set = ResultSet(0, 0, None, len(rows), rows)
+        batch.result_set = result_set
+        batch.has_executed = True
+        query.batches = [batch]
+        self.query_execution_service.query_results = {
+            new_owner_uri: query
+        }
+        query.execute = mock.MagicMock()
 
-        def get_mock_uuid():
-            guuid = new_owner_uri
-            query = Query(guuid, '')
-            rows = mock_rows
-            batch = Batch('', 0, SelectionData())
-            result_set = ResultSet(0, 0, None, len(rows), rows)
-            batch.result_set = result_set
-            batch.has_executed = True
-            query.batches = [batch]
-            self.query_execution_service.query_results = {
-                guuid: query
-            }
-            query.execute = mock.MagicMock()
-            return guuid
-
+        
         def get_result_subset_mock(request_context, subset_params):
 
             self.assertEqual(self.request_context, request_context)
@@ -724,15 +721,14 @@ class TestQueryService(unittest.TestCase):
 
         self.query_execution_service._get_result_subset = mock.Mock(side_effect=get_result_subset_mock)
 
-        self.query_execution_service._generate_uuid = mock.Mock(side_effect=get_mock_uuid)
-
         def send_response_mock(args):
             self.assertEqual(args.rows, mock_rows)
             self.assertEqual(args.row_count, len(mock_rows))
 
         self.request_context.send_response = mock.Mock(side_effect=send_response_mock)
 
-        self.query_execution_service._handle_simple_execute_request(self.request_context, simple_execution_request)
+        with mock.patch('uuid.uuid4', new=mock.Mock(return_value=new_owner_uri)):
+            self.query_execution_service._handle_simple_execute_request(self.request_context, simple_execution_request)
 
 
 class SubsetMock:
