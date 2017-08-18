@@ -672,6 +672,8 @@ class TestQueryService(unittest.TestCase):
         self.cursor.execute.assert_has_calls([mock.call(query_params.query), mock.call('ROLLBACK')])
 
     def test_handle_simple_execute_request(self):
+        """ Test for _handle_simple_execute_request to make sure it returns required details
+        from the first batch """
         simple_execution_request = SimpleExecuteRequest()
         simple_execution_request.owner_uri = 'test_uri'
         simple_execution_request.query_string = 'Select something'
