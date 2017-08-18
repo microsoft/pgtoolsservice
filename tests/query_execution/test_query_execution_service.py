@@ -11,10 +11,11 @@ from typing import List, Dict  # noqa
 
 import psycopg2
 from dateutil import parser
+import uuid
 
-from pgsqltoolsservice.connection import ConnectionService
-from pgsqltoolsservice.connection.contracts.common import ConnectionType
-from pgsqltoolsservice.query_execution.query_execution_service import QueryExecutionService, CANCELATION_QUERY, NO_QUERY_MESSAGE
+from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
+from pgsqltoolsservice.query_execution.query_execution_service import (
+    QueryExecutionService, CANCELATION_QUERY, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
 from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData, ExecuteRequestParamsBase)
 from pgsqltoolsservice.utils import constants
@@ -22,11 +23,13 @@ from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMe
 from pgsqltoolsservice.query_execution.contracts import (
     DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
-    QueryCancelResult, QueryDisposeParams)
+    QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest)
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
+from pgsqltoolsservice.connection.contracts import ConnectionType, ConnectionDetails
+from pgsqltoolsservice.query_execution.contracts.common import SubsetResult
 
 
 class TestQueryService(unittest.TestCase):
@@ -658,10 +661,80 @@ class TestQueryService(unittest.TestCase):
         self.query_execution_service.query_results[query_params.owner_uri] = Query(query_params.owner_uri, query_params.query)
 
         # If I execute a query that opens a transaction and then throws an error when executed
-        self.query_execution_service._execute_query_request_worker(self.request_context, query_params, self.connection)
+
+        worker_args = ExecuteRequestWorkerArgs(query_params.owner_uri, self.connection, self.request_context)
+
+        self.query_execution_service._execute_query_request_worker(worker_args)
 
         # Then a rollback transaction should have been executed
         self.cursor.execute.assert_has_calls([mock.call(query_params.query), mock.call('ROLLBACK')])
+
+    def test_handle_simple_execute_request(self):
+        """ Test for _handle_simple_execute_request to make sure it returns required details
+        from the first batch """
+        simple_execution_request = SimpleExecuteRequest()
+        simple_execution_request.owner_uri = 'test_uri'
+        simple_execution_request.query_string = 'Select something'
+        connection_uri = 'test_connection_url'
+
+        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_info = ConnectionInfo(connection_uri, connection_details)
+
+        def get_connection_info(uri):
+            self.assertEqual(uri, simple_execution_request.owner_uri)
+            return connection_info
+
+        self.connection_service.get_connection_info = mock.Mock(side_effect=get_connection_info)
+        self.connection_service.connect = mock.MagicMock()
+
+        mock_rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
+        new_owner_uri = str(uuid.uuid4())
+        query = Query(new_owner_uri, '')
+        rows = mock_rows
+        batch = Batch('', 0, SelectionData())
+        result_set = ResultSet(0, 0, None, len(rows), rows)
+        batch.result_set = result_set
+        batch.has_executed = True
+        query.batches = [batch]
+        self.query_execution_service.query_results = {
+            new_owner_uri: query
+        }
+        query.execute = mock.MagicMock()
+
+        def get_result_subset_mock(request_context, subset_params):
+
+            self.assertEqual(self.request_context, request_context)
+            self.assertEqual(subset_params.owner_uri, new_owner_uri)
+            self.assertEqual(subset_params.batch_index, 0)
+            self.assertEqual(subset_params.result_set_index, 0)
+            self.assertEqual(subset_params.rows_start_index, 0)
+            self.assertEqual(subset_params.rows_count, 2)
+
+            subset = SubsetMock()
+            subset.row_count = len(mock_rows)
+            subset.rows = mock_rows
+
+            result = SubsetResult(subset)
+
+            return result
+
+        self.query_execution_service._get_result_subset = mock.Mock(side_effect=get_result_subset_mock)
+
+        def send_response_mock(args):
+            self.assertEqual(args.rows, mock_rows)
+            self.assertEqual(args.row_count, len(mock_rows))
+
+        self.request_context.send_response = mock.Mock(side_effect=send_response_mock)
+
+        with mock.patch('uuid.uuid4', new=mock.Mock(return_value=new_owner_uri)):
+            self.query_execution_service._handle_simple_execute_request(self.request_context, simple_execution_request)
+
+
+class SubsetMock:
+
+    def __init__(self):
+        self.rows = None
+        self.row_count = None
 
 
 class TestQueryAndBatchObjects(unittest.TestCase):

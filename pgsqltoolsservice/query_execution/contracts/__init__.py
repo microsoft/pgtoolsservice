@@ -32,6 +32,9 @@ from pgsqltoolsservice.query_execution.contracts.common import (
     SelectionData, DbColumn, DbCellValue, ResultSetSubset,
     SubsetResult, SpecialAction, QueryCancelResult
 )
+from pgsqltoolsservice.query_execution.contracts.simple_execute_request import (
+    SimpleExecuteRequest, SIMPLE_EXECUTE_REQUEST, SimpleExecuteResponse
+)
 
 __all__ = [
     'BatchNotificationParams',
@@ -44,5 +47,7 @@ __all__ = [
     'BatchSummary', 'ResultMessage', 'SelectionData', 'DbColumn',
     'DbCellValue', 'ResultSetSubset', 'SubsetResult', 'SpecialAction', 'SubsetParams',
     'SUBSET_REQUEST', 'CANCEL_REQUEST', 'QueryCancelResult', 'QueryCancelParams',
-    'QueryDisposeParams', 'DISPOSE_REQUEST'
+    'QueryDisposeParams', 'DISPOSE_REQUEST', 'SIMPLE_EXECUTE_REQUEST', 'SimpleExecuteRequest',
+    'SimpleExecuteResponse'
+
 ]
