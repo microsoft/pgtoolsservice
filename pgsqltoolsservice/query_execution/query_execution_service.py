@@ -35,11 +35,12 @@ import uuid
 CANCELATION_QUERY = 'SELECT pg_cancel_backend (%s)'
 NO_QUERY_MESSAGE = 'QueryServiceRequestsNoQuery'
 
+
 class ExecuteRequestWorkerArgs():
 
     def __init__(self, owner_uri: str, connection: 'psycopg2.extensions.connection', request_context: RequestContext,
-                before_query_initialize: Callable=None, on_batch_start:Callable=None, on_message_notification:Callable=None,
-                on_resultset_complete:Callable=None, on_batch_complete:Callable=None, on_query_complete:Callable=None):
+                 before_query_initialize: Callable=None, on_batch_start: Callable=None, on_message_notification: Callable=None,
+                 on_resultset_complete: Callable=None, on_batch_complete: Callable=None, on_query_complete: Callable=None):
 
         self.owner_uri = owner_uri
         self.connection = connection
@@ -50,7 +51,7 @@ class ExecuteRequestWorkerArgs():
         self.on_resultset_complete = on_resultset_complete
         self.on_batch_complete = on_batch_complete
         self.on_query_complete = on_query_complete
-        
+
 
 class QueryExecutionService(object):
     """Service for executing queries"""
@@ -158,12 +159,12 @@ class QueryExecutionService(object):
             return
 
         worker_args = ExecuteRequestWorkerArgs(params.owner_uri, conn, request_context, before_query_initialize,
-                                              on_batch_start, on_message_notification, on_resultset_complete,
-                                              on_batch_complete, on_query_complete)
+                                               on_batch_start, on_message_notification, on_resultset_complete,
+                                               on_batch_complete, on_query_complete)
 
         self._start_query_execution_thread(request_context, params, worker_args)
 
-    def _start_query_execution_thread(self, request_context: RequestContext, params: ExecuteRequestParamsBase, worker_args:ExecuteRequestWorkerArgs= None):
+    def _start_query_execution_thread(self, request_context: RequestContext, params: ExecuteRequestParamsBase, worker_args: ExecuteRequestWorkerArgs= None):
 
         # Create a new query if one does not already exist or we already executed the previous one
         if params.owner_uri not in self.query_results or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED:

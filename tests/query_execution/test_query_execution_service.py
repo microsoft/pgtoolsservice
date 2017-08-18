@@ -12,9 +12,9 @@ from typing import List, Dict  # noqa
 import psycopg2
 from dateutil import parser
 
-from pgsqltoolsservice.connection import (ConnectionService, ConnectionInfo)
-from pgsqltoolsservice.query_execution.query_execution_service import (QueryExecutionService, 
-    CANCELATION_QUERY, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
+from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
+from pgsqltoolsservice.query_execution.query_execution_service import (
+    QueryExecutionService, CANCELATION_QUERY, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
 from pgsqltoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData, ExecuteRequestParamsBase)
 from pgsqltoolsservice.utils import constants
@@ -701,7 +701,6 @@ class TestQueryService(unittest.TestCase):
         }
         query.execute = mock.MagicMock()
 
-        
         def get_result_subset_mock(request_context, subset_params):
 
             self.assertEqual(self.request_context, request_context)
