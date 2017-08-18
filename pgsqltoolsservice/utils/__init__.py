@@ -11,6 +11,8 @@ import pgsqltoolsservice.utils.log
 import pgsqltoolsservice.utils.serialization
 import pgsqltoolsservice.utils.thread
 import pgsqltoolsservice.utils.time
+import pgsqltoolsservice.utils.uuid_generator
+import pgsqltoolsservice.utils.method_executer
 import pgsqltoolsservice.utils.validate         # noqa
 
 __all__ = [
@@ -20,5 +22,8 @@ __all__ = [
     'serialization',
     'thread',
     'time',
-    'validate'
+    'validate',
+    'uuid_generator',
+    'method_executer'
+
 ]

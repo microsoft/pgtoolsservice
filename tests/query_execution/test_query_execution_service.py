@@ -21,14 +21,15 @@ from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMe
 from pgsqltoolsservice.query_execution.contracts import (
     DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
-    QueryCancelResult, QueryDisposeParams, ExecuteRequestWorkerArgs, SimpleExecuteRequest)
+    QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest)
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
-from pgsqltoolsservice.connection.contracts import (ConnectionType, ConnectionDetails)
+from pgsqltoolsservice.connection.contracts import ConnectionType, ConnectionDetails
 from pgsqltoolsservice.query_execution.contracts.common import SubsetResult
 import uuid
+from pgsqltoolsservice.query_execution.contracts.internal import ExecuteRequestWorkerArgs
 
 
 class TestQueryService(unittest.TestCase):
@@ -661,10 +662,7 @@ class TestQueryService(unittest.TestCase):
 
         # If I execute a query that opens a transaction and then throws an error when executed
 
-        worker_args = ExecuteRequestWorkerArgs()
-        worker_args.connection = self.connection
-        worker_args.owner_uri = query_params.owner_uri
-        worker_args.request_context = self.request_context
+        worker_args = ExecuteRequestWorkerArgs(query_params.owner_uri, self.connection, self.request_context)
 
         self.query_execution_service._execute_query_request_worker(worker_args)
 
@@ -725,7 +723,8 @@ class TestQueryService(unittest.TestCase):
             return result
 
         self.query_execution_service._get_result_subset = mock.Mock(side_effect=get_result_subset_mock)
-        self.query_execution_service._get_uuid = mock.Mock(side_effect=get_mock_uuid)
+
+        self.query_execution_service._generate_uuid = mock.Mock(side_effect=get_mock_uuid)
 
         def send_response_mock(args):
             self.assertEqual(args.rows, mock_rows)
@@ -733,7 +732,7 @@ class TestQueryService(unittest.TestCase):
 
         self.request_context.send_response = mock.Mock(side_effect=send_response_mock)
 
-        self.query_execution_service._handle_simple_execute_request(self.request_context,  simple_execution_request)
+        self.query_execution_service._handle_simple_execute_request(self.request_context, simple_execution_request)
 
 
 class SubsetMock:

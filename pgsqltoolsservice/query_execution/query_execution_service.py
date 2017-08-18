@@ -19,8 +19,9 @@ from pgsqltoolsservice.query_execution.contracts import (
     BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams,
     BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams,
     DISPOSE_REQUEST, SIMPLE_EXECUTE_REQUEST, SimpleExecuteRequest, ExecuteStringParams,
-    ExecuteRequestWorkerArgs, SimpleExecuteResponse
+    SimpleExecuteResponse
 )
+from pgsqltoolsservice.query_execution.contracts.internal import ExecuteRequestWorkerArgs
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams
 from pgsqltoolsservice.query_execution.contracts.common import (
     ResultMessage, SubsetResult, ResultSetSubset, QueryCancelResult
@@ -29,7 +30,7 @@ from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
 import pgsqltoolsservice.utils as utils
-import uuid
+
 
 CANCELATION_QUERY = 'SELECT pg_cancel_backend (%s)'
 NO_QUERY_MESSAGE = 'QueryServiceRequestsNoQuery'
@@ -40,13 +41,14 @@ class QueryExecutionService(object):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
+        self._generate_uuid = None
         # Dictionary mapping uri to a list of batches
         self.query_results: Dict[str, Query] = {}
         self.owner_to_thread_map: dict = {}  # Only used for testing
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
-
+        self._generate_uuid = utils.uuid_generator.generate_uuid
         # Register the request handlers with the server
         self._service_provider.server.set_request_handler(
             EXECUTE_STRING_REQUEST, self._handle_execute_query_request
@@ -74,17 +76,13 @@ class QueryExecutionService(object):
             self._service_provider.logger.info('Query execution service successfully initialized')
 
     # REQUEST HANDLERS #####################################################
-
-    def _get_uuid(self):
-        return str(uuid.uuid4())
-
     def _handle_simple_execute_request(self, request_context: RequestContext, params: SimpleExecuteRequest):
 
-        new_owner_uri = self._get_uuid()
+        new_owner_uri = self._generate_uuid()
 
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         connection_info = connection_service.get_connection_info(params.owner_uri)
-        connection_service.connect(ConnectRequestParams(connection_info.details, new_owner_uri,  ConnectionType.QUERY))
+        connection_service.connect(ConnectRequestParams(connection_info.details, new_owner_uri, ConnectionType.QUERY))
         new_connection = self._get_connection(new_owner_uri, ConnectionType.QUERY)
 
         execute_params = ExecuteStringParams()
@@ -107,10 +105,7 @@ class QueryExecutionService(object):
             simple_execute_response = SimpleExecuteResponse(subset.result_subset.rows, subset.result_subset.row_count, resultset_summary.column_info)
             request_context.send_response(simple_execute_response)
 
-        worker_args = ExecuteRequestWorkerArgs()
-        worker_args.owner_uri = new_owner_uri
-        worker_args.connection = new_connection
-        worker_args.on_query_complete = on_query_complete
+        worker_args = ExecuteRequestWorkerArgs(new_owner_uri, new_connection, request_context, on_query_complete=on_query_complete)
 
         self._start_query_execution_thread(request_context, execute_params, worker_args)
 
@@ -148,21 +143,21 @@ class QueryExecutionService(object):
             request_context.send_unhandled_error_response(e)
             return
 
-        worker_args = ExecuteRequestWorkerArgs()
-
-        worker_args.owner_uri = params.owner_uri
-        worker_args.request_context = request_context
-        worker_args.before_query_initialize = before_query_initialize
-        worker_args.on_batch_start = on_batch_start
-        worker_args.on_message_notification = on_message_notification
-        worker_args.on_resultset_complete = on_resultset_complete
-        worker_args.on_batch_complete = on_batch_complete
-        worker_args.on_query_complete = on_query_complete
-        worker_args.connection = conn
+        worker_args = ExecuteRequestWorkerArgs(
+                                                params.owner_uri,
+                                                conn,
+                                                request_context,
+                                                before_query_initialize,
+                                                on_batch_start,
+                                                on_message_notification,
+                                                on_resultset_complete,
+                                                on_batch_complete,
+                                                on_query_complete
+                                              )
 
         self._start_query_execution_thread(request_context, params, worker_args)
 
-    def _start_query_execution_thread(self, request_context: RequestContext, params: ExecuteRequestParamsBase,  worker_args: ExecuteRequestWorkerArgs= None):
+    def _start_query_execution_thread(self, request_context: RequestContext, params: ExecuteRequestParamsBase, worker_args: ExecuteRequestWorkerArgs= None):
 
         # Create a new query if one does not already exist or we already executed the previous one
         if params.owner_uri not in self.query_results or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED:
@@ -247,43 +242,39 @@ class QueryExecutionService(object):
         except BaseException:
             raise
 
-    def _check_and_fire(self, action, params=None):
-        if action is not None:
-            action(params)
-
     def _execute_query_request_worker(self, worker_args: ExecuteRequestWorkerArgs):
         """Worker method for 'handle execute query request' thread"""
 
-        self._check_and_fire(worker_args.before_query_initialize, {})
+        utils.method_executer.check_and_fire(worker_args.before_query_initialize, {})
 
         # Set up batch execution callback methods for sending notifications
         def _batch_execution_started_callback(query: Query, batch: Batch) -> None:
             batch_event_params = BatchNotificationParams(batch.build_batch_summary(), worker_args.owner_uri)
-            self._check_and_fire(worker_args.on_batch_start, batch_event_params)
+            utils.method_executer.check_and_fire(worker_args.on_batch_start, batch_event_params)
 
         def _batch_execution_finished_callback(query: Query, batch: Batch) -> None:
             # Send back notices as a separate message to avoid error coloring / highlighting of text
             notices = batch.notices
             if notices:
                 notice_message_params = self.build_message_params(query.owner_uri, batch.id, ''.join(notices), False)
-                self._check_and_fire(worker_args.on_message_notification, notice_message_params)
+                utils.method_executer.check_and_fire(worker_args.on_message_notification, notice_message_params)
                 batch.notices = []
 
             batch_summary = batch.build_batch_summary()
 
             # send query/resultSetComplete response
             result_set_params = self.build_result_set_complete_params(batch_summary, query.owner_uri)
-            self._check_and_fire(worker_args.on_resultset_complete, result_set_params)
+            utils.method_executer.check_and_fire(worker_args.on_resultset_complete, result_set_params)
 
             # If the batch was successful, send a message to the client
             if not batch.has_error:
                 rows_message = _create_rows_affected_message(batch)
                 message_params = self.build_message_params(query.owner_uri, batch.id, rows_message, False)
-                self._check_and_fire(worker_args.on_message_notification, message_params)
+                utils.method_executer.check_and_fire(worker_args.on_message_notification, message_params)
 
             # send query/batchComplete and query/complete response
             batch_event_params = BatchNotificationParams(batch_summary, worker_args.owner_uri)
-            self._check_and_fire(worker_args.on_batch_complete, batch_event_params)
+            utils.method_executer.check_and_fire(worker_args.on_batch_complete, batch_event_params)
 
         query = self.query_results[worker_args.owner_uri]
 
@@ -296,7 +287,7 @@ class QueryExecutionService(object):
             # Send a query complete notification
             batch_summaries = [batch.build_batch_summary() for batch in query.batches]
             query_complete_params = QueryCompleteNotificationParams(worker_args.owner_uri, batch_summaries)
-            self._check_and_fire(worker_args.on_query_complete, query_complete_params)
+            utils.method_executer.check_and_fire(worker_args.on_query_complete, query_complete_params)
 
     def _get_connection(self, owner_uri: str, connection_type: ConnectionType) -> 'psycopg2.connection':
         """

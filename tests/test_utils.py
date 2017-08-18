@@ -7,8 +7,9 @@
 
 import enum
 import unittest
-
+from unittest import mock
 import pgsqltoolsservice.utils as utils
+import uuid
 
 
 class TestUtils(unittest.TestCase):
@@ -41,6 +42,36 @@ class TestUtils(unittest.TestCase):
         for key in test_object.dict:
             self.assertIn(key, result.dict)  # TODO: Update once dicts are converted correctly
         self.assertEqual(result.enum, test_object.enum.value)  # TODO: Update once enums are converted correctly
+
+
+class TestUuidGenerator(unittest.TestCase):
+
+    def test_generate_uuid(self):
+        expected_uuid = 'uuid'
+
+        def mock_uuid_generator():
+            return expected_uuid
+
+        uuid.uuid4 = mock.Mock(side_effect=mock_uuid_generator)
+
+        actual = utils.uuid_generator.generate_uuid()
+
+        self.assertEqual(expected_uuid, actual)
+
+
+class TestMethodExecuter(unittest.TestCase):
+
+    def setUp(self):
+        self.method_called = False
+
+    def test_check_and_fire(self):
+
+        def method_to_call(some_args):
+            self.method_called = True
+
+        utils.method_executer.check_and_fire(method_to_call)
+
+        self.assertTrue(self.method_called)
 
 
 class _ConversionTestClass:

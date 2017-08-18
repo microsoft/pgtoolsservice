@@ -3,9 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-
+from typing import List
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
 
 
 class SimpleExecuteRequest:
@@ -18,12 +19,12 @@ class SimpleExecuteRequest:
         self.query_string: str = None
 
 
-SIMPLE_EXECUTE_REQUEST = IncomingMessageConfiguration('query/simpleexecute', SimpleExecuteRequest)
-
-
 class SimpleExecuteResponse:
 
-    def __init__(self, rows, row_count: int, column_info):
+    def __init__(self, rows: List[List[DbCellValue]], row_count: int, column_info: List[DbColumn]):
         self.rows = rows
         self.row_count = row_count
         self.column_info = column_info
+
+
+SIMPLE_EXECUTE_REQUEST = IncomingMessageConfiguration('query/simpleexecute', SimpleExecuteRequest)

@@ -30,19 +30,6 @@ EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
 )
 
 
-class ExecuteRequestWorkerArgs():
-    def __init__(self):
-        self.owner_uri: str = None
-        self.request_context: RequestContext = None
-        self.connection: str = 'psycopg2.connection'
-        self.before_query_initialize = None
-        self.on_batch_start = None
-        self.on_message_notification = None
-        self.on_resultset_complete = None
-        self.on_batch_complete = None
-        self.on_query_complete = None
-
-
 class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
     @classmethod
     def from_dict(cls, dictionary: dict):
