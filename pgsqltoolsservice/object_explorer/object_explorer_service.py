@@ -142,23 +142,25 @@ class ObjectExplorerService(object):
 
         # Step 2: Start a task for expanding the node
         try:
-            key = session.id + params.node_path
-            if is_refresh:
-                task = session.refresh_tasks.get(key)
-            else:
-                task = session.expand_tasks.get(key)
+            with self._session_lock:
+                key = session.id + params.node_path
+                if is_refresh:
+                    task = session.refresh_tasks.get(key)
+                else:
+                    task = session.expand_tasks.get(key)
 
-            if task is not None and task.isAlive():
-                return
+                if task is not None and task.isAlive():
+                    return
 
-            new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
-            new_task.setDaemon(False)
-            new_task.start()
+                new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
+                new_task.setDaemon(False)
+                new_task.start()
 
-            if is_refresh:
-                session.refresh_tasks[key] = new_task
-            else:
-                session.expand_tasks[key] = new_task
+                if is_refresh:
+                    session.refresh_tasks[key] = new_task
+                else:
+                    session.expand_tasks[key] = new_task
+
         except Exception as e:
             self._expand_node_error(request_context, params, str(e))
 
