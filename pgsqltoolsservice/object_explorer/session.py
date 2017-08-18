@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import threading                    # noqa
-from typing import List, Optional   # noqa
+from typing import List, Optional, Dict   # noqa
 
 from pgsmo import Server            # noqa
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
@@ -18,5 +18,5 @@ class ObjectExplorerSession:
         self.server: Optional[Server] = None
 
         self.init_task: Optional[threading.Thread] = None
-        self.expand_tasks: List[threading.Thread] = []
-        self.refresh_tasks: List[threading.Thread] = []
+        self.expand_tasks: Dict[str, threading.Thread] = {}
+        self.refresh_tasks: Dict[str, threading.Thread] = {}
