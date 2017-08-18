@@ -5,6 +5,7 @@
 
 from datetime import datetime
 import threading
+import uuid
 from typing import Callable, Dict, List, Optional  # noqa
 
 import psycopg2
@@ -29,7 +30,6 @@ from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
 import pgsqltoolsservice.utils as utils
-import uuid
 
 
 CANCELATION_QUERY = 'SELECT pg_cancel_backend (%s)'

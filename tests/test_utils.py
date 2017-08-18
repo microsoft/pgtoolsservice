@@ -7,6 +7,7 @@
 
 import enum
 import unittest
+
 import pgsqltoolsservice.utils as utils
 
 

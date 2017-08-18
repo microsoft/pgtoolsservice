@@ -11,6 +11,7 @@ from typing import List, Dict  # noqa
 
 import psycopg2
 from dateutil import parser
+import uuid
 
 from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
 from pgsqltoolsservice.query_execution.query_execution_service import (
@@ -29,7 +30,6 @@ from pgsqltoolsservice.query_execution.result_set import ResultSet
 import tests.utils as utils
 from pgsqltoolsservice.connection.contracts import ConnectionType, ConnectionDetails
 from pgsqltoolsservice.query_execution.contracts.common import SubsetResult
-import uuid
 
 
 class TestQueryService(unittest.TestCase):

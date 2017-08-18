@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import List
+
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
