@@ -467,6 +467,9 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_expand_node_successful(self):
         self._handle_er_node_successful(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
 
+    def test_handle_expand_node_alivetasksuccessful(self):
+        self._handle_er_node_alivetasksuccessful(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
+
     # REFRESH NODE #########################################################
     @staticmethod
     def refresh_method(oe: ObjectExplorerService, rc: RequestContext, p: ExpandParameters):
@@ -493,6 +496,9 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_handle_refresh_node_successful(self):
         self._handle_er_node_successful(TestObjectExplorer.refresh_method, TestObjectExplorer.refresh_tasks)
+
+    def test_handle_refresh_node_alivetasksuccessful(self):
+        self._handle_er_node_alivetasksuccessful(TestObjectExplorer.refresh_method, TestObjectExplorer.refresh_tasks)
 
     # EXPAND/REFRESH NODE TEST BASES #######################################
     TEventHandler = TypeVar(Callable[[ObjectExplorerService, RequestContext, ExpandParameters], None])
@@ -570,8 +576,8 @@ class TestObjectExplorer(unittest.TestCase):
         rc.validate()
 
         # ... The session should not have an expand task defined
-        self.assertListEqual(session.expand_tasks, [])
-        self.assertListEqual(session.refresh_tasks, [])
+        self.assertDictEqual(session.expand_tasks, {})
+        self.assertDictEqual(session.refresh_tasks, {})
 
     def _handle_er_exception_expanding(self, method: TEventHandler, get_tasks: TGetTask):
         # Setup: Create an OE service with a session preloaded
@@ -591,8 +597,6 @@ class TestObjectExplorer(unittest.TestCase):
                 lambda param: self._validate_expand_error(param, session_uri, '/'))
             params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
             method(oe, rc.request_context, params)
-        get_tasks(session)[0].join()
-
         # Then:
         # ... An error notification should have been sent
         rc.validate()
@@ -619,7 +623,6 @@ class TestObjectExplorer(unittest.TestCase):
         rc.add_expected_notification(ExpandCompletedParameters, EXPAND_COMPLETED_METHOD, validate_success_notification)
         params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
         method(oe, rc.request_context, params)
-        get_tasks(session)[0].join()
 
         # Then:
         # ... I should have gotten a completed successfully message
@@ -627,6 +630,42 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... The thread should be attached to the session
         self.assertEqual(len(get_tasks(session)), 1)
+
+    def _handle_er_node_alivetasksuccessful(self, method: TEventHandler, get_tasks: TGetTask):
+        # Setup: Create an OE service with a session preloaded
+        oe, session, session_uri = self._preloaded_oe_service()
+
+        # ... Define validation for the return notification
+        def validate_success_notification(response: ExpandCompletedParameters):
+            self.assertIsNone(response.error_message)
+            self.assertEqual(response.session_id, session_uri)
+            self.assertEqual(response.node_path, '/')
+            self.assertIsInstance(response.nodes, list)
+            for node in response.nodes:
+                self.assertIsInstance(node, NodeInfo)
+
+        def myfunc(e):
+            while not e.isSet():
+                pass
+
+        # If: I expand a node
+        rc = RequestFlowValidator()
+        rc.add_expected_response(bool, self.assertTrue)
+        params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
+        testevent = threading.Event()
+        testtask = threading.Thread(target=myfunc, args=(testevent,))
+        session.expand_tasks[params.node_path] = testtask
+        session.refresh_tasks[params.node_path] = testtask
+        testtask.start()
+        method(oe, rc.request_context, params)
+
+        # Then:
+        # ... I should have gotten a completed successfully message
+        rc.validate()
+
+        # ... The thread should be attached to the session
+        self.assertEqual(len(get_tasks(session)), 1)
+        testevent.set()
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connection_details(self) -> Tuple[ConnectionDetails, str]:
