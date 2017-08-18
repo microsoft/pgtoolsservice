@@ -40,7 +40,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(list_result.test_string, test_object.list[0].test_string)
         for key in test_object.dict:
             self.assertIn(key, result.dict)  # TODO: Update once dicts are converted correctly
-        self.assertEqual(result.enum, test_object.enum.value)  # TODO: Update once enums are converted correctly
+        self.assertEqual(len(test_object.dict), len(result.dict))
+        self.assertEqual(result.enum, test_object.enum)
 
 
 class _ConversionTestClass:
@@ -50,7 +51,7 @@ class _ConversionTestClass:
     def from_dict(cls, dictionary: dict):
         """from_dict method intended to be similar to the one used in contract classes"""
         return utils.serialization.convert_from_dict(cls, dictionary, nested_object=_NestedTestClass,
-                                                     list=_NestedTestClass)
+                                                     list=_NestedTestClass, enum=_TestEnum)
 
     def __init__(self):
         self.test_int = 1
