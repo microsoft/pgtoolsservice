@@ -40,6 +40,7 @@ class ObjectExplorerService(object):
         self._service_provider.server.set_request_handler(CLOSE_SESSION_REQUEST, self._handle_close_session_request)
         self._service_provider.server.set_request_handler(EXPAND_REQUEST, self._handle_expand_request)
         self._service_provider.server.set_request_handler(REFRESH_REQUEST, self._handle_refresh_request)
+        self._service_provider.server.add_shutdown_handler(self._handle_shutdown)
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Object Explorer service successfully initialized')
@@ -92,9 +93,18 @@ class ObjectExplorerService(object):
 
             # Try to remove the session
             session = self._session_map.pop(params.session_id, None)
-            # TODO: Dispose session (disconnect, etc) (see: https://github.com/Microsoft/carbon/issues/1541)
+            if session is not None:
+                conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+                connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+                if not connect_result:
+                    if self._service_provider.logger is not None:
+                        self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
+                    request_context.send_response(False)
+                else:
+                    request_context.send_response(True)
+            else:
+                request_context.send_response(False)
 
-            request_context.send_response(session is not None)
         except Exception as e:
             message = f'Failed to close OE session: {str(e)}'   # TODO: Localize
             if self._service_provider.logger is not None:
@@ -108,6 +118,20 @@ class ObjectExplorerService(object):
     def _handle_expand_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle expand Object Explorer tree node request"""
         self._expand_node_base(False, request_context, params)
+
+    def _handle_shutdown(self) -> None:
+        """Close all OE sessions when service is shutdown"""
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.info('Closing all the OE sessions')
+        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        for key, session in self._session_map.items():
+            connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+            if connect_result:
+                if self._service_provider.logger is not None:
+                    self._service_provider.logger.info('Closed the OE session with Id: ' + session.id)
+            else:
+                if self._service_provider.logger is not None:
+                    self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
 
     # PRIVATE HELPERS ######################################################
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):

@@ -10,10 +10,11 @@ import enum
 
 class ScriptOperation(enum.Enum):
     """ Class that defines the various script operations """
-    Select = 0
-    Create = 1
-    Update = 2
-    Delete = 3
+    SELECT = 0
+    CREATE = 1
+    INSERT = 2
+    UPDATE = 3
+    DELETE = 4
 
 
 class ScriptAsParameters:
