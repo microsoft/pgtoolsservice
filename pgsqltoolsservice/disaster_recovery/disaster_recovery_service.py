@@ -64,9 +64,10 @@ class DisasterRecoveryService:
         host = connection_info.details.options['host']
         database = connection_info.details.options['dbname']
         task = Task('Restore', f'Host: {host}, Database: {database}', constants.PROVIDER_NAME, host, database, request_context,  # TODO: Localize
-                    lambda _: None)
+                    functools.partial(_perform_restore, connection_info, params))
         request_context.send_response({})
         task.start()
+
 
 def _perform_backup(connection_info: ConnectionInfo, params: BackupParams) -> TaskResult:
     """Call out to pg_dump to do a backup"""
@@ -98,6 +99,39 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams) -> Ta
     # pg_dump will prompt for the password, so send it via stdin. This call will block until the process exits.
     _, stderr = pg_dump_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
     if pg_dump_process.returncode != 0:
+        return TaskResult(TaskStatus.FAILED, str(stderr, 'utf-8'))
+    return TaskResult(TaskStatus.SUCCEEDED)
+
+
+def _perform_restore(connection_info: ConnectionInfo, params: RestoreParams) -> TaskResult:
+    """Call out to pg_restore to restore from a backup"""
+    try:
+        pg_dump_location = _get_pg_exe_path('pg_restore')
+    except ValueError as e:
+        return TaskResult(TaskStatus.FAILED, str(e))
+    pg_restore_args = [pg_dump_location,
+                       f'--dbname={connection_info.details.options["dbname"]}',
+                       f'--host={connection_info.details.options["host"]}',
+                       f'--username={connection_info.details.options["user"]}',
+                       f'{params.options.path}']
+    # Add the rest of the options automatically
+    for option, value in params.options.__dict__.items():
+        # If the option was already handled above, or is not set, then don't add it to the arguments
+        if option == 'type' or option == 'path' or value is None or value is False:
+            continue
+        # Replace underscores with dashes in the option name
+        key_name = inflection.dasherize(option)
+        if value is True:
+            # The option is a boolean flag, so just add the option
+            pg_restore_args.append(f'--{key_name}')
+        else:
+            # The option has a value, so add the flag with its value
+            pg_restore_args.append(f'--{key_name}={value}')
+
+    pg_restore_process = subprocess.Popen(pg_restore_args, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    # pg_restore will prompt for the password, so send it via stdin. This call will block until the process exits.
+    _, stderr = pg_restore_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
+    if pg_restore_process.returncode != 0:
         return TaskResult(TaskStatus.FAILED, str(stderr, 'utf-8'))
     return TaskResult(TaskStatus.SUCCEEDED)
 
