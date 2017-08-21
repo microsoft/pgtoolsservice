@@ -413,7 +413,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_sequence.create_script()
 
         scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_sequence_create_script())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_create_script())
 
         # If I try to get select script for any object
         result = service.script_as_create()
@@ -437,7 +437,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_function.create_script()
 
         scripter.get_function_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_create = mock.MagicMock(return_value=scripter.get_function_create_script())
+        service.script_as_create = mock.MagicMock(return_value=scripter.get_create_script())
 
         # If I try to get select script for any object
         result = service.script_as_create()
@@ -582,7 +582,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_tablespace.delete_script()
 
         scripter.get_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_tablespace_delete_script())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_delete_script())
 
         # If I try to get select script for any object
         result = service.script_as_delete()
@@ -606,7 +606,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_sequence.delete_script()
 
         scripter.get_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_sequence_delete_script())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_delete_script())
 
         # If I try to get select script for any object
         result = service.script_as_delete()
@@ -630,7 +630,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_function.delete_script()
 
         scripter.get_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_function_delete_script())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_delete_script())
 
         # If I try to get select script for any object
         result = service.script_as_delete()
@@ -654,7 +654,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_collation.delete_script()
 
         scripter.get_delete_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_delete = mock.MagicMock(return_value=scripter.get_collation_delete_script())
+        service.script_as_delete = mock.MagicMock(return_value=scripter.get_delete_script())
 
         # If I try to get select script for any object
         result = service.script_as_delete()
@@ -728,7 +728,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_tablespace.update_script()
 
         scripter.get_update_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_update = mock.MagicMock(return_value=scripter.get_tablespace_update_script())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_update_script())
 
         # If I try to get select script for any object
         result = service.script_as_update()
@@ -753,7 +753,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_sequence.update_script()
 
         scripter.get_update_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_update = mock.MagicMock(return_value=scripter.get_sequence_update_script())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_update_script())
 
         # If I try to get select script for any object
         result = service.script_as_update()
@@ -777,7 +777,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_function.update_script()
 
         scripter.get_update_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_update = mock.MagicMock(return_value=scripter.get_function_update_script())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_update_script())
 
         # If I try to get select script for any object
         result = service.script_as_update()
@@ -802,7 +802,7 @@ class TestScriptingService(unittest.TestCase):
             return mock_collation.update_script()
 
         scripter.get_collation_update_script = mock.MagicMock(return_value=scripter_mock_fn())
-        service.script_as_update = mock.MagicMock(return_value=scripter.get_collation_update_script())
+        service.script_as_update = mock.MagicMock(return_value=scripter.get_update_script())
 
         # If I try to get select script for any object
         result = service.script_as_update()
