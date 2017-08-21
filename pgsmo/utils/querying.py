@@ -20,7 +20,7 @@ class ServerConnection:
         self._dsn_parameters = conn.get_dsn_parameters()
 
         # Calculate the server version
-        version_string = str(connection.server_version)
+        version_string = str(conn.server_version)
         self._version: Tuple[int, int, int] = (
             int(version_string[:-4]),
             int(version_string[-4:-2]),
