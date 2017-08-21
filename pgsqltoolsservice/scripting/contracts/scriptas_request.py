@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import pgsqltoolsservice.utils as utils
 import enum
 
@@ -20,7 +21,7 @@ class ScriptOperation(enum.Enum):
 class ScriptAsParameters:
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+        return utils.serialization.convert_from_dict(cls, dictionary, metadata=ObjectMetadata, operation=ScriptOperation)
 
     def __init__(self):
         self.owner_uri: str = None

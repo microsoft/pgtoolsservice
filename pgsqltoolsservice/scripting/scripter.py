@@ -128,7 +128,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_view(self, metadata):
+    def _find_view(self, metadata: ObjectMetadata):
         """ Find a view in the server """
         try:
             view_name = metadata.name
@@ -138,7 +138,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_role(self, metadata):
+    def _find_role(self, metadata: ObjectMetadata):
         """ Find a role in the server """
         try:
             role_name = metadata.name
@@ -147,7 +147,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_sequence(self, metadata):
+    def _find_sequence(self, metadata: ObjectMetadata):
         """ Find a sequence in the server """
         try:
             sequence_name = metadata.name
@@ -156,7 +156,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _get_object(self, object_type: str, metadata):
+    def _get_object(self, object_type: str, metadata: ObjectMetadata):
         """ Retrieve a given object """
         object_map = {
             "Table": self._find_table,
