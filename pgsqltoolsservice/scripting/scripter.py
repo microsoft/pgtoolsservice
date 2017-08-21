@@ -3,8 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo.objects.server.server import Server
-from pgsqltoolsservice.metadata.contracts import ObjectMetadata
+from pgsmo import Server, Schema
+from pgsmo.utils.templating import qt_ident
+from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 
 
 class Scripter(object):
@@ -21,11 +22,9 @@ class Scripter(object):
 
     def script_as_select(self, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
-        schema = metadata.schema
-        name = metadata.name
-        # wrap quotes only around objects with all small letters
-        name = f'"{name}"' if name.islower() else name
-        script = f"SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n"
+        schema = qt_ident(None, metadata.schema)
+        name = qt_ident(None, metadata.name)
+        script = f'SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n'
         return script
 
     # CREATE ##################################################################
@@ -76,24 +75,18 @@ class Scripter(object):
 
     # HELPER METHODS ##########################################################
 
-    def _get_schema_from_db(self, schema_name, databases):
-        try:
-            schema = databases[schema_name]
-            return schema
-        except NameError:
-            return None
-
-    def _find_schema(self, metadata):
+    def _find_schema(self, metadata: ObjectMetadata) -> Schema:
         """ Find the schema in the server to script as """
         schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
-        databases = self.server.databases
+        database = self.server.maintenance_db
         parent_schema = None
         try:
-            for db in databases:
-                if db.schemas is not None:
-                    parent_schema = self._get_schema_from_db(schema_name, db.schemas)
-                    if parent_schema is not None:
-                        return parent_schema
+            if database.schemas is not None:
+                parent_schema = database.schemas.get(schema_name)
+                if parent_schema is not None:
+                    return parent_schema
+            
+            return None
         except Exception:
             return None
 
