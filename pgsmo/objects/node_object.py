@@ -9,7 +9,6 @@ from typing import Callable, Dict, Generic, List, Optional, Union, TypeVar, Keys
 
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
-import pgsmo.utils.querying as querying
 
 
 class NodeObject(metaclass=ABCMeta):
@@ -98,15 +97,13 @@ class NodeObject(metaclass=ABCMeta):
         pass
 
     @classmethod
-    def _macro_root(cls) -> str:
+    def _macro_root(cls) -> Optional[str]:
         return None
 
-    def _get_template(self, connection: querying.ServerConnection, query_file: str, data,
-                      paths_to_add=None, filters_to_add=None) -> str:
+    def _get_template(self, query_file: str, data: dict, paths_to_add: List[str]=None, filters_to_add=None) -> str:
         """ Helper function to render a template given data and query file """
         template_root = self._template_root(self.server)
-        connection_version = querying.get_server_version(connection)
-        template_path = templating.get_template_path(template_root, query_file, connection_version)
+        template_path = templating.get_template_path(template_root, query_file, self.server.version)
         script_template = templating.render_template(template_path, paths_to_add, filters_to_add, **data)
         return script_template
 

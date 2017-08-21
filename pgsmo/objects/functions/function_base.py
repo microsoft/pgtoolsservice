@@ -7,7 +7,6 @@ from abc import ABCMeta
 from typing import Optional
 
 import pgsmo.objects.node_object as node
-import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 from pgsmo.objects.server import server as s    # noqa
 
@@ -71,6 +70,7 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
     def owner(self) -> Optional[str]:
         return self._owner
 
+    # -FULL OBJECT PROPERTIES ##############################################
     @property
     def arguments(self) -> Optional[list]:
         return self._full_properties.get("arguments")
@@ -156,23 +156,23 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
         return self._full_properties.get("cascade")
 
     # SCRIPTING METHODS ##############################################################
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a functions """
         data = self._create_query_data()
         query_file = "create.sql"
-        return self._get_template(connection, query_file, data, paths_to_add=[self.MACRO_ROOT])
+        return self._get_template(query_file, data, paths_to_add=[self.MACRO_ROOT])
 
-    def delete_script(self, connection: querying.ServerConnection) -> str:
+    def delete_script(self) -> str:
         """ Function to retrieve delete scripts for a functions"""
         data = self._delete_query_data()
         query_file = "delete.sql"
-        return self._get_template(connection, query_file, data)
+        return self._get_template(query_file, data)
 
-    def update_script(self, connection: querying.ServerConnection) -> str:
+    def update_script(self) -> str:
         """ Function to retrieve update scripts for a functions"""
         data = self._update_query_data()
         query_file = "update.sql"
-        return self._get_template(connection, query_file, data, paths_to_add=[self.MACRO_ROOT])
+        return self._get_template(query_file, data, paths_to_add=[self.MACRO_ROOT])
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
