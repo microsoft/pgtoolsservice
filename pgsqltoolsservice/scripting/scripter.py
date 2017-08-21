@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsmo.objects.server.server import Server
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 
 
 class Scripter(object):
@@ -18,7 +19,7 @@ class Scripter(object):
 
     # SELECT ##################################################################
 
-    def script_as_select(self, metadata) -> str:
+    def script_as_select(self, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
         schema = metadata.schema
         name = metadata.name
@@ -29,7 +30,7 @@ class Scripter(object):
 
     # CREATE ##################################################################
 
-    def get_create_script(self, metadata) -> str:
+    def get_create_script(self, metadata: ObjectMetadata) -> str:
         """ Get create script for all objects """
         try:
             # get object from server
@@ -45,7 +46,7 @@ class Scripter(object):
             return None
 
     # DELETE ##################################################################
-    def get_delete_script(self, metadata) -> str:
+    def get_delete_script(self, metadata: ObjectMetadata) -> str:
         """ Get delete script for all objects """
         try:
             # get object from server
@@ -60,7 +61,7 @@ class Scripter(object):
 
     # UPDATE ##################################################################
 
-    def get_update_script(self, metadata) -> str:
+    def get_update_script(self, metadata: ObjectMetadata) -> str:
         """ Get update script for tables """
         try:
             # get object from server
@@ -96,7 +97,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_table(self, metadata):
+    def _find_table(self, metadata: ObjectMetadata):
         """ Find the table in the server to script as """
         try:
             table_name = metadata.name
@@ -106,7 +107,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_function(self, metadata):
+    def _find_function(self, metadata: ObjectMetadata):
         """ Find the function in the server to script as """
         try:
             function_name = metadata.name
@@ -115,7 +116,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_database(self, metadata):
+    def _find_database(self, metadata: ObjectMetadata):
         """ Find a database in the server """
         try:
             database_name = metadata.name
@@ -124,7 +125,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_view(self, metadata):
+    def _find_view(self, metadata: ObjectMetadata):
         """ Find a view in the server """
         try:
             view_name = metadata.name
@@ -134,7 +135,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_role(self, metadata):
+    def _find_role(self, metadata: ObjectMetadata):
         """ Find a role in the server """
         try:
             role_name = metadata.name
@@ -143,7 +144,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_sequence(self, metadata):
+    def _find_sequence(self, metadata: ObjectMetadata):
         """ Find a sequence in the server """
         try:
             sequence_name = metadata.name
@@ -152,7 +153,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _get_object(self, object_type: str, metadata):
+    def _get_object(self, object_type: str, metadata: ObjectMetadata):
         """ Retrieve a given object """
         object_map = {
             "Table": self._find_table,
