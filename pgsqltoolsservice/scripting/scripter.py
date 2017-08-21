@@ -3,8 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
-
 from pgsmo import Server, Schema
 from pgsmo.utils.templating import qt_ident
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
@@ -28,9 +26,6 @@ class Scripter(object):
         name = qt_ident(None, metadata.name)
         script = f'SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n'
         return script
-
-    def _escape_name(self, name: str) -> str:
-        return '"%s"' % name
 
     # CREATE ##################################################################
 
@@ -80,23 +75,18 @@ class Scripter(object):
 
     # HELPER METHODS ##########################################################
 
-    def _get_schema_from_list(self, schema_name: str, schemas: List[Schema]) -> Schema:
-        try:
-            schema = schemas[schema_name]
-            return schema
-        except NameError:
-            return None
-
-    def _find_schema(self, metadata: ObjectMetadata):
+    def _find_schema(self, metadata: ObjectMetadata) -> Schema:
         """ Find the schema in the server to script as """
         schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
         database = self.server.maintenance_db
         parent_schema = None
         try:
             if database.schemas is not None:
-                parent_schema = self._get_schema_from_list(schema_name, database.schemas)
+                parent_schema = database.schemas.get(schema_name)
                 if parent_schema is not None:
                     return parent_schema
+            
+            return None
         except Exception:
             return None
 
