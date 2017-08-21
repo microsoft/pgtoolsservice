@@ -8,7 +8,6 @@ from typing import Optional
 from pgsmo.objects.node_object import NodeObject
 from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
-import pgsmo.utils.querying as querying
 
 
 class Role(NodeObject):
@@ -61,6 +60,7 @@ class Role(NodeObject):
         """Whether or not the role is a super user"""
         return self._super
 
+    # -FULL OBJECT PROPERTIES ##############################################
     @property
     def createdb(self):
         return self._full_properties.get("createdb", "")
@@ -124,18 +124,18 @@ class Role(NodeObject):
 
     # SCRIPTING METHODS ####################################################
 
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a role """
         data = self._create_query_data()
         query_file = "create.sql"
-        return self._get_template(connection, query_file, data)
+        return self._get_template(query_file, data)
 
-    def update_script(self, connection: querying.ServerConnection) -> str:
+    def update_script(self) -> str:
         """ Function to retrieve create scripts for a role """
         data = self._update_query_data()
         query_file = "update.sql"
         filters = {'hasAny': templating.has_any}
-        return self._get_template(connection, query_file, data, filters_to_add=filters)
+        return self._get_template(query_file, data, filters_to_add=filters)
 
     # HELPER METHODS ##################################################################
 

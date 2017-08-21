@@ -85,7 +85,7 @@ class Scripter(object):
                 parent_schema = database.schemas.get(schema_name)
                 if parent_schema is not None:
                     return parent_schema
-            
+
             return None
         except Exception:
             return None
