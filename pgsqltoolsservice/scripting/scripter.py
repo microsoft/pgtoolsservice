@@ -3,7 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo.objects.server.server import Server
+from pgsmo import Server, Schema
+from pgsmo.utils.templating import qt_ident
+from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 
 
 class Scripter(object):
@@ -18,18 +20,16 @@ class Scripter(object):
 
     # SELECT ##################################################################
 
-    def script_as_select(self, metadata) -> str:
+    def script_as_select(self, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
-        schema = metadata.schema
-        name = metadata.name
-        # wrap quotes only around objects with all small letters
-        name = f'"{name}"' if name.islower() else name
-        script = f"SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n"
+        schema = qt_ident(None, metadata.schema)
+        name = qt_ident(None, metadata.name)
+        script = f'SELECT *\nFROM {schema}.{name}\nLIMIT 1000\n'
         return script
 
     # CREATE ##################################################################
 
-    def get_create_script(self, metadata) -> str:
+    def get_create_script(self, metadata: ObjectMetadata) -> str:
         """ Get create script for all objects """
         try:
             # get object from server
@@ -45,7 +45,7 @@ class Scripter(object):
             return None
 
     # DELETE ##################################################################
-    def get_delete_script(self, metadata) -> str:
+    def get_delete_script(self, metadata: ObjectMetadata) -> str:
         """ Get delete script for all objects """
         try:
             # get object from server
@@ -60,7 +60,7 @@ class Scripter(object):
 
     # UPDATE ##################################################################
 
-    def get_update_script(self, metadata) -> str:
+    def get_update_script(self, metadata: ObjectMetadata) -> str:
         """ Get update script for tables """
         try:
             # get object from server
@@ -75,28 +75,22 @@ class Scripter(object):
 
     # HELPER METHODS ##########################################################
 
-    def _get_schema_from_db(self, schema_name, databases):
-        try:
-            schema = databases[schema_name]
-            return schema
-        except NameError:
-            return None
-
-    def _find_schema(self, metadata):
+    def _find_schema(self, metadata: ObjectMetadata) -> Schema:
         """ Find the schema in the server to script as """
         schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
-        databases = self.server.databases
+        database = self.server.maintenance_db
         parent_schema = None
         try:
-            for db in databases:
-                if db.schemas is not None:
-                    parent_schema = self._get_schema_from_db(schema_name, db.schemas)
-                    if parent_schema is not None:
-                        return parent_schema
+            if database.schemas is not None:
+                parent_schema = database.schemas.get(schema_name)
+                if parent_schema is not None:
+                    return parent_schema
+            
+            return None
         except Exception:
             return None
 
-    def _find_table(self, metadata):
+    def _find_table(self, metadata: ObjectMetadata):
         """ Find the table in the server to script as """
         try:
             table_name = metadata.name
@@ -106,7 +100,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_function(self, metadata):
+    def _find_function(self, metadata: ObjectMetadata):
         """ Find the function in the server to script as """
         try:
             function_name = metadata.name
@@ -115,7 +109,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_database(self, metadata):
+    def _find_database(self, metadata: ObjectMetadata):
         """ Find a database in the server """
         try:
             database_name = metadata.name
@@ -124,7 +118,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_view(self, metadata):
+    def _find_view(self, metadata: ObjectMetadata):
         """ Find a view in the server """
         try:
             view_name = metadata.name
@@ -134,7 +128,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_role(self, metadata):
+    def _find_role(self, metadata: ObjectMetadata):
         """ Find a role in the server """
         try:
             role_name = metadata.name
@@ -143,7 +137,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _find_sequence(self, metadata):
+    def _find_sequence(self, metadata: ObjectMetadata):
         """ Find a sequence in the server """
         try:
             sequence_name = metadata.name
@@ -152,7 +146,7 @@ class Scripter(object):
         except Exception:
             return None
 
-    def _get_object(self, object_type: str, metadata):
+    def _get_object(self, object_type: str, metadata: ObjectMetadata):
         """ Retrieve a given object """
         object_map = {
             "Table": self._find_table,

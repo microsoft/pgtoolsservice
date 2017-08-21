@@ -94,22 +94,21 @@ class TestScriptingService(unittest.TestCase):
     def test_handle_scriptas_request(self):
         """ Test _handle_scriptas_request function """
         mock_service = ScriptingService()
-        metadata = ObjectMetadata()
-        metadata.schema = "public"
-        metadata.name = "test"
-        params = {
-            "metadata": metadata,
+        params = ScriptAsParameters.from_dict({
+            "metadata": {
+                'schema': 'public',
+                'name': 'test'
+            },
             "operation": ScriptOperation.SELECT,
             "owner_uri": "test_uri"
-        }
+        })
 
         mock_conn_service = mock.MagicMock()
         mock_conn_service.get_connection = mock.MagicMock(return_value=self.connection)
         mock_service._service_provider = mock.MagicMock(return_value=mock_conn_service)
         mock_service._scripting_operation = mock.MagicMock(return_value=None)
         self.request_context.send_response = mock.MagicMock(side_effect=self._success())
-        mock_params = ScriptAsParameters.from_dict(params)
-        mock_service._handle_scriptas_request(self.request_context, mock_params)
+        mock_service._handle_scriptas_request(self.request_context, params)
         self.assertTrue(self.success)
 
     def test_scripting_operation(self):
