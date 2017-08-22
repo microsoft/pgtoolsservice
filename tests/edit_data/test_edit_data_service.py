@@ -44,13 +44,13 @@ class TestEditDataService(unittest.TestCase):
 
     def test_update_cell_with_no_active_session(self):
 
-            update_cell_request = UpdateCellRequest()
-            update_cell_request.owner_uri = 'test_owner_uri'
+        update_cell_request = UpdateCellRequest()
+        update_cell_request.owner_uri = 'test_owner_uri'
 
-            request_context = utils.MockRequestContext()
+        request_context = utils.MockRequestContext()
 
-            with self.assertRaises(KeyError):
-                self._service_under_test._update_cell(request_context, update_cell_request)
+        with self.assertRaises(KeyError):
+            self._service_under_test._update_cell(request_context, update_cell_request)
 
     def test_update_cell_with_active_session(self):
 
