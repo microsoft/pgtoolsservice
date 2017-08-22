@@ -41,17 +41,17 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(self.request_context.last_notification_method, 'tasks/newtaskcreated')
         expected_params = {
             'status': TaskStatus.NOT_STARTED,
-            'serverName': self.server_name,
-            'databaseName': self.database_name,
+            'server_name': self.server_name,
+            'database_name': self.database_name,
             'name': self.task_name,
-            'providerName': self.task_provider,
+            'provider_name': self.task_provider,
             'description': self.task_description
         }
-        actual_params = self.request_context.last_notification_params
+        actual_params = self.request_context.last_notification_params.__dict__
         for param, value in expected_params.items():
             self.assertIn(param, actual_params)
             self.assertEqual(value, actual_params[param])
-        self.assertIn('taskId', actual_params)
+        self.assertIn('task_id', actual_params)
 
     def test_run_task(self):
         """Test that the task can be started, runs in a separate thread, and sends status notifications"""

@@ -136,7 +136,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
                         new=mock.Mock(return_value=mock_pg_path)) as mock_get_path, \
                 mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)) as mock_popen:
             # If I perform a backup
-            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params)
+            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params, mock.Mock())
             # Then the code got the path of pg_dump
             mock_get_path.assert_called_once_with('pg_dump')
             # And ran the pg_dump executable as a subprocess
@@ -172,7 +172,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path',
                         new=mock.Mock(return_value=mock_pg_path)), mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)):
             # If I perform a backup where pg_dump fails
-            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params)
+            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params, mock.Mock())
             # Then the task returns a failed result
             self.assertIs(task_result.status, TaskStatus.FAILED)
             # And the task contains the error message from pg_dump's stderr
@@ -182,7 +182,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         """Test that the perform_backup task fails when the pg_dump exe is not found"""
         with mock.patch('os.path.exists', new=mock.Mock(return_value=False)), mock.patch('subprocess.Popen') as mock_popen:
             # If I perform a backup when the pg_dump executable cannot be found
-            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params)
+            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params, mock.Mock())
             # Then the task fails and does try to kick off a new process
             self.assertIs(task_result.status, TaskStatus.FAILED)
             mock_popen.assert_not_called()

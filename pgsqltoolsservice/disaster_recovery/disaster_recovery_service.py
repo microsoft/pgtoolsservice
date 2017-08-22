@@ -48,11 +48,12 @@ class DisasterRecoveryService:
         database = connection_info.details.options['dbname']
         task = Task('Backup', f'Host: {host}, Database: {database}', constants.PROVIDER_NAME, host, database, request_context,  # TODO: Localize
                     functools.partial(_perform_backup, connection_info, params))
+        self._service_provider[constants.TASK_SERVICE_NAME].register_task(task)
         request_context.send_response({})
         task.start()
 
 
-def _perform_backup(connection_info: ConnectionInfo, params: BackupParams) -> TaskResult:
+def _perform_backup(connection_info: ConnectionInfo, params: BackupParams, task: Task) -> TaskResult:
     """Call out to pg_dump to do a backup"""
     try:
         pg_dump_location = _get_pg_exe_path('pg_dump')
@@ -79,6 +80,7 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams) -> Ta
             pg_dump_args.append(f'--{key_name}={value}')
 
     pg_dump_process = subprocess.Popen(pg_dump_args, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+    task.on_cancel = pg_dump_process.kill
     # pg_dump will prompt for the password, so send it via stdin. This call will block until the process exits.
     _, stderr = pg_dump_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
     if pg_dump_process.returncode != 0:
