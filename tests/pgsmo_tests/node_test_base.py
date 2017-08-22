@@ -37,7 +37,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         return {}
 
     @property
-    def init_lambda(self) -> Callable[[], NodeObject]:
+    def init_lambda(self) -> Callable[[Server, NodeObject, str], NodeObject]:
         class_ = self.class_for_test
         return lambda server, parent, name: class_(server, parent, name)
 

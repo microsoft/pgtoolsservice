@@ -59,7 +59,7 @@ class ScriptableUpdate(ScriptableBase, metaclass=ABCMeta):
 
     def update_script(self):
         """Generates a script that creates an object of the inheriting type"""
-        data = self._delete_query_data()
+        data = self._update_query_data()
         return templating.render_template(
             templating.get_template_path(self._mxin_template_root, 'update.sql', self._mxin_server_version),
             self._mxin_macro_root,
