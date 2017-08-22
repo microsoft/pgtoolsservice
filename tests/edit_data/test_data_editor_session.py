@@ -41,6 +41,10 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._metadata_factory.get = mock.Mock(return_value=self._edit_table_metadata)
 
+        self._query = 'SELECT TESTCOLUMN FROM TESTTABLE LIMIT 100'
+
+        self._data_editor_session._construct_initialize_query = mock.Mock(return_value=self._query)
+
     def test_initialize_gets_metadata(self):
 
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
@@ -54,14 +58,6 @@ class TestDataEditorSession(unittest.TestCase):
         self.assertEqual(self._initialize_edit_request.schema_name, call_args[1])
         self.assertEqual(self._initialize_edit_request.object_name, call_args[2])
         self.assertEqual(self._initialize_edit_request.object_type, call_args[3])
-
-    def test_initialize_calls_queryexecuter_with_query(self):
-
-        self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
-
-        self.assertEqual(self._query_executer.call_args[0][0].upper(), 'SELECT TESTCOLUMN FROM TESTTABLE')
-
-        self._query_executer.assert_called_once()
 
     def test_initialize_calls_queryexecuter_with_query_with_filters(self):
 

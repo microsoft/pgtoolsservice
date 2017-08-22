@@ -15,9 +15,6 @@ from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 
 class SmoEditTableMetadataFactory:
 
-    def __init__(self):
-        pass
-
     def get(self, connection: 'psycopg2.extensions.connection', schema_name: str, object_name: str, object_type: str) -> EditTableMetadata:
         # Check if you can get the object metdata from the client directly
 
@@ -33,7 +30,7 @@ class SmoEditTableMetadataFactory:
         elif object_type == 'View':
             result_object = object_finder.find_view(server, object_metadata)
         else:
-            raise Exception('Not supported object type')
+            raise ValueError('Not supported object type')
 
         edit_columns_metadata: List[EditColumnMetadata] = []
 

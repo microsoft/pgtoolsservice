@@ -5,6 +5,7 @@
 
 
 from typing import Callable, Dict, List, Optional, Tuple # noqa
+from psycopg2 import sql
 
 from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate # noqa
 from pgsqltoolsservice.query_execution.result_set import ResultSet # noqa
@@ -33,7 +34,9 @@ class DataEditorSession():
         self.table_metadata: EditTableMetadata = None
 
     def initialize(self, initailize_edit_params: InitializeEditParams, connection: 'psycopg2.extensions.connection',
-                   query_executer: Callable, on_success: Callable, on_failure: Callable):
+                   query_executer: Callable[[str], DataEditSessionExecutionState], on_success: Callable, on_failure: Callable):
+        """ This method creates the metadata for the object to be edited and creates the query to be
+        executed and calls query executer with it """
 
         try:
             self.table_metadata = self._metadata_factory.get(
@@ -47,7 +50,9 @@ class DataEditorSession():
                 message = execution_state.message
                 raise Exception(message)
 
-            self._result_set = self._validate_query_for_session(execution_state.query)
+            self._validate_query_for_session(execution_state.query)
+
+            self._result_set = execution_state.query.batches[0].result_set
             self._next_row_id = self._result_set.row_count
             self._is_initialized = True
             self.table_metadata.extend(self._result_set.columns)
@@ -74,18 +79,17 @@ class DataEditorSession():
         if query.execution_state is not ExecutionState.EXECUTED:
             raise Exception('Execution not completed')
 
-        return query.batches[0].result_set
+    def _construct_initialize_query(self, connection: 'psycopg2.extensions.connection', metadata: EditTableMetadata, filters: EditInitializerFilter):
 
-    def _construct_initialize_query(self, metadata: EditTableMetadata, filters: EditInitializerFilter):
-
-        query_string = 'SELECT '
-
-        column_names = [column.escaped_name for column in metadata.column_metadata]
-        column_clause = ', '.join(column_names)
-
-        limit_clause = ''
+        column_names = [sql.Identifier(column.escaped_name) for column in metadata.column_metadata]
 
         if filters.limit_results is not None and filters.limit_results > 0:
             limit_clause = ' '.join([' LIMIT', str(filters.limit_results)])
 
-        return ''.join([query_string, column_clause, ' FROM ', metadata.escaped_multipart_name, limit_clause])
+        query = sql.SQL('SELECT {0} FROM {1} {2}').format(
+            sql.SQL(', ').join(column_names),
+            sql.Identifier(metadata.escaped_multipart_name),
+            sql.SQL(limit_clause)
+        )
+
+        return query.as_string(connection)

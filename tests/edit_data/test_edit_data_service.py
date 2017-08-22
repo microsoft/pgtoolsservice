@@ -48,34 +48,34 @@ class TestEditDataService(unittest.TestCase):
             update_cell_request.owner_uri = 'test_owner_uri'
 
             request_context = utils.MockRequestContext()
-            self._service_under_test._update_cell(request_context, update_cell_request)
 
-            self.assertIsNotNone(request_context.last_error_message)
+            with self.assertRaises(KeyError):
+                self._service_under_test._update_cell(request_context, update_cell_request)
 
     def test_update_cell_with_active_session(self):
 
-            update_cell_request = UpdateCellRequest()
-            update_cell_request.owner_uri = 'test_owner_uri'
-            update_cell_request.row_id = 1
-            update_cell_request.column_id = 1
-            update_cell_request.new_value = 'Updates'
+        update_cell_request = UpdateCellRequest()
+        update_cell_request.owner_uri = 'test_owner_uri'
+        update_cell_request.row_id = 1
+        update_cell_request.column_id = 1
+        update_cell_request.new_value = 'Updates'
 
-            request_context = utils.MockRequestContext()
+        request_context = utils.MockRequestContext()
 
-            edit_session = mock.MagicMock()
-            edit_session.update_cell = mock.Mock(return_value='Something')
+        edit_session = mock.MagicMock()
+        edit_session.update_cell = mock.Mock(return_value='Something')
 
-            self._service_under_test._active_sessions[update_cell_request.owner_uri] = edit_session
+        self._service_under_test._active_sessions[update_cell_request.owner_uri] = edit_session
 
-            self._service_under_test._update_cell(request_context, update_cell_request)
+        self._service_under_test._update_cell(request_context, update_cell_request)
 
-            edit_session.update_cell.assert_called()
+        edit_session.update_cell.assert_called()
 
-            args = edit_session.update_cell.call_args[0]
+        args = edit_session.update_cell.call_args[0]
 
-            self.assertEqual(update_cell_request.row_id, args[0])
-            self.assertEqual(update_cell_request.column_id, args[1])
-            self.assertEqual(update_cell_request.new_value, args[2])
+        self.assertEqual(update_cell_request.row_id, args[0])
+        self.assertEqual(update_cell_request.column_id, args[1])
+        self.assertEqual(update_cell_request.new_value, args[2])
 
 
 if __name__ == '__main__':

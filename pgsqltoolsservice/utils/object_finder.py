@@ -14,7 +14,7 @@ def find_schema(server: Server, metadata):
     parent_schema = None
     try:
         if database.schemas is not None:
-            parent_schema = database.schemas.get(schema_name)
+            parent_schema = database.schemas[schema_name]
             if parent_schema is not None:
                 return parent_schema
 
@@ -25,23 +25,12 @@ def find_schema(server: Server, metadata):
 
 def find_table(server: Server, metadata):
     """ Find the table in the server to script as """
-    try:
-        table_name = metadata.name
-        parent_schema = find_schema(server, metadata)
-        for table in parent_schema.tables:
-            return parent_schema.tables[table_name]
-    except Exception:
-        return None
+    return find_schema_child_object(server, 'tables', metadata)
 
 
 def find_function(server: Server, metadata):
     """ Find the function in the server to script as """
-    try:
-        function_name = metadata.name
-        parent_schema = find_schema(server, metadata)
-        return parent_schema.functions[function_name]
-    except Exception:
-        return None
+    return find_schema_child_object(server, 'functions', metadata)
 
 
 def find_database(server: Server, metadata):
@@ -56,13 +45,7 @@ def find_database(server: Server, metadata):
 
 def find_view(server: Server, metadata):
     """ Find a view in the server """
-    try:
-        view_name = metadata.name
-        parent_schema = find_schema(server, metadata)
-        view = parent_schema.views[view_name]
-        return view
-    except Exception:
-        return None
+    return find_schema_child_object(server, 'views', metadata)
 
 
 def find_role(server: Server, metadata):
@@ -77,9 +60,45 @@ def find_role(server: Server, metadata):
 
 def find_sequence(server: Server, metadata):
     """ Find a sequence in the server """
+    return find_schema_child_object(server, 'sequences', metadata)
+
+
+def find_datatype(server: Server, metadata):
+    """ Find a datatype in the server """
+    return find_schema_child_object(server, 'datatypes', metadata)
+
+
+def find_schema_child_object(server, prop_name: str, metadata):
+    """
+    Find an object that is a child of a schema object.
+    :param prop_name: name of the property used to query for objects
+    of this type on the schema
+    :param metadata: metadata including object name and schema name
+    """
     try:
-        sequence_name = metadata.name
-        sequence = server.sequences[sequence_name]
-        return sequence
+        obj_name = metadata.name
+        parent_schema = find_schema(server, metadata)
+        if not parent_schema:
+            return None
+        obj_collection = getattr(parent_schema, prop_name)
+        if not obj_collection:
+            return None
+        obj = obj_collection[obj_name]
+        return obj
     except Exception:
         return None
+
+
+def get_object(server: Server, object_type: str, metadata):
+    """ Retrieve a given object """
+    object_map = {
+        "Table": find_table,
+        "Schema": find_schema,
+        "Database": find_database,
+        "View": find_view,
+        "Role": find_role,
+        "Function": find_function,
+        "Sequence": find_sequence,
+        "DataType": find_datatype
+    }
+    return object_map[object_type](server, metadata)

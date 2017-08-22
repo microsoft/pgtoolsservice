@@ -43,22 +43,17 @@ class EditDataService(object):
     def _handle_session_request(self, session_operation_request: SessionOperationRequest,
                                 request_context: RequestContext, session_operation: Callable):
 
-        try:
-            edit_session = self._get_active_session(session_operation_request.owner_uri)
+        edit_session = self._get_active_session(session_operation_request.owner_uri)
+        result = session_operation(edit_session)
 
-            result = session_operation(edit_session)
-
-            request_context.send_response(result)
-
-        except Exception as error:
-            request_context.send_error(error)
+        request_context.send_response(result)
 
     def _get_active_session(self, owner_uri: str):
 
         edit_session = self._active_sessions.get(owner_uri)
 
         if edit_session is None:
-            raise Exception('Edit session not found')
+            raise KeyError('Edit session not found')
 
         return edit_session
 
