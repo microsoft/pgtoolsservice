@@ -5,6 +5,8 @@
 
 from typing import Optional
 
+import pgsqltoolsservice.utils as utils
+
 
 class ObjectMetadata(object):
     """Database object metadata"""
@@ -16,6 +18,10 @@ class ObjectMetadata(object):
         obj.name = name
         obj.schema = schema
         return obj
+
+    @classmethod
+    def from_dict(cls, dictionary: dict) -> 'ObjectMetadata':
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.metadata_type: int = 0

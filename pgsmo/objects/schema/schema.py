@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import os.path as path
-from typing import Optional
+from typing import List, Optional
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.collation import Collation
@@ -14,7 +14,6 @@ from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 import pgsmo.utils.templating as templating
-import pgsmo.utils.querying as querying
 
 
 TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
@@ -134,27 +133,27 @@ class Schema(node.NodeObject):
         return path.join(TEMPLATE_ROOT, server.server_type)
 
     @classmethod
-    def _macro_root(cls) -> str:
+    def _macro_root(cls) -> List[str]:
         return [MACRO_ROOT]
 
     # SCRIPTING METHODS ##############################################################
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a schema """
         data = self._create_query_data()
         query_file = "create.sql"
-        return self._get_template(connection, query_file, data, paths_to_add=self._macro_root())
+        return self._get_template(query_file, data, paths_to_add=self._macro_root())
 
-    def delete_script(self, connection: querying.ServerConnection) -> str:
+    def delete_script(self) -> str:
         """ Function to retrieve delete scripts for schema """
         data = self._delete_query_data()
         query_file = "delete.sql"
-        return self._get_template(connection, query_file, data)
+        return self._get_template(query_file, data)
 
-    def update_script(self, connection: querying.ServerConnection) -> str:
+    def update_script(self) -> str:
         """ Function to retrieve update scripts for schema """
         data = self._update_query_data()
         query_file = "update.sql"
-        return self._get_template(connection, query_file, data, paths_to_add=self._macro_root())
+        return self._get_template(query_file, data, paths_to_add=self._macro_root())
 
     #  HELPER METHODS ######################################################
     def _create_query_data(self) -> dict:

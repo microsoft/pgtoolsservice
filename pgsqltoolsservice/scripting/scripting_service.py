@@ -34,30 +34,22 @@ class ScriptingService(object):
 
     def _handle_scriptas_request(self, request_context: RequestContext, params: ScriptAsParameters) -> None:
         try:
-            metadata = self._get_metadata(params.metadata)
             scripting_operation = params.operation
             connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
             connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
-            script = self._scripting_operation(scripting_operation, connection, metadata)
+            script = self._scripting_operation(scripting_operation, connection, params.metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:
             request_context.send_error(str(e), params)
 
     # HELPER FUNCTIONS ######################################################
 
-    def _get_metadata(self, metadata: dict) -> ObjectMetadata:
-        metadata_type = metadata.get("metadataType", "")
-        metadata_type_name = metadata.get("metadataTypeName", "")
-        name = metadata.get("name", "")
-        schema = metadata.get("schema", "")
-        return ObjectMetadata.from_data(metadata_type, metadata_type_name, name, schema)
-
     def _script_as_select(self, connection, metadata: ObjectMetadata) -> str:
         """ Function to get script for select operations """
         scripter = Scripter(connection)
         return scripter.script_as_select(metadata)
 
-    def _scripting_operation(self, scripting_operation: int, connection, metadata: ObjectMetadata):
+    def _scripting_operation(self, scripting_operation: ScriptOperation, connection, metadata: ObjectMetadata):
         """Helper function to get the correct script based on operation"""
         try:
             script_map = self._script_map(connection, metadata)
@@ -71,10 +63,10 @@ class ScriptingService(object):
     def _script_map(self, connection, metadata) -> dict:
         """ Maps every object and operation to the correct script function """
         scripter = Scripter(connection)
-        create = ScriptOperation.CREATE.value
-        delete = ScriptOperation.DELETE.value
-        update = ScriptOperation.UPDATE.value
-        select = ScriptOperation.SELECT.value
+        create = ScriptOperation.CREATE
+        delete = ScriptOperation.DELETE
+        update = ScriptOperation.UPDATE
+        select = ScriptOperation.SELECT
         return {
             create: scripter.get_create_script(metadata),
             delete: scripter.get_delete_script(metadata),

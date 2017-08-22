@@ -7,25 +7,18 @@
 from pgsmo import Server
 
 
-def get_schema_from_db(schema_name, databases):
-    try:
-        schema = databases[schema_name]
-        return schema
-    except NameError:
-        return None
-
-
 def find_schema(server: Server, metadata):
     """ Find the schema in the server to script as """
     schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
-    databases = server.databases
+    database = server.maintenance_db
     parent_schema = None
     try:
-        for db in databases:
-            if db.schemas is not None:
-                parent_schema = get_schema_from_db(schema_name, db.schemas)
-                if parent_schema is not None:
-                    return parent_schema
+        if database.schemas is not None:
+            parent_schema = database.schemas.get(schema_name)
+            if parent_schema is not None:
+                return parent_schema
+
+        return None
     except Exception:
         return None
 

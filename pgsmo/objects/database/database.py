@@ -63,6 +63,7 @@ class Database(node.NodeObject):
             self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
 
     # PROPERTIES ###########################################################
+    # -BASIC PROPERTIES ####################################################
     @property
     def allow_conn(self) -> bool:
         return self._allow_conn
@@ -75,6 +76,7 @@ class Database(node.NodeObject):
     def tablespace(self) -> str:
         return self._tablespace
 
+    # -FULL OBJECT PROPERTIES ##############################################
     @property
     def encoding(self) -> str:
         return self._full_properties.get("encoding", "")
@@ -106,17 +108,17 @@ class Database(node.NodeObject):
 
     # METHODS ##############################################################
 
-    def create_script(self, connection: querying.ServerConnection) -> str:
+    def create_script(self) -> str:
         """ Function to retrieve create scripts for a database """
         data = self._create_query_data()
         query_file = "create.sql"
-        return self._get_template(connection, query_file, data)
+        return self._get_template(query_file, data)
 
-    def delete_script(self, connection: querying.ServerConnection) -> str:
+    def delete_script(self) -> str:
         """ Function to retrieve delete scripts for a database """
         data = self._delete_query_data()
         query_file = "delete.sql"
-        return self._get_template(connection, query_file, data)
+        return self._get_template(query_file, data)
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
