@@ -6,12 +6,12 @@
 from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete):
+class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -77,15 +77,6 @@ class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-
-    # SCRIPTING METHODS ####################################################
-    def update_script(self) -> str:
-        """ Function to retrieve update scripts for a table"""
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(query_file, data, paths_to_add=self._macro_root())
-
-    # HELPER METHODS #######################################################
 
     def _create_query_data(self):
         """ Returns the data needed for create query """

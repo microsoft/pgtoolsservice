@@ -108,13 +108,6 @@ class NodeObject(metaclass=ABCMeta):
         pass
 
     # PROTECTED HELPERS ####################################################
-    def _get_template(self, query_file: str, data: dict, paths_to_add: List[str] = None) -> str:
-        """ Helper function to render a template given data and query file """
-        template_root = self._template_root(self.server)
-        template_path = templating.get_template_path(template_root, query_file, self.server.version)
-        script_template = templating.render_template(template_path, paths_to_add, **data)
-        return script_template
-
     TRCC = TypeVar('TRCC')
 
     def _register_child_collection(self, generator: Callable[[], List[TRCC]]) -> 'NodeCollection[TRCC]':
@@ -149,6 +142,7 @@ class NodeObject(metaclass=ABCMeta):
         # Render and execute the template
         sql = templating.render_template(
             templating.get_template_path(template_root, 'properties.sql', self._server.version),
+            self._macro_root(),
             **template_vars
         )
         cols, rows = self._server.connection.execute_dict(sql)

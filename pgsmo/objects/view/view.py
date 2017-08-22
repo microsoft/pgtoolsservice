@@ -6,7 +6,7 @@
 from typing import List
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.rule import Rule
 from pgsmo.objects.table_objects.trigger import Trigger
@@ -14,7 +14,7 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class View(NodeObject, ScriptableCreate, ScriptableDelete):
+class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -71,7 +71,7 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete):
     def triggers(self) -> NodeCollection[Trigger]:
         return self._triggers
 
-    # FULL OBJECT PROPERTIES ###############################################
+    # -FULL OBJECT PROPERTIES ##############################################
     @property
     def schema(self):
         return self._full_properties.get("schema", "")
@@ -100,14 +100,6 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete):
     def security_barrier(self):
         return self._full_properties.get("security_barrier", "")
 
-    # METHODS ##############################################################
-
-    def update_script(self) -> str:
-        """ Function to retrieve update scripts for a view """
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(query_file, data)
-
     # IMPLEMENTATION DETAILS ################################################
     @classmethod
     def _macro_root(cls) -> List[str]:
@@ -116,8 +108,6 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-
-    # HELPER METHODS #######################################################
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """

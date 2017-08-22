@@ -7,7 +7,7 @@ import os.path as path
 from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.functions.function import Function
 from pgsmo.objects.functions.trigger_function import TriggerFunction
@@ -18,7 +18,7 @@ from pgsmo.objects.view.view import View
 import pgsmo.utils.templating as templating
 
 
-class Schema(NodeObject, ScriptableCreate, ScriptableDelete):
+class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -138,14 +138,6 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete):
     def _template_root(cls, server: 's.Server') -> str:
         return path.join(cls.TEMPLATE_ROOT, server.server_type)
 
-    # SCRIPTING METHODS ##############################################################
-    def update_script(self) -> str:
-        """ Function to retrieve update scripts for schema """
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(query_file, data)
-
-    #  HELPER METHODS ######################################################
     def _create_query_data(self) -> dict:
         """ Function that returns data for create script """
         return {"data": {

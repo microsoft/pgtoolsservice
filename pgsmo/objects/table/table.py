@@ -6,7 +6,7 @@
 from typing import List
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.constraints import (
     CheckConstraint,
@@ -21,8 +21,7 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Table(NodeObject, ScriptableCreate, ScriptableDelete):
-
+class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -221,16 +220,6 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-
-    # SCRIPTING METHODS ##############################################################
-    def update_script(self) -> str:
-        """ Function to retrieve update scripts for a table"""
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(query_file, data)
-
-    # HELPER METHODS ####################################################################
-    # QUERY DATA BUILDING METHODS #######################################################
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """

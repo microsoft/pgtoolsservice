@@ -6,12 +6,12 @@
 from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableUpdate
 from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
 
 
-class Role(NodeObject, ScriptableCreate):
+class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -126,15 +126,6 @@ class Role(NodeObject, ScriptableCreate):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-
-    # SCRIPTING METHODS ####################################################
-    def update_script(self) -> str:
-        """ Function to retrieve create scripts for a role """
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(query_file, data)
-
-    # HELPER METHODS ##################################################################
 
     def _create_query_data(self):
         """ Gives the data object for create query """
