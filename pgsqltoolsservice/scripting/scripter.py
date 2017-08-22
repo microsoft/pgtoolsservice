@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsmo.objects.server.server import Server
+from pgsqltoolsservice.utils import object_finder
 
 
 class Scripter(object):
@@ -75,91 +76,14 @@ class Scripter(object):
 
     # HELPER METHODS ##########################################################
 
-    def _get_schema_from_db(self, schema_name, databases):
-        try:
-            schema = databases[schema_name]
-            return schema
-        except NameError:
-            return None
-
-    def _find_schema(self, metadata):
-        """ Find the schema in the server to script as """
-        schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
-        databases = self.server.databases
-        parent_schema = None
-        try:
-            for db in databases:
-                if db.schemas is not None:
-                    parent_schema = self._get_schema_from_db(schema_name, db.schemas)
-                    if parent_schema is not None:
-                        return parent_schema
-        except Exception:
-            return None
-
-    def _find_table(self, metadata):
-        """ Find the table in the server to script as """
-        try:
-            table_name = metadata.name
-            parent_schema = self._find_schema(metadata)
-            for table in parent_schema.tables:
-                return parent_schema.tables[table_name]
-        except Exception:
-            return None
-
-    def _find_function(self, metadata):
-        """ Find the function in the server to script as """
-        try:
-            function_name = metadata.name
-            parent_schema = self._find_schema(metadata)
-            return parent_schema.functions[function_name]
-        except Exception:
-            return None
-
-    def _find_database(self, metadata):
-        """ Find a database in the server """
-        try:
-            database_name = metadata.name
-            database = self.server.databases[database_name]
-            return database
-        except Exception:
-            return None
-
-    def _find_view(self, metadata):
-        """ Find a view in the server """
-        try:
-            view_name = metadata.name
-            parent_schema = self._find_schema(metadata)
-            view = parent_schema.views[view_name]
-            return view
-        except Exception:
-            return None
-
-    def _find_role(self, metadata):
-        """ Find a role in the server """
-        try:
-            role_name = metadata.name
-            role = self.server.roles[role_name]
-            return role
-        except Exception:
-            return None
-
-    def _find_sequence(self, metadata):
-        """ Find a sequence in the server """
-        try:
-            sequence_name = metadata.name
-            sequence = self.server.sequences[sequence_name]
-            return sequence
-        except Exception:
-            return None
-
     def _get_object(self, object_type: str, metadata):
         """ Retrieve a given object """
         object_map = {
-            "Table": self._find_table,
-            "Schema": self._find_schema,
-            "Database": self._find_database,
-            "View": self._find_view,
-            "Role": self._find_role,
-            "Function": self._find_function
+            "Table": object_finder.find_table,
+            "Schema": object_finder.find_schema,
+            "Database": object_finder.find_database,
+            "View": object_finder.find_view,
+            "Role": object_finder.find_role,
+            "Function": object_finder.find_function
         }
-        return object_map[object_type](metadata)
+        return object_map[object_type](self.server, metadata)

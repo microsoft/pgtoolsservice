@@ -4,10 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 
-from unittest import mock
+from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
 
 
-class ServerMock(object):
+class EditCell(DbCellValue):
 
-    def __init__(self):
-        self.set_request_handler = mock.MagicMock()
+    def __init__(self, db_cell_value: DbCellValue, is_dirty: bool):
+        self.db_cell_value = db_cell_value
+        self.is_dirty = is_dirty

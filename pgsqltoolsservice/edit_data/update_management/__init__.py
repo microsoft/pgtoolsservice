@@ -4,10 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 
-from unittest import mock
+from pgsqltoolsservice.edit_data.update_management.cell_update import CellUpdate
+from pgsqltoolsservice.edit_data.update_management.row_edit import RowEdit
+from pgsqltoolsservice.edit_data.update_management.row_update import RowUpdate
 
 
-class ServerMock(object):
-
-    def __init__(self):
-        self.set_request_handler = mock.MagicMock()
+__all__ = ['RowEdit', 'RowUpdate', 'CellUpdate']
