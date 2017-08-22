@@ -5,7 +5,7 @@
 
 import unittest
 
-from pgsmo.objects.collation import Collation
+from pgsmo import Collation
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 

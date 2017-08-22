@@ -3,16 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsmo.objects.node_object as node
+from pgsmo.objects.node_object import NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Collation(node.NodeObject):
+class Collation(NodeObject, ScriptableCreate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Collation':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Collation':
         """
         Creates a Collation object from the results of a node query
         :param server: Server that owns the collation
@@ -28,8 +29,9 @@ class Collation(node.NodeObject):
 
         return collation
 
-    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
-        super(Collation, self).__init__(server, parent, name)
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+        NodeObject.__init__(self, server, parent, name)
+        ScriptableCreate.__init__(self, Collation.TEMPLATE_ROOT, server.version)
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
@@ -70,12 +72,6 @@ class Collation(node.NodeObject):
         return self._full_properties.get("cascade", "")
 
     # SCRIPTING METHODS ##############################################################
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a collation """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data)
-
     def delete_script(self) -> str:
         """ Function to retrieve delete scripts for a collation"""
         data = self._delete_query_data()

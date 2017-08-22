@@ -6,10 +6,11 @@
 import os.path as path
 from typing import List, Optional
 
-import pgsmo.objects.node_object as node
-from pgsmo.objects.collation import Collation
-from pgsmo.objects.functions import Function, TriggerFunction
-from pgsmo.objects.sequence import Sequence
+from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.collation.collation import Collation
+from pgsmo.objects.functions.function import Function
+from pgsmo.objects.functions.trigger_function import TriggerFunction
+from pgsmo.objects.sequence.sequence import Sequence
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
@@ -20,9 +21,9 @@ TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
 
-class Schema(node.NodeObject):
+class Schema(NodeObject):
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Schema':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Schema':
         """
         Creates an instance of a schema object from the results of a nodes query
         :param server: Server that owns the schema
@@ -42,7 +43,7 @@ class Schema(node.NodeObject):
 
         return schema
 
-    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
         super(Schema, self).__init__(server, parent, name)
 
         # Declare the optional parameters
@@ -50,22 +51,22 @@ class Schema(node.NodeObject):
         self._has_usage: Optional[bool] = None
 
         # Declare the child items
-        self._collations: node.NodeCollection = self._register_child_collection(
+        self._collations: NodeCollection = self._register_child_collection(
             lambda: Collation.get_nodes_for_parent(self._server, self)
         )
-        self._functions: node.NodeCollection = self._register_child_collection(
+        self._functions: NodeCollection = self._register_child_collection(
             lambda: Function.get_nodes_for_parent(self._server, self)
         )
-        self._sequences: node.NodeCollection = self._register_child_collection(
+        self._sequences: NodeCollection = self._register_child_collection(
             lambda: Sequence.get_nodes_for_parent(self._server, self)
         )
-        self._tables: node.NodeCollection = self._register_child_collection(
+        self._tables: NodeCollection = self._register_child_collection(
             lambda: Table.get_nodes_for_parent(self._server, self)
         )
         self._trigger_functions = self._register_child_collection(
             lambda: TriggerFunction.get_nodes_for_parent(self._server, self)
         )
-        self._views: node.NodeCollection = self._register_child_collection(
+        self._views: NodeCollection = self._register_child_collection(
             lambda: View.get_nodes_for_parent(self._server, self)
         )
 
@@ -80,27 +81,27 @@ class Schema(node.NodeObject):
 
     # -CHILD OBJECTS #######################################################
     @property
-    def collations(self) -> node.NodeCollection:
+    def collations(self) -> NodeCollection:
         return self._collations
 
     @property
-    def functions(self) -> node.NodeCollection:
+    def functions(self) -> NodeCollection:
         return self._functions
 
     @property
-    def sequences(self) -> node.NodeCollection:
+    def sequences(self) -> NodeCollection:
         return self._sequences
 
     @property
-    def tables(self) -> node.NodeCollection:
+    def tables(self) -> NodeCollection:
         return self._tables
 
     @property
-    def trigger_functions(self) -> node.NodeCollection:
+    def trigger_functions(self) -> NodeCollection:
         return self._trigger_functions
 
     @property
-    def views(self) -> node.NodeCollection:
+    def views(self) -> NodeCollection:
         return self._views
 
     @property

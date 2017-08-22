@@ -5,7 +5,7 @@
 
 import unittest
 
-from pgsmo.objects.table_objects import Trigger
+from pgsmo import Trigger
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 

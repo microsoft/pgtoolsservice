@@ -3,17 +3,19 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo.objects.table_objects import Column, Rule, Trigger
-import pgsmo.objects.node_object as node
+from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.table_objects.column import Column
+from pgsmo.objects.table_objects.rule import Rule
+from pgsmo.objects.table_objects.trigger import Trigger
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class View(node.NodeObject):
+class View(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'View':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'View':
         """
         Creates a view object from the results of a node query
         :param server: Server that owns the view
@@ -29,17 +31,17 @@ class View(node.NodeObject):
 
         return view
 
-    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
         super(View, self).__init__(server, parent, name)
 
         # Declare child items
-        self._columns: node.NodeCollection[Column] = self._register_child_collection(
+        self._columns: NodeCollection[Column] = self._register_child_collection(
             lambda: Column.get_nodes_for_parent(self._server, self)
         )
-        self._rules: node.NodeCollection[Rule] = self._register_child_collection(
+        self._rules: NodeCollection[Rule] = self._register_child_collection(
             lambda: Rule.get_nodes_for_parent(self._server, self)
         )
-        self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(
+        self._triggers: NodeCollection[Trigger] = self._register_child_collection(
             lambda: Trigger.get_nodes_for_parent(self._server, self)
         )
 
@@ -53,15 +55,15 @@ class View(node.NodeObject):
 
     # -CHILD OBJECTS #######################################################
     @property
-    def columns(self) -> node.NodeCollection[Column]:
+    def columns(self) -> NodeCollection[Column]:
         return self._columns
 
     @property
-    def rules(self) -> node.NodeCollection[Rule]:
+    def rules(self) -> NodeCollection[Rule]:
         return self._rules
 
     @property
-    def triggers(self) -> node.NodeCollection[Trigger]:
+    def triggers(self) -> NodeCollection[Trigger]:
         return self._triggers
 
     # FULL OBJECT PROPERTIES ###############################################

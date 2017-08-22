@@ -8,7 +8,6 @@ from typing import Dict, Optional, Tuple                # noqa
 from psycopg2.extensions import connection
 
 from pgsmo.objects.database.database import Database
-
 from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace

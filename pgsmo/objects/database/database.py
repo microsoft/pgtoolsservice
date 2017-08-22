@@ -5,14 +5,14 @@
 
 from typing import Optional               # noqa
 
-import pgsmo.objects.node_object as node
+from pgsmo.objects.node_object import NodeCollection, NodeObject
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-class Database(node.NodeObject):
+class Database(NodeObject):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -58,7 +58,7 @@ class Database(node.NodeObject):
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-        self._schemas: Optional[node.NodeCollection[Schema]] = None
+        self._schemas: Optional[NodeCollection[Schema]] = None
         if self._is_connected:
             self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
 
@@ -103,7 +103,7 @@ class Database(node.NodeObject):
 
     # -CHILD OBJECTS #######################################################
     @property
-    def schemas(self) -> node.NodeCollection[Schema]:
+    def schemas(self) -> NodeCollection[Schema]:
         return self._schemas
 
     # METHODS ##############################################################
