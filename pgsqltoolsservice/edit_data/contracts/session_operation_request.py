@@ -4,10 +4,13 @@
 # --------------------------------------------------------------------------------------------
 
 
-from unittest import mock
-
-
-class ServerMock:
+class SessionOperationRequest():
 
     def __init__(self):
-        self.set_request_handler = mock.MagicMock()
+        self.owner_uri = None
+
+
+class RowOperationRequest(SessionOperationRequest):
+
+    def _init__(self):
+        self.row_id = None
