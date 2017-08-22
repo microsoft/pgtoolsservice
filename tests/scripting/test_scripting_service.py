@@ -660,7 +660,7 @@ class TestScriptingService(unittest.TestCase):
         mock_schema = Schema(self.server, 'test', None)
 
         def schema_mock_fn():
-            mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
+            mock_schema._template_root = mock.MagicMock(return_value=Schema.TEMPLATE_ROOT)
             mock_schema._update_query_data = mock.MagicMock(return_value={"data": {"name": "test"}, "o_data": {"name": "test"}})
             result = mock_schema.update_script()
             return result

@@ -6,13 +6,13 @@
 from typing import Optional               # noqa
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils.templating as templating
 
 
-class Database(NodeObject, ScriptableCreate):
+class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -105,25 +105,14 @@ class Database(NodeObject, ScriptableCreate):
     def schemas(self) -> NodeCollection[Schema]:
         return self._schemas
 
-    # METHODS ##############################################################
-
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for a database """
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(query_file, data)
-
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
-    # HELPER METHODS #######################################################
-
-    # QUERY INPUT METHODS ##################################################
     def _create_query_data(self) -> dict:
         """ Return the data input for create query """
-        data = {"data": {
+        return {"data": {
             "name": self.name,
             "encoding": self.encoding,
             "template": self.template,
@@ -132,12 +121,10 @@ class Database(NodeObject, ScriptableCreate):
             "datconnlimit": self.datconnlimit,
             "spcname": self.spcname
         }}
-        return data
 
     def _delete_query_data(self) -> dict:
         """ Return the data input for delete query """
-        data = {
+        return {
             "did": self._oid,
             "datname": self._name
         }
-        return data

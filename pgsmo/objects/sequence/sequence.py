@@ -6,12 +6,12 @@
 from typing import List
 
 from pgsmo.objects.node_object import NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Sequence(NodeObject, ScriptableCreate):
+class Sequence(NodeObject, ScriptableCreate, ScriptableDelete):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -97,12 +97,6 @@ class Sequence(NodeObject, ScriptableCreate):
         """ Function to retrieve create scripts for a sequence """
         data = self._update_query_data()
         query_file = "update.sql"
-        return self._get_template(query_file, data)
-
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for a sequence"""
-        data = self._delete_query_data()
-        query_file = "delete.sql"
         return self._get_template(query_file, data)
 
     # HELPER METHODS ##################################################################

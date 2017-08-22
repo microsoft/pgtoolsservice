@@ -4,15 +4,15 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta
-from typing import Optional
+from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class FunctionBase(NodeObject, ScriptableCreate, metaclass=ABCMeta):
+class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, metaclass=ABCMeta):
     """Base class for Functions. Provides basic properties for all Function types"""
 
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
@@ -158,23 +158,15 @@ class FunctionBase(NodeObject, ScriptableCreate, metaclass=ABCMeta):
         return self._full_properties.get("cascade")
 
     # SCRIPTING METHODS ##############################################################
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a functions """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data, paths_to_add=[self.MACRO_ROOT])
-
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for a functions"""
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(query_file, data)
-
     def update_script(self) -> str:
         """ Function to retrieve update scripts for a functions"""
         data = self._update_query_data()
         query_file = "update.sql"
         return self._get_template(query_file, data, paths_to_add=[self.MACRO_ROOT])
+
+    # IMPLEMENTATION DETAILS ###############################################
+    def _macro_root(cls) -> List[str]:
+        return [cls.MACRO_ROOT]
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """

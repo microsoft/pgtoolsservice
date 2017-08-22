@@ -6,12 +6,12 @@
 from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Tablespace(NodeObject, ScriptableCreate):
+class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -79,12 +79,6 @@ class Tablespace(NodeObject, ScriptableCreate):
         return cls.TEMPLATE_ROOT
 
     # SCRIPTING METHODS ####################################################
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for a table"""
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(query_file, data)
-
     def update_script(self) -> str:
         """ Function to retrieve update scripts for a table"""
         data = self._update_query_data()
@@ -107,16 +101,18 @@ class Tablespace(NodeObject, ScriptableCreate):
 
     def _update_query_data(self):
         """ Returns the data needed for update query """
-        return {"data": {
-            "name": self.name,
-            "spcuser": self.user,
-            "spclocation": self.location,
-            "description": self.description,
-            "spcoptions": self.options,
-            "spcacl": self.acl
-        }, "o_data": {
-            "name": "",
-            "spcuser": "",
-            "description": ""
-        }
+        return {
+            "data": {
+                "name": self.name,
+                "spcuser": self.user,
+                "spclocation": self.location,
+                "description": self.description,
+                "spcoptions": self.options,
+                "spcacl": self.acl
+            },
+            "o_data": {
+                "name": "",
+                "spcuser": "",
+                "description": ""
+            }
         }

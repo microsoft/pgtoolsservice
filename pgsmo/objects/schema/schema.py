@@ -7,7 +7,7 @@ import os.path as path
 from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.functions.function import Function
 from pgsmo.objects.functions.trigger_function import TriggerFunction
@@ -18,7 +18,7 @@ from pgsmo.objects.view.view import View
 import pgsmo.utils.templating as templating
 
 
-class Schema(NodeObject, ScriptableCreate):
+class Schema(NodeObject, ScriptableCreate, ScriptableDelete):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -139,12 +139,6 @@ class Schema(NodeObject, ScriptableCreate):
         return path.join(cls.TEMPLATE_ROOT, server.server_type)
 
     # SCRIPTING METHODS ##############################################################
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for schema """
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(query_file, data)
-
     def update_script(self) -> str:
         """ Function to retrieve update scripts for schema """
         data = self._update_query_data()
@@ -154,26 +148,24 @@ class Schema(NodeObject, ScriptableCreate):
     #  HELPER METHODS ######################################################
     def _create_query_data(self) -> dict:
         """ Function that returns data for create script """
-        data = {"data": {
+        return {"data": {
             "name": self.name,
             "namespaceowner": self.namespaceowner,
             "description": self.description,
             "nspacl": self.nspacl,
             "seclabels": self.seclabels
         }}
-        return data
 
     def _delete_query_data(self) -> dict:
         """ Function that returns data for delete script """
-        data = {
+        return {
             "name": self.name,
             "cascade": self.cascade
         }
-        return data
 
     def _update_query_data(self) -> dict:
         """ Function that returns data for update script """
-        data = {
+        return {
             "data": {
                 "name": self.name,
                 "namespaceowner": self.namespaceowner,
@@ -187,4 +179,3 @@ class Schema(NodeObject, ScriptableCreate):
                 "description": ""
             }
         }
-        return data

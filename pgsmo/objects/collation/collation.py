@@ -4,12 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsmo.objects.node_object import NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Collation(NodeObject, ScriptableCreate):
+class Collation(NodeObject, ScriptableCreate, ScriptableDelete):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
@@ -72,12 +72,6 @@ class Collation(NodeObject, ScriptableCreate):
         return self._full_properties.get("cascade", "")
 
     # SCRIPTING METHODS ##############################################################
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for a collation"""
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(query_file, data)
-
     def update_script(self) -> str:
         """ Function to retrieve update scripts for a collation"""
         data = self._update_query_data()
