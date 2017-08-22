@@ -12,6 +12,7 @@ from pgsmo.objects.table_objects import (
 )
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.database.database import Database
+from pgsmo.objects.datatype.datatype import DataType
 from pgsmo.objects.functions.function import Function
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.schema.schema import Schema
@@ -26,6 +27,7 @@ __all__ = [
     'Collation',
     'Column',
     'Database',
+    'DataType',
     'ExclusionConstraint',
     'ForeignKeyConstraint',
     'Function',
