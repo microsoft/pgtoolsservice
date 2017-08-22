@@ -6,11 +6,12 @@
 from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Tablespace(NodeObject):
+class Tablespace(NodeObject, ScriptableCreate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -33,10 +34,9 @@ class Tablespace(NodeObject):
     def __init__(self, server: 's.Server', name: str):
         """
         Initializes internal state of a Role object
-        :param server: Server that owns the tablespace
-        :param name: Name of the role
         """
-        super(Tablespace, self).__init__(server, None, name)
+        NodeObject.__init__(self, server, None, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare basic properties
         self._owner: Optional[int] = None
@@ -71,21 +71,14 @@ class Tablespace(NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
-
-    @classmethod
     def _macro_root(cls) -> List[str]:
         return [cls.MACRO_ROOT]
 
+    @classmethod
+    def _template_root(cls, server: 's.Server') -> str:
+        return cls.TEMPLATE_ROOT
+
     # SCRIPTING METHODS ####################################################
-
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a tablespace """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data)
-
     def delete_script(self) -> str:
         """ Function to retrieve delete scripts for a table"""
         data = self._delete_query_data()

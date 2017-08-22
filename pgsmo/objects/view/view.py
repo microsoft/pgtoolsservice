@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.rule import Rule
 from pgsmo.objects.table_objects.trigger import Trigger
@@ -11,7 +12,7 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class View(NodeObject):
+class View(NodeObject, ScriptableCreate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
 
     @classmethod
@@ -32,7 +33,8 @@ class View(NodeObject):
         return view
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
-        super(View, self).__init__(server, parent, name)
+        NodeObject.__init__(self, server, parent, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare child items
         self._columns: NodeCollection[Column] = self._register_child_collection(
@@ -96,12 +98,6 @@ class View(NodeObject):
         return self._full_properties.get("security_barrier", "")
 
     # METHODS ##############################################################
-
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a view """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data)
 
     def delete_script(self) -> str:
         """ Function to retrieve delete scripts for a view """

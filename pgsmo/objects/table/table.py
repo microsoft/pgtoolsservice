@@ -3,7 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import List
+
 from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.constraints import (
     CheckConstraint,
@@ -18,9 +21,10 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Table(NodeObject):
+class Table(NodeObject, ScriptableCreate):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Table':
@@ -40,7 +44,8 @@ class Table(NodeObject):
         return table
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
-        super(Table, self).__init__(server, parent, name)
+        NodeObject.__init__(self, server, parent, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare child items
         self._check_constraints: NodeCollection[CheckConstraint] = self._register_child_collection(
@@ -210,16 +215,14 @@ class Table(NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
+    def _macro_root(cls) -> List[str]:
+        return [cls.MACRO_ROOT]
+
+    @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
     # SCRIPTING METHODS ##############################################################
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a table """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data)
-
     def delete_script(self) -> str:
         """ Function to retrieve delete scripts for a table"""
         data = self._delete_query_data()

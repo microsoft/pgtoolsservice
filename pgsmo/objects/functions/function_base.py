@@ -6,18 +6,19 @@
 from abc import ABCMeta
 from typing import Optional
 
-import pgsmo.objects.node_object as node
-import pgsmo.utils.templating as templating
+from pgsmo.objects.node_object import NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate
 from pgsmo.objects.server import server as s    # noqa
+import pgsmo.utils.templating as templating
 
 
-class FunctionBase(node.NodeObject, metaclass=ABCMeta):
+class FunctionBase(NodeObject, ScriptableCreate, metaclass=ABCMeta):
     """Base class for Functions. Provides basic properties for all Function types"""
 
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'FunctionBase':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'FunctionBase':
         """
         Creates a Function instance from the results of a node query
         :param server: Server that owns the function
@@ -39,8 +40,9 @@ class FunctionBase(node.NodeObject, metaclass=ABCMeta):
 
         return func
 
-    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
-        super(FunctionBase, self).__init__(server, parent, name)
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+        NodeObject.__init__(self, server, parent, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare the basic properties
         self._description: Optional[str] = None

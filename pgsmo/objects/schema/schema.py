@@ -7,6 +7,7 @@ import os.path as path
 from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.functions.function import Function
 from pgsmo.objects.functions.trigger_function import TriggerFunction
@@ -17,11 +18,10 @@ from pgsmo.objects.view.view import View
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+class Schema(NodeObject, ScriptableCreate):
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
-
-class Schema(NodeObject):
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Schema':
         """
@@ -44,7 +44,8 @@ class Schema(NodeObject):
         return schema
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
-        super(Schema, self).__init__(server, parent, name)
+        NodeObject.__init__(self, server, parent, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare the optional parameters
         self._can_create: Optional[bool] = None
@@ -130,20 +131,14 @@ class Schema(NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return path.join(TEMPLATE_ROOT, server.server_type)
+    def _macro_root(cls) -> List[str]:
+        return [cls.MACRO_ROOT]
 
     @classmethod
-    def _macro_root(cls) -> List[str]:
-        return [MACRO_ROOT]
+    def _template_root(cls, server: 's.Server') -> str:
+        return path.join(cls.TEMPLATE_ROOT, server.server_type)
 
     # SCRIPTING METHODS ##############################################################
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a schema """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data, paths_to_add=self._macro_root())
-
     def delete_script(self) -> str:
         """ Function to retrieve delete scripts for schema """
         data = self._delete_query_data()
@@ -154,7 +149,7 @@ class Schema(NodeObject):
         """ Function to retrieve update scripts for schema """
         data = self._update_query_data()
         query_file = "update.sql"
-        return self._get_template(query_file, data, paths_to_add=self._macro_root())
+        return self._get_template(query_file, data)
 
     #  HELPER METHODS ######################################################
     def _create_query_data(self) -> dict:

@@ -6,13 +6,13 @@
 from typing import Optional               # noqa
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
-import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-class Database(NodeObject):
+class Database(NodeObject, ScriptableCreate):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -44,11 +44,10 @@ class Database(NodeObject):
     def __init__(self, server: 's.Server', name: str):
         """
         Initializes a new instance of a database
-        :param server: Server that owns the database.
-        :param name: Name of the database
         """
+        NodeObject.__init__(self, server, None, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
-        super(Database, self).__init__(server, None, name)
         self._is_connected: bool = server.maintenance_db_name == name
 
         # Declare the optional parameters
@@ -108,12 +107,6 @@ class Database(NodeObject):
 
     # METHODS ##############################################################
 
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a database """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data)
-
     def delete_script(self) -> str:
         """ Function to retrieve delete scripts for a database """
         data = self._delete_query_data()
@@ -122,7 +115,7 @@ class Database(NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
+    def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
     # HELPER METHODS #######################################################

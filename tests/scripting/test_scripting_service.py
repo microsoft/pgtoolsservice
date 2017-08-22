@@ -32,7 +32,6 @@ from pgsmo import (
     Function,
     Collation
 )
-from pgsmo.objects.schema.schema import TEMPLATE_ROOT
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 
 
@@ -256,10 +255,9 @@ class TestScriptingService(unittest.TestCase):
     def _test_table_create_script(self, scripter, service):
         """ Helper function to test create script for tables """
         # Set up the mocks
-        mock_table = Table(self.server, None, 'test')
+        mock_table = Table(self.server, 'test', None)
 
         def table_mock_fn():
-            mock_table._template_root = mock.MagicMock(return_value=Table.TEMPLATE_ROOT)
             mock_table._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_table.create_script()
             return result
@@ -280,10 +278,9 @@ class TestScriptingService(unittest.TestCase):
     def _test_view_create_script(self, scripter, service):
         """ Helper function to test create script for views """
         # Set up the mocks
-        mock_view = View(self.server, None, 'test')
+        mock_view = View(self.server, 'test', None)
 
         def view_mock_fn():
-            mock_view._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
             mock_view._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_view.create_script()
             return result
@@ -307,7 +304,6 @@ class TestScriptingService(unittest.TestCase):
         mock_database = Database(self.server, 'test')
 
         def database_mock_fn():
-            mock_database._template_root = mock.MagicMock(return_value=Database.TEMPLATE_ROOT)
             mock_database._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_database.create_script()
             return result
@@ -328,10 +324,9 @@ class TestScriptingService(unittest.TestCase):
     def _test_schema_create_script(self, scripter, service):
         """ Helper function to test create script for schema """
         # Set up the mocks
-        mock_schema = Schema(self.server, None, 'test')
+        mock_schema = Schema(self.server, 'test', None)
 
         def schema_mock_fn():
-            mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
             mock_schema._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_schema.create_script()
             return result
@@ -355,7 +350,6 @@ class TestScriptingService(unittest.TestCase):
         mock_role = Role(self.server, 'test')
 
         def role_mock_fn():
-            mock_role._template_root = mock.MagicMock(return_value=Role.TEMPLATE_ROOT)
             mock_role._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_role.create_script()
             return result
@@ -379,7 +373,6 @@ class TestScriptingService(unittest.TestCase):
         mock_tablespace = Tablespace(self.server, 'test')
 
         def tablespace_mock_fn():
-            mock_tablespace._template_root = mock.MagicMock(return_value=Tablespace.TEMPLATE_ROOT)
             mock_tablespace._create_query_data = mock.MagicMock(return_value={"data": {"name": "test", "spclocation": None}})
             result = mock_tablespace.create_script()
             return result
@@ -400,10 +393,9 @@ class TestScriptingService(unittest.TestCase):
     def _test_sequence_create_script(self, scripter, service):
         """ Helper function to test create script for sequence """
         # Set up the mocks
-        mock_sequence = Sequence(self.server, None, 'test')
+        mock_sequence = Sequence(self.server, 'test', None)
 
         def sequence_mock_fn():
-            mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
             mock_sequence._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_sequence.create_script()
             return result
@@ -427,7 +419,6 @@ class TestScriptingService(unittest.TestCase):
         mock_function = Function(self.server, None, 'test')
 
         def function_mock_fn():
-            mock_function._template_root = mock.MagicMock(return_value=Function.TEMPLATE_ROOT)
             mock_function._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestFunction", "lanname": "pglsql"}})
             result = mock_function.create_script()
             return result
@@ -448,10 +439,9 @@ class TestScriptingService(unittest.TestCase):
     def _test_collation_create_script(self, scripter, service):
         """ Helper function to test create script for collation """
         # Set up the mocks
-        mock_collation = Collation(self.server, None, 'test')
+        mock_collation = Collation(self.server, 'test', None)
 
         def collation_mock_fn():
-            mock_collation._template_root = mock.MagicMock(return_value=Collation.TEMPLATE_ROOT)
             mock_collation._create_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_collation.create_script()
             return result
@@ -473,7 +463,7 @@ class TestScriptingService(unittest.TestCase):
     def _test_table_delete_script(self, scripter, service):
         """ Helper function to test delete script for tables """
         # Set up the mocks
-        mock_table = Table(self.server, None, 'test')
+        mock_table = Table(self.server, 'test', None)
 
         def table_mock_fn():
             mock_table._template_root = mock.MagicMock(return_value=Table.TEMPLATE_ROOT)
@@ -497,7 +487,7 @@ class TestScriptingService(unittest.TestCase):
     def _test_view_delete_script(self, scripter, service):
         """ Helper function to test delete script for views """
         # Set up the mocks
-        mock_view = View(self.server, None, 'test')
+        mock_view = View(self.server, 'test', None)
 
         def view_mock_fn():
             mock_view._template_root = mock.MagicMock(return_value=View.TEMPLATE_ROOT)
@@ -545,10 +535,10 @@ class TestScriptingService(unittest.TestCase):
     def _test_schema_delete_script(self, scripter, service):
         """ Helper function to test delete script for schemas """
         # Set up the mocks
-        mock_schema = Schema(self.server, None, 'test')
+        mock_schema = Schema(self.server, 'test', None)
 
         def schema_mock_fn():
-            mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
+            mock_schema._template_root = mock.MagicMock(return_value=Schema.TEMPLATE_ROOT)
             mock_schema._delete_query_data = mock.MagicMock(return_value={"data": {"name": "test"}})
             result = mock_schema.delete_script()
             return result
@@ -593,7 +583,7 @@ class TestScriptingService(unittest.TestCase):
     def _test_sequence_delete_script(self, scripter, service):
         """ Helper function to test delete script for sequence """
         # Set up the mocks
-        mock_sequence = Sequence(self.server, None, 'test')
+        mock_sequence = Sequence(self.server, 'test', None)
 
         def sequence_mock_fn():
             mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
@@ -641,7 +631,7 @@ class TestScriptingService(unittest.TestCase):
     def _test_collation_delete_script(self, scripter, service):
         """ Helper function to test delete script for Function """
         # Set up the mocks
-        mock_collation = Collation(self.server, None, 'test')
+        mock_collation = Collation(self.server, 'test', None)
 
         def collation_mock_fn():
             mock_collation._template_root = mock.MagicMock(return_value=Collation.TEMPLATE_ROOT)
@@ -667,7 +657,7 @@ class TestScriptingService(unittest.TestCase):
     def _test_schema_update_script(self, scripter, service):
         """ Helper function to test update script for schemas """
         # Set up the mocks
-        mock_schema = Schema(self.server, None, 'test')
+        mock_schema = Schema(self.server, 'test', None)
 
         def schema_mock_fn():
             mock_schema._template_root = mock.MagicMock(return_value=TEMPLATE_ROOT)
@@ -739,7 +729,7 @@ class TestScriptingService(unittest.TestCase):
     def _test_sequence_update_script(self, scripter, service):
         """ Helper function to test update script for sequence """
         # Set up the mocks
-        mock_sequence = Sequence(self.server, None, 'test')
+        mock_sequence = Sequence(self.server, 'test', None)
 
         def sequence_mock_fn():
             mock_sequence._template_root = mock.MagicMock(return_value=Sequence.TEMPLATE_ROOT)
@@ -788,7 +778,7 @@ class TestScriptingService(unittest.TestCase):
     def _test_collation_update_script(self, scripter, service):
         """ Helper function to test update script for collation """
         # Set up the mocks
-        mock_collation = Collation(self.server, None, 'test')
+        mock_collation = Collation(self.server, 'test', None)
 
         def collation_mock_fn():
             mock_collation._template_root = mock.MagicMock(return_value=Collation.TEMPLATE_ROOT)

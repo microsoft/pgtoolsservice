@@ -29,9 +29,9 @@ class Collation(NodeObject, ScriptableCreate):
 
         return collation
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self,  server: 's.Server', parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
-        ScriptableCreate.__init__(self, Collation.TEMPLATE_ROOT, server.version)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
