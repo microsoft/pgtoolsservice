@@ -8,6 +8,7 @@ from typing import List, Optional
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.collation import Collation
+from pgsmo.objects.datatype.datatype import DataType
 from pgsmo.objects.functions import Function, TriggerFunction
 from pgsmo.objects.sequence import Sequence
 from pgsmo.objects.server import server as s    # noqa
@@ -53,6 +54,9 @@ class Schema(node.NodeObject):
         self._collations: node.NodeCollection = self._register_child_collection(
             lambda: Collation.get_nodes_for_parent(self._server, self)
         )
+        self._datatypes: node.NodeCollection = self._register_child_collection(
+            lambda: DataType.get_nodes_for_parent(self._server, self)
+        )
         self._functions: node.NodeCollection = self._register_child_collection(
             lambda: Function.get_nodes_for_parent(self._server, self)
         )
@@ -82,6 +86,10 @@ class Schema(node.NodeObject):
     @property
     def collations(self) -> node.NodeCollection:
         return self._collations
+
+    @property
+    def datatypes(self) -> node.NodeCollection:
+        return self._datatypes
 
     @property
     def functions(self) -> node.NodeCollection:
