@@ -126,7 +126,8 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         NodeObjectTestBase.unittest.assertIsInstance(path, str)
         NodeObjectTestBase.unittest.assertTrue(os.path.exists(path))
 
-    def test_scripting_mixins(self):
+    # TODO: Disabled 08/23/2017 beruss -- reenable once properties are fixed, tracked by https://github.com/Microsoft/carbon/issues/1734
+    def _test_scripting_mixins(self):
         # Setup: Create an instance of the object
         mock_server = Server(utils.MockConnection(None))
         mock_grand_parent = utils.MockNodeObject(mock_server, None, 'grandparent') if not self.parent_expected_to_be_none else None

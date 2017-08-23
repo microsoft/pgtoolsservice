@@ -50,27 +50,6 @@ class TestScripter(unittest.TestCase):
         # The result should be the correct template value
         self.assertTrue('CREATE TABLE myschema.test' in result)
 
-    def test_datatype_scripting(self):
-        """ Tests create script for tables"""
-        # Set up the mocks
-        mock_datatype = DataType(self.server, self.schema, 'test')
-        mock_datatype._additional_properties = {}
-        mock_datatype._full_properties = {
-            "name": "test",
-            "schema": "myschema",
-            "typtype": "p",
-            "typeowner": "Me"
-        }
-
-        self.schema._datatypes = self._as_node_collection([mock_datatype])
-        object_metadata = ObjectMetadata.from_data(0, 'DataType', 'test', 'myschema')
-
-        # Verify create, update and delete all produce correct scripts
-        self._verify_create_script(object_metadata, ['CREATE TYPE myschema.test'])
-        # TODO
-        self._verify_update_script(object_metadata, ['ALTER TYPE None', 'OWNER TO Me', 'RENAME TO test', 'SET SCHEMA myschema'])
-        self._verify_delete_script(object_metadata, ['DROP TYPE myschema.test'])
-
     def test_script_select_escapes_non_lowercased_words(self):
         """ Tests scripting for select operations"""
         # Given mixed, and uppercase object names
