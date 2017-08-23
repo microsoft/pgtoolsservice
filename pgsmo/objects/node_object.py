@@ -38,7 +38,7 @@ class NodeObject(metaclass=ABCMeta):
             paths_to_add=cls._macro_root(),
             **template_vars
         )
-        cols, rows = root_server.connection.execute_dict(sql)
+        cols, rows = root_server.activedbconnection.execute_dict(sql)
 
         return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
 

@@ -26,6 +26,7 @@ class Server:
         """
         # Everything we know about the server will be based on the connection
         self._conn: utils.querying.ServerConnection = utils.querying.ServerConnection(conn)
+        self.activedbconnection: utils.querying.ServerConnection = self._conn
 
         # Declare the server properties
         props = self._conn.dsn_parameters

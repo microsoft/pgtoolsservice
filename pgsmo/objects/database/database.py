@@ -30,6 +30,7 @@ class Database(node.NodeObject):
             datallowconn bool: Whether or not the database can be connected to
             cancreate bool: Whether or not the database can be created by the current user
             owner int: Object ID of the user that owns the database
+            datistemplate bool: Whether or not the database is a template database
         :return: Instance of the Database
         """
         db = cls(server, kwargs['name'])
@@ -38,6 +39,7 @@ class Database(node.NodeObject):
         db._allow_conn = kwargs['datallowconn']
         db._can_create = kwargs['cancreate']
         db._owner_oid = kwargs['owner']
+        db._is_template = kwargs['datistemplate']
 
         return db
 
@@ -54,18 +56,24 @@ class Database(node.NodeObject):
         # Declare the optional parameters
         self._tablespace: Optional[str] = None
         self._allow_conn: Optional[bool] = None
+        self._is_template: Optional[bool] = None
         self._can_create: Optional[bool] = None
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-        self._schemas: Optional[node.NodeCollection[Schema]] = None
-        if self._is_connected:
-            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
+        self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
 
     # PROPERTIES ###########################################################
     @property
     def allow_conn(self) -> bool:
         return self._allow_conn
+
+    @property
+    def oid(self) -> int:
+        return self._oid
+
+    def is_template(self) -> bool:
+        return self._is_template
 
     @property
     def can_create(self) -> bool:
