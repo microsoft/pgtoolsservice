@@ -19,6 +19,7 @@ class RestoreParams:
     def __init__(self):
         self.owner_uri: str = None
         self.options: RestoreOptions = None
+        self.task_execution_mode = None
 
 
 class RestoreOptions:
