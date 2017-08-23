@@ -40,6 +40,7 @@ class Database(node.NodeObject):
         db._can_create = kwargs['cancreate']
         db._owner_oid = kwargs['owner']
         db._is_template = kwargs['datistemplate']
+        db._can_connect = kwargs['canconnect']
 
         return db
 
@@ -72,8 +73,13 @@ class Database(node.NodeObject):
     def oid(self) -> int:
         return self._oid
 
+    @property
     def is_template(self) -> bool:
         return self._is_template
+
+    @property
+    def can_connect(self) -> bool:
+        return self._can_connect
 
     @property
     def can_create(self) -> bool:

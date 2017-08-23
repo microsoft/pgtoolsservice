@@ -256,7 +256,8 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     if is_refresh:
         session.server.refresh()
     for node in session.server.databases:
-        yield _get_node_info(node, current_path, 'Database', is_leaf=False)
+        if node.can_connect:
+            yield _get_node_info(node, current_path, 'Database', is_leaf=False)
 
 
 def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
