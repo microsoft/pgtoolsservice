@@ -188,6 +188,43 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     ]
 
 
+def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for collations in a schema
+    Expected match_params:
+      scid int: schema OID
+    """
+    return _get_schema_child_object(is_refresh, current_path, session, match_params, 'Collation', 'collations')
+
+
+def _datatypes(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for datatypes in a schema
+    Expected match_params:
+      scid int: schema OID
+    """
+    return _get_schema_child_object(is_refresh, current_path, session, match_params, 'DataType', 'datatypes')
+
+
+def _sequences(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for sequences in a schema
+    Expected match_params:
+      scid int: schema OID
+    """
+    return _get_schema_child_object(is_refresh, current_path, session, match_params, 'Sequence', 'sequences')
+
+
+def _get_schema_child_object(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
+                             match_params: dict, node_type: str, schema_propname: str) -> List[NodeInfo]:
+    schema = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
+    child_objects = getattr(schema, schema_propname)
+    return [
+        _get_node_info(node, current_path, node_type, schema=schema.name)
+        for node in child_objects
+    ]
+
+
 def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate index NodeInfo for tables
@@ -297,11 +334,17 @@ ROUTING_TABLE = {
         [
             Folder('Tables', 'tables'),
             Folder('Views', 'views'),
-            Folder('Functions', 'functions')
+            Folder('Functions', 'functions'),
+            Folder('Collations', 'collations'),
+            Folder('Data Types', 'datatypes'),
+            Folder('Sequences', 'sequences')
         ],
         None
     ),
     re.compile('^/schemas/(?P<scid>\d+)/functions/$'): RoutingTarget(None, _functions),
+    re.compile('^/schemas/(?P<scid>\d+)/collations/$'): RoutingTarget(None, _collations),
+    re.compile('^/schemas/(?P<scid>\d+)/datatypes/$'): RoutingTarget(None, _datatypes),
+    re.compile('^/schemas/(?P<scid>\d+)/sequences/$'): RoutingTarget(None, _sequences),
     re.compile('^/schemas/(?P<scid>\d+)/tables/$'): RoutingTarget(None, _tables),
     re.compile('^/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
         [

@@ -150,6 +150,23 @@ class NodeObject(metaclass=ABCMeta):
         if len(rows) > 0:
             return rows[0]
 
+    def _additional_property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
+        """Gets any additional properties if defined in a sql file"""
+        template_root = self._template_root(self._server)
+
+        # Setup the parameters for the query
+        template_vars = self.template_vars
+
+        # Render and execute the template
+        sql = templating.render_template(
+            templating.get_template_path(template_root, 'additional_properties.sql', self._server.version),
+            **template_vars
+        )
+        cols, rows = self._server.connection.execute_dict(sql)
+
+        if len(rows) > 0:
+            return rows[0]
+
     def _refresh_child_collections(self) -> None:
         """Iterates over the registered child collections and property collections and resets them"""
         for node_collection in self._child_collections:
