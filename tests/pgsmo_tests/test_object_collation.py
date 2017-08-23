@@ -14,7 +14,7 @@ class TestCollation(NodeObjectTestBase, unittest.TestCase):
         'name': 'collation',
         'oid': 123
     }
-    
+
     PROPERTY_QUERY = {
         'owner': 'postgres',
         'schema': 'test_schema',

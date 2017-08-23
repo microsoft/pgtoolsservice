@@ -39,6 +39,7 @@ __all__ = [
     'CheckConstraint',
     'Collation',
     'Column',
+    'Constraint',
     'Database',
     'DataType',
     'ExclusionConstraint',

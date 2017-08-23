@@ -5,7 +5,7 @@
 
 from typing import Optional, List, Any
 
-from pgsmo.objects.node_object import NodeObject, NodeLazyPropertyCollection
+from pgsmo.objects.node_object import NodeObject, NodeLazyPropertyCollection    # noqa
 from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
@@ -112,7 +112,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         return self._additional_properties.get("rngcanonical", "")
 
     @property
-    def composite(self) -> List[Any]:
+    def composite(self) -> Optional[List[Any]]:
         if not self.typtype == 'c':
             return None
         composite = []
