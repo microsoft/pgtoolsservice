@@ -19,7 +19,9 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         'spcname': 'primary',
         'datallowconn': True,
         'cancreate': True,
-        'owner': 10
+        'owner': 10,
+        'datistemplate': False,
+        'canconnect': True
     }
 
     @property
@@ -116,5 +118,5 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         self.assertFalse(db._is_connected)
 
         # ... The schema node collection should not be defined
-        self.assertIsNone(db._schemas)
-        self.assertIsNone(db.schemas)
+        self.assertIsNotNone(db._schemas)
+        self.assertIsNotNone(db.schemas)

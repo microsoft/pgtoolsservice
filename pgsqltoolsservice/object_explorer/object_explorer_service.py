@@ -98,21 +98,13 @@ class ObjectExplorerService(object):
             if session is not None:
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
-                if not connect_result:
+                database_connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXPLORER_DATABASE)
+                if not connect_result or not database_connect_result:
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
                     request_context.send_response(False)
                 else:
                     request_context.send_response(True)
-
-                connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECTEXPLORERDATABASE)
-                if not connect_result:
-                    if self._service_provider.logger is not None:
-                        self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
-                    request_context.send_response(False)
-                else:
-                    request_context.send_response(True)
-
             else:
                 request_context.send_response(False)
 
@@ -178,6 +170,8 @@ class ObjectExplorerService(object):
                     activedbconnection = self._get_activedbconnection(session, conndetails)
                     if activedbconnection is not None:
                         session.server.activedbconnection = activedbconnection
+                    else:
+                        raise RuntimeError(f'could not connect to database {selected_database}')
 
             new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
             new_task.daemon = True
@@ -217,18 +211,22 @@ class ObjectExplorerService(object):
         connect_request = ConnectRequestParams(
             conndetails,
             session.id,
-            ConnectionType.OBJECTEXPLORERDATABASE
+            ConnectionType.OBJECT_EXPLORER_DATABASE
         )
-        connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECTEXPLORERDATABASE)
+        # Step 2: Disconnect the existing connection of same type and create connection with selected database
+        conn_service.disconnect(session.id, ConnectionType.OBJECT_EXPLORER_DATABASE)
         connect_result = conn_service.connect(connect_request)
         if connect_result is None:
             raise RuntimeError('Connection was cancelled during connect')   # TODO Localize
         if connect_result.error_message is not None:
             raise RuntimeError(connect_result.error_message)
 
-        # Step 2: Get the connection to use for object explorer
-        connection = conn_service.get_connection(session.id, ConnectionType.OBJECTEXPLORERDATABASE)
-        return pgsmoutils.querying.ServerConnection(connection)
+        # Step 3: Get the connection to use for object explorer
+        connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXPLORER_DATABASE)
+        if connection is not None:
+            return pgsmoutils.querying.ServerConnection(connection)
+        else:
+            return None
 
     def _get_session(self, request_context: RequestContext, params: ExpandParameters) -> Optional[ObjectExplorerSession]:
         try:
