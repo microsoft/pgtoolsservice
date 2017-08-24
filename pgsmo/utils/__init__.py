@@ -5,8 +5,10 @@
 
 import pgsmo.utils.querying
 import pgsmo.utils.templating   # noqa
+from pgsmo.utils.utils import process_urn
 
 __all__ = [
     'querying',
     'templating'
+    'process_urn'
 ]

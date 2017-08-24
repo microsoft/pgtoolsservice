@@ -43,30 +43,20 @@ class Table(node.NodeObject):
         super(Table, self).__init__(server, parent, name)
 
         # Declare child items
-        self._check_constraints: node.NodeCollection[CheckConstraint] = self._register_child_collection(
-            lambda: CheckConstraint.get_nodes_for_parent(self._server, self)
-        )
-        self._columns: node.NodeCollection[Column] = self._register_child_collection(
-            lambda: Column.get_nodes_for_parent(self._server, self)
-        )
+        self._check_constraints: node.NodeCollection[CheckConstraint] = self._register_child_collection(CheckConstraint)
+        self._columns: node.NodeCollection[Column] = self._register_child_collection(Column)
         self._exclusion_constraints: node.NodeCollection[ExclusionConstraint] = self._register_child_collection(
-            lambda: ExclusionConstraint.get_nodes_for_parent(self._server, self)
+            ExclusionConstraint
         )
         self._foreign_key_constraints: node.NodeCollection[ForeignKeyConstraint] = self._register_child_collection(
-            lambda: ForeignKeyConstraint.get_nodes_for_parent(self._server, self)
+            ForeignKeyConstraint
         )
         self._index_constraints: node.NodeCollection[IndexConstraint] = self._register_child_collection(
-            lambda: IndexConstraint.get_nodes_for_parent(self._server, self)
+            IndexConstraint
         )
-        self._indexes: node.NodeCollection[Index] = self._register_child_collection(
-            lambda: Index.get_nodes_for_parent(self._server, self)
-        )
-        self._rules: node.NodeCollection[Rule] = self._register_child_collection(
-            lambda: Rule.get_nodes_for_parent(self._server, self)
-        )
-        self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(
-            lambda: Trigger.get_nodes_for_parent(self._server, self)
-        )
+        self._indexes: node.NodeCollection[Index] = self._register_child_collection(Index)
+        self._rules: node.NodeCollection[Rule] = self._register_child_collection(Rule)
+        self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(Trigger)
 
     # PROPERTIES ###########################################################
     @property

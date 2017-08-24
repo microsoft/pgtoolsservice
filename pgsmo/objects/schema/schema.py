@@ -51,27 +51,13 @@ class Schema(node.NodeObject):
         self._has_usage: Optional[bool] = None
 
         # Declare the child items
-        self._collations: node.NodeCollection = self._register_child_collection(
-            lambda: Collation.get_nodes_for_parent(self._server, self)
-        )
-        self._datatypes: node.NodeCollection = self._register_child_collection(
-            lambda: DataType.get_nodes_for_parent(self._server, self)
-        )
-        self._functions: node.NodeCollection = self._register_child_collection(
-            lambda: Function.get_nodes_for_parent(self._server, self)
-        )
-        self._sequences: node.NodeCollection = self._register_child_collection(
-            lambda: Sequence.get_nodes_for_parent(self._server, self)
-        )
-        self._tables: node.NodeCollection = self._register_child_collection(
-            lambda: Table.get_nodes_for_parent(self._server, self)
-        )
-        self._trigger_functions = self._register_child_collection(
-            lambda: TriggerFunction.get_nodes_for_parent(self._server, self)
-        )
-        self._views: node.NodeCollection = self._register_child_collection(
-            lambda: View.get_nodes_for_parent(self._server, self)
-        )
+        self._collations: node.NodeCollection = self._register_child_collection(Collation)
+        self._datatypes: node.NodeCollection = self._register_child_collection(DataType)
+        self._functions: node.NodeCollection = self._register_child_collection(Function)
+        self._sequences: node.NodeCollection = self._register_child_collection(Sequence)
+        self._tables: node.NodeCollection = self._register_child_collection(Table)
+        self._trigger_functions = self._register_child_collection(TriggerFunction)
+        self._views: node.NodeCollection = self._register_child_collection(View)
 
     # PROPERTIES ###########################################################
     @property

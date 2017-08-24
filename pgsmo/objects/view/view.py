@@ -33,15 +33,9 @@ class View(node.NodeObject):
         super(View, self).__init__(server, parent, name)
 
         # Declare child items
-        self._columns: node.NodeCollection[Column] = self._register_child_collection(
-            lambda: Column.get_nodes_for_parent(self._server, self)
-        )
-        self._rules: node.NodeCollection[Rule] = self._register_child_collection(
-            lambda: Rule.get_nodes_for_parent(self._server, self)
-        )
-        self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(
-            lambda: Trigger.get_nodes_for_parent(self._server, self)
-        )
+        self._columns: node.NodeCollection[Column] = self._register_child_collection(Column)
+        self._rules: node.NodeCollection[Rule] = self._register_child_collection(Rule)
+        self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(Trigger)
 
     # PROPERTIES ###########################################################
     @property
