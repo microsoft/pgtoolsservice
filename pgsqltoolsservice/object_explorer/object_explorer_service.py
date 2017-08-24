@@ -168,10 +168,7 @@ class ObjectExplorerService(object):
                         doptions
                     )
                     activedbconnection = self._get_activedbconnection(session, conndetails)
-                    if activedbconnection is not None:
-                        session.server.activedbconnection = activedbconnection
-                    else:
-                        raise RuntimeError(f'could not connect to database {selected_database}')
+                    session.server.activedbconnection = activedbconnection
 
             new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
             new_task.daemon = True
@@ -223,10 +220,7 @@ class ObjectExplorerService(object):
 
         # Step 3: Get the connection to use for object explorer
         connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXPLORER_DATABASE)
-        if connection is not None:
-            return pgsmoutils.querying.ServerConnection(connection)
-        else:
-            return None
+        return pgsmoutils.querying.ServerConnection(connection)
 
     def _get_session(self, request_context: RequestContext, params: ExpandParameters) -> Optional[ObjectExplorerSession]:
         try:
