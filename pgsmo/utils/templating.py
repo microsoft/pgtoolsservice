@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Tuple
 from jinja2 import Environment, FileSystemLoader, Template
 from psycopg2.extensions import adapt
 
-TEMPLATE_ENVIRONMENTS: Dict[str, Environment] = {}
+TEMPLATE_ENVIRONMENTS: Dict[int, Environment] = {}
 TEMPLATE_FOLDER_REGEX = re.compile('(\d+)\.(\d+)(?:_(\w+))?$')
 TEMPLATE_SKIPPED_FOLDERS: List[str] = ['macros']
 
@@ -87,23 +87,22 @@ def render_template(template_path: str, macro_roots: Optional[List[str]]=None, *
     path, filename = os.path.split(template_path)
     macro_roots = macro_roots if macro_roots is not None else []
     paths = [path, *macro_roots]
+    environment_key = _hash_source_list(paths)
 
-    for path in paths:
-        if path not in TEMPLATE_ENVIRONMENTS:
-            # Create the filesystem loader that will look in template folder FIRST
-            loader: FileSystemLoader = FileSystemLoader(paths)
+    if environment_key not in TEMPLATE_ENVIRONMENTS:
+        # Create the filesystem loader that will look in template folder FIRST
+        loader: FileSystemLoader = FileSystemLoader(paths)
 
-            # Create the environment and add the basic filters
-            new_env: Environment = Environment(loader=loader)
-            new_env.filters['qtLiteral'] = qt_literal
-            new_env.filters['qtIdent'] = qt_ident
-            new_env.filters['qtTypeIdent'] = qt_type_ident
-            new_env.filters['hasAny'] = has_any
+        # Create the environment and add the basic filters
+        new_env: Environment = Environment(loader=loader)
+        new_env.filters['qtLiteral'] = qt_literal
+        new_env.filters['qtIdent'] = qt_ident
+        new_env.filters['qtTypeIdent'] = qt_type_ident
+        new_env.filters['hasAny'] = has_any
 
-            TEMPLATE_ENVIRONMENTS[path] = new_env
-            break
+        TEMPLATE_ENVIRONMENTS[environment_key] = new_env
 
-    env = TEMPLATE_ENVIRONMENTS[path]
+    env = TEMPLATE_ENVIRONMENTS[environment_key]
     to_render = env.get_template(filename)
     return to_render.render(context)
 
@@ -118,6 +117,10 @@ def render_template_string(source, **context):
     """
     template = Template(source)
     return template.render(context)
+
+
+def _hash_source_list(sources: list) -> int:
+    return hash(frozenset(sources))
 
 ##########################################################################
 #

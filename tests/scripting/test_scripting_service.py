@@ -15,7 +15,7 @@ from pgsqltoolsservice.scripting.scripter import Scripter
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 from pgsqltoolsservice.scripting.contracts.scriptas_request import ScriptOperation, ScriptAsParameters, ScriptAsResponse
 from tests.mock_request_validation import RequestFlowValidator
-from tests.pgsmo_tests.utils import MockConnection      # TODO: Replace with global mock connection
+from tests.pgsmo_tests.utils import MockConnection      # TODO: Replace with global
 import tests.utils as utils
 
 
