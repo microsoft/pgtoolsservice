@@ -65,6 +65,7 @@ class DisasterRecoveryService:
         database = connection_info.details.options['dbname']
         task = Task('Restore', f'Host: {host}, Database: {database}', constants.PROVIDER_NAME, host, database, request_context,  # TODO: Localize
                     functools.partial(_perform_restore, connection_info, params))
+        self._service_provider[constants.TASK_SERVICE_NAME].register_task(task)
         request_context.send_response({})
         task.start()
 
@@ -85,7 +86,7 @@ def _perform_backup_restore(connection_info: ConnectionInfo, process_args: List[
             process_args.append(f'--{key_name}={value}')
 
     dump_restore_process = subprocess.Popen(process_args, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-    task.on_cancel = dump_restore_process.kill
+    task.on_cancel = dump_restore_process.terminate
     # pg_dump and pg_restore will prompt for the password, so send it via stdin. This call will block until the process exits.
     _, stderr = dump_restore_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
     if dump_restore_process.returncode != 0:

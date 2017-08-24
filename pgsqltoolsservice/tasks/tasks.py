@@ -69,6 +69,12 @@ class Task:
         """Cancel the task if it is running and return true, or return false if the task is not running"""
         if self.status is not TaskStatus.IN_PROGRESS:
             return False
+        try:
+            self.on_cancel()
+        except Exception as e:
+            self._set_status(TaskStatus.IN_PROGRESS, str(e))
+            return False
+        self._set_status(TaskStatus.CANCELED)
         return True
 
     def _run(self) -> None:
@@ -76,7 +82,8 @@ class Task:
         self._set_status(TaskStatus.IN_PROGRESS)
         try:
             task_result: TaskResult = self._action(self)
-            self._set_status(task_result.status, task_result.error_message)
+            if not self._is_completed():
+                self._set_status(task_result.status, task_result.error_message)
         except Exception as e:
             self._set_status(TaskStatus.FAILED, str(e))
 
@@ -98,5 +105,5 @@ class Task:
             'duration': int((time.clock() - self._start_time) * 1000) if self._is_completed else 0
         })
 
-    def _is_completed(self) -> None:
+    def _is_completed(self) -> bool:
         return self.status in [TaskStatus.CANCELED, TaskStatus.FAILED, TaskStatus.SUCCEEDED, TaskStatus.SUCCEEDED_WITH_WARNING]
