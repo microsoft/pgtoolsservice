@@ -23,7 +23,10 @@ from pgsqltoolsservice.object_explorer.contracts import (
 )
 from pgsqltoolsservice.utils import constants
 import tests.utils as utils
+import tests.pgsmo_tests.utils as pgsmoutils
 from tests.mock_request_validation import RequestFlowValidator
+from pgsmo.objects.database.database import Database
+from pgsmo.objects.server.server import Server
 
 
 class TestObjectExplorer(unittest.TestCase):
@@ -467,6 +470,9 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_expand_node_successful(self):
         self._handle_er_node_successful(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
 
+    def test_handle_expand_node_other_database_successful(self):
+        self._handle_er_node_other_database_successful(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
+
     def test_handle_expand_node_alivetasksuccessful(self):
         self._handle_er_node_alivetasksuccessful(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
 
@@ -496,6 +502,9 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_handle_refresh_node_successful(self):
         self._handle_er_node_successful(TestObjectExplorer.refresh_method, TestObjectExplorer.refresh_tasks)
+
+    def test_handle_refresh_node_other_database_successful(self):
+        self._handle_er_node_other_database_successful(TestObjectExplorer.expand_method, TestObjectExplorer.expand_tasks)
 
     def test_handle_refresh_node_alivetasksuccessful(self):
         self._handle_er_node_alivetasksuccessful(TestObjectExplorer.refresh_method, TestObjectExplorer.refresh_tasks)
@@ -630,6 +639,41 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... The thread should be attached to the session
         self.assertEqual(len(get_tasks(session)), 1)
+
+    def _handle_er_node_other_database_successful(self, method: TEventHandler, get_tasks: TGetTask):
+        # Setup: Create an OE service with a session preloaded
+        oe, session, session_uri = self._preloaded_oe_service()
+        cs = ConnectionService()
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        cs.disconnect = mock.MagicMock(return_value=True)
+        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
+        name = 'dbname'
+        cs.get_connection = mock.MagicMock(return_value=pgsmoutils.MockConnection(name))
+        mock_server = Server(pgsmoutils.MockConnection(name))
+        db = Database(mock_server, name)
+        db._oid = 12345
+        session.server = mock_server
+        session.server._databases = [db]
+
+        # ... Define validation for the return notification
+        def validate_success_notification(response: ExpandCompletedParameters):
+            self.assertIsNone(response.error_message)
+            self.assertEqual(response.session_id, session_uri)
+            self.assertEqual(response.node_path, '/')
+            self.assertIsInstance(response.nodes, list)
+            for node in response.nodes:
+                self.assertIsInstance(node, NodeInfo)
+
+        # If: I expand a node
+        rc = RequestFlowValidator()
+        rc.add_expected_response(bool, self.assertTrue)
+        rc.add_expected_notification(ExpandCompletedParameters, EXPAND_COMPLETED_METHOD, validate_success_notification)
+        params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
+        method(oe, rc.request_context, params)
+
+        # Then:
+        # ... I should have gotten a completed successfully message
+        rc.validate()
 
     def _handle_er_node_alivetasksuccessful(self, method: TEventHandler, get_tasks: TGetTask):
         # Setup: Create an OE service with a session preloaded
