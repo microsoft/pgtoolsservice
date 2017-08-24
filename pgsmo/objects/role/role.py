@@ -44,6 +44,7 @@ class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
         """
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare basic properties
         self._can_login: Optional[bool] = None

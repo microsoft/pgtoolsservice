@@ -37,6 +37,8 @@ class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
         """
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare basic properties
         self._owner: Optional[int] = None

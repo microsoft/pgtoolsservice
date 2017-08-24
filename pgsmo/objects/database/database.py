@@ -47,6 +47,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         """
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         self._is_connected: bool = server.maintenance_db_name == name
 

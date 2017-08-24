@@ -38,6 +38,8 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare child items
         self._columns: NodeCollection[Column] = self._register_child_collection(

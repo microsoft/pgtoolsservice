@@ -98,7 +98,7 @@ def render_template(template_path: str, macro_roots: Optional[List[str]]=None, *
             new_env.filters['qtLiteral'] = qt_literal
             new_env.filters['qtIdent'] = qt_ident
             new_env.filters['qtTypeIdent'] = qt_type_ident
-            new_env.filters['has_any'] = has_any
+            new_env.filters['hasAny'] = has_any
 
             TEMPLATE_ENVIRONMENTS[path] = new_env
             break

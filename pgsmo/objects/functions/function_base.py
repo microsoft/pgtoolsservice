@@ -43,6 +43,8 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare the basic properties
         self._description: Optional[str] = None
