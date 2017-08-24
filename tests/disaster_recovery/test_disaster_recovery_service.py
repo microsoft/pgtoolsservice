@@ -14,8 +14,7 @@ from unittest import mock
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
 from pgsqltoolsservice.disaster_recovery import disaster_recovery_service, DisasterRecoveryService
-from pgsqltoolsservice.disaster_recovery.contracts.backup import BackupParams
-from pgsqltoolsservice.disaster_recovery.contracts.restore import RestoreParams
+from pgsqltoolsservice.disaster_recovery.contracts import BackupParams, RestoreParams
 from pgsqltoolsservice.tasks import TaskStatus
 from pgsqltoolsservice.utils import constants
 from tests import utils

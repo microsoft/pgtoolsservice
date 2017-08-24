@@ -13,8 +13,7 @@ from pgsqltoolsservice.capabilities.contracts import (
     InitializeRequestParams,
     InitializeResult, ServerCapabilities, TextDocumentSyncKind
 )
-from pgsqltoolsservice.disaster_recovery.contracts.backup import BACKUP_OPTIONS
-from pgsqltoolsservice.disaster_recovery.contracts.restore import RESTORE_OPTIONS
+from pgsqltoolsservice.disaster_recovery.contracts import BACKUP_OPTIONS, RESTORE_OPTIONS
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
 

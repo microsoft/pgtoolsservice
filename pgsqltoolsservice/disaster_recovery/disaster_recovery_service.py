@@ -14,8 +14,7 @@ from typing import Any, List, Dict
 import inflection
 
 from pgsqltoolsservice.connection import ConnectionInfo
-from pgsqltoolsservice.disaster_recovery.contracts.backup import BACKUP_REQUEST, BackupParams, BackupType
-from pgsqltoolsservice.disaster_recovery.contracts.restore import RESTORE_REQUEST, RestoreParams
+from pgsqltoolsservice.disaster_recovery.contracts import BACKUP_REQUEST, BackupParams, BackupType, RESTORE_REQUEST, RestoreParams
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.tasks import Task, TaskResult, TaskStatus
