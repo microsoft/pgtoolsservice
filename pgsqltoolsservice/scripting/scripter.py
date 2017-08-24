@@ -3,9 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo import Server, Schema
+from pgsmo import Server
 from pgsmo.utils.templating import qt_ident
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+from pgsqltoolsservice.utils import object_finder
 
 
 class Scripter(object):
@@ -34,13 +35,13 @@ class Scripter(object):
         try:
             # get object from server
             object_type = metadata.metadata_type_name
-            obj = self._get_object(object_type, metadata)
+            obj = object_finder.get_object(self.server, object_type, metadata)
 
             # get the create script
-            script = obj.create_script(self.connection)
+            script = obj.create_script()
 
             return script
-        except Exception:
+        except Exception as e:
             # need to handle exceptions well
             return None
 
@@ -50,10 +51,10 @@ class Scripter(object):
         try:
             # get object from server
             object_type = metadata.metadata_type_name
-            obj = self._get_object(object_type, metadata)
+            obj = object_finder.get_object(self.server, object_type, metadata)
 
             # get the delete script
-            script = obj.delete_script(self.connection)
+            script = obj.delete_script()
             return script
         except Exception:
             return None
@@ -65,13 +66,14 @@ class Scripter(object):
         try:
             # get object from server
             object_type = metadata.metadata_type_name
-            obj = self._get_object(object_type, metadata)
+            obj = object_finder.get_object(self.server, object_type, metadata)
 
             # get the update script
-            script = obj.update_script(self.connection)
+            script = obj.update_script()
             return script
         except Exception:
             return None
+<<<<<<< HEAD
 
     # HELPER METHODS ##########################################################
 
@@ -157,3 +159,5 @@ class Scripter(object):
             "Function": self._find_function
         }
         return object_map[object_type](metadata)
+=======
+>>>>>>> a46a392cf942d031a6159dd7d56e7cb3d0cfba0b

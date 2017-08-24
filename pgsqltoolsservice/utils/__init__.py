@@ -11,6 +11,7 @@ import pgsqltoolsservice.utils.log
 import pgsqltoolsservice.utils.serialization
 import pgsqltoolsservice.utils.thread
 import pgsqltoolsservice.utils.time
+import pgsqltoolsservice.utils.object_finder
 import pgsqltoolsservice.utils.validate         # noqa
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     'serialization',
     'thread',
     'time',
-    'validate'
+    'validate',
+    'object_finder'
 
 ]
