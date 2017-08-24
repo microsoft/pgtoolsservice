@@ -357,18 +357,12 @@ ROUTING_TABLE = {
         ],
         None
     ),
-<<<<<<< HEAD
     re.compile('^/databases/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/functions/$'): RoutingTarget(None, _functions),
+    re.compile('^/databases/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/collations/$'): RoutingTarget(None, _collations),
+    re.compile('^/databases/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/datatypes/$'): RoutingTarget(None, _datatypes),
+    re.compile('^/databases/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/sequences/$'): RoutingTarget(None, _sequences),
     re.compile('^/databases/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/tables/$'): RoutingTarget(None, _tables),
     re.compile('^/databases/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
-=======
-    re.compile('^/schemas/(?P<scid>\d+)/functions/$'): RoutingTarget(None, _functions),
-    re.compile('^/schemas/(?P<scid>\d+)/collations/$'): RoutingTarget(None, _collations),
-    re.compile('^/schemas/(?P<scid>\d+)/datatypes/$'): RoutingTarget(None, _datatypes),
-    re.compile('^/schemas/(?P<scid>\d+)/sequences/$'): RoutingTarget(None, _sequences),
-    re.compile('^/schemas/(?P<scid>\d+)/tables/$'): RoutingTarget(None, _tables),
-    re.compile('^/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
->>>>>>> a46a392cf942d031a6159dd7d56e7cb3d0cfba0b
         [
             Folder('Columns', 'columns'),
             Folder('Constraints', 'constraints'),
