@@ -4,8 +4,17 @@
 # --------------------------------------------------------------------------------------------
 
 
+from typing import Optional # noqa
+
+
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 import pgsqltoolsservice.utils as utils
+
+
+class EditInitializerFilter:
+
+    def __init__(self):
+        self.limit_results: Optional[int] = None
 
 
 class InitializeEditParams:
@@ -18,7 +27,7 @@ class InitializeEditParams:
         self.schema_name: str = None
         self.object_type: str = None
         self.object_name: str = None
-        self.filters = None
+        self.filters: EditInitializerFilter = EditInitializerFilter()
 
 
 INITIALIZE_EDIT_REQUEST = IncomingMessageConfiguration('edit/initialize', InitializeEditParams)

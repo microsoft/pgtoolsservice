@@ -117,6 +117,7 @@ class DbCellValue:
         self.display_value: str = None if (display_value is None) else str(display_value)
         self.is_null: bool = is_null
         self.row_id: int = row_id
+        self.raw_object = raw_object
 
 
 class ResultSetSubset:

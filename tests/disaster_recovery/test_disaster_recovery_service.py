@@ -7,13 +7,14 @@
 
 import os.path
 import sys
+from typing import Callable, List
 import unittest
 from unittest import mock
 
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
 from pgsqltoolsservice.disaster_recovery import disaster_recovery_service, DisasterRecoveryService
-from pgsqltoolsservice.disaster_recovery.contracts.backup import BackupParams
+from pgsqltoolsservice.disaster_recovery.contracts import BackupParams, RestoreParams
 from pgsqltoolsservice.tasks import TaskStatus
 from pgsqltoolsservice.utils import constants
 from tests import utils
@@ -43,12 +44,12 @@ class TestDisasterRecoveryService(unittest.TestCase):
 
         # Create backup parameters for the tests
         self.request_context = utils.MockRequestContext()
-        self.backup_path = 'mock/pg_dump'
+        self.backup_path = 'mock/path/test.sql'
         self.backup_type = 'sql'
         self.data_only = False
         self.no_owner = True
         self.schema = 'test_schema'
-        self.params = BackupParams.from_dict({
+        self.backup_params = BackupParams.from_dict({
             'ownerUri': self.test_uri,
             'backupInfo': {
                 'type': self.backup_type,
@@ -58,6 +59,18 @@ class TestDisasterRecoveryService(unittest.TestCase):
                 'schema': self.schema
             }
         })
+        self.restore_path = 'mock/path/test.dump'
+        self.restore_params = RestoreParams.from_dict({
+            'ownerUri': self.test_uri,
+            'options': {
+                'path': self.restore_path,
+                'data_only': self.data_only,
+                'no_owner': self.no_owner,
+                'schema': self.schema
+            }
+        })
+        self.pg_dump_exe = 'pg_dump'
+        self.pg_restore_exe = 'pg_restore'
 
     def test_get_pg_exe_path_local(self):
         """Test the get_pg_exe_path function when the service is running from source code"""
@@ -71,19 +84,19 @@ class TestDisasterRecoveryService(unittest.TestCase):
 
                 # If I get the executable path on Mac
                 sys.platform = 'darwin'
-                path = disaster_recovery_service._get_pg_exe_path('pg_dump')
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the mac directory and does not have a trailing .exe
                 self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/mac/bin/pg_dump'))
 
                 # If I get the executable path on Linux
                 sys.platform = 'linux'
-                path = disaster_recovery_service._get_pg_exe_path('pg_dump')
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the linux directory and does not have a trailing .exe
                 self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/linux/bin/pg_dump'))
 
                 # If I get the executable path on Windows
                 sys.platform = 'win32'
-                path = disaster_recovery_service._get_pg_exe_path('pg_dump')
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the win directory and does have a trailing .exe
                 self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/win/pg_dump.exe'))
         finally:
@@ -102,19 +115,19 @@ class TestDisasterRecoveryService(unittest.TestCase):
 
                 # If I get the executable path on Mac
                 sys.platform = 'darwin'
-                path = disaster_recovery_service._get_pg_exe_path('pg_dump')
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the mac directory and does not have a trailing .exe
                 self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/mac/bin/pg_dump'))
 
                 # If I get the executable path on Linux
                 sys.platform = 'linux'
-                path = disaster_recovery_service._get_pg_exe_path('pg_dump')
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the linux directory and does not have a trailing .exe
                 self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/linux/bin/pg_dump'))
 
                 # If I get the executable path on Windows
                 sys.platform = 'win32'
-                path = disaster_recovery_service._get_pg_exe_path('pg_dump')
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the win directory and does have a trailing .exe
                 self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/win/pg_dump.exe'))
         finally:
@@ -128,76 +141,120 @@ class TestDisasterRecoveryService(unittest.TestCase):
 
     def test_perform_backup(self):
         """Test that the perform_backup method passes the correct parameters to pg_dump"""
-        mock_pg_path = 'mock/pg_dump'
+        exe_name = self.pg_dump_exe
+        test_method = disaster_recovery_service._perform_backup
+        test_params = self.backup_params
+        expected_args = [
+            f'--file={self.backup_path}',
+            '--format=p',
+            f'--dbname={self.dbname}',
+            f'--host={self.host}',
+            f'--username={self.username}',
+            '--no-owner',
+            f'--schema={self.schema}'
+        ]
+        self._test_perform_backup_restore_internal(exe_name, test_method, test_params, expected_args)
+
+    def test_perform_restore(self):
+        """Test that the perform_restore method passes the correct parameters to pg_restore"""
+        exe_name = self.pg_restore_exe
+        test_method = disaster_recovery_service._perform_restore
+        test_params = self.restore_params
+        expected_args = [
+            f'{self.restore_path}',
+            f'--dbname={self.dbname}',
+            f'--host={self.host}',
+            f'--username={self.username}',
+            '--no-owner',
+            f'--schema={self.schema}'
+        ]
+        self._test_perform_backup_restore_internal(exe_name, test_method, test_params, expected_args)
+
+    def _test_perform_backup_restore_internal(self, exe_name: str, test_method: Callable, test_params, expected_args: List[str]):
+        mock_pg_path = f'mock/{exe_name}'
         mock_process = mock.Mock()
         mock_process.returncode = 0
         mock_process.communicate = mock.Mock(return_value=(b'', b''))
         with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path',
                         new=mock.Mock(return_value=mock_pg_path)) as mock_get_path, \
                 mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)) as mock_popen:
-            # If I perform a backup
-            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params, mock.Mock())
-            # Then the code got the path of pg_dump
-            mock_get_path.assert_called_once_with('pg_dump')
-            # And ran the pg_dump executable as a subprocess
+            # If I perform a backup/restore
+            task_result = test_method(self.connection_info, test_params, mock.Mock())
+            # Then the code got the path of the executable
+            mock_get_path.assert_called_once_with(exe_name)
+            # And ran the executable as a subprocess
             mock_popen.assert_called_once()
             # And then called communicate on the process
             mock_process.communicate.assert_called_once_with(b'')
             # And the arguments for the subprocess.Popen call were the expected values
-            expected_args = [
-                f'--file={self.backup_path}',
-                '--format=p',
-                f'--dbname={self.dbname}',
-                f'--host={self.host}',
-                f'--username={self.username}',
-                '--no-owner',
-                f'--schema={self.schema}'
-            ]
             actual_args = mock_popen.call_args[0][0]
             self.assertEqual(actual_args[0], mock_pg_path)
-            pg_dump_flags = actual_args[1:]
+            pg_exe_flags = actual_args[1:]
             for expected_arg in expected_args:
-                self.assertIn(expected_arg, pg_dump_flags)
-            self.assertEqual(len(expected_args), len(pg_dump_flags))
+                self.assertIn(expected_arg, pg_exe_flags)
+            self.assertEqual(len(expected_args), len(pg_exe_flags))
             # And the task returns a successful result
             self.assertIs(task_result.status, TaskStatus.SUCCEEDED)
 
     def test_perform_backup_fails(self):
         """Test that the perform_backup method handles failures by recording pg_dump's stderr output and marking the task failed"""
-        mock_pg_path = 'mock/pg_dump'
+        self._test_perform_backup_restore_fails_internal(self.pg_dump_exe, disaster_recovery_service._perform_backup, self.backup_params)
+
+    def test_perform_restore_fails(self):
+        """Test that the perform_restore method handles failures by recording pg_dump's stderr output and marking the task failed"""
+        self._test_perform_backup_restore_fails_internal(self.pg_restore_exe, disaster_recovery_service._perform_restore, self.restore_params)
+
+    def _test_perform_backup_restore_fails_internal(self, exe_name: str, test_method: Callable, test_params):
+        mock_pg_path = f'mock/{exe_name}'
         mock_process = mock.Mock()
         mock_process.returncode = 1
         test_error_message = b'test error message'
         mock_process.communicate = mock.Mock(return_value=(b'', test_error_message))
         with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path',
                         new=mock.Mock(return_value=mock_pg_path)), mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)):
-            # If I perform a backup where pg_dump fails
-            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params, mock.Mock())
+            # If I perform a backup/restore that fails
+            task_result = test_method(self.connection_info, test_params, mock.Mock())
             # Then the task returns a failed result
             self.assertIs(task_result.status, TaskStatus.FAILED)
-            # And the task contains the error message from pg_dump's stderr
+            # And the task contains the error message from stderr
             self.assertEqual(task_result.error_message, str(test_error_message, 'utf-8'))
 
     def test_perform_backup_no_exe(self):
         """Test that the perform_backup task fails when the pg_dump exe is not found"""
+        self._test_perform_backup_restore_no_exe_internal(disaster_recovery_service._perform_backup, self.backup_params)
+
+    def test_perform_restore_no_exe(self):
+        """Test that the perform_restore task fails when the pg_restore exe is not found"""
+        self._test_perform_backup_restore_no_exe_internal(disaster_recovery_service._perform_restore, self.restore_params)
+
+    def _test_perform_backup_restore_no_exe_internal(self, test_method: Callable, test_params):
         with mock.patch('os.path.exists', new=mock.Mock(return_value=False)), mock.patch('subprocess.Popen') as mock_popen:
-            # If I perform a backup when the pg_dump executable cannot be found
-            task_result = disaster_recovery_service._perform_backup(self.connection_info, self.params, mock.Mock())
+            # If I perform a restore when the pg_restore executable cannot be found
+            task_result = test_method(self.connection_info, test_params, mock.Mock())
             # Then the task fails and does try to kick off a new process
             self.assertIs(task_result.status, TaskStatus.FAILED)
             mock_popen.assert_not_called()
 
     def test_handle_backup_request(self):
         """Test that the backup request handler responds properly and kicks off a task to perform the backup"""
+        self._test_handle_backup_restore_internal(self.disaster_recovery_service.handle_backup_request, disaster_recovery_service._perform_backup,
+                                                  self.backup_params)
+
+    def test_handle_restore_request(self):
+        """Test that the restore request handler responds properly and kicks off a task to perform the restore"""
+        self._test_handle_backup_restore_internal(self.disaster_recovery_service.handle_restore_request, disaster_recovery_service._perform_restore,
+                                                  self.restore_params)
+
+    def _test_handle_backup_restore_internal(self, test_handler: Callable, test_method: Callable, test_params):
         # Set up the connection service to return the test's connection information
         self.connection_service.owner_to_connection_map[self.test_uri] = self.connection_info
-        # Set up a mock task so that the backup code does not actually run in a separate thread
+        # Set up a mock task so that the restore code does not actually run in a separate thread
         mock_task = mock.Mock()
         mock_action = object()
         with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=mock_task)) as mock_task_constructor, \
                 mock.patch('functools.partial', new=mock.Mock(return_value=mock_action)) as mock_partial:
-            # When I call the backup request handler
-            self.disaster_recovery_service.handle_backup_request(self.request_context, self.params)
+            # When I call the backup/restore request handler
+            test_handler(self.request_context, test_params)
             # Then a mock task is created and started
             mock_task_constructor.assert_called_once()
             mock_task.start.assert_called_once()
@@ -207,19 +264,26 @@ class TestDisasterRecoveryService(unittest.TestCase):
             self.assertEqual(parameters[3], self.host)
             self.assertEqual(parameters[4], self.dbname)
             self.assertIs(parameters[6], mock_action)
-            mock_partial.assert_called_once_with(disaster_recovery_service._perform_backup, self.connection_info, self.params)
+            mock_partial.assert_called_once_with(test_method, self.connection_info, test_params)
             # And the handler sends an empty response to indicate success
             self.assertEqual(self.request_context.last_response_params, {})
 
     def test_handle_backup_request_no_connection(self):
         """Test that the backup request handler responds with an error if there is no connection for the given owner URI"""
-        # Set up a mock task so that the backup code does not actually run in a separate thread
+        self._test_handle_backup_restore_request_no_connection(self.disaster_recovery_service.handle_backup_request, self.backup_params)
+
+    def test_handle_restore_request_no_connection(self):
+        """Test that the restore request handler responds with an error if there is no connection for the given owner URI"""
+        self._test_handle_backup_restore_request_no_connection(self.disaster_recovery_service.handle_restore_request, self.restore_params)
+
+    def _test_handle_backup_restore_request_no_connection(self, test_handler: Callable, test_params):
+        # Set up a mock task so that the restore code does not actually run in a separate thread
         mock_task = mock.Mock()
         mock_action = object()
         with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=mock_task)) as mock_task_constructor, \
                 mock.patch('functools.partial', new=mock.Mock(return_value=mock_action)):
-            # If I call the backup request handler and there is no connection corresponding to the given owner URI
-            self.disaster_recovery_service.handle_backup_request(self.request_context, self.params)
+            # If I call the request handler and there is no connection corresponding to the given owner URI
+            test_handler(self.request_context, test_params)
             # Then a mock task is not created
             mock_task_constructor.assert_not_called()
             # And the handler sends an error response to indicate failure
