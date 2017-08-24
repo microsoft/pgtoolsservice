@@ -171,7 +171,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
     @staticmethod
     def _custom_validate_init(obj, mock_server: Server):
         """
-        Can be overridden in child classes to add custom vaidation to __init__ tests after the
+        Can be overridden in child classes to add custom validation to __init__ tests after the
         standard validation is performed.
         """
         pass
