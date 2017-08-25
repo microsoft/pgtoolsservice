@@ -8,16 +8,14 @@ from urllib.parse import ParseResult, urlparse
 
 from psycopg2.extensions import connection
 
-from pgsmo.objects.database.database import Database
-
 from pgsmo.objects.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
+from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import pgsmo.utils as utils
 
 
 class Server:
-    URN_SCHEME = 'pgsmo'
     TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
     # CONSTRUCTOR ##########################################################
@@ -40,9 +38,9 @@ class Server:
 
         # Declare the child objects
         self._child_objects: Mapping[str, NodeCollection] = {
-            Database.class_name():    NodeCollection(lambda: Database.get_nodes_for_parent(self, None)),
-            Role.class_name():        NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
-            Tablespace.class_name():  NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None))
+            Database.__name__:    NodeCollection(lambda: Database.get_nodes_for_parent(self, None)),
+            Role.__name__:        NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
+            Tablespace.__name__:  NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None))
         }
 
     # PROPERTIES ###########################################################
@@ -84,12 +82,11 @@ class Server:
     @property
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
-        scheme = self.URN_SCHEME
-        username = self.connection.dsn_parameters['username']
+        user = self.connection.dsn_parameters['user']
         db = self.maintenance_db_name
         host = self.host
         port = self.port
-        return f'{scheme}://{username}@{db}.{host}:{port}/'
+        return f'//{user}@{db}.{host}:{port}/'
 
     @property
     def wal_paused(self) -> Optional[bool]:
@@ -100,7 +97,7 @@ class Server:
     @property
     def databases(self) -> NodeCollection[Database]:
         """Databases that belong to the server"""
-        return self._child_objects[Database.__class__.__name__]
+        return self._child_objects[Database.__name__]
 
     @property
     def maintenance_db(self) -> Database:
@@ -110,12 +107,12 @@ class Server:
     @property
     def roles(self) -> NodeCollection[Role]:
         """Roles that belong to the server"""
-        return self._child_objects[Role.__class__.__name__]
+        return self._child_objects[Role.__name__]
 
     @property
     def tablespaces(self) -> NodeCollection[Tablespace]:
         """Tablespaces defined for the server"""
-        return self._child_objects[Tablespace.__class__.__name__]
+        return self._child_objects[Tablespace.__name__]
 
     # METHODS ##############################################################
     def get_object_by_urn(self, urn: str) -> NodeObject:
@@ -124,11 +121,8 @@ class Server:
             raise ValueError('URN was not provided')    # TODO: Localize?
 
         parsed_urn: ParseResult = urlparse(urn)
-        if parsed_urn.scheme != self.URN_SCHEME:
-            raise ValueError('URN scheme is invalid')    # TODO: Localize?
-
-        reconstructed_urn = f'{parsed_urn.scheme}://{parsed_urn.netloc}/'
-        if reconstructed_urn != self.urn_base:
+        reconstructed_urn_base = f'//{parsed_urn.netloc}/'
+        if reconstructed_urn_base != self.urn_base:
             raise ValueError('Provided URN is not applicable to this server')   # TODO: Localize?
 
         # Process the first fragment
@@ -142,13 +136,12 @@ class Server:
         # Find the matching object
         # TODO: Create a .get method for NodeCollection (see https://github.com/Microsoft/carbon/issues/1713)
         obj = collection[int(oid)]
-        obj.get_obj_from_urn(remaining)
+        return obj.get_object_by_urn(remaining)
 
     def refresh(self) -> None:
         # Reset child objects
-        self._child_objects[Database.class_name()].reset()
-        self._child_objects[Role.class_name()].reset()
-        self._child_objects[Tablespace.class_name()].reset()
+        for collection in self._child_objects.values():
+            collection.reset()
 
         # Reset property collections
         self._recovery_props.reset()
