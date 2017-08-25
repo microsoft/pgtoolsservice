@@ -42,6 +42,7 @@ def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwarg
                                  .format(class_, pythonic_attr))
 
         value = dictionary[attr]
+
         if pythonic_attr in kwargs:
             # Caller provided a class to deserialize to. Use that
             if isinstance(value, list):

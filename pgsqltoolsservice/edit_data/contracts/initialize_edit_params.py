@@ -8,19 +8,19 @@ from typing import Optional # noqa
 
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.common import Serializable
 
 
-class EditInitializerFilter:
+class EditInitializerFilter(Serializable):
 
     def __init__(self):
         self.limit_results: Optional[int] = None
 
 
-class InitializeEditParams:
+class InitializeEditParams(Serializable):
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+    def get_child_serializable_types(cls):
+        return {'filters': EditInitializerFilter}
 
     def __init__(self):
         self.owner_uri: str = None

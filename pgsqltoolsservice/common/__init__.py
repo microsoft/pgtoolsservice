@@ -3,15 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.common.serializable import Serializable
 
-
-class ExpandParameters(Serializable):
-
-    def __init__(self):
-        self.session_id: str = None
-        self.node_path: str = None
-
-
-EXPAND_REQUEST = IncomingMessageConfiguration('objectexplorer/expand', ExpandParameters)
+__all__ = ['Serializable']

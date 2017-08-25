@@ -5,8 +5,8 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
-import pgsqltoolsservice.utils as utils
 import enum
+from pgsqltoolsservice.common import Serializable
 
 
 class ScriptOperation(enum.Enum):
@@ -18,10 +18,10 @@ class ScriptOperation(enum.Enum):
     DELETE = 4
 
 
-class ScriptAsParameters:
+class ScriptAsParameters(Serializable):
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, metadata=ObjectMetadata, operation=ScriptOperation)
+    def get_child_serializable_types(cls):
+        return {'metadata': ObjectMetadata, 'operation': ScriptOperation}
 
     def __init__(self):
         self.owner_uri: str = None
@@ -29,10 +29,7 @@ class ScriptAsParameters:
         self.metadata: ObjectMetadata = None
 
 
-class ScriptAsResponse:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+class ScriptAsResponse(Serializable):
 
     def __init__(self, owner_uri: str, script: str):
         self.owner_uri: str = owner_uri
