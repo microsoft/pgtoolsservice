@@ -47,6 +47,8 @@ class Task:
         self.status: TaskStatus = TaskStatus.NOT_STARTED
         self.status_message: str = None
         self.on_cancel: Callable = on_cancel
+        self.cancellation_lock: threading.Lock = threading.Lock()
+        self.canceled: bool = False
         self._request_context = request_context
         self._start_time: float = None
         self._action = action
@@ -69,12 +71,13 @@ class Task:
         """Cancel the task if it is running and return true, or return false if the task is not running"""
         if self.status is not TaskStatus.IN_PROGRESS:
             return False
-        try:
-            self.on_cancel()
-        except Exception as e:
-            self._set_status(TaskStatus.IN_PROGRESS, str(e))
-            return False
-        self._set_status(TaskStatus.CANCELED)
+        with self.cancellation_lock:
+            if self.on_cancel:
+                try:
+                    self.on_cancel()
+                except Exception:
+                    return False
+            self.canceled = True
         return True
 
     def _run(self) -> None:
@@ -82,7 +85,9 @@ class Task:
         self._set_status(TaskStatus.IN_PROGRESS)
         try:
             task_result: TaskResult = self._action(self)
-            if not self._is_completed():
+            if self.canceled:
+                self._set_status(TaskStatus.CANCELED)
+            else:
                 self._set_status(task_result.status, task_result.error_message)
         except Exception as e:
             self._set_status(TaskStatus.FAILED, str(e))

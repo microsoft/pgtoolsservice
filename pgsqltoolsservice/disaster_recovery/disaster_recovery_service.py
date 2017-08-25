@@ -49,9 +49,8 @@ class DisasterRecoveryService:
         database = connection_info.details.options['dbname']
         task = Task('Backup', f'Host: {host}, Database: {database}', constants.PROVIDER_NAME, host, database, request_context,  # TODO: Localize
                     functools.partial(_perform_backup, connection_info, params))
-        self._service_provider[constants.TASK_SERVICE_NAME].register_task(task)
+        self._service_provider[constants.TASK_SERVICE_NAME].start_task(task)
         request_context.send_response({})
-        task.start()
 
     def handle_restore_request(self, request_context: RequestContext, params: RestoreParams) -> None:
         """
@@ -65,9 +64,8 @@ class DisasterRecoveryService:
         database = connection_info.details.options['dbname']
         task = Task('Restore', f'Host: {host}, Database: {database}', constants.PROVIDER_NAME, host, database, request_context,  # TODO: Localize
                     functools.partial(_perform_restore, connection_info, params))
-        self._service_provider[constants.TASK_SERVICE_NAME].register_task(task)
+        self._service_provider[constants.TASK_SERVICE_NAME].start_task(task)
         request_context.send_response({})
-        task.start()
 
 
 def _perform_backup_restore(connection_info: ConnectionInfo, process_args: List[str], options: Dict[str, Any], task: Task):
@@ -84,9 +82,11 @@ def _perform_backup_restore(connection_info: ConnectionInfo, process_args: List[
         else:
             # The option has a value, so add the flag with its value
             process_args.append(f'--{key_name}={value}')
-
-    dump_restore_process = subprocess.Popen(process_args, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-    task.on_cancel = dump_restore_process.terminate
+    with task.cancellation_lock:
+        if task.canceled:
+            return TaskResult(TaskStatus.CANCELED)
+        dump_restore_process = subprocess.Popen(process_args, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        task.on_cancel = dump_restore_process.terminate
     # pg_dump and pg_restore will prompt for the password, so send it via stdin. This call will block until the process exits.
     _, stderr = dump_restore_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
     if dump_restore_process.returncode != 0:

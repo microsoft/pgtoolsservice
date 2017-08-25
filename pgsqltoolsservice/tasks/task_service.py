@@ -40,6 +40,7 @@ class TaskService:
             tasks = [task for task in tasks if task.status is TaskStatus.IN_PROGRESS]
         request_context.send_response([task.task_info for task in tasks])
 
-    def register_task(self, task: Task) -> None:
-        """Register a task so that it can be listed and canceled"""
+    def start_task(self, task: Task) -> None:
+        """Register a task so that it can be listed and canceled, then start it"""
         self._task_map[task.id] = task
+        task.start()
