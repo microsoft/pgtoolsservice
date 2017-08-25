@@ -8,7 +8,6 @@
 from pgsqltoolsservice.capabilities.contracts import FeatureMetadataProvider, ServiceOption
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.serialization import Serializable
-import pgsqltoolsservice.utils as utils
 
 
 class RestoreParams(Serializable):
