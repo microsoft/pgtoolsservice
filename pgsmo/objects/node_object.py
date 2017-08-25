@@ -315,7 +315,7 @@ class NodeCollection(Generic[TNC]):
                 return item
 
         # If we make it to here, an item with the given index does not exist
-        raise NameError('An item with the provided index does not exist')
+        raise NameError('An item with the provided index does not exist')       # TODO: Localize?
 
     def __iter__(self) -> Iterator:
         return self._items.__iter__()
