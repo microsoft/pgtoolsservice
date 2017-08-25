@@ -3,27 +3,30 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsmo.objects.table_objects import (
-    Column,
+from typing import List
+
+from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from pgsmo.objects.table_objects.column import Column
+from pgsmo.objects.table_objects.constraints import (
     CheckConstraint,
     ExclusionConstraint,
     ForeignKeyConstraint,
-    Index,
-    IndexConstraint,
-    Rule,
-    Trigger
+    IndexConstraint
 )
-import pgsmo.objects.node_object as node
+from pgsmo.objects.table_objects.index import Index
+from pgsmo.objects.table_objects.rule import Rule
+from pgsmo.objects.table_objects.trigger import Trigger
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Table(node.NodeObject):
-
+class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Table':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Table':
         """
         Creates a table instance from the results of a node query
         :param server: Server that owns the table
@@ -39,32 +42,35 @@ class Table(node.NodeObject):
 
         return table
 
-    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
-        super(Table, self).__init__(server, parent, name)
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+        NodeObject.__init__(self, server, parent, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare child items
-        self._check_constraints: node.NodeCollection[CheckConstraint] = self._register_child_collection(
+        self._check_constraints: NodeCollection[CheckConstraint] = self._register_child_collection(
             lambda: CheckConstraint.get_nodes_for_parent(self._server, self)
         )
-        self._columns: node.NodeCollection[Column] = self._register_child_collection(
+        self._columns: NodeCollection[Column] = self._register_child_collection(
             lambda: Column.get_nodes_for_parent(self._server, self)
         )
-        self._exclusion_constraints: node.NodeCollection[ExclusionConstraint] = self._register_child_collection(
+        self._exclusion_constraints: NodeCollection[ExclusionConstraint] = self._register_child_collection(
             lambda: ExclusionConstraint.get_nodes_for_parent(self._server, self)
         )
-        self._foreign_key_constraints: node.NodeCollection[ForeignKeyConstraint] = self._register_child_collection(
+        self._foreign_key_constraints: NodeCollection[ForeignKeyConstraint] = self._register_child_collection(
             lambda: ForeignKeyConstraint.get_nodes_for_parent(self._server, self)
         )
-        self._index_constraints: node.NodeCollection[IndexConstraint] = self._register_child_collection(
+        self._index_constraints: NodeCollection[IndexConstraint] = self._register_child_collection(
             lambda: IndexConstraint.get_nodes_for_parent(self._server, self)
         )
-        self._indexes: node.NodeCollection[Index] = self._register_child_collection(
+        self._indexes: NodeCollection[Index] = self._register_child_collection(
             lambda: Index.get_nodes_for_parent(self._server, self)
         )
-        self._rules: node.NodeCollection[Rule] = self._register_child_collection(
+        self._rules: NodeCollection[Rule] = self._register_child_collection(
             lambda: Rule.get_nodes_for_parent(self._server, self)
         )
-        self._triggers: node.NodeCollection[Trigger] = self._register_child_collection(
+        self._triggers: NodeCollection[Trigger] = self._register_child_collection(
             lambda: Trigger.get_nodes_for_parent(self._server, self)
         )
 
@@ -80,35 +86,35 @@ class Table(node.NodeObject):
 
     # -CHILD OBJECTS #######################################################
     @property
-    def check_constraints(self) -> node.NodeCollection[CheckConstraint]:
+    def check_constraints(self) -> NodeCollection[CheckConstraint]:
         return self._check_constraints
 
     @property
-    def columns(self) -> node.NodeCollection:
+    def columns(self) -> NodeCollection:
         return self._columns
 
     @property
-    def exclusion_constraints(self) -> node.NodeCollection[ExclusionConstraint]:
+    def exclusion_constraints(self) -> NodeCollection[ExclusionConstraint]:
         return self._exclusion_constraints
 
     @property
-    def foreign_key_constraints(self) -> node.NodeCollection[ForeignKeyConstraint]:
+    def foreign_key_constraints(self) -> NodeCollection[ForeignKeyConstraint]:
         return self._foreign_key_constraints
 
     @property
-    def index_constraints(self) -> node.NodeCollection[IndexConstraint]:
+    def index_constraints(self) -> NodeCollection[IndexConstraint]:
         return self._index_constraints
 
     @property
-    def indexes(self) -> node.NodeCollection[Index]:
+    def indexes(self) -> NodeCollection[Index]:
         return self._indexes
 
     @property
-    def rules(self) -> node.NodeCollection[Rule]:
+    def rules(self) -> NodeCollection[Rule]:
         return self._rules
 
     @property
-    def triggers(self) -> node.NodeCollection[Trigger]:
+    def triggers(self) -> NodeCollection[Trigger]:
         return self._triggers
 
     # -FULL OBJECT PROPERTIES ##############################################
@@ -210,34 +216,16 @@ class Table(node.NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
+    def _macro_root(cls) -> List[str]:
+        return [cls.MACRO_ROOT]
+
+    @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
-    # SCRIPTING METHODS ##############################################################
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a table """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data)
-
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for a table"""
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(query_file, data)
-
-    def update_script(self) -> str:
-        """ Function to retrieve update scripts for a table"""
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(query_file, data)
-
-    # HELPER METHODS ####################################################################
-    # QUERY DATA BUILDING METHODS #######################################################
-
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
-        data = {"data": {
+        return {"data": {
             "name": self.name,
             "coll_inherits": self.coll_inherits,
             "columns": self.columns,
@@ -253,21 +241,20 @@ class Table(node.NodeObject):
             "relowner": self.owner,
             "schema": self.parent.name
         }}
-        return data
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
-        data = {
+        return {
             "data": {
                 "name": self.name,
                 "schema": self.parent.name
-            }, "cascade": self.cascade
+            },
+            "cascade": self.cascade
         }
-        return data
 
     def _update_query_data(self) -> dict:
         """ Provides data input for update script """
-        data = {"data": {
+        return {"data": {
             "name": self.name,
             "schema": self.parent.name,
             "relowner": self.owner,
@@ -286,4 +273,3 @@ class Table(node.NodeObject):
             "relacl": self.acl,
             "seclabels": self.seclabels
         }}
-        return data

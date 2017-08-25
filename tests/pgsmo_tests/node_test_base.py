@@ -9,7 +9,8 @@ from typing import Callable, List, Mapping, Type
 import unittest
 import unittest.mock as mock
 
-from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection, NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server.server import Server
 import tests.pgsmo_tests.utils as utils
 
@@ -37,7 +38,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         return {}
 
     @property
-    def init_lambda(self) -> Callable[[], NodeObject]:
+    def init_lambda(self) -> Callable[[Server, NodeObject, str], NodeObject]:
         class_ = self.class_for_test
         return lambda server, parent, name: class_(server, parent, name)
 
@@ -125,6 +126,37 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         NodeObjectTestBase.unittest.assertIsInstance(path, str)
         NodeObjectTestBase.unittest.assertTrue(os.path.exists(path))
 
+    # TODO: Disabled 08/23/2017 beruss -- reenable once properties are fixed, tracked by https://github.com/Microsoft/carbon/issues/1734
+    def _test_scripting_mixins(self):
+        # Setup: Create an instance of the object
+        mock_server = Server(utils.MockConnection(None))
+        mock_grand_parent = utils.MockNodeObject(mock_server, None, 'grandparent') if not self.parent_expected_to_be_none else None
+        mock_parent = utils.MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
+        name = 'test'
+        obj = self.init_lambda(mock_server, mock_parent, name)
+        obj._full_properties = self.property_query
+
+        if isinstance(obj, ScriptableCreate):
+            # If: I script for create
+            script = obj.create_script()
+
+            # Then: The script should successfully return
+            utils.assert_is_not_none_or_whitespace(script)
+
+        if isinstance(obj, ScriptableDelete):
+            # If: I script for delete
+            script = obj.delete_script()
+
+            # Then: The script should successfully return
+            utils.assert_is_not_none_or_whitespace(script)
+
+        if isinstance(obj, ScriptableUpdate):
+            # If: I script for update
+            script = obj.update_script()
+
+            # Then: The script should successfully return
+            utils.assert_is_not_none_or_whitespace(script)
+
     # TODO: Add test for PPAS server type when we support it
 
     # CUSTOM TEST LOGIC ####################################################
@@ -139,7 +171,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
     @staticmethod
     def _custom_validate_init(obj, mock_server: Server):
         """
-        Can be overridden in child classes to add custom vaidation to __init__ tests after the
+        Can be overridden in child classes to add custom validation to __init__ tests after the
         standard validation is performed.
         """
         pass
@@ -164,7 +196,10 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         for prop in self.basic_properties.keys():
             test_case.assertIsNone(getattr(obj, prop))
 
-        # ... The child properties should be assigned to node collections
+        # ... The full properties collection should be a lazy property collection
+        test_case.assertIsInstance(obj._full_properties, NodeLazyPropertyCollection)
+
+        # ... The child node collections should be assigned to node collections
         for coll in self.collections:
             test_case.assertIsInstance(getattr(obj, coll), NodeCollection)
 
