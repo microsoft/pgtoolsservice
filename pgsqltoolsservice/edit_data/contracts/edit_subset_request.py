@@ -5,13 +5,10 @@
 
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class EditSubsetParams():
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+class EditSubsetParams(Serializable):
 
     def __init__(self):
         self.owner_uri: str = None

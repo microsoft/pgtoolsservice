@@ -5,14 +5,14 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType  # noqa
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class ConnectRequestParams:
+class ConnectRequestParams(Serializable):
+
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     connection=ConnectionDetails)
+    def get_child_serializable_types(cls):
+        return {'connection': ConnectionDetails}
 
     def __init__(self, connection=None, owner_uri=None, connection_type=ConnectionType.DEFAULT):
         self.connection: ConnectionDetails = connection
