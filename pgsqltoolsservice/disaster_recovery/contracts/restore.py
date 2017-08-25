@@ -7,14 +7,15 @@
 
 from pgsqltoolsservice.capabilities.contracts import FeatureMetadataProvider, ServiceOption
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
+from pgsqltoolsservice.serialization import Serializable
 import pgsqltoolsservice.utils as utils
 
 
-class RestoreParams:
+class RestoreParams(Serializable):
     """Parameters for a restore request"""
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, options=RestoreOptions)
+    def get_child_serializable_types(cls):
+        return {'options': RestoreOptions}
 
     def __init__(self):
         self.owner_uri: str = None
@@ -22,11 +23,11 @@ class RestoreParams:
         self.task_execution_mode = None
 
 
-class RestoreOptions:
+class RestoreOptions(Serializable):
     """Options for a requested restore"""
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, ignore_extra_attributes=True)
+    def ignore_extra_attributes(cls):
+        return True
 
     def __init__(self):
         self.path: str = None
