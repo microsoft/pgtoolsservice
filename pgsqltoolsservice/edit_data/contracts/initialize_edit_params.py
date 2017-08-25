@@ -8,7 +8,7 @@ from typing import Optional # noqa
 
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class EditInitializerFilter(Serializable):

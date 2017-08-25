@@ -7,7 +7,7 @@ from typing import List
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class SimpleExecuteRequest(Serializable):

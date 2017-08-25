@@ -6,7 +6,7 @@
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata  # noqa
 from typing import List  # noqa
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class MetadataListParameters(Serializable):

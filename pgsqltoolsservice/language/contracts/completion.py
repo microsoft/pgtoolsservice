@@ -10,7 +10,7 @@ import enum
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.workspace.contracts import TextDocumentPosition
 from pgsqltoolsservice.language.contracts import TextEdit   # noqa
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class CompletionItemKind(enum.Enum):

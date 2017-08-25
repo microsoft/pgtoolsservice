@@ -7,7 +7,7 @@
 from typing import List, Dict  # noqa
 
 from pgsqltoolsservice.workspace.contracts import Position, Range
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 import pgsqltoolsservice.utils as utils
 
 DESC = {'name': 0, 'type_code': 1, 'display_size': 2, 'internal_size': 3, 'precision': 4, 'scale': 5, 'null_ok': 6}

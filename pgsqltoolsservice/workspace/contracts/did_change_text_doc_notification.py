@@ -7,7 +7,7 @@ from typing import List, Optional     # noqa
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.workspace.contracts.common import Range
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class TextDocumentChangeEvent(Serializable):

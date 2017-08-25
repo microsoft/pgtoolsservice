@@ -3,6 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.common.serializable import Serializable
+from pgsqltoolsservice.serialization.serializable import Serializable
 
 __all__ = ['Serializable']

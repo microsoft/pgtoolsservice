@@ -6,7 +6,7 @@
 from typing import List
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class CapabilitiesRequestParams(Serializable):

@@ -9,7 +9,7 @@ import enum
 import unittest
 
 import pgsqltoolsservice.utils as utils
-from pgsqltoolsservice.common.serializable import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class TestUtils(unittest.TestCase):

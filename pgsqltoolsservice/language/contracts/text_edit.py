@@ -5,7 +5,7 @@
 
 
 from pgsqltoolsservice.workspace.contracts import Range
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class TextEdit(Serializable):

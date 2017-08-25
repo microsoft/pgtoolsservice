@@ -6,7 +6,7 @@
 """This module holds contracts for the language flavor change notification"""
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class LanguageFlavorChangeParams(Serializable):

@@ -5,7 +5,7 @@
 
 from typing import Optional
 
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class ObjectMetadata(Serializable):

@@ -5,7 +5,7 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class CreateSessionResponse(Serializable):

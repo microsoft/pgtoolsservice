@@ -5,7 +5,7 @@
 
 import enum
 
-from pgsqltoolsservice.common import Serializable
+from pgsqltoolsservice.serialization import Serializable
 
 
 class ConnectionSummary:
