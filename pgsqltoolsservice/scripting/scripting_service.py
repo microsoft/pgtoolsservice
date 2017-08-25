@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, Dict       # noqa
+from typing import Callable, Dict, Optional       # noqa
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.scripting.scripter import Scripter
@@ -18,7 +18,7 @@ import pgsqltoolsservice.utils as utils
 class ScriptingService(object):
     """Service for scripting database objects"""
     def __init__(self):
-        self._service_provider: ServiceProvider = None
+        self._service_provider: Optional[ServiceProvider] = None
 
         self._script_map: Dict[ScriptOperation, Callable[[Scripter, ObjectMetadata], str]] = {
             ScriptOperation.CREATE: lambda scripter, metadata: scripter.get_create_script(metadata),
