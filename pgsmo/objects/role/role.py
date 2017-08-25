@@ -3,15 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional
+from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableUpdate
 from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
 
 
-class Role(NodeObject):
+class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Role':
@@ -32,21 +34,21 @@ class Role(NodeObject):
         # Define values from node query
         role._oid = kwargs['oid']
         role._can_login = kwargs['rolcanlogin']
-        role._super = kwargs['rolsuper']
+        role._is_super = kwargs['rolsuper']
 
         return role
 
     def __init__(self, server: 's.Server', name: str):
         """
         Initializes internal state of a Role object
-        :param server: Server that owns the role
-        :param name: Name of the role
         """
-        super(Role, self).__init__(server, None, name)
+        NodeObject.__init__(self, server, None, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare basic properties
         self._can_login: Optional[bool] = None
-        self._super: Optional[bool] = None
+        self._is_super: Optional[bool] = None
 
     # PROPERTIES ###########################################################
     # -BASIC PROPERTIES ####################################################
@@ -56,9 +58,9 @@ class Role(NodeObject):
         return self._can_login
 
     @property
-    def super(self) -> Optional[bool]:
+    def is_super(self) -> Optional[bool]:
         """Whether or not the role is a super user"""
-        return self._super
+        return self._is_super
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -119,31 +121,18 @@ class Role(NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
+    def _macro_root(cls) -> List[str]:
+        return [cls.MACRO_ROOT]
+
+    @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-
-    # SCRIPTING METHODS ####################################################
-
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a role """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data)
-
-    def update_script(self) -> str:
-        """ Function to retrieve create scripts for a role """
-        data = self._update_query_data()
-        query_file = "update.sql"
-        filters = {'hasAny': templating.has_any}
-        return self._get_template(query_file, data, filters_to_add=filters)
-
-    # HELPER METHODS ##################################################################
 
     def _create_query_data(self):
         """ Gives the data object for create query """
         return {"data": {
             "rolcanlogin": self.can_login,
-            "rolsuper": self.super,
+            "rolsuper": self.is_super,
             "rolcreatedb": self.createdb,
             "rolcreaterole": self.createrole,
             "rolinherit": self.inherit,
@@ -165,7 +154,7 @@ class Role(NodeObject):
             "data": {
                 "rolname": self.name,
                 "rolcanlogin": self.can_login,
-                "rolsuper": self.super,
+                "rolsuper": self.is_super,
                 "rolcreatedb": self.createdb,
                 "rolcreaterole": self.createrole,
                 "rolinherit": self.inherit,

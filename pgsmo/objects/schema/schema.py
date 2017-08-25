@@ -6,24 +6,25 @@
 import os.path as path
 from typing import List, Optional
 
-import pgsmo.objects.node_object as node
-from pgsmo.objects.collation import Collation
+from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.datatype.datatype import DataType
-from pgsmo.objects.functions import Function, TriggerFunction
-from pgsmo.objects.sequence import Sequence
+from pgsmo.objects.functions.function import Function
+from pgsmo.objects.functions.trigger_function import TriggerFunction
+from pgsmo.objects.sequence.sequence import Sequence
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
 import pgsmo.utils.templating as templating
 
 
-TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
-
-class Schema(node.NodeObject):
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Schema':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Schema':
         """
         Creates an instance of a schema object from the results of a nodes query
         :param server: Server that owns the schema
@@ -43,21 +44,24 @@ class Schema(node.NodeObject):
 
         return schema
 
-    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
-        super(Schema, self).__init__(server, parent, name)
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+        NodeObject.__init__(self, server, parent, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare the optional parameters
         self._can_create: Optional[bool] = None
         self._has_usage: Optional[bool] = None
 
         # Declare the child items
-        self._collations: node.NodeCollection = self._register_child_collection(Collation)
-        self._datatypes: node.NodeCollection = self._register_child_collection(DataType)
-        self._functions: node.NodeCollection = self._register_child_collection(Function)
-        self._sequences: node.NodeCollection = self._register_child_collection(Sequence)
-        self._tables: node.NodeCollection = self._register_child_collection(Table)
-        self._trigger_functions = self._register_child_collection(TriggerFunction)
-        self._views: node.NodeCollection = self._register_child_collection(View)
+        self._collations: NodeCollection = self._register_child_collection(Collation)
+        self._datatypes: NodeCollection = self._register_child_collection(DataType)
+        self._functions: NodeCollection = self._register_child_collection(Function)
+        self._sequences: NodeCollection = self._register_child_collection(Sequence)
+        self._tables: NodeCollection = self._register_child_collection(Table)
+        self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
+        self._views: NodeCollection = self._register_child_collection(View)
 
     # PROPERTIES ###########################################################
     @property
@@ -70,31 +74,31 @@ class Schema(node.NodeObject):
 
     # -CHILD OBJECTS #######################################################
     @property
-    def collations(self) -> node.NodeCollection:
+    def collations(self) -> NodeCollection:
         return self._collations
 
     @property
-    def datatypes(self) -> node.NodeCollection:
+    def datatypes(self) -> NodeCollection:
         return self._datatypes
 
     @property
-    def functions(self) -> node.NodeCollection:
+    def functions(self) -> NodeCollection:
         return self._functions
 
     @property
-    def sequences(self) -> node.NodeCollection:
+    def sequences(self) -> NodeCollection:
         return self._sequences
 
     @property
-    def tables(self) -> node.NodeCollection:
+    def tables(self) -> NodeCollection:
         return self._tables
 
     @property
-    def trigger_functions(self) -> node.NodeCollection:
+    def trigger_functions(self) -> NodeCollection:
         return self._trigger_functions
 
     @property
-    def views(self) -> node.NodeCollection:
+    def views(self) -> NodeCollection:
         return self._views
 
     @property
@@ -123,55 +127,33 @@ class Schema(node.NodeObject):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return path.join(TEMPLATE_ROOT, server.server_type)
+    def _macro_root(cls) -> List[str]:
+        return [cls.MACRO_ROOT]
 
     @classmethod
-    def _macro_root(cls) -> List[str]:
-        return [MACRO_ROOT]
+    def _template_root(cls, server: 's.Server') -> str:
+        return path.join(cls.TEMPLATE_ROOT, server.server_type)
 
-    # SCRIPTING METHODS ##############################################################
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a schema """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data, paths_to_add=self._macro_root())
-
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for schema """
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(query_file, data)
-
-    def update_script(self) -> str:
-        """ Function to retrieve update scripts for schema """
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(query_file, data, paths_to_add=self._macro_root())
-
-    #  HELPER METHODS ######################################################
     def _create_query_data(self) -> dict:
         """ Function that returns data for create script """
-        data = {"data": {
+        return {"data": {
             "name": self.name,
             "namespaceowner": self.namespaceowner,
             "description": self.description,
             "nspacl": self.nspacl,
             "seclabels": self.seclabels
         }}
-        return data
 
     def _delete_query_data(self) -> dict:
         """ Function that returns data for delete script """
-        data = {
+        return {
             "name": self.name,
             "cascade": self.cascade
         }
-        return data
 
     def _update_query_data(self) -> dict:
         """ Function that returns data for update script """
-        data = {
+        return {
             "data": {
                 "name": self.name,
                 "namespaceowner": self.namespaceowner,
@@ -185,4 +167,3 @@ class Schema(node.NodeObject):
                 "description": ""
             }
         }
-        return data

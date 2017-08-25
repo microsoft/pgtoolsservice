@@ -93,10 +93,6 @@ class TestScripter(unittest.TestCase):
     def _as_node_collection(self, object_list: List[Any]) -> NodeCollection[Any]:
         return NodeCollection(lambda: object_list)
 
-    def assertNotNoneOrEmpty(self, result: str) -> bool:
-        """Assertion to confirm a string to be not none or empty"""
-        self.assertIsNotNone(result) and self.assertTrue(len(result))
-
     def _verify_create_script(self, object_metadata: ObjectMetadata, expected_contents: List[str]):
         # If I try to get create script
         result: str = self.scripter.get_create_script(object_metadata)

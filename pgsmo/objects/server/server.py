@@ -9,17 +9,16 @@ from urllib.parse import ParseResult, urlparse
 from psycopg2.extensions import connection
 
 from pgsmo.objects.database.database import Database
+
 from pgsmo.objects.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import pgsmo.utils as utils
 
 
-TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
-
-
 class Server:
     URN_SCHEME = 'pgsmo'
+    TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
     # CONSTRUCTOR ##########################################################
     def __init__(self, conn: connection):
@@ -157,7 +156,7 @@ class Server:
     # IMPLEMENTATION DETAILS ###############################################
     def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:
         recovery_check_sql = utils.templating.render_template(
-            utils.templating.get_template_path(TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)
+            utils.templating.get_template_path(self.TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)
         )
 
         cols, rows = self._conn.execute_dict(recovery_check_sql)

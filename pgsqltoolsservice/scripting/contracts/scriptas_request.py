@@ -13,7 +13,7 @@ class ScriptOperation(enum.Enum):
     """ Class that defines the various script operations """
     SELECT = 0
     CREATE = 1
-    INSERT = 2
+    # INSERT = 2    # TODO: Reenable INSERT script operation when it is supported. (https://github.com/Microsoft/carbon/issues/1751)
     UPDATE = 3
     DELETE = 4
 

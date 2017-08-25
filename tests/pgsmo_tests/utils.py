@@ -126,3 +126,10 @@ def assert_threeway_equals(target: any, attrib: any, prop: any):
     test_case = unittest.TestCase('__init__')
     test_case.assertEqual(attrib, target)
     test_case.assertEqual(prop, target)
+
+
+def assert_is_not_none_or_whitespace(target: str):
+    test_case = unittest.TestCase('__init__')
+    test_case.assertIsNotNone(target)
+    test_case.assertIsInstance(target, str)
+    test_case.assertNotEqual(target.strip(), '')

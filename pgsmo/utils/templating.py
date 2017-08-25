@@ -5,12 +5,12 @@
 
 import os
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from jinja2 import Environment, FileSystemLoader, Template
 from psycopg2.extensions import adapt
 
-TEMPLATE_ENVIRONMENTS: Dict[str, Environment] = {}
+TEMPLATE_ENVIRONMENTS: Dict[int, Environment] = {}
 TEMPLATE_FOLDER_REGEX = re.compile('(\d+)\.(\d+)(?:_(\w+))?$')
 TEMPLATE_SKIPPED_FOLDERS: List[str] = ['macros']
 
@@ -72,40 +72,37 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     raise ValueError(f'Template folder {template_root} does not contain {template_name}')
 
 
-def render_template(template_path: str, paths_to_add=None, filters_to_add=None, **context) -> str:
+def render_template(template_path: str, macro_roots: Optional[List[str]]=None, **context) -> str:
     """
     Renders a template from the template folder with the given context.
     :param template_path: the path to the template to be rendered
+    :param macro_roots: optional root folders to add for macros
     :param context: the variables that should be available in the context of the template.
     :return: The template rendered with the provided context
     """
+    # Determine the order of the paths to check
+    # 1) Look in the directory of the template path FIRST
+    # 2) Look in any macro folders SECOND
+    # 3) TODO: If necessary, add a global macro directory to check LAST
     path, filename = os.path.split(template_path)
-    paths = [path]
-    if (paths_to_add is not None):
-        paths += paths_to_add
+    macro_roots = macro_roots if macro_roots is not None else []
+    paths = [path, *macro_roots]
+    environment_key = _hash_source_list(paths)
 
-    for path in paths:
-        if path not in TEMPLATE_ENVIRONMENTS:
-            # Create the filesystem loader that will look in template folder FIRST
-            template_root = os.path.dirname(os.path.dirname(template_path))
-            if (template_root not in TEMPLATE_ENVIRONMENTS):
-                paths.append(template_root)
-            loader: FileSystemLoader = FileSystemLoader(paths)
+    if environment_key not in TEMPLATE_ENVIRONMENTS:
+        # Create the filesystem loader that will look in template folder FIRST
+        loader: FileSystemLoader = FileSystemLoader(paths)
 
-            # Create the environment and add the basic filters
-            new_env: Environment = Environment(loader=loader)
-            new_env.filters['qtLiteral'] = qt_literal
-            new_env.filters['qtIdent'] = qt_ident
-            new_env.filters['qtTypeIdent'] = qt_type_ident
+        # Create the environment and add the basic filters
+        new_env: Environment = Environment(loader=loader)
+        new_env.filters['qtLiteral'] = qt_literal
+        new_env.filters['qtIdent'] = qt_ident
+        new_env.filters['qtTypeIdent'] = qt_type_ident
+        new_env.filters['hasAny'] = has_any
 
-            TEMPLATE_ENVIRONMENTS[path] = new_env
-            break
+        TEMPLATE_ENVIRONMENTS[environment_key] = new_env
 
-    if (filters_to_add is not None):
-        for filter_name, function in filters_to_add.items():
-            TEMPLATE_ENVIRONMENTS[path].filters[filter_name] = function
-
-    env = TEMPLATE_ENVIRONMENTS[path]
+    env = TEMPLATE_ENVIRONMENTS[environment_key]
     to_render = env.get_template(filename)
     return to_render.render(context)
 
@@ -120,6 +117,10 @@ def render_template_string(source, **context):
     """
     template = Template(source)
     return template.render(context)
+
+
+def _hash_source_list(sources: list) -> int:
+    return hash(frozenset(sources))
 
 ##########################################################################
 #
