@@ -116,6 +116,10 @@ class LanguageService:
         def do_send_response():
             request_context.send_response(response)
 
+        if self.should_skip_formatting(params.text_document.uri):
+            do_send_response()
+            return
+
         file: ScriptFile = self._workspace_service.workspace.get_file(params.text_document.uri)
         if file is None:
             do_send_response()
@@ -138,6 +142,10 @@ class LanguageService:
 
         def do_send_response():
             request_context.send_response(response)
+        
+        if self.should_skip_formatting(params.text_document.uri):
+            do_send_response()
+            return
 
         file: ScriptFile = self._workspace_service.workspace.get_file(params.text_document.uri)
         if file is None:
@@ -176,6 +184,9 @@ class LanguageService:
     # METHODS ##############################################################
     def should_skip_intellisense(self, uri: str) -> bool:
         return not self._workspace_service.configuration.sql.intellisense.enable_intellisense or not self.is_pgsql_uri(uri)
+
+    def should_skip_formatting(self, uri: str) -> bool:
+        return not self.is_pgsql_uri(uri)
 
     def is_pgsql_uri(self, uri: str) -> bool:
         """
