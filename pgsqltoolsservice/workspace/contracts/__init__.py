@@ -5,7 +5,8 @@
 
 from pgsqltoolsservice.workspace.contracts.did_change_config_notification import (
     DID_CHANGE_CONFIG_NOTIFICATION, DidChangeConfigurationParams,
-    Configuration, PGSQLConfiguration, SQLConfiguration, IntellisenseConfiguration
+    Configuration, PGSQLConfiguration, SQLConfiguration, IntellisenseConfiguration,
+    FormatterConfiguration
 )
 from pgsqltoolsservice.workspace.contracts.did_change_text_doc_notification import (
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams, TextDocumentChangeEvent
@@ -22,7 +23,7 @@ from pgsqltoolsservice.workspace.contracts.common import (
 
 __all__ = [
     'DID_CHANGE_CONFIG_NOTIFICATION', 'DidChangeConfigurationParams',
-    'Configuration', 'PGSQLConfiguration', 'SQLConfiguration', 'IntellisenseConfiguration',
+    'Configuration', 'PGSQLConfiguration', 'SQLConfiguration', 'IntellisenseConfiguration', 'FormatterConfiguration',
     'DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION', 'DidChangeTextDocumentParams', 'TextDocumentChangeEvent',
     'DID_OPEN_TEXT_DOCUMENT_NOTIFICATION', 'DidOpenTextDocumentParams',
     'DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION', 'DidCloseTextDocumentParams',

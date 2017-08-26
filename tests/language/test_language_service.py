@@ -20,11 +20,13 @@ from pgsqltoolsservice.hosting import (     # noqa
 from pgsqltoolsservice.language import LanguageService
 from pgsqltoolsservice.language.contracts import (
     LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
-    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams
+    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
+    DocumentFormattingParams, FormattingOptions, TextEdit
 )
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import (
-    WorkspaceService, SQLConfiguration, ScriptFile, Workspace
+    WorkspaceService, TextDocumentIdentifier, Configuration, SQLConfiguration,
+    PGSQLConfiguration, ScriptFile, Workspace
 )
 from pgsqltoolsservice.workspace.contracts import (
     Range
@@ -59,6 +61,9 @@ class TestLanguageService(unittest.TestCase):
                 'line': 1,
                 'character': 1
             }
+        })
+        self.default_text_document_id = TextDocumentIdentifier.from_dict({
+            'uri': self.default_uri
         })
 
     def test_register(self):
@@ -95,8 +100,9 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: intellisense is disabled
         context: RequestContext = utils.MockRequestContext()
-        self.mock_workspace_service._sql_configuration = SQLConfiguration()
-        self.mock_workspace_service._sql_configuration.intellisense.enable_intellisense = False
+        config = Configuration()
+        config.sql.intellisense.enable_intellisense = False
+        self.mock_workspace_service._configuration = config
         service: LanguageService = self._init_service()
 
         # When: I request completion item
@@ -104,7 +110,7 @@ class TestLanguageService(unittest.TestCase):
 
         # Then:
         # ... An empty completion should be sent over the notification
-        context.send_response.asssert_called_once()
+        context.send_response.assert_called_once()
         self.assertEqual(context.last_response_params, [])
 
     def test_completion_file_not_found(self):
@@ -114,9 +120,6 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: The script file doesn't exist (there is an empty workspace)
         context: RequestContext = utils.MockRequestContext()
-        config: SQLConfiguration = SQLConfiguration()
-
-        self.mock_workspace_service._sql_configuration = config
         self.mock_workspace_service._workspace = Workspace()
         service: LanguageService = self._init_service()
 
@@ -125,7 +128,7 @@ class TestLanguageService(unittest.TestCase):
 
         # Then:
         # ... An empty completion should be sent over the notification
-        context.send_response.asssert_called_once()
+        context.send_response.assert_called_once()
         self.assertEqual(context.last_response_params, [])
 
     def test_default_completion_items(self):
@@ -145,8 +148,9 @@ class TestLanguageService(unittest.TestCase):
             }
         })
         context: RequestContext = utils.MockRequestContext()
-        self.mock_workspace_service._sql_configuration = SQLConfiguration()
-        self.mock_workspace_service._sql_configuration.intellisense.enable_intellisense = True
+        config = Configuration()
+        config.sql.intellisense.enable_intellisense = True
+        self.mock_workspace_service._configuration = config
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
         service: LanguageService = self._init_service()
@@ -156,7 +160,7 @@ class TestLanguageService(unittest.TestCase):
 
         # Then:
         # ... An empty completion should be sent over the notification
-        context.send_response.asssert_called_once()
+        context.send_response.assert_called_once()
         completions: List[CompletionItem] = context.last_response_params
         self.assertTrue(len(completions) > 0)
         self.verify_match('TABLE', completions, Range.from_data(0, 7, 0, 10))
@@ -211,6 +215,39 @@ class TestLanguageService(unittest.TestCase):
         # Then:
         # an intellisense ready notification should be sent for that URI
         self.flow_validator.validate()
+
+    def test_format_doc(self):
+        """
+        Test that the format document codepath works as expected
+        """
+        # If: The script file doesn't exist (there is an empty workspace)
+        input_text = 'select * from foo where id in (select id from bar);'
+        expected_output = 'SELECT *\nFROM foo\nWHERE id IN\n\t\t\t\t(SELECT id\n\t\t\t\t\tFROM bar);'
+
+        context: RequestContext = utils.MockRequestContext()
+        config = Configuration()
+        config.pgsql = PGSQLConfiguration()
+        config.pgsql.format.keyword_case = 'upper'
+        self.mock_workspace_service._configuration = config
+        workspace, script_file = self._get_test_workspace(True, input_text)
+        self.mock_workspace_service._workspace = workspace
+        service: LanguageService = self._init_service()
+
+        format_options = FormattingOptions()
+        format_options.insert_spaces = False
+        format_params = DocumentFormattingParams()
+        format_params.options = format_options
+        format_params.text_document = self.default_text_document_id
+        # When: I request document formatting
+        service.handle_doc_format_request(context, format_params)
+
+        # Then:
+        # ... An empty completion should be sent over the notification
+        context.send_response.assert_called_once()
+        edits: List[TextEdit] = context.last_response_params
+        self.assertTrue(len(edits) > 0)
+        self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
+        self.assertEqual(edits[0].new_text, expected_output)
 
     def _init_service(self) -> LanguageService:
         service = LanguageService()
