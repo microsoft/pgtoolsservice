@@ -9,13 +9,14 @@ from pgsmo import NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpda
 from pgsmo.utils.templating import qt_ident         # TODO: remove (see https://github.com/Microsoft/carbon/issues/1764)
 from pgsqltoolsservice.scripting.contracts import ScriptOperation
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+import pgsqltoolsservice.utils as utils
 
 
 def script_as_select(obj: NodeObject) -> str:
     """ Function to get script for select operations """
     # Make sure the object is a table or view
-    if (not isinstance(obj, Table)) and (not isinstance):
-        raise TypeError(f'Object of type {object.__class__.__name__} does not support script operation SELECT')
+    if (not isinstance(obj, Table)) and (not isinstance(obj, View)):
+        raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation SELECT')
 
     schema = qt_ident(None, obj.parent.name)
     name = qt_ident(None, obj.name)
@@ -26,7 +27,7 @@ def script_as_select(obj: NodeObject) -> str:
 class Scripter(object):
     """Service for retrieving operation scripts"""
     SCRIPT_OPERATION = TypeVar(Callable[[NodeObject], str])
-    SCRIPT_HANDLERS: Dict[ScriptOperation, Tuple[type, ScriptOperation]] = {
+    SCRIPT_HANDLERS: Dict[ScriptOperation, Tuple[type, SCRIPT_OPERATION]] = {
         ScriptOperation.CREATE: (ScriptableCreate, lambda obj: obj.create_script()),
         ScriptOperation.DELETE: (ScriptableDelete, lambda obj: obj.delete_script()),
         ScriptOperation.UPDATE: (ScriptableUpdate, lambda obj: obj.update_script()),
@@ -35,8 +36,7 @@ class Scripter(object):
 
     def __init__(self, conn):
         # get server from psycopg2 connection
-        self.connection = conn
-        self.server = Server(conn)
+        self.server: Server = Server(conn)
 
     # SCRIPTING METHODS ############################
     def script(self, operation: ScriptOperation, metadata: ObjectMetadata) -> str:
@@ -52,10 +52,12 @@ class Scripter(object):
         if handler is None:
             raise ValueError(f'Script operation {operation} is not supported')    # TODO: Localize
 
+        utils.validate.is_not_none('metadata', metadata)
+
         # Get the object and make sure it supports the operation
         obj: NodeObject = self.server.get_object_by_urn(metadata.name)
         if not isinstance(obj, handler[0]):
             # TODO: Localize
-            raise TypeError(f'Object of type {object.__class__.__name__} does not support script operation {operation}')
+            raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation {operation}')
 
         return handler[1](obj)

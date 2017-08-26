@@ -330,7 +330,7 @@ class TestNodeObject(unittest.TestCase):
         utils.assert_threeway_equals(server, node_obj._server, node_obj.server)
         utils.assert_threeway_equals(parent, node_obj._parent, node_obj.parent)
 
-        self.assertListEqual(node_obj._child_collections, [])
+        self.assertDictEqual(node_obj._child_collections, {})
         self.assertEqual(len(node_obj._property_collections), 1)
 
         self.assertIsInstance(node_obj._full_properties, node.NodeLazyPropertyCollection)
@@ -424,25 +424,30 @@ class TestNodeObject(unittest.TestCase):
         node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         # If: I register a child collection
-        generator = mock.MagicMock()
-        collection1 = node_obj._register_child_collection(generator)
+        mock_class1 = mock.MagicMock()
+        mock_class1.__name__ = 'mock_class1'
+        mock_class1.get_nodes_for_parent = mock.MagicMock()
+        collection1 = node_obj._register_child_collection(mock_class1)
 
         # Then
         # ... The returned collection should be a collection with the given generator
         self.assertIsInstance(collection1, node.NodeCollection)
-        self.assertIs(collection1._generator, generator)
 
         # ... The collection should be added to the list of registered collections
         self.assertEqual(len(node_obj._child_collections), 1)
-        self.assertIn(collection1, node_obj._child_collections)
 
         # If: I add another one
-        collection2 = node_obj._register_child_collection(generator)
+        mock_class2 = mock.MagicMock()
+        mock_class2.__name__ = 'mock_class2'
+        mock_class2.get_nodes_for_parent = mock.MagicMock()
+        collection2 = node_obj._register_child_collection(mock_class2)
 
         # Then: The collection should be appended to the list of registered collections
         self.assertEqual(len(node_obj._child_collections), 2)
-        self.assertIn(collection1, node_obj._child_collections)
-        self.assertIn(collection2, node_obj._child_collections)
+        self.assertTrue(mock_class1.__name__ in node_obj._child_collections.keys())
+        self.assertTrue(mock_class2.__name__ in node_obj._child_collections.keys())
+        self.assertIs(node_obj._child_collections[mock_class1.__name__], collection1)
+        self.assertIs(node_obj._child_collections[mock_class2.__name__], collection2)
 
     def test_register_property_collection(self):
         # Setup: Create a node object
@@ -515,12 +520,12 @@ def _get_node_for_parents_mock_connection():
 
 
 def _get_mock_node_generator():
-    conn = utils.MockConnection(None)
+    server = Server(utils.MockConnection(None))
 
-    mock_object1 = utils.MockNodeObject(conn, None, 'a')
+    mock_object1 = utils.MockNodeObject(server, None, 'a')
     mock_object1._oid = 123
 
-    mock_object2 = utils.MockNodeObject(conn, None, 'b')
+    mock_object2 = utils.MockNodeObject(server, None, 'b')
     mock_object2._oid = 456
 
     mock_objects = [mock_object1, mock_object2]

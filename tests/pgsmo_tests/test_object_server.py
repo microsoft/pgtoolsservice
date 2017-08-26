@@ -6,7 +6,10 @@
 import unittest
 import unittest.mock as mock
 
+import inflection
+
 from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection
+from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
@@ -42,13 +45,13 @@ class TestServer(unittest.TestCase):
         # ... Recovery options should be a lazily loaded thing
         self.assertIsInstance(server._recovery_props, NodeLazyPropertyCollection)
 
-        # ... The child object collections should be assigned to NodeCollections
-        self.assertIsInstance(server._databases, NodeCollection)
-        self.assertIs(server.databases, server._databases)
-        self.assertIsInstance(server._roles, NodeCollection)
-        self.assertIs(server.roles, server._roles)
-        self.assertIsInstance(server._tablespaces, NodeCollection)
-        self.assertIs(server.tablespaces, server._tablespaces)
+        for key, collection in server._child_objects.items():
+            # ... The child object collection a NodeCollection
+            self.assertIsInstance(collection, NodeCollection)
+
+            # ... There should be a property mapped to the node collection
+            prop = getattr(server, inflection.pluralize(key.lower()))
+            self.assertIs(prop, collection)
 
     def test_recovery_properties(self):
         # Setup:
@@ -77,7 +80,7 @@ class TestServer(unittest.TestCase):
         mock_db = {}
         mock_db_collection = mock.Mock()
         mock_db_collection.__getitem__ = mock.MagicMock(return_value=mock_db)
-        obj._databases = mock_db_collection
+        obj._child_objects[Database.__name__] = mock_db_collection
 
         # If: I retrieve the maintenance db for the server
         maintenance_db = obj.maintenance_db
@@ -85,7 +88,7 @@ class TestServer(unittest.TestCase):
         # Then:
         # ... It must have come from the mock handler
         self.assertIs(maintenance_db, mock_db)
-        obj._databases.__getitem__.assert_called_once_with('dbname')
+        obj._child_objects[Database.__name__].__getitem__.assert_called_once_with('dbname')
 
     def test_refresh(self):
         # Setup:
