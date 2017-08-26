@@ -210,8 +210,8 @@ class CapabilitiesService:
             text_document_sync=TextDocumentSyncKind.INCREMENTAL,
             definition_provider=False,
             references_provider=False,
-            document_formatting_provider=False,
-            document_range_formatting_provider=False,
+            document_formatting_provider=True,
+            document_range_formatting_provider=True,
             document_highlight_provider=False,
             hover_provider=False,
             completion_provider=CompletionOptions(True, ['.', '-', ':', '\\', '[', '"'])
