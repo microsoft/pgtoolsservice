@@ -3,73 +3,52 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import Callable, Dict       # noqa
+
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.scripting.scripter import Scripter
 from pgsqltoolsservice.scripting.contracts import (
     ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST, ScriptOperation
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
-from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
-from pgsqltoolsservice.utils import constants
+from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata     # noqa
+import pgsqltoolsservice.utils as utils
 
 
 class ScriptingService(object):
     """Service for scripting database objects"""
-
     def __init__(self):
         self._service_provider: ServiceProvider = None
+
+        self._script_map: Dict[ScriptOperation, Callable[[Scripter, ObjectMetadata], str]] = {
+            ScriptOperation.CREATE: lambda scripter, metadata: scripter.get_create_script(metadata),
+            ScriptOperation.DELETE: lambda scripter, metadata: scripter.get_delete_script(metadata),
+            ScriptOperation.UPDATE: lambda scripter, metadata: scripter.get_update_script(metadata),
+            ScriptOperation.SELECT: lambda scripter, metadata: scripter.script_as_select(metadata)
+        }
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
 
         # Register the request handlers with the server
-        self._service_provider.server.set_request_handler(
-            SCRIPTAS_REQUEST, self._handle_scriptas_request
-        )
+        self._service_provider.server.set_request_handler(SCRIPTAS_REQUEST, self._handle_scriptas_request)
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Scripting service successfully initialized')
 
     # REQUEST HANDLERS #####################################################
-
     def _handle_scriptas_request(self, request_context: RequestContext, params: ScriptAsParameters) -> None:
         try:
+            utils.validate.is_not_none('params', params)
+
             scripting_operation = params.operation
-            connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+            connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
             connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
-            script = self._scripting_operation(scripting_operation, connection, params.metadata)
+
+            scripter = Scripter(connection)
+            script = self._script_map[scripting_operation](scripter, params.metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:
-            request_context.send_error(str(e), params)
-
-    # HELPER FUNCTIONS ######################################################
-
-    def _script_as_select(self, connection, metadata: ObjectMetadata) -> str:
-        """ Function to get script for select operations """
-        scripter = Scripter(connection)
-        return scripter.script_as_select(metadata)
-
-    def _scripting_operation(self, scripting_operation: ScriptOperation, connection, metadata: ObjectMetadata):
-        """Helper function to get the correct script based on operation"""
-        try:
-            script_map = self._script_map(connection, metadata)
-            return script_map[scripting_operation]
-        except Exception:
-            object_type = metadata.metadata_type_name
             if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(f'{ScriptOperation(scripting_operation)} failed for {object_type}')
-            return "Scripting Operation not supported"
-
-    def _script_map(self, connection, metadata) -> dict:
-        """ Maps every object and operation to the correct script function """
-        scripter = Scripter(connection)
-        create = ScriptOperation.CREATE
-        delete = ScriptOperation.DELETE
-        update = ScriptOperation.UPDATE
-        select = ScriptOperation.SELECT
-        return {
-            create: scripter.get_create_script(metadata),
-            delete: scripter.get_delete_script(metadata),
-            update: scripter.get_update_script(metadata),
-            select: self._script_as_select(connection, metadata)
-        }
+                self._service_provider.logger.exception('Scripting operation failed')
+            request_context.send_error(str(e), params)

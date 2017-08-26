@@ -3,11 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsqltoolsservice.utils as utils
+
 from pgsqltoolsservice.workspace.contracts import Range
+from pgsqltoolsservice.serialization import Serializable
 
 
-class TextEdit:
+class TextEdit(Serializable):
     """
     A textual edit applicable to a text document.
     """
@@ -19,8 +20,8 @@ class TextEdit:
         return obj
 
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, range=Range)
+    def get_child_serializable_types(cls):
+        return {'range': Range}
 
     def __init__(self):
         self.range: Range = None

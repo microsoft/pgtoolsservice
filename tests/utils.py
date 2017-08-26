@@ -4,10 +4,25 @@
 # --------------------------------------------------------------------------------------------
 
 import logging
+import unittest
 import unittest.mock as mock
 import psycopg2
 
 from pgsqltoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
+
+
+def assert_not_none_or_empty(value: str):
+    """Assertion to confirm a string to be not none or empty"""
+    testcase = unittest.TestCase('__init__')
+    testcase.assertIsNotNone(value)
+    testcase.assertTrue(len(value))
+
+
+def assert_not_none_or_whitespace(value: str):
+    """Assertion to confirm a string is not none or whitespace"""
+    testcase = unittest.TestCase('__init__')
+    testcase.assertIsNotNone(value)
+    testcase.assertTrue(len(value.strip()))
 
 
 def get_mock_notification_context() -> NotificationContext:

@@ -4,42 +4,44 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class SQLConfiguration:
+class SQLConfiguration(Serializable):
     """
     Configuration for SQL settings in general. These are common to any SQL provider
     """
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     ignore_extra_attributes=True,
-                                                     intellisense=IntellisenseConfiguration)
+    def get_child_serializable_types(cls):
+        return {'intellisense': IntellisenseConfiguration}
+
+    @classmethod
+    def ignore_extra_attributes(cls):
+        return True
 
     def __init__(self):
         self.intellisense: IntellisenseConfiguration = IntellisenseConfiguration()
 
 
-class PGSQLConfiguration:
+class PGSQLConfiguration(Serializable):
     """
     Configuration for PGSQL tool service
     """
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, ignore_extra_attributes=True)
+    def ignore_extra_attributes(cls):
+        return True
 
     def __init__(self):
         self.default_database: str = 'postgres'
 
 
-class IntellisenseConfiguration:
+class IntellisenseConfiguration(Serializable):
     """
     Configuration for Intellisense settings
     """
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, ignore_extra_attributes=True)
+    def ignore_extra_attributes(cls):
+        return True
 
     def __init__(self):
         self.enable_intellisense = True
@@ -49,27 +51,26 @@ class IntellisenseConfiguration:
         self.enable_quick_info = True
 
 
-class Configuration:
+class Configuration(Serializable):
     """
     Configuration of the tools service
     """
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, sql=SQLConfiguration, pgsql=PGSQLConfiguration)
+    def get_child_serializable_types(cls):
+        return {'sql': SQLConfiguration, 'pgsql': PGSQLConfiguration}
 
     def __init__(self):
         self.sql = SQLConfiguration()
         self.pgsql = PGSQLConfiguration()
 
 
-class DidChangeConfigurationParams:
+class DidChangeConfigurationParams(Serializable):
     """
     Parameters received when configuration has been changed
     """
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     settings=Configuration)
+    def get_child_serializable_types(cls):
+        return {'sql': SQLConfiguration, 'settings': Configuration}
 
     def __init__(self):
         self.settings = None

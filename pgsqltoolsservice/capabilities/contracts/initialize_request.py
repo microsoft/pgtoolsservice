@@ -6,15 +6,11 @@
 import enum
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class InitializeRequestParams:
+class InitializeRequestParams(Serializable):
     """Initialization request parameters"""
-
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.capabilities: any = None    # TODO: Add support for client capabilities
@@ -27,7 +23,7 @@ class InitializeRequestParams:
         self.root_uri: str = None
 
 
-class CompletionOptions(object):
+class CompletionOptions:
     """Completion options contract"""
 
     def __init__(self, resolve_provider=None, trigger_characters=None):
@@ -35,7 +31,7 @@ class CompletionOptions(object):
         self.trigger_characters = trigger_characters
 
 
-class SignatureHelpOptions(object):
+class SignatureHelpOptions:
     """Signature help options contract"""
 
     def __init__(self, trigger_characters=None):

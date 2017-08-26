@@ -5,8 +5,8 @@
  # This software is released under the PostgreSQL Licence
  #}
 {# ============================ Update View ========================= #}
-{% import 'macros/schemas/security.macros' as SECLABEL %}
-{% import 'macros/schemas/privilege.macros' as PRIVILEGE %}
+{% import 'security.macros' as SECLABEL %}
+{% import 'privilege.macros' as PRIVILEGE %}
 {% if data %}
 {% set view_name = data.name if data.name else o_data.name %}
 {% set view_schema = data.schema if data.schema else o_data.schema %}
