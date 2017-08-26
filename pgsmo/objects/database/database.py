@@ -5,14 +5,14 @@
 
 from typing import Optional               # noqa
 
-import pgsmo.objects.node_object as node
+from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
-import pgsmo.utils.querying as querying
 import pgsmo.utils.templating as templating
 
 
-class Database(node.NodeObject):
+class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -44,11 +44,11 @@ class Database(node.NodeObject):
     def __init__(self, server: 's.Server', name: str):
         """
         Initializes a new instance of a database
-        :param server: Server that owns the database.
-        :param name: Name of the database
         """
+        NodeObject.__init__(self, server, None, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
-        super(Database, self).__init__(server, None, name)
         self._is_connected: bool = server.maintenance_db_name == name
 
         # Declare the optional parameters
@@ -58,7 +58,7 @@ class Database(node.NodeObject):
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-        self._schemas: Optional[node.NodeCollection[Schema]] = None
+        self._schemas: Optional[NodeCollection[Schema]] = None
         if self._is_connected:
             self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
 
@@ -103,34 +103,17 @@ class Database(node.NodeObject):
 
     # -CHILD OBJECTS #######################################################
     @property
-    def schemas(self) -> node.NodeCollection[Schema]:
+    def schemas(self) -> NodeCollection[Schema]:
         return self._schemas
-
-    # METHODS ##############################################################
-
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a database """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data)
-
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for a database """
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(query_file, data)
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, conn: querying.ServerConnection) -> str:
+    def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
-    # HELPER METHODS #######################################################
-
-    # QUERY INPUT METHODS ##################################################
     def _create_query_data(self) -> dict:
         """ Return the data input for create query """
-        data = {"data": {
+        return {"data": {
             "name": self.name,
             "encoding": self.encoding,
             "template": self.template,
@@ -139,12 +122,10 @@ class Database(node.NodeObject):
             "datconnlimit": self.datconnlimit,
             "spcname": self.spcname
         }}
-        return data
 
     def _delete_query_data(self) -> dict:
         """ Return the data input for delete query """
-        data = {
+        return {
             "did": self._oid,
             "datname": self._name
         }
-        return data

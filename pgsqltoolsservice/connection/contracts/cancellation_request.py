@@ -5,15 +5,11 @@
 
 from pgsqltoolsservice.connection.contracts.common import ConnectionType
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class CancelConnectParams:
+class CancelConnectParams(Serializable):
     """Parameters for the cancel connect request"""
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        """Method to create an instance of the class from a dictionary (for deserialization)"""
-        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self, owner_uri: str = None, connection_type: ConnectionType = ConnectionType.DEFAULT):
         self.owner_uri: str = owner_uri

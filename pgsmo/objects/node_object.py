@@ -34,7 +34,7 @@ class NodeObject(metaclass=ABCMeta):
         # Render and execute the template
         sql = templating.render_template(
             templating.get_template_path(template_root, 'nodes.sql', root_server.version),
-            paths_to_add=cls._macro_root(),
+            macro_roots=cls._macro_root(),
             **template_vars
         )
         cols, rows = root_server.connection.execute_dict(sql)
@@ -91,21 +91,21 @@ class NodeObject(metaclass=ABCMeta):
         """Refreshes and lazily loaded data"""
         self._refresh_child_collections()
 
+    # STATIC HELPERS #######################################################
+    @classmethod
+    def _macro_root(cls) -> Optional[List[str]]:
+        """Optionally add additional paths to macros for template rendering"""
+        return None
+
     @classmethod
     @abstractmethod
     def _template_root(cls, root_server: 's.Server') -> str:
+        """
+        Required to be implemented in child classes. Returns the path to the root of templates for the object
+        :param root_server: The server that the object belongs to
+        :return: Path to the root of templates used by this class
+        """
         pass
-
-    @classmethod
-    def _macro_root(cls) -> Optional[str]:
-        return None
-
-    def _get_template(self, query_file: str, data: dict, paths_to_add: List[str]=None, filters_to_add=None) -> str:
-        """ Helper function to render a template given data and query file """
-        template_root = self._template_root(self.server)
-        template_path = templating.get_template_path(template_root, query_file, self.server.version)
-        script_template = templating.render_template(template_path, paths_to_add, filters_to_add, **data)
-        return script_template
 
     # PROTECTED HELPERS ####################################################
     TRCC = TypeVar('TRCC')
@@ -133,7 +133,6 @@ class NodeObject(metaclass=ABCMeta):
         return collection
 
     # PRIVATE HELPERS ######################################################
-
     def _property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
         template_root = self._template_root(self._server)
 
@@ -143,6 +142,7 @@ class NodeObject(metaclass=ABCMeta):
         # Render and execute the template
         sql = templating.render_template(
             templating.get_template_path(template_root, 'properties.sql', self._server.version),
+            self._macro_root(),
             **template_vars
         )
         cols, rows = self._server.connection.execute_dict(sql)
