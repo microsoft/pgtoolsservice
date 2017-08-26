@@ -53,9 +53,9 @@ class LanguageService:
         # Register request handlers
         self._server.set_request_handler(COMPLETION_REQUEST, self.handle_completion_request)
         self._server.set_request_handler(COMPLETION_RESOLVE_REQUEST, self.handle_completion_resolve_request)
+        self._server.set_request_handler(DOCUMENT_FORMATTING_REQUEST, self.handle_doc_format_request)
+        self._server.set_request_handler(DOCUMENT_RANGE_FORMATTING_REQUEST, self.handle_doc_range_format_request)
         self._server.set_notification_handler(LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, self.handle_flavor_change)
-        self._server.set_notification_handler(DOCUMENT_FORMATTING_REQUEST, self.handle_doc_format_request)
-        self._server.set_notification_handler(DOCUMENT_RANGE_FORMATTING_REQUEST, self.handle_doc_range_format_request)
 
         # Register internal service notification handlers
         self._connection_service.register_on_connect_callback(self.on_connect)
