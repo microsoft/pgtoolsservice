@@ -215,8 +215,8 @@ class TestQueryService(unittest.TestCase):
 
         result_rows = query_results[owner_uri].batches[batch_ordinal].result_set.rows
         results_size = len(result_rows)
-        result_set_subset = ResultSetSubset(query_results, owner_uri, batch_ordinal,
-                                            result_ordinal, 0, results_size)
+        result_set_subset = ResultSetSubset.from_query_results(query_results, owner_uri, batch_ordinal,
+                                                               result_ordinal, 0, results_size)
 
         row_size = 3
         self.assertEquals(results_size, result_set_subset.row_count)
@@ -238,21 +238,21 @@ class TestQueryService(unittest.TestCase):
 
         # Test that we raise Value Errors when using incorrect indices
         with self.assertRaises(ValueError):
-            ResultSetSubset(query_results, owner_uri, -1, result_ordinal, 0, results_size)
+            ResultSetSubset.from_query_results(query_results, owner_uri, -1, result_ordinal, 0, results_size)
         with self.assertRaises(ValueError):
-            ResultSetSubset(query_results, owner_uri, 1, result_ordinal, 0, results_size)
+            ResultSetSubset.from_query_results(query_results, owner_uri, 1, result_ordinal, 0, results_size)
         with self.assertRaises(ValueError):
-            ResultSetSubset(query_results, owner_uri, batch_ordinal, 500, 0, results_size)
+            ResultSetSubset.from_query_results(query_results, owner_uri, batch_ordinal, 500, 0, results_size)
         with self.assertRaises(ValueError):
-            ResultSetSubset(query_results, owner_uri, batch_ordinal, -1, 0, results_size)
+            ResultSetSubset.from_query_results(query_results, owner_uri, batch_ordinal, -1, 0, results_size)
         with self.assertRaises(ValueError):
-            ResultSetSubset(query_results, owner_uri, batch_ordinal, result_ordinal, 0, results_size + 1)
+            ResultSetSubset.from_query_results(query_results, owner_uri, batch_ordinal, result_ordinal, 0, results_size + 1)
         with self.assertRaises(ValueError):
-            ResultSetSubset(query_results, owner_uri, batch_ordinal, result_ordinal, 2, results_size)
+            ResultSetSubset.from_query_results(query_results, owner_uri, batch_ordinal, result_ordinal, 2, results_size)
         with self.assertRaises(ValueError):
-            ResultSetSubset(query_results, owner_uri, batch_ordinal, result_ordinal, -1, results_size)
+            ResultSetSubset.from_query_results(query_results, owner_uri, batch_ordinal, result_ordinal, -1, results_size)
         with self.assertRaises(ValueError):
-            ResultSetSubset(query_results, owner_uri, batch_ordinal, result_ordinal, 0, -1)
+            ResultSetSubset.from_query_results(query_results, owner_uri, batch_ordinal, result_ordinal, 0, -1)
 
     def test_result_set_positive(self):
         """Test that we properly generate the result set"""

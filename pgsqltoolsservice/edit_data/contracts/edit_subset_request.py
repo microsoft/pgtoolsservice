@@ -15,8 +15,8 @@ class EditSubsetParams():
 
     def __init__(self):
         self.owner_uri: str = None
-        self.rows_start_index: int = None
-        self.rows_count: int = None
+        self.row_start_index: int = None
+        self.row_count: int = None
 
 
 EDIT_SUBSET_REQUEST = IncomingMessageConfiguration('edit/subset', EditSubsetParams)

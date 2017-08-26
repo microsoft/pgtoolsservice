@@ -14,10 +14,14 @@ from pgsqltoolsservice.edit_data.contracts.edit_cell_response import EditCellRes
 from pgsqltoolsservice.edit_data.contracts.update_cell_request import (
     UPDATE_CELL_REQUEST, UpdateCellRequest, UpdateCellResponse
 )
-
+from pgsqltoolsservice.edit_data.contracts.editsession_ready_notification import (
+    EditSessionReadyNotificationParams, EDIT_SESSIONREADY_NOTIFICATION
+)
+from pgsqltoolsservice.edit_data.contracts.edit_row import EditRow
 
 __all__ = [
     'InitializeEditParams', 'INITIALIZE_EDIT_REQUEST', 'EditSubsetParams', 'EDIT_SUBSET_REQUEST',
     'SessionOperationRequest', 'RowOperationRequest', 'EditCell', 'EditCellResponse',
-    'UPDATE_CELL_REQUEST', 'UpdateCellRequest', 'UpdateCellResponse', 'EditInitializerFilter'
+    'UPDATE_CELL_REQUEST', 'UpdateCellRequest', 'UpdateCellResponse', 'EditInitializerFilter',
+    'EditSessionReadyNotificationParams', 'EDIT_SESSIONREADY_NOTIFICATION', 'EditRow'
     ]

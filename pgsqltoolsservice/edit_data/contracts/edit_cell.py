@@ -10,5 +10,5 @@ from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
 class EditCell(DbCellValue):
 
     def __init__(self, db_cell_value: DbCellValue, is_dirty: bool):
-        self.db_cell_value = db_cell_value
+        super().__init__(db_cell_value, False, None, None)
         self.is_dirty = is_dirty
