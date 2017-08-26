@@ -146,7 +146,7 @@ class LanguageService:
 
         # Process the text range and respond with the edit
         text_range = params.range
-        sql: str = file.get_text_in_range()
+        sql: str = file.get_text_in_range(text_range)
         if sql is None or sql.strip() == '':
             do_send_response()
             return

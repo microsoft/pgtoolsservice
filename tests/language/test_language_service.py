@@ -5,6 +5,7 @@
 
 """Test the language service"""
 
+import os
 import threading    # noqa
 from typing import List, Tuple, Optional
 import unittest
@@ -21,7 +22,7 @@ from pgsqltoolsservice.language import LanguageService
 from pgsqltoolsservice.language.contracts import (
     LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
     INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
-    DocumentFormattingParams, FormattingOptions, TextEdit
+    DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions, TextEdit
 )
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import (
@@ -222,7 +223,13 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: The script file doesn't exist (there is an empty workspace)
         input_text = 'select * from foo where id in (select id from bar);'
-        expected_output = 'SELECT *\nFROM foo\nWHERE id IN\n\t\t\t\t(SELECT id\n\t\t\t\t\tFROM bar);'
+        expected_output = os.linesep.join([
+            'SELECT *',
+            'FROM foo',
+            'WHERE id IN',
+            '\t\t\t\t(SELECT id',
+            '\t\t\t\t\tFROM bar);'
+        ])
 
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
@@ -242,11 +249,56 @@ class TestLanguageService(unittest.TestCase):
         service.handle_doc_format_request(context, format_params)
 
         # Then:
-        # ... An empty completion should be sent over the notification
+        # ... The entire document text should be formatted
         context.send_response.assert_called_once()
         edits: List[TextEdit] = context.last_response_params
         self.assertTrue(len(edits) > 0)
         self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
+        self.assertEqual(edits[0].new_text, expected_output)
+
+    def test_format_doc_range(self):
+        """
+        Test that the format document range codepath works as expected
+        """
+        # If: The script file doesn't exist (there is an empty workspace)
+        input_lines: List[str] = [
+            'select * from t1',
+            'select * from foo where id in (select id from bar);'
+        ]
+        input_text = os.linesep.join(input_lines)
+        expected_output = os.linesep.join([
+            'SELECT *',
+            'FROM foo',
+            'WHERE id IN',
+            '\t\t\t\t(SELECT id',
+            '\t\t\t\t\tFROM bar);'
+        ])
+
+        context: RequestContext = utils.MockRequestContext()
+        config = Configuration()
+        config.pgsql = PGSQLConfiguration()
+        config.pgsql.format.keyword_case = 'upper'
+        self.mock_workspace_service._configuration = config
+        workspace, script_file = self._get_test_workspace(True, input_text)
+        self.mock_workspace_service._workspace = workspace
+        service: LanguageService = self._init_service()
+
+        format_options = FormattingOptions()
+        format_options.insert_spaces = False
+        format_params = DocumentRangeFormattingParams()
+        format_params.options = format_options
+        format_params.text_document = self.default_text_document_id
+
+        # When: I request format the 2nd line of a document
+        format_params.range = Range.from_data(1, 0, 1, len(input_lines[1]))
+        service.handle_doc_range_format_request(context, format_params)
+
+        # Then:
+        # ... only the 2nd line should be formatted
+        context.send_response.assert_called_once()
+        edits: List[TextEdit] = context.last_response_params
+        self.assertTrue(len(edits) > 0)
+        self.assert_range_equals(edits[0].range, format_params.range)
         self.assertEqual(edits[0].new_text, expected_output)
 
     def _init_service(self) -> LanguageService:
