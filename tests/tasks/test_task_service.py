@@ -8,8 +8,8 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.tasks import Task, TaskService
-from pgsqltoolsservice.tasks.contracts import CANCEL_TASK_REQUEST, LIST_TASKS_REQUEST
+from pgsqltoolsservice.tasks import Task, TaskStatus, TaskService
+from pgsqltoolsservice.tasks.contracts import CANCEL_TASK_REQUEST, CancelTaskParameters, LIST_TASKS_REQUEST, ListTasksParameters
 from pgsqltoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.utils import MockRequestContext
@@ -21,10 +21,10 @@ class TaskServiceTests(unittest.TestCase):
         self.task_service = TaskService()
         self.service_provider = ServiceProviderMock({constants.TASK_SERVICE_NAME: self.task_service})
         self.request_context = MockRequestContext()
-        self.mock_test_1 = Task(None, None, None, None, None, self.request_context, mock.Mock(), mock.Mock())
-        self.mock_test_1.start = mock.Mock()
-        self.mock_test_2 = Task(None, None, None, None, None, self.request_context, mock.Mock(), mock.Mock())
-        self.mock_test_2.start = mock.Mock()
+        self.mock_task_1 = Task(None, None, None, None, None, self.request_context, mock.Mock(), mock.Mock())
+        self.mock_task_1.start = mock.Mock()
+        self.mock_task_2 = Task(None, None, None, None, None, self.request_context, mock.Mock(), mock.Mock())
+        self.mock_task_2.start = mock.Mock()
 
     def test_registration(self):
         """Test that the service registers its cancel and list methods correctly"""
@@ -39,26 +39,72 @@ class TaskServiceTests(unittest.TestCase):
     def test_start_task(self):
         """Test that the service can start tasks"""
         # If I start both tasks
-        self.task_service.start_task(self.mock_test_1)
-        self.task_service.start_task(self.mock_test_2)
+        self.task_service.start_task(self.mock_task_1)
+        self.task_service.start_task(self.mock_task_2)
 
         # Then the task service is aware of them
-        self.assertIs(self.task_service._task_map[self.mock_test_1.id], self.mock_test_1)
-        self.assertIs(self.task_service._task_map[self.mock_test_2.id], self.mock_test_2)
+        self.assertIs(self.task_service._task_map[self.mock_task_1.id], self.mock_task_1)
+        self.assertIs(self.task_service._task_map[self.mock_task_2.id], self.mock_task_2)
 
         # And the tasks' start methods were called
-        self.mock_test_1.start.assert_called_once()
-        self.mock_test_2.start.assert_called_once()
+        self.mock_task_1.start.assert_called_once()
+        self.mock_task_2.start.assert_called_once()
 
     def test_cancel_request(self):
         """Test that sending a cancellation request attempts to cancel the task"""
         # Set up a task
-        pass
+        self.mock_task_1.cancel = mock.Mock(return_value=True)
+        self.mock_task_1.status = TaskStatus.IN_PROGRESS
+        self.task_service.start_task(self.mock_task_1)
+
+        # If I call the cancellation handler
+        params = CancelTaskParameters()
+        params.task_id = self.mock_task_1.id
+        self.task_service.handle_cancel_request(self.request_context, params)
+
+        # Then the task's cancel method should have been called and a positive response should have been sent
+        self.mock_task_1.cancel.assert_called_once()
+        self.assertTrue(self.request_context.last_response_params)
+
 
     def test_cancel_request_no_task(self):
         """Test that the cancellation handler returns false when there is no task to cancel"""
-        pass
+        # If I call the cancellation handler without a corresponding task
+        params = CancelTaskParameters()
+        params.task_id = self.mock_task_1.id
+        self.task_service.handle_cancel_request(self.request_context, params)
 
-    def test_list_tasks(self):
+        # Then a negative response should have been sent
+        self.assertFalse(self.request_context.last_response_params)
+
+    def test_list_all_tasks(self):
         """Test that the list task handler displays the correct task information"""
-        pass
+        self._test_list_tasks(False)
+
+    def test_list_active_tasks(self):
+        """Test that the list task handler displays the correct task information"""
+        self._test_list_tasks(True)
+
+    def _test_list_tasks(self, active_tasks_only: bool):
+        # Set up task 1 to be in progress and task 2 to be complete
+        self.task_service.start_task(self.mock_task_1)
+        self.task_service.start_task(self.mock_task_2)
+        self.mock_task_1.status = TaskStatus.IN_PROGRESS
+        self.mock_task_2.status = TaskStatus.SUCCEEDED
+
+        # If I start the tasks and then list them
+        self.task_service.start_task(self.mock_task_1)
+        self.task_service.start_task(self.mock_task_2)
+        params = ListTasksParameters()
+        params.list_active_tasks_only = active_tasks_only
+        self.task_service.handle_list_request(self.request_context, params)
+
+        # Then the service responds with TaskInfo for only task 1
+        response_params = self.request_context.last_response_params
+        actual_response_dict = [info.__dict__ for info in response_params]
+        expected_response_dict = [self.mock_task_1.task_info.__dict__]
+        if not active_tasks_only:
+            expected_response_dict.append(self.mock_task_2.task_info.__dict__)
+        self.assertEqual(len(actual_response_dict), len(expected_response_dict))
+        for expected_info in expected_response_dict:
+            self.assertIn(expected_info, actual_response_dict)
