@@ -67,13 +67,13 @@ class TestTemplatingUtils(unittest.TestCase):
                 pgsmo_utils.templating.get_template_path(TEMPLATE_ROOT_NAME, 'template.sql', (9, 0, 0))
 
     # RENDER_TEMPLATE TESTS ################################################
-    def test_render_template(self):
+    def test_render_template_no_macros(self):
         # NOTE: This test has an external dependency on dummy_template.txt
         # If: I render a string
         template_file = 'dummy_template.txt'
         template_folder = path.dirname(__file__)
         template_path = path.normpath(path.join(template_folder, template_file))
-        rendered = pgsmo_utils.templating.render_template(template_path, foo='bar')
+        rendered = pgsmo_utils.templating.render_template(template_path, None, foo='bar')
 
         # Then:
         # ... The output should be properly rendered
@@ -81,13 +81,54 @@ class TestTemplatingUtils(unittest.TestCase):
 
         # ... The environment should be cached
         self.assertIsInstance(pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS, dict)
-        env = pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS.get(template_folder)
+        env_hash = pgsmo_utils.templating._hash_source_list([template_folder])
+        env = pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS.get(env_hash)
         self.assertIsInstance(env, jinja2.Environment)
+
+        # ... The environment should only have the template folder as a path
+        loader = env.loader
+        self.assertIsInstance(loader, jinja2.FileSystemLoader)
+        self.assertListEqual(loader.searchpath, [template_folder])
 
         # ... The environment should have the proper filters defined
         self.assertEquals(env.filters['qtLiteral'], pgsmo_utils.templating.qt_literal)
         self.assertEquals(env.filters['qtIdent'], pgsmo_utils.templating.qt_ident)
         self.assertEquals(env.filters['qtTypeIdent'], pgsmo_utils.templating.qt_type_ident)
+        self.assertEquals(env.filters['hasAny'], pgsmo_utils.templating.has_any)
+
+    def test_render_template_with_macros(self):
+        # NOTE: This test has an external dependency on dummy_template.txt
+        # If: I render a string
+        template_file = 'dummy_template.txt'
+        template_folder = path.dirname(__file__)
+        template_path = path.normpath(path.join(template_folder, template_file))
+        macro_folder1 = path.normpath(path.dirname(path.dirname(__file__)))
+        macro_folder2 = path.normpath(path.dirname(path.dirname(path.dirname(__file__))))
+        macro_folders = [macro_folder1, macro_folder2]
+        all_folders = [template_folder, macro_folder1, macro_folder2]
+        rendered = pgsmo_utils.templating.render_template(template_path, macro_folders, foo='bar')
+
+        # Then:
+        # ... The output should be properly rendered
+        self.assertEqual(rendered, 'bar')
+
+        # ... The environment should be cached
+        self.assertIsInstance(pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS, dict)
+        env_hash = pgsmo_utils.templating._hash_source_list(all_folders)
+        env = pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS.get(env_hash)
+        self.assertIsInstance(env, jinja2.Environment)
+
+        # ... The environment should only have the template folder and macro folders in its path
+        loader = env.loader
+        self.assertIsInstance(loader, jinja2.FileSystemLoader)
+        all_folders = [template_folder, *macro_folders]
+        self.assertListEqual(loader.searchpath, all_folders)
+
+        # ... The environment should have the proper filters defined
+        self.assertEquals(env.filters['qtLiteral'], pgsmo_utils.templating.qt_literal)
+        self.assertEquals(env.filters['qtIdent'], pgsmo_utils.templating.qt_ident)
+        self.assertEquals(env.filters['qtTypeIdent'], pgsmo_utils.templating.qt_type_ident)
+        self.assertEquals(env.filters['hasAny'], pgsmo_utils.templating.has_any)
 
     def test_render_template_cached(self):
         # NOTE: This test has an external dependency on dummy_template.txt
@@ -97,15 +138,39 @@ class TestTemplatingUtils(unittest.TestCase):
         template_folder = path.dirname(__file__)
         template_path = path.normpath(path.join(template_folder, template_file))
         rendered1 = pgsmo_utils.templating.render_template(template_path, foo='bar')
-        env1 = pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS.get(template_folder)
+        env1_hash = pgsmo_utils.templating._hash_source_list([template_folder])
+        env1 = pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS.get(env1_hash)
 
         # ... I render the same string
         rendered2 = pgsmo_utils.templating.render_template(template_path, foo='bar')
-        env2 = pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS.get(template_folder)
+        env2_hash = pgsmo_utils.templating._hash_source_list([template_folder])
+        env2 = pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS.get(env2_hash)
 
         # Then: The environments used should be literally the same
         self.assertEqual(rendered1, rendered2)
         self.assertIs(env1, env2)
+
+    def test_render_template_differing_macro(self):
+        # NOTE: This test has an external dependency on dummy_template.txt
+        # If:
+        # ... I render a string
+        template_file = 'dummy_template.txt'
+        template_folder = path.dirname(__file__)
+        template_path = path.normpath(path.join(template_folder, template_file))
+        rendered1 = pgsmo_utils.templating.render_template(template_path, foo='bar')
+        env1_hash = pgsmo_utils.templating._hash_source_list([template_folder])
+        env1 = pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS.get(env1_hash)
+
+        # ... I render the same string
+        macro_folder = path.normpath(path.dirname(path.dirname(__file__)))
+        all_folders = [template_folder, macro_folder]
+        rendered2 = pgsmo_utils.templating.render_template(template_path, [macro_folder], foo='bar')
+        env2_hash = pgsmo_utils.templating._hash_source_list(all_folders)
+        env2 = pgsmo_utils.templating.TEMPLATE_ENVIRONMENTS.get(env2_hash)
+
+        # Then: The environments used should be different
+        self.assertEqual(rendered1, rendered2)
+        self.assertIsNot(env1, env2)
 
     # RENDER_TEMPLATE_STRING TESTS #########################################
     def test_render_template_string(self):

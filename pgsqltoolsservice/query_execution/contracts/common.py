@@ -6,17 +6,15 @@
 """Contains contracts for query execution service"""
 from typing import List, Dict  # noqa
 
-import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.workspace.contracts import Position, Range
+from pgsqltoolsservice.serialization import Serializable
+import pgsqltoolsservice.utils as utils
 
 DESC = {'name': 0, 'type_code': 1, 'display_size': 2, 'internal_size': 3, 'precision': 4, 'scale': 5, 'null_ok': 6}
 
 
-class SelectionData:
+class SelectionData(Serializable):
     """Container class for a selection range from file"""
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self, start_line: int = 0, start_column: int = 0, end_line: int = 0, end_column: int = 0):
         self.start_line: int = start_line

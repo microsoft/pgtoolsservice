@@ -9,6 +9,7 @@ import enum
 import unittest
 
 import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
 class TestUtils(unittest.TestCase):
@@ -44,14 +45,12 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(result.enum, test_object.enum)
 
 
-class _ConversionTestClass:
+class _ConversionTestClass(Serializable):
     """Test class to be used for testing dictionary conversions"""
 
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        """from_dict method intended to be similar to the one used in contract classes"""
-        return utils.serialization.convert_from_dict(cls, dictionary, nested_object=_NestedTestClass,
-                                                     list=_NestedTestClass, enum=_TestEnum)
+    def get_child_serializable_types(cls):
+        return {'nested_object': _NestedTestClass, 'list': _NestedTestClass, 'enum': _TestEnum}
 
     def __init__(self):
         self.test_int = 1
@@ -73,13 +72,8 @@ class _ConversionTestClass:
         }
 
 
-class _NestedTestClass:
+class _NestedTestClass(Serializable):
     """Test class to be nested within other classes to ensure recursive conversion works"""
-
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        """from_dict method intended to be similar to the one used in contract classes"""
-        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.test_int = 1

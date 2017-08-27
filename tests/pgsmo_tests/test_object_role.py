@@ -26,8 +26,8 @@ class TestRole(NodeObjectTestBase, unittest.TestCase):
         return {
             '_can_login': TestRole.NODE_ROW['rolcanlogin'],
             'can_login': TestRole.NODE_ROW['rolcanlogin'],
-            'super': TestRole.NODE_ROW['rolsuper'],
-            '_super': TestRole.NODE_ROW['rolsuper']
+            'is_super': TestRole.NODE_ROW['rolsuper'],
+            '_is_super': TestRole.NODE_ROW['rolsuper']
         }
 
     @property

@@ -4,7 +4,7 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/variable.macros' as VARIABLE %}
+{% import 'variable.macros' as VARIABLE %}
 {% if 'rolname' in data %}
 {% set rolname=data.rolname %}
 ALTER{% if rolCanLogin %} USER {% else %} ROLE {% endif %}{{ conn|qtIdent(role) }}

@@ -5,20 +5,18 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.workspace.contracts.common import TextDocumentItem
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class DidCloseTextDocumentParams:
+class DidCloseTextDocumentParams(Serializable):
     """
     Parameters to receive with a textDocument/didClose notification
     Attributes:
         text_document:  The document that was closed
     """
-
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     text_document=TextDocumentItem)
+    def get_child_serializable_types(cls):
+        return {'text_document': TextDocumentItem}
 
     def __init__(self):
         self.text_document: TextDocumentItem = None

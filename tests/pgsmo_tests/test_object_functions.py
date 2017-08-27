@@ -6,7 +6,7 @@
 from abc import ABCMeta
 import unittest
 
-from pgsmo.objects.functions import Function, TriggerFunction
+from pgsmo import Function, TriggerFunction
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
