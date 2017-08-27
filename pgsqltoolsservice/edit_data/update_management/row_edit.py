@@ -12,12 +12,13 @@ from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
 from pgsqltoolsservice.edit_data.contracts import EditCellResponse
 
 
-class RowEdit(object):
+class RowEdit:
 
     def __init__(self, row_id, result_set: ResultSet, table_metadata: EditTableMetadata):
         self.row_id = row_id
         self.result_set = result_set
         self.table_metadata = table_metadata
+        self.row = self._get_db_cell_values_for_row(row_id, result_set)
 
     @abstractmethod
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
@@ -32,5 +33,10 @@ class RowEdit(object):
         pass
 
     @abstractmethod
-    def revert_cell_value(self, column_index):
+    def revert_cell_value(self, column_index: int):
         pass
+
+    def _get_db_cell_values_for_row(self, row_id: int, result_set: ResultSet)-> List[DbCellValue]:
+
+        row = result_set.rows[row_id]
+        return [DbCellValue(cell_value, cell_value is None, cell_value, row_id) for cell_value in list(row)]

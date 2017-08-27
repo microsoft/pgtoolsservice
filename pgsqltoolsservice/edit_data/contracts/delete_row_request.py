@@ -4,33 +4,24 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Optional # noqa
-
-
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
+from pgsqltoolsservice.edit_data.contracts import SessionOperationRequest
 import pgsqltoolsservice.utils as utils
 
 
-class EditInitializerFilter:
+class DeleteRowRequest(SessionOperationRequest):
     @classmethod
     def from_dict(cls, dictionary: dict):
         return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
-        self.limit_results: Optional[int] = None
+        pass
 
 
-class InitializeEditParams:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, filters=EditInitializerFilter)
+class DeleteRowResponse:
 
     def __init__(self):
-        self.owner_uri: str = None
-        self.schema_name: str = None
-        self.object_type: str = None
-        self.object_name: str = None
-        self.filters: EditInitializerFilter = None
+        pass
 
 
-INITIALIZE_EDIT_REQUEST = IncomingMessageConfiguration('edit/initialize', InitializeEditParams)
+DELETE_ROW_REQUEST = IncomingMessageConfiguration('edit/deleteRow', DeleteRowRequest)

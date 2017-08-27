@@ -6,9 +6,13 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.edit_data.contracts import RowOperationRequest, EditCellResponse
+import pgsqltoolsservice.utils as utils
 
 
 class UpdateCellRequest(RowOperationRequest):
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.column_id = None
