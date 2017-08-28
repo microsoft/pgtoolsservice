@@ -4,8 +4,8 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/security.macros' as SECLABEL %}
-{% import 'macros/variable.macros' as VARIABLE %}
+{% import 'security.macros' as SECLABEL %}
+{% import 'variable.macros' as VARIABLE %}
 CREATE {% if data.rolcanlogin %}USER{% else %}ROLE{% endif %} {{ conn|qtIdent(data.rolname) }} WITH{% if data.rolcanlogin and data.rolcanlogin is sameas True  %}
 
 	LOGIN{% else %}

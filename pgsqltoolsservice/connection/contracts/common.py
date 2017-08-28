@@ -5,7 +5,7 @@
 
 import enum
 
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
 class ConnectionSummary:
@@ -17,7 +17,7 @@ class ConnectionSummary:
         self.user_name: str = user_name
 
 
-class ConnectionDetails:
+class ConnectionDetails(Serializable):
     """
     Details about the connection on top of a basic connection summary. Used as part of the incoming
     connection request
@@ -30,10 +30,6 @@ class ConnectionDetails:
         obj.server_name = server_name
         obj.options = opts
         return obj
-
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.options: dict = None

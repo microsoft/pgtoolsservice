@@ -10,14 +10,14 @@ from typing import List  # noqa
 
 from pgsqltoolsservice.capabilities.contracts import CategoryValue, FeatureMetadataProvider, ServiceOption
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class BackupParams:
+class BackupParams(Serializable):
     """Parameters for a backup request"""
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, backup_info=BackupInfo)
+    def get_child_serializable_types(cls):
+        return {'backup_info': BackupInfo}
 
     def __init__(self):
         self.owner_uri: str = None
@@ -25,11 +25,15 @@ class BackupParams:
         self.task_execution_mode = None
 
 
-class BackupInfo:
+class BackupInfo(Serializable):
     """Options for a requested backup"""
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, ignore_extra_attributes=True, type=BackupType)
+    def get_child_serializable_types(cls):
+        return {'type': BackupType}
+
+    @classmethod
+    def ignore_extra_attributes(cls):
+        return True
 
     def __init__(self):
         self.type: BackupType = None

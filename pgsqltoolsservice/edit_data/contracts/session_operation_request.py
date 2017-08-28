@@ -3,8 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from pgsqltoolsservice.serialization import Serializable
 
-class SessionOperationRequest():
+
+class SessionOperationRequest(Serializable):
 
     def __init__(self):
         self.owner_uri = None
@@ -12,5 +14,6 @@ class SessionOperationRequest():
 
 class RowOperationRequest(SessionOperationRequest):
 
-    def _init__(self):
+    def __init__(self):
+        SessionOperationRequest.__init__(self)
         self.row_id = None

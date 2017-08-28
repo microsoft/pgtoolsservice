@@ -11,6 +11,7 @@ from pgsqltoolsservice.edit_data.contracts import RowOperationRequest, EditCellR
 class UpdateCellRequest(RowOperationRequest):
 
     def __init__(self):
+        RowOperationRequest.__init__(self)
         self.column_id = None
         self.new_value = None
 
@@ -18,7 +19,7 @@ class UpdateCellRequest(RowOperationRequest):
 class UpdateCellResponse(EditCellResponse):
 
     def __init__(self):
-        pass
+        EditCellResponse.__init__(self)
 
 
 UPDATE_CELL_REQUEST = IncomingMessageConfiguration('edit/updateCell', UpdateCellRequest)

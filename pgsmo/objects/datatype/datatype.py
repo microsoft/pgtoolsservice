@@ -5,7 +5,8 @@
 
 from typing import Optional, List, Any
 
-from pgsmo.objects.node_object import NodeObject
+from pgsmo.objects.node_object import NodeObject, NodeLazyPropertyCollection    # noqa
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s        # noqa
 import pgsmo.utils.templating as templating
 
@@ -13,7 +14,7 @@ TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
 
-class DataType(NodeObject):
+class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     """Represents a data type"""
 
     @classmethod
@@ -26,9 +27,7 @@ class DataType(NodeObject):
         Kwargs:
             name str: Name of the DataType
             oid int: Object ID of the DataType
-            rolcanlogin bool: Whether or not the DataType can login
-            rolsuper bool: Whether or not the DataType is a super user
-        :return: A DataType7 instance
+        :return: A DataType instance
         """
         datatype = cls(server, parent, kwargs['name'])
 
@@ -42,7 +41,11 @@ class DataType(NodeObject):
         :param server: Server that owns the role
         :param name: Name of the role
         """
-        super(DataType, self).__init__(server, parent, name)
+        NodeObject.__init__(self, server, parent, name)
+        ScriptableCreate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
+        ScriptableDelete.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
+        ScriptableUpdate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
+
         self._additional_properties: NodeLazyPropertyCollection = self._register_property_collection(self._additional_property_generator)
 
     # PROPERTIES ###########################################################
@@ -109,7 +112,7 @@ class DataType(NodeObject):
         return self._additional_properties.get("rngcanonical", "")
 
     @property
-    def composite(self) -> List[Any]:
+    def composite(self) -> Optional[List[Any]]:
         if not self.typtype == 'c':
             return None
         composite = []
@@ -124,28 +127,6 @@ class DataType(NodeObject):
     @classmethod
     def _macro_root(cls) -> List[str]:
         return [MACRO_ROOT]
-
-    # SCRIPTING METHODS ####################################################
-
-    def create_script(self) -> str:
-        """ Function to retrieve create scripts for a DataType """
-        data = self._create_query_data()
-        query_file = "create.sql"
-        return self._get_template(query_file, data, paths_to_add=self._macro_root())
-
-    def update_script(self) -> str:
-        """ Function to retrieve update scripts for a DataType """
-        data = self._update_query_data()
-        query_file = "update.sql"
-        return self._get_template(query_file, data, paths_to_add=self._macro_root())
-
-    def delete_script(self) -> str:
-        """ Function to retrieve delete scripts for datatype """
-        data = self._delete_query_data()
-        query_file = "delete.sql"
-        return self._get_template(query_file, data)
-
-    # HELPER METHODS ##################################################################
 
     def _create_query_data(self):
         """ Gives the data object for create query """

@@ -8,9 +8,9 @@
 import enum
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.workspace.contracts import TextDocumentPosition
 from pgsqltoolsservice.language.contracts import TextEdit   # noqa
+from pgsqltoolsservice.serialization import Serializable
 
 
 class CompletionItemKind(enum.Enum):
@@ -38,15 +38,14 @@ class CompletionItemKind(enum.Enum):
     Reference = 18
 
 
-class CompletionItem:
+class CompletionItem(Serializable):
     """
     Completion items are presented in an IntelliSense user interface, representing valid
     items to complete an in-process typing
     """
-
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary, kind=CompletionItemKind, text_edit=TextEdit)
+    def get_child_serializable_types(cls):
+        return {'kind': CompletionItemKind, 'text_edit': TextEdit}
 
     def __init__(self):
         self.label: str = None
