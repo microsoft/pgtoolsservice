@@ -13,7 +13,7 @@ from pgsqltoolsservice.edit_data.contracts import SessionOperationRequest
 class CreateRowRequest(SessionOperationRequest):
 
     def __init__(self):
-        pass
+        SessionOperationRequest.__init__(self)
 
 
 class CreateRowResponse:

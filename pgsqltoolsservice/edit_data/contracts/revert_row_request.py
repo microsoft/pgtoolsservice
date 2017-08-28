@@ -11,7 +11,7 @@ from pgsqltoolsservice.edit_data.contracts import RowOperationRequest
 class RevertRowRequest(RowOperationRequest):
 
     def __init__(self):
-        pass
+        RowOperationRequest.__init__(self)
 
 
 class RevertRowResponse:

@@ -11,6 +11,7 @@ from pgsqltoolsservice.edit_data.contracts import RowOperationRequest, EditCellR
 class RevertCellRequest(RowOperationRequest):
 
     def __init__(self):
+        RowOperationRequest.__init__(self)
         self.column_id: int = None
 
 

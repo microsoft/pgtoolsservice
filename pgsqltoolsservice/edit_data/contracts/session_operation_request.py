@@ -15,4 +15,5 @@ class SessionOperationRequest(Serializable):
 class RowOperationRequest(SessionOperationRequest):
 
     def __init__(self):
+        SessionOperationRequest.__init__(self)
         self.row_id = None
