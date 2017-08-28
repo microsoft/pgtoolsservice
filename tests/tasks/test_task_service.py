@@ -34,7 +34,7 @@ class TaskServiceTests(unittest.TestCase):
         # Then CANCEL_TASK_REQUEST and LIST_TASKS_REQUEST should have been registered
         self.service_provider.server.set_request_handler.assert_has_calls(
             [mock.call(CANCEL_TASK_REQUEST, self.task_service.handle_cancel_request), mock.call(LIST_TASKS_REQUEST, self.task_service.handle_list_request)],
-            any_order=True)        
+            any_order=True)
 
     def test_start_task(self):
         """Test that the service can start tasks"""
@@ -65,7 +65,6 @@ class TaskServiceTests(unittest.TestCase):
         # Then the task's cancel method should have been called and a positive response should have been sent
         self.mock_task_1.cancel.assert_called_once()
         self.assertTrue(self.request_context.last_response_params)
-
 
     def test_cancel_request_no_task(self):
         """Test that the cancellation handler returns false when there is no task to cancel"""
