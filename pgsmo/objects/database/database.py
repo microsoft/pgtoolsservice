@@ -62,13 +62,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         self._owner_oid: Optional[int] = None
 
         # Declare the child items
-<<<<<<< HEAD
         self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
-=======
-        self._schemas: Optional[NodeCollection[Schema]] = None
-        if self._is_connected:
-            self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
->>>>>>> 89bada8ad2febe81a07ec3453f04f077eaad1011
 
     # PROPERTIES ###########################################################
     # -BASIC PROPERTIES ####################################################
