@@ -58,9 +58,17 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     # PROPERTIES ###########################################################
     @property
-    def name(self):
-        return self._full_properties.get("name", "")
+    def datatype(self) -> str:
+        return self._datatype
 
+    @property
+    def has_default_value(self) -> Optional[bool]:
+        return self._has_default_value
+
+    @property
+    def not_null(self) -> Optional[bool]:
+        return self._not_null
+    
     @property
     def cltype(self):
         return self._full_properties.get("cltype", "")
