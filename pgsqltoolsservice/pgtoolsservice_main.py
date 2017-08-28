@@ -45,8 +45,6 @@ if __name__ == '__main__':
                     wait_for_debugger = True
             elif arg_parts[0] == '--log-dir':
                 log_dir = arg_parts[1]
-            if arg_parts[0] == '--enable-remote-debugging-wait':
-                wait_for_debugger = True
 
     # Create the output logger
     logger = logging.getLogger('pgsqltoolsservice')
