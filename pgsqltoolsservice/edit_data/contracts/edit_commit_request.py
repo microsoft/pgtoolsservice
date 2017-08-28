@@ -3,17 +3,21 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.serialization import Serializable
+
+from pgsqltoolsservice.hosting import IncomingMessageConfiguration
+from pgsqltoolsservice.edit_data.contracts import SessionOperationRequest
 
 
-class SessionOperationRequest(Serializable):
-
-    def __init__(self):
-        self.owner_uri = None
-
-
-class RowOperationRequest(SessionOperationRequest):
+class EditCommitRequest(SessionOperationRequest):
 
     def __init__(self):
         SessionOperationRequest.__init__(self)
-        self.row_id = None
+
+
+class EditCommitResponse:
+
+    def __init__(self):
+        pass
+
+
+EDIT_COMMIT_REQUEST = IncomingMessageConfiguration('edit/commit', EditCommitRequest)

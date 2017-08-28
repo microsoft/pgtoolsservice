@@ -43,4 +43,4 @@ class ResultSet(object):
         if description is None:
             return []
 
-        return [DbColumn(index, desc) for index, desc in enumerate(description)]
+        return [DbColumn.from_cursor_description(index, desc) for index, desc in enumerate(description)]
