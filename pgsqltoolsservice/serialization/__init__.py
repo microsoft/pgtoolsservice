@@ -3,17 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.serialization import Serializable
+from pgsqltoolsservice.serialization.serializable import Serializable
 
-
-class SessionOperationRequest(Serializable):
-
-    def __init__(self):
-        self.owner_uri = None
-
-
-class RowOperationRequest(SessionOperationRequest):
-
-    def __init__(self):
-        SessionOperationRequest.__init__(self)
-        self.row_id = None
+__all__ = ['Serializable']

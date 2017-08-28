@@ -4,14 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
+from pgsqltoolsservice.serialization import Serializable
 
 
-class CreateSessionResponse:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+class CreateSessionResponse(Serializable):
 
     def __init__(self, session_id):
         self.session_id: str = session_id

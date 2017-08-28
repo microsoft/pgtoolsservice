@@ -20,7 +20,7 @@ class TestRowUpdate(unittest.TestCase):
 
         description = [("first", 0, 1, 2, 3, 4, True), ("second", 5, 6, 7, 8, 9, False)]
 
-        self._result_set.columns = [DbColumn(0, description[0]), DbColumn(1, description[1])]
+        self._result_set.columns = [DbColumn.from_cursor_description(0, description[0]), DbColumn.from_cursor_description(1, description[1])]
         self._table_metadata = None
         self._column_index = 0
         self._new_value = 'Updated'

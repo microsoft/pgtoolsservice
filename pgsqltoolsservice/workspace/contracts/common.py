@@ -3,10 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class Position:
+class Position(Serializable):
     """
     Represents a point in the document
     Attributes:
@@ -21,16 +21,12 @@ class Position:
         pos.character = col
         return pos
 
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
-
     def __init__(self, line=0, character=0):
         self.line: int = line
         self.character: int = character
 
 
-class Range:
+class Range(Serializable):
     """
     Represents a selection of the document
     Attributes:
@@ -46,17 +42,15 @@ class Range:
         return result
 
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     start=Position,
-                                                     end=Position)
+    def get_child_serializable_types(cls):
+        return {'start': Position, 'end': Position}
 
     def __init__(self, start=None, end=None):
         self.start: Position = start
         self.end: Position = end
 
 
-class TextDocumentItem:
+class TextDocumentItem(Serializable):
     """
     Defines a text document
     Attributes:
@@ -66,10 +60,6 @@ class TextDocumentItem:
         text:           Full content of the document
     """
 
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
-
     def __init__(self):
         self.uri: str = None
         self.language_id: str = None
@@ -77,22 +67,18 @@ class TextDocumentItem:
         self.text: str = None
 
 
-class TextDocumentIdentifier:
+class TextDocumentIdentifier(Serializable):
     """
     Defines a base parameter class for identifying a text document
     Attributes:
         uri:        The URI that uniquely identifies the path of the text document
     """
 
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
-
     def __init__(self):
         self.uri: str = None
 
 
-class TextDocumentPosition:
+class TextDocumentPosition(Serializable):
     """
     Defines a position in a text document
     Attributes:
@@ -101,10 +87,8 @@ class TextDocumentPosition:
     """
 
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     text_document=TextDocumentIdentifier,
-                                                     position=Position)
+    def get_child_serializable_types(cls):
+        return {'text_document': TextDocumentIdentifier, 'position': Position}
 
     def __init__(self):
         self.text_document: TextDocumentIdentifier = None

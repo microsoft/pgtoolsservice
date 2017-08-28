@@ -5,19 +5,16 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.query_execution.contracts.common import SelectionData
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class ExecuteRequestParamsBase:
+class ExecuteRequestParamsBase(Serializable):
     def __init__(self):
         self.owner_uri: str = None
         self.execution_plan_options = None      # TODO: Define/wire up ExecutionPlanOptions class
 
 
 class ExecuteStringParams(ExecuteRequestParamsBase):
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
         super().__init__()
@@ -32,9 +29,8 @@ EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
 
 class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
     @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary,
-                                                     query_selection=SelectionData)
+    def get_child_serializable_types(cls):
+        return {'query_selection': SelectionData}
 
     def __init__(self):
         super().__init__()

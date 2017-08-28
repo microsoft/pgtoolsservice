@@ -5,15 +5,19 @@
 
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.serialization import Serializable
+from pgsqltoolsservice.edit_data.contracts import SessionOperationRequest
 
 
-class EditSubsetParams(Serializable):
+class DisposeRequest(SessionOperationRequest):
 
     def __init__(self):
-        self.owner_uri: str = None
-        self.rows_start_index: int = None
-        self.rows_count: int = None
+        SessionOperationRequest.__init__(self)
 
 
-EDIT_SUBSET_REQUEST = IncomingMessageConfiguration('edit/subset', EditSubsetParams)
+class DisposeResponse:
+
+    def __init__(self):
+        pass
+
+
+DISPOSE_REQUEST = IncomingMessageConfiguration('edit/dispose', DisposeRequest)
