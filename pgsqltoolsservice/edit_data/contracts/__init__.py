@@ -15,7 +15,7 @@ from pgsqltoolsservice.edit_data.contracts.update_cell_request import (
     UPDATE_CELL_REQUEST, UpdateCellRequest, UpdateCellResponse
 )
 from pgsqltoolsservice.edit_data.contracts.create_row_request import (
-    CreateRowRequest, CreateRowResponse, CREATE_ROW_REQUEST
+    CREATE_ROW_REQUEST, CreateRowRequest, CreateRowResponse
 )
 from pgsqltoolsservice.edit_data.contracts.delete_row_request import (
     DELETE_ROW_REQUEST, DeleteRowRequest, DeleteRowResponse

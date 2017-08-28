@@ -36,7 +36,6 @@ class EditDataService(object):
             REVERT_ROW_REQUEST: self._revert_row,
             EDIT_COMMIT_REQUEST: self._edit_commit,
             DISPOSE_REQUEST: self._dispose
-
         }
 
     def _edit_initialize(self, request_context: RequestContext, params: InitializeEditParams) -> None:
