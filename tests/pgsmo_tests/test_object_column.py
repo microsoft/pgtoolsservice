@@ -52,8 +52,26 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
         }
 
     @property
-    def property_query(self) -> dict:
-        return self.full_properties
+    def property_query(self):
+        return {
+            "name": "test",
+            "cltype": "test",
+            "schema": "test_schema",
+            "table": "test_table",
+            "displaytypname": "test_displaytypname",
+            "attlen": "test",
+            "attprecision": "test",
+            "hasSqrBracket": "test",
+            "collspcname": "test",
+            "attnotnull": "test",
+            "defval": "test",
+            "description": "test_description",
+            "attoptions": "test",
+            "attacl": "test",
+            "seclabels": "test",
+            "attstattarget": "test",
+            "attstorage": "test"  
+        }
 
     @property
     def class_for_test(self):
