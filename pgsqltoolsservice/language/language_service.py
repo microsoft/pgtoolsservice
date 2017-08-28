@@ -142,7 +142,7 @@ class LanguageService:
 
         def do_send_response():
             request_context.send_response(response)
-        
+
         if self.should_skip_formatting(params.text_document.uri):
             do_send_response()
             return

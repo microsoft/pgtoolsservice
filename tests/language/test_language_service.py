@@ -5,7 +5,6 @@
 
 """Test the language service"""
 
-import os
 import threading    # noqa
 from typing import List, Tuple, Optional
 import unittest
@@ -19,14 +18,14 @@ from pgsqltoolsservice.hosting import (     # noqa
     ServiceProvider
 )
 from pgsqltoolsservice.language import LanguageService
-from pgsqltoolsservice.language.contracts import (
+from pgsqltoolsservice.language.contracts import (      # noqa
     LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
     INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
     DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions, TextEdit
 )
 from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.workspace import (
-    WorkspaceService, TextDocumentIdentifier, Configuration, SQLConfiguration,
+from pgsqltoolsservice.workspace import (       # noqa
+    WorkspaceService, TextDocumentIdentifier, Configuration,
     PGSQLConfiguration, ScriptFile, Workspace
 )
 from pgsqltoolsservice.workspace.contracts import (

@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
-from pgsqltoolsservice.workspace import WorkspaceService, IntellisenseConfiguration, FormatterConfiguration    # noqa
+from pgsqltoolsservice.workspace import WorkspaceService, IntellisenseConfiguration    # noqa
 from pgsqltoolsservice.workspace.workspace import Workspace, ScriptFile
 from pgsqltoolsservice.workspace.contracts import (
     Configuration,
@@ -108,7 +108,7 @@ class TestWorkspaceService(unittest.TestCase):
 
         # Then:
         # ... The config should have sensible default values
-        format_options: FormatterConfiguration = ws.configuration.pgsql.format
+        format_options = ws.configuration.pgsql.format
         self.assertIsNotNone(format_options)
         self.assertIsNone(format_options.keyword_case)
         self.assertIsNone(format_options.identifier_case)
