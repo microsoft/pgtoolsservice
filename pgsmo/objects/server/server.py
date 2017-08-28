@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import Dict, Mapping, Optional, Tuple                # noqa
-from urllib.parse import ParseResult, urlparse
+from urllib.parse import ParseResult, urlparse                   # noqa
 
 from psycopg2.extensions import connection
 

@@ -31,7 +31,8 @@ class Scripter(object):
         ScriptOperation.CREATE: (ScriptableCreate, lambda obj: obj.create_script()),
         ScriptOperation.DELETE: (ScriptableDelete, lambda obj: obj.delete_script()),
         ScriptOperation.UPDATE: (ScriptableUpdate, lambda obj: obj.update_script()),
-        ScriptOperation.SELECT: (NodeObject, lambda obj: script_as_select(obj))         # TODO: Replace with ScriptableSelect mixin (see https://github.com/Microsoft/carbon/issues/1764)
+        ScriptOperation.SELECT: (NodeObject, lambda obj: script_as_select(obj))
+        # TODO: Replace with ScriptableSelect mixin (see https://github.com/Microsoft/carbon/issues/1764)
     }
 
     def __init__(self, conn):

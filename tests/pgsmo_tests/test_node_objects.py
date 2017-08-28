@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import urllib.parse as parse
 import unittest
 import unittest.mock as mock
 
@@ -507,6 +508,58 @@ class TestNodeObject(unittest.TestCase):
         collection2.reset.assert_called_once()
         props1.reset.assert_called_once()
         props2.reset.assert_called_once()
+
+    def test_urn_basecase(self):
+        # Setup:
+        # ... Create a node object
+        server = Server(utils.MockConnection(None))
+        node_obj = utils.MockNodeObject(server, None, 'obj_name')
+        node_obj._oid = 123
+
+        # If: I get the URN for a node object
+        urn = node_obj.urn
+
+        # Then:
+        # ... I expect it to be formatted as a URL
+        parsed_url = parse.urlparse(urn)
+
+        # ... The netlocation should be equal to the urn base (with added slashes)
+        # NOTE: Server URN Base is tested in the server class unit tests
+        self.assertEqual(f'//{parsed_url.netloc}/', server.urn_base)
+
+        # ... The path should match Class.OID (with added slashes)
+        self.assertEqual(parsed_url.path, f'/{node_obj.__class__.__name__}.{node_obj.oid}/')
+
+    def test_urn_recursive(self):
+        # Setup:
+        # ... Create a node object with a parent
+        server = Server(utils.MockConnection(None))
+        node_obj1 = utils.MockNodeObject(server, None, 'parent_name')
+        node_obj1._oid = 123
+
+        node_obj2 = utils.MockNodeObject(server, node_obj1, 'obj_name')
+        node_obj2._oid = 456
+
+        # If: I get the URN for the child node object
+        urn = node_obj2.urn
+
+        # Then:
+        # ... I expect it to be formatted as a URL
+        parsed_url = parse.urlparse(urn)
+
+        # ... The netlocation should be equal to the urn base (with added slashes)
+        # NOTE: Server URN Base is tested in the server class unit tests
+        self.assertEqual(f'//{parsed_url.netloc}/', server.urn_base)
+
+        # ... The path should have multiple folders under it (list comprehension removes empty strings)
+        split_path = [x for x in parsed_url.path.split('/') if x]
+        self.assertEqual(len(split_path), 2)
+
+        # ... The parent path should be first
+        self.assertEqual(split_path[0], f'{node_obj1.__class__.__name__}.{node_obj1.oid}')
+
+        # ... The child path should be second
+        self.assertEqual(split_path[1], f'{node_obj2.__class__.__name__}.{node_obj2.oid}')
 
 
 def _get_node_for_parents_mock_connection():

@@ -99,7 +99,8 @@ class MockConnection(connection):
             version: str='90602',
             name: str='postgres',
             host: str='localhost',
-            port: str='25565'):
+            port: str='25565',
+            user: str='postgres'):
         # Setup the properties
         self._server_version = version
 
@@ -107,7 +108,7 @@ class MockConnection(connection):
         self.close = mock.MagicMock()
         self.cursor = mock.MagicMock(return_value=cur)
 
-        dsn_params = {'dbname': name, 'host': host, 'port': port}
+        dsn_params = {'dbname': name, 'host': host, 'port': port, 'user': user}
         self.get_dsn_parameters = mock.MagicMock(return_value=dsn_params)
 
     @property
