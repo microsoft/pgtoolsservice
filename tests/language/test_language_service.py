@@ -223,7 +223,9 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: The script file doesn't exist (there is an empty workspace)
         input_text = 'select * from foo where id in (select id from bar);'
-        expected_output = os.linesep.join([
+        # Note: sqlparse always uses '\n\ for line separator even on windows.
+        # For now, respecting this behavior and leaving as-is
+        expected_output = '\n'.join([
             'SELECT *',
             'FROM foo',
             'WHERE id IN',
@@ -265,8 +267,8 @@ class TestLanguageService(unittest.TestCase):
             'select * from t1',
             'select * from foo where id in (select id from bar);'
         ]
-        input_text = os.linesep.join(input_lines)
-        expected_output = os.linesep.join([
+        input_text = '\n'.join(input_lines)
+        expected_output = '\n'.join([
             'SELECT *',
             'FROM foo',
             'WHERE id IN',
