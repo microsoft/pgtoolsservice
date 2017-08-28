@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import Dict, Mapping, Optional, Tuple                # noqa
-from urllib.parse import ParseResult, urlparse                   # noqa
+from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
 from psycopg2.extensions import connection
 
@@ -82,11 +82,12 @@ class Server:
     @property
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
-        user = self.connection.dsn_parameters['user']
-        db = self.maintenance_db_name
-        host = self.host
-        port = self.port
+        user = quote_plus(self.connection.dsn_parameters['user'])
+        db = quote_plus(self.maintenance_db_name)
+        host = quote_plus(self.host)
+        port = quote_plus(str(self.port))
         return f'//{user}@{db}.{host}:{port}/'
+        # TODO: Ensure that this formatting works with non-username/password logins
 
     @property
     def wal_paused(self) -> Optional[bool]:
@@ -117,7 +118,7 @@ class Server:
     # METHODS ##############################################################
     def get_object_by_urn(self, urn: str) -> NodeObject:
         # Validate that the urn is a full urn
-        if urn is None or urn == '' or urn.strip() == '':
+        if urn is None or urn.strip() == '':
             raise ValueError('URN was not provided')    # TODO: Localize?
 
         parsed_urn: ParseResult = urlparse(urn)

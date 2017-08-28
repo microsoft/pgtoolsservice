@@ -3,8 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import re
 import unittest
 import unittest.mock as mock
+import urllib.parse as parse
 
 import inflection
 
@@ -109,3 +111,65 @@ class TestServer(unittest.TestCase):
         obj.roles.reset.assert_called_once()
         obj.tablespaces.reset.assert_called_once()
         obj._recovery_props.reset.assert_called_once()
+
+    def test_urn_base(self):
+        # Setup:
+        # ... Create a server object that has a connection
+        server = Server(utils.MockConnection(None))
+
+        # If: I get the URN base for the server
+        urn_base = server.urn_base
+
+        # Then: The urn base should match the expected outcome
+        urn_base_regex = re.compile('//(?P<user>.+)@(?P<db>.+)\.(?P<host>.+):(?P<port>\d+)')
+        urn_base_match = urn_base_regex.match(urn_base)
+        self.assertIsNotNone(urn_base_match)
+        self.assertEqual(urn_base_match.groupdict()['user'], server.connection.dsn_parameters['user'])
+        self.assertEqual(urn_base_match.groupdict()['db'], server.maintenance_db_name)
+        self.assertEqual(urn_base_match.groupdict()['host'], server.host)
+        self.assertEqual(int(urn_base_match.groupdict()['port']), server.port)
+
+    def test_get_obj_by_urn_empty(self):
+        # Setup: Create a server object
+        server = Server(utils.MockConnection(None))
+
+        test_cases = [None, '', '\t \n\r']
+        for test_case in test_cases:
+            with self.assertRaises(ValueError):
+                # If: I get an object by its URN without providing a URN
+                # Then: I should get an exception
+                server.get_object_by_urn(test_case)
+
+    def test_get_obj_by_urn_wrong_server(self):
+        # Setup: Create a server object
+        server = Server(utils.MockConnection(None))
+
+        with self.assertRaises(ValueError):
+            # If: I get an object by its URN with a URN that is invalid for the server
+            # Then: I should get an exception
+            invalid_urn = '//this@is.the.wrong.urn:456/Database.123/'
+            server.get_object_by_urn(invalid_urn)
+
+    def test_get_obj_by_urn_wrong_collection(self):
+        # Setup: Create a server object
+        server = Server(utils.MockConnection(None))
+
+        with self.assertRaises(ValueError):
+            # If: I get an object by its URN with a URN that points to an invalid path off the server
+            # Then: I should get an exception
+            invalid_urn = parse.urljoin(server.urn_base, 'Datatype.123/')
+            server.get_object_by_urn(invalid_urn)
+
+    def test_get_obj_by_urn_success(self):
+        # Setup: Create a server with a database under it
+        server = Server(utils.MockConnection(None))
+        mock_db = Database(server, 'test_db')
+        mock_db._oid = 123
+        server._child_objects[Database.__name__] = {123: mock_db}
+
+        # If: I get an object by its URN
+        urn = parse.urljoin(server.urn_base, '/Database.123/')
+        obj = server.get_object_by_urn(urn)
+
+        # Then: The object I get back should be the same as the object I provided
+        self.assertIs(obj, mock_db)

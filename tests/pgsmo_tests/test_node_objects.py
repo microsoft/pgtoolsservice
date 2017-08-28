@@ -506,7 +506,9 @@ class TestNodeObject(unittest.TestCase):
         collection1.reset.assert_called_once()
         # noinspection PyUnresolvedReferences
         collection2.reset.assert_called_once()
+        # noinspection PyUnresolvedReferences
         props1.reset.assert_called_once()
+        # noinspection PyUnresolvedReferences
         props2.reset.assert_called_once()
 
     def test_urn_basecase(self):
