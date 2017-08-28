@@ -209,7 +209,8 @@ class LanguageService:
             format_options = self._workspace_service.configuration.pgsql.format
             if format_options:
                 sqlparse_options = {**sqlparse_options, **format_options.__dict__}
-        except Exception:
+        except AttributeError:
+            # Indicates the config isn't defined. We are OK with this as it's not required
             pass
         return sqlparse_options
 

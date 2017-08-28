@@ -44,9 +44,9 @@ class PGSQLConfiguration(Serializable):
 
 class Case(Enum):
     """Case options for keyword and identifier formatting"""
-    Upper = 'upper',
-    Lower = 'lower',
-    Capitalize = 'capitalize'
+    UPPER = 'upper',
+    LOWER = 'lower',
+    CAPITALIZE = 'capitalize'
 
 
 class FormatterConfiguration(Serializable):

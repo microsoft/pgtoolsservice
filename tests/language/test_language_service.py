@@ -216,11 +216,41 @@ class TestLanguageService(unittest.TestCase):
         # an intellisense ready notification should be sent for that URI
         self.flow_validator.validate()
 
+    def test_format_doc_no_pgsql_format(self):
+        """
+        Test that the format codepath succeeds even if the configuration options aren't defined
+        """
+        input_text = 'select * from foo where id in (select id from bar);'
+
+        context: RequestContext = utils.MockRequestContext()
+
+        self.mock_workspace_service._configuration = None
+        workspace, script_file = self._get_test_workspace(True, input_text)
+        self.mock_workspace_service._workspace = workspace
+        service: LanguageService = self._init_service()
+
+        format_options = FormattingOptions()
+        format_options.insert_spaces = False
+        format_params = DocumentFormattingParams()
+        format_params.options = format_options
+        format_params.text_document = self.default_text_document_id
+
+        # When: I have no useful formatting defaults defined
+        service.handle_doc_format_request(context, format_params)
+
+        # Then:
+        # ... There should be no changes to the doc
+        context.send_response.assert_called_once()
+        edits: List[TextEdit] = context.last_response_params
+        self.assertTrue(len(edits) > 0)
+        self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
+        self.assertEqual(edits[0].new_text, input_text)
+
     def test_format_doc(self):
         """
         Test that the format document codepath works as expected
         """
-        # If: The script file doesn't exist (there is an empty workspace)
+        # If: We have a basic string to be formatted
         input_text = 'select * from foo where id in (select id from bar);'
         # Note: sqlparse always uses '\n\ for line separator even on windows.
         # For now, respecting this behavior and leaving as-is
@@ -246,6 +276,7 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
+
         # When: I request document formatting
         service.handle_doc_format_request(context, format_params)
 

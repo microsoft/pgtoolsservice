@@ -28,7 +28,7 @@ class FormattingOptions(Serializable):
 
 class DocumentFormattingParams(Serializable):
     """
-    Parameters use in a formatting request to process an entire document
+    Parameters used in a formatting request to process an entire document
     """
     @classmethod
     def get_child_serializable_types(cls):
@@ -41,7 +41,7 @@ class DocumentFormattingParams(Serializable):
 
 class DocumentRangeFormattingParams(DocumentFormattingParams):
     """
-    Parameters use in a formatting request to process an entire document
+    Parameters used in a formatting request to process a specific text range
     """
     @classmethod
     def get_child_serializable_types(cls):
