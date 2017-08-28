@@ -563,6 +563,43 @@ class TestNodeObject(unittest.TestCase):
         # ... The child path should be second
         self.assertEqual(split_path[1], f'{node_obj2.__class__.__name__}.{node_obj2.oid}')
 
+    def test_get_obj_by_urn_base_case(self):
+        # Setup: Create a node object
+        server = Server(utils.MockConnection(None))
+        node_obj = utils.MockNodeObject(server, None, 'obj_name')
+
+        # If: I have a URN fragment that returns the object
+        fragment = '/'
+        obj = node_obj.get_object_by_urn(fragment)
+
+        # Then: I should get that object back
+        self.assertIs(obj, node_obj)
+
+    def test_get_obj_by_urn_invalid_collection(self):
+        # Setup: Create a node object (without any collections under it)
+        server = Server(utils.MockConnection(None))
+        node_obj = utils.MockNodeObject(server, None, 'obj_name')
+
+        with self.assertRaises(ValueError):
+            # If: I have a URN fragment that goes into a collection that doesn't exist
+            # Then: I should get an exception
+            fragment = '/Database.123/'
+            node_obj.get_object_by_urn(fragment)
+
+    def test_get_obj_by_urn_recurses(self):
+        # Setup: Create a node object with a collection under it
+        server = Server(utils.MockConnection(None))
+        db_obj = utils.MockNodeObject(server, None, 'db_name')
+        sc_obj = utils.MockNodeObject(server, db_obj, 'schema_name')
+        db_obj._child_collections = {'Schema': {123: sc_obj}}
+
+        # If: I ask for an object that recurses
+        fragment = '/Schema.123/'
+        obj = db_obj.get_object_by_urn(fragment)
+
+        # Then: The object I get back should be the same as the one I created
+        self.assertIs(obj, sc_obj)
+
 
 def _get_node_for_parents_mock_connection():
     # ... Create a mockup of a server connection with a mock executor
