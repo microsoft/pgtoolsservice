@@ -21,10 +21,6 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
     }
 
     @property
-    def class_for_test(self):
-        return Column
-
-    @property
     def basic_properties(self):
         return {
             'has_default_value': self.node_query['has_default_val'],
@@ -32,6 +28,36 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             'not_null': self.node_query['not_null'],
             '_not_null': self.node_query['not_null'],
         }
+    
+    @property
+    def full_properties(self):
+        return {
+            "name": "name",
+            "cltype": "cltype",
+            "schema": "schema",
+            "table": "table",
+            "displaytypname": "displaytypname",
+            "attlen": "attlen",
+            "attprecision": "attprecision",
+            "hasSqrBracket": "hasSqrBracket",
+            "collspcname": "collspcname",
+            "attnotnull": "attnotnull",
+            "defval": "defval",
+            "description": "description",
+            "attoptions": "attoptions",
+            "attacl": "attacl",
+            "seclabels": "seclabels",
+            "attstattarget": "attstattarget",
+            "attstorage": "attstorage",            
+        }
+
+    @property
+    def property_query(self) -> dict:
+        return self.full_properties
+
+    @property
+    def class_for_test(self):
+        return Column
 
     @property
     def collections(self):
