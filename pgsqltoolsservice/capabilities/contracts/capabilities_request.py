@@ -6,13 +6,10 @@
 from typing import List
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class CapabilitiesRequestParams:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+class CapabilitiesRequestParams(Serializable):
 
     def __init__(self):
         self.host_name = None

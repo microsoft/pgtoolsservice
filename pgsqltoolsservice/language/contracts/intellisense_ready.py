@@ -6,17 +6,13 @@
 """This module holds contracts for the IntelliSense Ready notification"""
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class IntelliSenseReadyParams:
+class IntelliSenseReadyParams(Serializable):
     """
     Parameters for the Language IntelliSense Ready notification
     """
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
-
     @classmethod
     def from_data(cls, uri: str):
         obj = cls()

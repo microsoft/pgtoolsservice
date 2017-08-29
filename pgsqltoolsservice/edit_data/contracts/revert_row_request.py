@@ -5,15 +5,19 @@
 
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.serialization import Serializable
+from pgsqltoolsservice.edit_data.contracts import RowOperationRequest
 
 
-class EditSubsetParams(Serializable):
+class RevertRowRequest(RowOperationRequest):
 
     def __init__(self):
-        self.owner_uri: str = None
-        self.rows_start_index: int = None
-        self.rows_count: int = None
+        RowOperationRequest.__init__(self)
 
 
-EDIT_SUBSET_REQUEST = IncomingMessageConfiguration('edit/subset', EditSubsetParams)
+class RevertRowResponse:
+
+    def __init__(self):
+        pass
+
+
+REVERT_ROW_REQUEST = IncomingMessageConfiguration('edit/revertRow', RevertRowRequest)

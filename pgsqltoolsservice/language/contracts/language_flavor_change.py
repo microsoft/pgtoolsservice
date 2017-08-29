@@ -6,17 +6,13 @@
 """This module holds contracts for the language flavor change notification"""
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization import Serializable
 
 
-class LanguageFlavorChangeParams:
+class LanguageFlavorChangeParams(Serializable):
     """
     Parameters for the Language Flavor Change notification
     """
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
-
     @classmethod
     def from_data(cls, uri: str, language: str, flavor: str):
         obj = cls()

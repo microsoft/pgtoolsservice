@@ -6,17 +6,15 @@
 """Contains contracts for query execution service"""
 from typing import List, Dict  # noqa
 
-import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.workspace.contracts import Position, Range
+from pgsqltoolsservice.serialization import Serializable
+import pgsqltoolsservice.utils as utils
 
 DESC = {'name': 0, 'type_code': 1, 'display_size': 2, 'internal_size': 3, 'precision': 4, 'scale': 5, 'null_ok': 6}
 
 
-class SelectionData:
+class SelectionData(Serializable):
     """Container class for a selection range from file"""
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self, start_line: int = 0, start_column: int = 0, end_line: int = 0, end_column: int = 0):
         self.start_line: int = start_line
@@ -67,28 +65,18 @@ class ResultSetSummary:
 
 class DbColumn:
 
-    # The cursor_description is an element from psycopg's cursor class' description property.
-    # It is a property that is a tuple (read-only) containing a 7-item sequence.
-    # Each inner sequence item can be referenced by using DESC
-    def __init__(self, column_ordinal: int, cursor_description: tuple):
-        # TODO: Retrieve additional fields if necessary and relevant. Leaving as 'None' for now
-
-        # Note that 'null_ok' is always 'None' by default because it's not easy to retrieve
-        # Need to take a look if we should turn this on if it's important
-        self.allow_db_null: bool = cursor_description[DESC['null_ok']]
+    def __init__(self):
+        self.allow_db_null: bool = None
         self.base_catalog_name: str = None
-        self.base_column_name: str = cursor_description[DESC['name']]
-        self.column_name: str = cursor_description[DESC['name']]
+        self.column_size: int = None
+        self.numeric_precision: int = None
+        self.numeric_scale: int = None
         self.base_schema_name: str = None
         self.base_server_name: str = None
         self.base_table_name: str = None
-        self.column_ordinal: int = column_ordinal
-
-        # From documentation, it seems like 'internal_size' is for the max size and
-        # 'display_size' is for the actual size based off of the largest entry in the column so far.
-        # 'display_size' is always 'None' by default since it's expensive to calculate.
-        # 'internal_size' is negative if column max is of a dynamic / variable size
-        self.column_size: int = cursor_description[DESC['internal_size']]
+        self.column_ordinal: int = None
+        self.base_column_name: str = None
+        self.column_name: str = None
         self.is_aliased: bool = None
         self.is_auto_increment: bool = None
         self.is_expression: bool = None
@@ -98,9 +86,6 @@ class DbColumn:
         self.is_long: bool = None
         self.is_read_only: bool = None
         self.is_unique: bool = None
-        self.numeric_precision: int = cursor_description[DESC['precision']]
-        self.numeric_scale: int = cursor_description[DESC['scale']]
-        self.udt_assembly_qualified_name: str = cursor_description[DESC['null_ok']]
         self.data_type = None
         self.data_type_name: str = None
         self.is_bytes: bool = None
@@ -109,6 +94,37 @@ class DbColumn:
         self.is_udt: bool = None
         self.is_xml: bool = None
         self.is_json: bool = None
+
+    @property
+    def is_updatable(self):
+        # TBD- Implementation Pending. This is not used anywhere currently
+        return True
+
+    # The cursor_description is an element from psycopg's cursor class' description property.
+    # It is a property that is a tuple (read-only) containing a 7-item sequence.
+    # Each inner sequence item can be referenced by using DESC
+    @classmethod
+    def from_cursor_description(cls, column_ordinal: int, cursor_description: tuple):
+
+        instance = cls()
+
+        # Note that 'null_ok' is always 'None' by default because it's not easy to retrieve
+        # Need to take a look if we should turn this on if it's important
+        instance.allow_db_null: bool = cursor_description[DESC['null_ok']]
+        instance.base_column_name: str = cursor_description[DESC['name']]
+        instance.column_name: str = cursor_description[DESC['name']]
+
+        # From documentation, it seems like 'internal_size' is for the max size and
+        # 'display_size' is for the actual size based off of the largest entry in the column so far.
+        # 'display_size' is always 'None' by default since it's expensive to calculate.
+        # 'internal_size' is negative if column max is of a dynamic / variable size
+
+        instance.column_size: int = cursor_description[DESC['internal_size']]
+        instance.numeric_precision: int = cursor_description[DESC['precision']]
+        instance.numeric_scale: int = cursor_description[DESC['scale']]
+        instance.column_ordinal: int = column_ordinal
+
+        return instance
 
 
 class DbCellValue:

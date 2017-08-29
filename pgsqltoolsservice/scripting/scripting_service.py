@@ -20,13 +20,6 @@ class ScriptingService(object):
     def __init__(self):
         self._service_provider: Optional[ServiceProvider] = None
 
-        self._script_map: Dict[ScriptOperation, Callable[[Scripter, ObjectMetadata], str]] = {
-            ScriptOperation.CREATE: lambda scripter, metadata: scripter.get_create_script(metadata),
-            ScriptOperation.DELETE: lambda scripter, metadata: scripter.get_delete_script(metadata),
-            ScriptOperation.UPDATE: lambda scripter, metadata: scripter.get_update_script(metadata),
-            ScriptOperation.SELECT: lambda scripter, metadata: scripter.script_as_select(metadata)
-        }
-
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
 
@@ -46,7 +39,7 @@ class ScriptingService(object):
             connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
 
             scripter = Scripter(connection)
-            script = self._script_map[scripting_operation](scripter, params.metadata)
+            script = scripter.script(scripting_operation, params.metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:
             if self._service_provider.logger is not None:

@@ -43,8 +43,8 @@ class DataEditorSession():
                 connection, initailize_edit_params.schema_name, initailize_edit_params.object_name,
                 initailize_edit_params.object_type)
 
-            execution_state: DataEditSessionExecutionState = query_executer(self._construct_initialize_query(
-                self.table_metadata, initailize_edit_params.filters))
+            execution_state: DataEditSessionExecutionState = query_executer(self._construct_initialize_query(connection,
+                                                                            self.table_metadata, initailize_edit_params.filters))
 
             if execution_state.query is None:
                 message = execution_state.message

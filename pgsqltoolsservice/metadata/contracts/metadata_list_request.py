@@ -5,14 +5,11 @@
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata  # noqa
-import pgsqltoolsservice.utils as utils
 from typing import List  # noqa
+from pgsqltoolsservice.serialization import Serializable
 
 
-class MetadataListParameters:
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+class MetadataListParameters(Serializable):
 
     def __init__(self):
         self.owner_uri: str = None
