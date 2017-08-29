@@ -1,3 +1,7 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
 
 import re
 from typing import Tuple
@@ -19,4 +23,4 @@ def process_urn(urn_path: str) -> Tuple[str, int, str]:
     if match is None:
         raise ValueError('The URN is invalid')    # TODO: Localize?
     capture_groups = match.groups()
-    return capture_groups
+    return capture_groups[0], int(capture_groups[1]), capture_groups[2]

@@ -124,7 +124,7 @@ class NodeObject(metaclass=ABCMeta):
 
         # Get the matching object
         # TODO: Create a .get method for NodeCollection (see https://github.com/Microsoft/carbon/issues/1713)
-        obj = collection[int(oid)]
+        obj = collection[oid]
         return obj.get_object_by_urn(remaining)
 
     def refresh(self) -> None:
