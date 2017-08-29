@@ -855,6 +855,26 @@ select * from t1;'''
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
 
+    def test_batches_strip_comments(self):
+        """Test that we do not attempt to execute a batch consisting only of comments"""
+        full_query = '''select * from t1;
+-- test
+-- test
+;select * from t1;
+-- test
+-- test;'''
+
+        # If I build a query that contains a batch consisting of only comments
+        query = Query('test_uri', full_query)
+
+        # Then there is only a batch for each non-comment statement
+        self.assertEqual(len(query.batches), 2)
+
+        # And each batch should have the correct location information
+        expected_selections = [(0, 0, 0, 16), (3, 1, 3, 17)]
+        for index, batch in enumerate(query.batches):
+            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
+
 
 def get_execute_string_params() -> ExecuteStringParams:
     """Get a simple ExecutestringParams"""
