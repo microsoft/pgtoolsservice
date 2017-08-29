@@ -133,6 +133,11 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def attstorage(self):
         return self._full_properties.get("attstorage", "")
 
+    @property
+    def is_sql(self):
+        return self._full_properties.get("is_sql", "")
+
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _macro_root(cls) -> List[str]:
@@ -161,7 +166,8 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "attoptions": self.attoptions,
                 "attacl": self.attacl,
                 "seclabels": self.seclabels                                
-            }
+            },
+            "is_sql": self.is_sql
         }        
 
     def _delete_query_data(self) -> dict:

@@ -48,7 +48,8 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             "attacl": "attacl",
             "seclabels": "seclabels",
             "attstattarget": "attstattarget",
-            "attstorage": "attstorage",            
+            "attstorage": "attstorage", 
+            "is_sql": "is_sql"           
         }
 
     @property
@@ -71,6 +72,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             "seclabels": "test",
             "attstattarget": "test",
             "attstorage": "test"  
+            "is_sql": "test"
         }
 
     @property
