@@ -3,15 +3,14 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, Dict, Optional       # noqa
+from typing import Optional       # noqa
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.scripting.scripter import Scripter
 from pgsqltoolsservice.scripting.contracts import (
-    ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST, ScriptOperation
+    ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
-from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata     # noqa
 import pgsqltoolsservice.utils as utils
 
 
