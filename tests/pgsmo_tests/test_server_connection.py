@@ -21,7 +21,7 @@ class TestServerConnection(unittest.TestCase):
         # Then: The properties should be properly set
         self.assertEqual(server_conn._conn, mock_conn)
         self.assertEqual(server_conn.connection, mock_conn)
-        expected_dict = {'dbname': 'postgres', 'host': 'localhost', 'port': '25565'}
+        expected_dict = {'dbname': 'postgres', 'host': 'localhost', 'port': '25565', 'user': 'postgres'}
         self.assertDictEqual(server_conn._dsn_parameters, expected_dict)
         self.assertDictEqual(server_conn.dsn_parameters, expected_dict)
         self.assertTupleEqual((10, 2, 16), server_conn.version)
