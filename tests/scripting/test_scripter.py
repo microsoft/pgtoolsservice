@@ -98,10 +98,11 @@ class TestScripter(unittest.TestCase):
 
         def column_mock_fn():
             mock_column._template_root = mock.MagicMock(return_value=Column.TEMPLATE_ROOT)
-            mock_column._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName", "cltype":"TestDatatype", 
-                                                                                   "schema":"TestSchema","table":"TestTable"},
-                                                                                   "is_sql": "true"
-                                                                        })
+            mock_column._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",
+                                                                                   "cltype": "TestDatatype",
+                                                                                   "schema": "TestSchema",
+                                                                                   "table": "TestTable"},
+                                                                          "is_sql": "true"})
             result = mock_column.create_script()
             return result
 
@@ -114,7 +115,7 @@ class TestScripter(unittest.TestCase):
 
         # If I try to get create script
         result = self.service.script_as_create()
-        # The result should be the correct template value    
+        # The result should be the correct template value
         self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" ;' in result)
 
     # Helper functions ##################################################################

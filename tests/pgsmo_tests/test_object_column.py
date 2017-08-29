@@ -28,7 +28,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             'not_null': self.node_query['not_null'],
             '_not_null': self.node_query['not_null'],
         }
-    
+
     @property
     def full_properties(self):
         return {
@@ -48,8 +48,8 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             "attacl": "attacl",
             "seclabels": "seclabels",
             "attstattarget": "attstattarget",
-            "attstorage": "attstorage", 
-            "is_sql": "is_sql"           
+            "attstorage": "attstorage",
+            "is_sql": "is_sql"
         }
 
     @property
@@ -71,7 +71,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             "attacl": "test",
             "seclabels": "test",
             "attstattarget": "test",
-            "attstorage": "test"  
+            "attstorage": "test",
             "is_sql": "test"
         }
 

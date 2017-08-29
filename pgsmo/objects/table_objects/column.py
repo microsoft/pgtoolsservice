@@ -68,7 +68,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def not_null(self) -> Optional[bool]:
         return self._not_null
-    
+
     @property
     def cltype(self):
         return self._full_properties.get("cltype", "")
@@ -108,7 +108,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def defval(self):
         return self._full_properties.get("defval", "")
-    
+
     @property
     def description(self):
         return self._full_properties.get("description", "")
@@ -124,11 +124,11 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def seclabels(self):
         return self._full_properties.get("seclabels", "")
-    
+
     @property
     def attstattarget(self):
         return self._full_properties.get("attstattarget", "")
-    
+
     @property
     def attstorage(self):
         return self._full_properties.get("attstorage", "")
@@ -137,12 +137,11 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def is_sql(self):
         return self._full_properties.get("is_sql", "")
 
-
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _macro_root(cls) -> List[str]:
-         return [cls.MACRO_ROOT]
-    
+        return [cls.MACRO_ROOT]
+
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
@@ -165,10 +164,10 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "description": self.description,
                 "attoptions": self.attoptions,
                 "attacl": self.attacl,
-                "seclabels": self.seclabels                                
+                "seclabels": self.seclabels
             },
             "is_sql": self.is_sql
-        }        
+        }
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
@@ -177,8 +176,8 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "schema": self.schema,
                 "table": self.table,
                 "name": self.name
-            }             
-        }        
+            }
+        }
 
     def _update_query_data(self) -> dict:
         """ Function that returns data for update script """
