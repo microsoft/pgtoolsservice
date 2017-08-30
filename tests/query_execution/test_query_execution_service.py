@@ -871,7 +871,7 @@ select * from t1;'''
 -- test
 -- test;'''
 
-        # If I build a query that contains a batch consisting of only comments
+        # If I build a query that contains a batch consisting of only comments, in addition to other valid batches
         query = Query('test_uri', full_query)
 
         # Then there is only a batch for each non-comment statement
