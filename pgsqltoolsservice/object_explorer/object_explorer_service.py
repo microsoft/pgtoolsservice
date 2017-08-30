@@ -135,17 +135,6 @@ class ObjectExplorerService(object):
                 if self._service_provider.logger is not None:
                     self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
 
-    def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
-        for database in session.server.databases:
-            if database._is_connected:
-                close_result = database._close_connection()
-                if not close_result:
-                    if self._service_provider.logger is not None:
-                        self._service_provider.logger.info(f'could not close the connection for the database {database.name}')
-                else:
-                    if self._service_provider.logger is not None:
-                        self._service_provider.logger.info(f'closed the connection for the database {database.name}')
-
     # PRIVATE HELPERS ######################################################
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
         # Step 1: Find the session
@@ -204,6 +193,17 @@ class ObjectExplorerService(object):
         response.error_message = f'Failed to expand node: {message}'    # TODO: Localize
 
         request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
+
+    def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
+        for database in session.server.databases:
+            if database._is_connected:
+                close_result = database._close_connection()
+                if not close_result:
+                    if self._service_provider.logger is not None:
+                        self._service_provider.logger.info(f'could not close the connection for the database {database.name}')
+                else:
+                    if self._service_provider.logger is not None:
+                        self._service_provider.logger.info(f'closed the connection for the database {database.name}')
 
     def _get_session(self, request_context: RequestContext, params: ExpandParameters) -> Optional[ObjectExplorerSession]:
         try:

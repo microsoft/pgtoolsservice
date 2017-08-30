@@ -351,7 +351,7 @@ class TestObjectExplorer(unittest.TestCase):
         db._is_connected = True
         db._close_connection = mock.MagicMock(return_value=True)
         session.server = mock_server
-        session.server._databases = [db]
+        session.server._child_objects[Database.__name__] = [db]
 
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         cs.disconnect = mock.MagicMock(return_value=False)
@@ -400,7 +400,7 @@ class TestObjectExplorer(unittest.TestCase):
         name = 'dbname'
         mock_server = Server(MockConnection(name))
         session.server = mock_server
-        session.server._databases = []
+        session.server._child_objects[Database.__name__] = []
         cs.disconnect = mock.MagicMock(return_value=True)
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
@@ -433,7 +433,7 @@ class TestObjectExplorer(unittest.TestCase):
         db._is_connected = True
         db._close_connection = mock.MagicMock(return_value=True)
         session.server = mock_server
-        session.server._databases = [db]
+        session.server._child_objects[Database.__name__] = [db]
         cs.disconnect = mock.MagicMock(return_value=True)
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
@@ -466,7 +466,7 @@ class TestObjectExplorer(unittest.TestCase):
         db._is_connected = True
         db._close_connection = mock.MagicMock(return_value=False)
         session.server = mock_server
-        session.server._databases = [db]
+        session.server._child_objects[Database.__name__] = [db]
         cs.disconnect = mock.MagicMock(return_value=True)
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
@@ -500,7 +500,7 @@ class TestObjectExplorer(unittest.TestCase):
         db._is_connected = True
         db._close_connection = mock.MagicMock(return_value=True)
         session.server = mock_server
-        session.server._databases = [db]
+        session.server._child_objects[Database.__name__] = [db]
 
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
         cs.disconnect = mock.MagicMock(return_value=True)
@@ -522,7 +522,7 @@ class TestObjectExplorer(unittest.TestCase):
         db._is_connected = True
         db._close_connection = mock.MagicMock(return_value=False)
         session.server = mock_server
-        session.server._databases = [db]
+        session.server._child_objects[Database.__name__] = [db]
 
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
         cs.disconnect = mock.MagicMock(return_value=True)
@@ -544,7 +544,7 @@ class TestObjectExplorer(unittest.TestCase):
         db._is_connected = True
         db._close_connection = mock.MagicMock(return_value=True)
         session.server = mock_server
-        session.server._databases = [db]
+        session.server._child_objects[Database.__name__] = [db]
 
         cs.disconnect = mock.MagicMock(return_value=False)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
@@ -775,7 +775,7 @@ class TestObjectExplorer(unittest.TestCase):
         db._oid = 12345
         db._create_connection = mock.MagicMock(return_value=None)
         session.server = mock_server
-        session.server._databases = [db]
+        session.server._child_objects[Database.__name__] = [db]
 
         # ... Define validation for the return notification
         def validate_success_notification(response: ExpandCompletedParameters):

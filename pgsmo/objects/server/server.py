@@ -7,11 +7,8 @@ from typing import Dict, Mapping, Optional, Tuple                # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
 from psycopg2.extensions import connection
-<<<<<<< HEAD
-=======
 
 from pgsmo.objects.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
->>>>>>> 51f979c4b40096920f67e0c1a8e3939f14e7114a
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
