@@ -7,7 +7,6 @@ from abc import ABCMeta, abstractmethod
 from collections import Iterator
 from urllib.parse import urljoin
 from typing import Callable, Dict, Generic, List, Optional, Union, Type, TypeVar, KeysView, ItemsView
-
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils as utils
 import pgsmo.utils.templating as templating
@@ -42,7 +41,7 @@ class NodeObject(metaclass=ABCMeta):
         if parent_obj is None:
             cols, rows = root_server.connection.execute_dict(sql)
         else:
-            database_node = cls._get_database_node(parent_obj)
+            database_node = parent_obj.get_database_node()
             cols, rows = database_node.connection.execute_dict(sql)
 
         return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
@@ -64,13 +63,6 @@ class NodeObject(metaclass=ABCMeta):
         # Declare node basic properties
         self._name: str = name
         self._oid: Optional[int] = None
-
-    @classmethod
-    def _get_database_node(cls, node: 'NodeObject') -> 'NodeObject':
-        if node.parent is None:
-            return node
-        else:
-            return node._get_database_node(node.parent)
 
     # PROPERTIES ###########################################################
     @property
@@ -141,6 +133,18 @@ class NodeObject(metaclass=ABCMeta):
     def refresh(self) -> None:
         """Refreshes and lazily loaded data"""
         self._refresh_child_collections()
+
+    def get_database_node(self) -> 'NodeObject':
+        if self is None:
+            return None
+
+        if self.parent is None:
+            if self.__class__.__name__ == 'Database':
+                return self
+            else:
+                return None
+        else:
+            return self.parent.get_database_node()
 
     # STATIC HELPERS #######################################################
     @classmethod
