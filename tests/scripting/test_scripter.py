@@ -8,10 +8,11 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Server
+from pgsmo import Table, DataType, Schema, Server, Column
 from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
+from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 
 import tests.utils as utils
 
@@ -139,6 +140,7 @@ class TestScripterOld(unittest.TestCase):
         self.connection = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
         self.scripter = scripter.Scripter(self.connection)
         self.server = self.scripter.server
+        self.service = ScriptingService()
 
     def test_table_create_script(self):
         """ Tests create script for tables"""
@@ -177,6 +179,32 @@ class TestScripterOld(unittest.TestCase):
         # TODO
         self._verify_update_script(object_metadata, ['ALTER TYPE None', 'OWNER TO Me', 'RENAME TO test', 'SET SCHEMA myschema'])
         self._verify_delete_script(object_metadata, ['DROP TYPE myschema.test'])
+
+    def test_column_scripting(self):
+        """ Helper function to test create script for column """
+        # Set up the mocks
+        mock_column = Column(self.server, "testTable", 'testName', 'testDatatype')
+
+        def column_mock_fn():
+            mock_column._template_root = mock.MagicMock(return_value=Column.TEMPLATE_ROOT)
+            mock_column._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",
+                                                                                   "cltype": "TestDatatype",
+                                                                                   "schema": "TestSchema",
+                                                                                   "table": "TestTable"}})
+            result = mock_column.create_script()
+            return result
+
+        def scripter_mock_fn():
+            mock_column.create_script = mock.MagicMock(return_value=column_mock_fn())
+            return mock_column.create_script()
+
+        self.scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        self.service.script_as_create = mock.MagicMock(return_value=self.scripter.get_create_script())
+
+        # If I try to get create script
+        result = self.service.script_as_create()
+        # The result should be the correct template value
+        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" \n\n"TestDatatype"' in result)
 
     # Helper functions ##################################################################
     def _as_node_collection(self, object_list: List[Any]) -> NodeCollection[Any]:
