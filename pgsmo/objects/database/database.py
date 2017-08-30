@@ -134,15 +134,13 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         return self._schemas
 
     # METHODS ##############################################################
-    def _create_connection(self, options: dict) -> utils.querying.ServerConnection:
+    def _create_connection(self, options: dict) -> None:
         # Connect using psycopg2
         if not self._is_connected:
             connection = psycopg2.connect(**options)
             if connection is not None:
                 self.connection = utils.querying.ServerConnection(connection)
                 self._is_connected = True
-            else:
-                self.connection
 
     def _close_connection(self) -> bool:
         # disconnect using psycopg2

@@ -196,7 +196,7 @@ class ObjectExplorerService(object):
 
     def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
         for database in session.server.databases:
-            if database._is_connected:
+            if database.is_connected:
                 close_result = database._close_connection()
                 if not close_result:
                     if self._service_provider.logger is not None:
