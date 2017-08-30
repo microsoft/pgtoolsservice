@@ -71,71 +71,71 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def cltype(self):
-        return self._full_properties.get("cltype", "")
+        return self._full_properties["cltype"]
 
     @property
     def schema(self):
-        return self._full_properties.get("schema", "")
+        return self._full_properties["schema"]
 
     @property
     def table(self):
-        return self._full_properties.get("table", "")
+        return self._full_properties["table"]
 
     @property
     def displaytypname(self):
-        return self._full_properties.get("displaytypname", "")
+        return self._full_properties["displaytypname"]
 
     @property
     def attlen(self):
-        return self._full_properties.get("attlen", "")
+        return self._full_properties["attlen"]
 
     @property
     def attprecision(self):
-        return self._full_properties.get("attprecision", "")
+        return self._full_properties["attprecision"]
 
     @property
     def hasSqrBracket(self):
-        return self._full_properties.get("hasSqrBracket", "")
+        return self._full_properties["hasSqrBracket"]
 
     @property
     def collspcname(self):
-        return self._full_properties.get("collspcname", "")
+        return self._full_properties["collspcname"]
 
     @property
     def attnotnull(self):
-        return self._full_properties.get("attnotnull", "")
+        return self._full_properties["attnotnull"]
 
     @property
     def defval(self):
-        return self._full_properties.get("defval", "")
+        return self._full_properties["defval"]
 
     @property
     def description(self):
-        return self._full_properties.get("description", "")
+        return self._full_properties["description"]
 
     @property
     def attoptions(self):
-        return self._full_properties.get("attoptions", "")
+        return self._full_properties["attoptions"]
 
     @property
     def attacl(self):
-        return self._full_properties.get("attacl", "")
+        return self._full_properties["attacl"]
 
     @property
     def seclabels(self):
-        return self._full_properties.get("seclabels", "")
+        return self._full_properties["seclabels"]
 
     @property
     def attstattarget(self):
-        return self._full_properties.get("attstattarget", "")
+        return self._full_properties["attstattarget"]
 
     @property
     def attstorage(self):
-        return self._full_properties.get("attstorage", "")
+        return self._full_properties["attstorage"]
 
     @property
     def is_sql(self):
-        return self._full_properties.get("is_sql", "")
+        return self._full_properties["is_sql"]
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
