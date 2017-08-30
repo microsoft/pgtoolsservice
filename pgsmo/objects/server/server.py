@@ -6,7 +6,6 @@
 from typing import Dict, Optional, Tuple                # noqa
 
 from psycopg2.extensions import connection
-
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.role.role import Role
@@ -24,7 +23,6 @@ class Server:
         """
         # Everything we know about the server will be based on the connection
         self._conn: utils.querying.ServerConnection = utils.querying.ServerConnection(conn)
-        self.activedbconnection: utils.querying.ServerConnection = self._conn
 
         # Declare the server properties
         props = self._conn.dsn_parameters

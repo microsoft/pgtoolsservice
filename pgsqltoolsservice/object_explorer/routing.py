@@ -292,9 +292,7 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     """Function to generate a list of databases"""
     if is_refresh:
         session.server.refresh()
-    for node in session.server.databases:
-        if node.can_connect:
-            yield _get_node_info(node, current_path, 'Database', is_leaf=False)
+    return [_get_node_info(node, current_path, 'Database', is_leaf=False) for node in session.server.databases if node.can_connect]
 
 
 def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -339,12 +337,7 @@ ROUTING_TABLE = {
         None
     ),
     re.compile('^/databases/$'): RoutingTarget(None, _databases),
-    re.compile('^/databases/(?P<dbid>\d+)/$'): RoutingTarget(
-        [
-            Folder('Schemas', 'schemas')
-        ],
-        None
-    ),
+    re.compile('^/databases/(?P<dbid>\d+)/$'): RoutingTarget([Folder('Schemas', 'schemas')], None),
     re.compile('^/databases/(?P<dbid>\d+)/schemas/$'): RoutingTarget(None, _schemas),
     re.compile('^/databases/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/$'): RoutingTarget(
         [

@@ -37,7 +37,11 @@ class NodeObject(metaclass=ABCMeta):
             macro_roots=cls._macro_root(),
             **template_vars
         )
-        cols, rows = root_server.activedbconnection.execute_dict(sql)
+        if parent_obj is None:
+            cols, rows = root_server.connection.execute_dict(sql)
+        else:
+            database_node = cls._get_database_node(parent_obj)
+            cols, rows = database_node.connection.execute_dict(sql)
 
         return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
 
@@ -58,6 +62,13 @@ class NodeObject(metaclass=ABCMeta):
         # Declare node basic properties
         self._name: str = name
         self._oid: Optional[int] = None
+
+    @classmethod
+    def _get_database_node(cls, node: 'NodeObject') -> 'NodeObject':
+        if node.parent is None:
+            return node
+        else:
+            return node._get_database_node(node.parent)
 
     # PROPERTIES ###########################################################
     @property

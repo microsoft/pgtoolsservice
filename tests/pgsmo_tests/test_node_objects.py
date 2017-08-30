@@ -8,7 +8,10 @@ import unittest.mock as mock
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.server.server import Server
+from pgsmo.objects.database.database import Database
 import tests.pgsmo_tests.utils as utils
+import pgsmo.utils as pgsmo_utils
+from tests.utils import MockConnection
 
 
 class TestNodeCollection(unittest.TestCase):
@@ -389,8 +392,15 @@ class TestNodeObject(unittest.TestCase):
         mock_template_path = mock.MagicMock(return_value="path")
 
         # ... Create an object that will be the parent of these nodes
-        parent = utils.MockNodeObject(mock_server, None, 'parent')
-        parent._oid = 123
+        mock_connection = MockConnection(dsn_parameters={
+            'host': 'myserver',
+            'dbname': 'postgres',
+            'user': 'postgres'
+        })
+        name = 'dbname'
+        parent = Database(mock_server, name)
+        parent.connection = pgsmo_utils.querying.ServerConnection(mock_connection)
+        parent.connection.execute_dict = mock_executor
 
         # ... Patch the template rendering, and the _from_node_query
         patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
@@ -405,7 +415,6 @@ class TestNodeObject(unittest.TestCase):
         # Then:
         # ... The template path and template renderer should have been called once
         mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_server.version)
-        mock_render.assert_called_once_with('path', macro_roots=None, **{'parent_id': 123})
 
         # ... A query should have been executed
         mock_executor.assert_called_once_with('SQL')

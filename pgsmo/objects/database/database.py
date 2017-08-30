@@ -10,6 +10,8 @@ from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
 import pgsmo.utils.templating as templating
+import pgsmo.utils as utils
+import psycopg2
 
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
@@ -31,6 +33,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
             cancreate bool: Whether or not the database can be created by the current user
             owner int: Object ID of the user that owns the database
             datistemplate bool: Whether or not the database is a template database
+            canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
         db = cls(server, kwargs['name'])
@@ -52,14 +55,20 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
-        self._is_connected: bool = server.maintenance_db_name == name
-
         # Declare the optional parameters
         self._tablespace: Optional[str] = None
         self._allow_conn: Optional[bool] = None
         self._is_template: Optional[bool] = None
+        self._can_connect: Optional[bool] = None
         self._can_create: Optional[bool] = None
         self._owner_oid: Optional[int] = None
+        self.connection: utils.querying.ServerConnection = None
+
+        if server.maintenance_db_name == name:
+            self._is_connected: bool = True
+            self.connection = server.connection
+        else:
+            self._is_connected: bool = False
 
         # Declare the child items
         self._schemas = self._register_child_collection(lambda: Schema.get_nodes_for_parent(self._server, self))
@@ -90,6 +99,10 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     def tablespace(self) -> str:
         return self._tablespace
 
+    @property
+    def is_connected(self) -> bool:
+        return self._is_connected
+
     # -FULL OBJECT PROPERTIES ##############################################
     @property
     def encoding(self) -> str:
@@ -119,6 +132,25 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def schemas(self) -> NodeCollection[Schema]:
         return self._schemas
+
+    # METHODS ##############################################################
+    def _create_connection(self, options: dict) -> utils.querying.ServerConnection:
+        # Connect using psycopg2
+        if not self._is_connected:
+            connection = psycopg2.connect(**options)
+            if connection is not None:
+                self.connection = utils.querying.ServerConnection(connection)
+                self._is_connected = True
+            else:
+                self.connection
+
+    def _close_connection(self) -> bool:
+        # disconnect using psycopg2
+        if self._is_connected or self.connection is not None:
+            self.connection.connection.close()
+            return True
+        else:
+            return False
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod

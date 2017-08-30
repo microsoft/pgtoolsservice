@@ -23,7 +23,6 @@ from pgsqltoolsservice.object_explorer.routing import route_request
 from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import pgsqltoolsservice.utils as utils
-import pgsmo.utils as pgsmoutils
 
 
 class ObjectExplorerService(object):
@@ -98,16 +97,15 @@ class ObjectExplorerService(object):
             if session is not None:
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
-                database_connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXPLORER_DATABASE)
-                if not connect_result or not database_connect_result:
+                self._close_database_connections(session)
+                if not connect_result:
                     if self._service_provider.logger is not None:
-                        self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
+                        self._service_provider.logger.info(f'Could not close the OE session with Id {session.id}')
                     request_context.send_response(False)
                 else:
                     request_context.send_response(True)
             else:
                 request_context.send_response(False)
-
         except Exception as e:
             message = f'Failed to close OE session: {str(e)}'   # TODO: Localize
             if self._service_provider.logger is not None:
@@ -128,6 +126,7 @@ class ObjectExplorerService(object):
             self._service_provider.logger.info('Closing all the OE sessions')
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         for key, session in self._session_map.items():
+            self._close_database_connections(session)
             connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
             if connect_result:
                 if self._service_provider.logger is not None:
@@ -135,6 +134,17 @@ class ObjectExplorerService(object):
             else:
                 if self._service_provider.logger is not None:
                     self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
+
+    def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
+        for database in session.server.databases:
+            if database._is_connected:
+                close_result = database._close_connection()
+                if not close_result:
+                    if self._service_provider.logger is not None:
+                        self._service_provider.logger.info(f'could not close the connection for the database {database.name}')
+                else:
+                    if self._service_provider.logger is not None:
+                        self._service_provider.logger.info(f'closed the connection for the database {database.name}')
 
     # PRIVATE HELPERS ######################################################
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
@@ -154,21 +164,16 @@ class ObjectExplorerService(object):
             if task is not None and task.isAlive():
                 return
 
-            if re.search(r'/databases/\d+', params.node_path) is not None:
-                active_database = session.server.activedbconnection.dsn_parameters['dbname']
-                dboid = [int(str) for str in re.findall(r'\d+', params.node_path)][0]
-                selected_database = [db for db in session.server.databases if db.oid == dboid][0].name
-                if active_database != selected_database:
-                    doptions = session.connection_details.options
-                    doptions['dbname'] = selected_database
-                    conndetails = ConnectionDetails.from_data(
-                        session.connection_details.server_name,
-                        None,
-                        session.connection_details.user_name,
-                        doptions
-                    )
-                    activedbconnection = self._get_activedbconnection(session, conndetails)
-                    session.server.activedbconnection = activedbconnection
+            match_obj = re.match(r'/databases/(\d+)/', params.node_path)
+            if match_obj is not None:
+                default_database_name = session.server.connection.dsn_parameters['dbname']
+                dboid = int(match_obj.group(1))
+                selected_database = [db for db in session.server.databases if db.oid == dboid][0]
+                if default_database_name != selected_database.name and not selected_database._is_connected:
+                    conn_options = session.server.connection.dsn_parameters
+                    conn_options['dbname'] = selected_database.name
+                    conn_options.update({'password': session.connection_details.options['password']})
+                    selected_database._create_connection(conn_options)
 
             new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
             new_task.daemon = True
@@ -199,28 +204,6 @@ class ObjectExplorerService(object):
         response.error_message = f'Failed to expand node: {message}'    # TODO: Localize
 
         request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
-
-    def _get_activedbconnection(self, session: ObjectExplorerSession, conndetails: ConnectionDetails) -> Optional[pgsmoutils.querying.ServerConnection]:
-        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        connection = None
-
-        # Step 1: Connect with the provided connection details
-        connect_request = ConnectRequestParams(
-            conndetails,
-            session.id,
-            ConnectionType.OBJECT_EXPLORER_DATABASE
-        )
-        # Step 2: Disconnect the existing connection of same type and create connection with selected database
-        conn_service.disconnect(session.id, ConnectionType.OBJECT_EXPLORER_DATABASE)
-        connect_result = conn_service.connect(connect_request)
-        if connect_result is None:
-            raise RuntimeError('Connection was cancelled during connect')   # TODO Localize
-        if connect_result.error_message is not None:
-            raise RuntimeError(connect_result.error_message)
-
-        # Step 3: Get the connection to use for object explorer
-        connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXPLORER_DATABASE)
-        return pgsmoutils.querying.ServerConnection(connection)
 
     def _get_session(self, request_context: RequestContext, params: ExpandParameters) -> Optional[ObjectExplorerSession]:
         try:
