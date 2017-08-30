@@ -216,7 +216,7 @@ def _sequences(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
 
 def _get_schema_child_object(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
                              match_params: dict, node_type: str, schema_propname: str) -> List[NodeInfo]:
-    schema = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
+    schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     child_objects = getattr(schema, schema_propname)
     return [
         _get_node_info(node, current_path, node_type, schema=schema.name)

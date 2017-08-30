@@ -220,7 +220,7 @@ class NodeObject(metaclass=ABCMeta):
 
     def _refresh_child_collections(self) -> None:
         """Iterates over the registered child collections and property collections and resets them"""
-        for node_collection in self._child_collections:
+        for key, node_collection in self._child_collections.items():
             node_collection.reset()
 
         for prop_collection in self._property_collections:

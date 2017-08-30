@@ -497,7 +497,7 @@ class TestNodeObject(unittest.TestCase):
         collection1.reset = mock.MagicMock()
         collection2 = node.NodeCollection(node_generator)
         collection2.reset = mock.MagicMock()
-        node_obj._child_collections = [collection1, collection2]
+        node_obj._child_collections = {'collection1': collection1, 'collection2': collection2}
 
         # ... Add a couple property collections
         prop_generator = mock.MagicMock()
