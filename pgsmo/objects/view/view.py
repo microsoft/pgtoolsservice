@@ -42,15 +42,9 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare child items
-        self._columns: NodeCollection[Column] = self._register_child_collection(
-            lambda: Column.get_nodes_for_parent(self._server, self)
-        )
-        self._rules: NodeCollection[Rule] = self._register_child_collection(
-            lambda: Rule.get_nodes_for_parent(self._server, self)
-        )
-        self._triggers: NodeCollection[Trigger] = self._register_child_collection(
-            lambda: Trigger.get_nodes_for_parent(self._server, self)
-        )
+        self._columns: NodeCollection[Column] = self._register_child_collection(Column)
+        self._rules: NodeCollection[Rule] = self._register_child_collection(Rule)
+        self._triggers: NodeCollection[Trigger] = self._register_child_collection(Trigger)
 
     # PROPERTIES ###########################################################
     @property

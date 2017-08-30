@@ -15,7 +15,7 @@ from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
 from pgsqltoolsservice.disaster_recovery import disaster_recovery_service, DisasterRecoveryService
 from pgsqltoolsservice.disaster_recovery.contracts import BackupParams, RestoreParams
-from pgsqltoolsservice.tasks import TaskStatus
+from pgsqltoolsservice.tasks import Task, TaskService, TaskStatus
 from pgsqltoolsservice.utils import constants
 from tests import utils
 
@@ -27,7 +27,10 @@ class TestDisasterRecoveryService(unittest.TestCase):
         """Set up the tests with a disaster recovery service and connection service with mock connection info"""
         self.disaster_recovery_service = DisasterRecoveryService()
         self.connection_service = ConnectionService()
-        self.disaster_recovery_service._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: self.connection_service})
+        self.task_service = TaskService()
+        self.disaster_recovery_service._service_provider = utils.get_mock_service_provider({
+            constants.CONNECTION_SERVICE_NAME: self.connection_service,
+            constants.TASK_SERVICE_NAME: self.task_service})
 
         # Create connection information for use in the tests
         self.connection_details = ConnectionDetails()
@@ -71,6 +74,11 @@ class TestDisasterRecoveryService(unittest.TestCase):
         })
         self.pg_dump_exe = 'pg_dump'
         self.pg_restore_exe = 'pg_restore'
+
+        # Create the mock task for the tests
+        self.mock_action = mock.Mock()
+        self.mock_task = Task(None, None, None, None, None, self.request_context, self.mock_action)
+        self.mock_task.start = mock.Mock()
 
     def test_get_pg_exe_path_local(self):
         """Test the get_pg_exe_path function when the service is running from source code"""
@@ -175,11 +183,10 @@ class TestDisasterRecoveryService(unittest.TestCase):
         mock_process = mock.Mock()
         mock_process.returncode = 0
         mock_process.communicate = mock.Mock(return_value=(b'', b''))
-        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path',
-                        new=mock.Mock(return_value=mock_pg_path)) as mock_get_path, \
-                mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)) as mock_popen:
+        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path', new=mock.Mock(return_value=mock_pg_path)) \
+                as mock_get_path, mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)) as mock_popen:
             # If I perform a backup/restore
-            task_result = test_method(self.connection_info, test_params)
+            task_result = test_method(self.connection_info, test_params, self.mock_task)
             # Then the code got the path of the executable
             mock_get_path.assert_called_once_with(exe_name)
             # And ran the executable as a subprocess
@@ -213,7 +220,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path',
                         new=mock.Mock(return_value=mock_pg_path)), mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)):
             # If I perform a backup/restore that fails
-            task_result = test_method(self.connection_info, test_params)
+            task_result = test_method(self.connection_info, test_params, self.mock_task)
             # Then the task returns a failed result
             self.assertIs(task_result.status, TaskStatus.FAILED)
             # And the task contains the error message from stderr
@@ -230,7 +237,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
     def _test_perform_backup_restore_no_exe_internal(self, test_method: Callable, test_params):
         with mock.patch('os.path.exists', new=mock.Mock(return_value=False)), mock.patch('subprocess.Popen') as mock_popen:
             # If I perform a restore when the pg_restore executable cannot be found
-            task_result = test_method(self.connection_info, test_params)
+            task_result = test_method(self.connection_info, test_params, mock.Mock())
             # Then the task fails and does try to kick off a new process
             self.assertIs(task_result.status, TaskStatus.FAILED)
             mock_popen.assert_not_called()
@@ -249,21 +256,19 @@ class TestDisasterRecoveryService(unittest.TestCase):
         # Set up the connection service to return the test's connection information
         self.connection_service.owner_to_connection_map[self.test_uri] = self.connection_info
         # Set up a mock task so that the restore code does not actually run in a separate thread
-        mock_task = mock.Mock()
-        mock_action = object()
-        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=mock_task)) as mock_task_constructor, \
-                mock.patch('functools.partial', new=mock.Mock(return_value=mock_action)) as mock_partial:
+        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=self.mock_task)) \
+                as mock_task_constructor, mock.patch('functools.partial', new=mock.Mock(return_value=self.mock_action)) as mock_partial:
             # When I call the backup/restore request handler
             test_handler(self.request_context, test_params)
             # Then a mock task is created and started
             mock_task_constructor.assert_called_once()
-            mock_task.start.assert_called_once()
+            self.mock_task.start.assert_called_once()
             # And the mock task was initialized with the expected parameters
             parameters = mock_task_constructor.call_args[0]
             self.assertEqual(parameters[2], constants.PROVIDER_NAME)
             self.assertEqual(parameters[3], self.host)
             self.assertEqual(parameters[4], self.dbname)
-            self.assertIs(parameters[6], mock_action)
+            self.assertIs(parameters[6], self.mock_action)
             mock_partial.assert_called_once_with(test_method, self.connection_info, test_params)
             # And the handler sends an empty response to indicate success
             self.assertEqual(self.request_context.last_response_params, {})
@@ -278,13 +283,43 @@ class TestDisasterRecoveryService(unittest.TestCase):
 
     def _test_handle_backup_restore_request_no_connection(self, test_handler: Callable, test_params):
         # Set up a mock task so that the restore code does not actually run in a separate thread
-        mock_task = mock.Mock()
-        mock_action = object()
-        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=mock_task)) as mock_task_constructor, \
-                mock.patch('functools.partial', new=mock.Mock(return_value=mock_action)):
+        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=self.mock_task)) \
+                as mock_task_constructor, mock.patch('functools.partial', new=mock.Mock(return_value=self.mock_action)):
             # If I call the request handler and there is no connection corresponding to the given owner URI
             test_handler(self.request_context, test_params)
             # Then a mock task is not created
             mock_task_constructor.assert_not_called()
             # And the handler sends an error response to indicate failure
             self.assertIsNotNone(self.request_context.last_error_message)
+
+    def test_canceled_task_does_not_spawn_process(self):
+        """Test that the pg_dump/pg_restore process is not created if the task has been canceled"""
+        # Set up the task to be canceled
+        self.mock_task.canceled = True
+
+        with mock.patch('subprocess.Popen', new=mock.Mock()) as mock_popen:
+            # If I try to perform a backup/restore for a canceled task
+            disaster_recovery_service._perform_backup_restore(self.connection_info, [], {}, self.mock_task)
+
+            # Then the process was not created
+            mock_popen.assert_not_called()
+
+    def test_cancel_backup(self):
+        """Test that backups can be canceled by calling terminate on the pg_dump process"""
+        # Set up the task to be canceled when communicate would normally be called
+
+        def cancel_function(*_, **__):
+            self.mock_task.cancel()
+            return mock.DEFAULT
+
+        self.mock_task.status = TaskStatus.IN_PROGRESS
+        mock_process = mock.Mock()
+        mock_process.communicate = mock.Mock(return_value=(None, None), side_effect=cancel_function)
+        mock_process.terminate = mock.Mock()
+        mock_process.returncode = 0
+        with mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)):
+            # If I perform a backup/restore that kicks off the subprocess and then I cancel the task
+            disaster_recovery_service._perform_backup_restore(self.connection_info, [], {}, self.mock_task)
+
+            # Then the backup/restore process was terminated
+            mock_process.terminate.assert_called_once()

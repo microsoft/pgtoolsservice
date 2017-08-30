@@ -64,7 +64,7 @@ class ConnectionInfo(object):
 
 
 class ConnectionService:
-    """Manage a single connection, including the ability to connect/disconnect"""
+    """Manage connections, including the ability to connect/disconnect"""
 
     def __init__(self):
         self.owner_to_connection_map: Dict[str, ConnectionInfo] = {}
