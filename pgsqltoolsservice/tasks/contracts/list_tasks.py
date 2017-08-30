@@ -3,23 +3,19 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.edit_data.contracts import RowOperationRequest, EditCellResponse
+import pgsqltoolsservice.utils as utils
 
 
-class UpdateCellRequest(RowOperationRequest):
+class ListTasksParameters:
+    """Parameters for the tasks/listtasks request"""
 
-    def __init__(self):
-        RowOperationRequest.__init__(self)
-        self.column_id = None
-        self.new_value = None
-
-
-class UpdateCellResponse(EditCellResponse):
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return utils.serialization.convert_from_dict(cls, dictionary)
 
     def __init__(self):
-        EditCellResponse.__init__(self)
+        self.list_active_tasks_only: bool = None
 
 
-UPDATE_CELL_REQUEST = IncomingMessageConfiguration('edit/updateCell', UpdateCellRequest)
+LIST_TASKS_REQUEST = IncomingMessageConfiguration('tasks/listtasks', ListTasksParameters)

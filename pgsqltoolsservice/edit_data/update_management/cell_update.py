@@ -10,6 +10,11 @@ from pgsqltoolsservice.edit_data.contracts import EditCell # noqa
 
 class CellUpdate():
 
+    @property
+    def db_cell_value(self):
+        # TBD - Implementation pending
+        return None
+
     def __init__(self, column: DbColumn, new_value: str):
         # Need to handle different data types
         self.value: object = new_value

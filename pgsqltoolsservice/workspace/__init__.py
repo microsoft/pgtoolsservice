@@ -3,12 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.workspace.contracts import SQLConfiguration, IntellisenseConfiguration
+from pgsqltoolsservice.workspace.contracts import (
+    Configuration, PGSQLConfiguration, SQLConfiguration, IntellisenseConfiguration,
+    FormatterConfiguration, TextDocumentIdentifier
+)
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 from pgsqltoolsservice.workspace.workspace_service import WorkspaceService
 from pgsqltoolsservice.workspace.workspace import Workspace
 
 __all__ = [
-    'SQLConfiguration', 'IntellisenseConfiguration',
-    'ScriptFile', 'WorkspaceService', 'Workspace'
+    'Configuration', 'PGSQLConfiguration', 'SQLConfiguration', 'IntellisenseConfiguration', 'FormatterConfiguration',
+    'ScriptFile', 'WorkspaceService', 'Workspace', 'TextDocumentIdentifier'
 ]

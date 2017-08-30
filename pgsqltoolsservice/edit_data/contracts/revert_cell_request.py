@@ -8,18 +8,17 @@ from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.edit_data.contracts import RowOperationRequest, EditCellResponse
 
 
-class UpdateCellRequest(RowOperationRequest):
+class RevertCellRequest(RowOperationRequest):
 
     def __init__(self):
         RowOperationRequest.__init__(self)
-        self.column_id = None
-        self.new_value = None
+        self.column_id: int = None
 
 
-class UpdateCellResponse(EditCellResponse):
+class RevertCellResponse(EditCellResponse):
 
     def __init__(self):
-        EditCellResponse.__init__(self)
+        pass
 
 
-UPDATE_CELL_REQUEST = IncomingMessageConfiguration('edit/updateCell', UpdateCellRequest)
+REVERT_CELL_REQUEST = IncomingMessageConfiguration('edit/revertCell', RevertCellRequest)

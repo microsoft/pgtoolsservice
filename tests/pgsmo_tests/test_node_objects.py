@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import urllib.parse as parse
 import unittest
 import unittest.mock as mock
 
@@ -330,7 +331,7 @@ class TestNodeObject(unittest.TestCase):
         utils.assert_threeway_equals(server, node_obj._server, node_obj.server)
         utils.assert_threeway_equals(parent, node_obj._parent, node_obj.parent)
 
-        self.assertListEqual(node_obj._child_collections, [])
+        self.assertDictEqual(node_obj._child_collections, {})
         self.assertEqual(len(node_obj._property_collections), 1)
 
         self.assertIsInstance(node_obj._full_properties, node.NodeLazyPropertyCollection)
@@ -424,25 +425,30 @@ class TestNodeObject(unittest.TestCase):
         node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         # If: I register a child collection
-        generator = mock.MagicMock()
-        collection1 = node_obj._register_child_collection(generator)
+        mock_class1 = mock.MagicMock()
+        mock_class1.__name__ = 'mock_class1'
+        mock_class1.get_nodes_for_parent = mock.MagicMock()
+        collection1 = node_obj._register_child_collection(mock_class1)
 
         # Then
         # ... The returned collection should be a collection with the given generator
         self.assertIsInstance(collection1, node.NodeCollection)
-        self.assertIs(collection1._generator, generator)
 
         # ... The collection should be added to the list of registered collections
         self.assertEqual(len(node_obj._child_collections), 1)
-        self.assertIn(collection1, node_obj._child_collections)
 
         # If: I add another one
-        collection2 = node_obj._register_child_collection(generator)
+        mock_class2 = mock.MagicMock()
+        mock_class2.__name__ = 'mock_class2'
+        mock_class2.get_nodes_for_parent = mock.MagicMock()
+        collection2 = node_obj._register_child_collection(mock_class2)
 
         # Then: The collection should be appended to the list of registered collections
         self.assertEqual(len(node_obj._child_collections), 2)
-        self.assertIn(collection1, node_obj._child_collections)
-        self.assertIn(collection2, node_obj._child_collections)
+        self.assertTrue(mock_class1.__name__ in node_obj._child_collections.keys())
+        self.assertTrue(mock_class2.__name__ in node_obj._child_collections.keys())
+        self.assertIs(node_obj._child_collections[mock_class1.__name__], collection1)
+        self.assertIs(node_obj._child_collections[mock_class2.__name__], collection2)
 
     def test_register_property_collection(self):
         # Setup: Create a node object
@@ -500,8 +506,99 @@ class TestNodeObject(unittest.TestCase):
         collection1.reset.assert_called_once()
         # noinspection PyUnresolvedReferences
         collection2.reset.assert_called_once()
+        # noinspection PyUnresolvedReferences
         props1.reset.assert_called_once()
+        # noinspection PyUnresolvedReferences
         props2.reset.assert_called_once()
+
+    def test_urn_basecase(self):
+        # Setup:
+        # ... Create a node object
+        server = Server(utils.MockConnection(None))
+        node_obj = utils.MockNodeObject(server, None, 'obj_name')
+        node_obj._oid = 123
+
+        # If: I get the URN for a node object
+        urn = node_obj.urn
+
+        # Then:
+        # ... I expect it to be formatted as a URL
+        parsed_url = parse.urlparse(urn)
+
+        # ... The netlocation should be equal to the urn base (with added slashes)
+        # NOTE: Server URN Base is tested in the server class unit tests
+        self.assertEqual(f'//{parsed_url.netloc}/', server.urn_base)
+
+        # ... The path should match Class.OID (with added slashes)
+        self.assertEqual(parsed_url.path, f'/{node_obj.__class__.__name__}.{node_obj.oid}/')
+
+    def test_urn_recursive(self):
+        # Setup:
+        # ... Create a node object with a parent
+        server = Server(utils.MockConnection(None))
+        node_obj1 = utils.MockNodeObject(server, None, 'parent_name')
+        node_obj1._oid = 123
+
+        node_obj2 = utils.MockNodeObject(server, node_obj1, 'obj_name')
+        node_obj2._oid = 456
+
+        # If: I get the URN for the child node object
+        urn = node_obj2.urn
+
+        # Then:
+        # ... I expect it to be formatted as a URL
+        parsed_url = parse.urlparse(urn)
+
+        # ... The netlocation should be equal to the urn base (with added slashes)
+        # NOTE: Server URN Base is tested in the server class unit tests
+        self.assertEqual(f'//{parsed_url.netloc}/', server.urn_base)
+
+        # ... The path should have multiple folders under it (list comprehension removes empty strings)
+        split_path = [x for x in parsed_url.path.split('/') if x]
+        self.assertEqual(len(split_path), 2)
+
+        # ... The parent path should be first
+        self.assertEqual(split_path[0], f'{node_obj1.__class__.__name__}.{node_obj1.oid}')
+
+        # ... The child path should be second
+        self.assertEqual(split_path[1], f'{node_obj2.__class__.__name__}.{node_obj2.oid}')
+
+    def test_get_obj_by_urn_base_case(self):
+        # Setup: Create a node object
+        server = Server(utils.MockConnection(None))
+        node_obj = utils.MockNodeObject(server, None, 'obj_name')
+
+        # If: I have a URN fragment that returns the object
+        fragment = '/'
+        obj = node_obj.get_object_by_urn(fragment)
+
+        # Then: I should get that object back
+        self.assertIs(obj, node_obj)
+
+    def test_get_obj_by_urn_invalid_collection(self):
+        # Setup: Create a node object (without any collections under it)
+        server = Server(utils.MockConnection(None))
+        node_obj = utils.MockNodeObject(server, None, 'obj_name')
+
+        with self.assertRaises(ValueError):
+            # If: I have a URN fragment that goes into a collection that doesn't exist
+            # Then: I should get an exception
+            fragment = '/Database.123/'
+            node_obj.get_object_by_urn(fragment)
+
+    def test_get_obj_by_urn_recurses(self):
+        # Setup: Create a node object with a collection under it
+        server = Server(utils.MockConnection(None))
+        db_obj = utils.MockNodeObject(server, None, 'db_name')
+        sc_obj = utils.MockNodeObject(server, db_obj, 'schema_name')
+        db_obj._child_collections = {'Schema': {123: sc_obj}}
+
+        # If: I ask for an object that recurses
+        fragment = '/Schema.123/'
+        obj = db_obj.get_object_by_urn(fragment)
+
+        # Then: The object I get back should be the same as the one I created
+        self.assertIs(obj, sc_obj)
 
 
 def _get_node_for_parents_mock_connection():
@@ -515,12 +612,12 @@ def _get_node_for_parents_mock_connection():
 
 
 def _get_mock_node_generator():
-    conn = utils.MockConnection(None)
+    server = Server(utils.MockConnection(None))
 
-    mock_object1 = utils.MockNodeObject(conn, None, 'a')
+    mock_object1 = utils.MockNodeObject(server, None, 'a')
     mock_object1._oid = 123
 
-    mock_object2 = utils.MockNodeObject(conn, None, 'b')
+    mock_object2 = utils.MockNodeObject(server, None, 'b')
     mock_object2._oid = 456
 
     mock_objects = [mock_object1, mock_object2]

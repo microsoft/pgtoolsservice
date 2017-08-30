@@ -3,10 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import re
 import unittest
 import unittest.mock as mock
+import urllib.parse as parse
+
+import inflection
 
 from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection
+from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
@@ -42,13 +47,13 @@ class TestServer(unittest.TestCase):
         # ... Recovery options should be a lazily loaded thing
         self.assertIsInstance(server._recovery_props, NodeLazyPropertyCollection)
 
-        # ... The child object collections should be assigned to NodeCollections
-        self.assertIsInstance(server._databases, NodeCollection)
-        self.assertIs(server.databases, server._databases)
-        self.assertIsInstance(server._roles, NodeCollection)
-        self.assertIs(server.roles, server._roles)
-        self.assertIsInstance(server._tablespaces, NodeCollection)
-        self.assertIs(server.tablespaces, server._tablespaces)
+        for key, collection in server._child_objects.items():
+            # ... The child object collection a NodeCollection
+            self.assertIsInstance(collection, NodeCollection)
+
+            # ... There should be a property mapped to the node collection
+            prop = getattr(server, inflection.pluralize(key.lower()))
+            self.assertIs(prop, collection)
 
     def test_recovery_properties(self):
         # Setup:
@@ -77,7 +82,7 @@ class TestServer(unittest.TestCase):
         mock_db = {}
         mock_db_collection = mock.Mock()
         mock_db_collection.__getitem__ = mock.MagicMock(return_value=mock_db)
-        obj._databases = mock_db_collection
+        obj._child_objects[Database.__name__] = mock_db_collection
 
         # If: I retrieve the maintenance db for the server
         maintenance_db = obj.maintenance_db
@@ -85,7 +90,7 @@ class TestServer(unittest.TestCase):
         # Then:
         # ... It must have come from the mock handler
         self.assertIs(maintenance_db, mock_db)
-        obj._databases.__getitem__.assert_called_once_with('dbname')
+        obj._child_objects[Database.__name__].__getitem__.assert_called_once_with('dbname')
 
     def test_refresh(self):
         # Setup:
@@ -106,3 +111,65 @@ class TestServer(unittest.TestCase):
         obj.roles.reset.assert_called_once()
         obj.tablespaces.reset.assert_called_once()
         obj._recovery_props.reset.assert_called_once()
+
+    def test_urn_base(self):
+        # Setup:
+        # ... Create a server object that has a connection
+        server = Server(utils.MockConnection(None))
+
+        # If: I get the URN base for the server
+        urn_base = server.urn_base
+
+        # Then: The urn base should match the expected outcome
+        urn_base_regex = re.compile('//(?P<user>.+)@(?P<db>.+)\.(?P<host>.+):(?P<port>\d+)')
+        urn_base_match = urn_base_regex.match(urn_base)
+        self.assertIsNotNone(urn_base_match)
+        self.assertEqual(urn_base_match.groupdict()['user'], server.connection.dsn_parameters['user'])
+        self.assertEqual(urn_base_match.groupdict()['db'], server.maintenance_db_name)
+        self.assertEqual(urn_base_match.groupdict()['host'], server.host)
+        self.assertEqual(int(urn_base_match.groupdict()['port']), server.port)
+
+    def test_get_obj_by_urn_empty(self):
+        # Setup: Create a server object
+        server = Server(utils.MockConnection(None))
+
+        test_cases = [None, '', '\t \n\r']
+        for test_case in test_cases:
+            with self.assertRaises(ValueError):
+                # If: I get an object by its URN without providing a URN
+                # Then: I should get an exception
+                server.get_object_by_urn(test_case)
+
+    def test_get_obj_by_urn_wrong_server(self):
+        # Setup: Create a server object
+        server = Server(utils.MockConnection(None))
+
+        with self.assertRaises(ValueError):
+            # If: I get an object by its URN with a URN that is invalid for the server
+            # Then: I should get an exception
+            invalid_urn = '//this@is.the.wrong.urn:456/Database.123/'
+            server.get_object_by_urn(invalid_urn)
+
+    def test_get_obj_by_urn_wrong_collection(self):
+        # Setup: Create a server object
+        server = Server(utils.MockConnection(None))
+
+        with self.assertRaises(ValueError):
+            # If: I get an object by its URN with a URN that points to an invalid path off the server
+            # Then: I should get an exception
+            invalid_urn = parse.urljoin(server.urn_base, 'Datatype.123/')
+            server.get_object_by_urn(invalid_urn)
+
+    def test_get_obj_by_urn_success(self):
+        # Setup: Create a server with a database under it
+        server = Server(utils.MockConnection(None))
+        mock_db = Database(server, 'test_db')
+        mock_db._oid = 123
+        server._child_objects[Database.__name__] = {123: mock_db}
+
+        # If: I get an object by its URN
+        urn = parse.urljoin(server.urn_base, '/Database.123/')
+        obj = server.get_object_by_urn(urn)
+
+        # Then: The object I get back should be the same as the object I provided
+        self.assertIs(obj, mock_db)

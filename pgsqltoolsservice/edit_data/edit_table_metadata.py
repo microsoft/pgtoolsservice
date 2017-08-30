@@ -15,6 +15,7 @@ class EditTableMetadata():
     def __init__(self, columns_metadata: List[EditColumnMetadata]):
         self.column_metadata = columns_metadata
         self.escaped_multipart_name = None
+        self.key_columns: List[EditColumnMetadata] = []
 
     def extend(self, db_columns: List[DbColumn]):
         # Extend additional properties from the SMO

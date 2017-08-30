@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
-from pgsqltoolsservice.workspace import WorkspaceService, IntellisenseConfiguration     # noqa
+from pgsqltoolsservice.workspace import WorkspaceService, IntellisenseConfiguration    # noqa
 from pgsqltoolsservice.workspace.workspace import Workspace, ScriptFile
 from pgsqltoolsservice.workspace.contracts import (
     Configuration,
@@ -88,7 +88,7 @@ class TestWorkspaceService(unittest.TestCase):
             # Then: The callback list should be updated
             self.assertListEqual(test_param[1], [test_callback])
 
-    def test_config_defaults(self):
+    def test_intellisense_config_defaults(self):
         # Setup: Create a workspace service
         ws: WorkspaceService = WorkspaceService()
 
@@ -101,6 +101,19 @@ class TestWorkspaceService(unittest.TestCase):
         self.assertFalse(intellisense.enable_lowercase_suggestions)
         self.assertTrue(intellisense.enable_error_checking)
         self.assertTrue(intellisense.enable_quick_info)
+
+    def test_formatter_config_defaults(self):
+        # Setup: Create a workspace service
+        ws: WorkspaceService = WorkspaceService()
+
+        # Then:
+        # ... The config should have sensible default values
+        format_options = ws.configuration.pgsql.format
+        self.assertIsNotNone(format_options)
+        self.assertIsNone(format_options.keyword_case)
+        self.assertIsNone(format_options.identifier_case)
+        self.assertFalse(format_options.strip_comments)
+        self.assertTrue(format_options.reindent)
 
     def test_handle_did_change_config(self):
         # Setup: Create a workspace service with two mock config change handlers
@@ -116,6 +129,14 @@ class TestWorkspaceService(unittest.TestCase):
                     'intellisense': {
                         'enable_intellisense': False
                     }
+                },
+                'pgsql': {
+                    'format': {
+                        'keyword_case': 'upper',
+                        'identifier_case': 'lower',
+                        'strip_comments': True,
+                        'reindent': False,
+                    }
                 }
             }
         })
@@ -127,6 +148,10 @@ class TestWorkspaceService(unittest.TestCase):
 
         # ... The config should have been updated
         self.assertIs(ws.configuration, params.settings)
+        self.assertEqual(ws.configuration.pgsql.format.keyword_case, 'upper')
+        self.assertEqual(ws.configuration.pgsql.format.identifier_case, 'lower')
+        self.assertTrue(ws.configuration.pgsql.format.strip_comments)
+        self.assertFalse(ws.configuration.pgsql.format.reindent)
         # ... And default values that weren't specified in the notification are preserved
         self.assertTrue(ws.configuration.sql.intellisense.enable_suggestions)
 

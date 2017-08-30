@@ -10,7 +10,6 @@ from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionCompleteParams
 from pgsqltoolsservice.utils.constants import CONNECTION_SERVICE_NAME
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
-
 from pgsqltoolsservice.scripting.scripter import Scripter
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 from pgsqltoolsservice.scripting.contracts.scriptas_request import ScriptOperation, ScriptAsParameters, ScriptAsResponse
@@ -34,11 +33,6 @@ class TestScriptingService(unittest.TestCase):
         # Then:
         # ... The service should have its internal state initialized
         self.assertIsNone(ss._service_provider)
-        self.assertIsInstance(ss._script_map, dict)
-
-        # ... The script map should have a mapping for every script operation
-        for operation in ScriptOperation:
-            self.assertIn(operation, ss._script_map)
 
     def test_registration(self):
         # Setup:
@@ -52,7 +46,6 @@ class TestScriptingService(unittest.TestCase):
         ss: ScriptingService = ScriptingService()
         ss.register(sp)
 
-        # Then:
         # Then:
         # ... The service should have registered its request handlers
         server.set_request_handler.assert_called()
@@ -114,11 +107,15 @@ class TestScriptingService(unittest.TestCase):
         patch_path = 'pgsqltoolsservice.scripting.scripting_service.Scripter'
         with mock.patch(patch_path) as scripter_patch:
             mock_scripter: Scripter = Scripter(mock_connection)
-            mock_scripter.script_as_select = mock.MagicMock(return_value=TestScriptingService.MOCK_SCRIPT)
-            mock_scripter.get_create_script = mock.MagicMock(return_value=TestScriptingService.MOCK_SCRIPT)
-            mock_scripter.get_delete_script = mock.MagicMock(return_value=TestScriptingService.MOCK_SCRIPT)
-            mock_scripter.get_update_script = mock.MagicMock(return_value=TestScriptingService.MOCK_SCRIPT)
+            mock_scripter.script = mock.MagicMock(return_value=TestScriptingService.MOCK_SCRIPT)
             scripter_patch.return_value = mock_scripter
+
+            params_metadata = {
+                'metadata_type': 0,
+                'metadata_type_name': 'Table',
+                'name': 'test_table',
+                'schema': 'test_schema'
+            }
 
             # For each operation supported
             for operation in ScriptOperation:
@@ -129,12 +126,7 @@ class TestScriptingService(unittest.TestCase):
                 params = ScriptAsParameters.from_dict({
                     'ownerUri': TestScriptingService.MOCK_URI,
                     'operation': operation,
-                    'metadata': {
-                        'metadata_type': 0,
-                        'metadata_type_name': 'Table',
-                        'name': 'test_table',
-                        'schema': 'test_schema'
-                    }
+                    'metadata': params_metadata
                 })
 
                 ss._handle_scriptas_request(rc.request_context, params)
@@ -143,8 +135,10 @@ class TestScriptingService(unittest.TestCase):
                 # ... The request should have been handled correctly
                 rc.validate()
 
-            # ... All of the scripter methods should have been called
-            mock_scripter.script_as_select.assert_called_once()
-            mock_scripter.get_create_script.assert_called_once()
-            mock_scripter.get_delete_script.assert_called_once()
-            mock_scripter.get_update_script.assert_called_once()
+            # ... All of the scripter methods should have been called once
+            matches = {operation: 0 for operation in ScriptOperation}
+            for call_args in mock_scripter.script.call_args_list:
+                matches[call_args[0][0]] += 1
+
+            for calls in matches.values():
+                self.assertEqual(calls, 1)

@@ -49,30 +49,18 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare child items
-        self._check_constraints: NodeCollection[CheckConstraint] = self._register_child_collection(
-            lambda: CheckConstraint.get_nodes_for_parent(self._server, self)
-        )
-        self._columns: NodeCollection[Column] = self._register_child_collection(
-            lambda: Column.get_nodes_for_parent(self._server, self)
-        )
+        self._check_constraints: NodeCollection[CheckConstraint] = self._register_child_collection(CheckConstraint)
+        self._columns: NodeCollection[Column] = self._register_child_collection(Column)
         self._exclusion_constraints: NodeCollection[ExclusionConstraint] = self._register_child_collection(
-            lambda: ExclusionConstraint.get_nodes_for_parent(self._server, self)
+            ExclusionConstraint
         )
         self._foreign_key_constraints: NodeCollection[ForeignKeyConstraint] = self._register_child_collection(
-            lambda: ForeignKeyConstraint.get_nodes_for_parent(self._server, self)
+            ForeignKeyConstraint
         )
-        self._index_constraints: NodeCollection[IndexConstraint] = self._register_child_collection(
-            lambda: IndexConstraint.get_nodes_for_parent(self._server, self)
-        )
-        self._indexes: NodeCollection[Index] = self._register_child_collection(
-            lambda: Index.get_nodes_for_parent(self._server, self)
-        )
-        self._rules: NodeCollection[Rule] = self._register_child_collection(
-            lambda: Rule.get_nodes_for_parent(self._server, self)
-        )
-        self._triggers: NodeCollection[Trigger] = self._register_child_collection(
-            lambda: Trigger.get_nodes_for_parent(self._server, self)
-        )
+        self._index_constraints: NodeCollection[IndexConstraint] = self._register_child_collection(IndexConstraint)
+        self._indexes: NodeCollection[Index] = self._register_child_collection(Index)
+        self._rules: NodeCollection[Rule] = self._register_child_collection(Rule)
+        self._triggers: NodeCollection[Trigger] = self._register_child_collection(Trigger)
 
     # PROPERTIES ###########################################################
     @property
