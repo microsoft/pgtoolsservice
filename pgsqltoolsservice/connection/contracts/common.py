@@ -51,4 +51,3 @@ class ConnectionType(enum.Enum):
     QUERY_CANCEL = 'QueryCancel'
     OBJECT_EXLPORER = 'ObjectExplorer'
     INTELLISENSE = 'Intellisense'
-    OBJECT_EXPLORER_DATABASE = 'ObjectExplorerDatabase'
