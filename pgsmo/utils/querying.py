@@ -68,3 +68,9 @@ class ServerConnection:
             return cols, rows
         finally:
             cur.close()
+
+    def close(self) -> None:
+        """
+        Closes the psycopg2 connection
+        """
+        self._conn.close()

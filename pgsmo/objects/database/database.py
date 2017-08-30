@@ -147,7 +147,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     def _close_connection(self) -> bool:
         # disconnect using psycopg2
         if self._is_connected or self.connection is not None:
-            self.connection.connection.close()
+            self.connection.close()
             return True
         else:
             return False
