@@ -31,12 +31,13 @@ class Query:
         # Initialize the batches
         statements = sqlparse.split(query_text)
         selection_data = _compute_selection_data_for_batches(statements, query_text)
-        for index, batch_text in enumerate(sqlparse.split(query_text)):
+        for index, batch_text in enumerate(statements):
             # Skip any empty text
-            if not batch_text.strip() or batch_text.strip() == ';':
+            formatted_text = sqlparse.format(batch_text, strip_comments=True).strip()
+            if not formatted_text or formatted_text == ';':
                 continue
             # Create and save the batch
-            batch = Batch(batch_text, len(self.batches), selection_data[index])
+            batch = Batch(formatted_text, len(self.batches), selection_data[index])
             self.batches.append(batch)
 
     def execute(self, connection, batch_start_callback: Callable[['Query', Batch], None] = None, batch_end_callback: Callable[['Query', Batch], None] = None):
