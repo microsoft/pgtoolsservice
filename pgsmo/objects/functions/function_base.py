@@ -160,6 +160,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         return self._full_properties.get("cascade")
 
     # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
     def _macro_root(cls) -> List[str]:
         return [cls.MACRO_ROOT]
 
