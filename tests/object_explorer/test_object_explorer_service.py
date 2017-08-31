@@ -453,43 +453,13 @@ class TestObjectExplorer(unittest.TestCase):
 
     # SHUTDOWN NODE #########################################################
 
-    def test_handle_shutdown_successfulWithSessionsWithDatabases(self):
+    def test_handle_shutdown_successfulWithSessions(self):
         # Setup: Create an OE service and add a session to it
         cs = ConnectionService()
         oe = ObjectExplorerService()
         params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
-        name = 'dbname'
-        mock_server = Server(MockConnection(name))
-        db = Database(mock_server, name)
-        db._is_connected = True
-        db._close_connection = mock.MagicMock(return_value=True)
-        session.server = mock_server
-        session.server._child_objects[Database.__name__] = [db]
-
-        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
-        cs.disconnect = mock.MagicMock(return_value=True)
-
-        # shutdown the session
-        oe._handle_shutdown()
-        oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')
-
-    def test_handle_shutdown_successfulWithSessionsNotWithDatabases(self):
-        # Setup: Create an OE service and add a session to it
-        cs = ConnectionService()
-        oe = ObjectExplorerService()
-        params, session_uri = self._connection_details()
-        session = ObjectExplorerSession(session_uri, params)
-        oe._session_map[session_uri] = session
-        name = 'dbname'
-        mock_server = Server(MockConnection(name))
-        db = Database(mock_server, name)
-        db._is_connected = True
-        db._close_connection = mock.MagicMock(return_value=False)
-        session.server = mock_server
-        session.server._child_objects[Database.__name__] = [db]
-
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
         cs.disconnect = mock.MagicMock(return_value=True)
 
@@ -504,14 +474,6 @@ class TestObjectExplorer(unittest.TestCase):
         params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
-        name = 'dbname'
-        mock_server = Server(MockConnection(name))
-        db = Database(mock_server, name)
-        db._is_connected = True
-        db._close_connection = mock.MagicMock(return_value=True)
-        session.server = mock_server
-        session.server._child_objects[Database.__name__] = [db]
-
         cs.disconnect = mock.MagicMock(return_value=False)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
@@ -528,7 +490,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # shutdown the session
         oe._handle_shutdown()
-        oe._service_provider.logger.info.assert_called_with('Closing all the OE sessions')
+        oe._service_provider.logger.info.assert_called_with('Closing all the OE sessions')    
 
     # EXPAND NODE ##########################################################
     @staticmethod
