@@ -14,7 +14,6 @@ from pgsmo.objects.role.role import Role
 from pgsmo.objects.schema.schema import Schema
 from pgsmo.objects.table.table import Table
 import tests.pgsmo_tests.utils as utils
-from tests.utils import MockConnection
 
 
 class TestNodeCollection(unittest.TestCase):
@@ -395,31 +394,22 @@ class TestNodeObject(unittest.TestCase):
         mock_template_path = mock.MagicMock(return_value="path")
 
         # ... Create an object that will be the parent of these nodes
-        mock_connection = MockConnection(dsn_parameters={
-            'host': 'myserver',
-            'dbname': 'postgres',
-            'user': 'postgres'
-        })
-
         name = 'postgres'
         parent = Database(mock_server, name)
         parent._oid = 123
-        mock_server._db_connection_callback = mock.MagicMock(return_value=mock_connection)
+        parent._connection = utils.MockConnection(None, version="10101")
+        parent._connection.execute_dict = mock_executor
 
         # ... Patch the template rendering, and the _from_node_query
         patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
         patch_template_path = 'pgsmo.objects.node_object.templating.get_template_path'
         patch_from_node_query = 'tests.pgsmo_tests.utils.MockNodeObject._from_node_query'
 
-        with mock.patch(patch_render_template, mock_render, create=True):
-            with mock.patch(patch_template_path, mock_template_path, create=True):
-                with mock.patch(patch_from_node_query, mock_from_node, create=True):
-                    # If: I ask for a collection of nodes *with a parent object*
-                    with mock.patch('ServerConnection') as mockServerConnection:
-                        conn = mockServerConnection.return_value
-                        conn.return_value = utils.MockConnection(None, version="10101")
-                        conn.execute_dict = mock.MagicMock(return_value=([{}, {}], mock_objs))
-                        nodes = utils.MockNodeObject.get_nodes_for_parent(mock_server, parent)
+        with mock.patch(patch_render_template, mock_render, create=True), \
+                mock.patch(patch_template_path, mock_template_path, create=True), \
+                mock.patch(patch_from_node_query, mock_from_node, create=True):
+            # If: I ask for a collection of nodes *with a parent object*
+            nodes = utils.MockNodeObject.get_nodes_for_parent(mock_server, parent)
 
         # Then:
         # ... The template path and template renderer should have been called once
