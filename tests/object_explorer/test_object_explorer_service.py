@@ -21,6 +21,8 @@ from pgsqltoolsservice.object_explorer.contracts import (
     CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
     ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
 )
+from pgsmo.objects.server.server import Server
+from pgsmo.objects.database.database import Database
 from pgsqltoolsservice.utils import constants
 import tests.utils as utils
 from tests.pgsmo_tests.utils import MockConnection
@@ -386,10 +388,19 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_close_session_unsuccessful(self):
         # Setup: Create an OE service
         cs = ConnectionService()
+        mock_connection = {}
         oe = ObjectExplorerService()
         params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
+        name = 'dbname'
+        mock_server = Server(MockConnection(name))
+        db = Database(mock_server, name)
+        db._close_connection = mock.MagicMock(return_value=True)
+        session.server = mock_server
+        session.server._child_objects[Database.__name__] = [db]
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+
         cs.disconnect = mock.MagicMock(return_value=False)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 

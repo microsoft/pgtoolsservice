@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, Mapping, Optional, Tuple                # noqa
+from typing import Dict, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
 from psycopg2.extensions import connection
@@ -19,14 +19,14 @@ class Server:
     TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
     # CONSTRUCTOR ##########################################################
-    def __init__(self, conn: connection, action=None):
+    def __init__(self, conn: connection, db_connection_callback: Callable[[str], connection] = None):
         """
         Initializes a server object using the provided connection
         :param conn: psycopg2 connection
         """
         # Everything we know about the server will be based on the connection
         self._conn: utils.querying.ServerConnection = utils.querying.ServerConnection(conn)
-        self._get_connection_action = action
+        self._db_connection_callback = db_connection_callback
 
         # Declare the server properties
         props = self._conn.dsn_parameters
@@ -51,9 +51,9 @@ class Server:
         return self._conn
 
     @property
-    def get_connection_action(self):
+    def db_connection_callback(self):
         """Connection to the server/db that this object will use"""
-        return self._get_connection_action
+        return self._db_connection_callback
 
     @property
     def host(self) -> str:

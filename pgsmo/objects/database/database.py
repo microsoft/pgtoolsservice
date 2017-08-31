@@ -50,6 +50,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         """
         Initializes a new instance of a database
         """
+        self._server = server
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
@@ -61,13 +62,10 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         self._can_connect: Optional[bool] = None
         self._can_create: Optional[bool] = None
         self._owner_oid: Optional[int] = None
-        self.connection: ServerConnection = None
+        self._connection: ServerConnection = None
 
         if server.maintenance_db_name == name:
-            self._is_connected: bool = True
-            self.connection = server.connection
-        else:
-            self._is_connected: bool = False
+            self._connection = server.connection
 
         # Declare the child items
         self._schemas = self._register_child_collection(Schema)
@@ -77,6 +75,16 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def allow_conn(self) -> bool:
         return self._allow_conn
+
+    @property
+    def connection(self) -> ServerConnection:
+        if self._connection is not None:
+            return self._connection
+        else:
+            connection = ServerConnection(self._server.db_connection_callback(self.name))
+            if connection.dsn_parameters['dbname'] == self.name:
+                self._connection = connection
+                return self._connection
 
     @property
     def oid(self) -> int:
@@ -97,10 +105,6 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def tablespace(self) -> str:
         return self._tablespace
-
-    @property
-    def is_connected(self) -> bool:
-        return self._is_connected
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property

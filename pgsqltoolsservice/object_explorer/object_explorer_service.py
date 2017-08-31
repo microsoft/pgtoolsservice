@@ -5,10 +5,11 @@
 
 import functools
 import threading
-import psycopg2
-import psycopg2.extensions
 from typing import Dict, Optional     # noqa
 from urllib.parse import quote
+
+import psycopg2
+import psycopg2.extensions
 
 from pgsmo import Server
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
@@ -97,6 +98,7 @@ class ObjectExplorerService(object):
             # Try to remove the session
             session = self._session_map.pop(params.session_id, None)
             if session is not None:
+                self._close_database_connections(session)
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
                 if not connect_result:
@@ -127,6 +129,7 @@ class ObjectExplorerService(object):
             self._service_provider.logger.info('Closing all the OE sessions')
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         for key, session in self._session_map.items():
+            self._close_database_connections(session)
             connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
             if connect_result:
                 if self._service_provider.logger is not None:
@@ -136,6 +139,19 @@ class ObjectExplorerService(object):
                     self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
 
     # PRIVATE HELPERS ######################################################
+
+    def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
+        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        for database in session.server.databases:
+            if database.is_connected:
+                close_result = conn_service.disconnect(session.id + database.name, ConnectionType.OBJECT_EXLPORER)
+                if not close_result:
+                    if self._service_provider.logger is not None:
+                        self._service_provider.logger.info(f'could not close the connection for the database {database.name}')
+                else:
+                    if self._service_provider.logger is not None:
+                        self._service_provider.logger.info(f'closed the connection for the database {database.name}')
+
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
         # Step 1: Find the session
         session = self._get_session(request_context, params)
@@ -208,7 +224,7 @@ class ObjectExplorerService(object):
     def _create_connection(self, session: ObjectExplorerSession, database_name: str) -> Optional[psycopg2.extensions.connection]:
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
 
-        doptions = session.connection_details.options
+        doptions = session.connection_details.options.copy()
         doptions['dbname'] = database_name
         conn_details = ConnectionDetails.from_data(
             session.connection_details.server_name,
@@ -217,14 +233,15 @@ class ObjectExplorerService(object):
             doptions
         )
 
-        connect_request = ConnectRequestParams(conn_details, session.id + database_name, ConnectionType.OBJECT_EXLPORER)
+        key_uri = session.id + database_name
+        connect_request = ConnectRequestParams(conn_details, key_uri, ConnectionType.OBJECT_EXLPORER)
         connect_result = conn_service.connect(connect_request)
         if connect_result is None:
             raise RuntimeError(f'could not create connection for database {database_name}')   # TODO Localize
         if connect_result.error_message is not None:
             raise RuntimeError(connect_result.error_message)
 
-        connection = conn_service.get_connection(session.id + database_name, ConnectionType.OBJECT_EXLPORER)
+        connection = conn_service.get_connection(key_uri, ConnectionType.OBJECT_EXLPORER)
         return connection
 
     def _initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
