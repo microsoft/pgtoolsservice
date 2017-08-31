@@ -50,7 +50,6 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         """
         Initializes a new instance of a database
         """
-        self._server = server
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
@@ -85,6 +84,8 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
             if connection.dsn_parameters['dbname'] == self.name:
                 self._connection = connection
                 return self._connection
+            else:
+                raise ValueError('connection create for wrong database')
 
     @property
     def oid(self) -> int:

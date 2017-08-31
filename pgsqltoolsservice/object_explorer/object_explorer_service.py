@@ -147,9 +147,6 @@ class ObjectExplorerService(object):
             if not close_result:
                 if self._service_provider.logger is not None:
                     self._service_provider.logger.info(f'could not close the connection for the database {database.name}')
-            else:
-                if self._service_provider.logger is not None:
-                    self._service_provider.logger.info(f'closed the connection for the database {database.name}')
 
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
         # Step 1: Find the session

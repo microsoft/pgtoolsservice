@@ -621,7 +621,7 @@ class TestNodeObject(unittest.TestCase):
         self.assertIsNotNone(node)
         self.assertEqual(node.__class__.__name__, 'Database')
 
-    def test_Role_get_database_node(self):
+    def test_role_get_database_node(self):
         # If: I create a DB that is connected
         name = 'dbname'
         mock_server = Server(utils.MockConnection(None, name='not_connected'))
@@ -633,7 +633,7 @@ class TestNodeObject(unittest.TestCase):
         # assert:
         self.assertIsNone(node)
 
-    def test_Table_get_database_node(self):
+    def test_table_get_database_node(self):
         # If: I create a DB that is connected
         mock_server = Server(utils.MockConnection(None, name='not_connected'))
         db = Database(mock_server, 'dbname')

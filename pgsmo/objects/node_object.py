@@ -135,9 +135,6 @@ class NodeObject(metaclass=ABCMeta):
         self._refresh_child_collections()
 
     def get_database_node(self) -> 'NodeObject':
-        if self is None:
-            return None
-
         if self.parent is None:
             if self.__class__.__name__ == 'Database':
                 return self
