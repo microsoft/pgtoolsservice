@@ -104,8 +104,7 @@ def _get_node_info(
     metadata = ObjectMetadata()
     metadata.metadata_type = 0
     metadata.metadata_type_name = type(node).__name__
-    metadata.schema = schema
-    metadata.name = node.name
+    metadata.name = node.urn
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf

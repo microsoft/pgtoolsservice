@@ -4,10 +4,10 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'column/macros/security.macros' as SECLABEL %}
-{% import 'column/macros/privilege.macros' as PRIVILEGE %}
-{% import 'macros/variable.macros' as VARIABLE %}
-{% import 'type/macros/get_full_type_sql_format.macros' as GET_TYPE %}
+{% import 'column_security.macros' as SECLABEL %}
+{% import 'column_privilege.macros' as PRIVILEGE %}
+{% import 'variable.macros' as VARIABLE %}
+{% import 'get_full_type_sql_format.macros' as GET_TYPE %}
 {###  Add column ###}
 {% if data.name and  data.cltype %}
 ALTER TABLE {{conn|qtIdent(data.schema, data.table)}}
