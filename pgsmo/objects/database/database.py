@@ -9,9 +9,8 @@ from pgsmo.objects.node_object import NodeCollection, NodeObject
 from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
+from pgsmo.utils.querying import ServerConnection    # noqa
 import pgsmo.utils.templating as templating
-import pgsmo.utils as utils
-import psycopg2
 
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
@@ -62,7 +61,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         self._can_connect: Optional[bool] = None
         self._can_create: Optional[bool] = None
         self._owner_oid: Optional[int] = None
-        self.connection: utils.querying.ServerConnection = None
+        self.connection: ServerConnection = None
 
         if server.maintenance_db_name == name:
             self._is_connected: bool = True
@@ -132,23 +131,6 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def schemas(self) -> NodeCollection[Schema]:
         return self._schemas
-
-    # METHODS ##############################################################
-    def _create_connection(self, options: dict) -> None:
-        # Connect using psycopg2
-        if not self._is_connected:
-            connection = psycopg2.connect(**options)
-            if connection is not None:
-                self.connection = utils.querying.ServerConnection(connection)
-                self._is_connected = True
-
-    def _close_connection(self) -> bool:
-        # disconnect using psycopg2
-        if self._is_connected or self.connection is not None:
-            self.connection.close()
-            return True
-        else:
-            return False
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod

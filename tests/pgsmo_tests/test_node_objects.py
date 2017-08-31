@@ -10,8 +10,10 @@ import unittest.mock as mock
 import pgsmo.objects.node_object as node
 from pgsmo.objects.server.server import Server
 from pgsmo.objects.database.database import Database
+from pgsmo.objects.role.role import Role
+from pgsmo.objects.schema.schema import Schema
+from pgsmo.objects.table.table import Table
 import tests.pgsmo_tests.utils as utils
-import pgsmo.utils as pgsmo_utils
 from tests.utils import MockConnection
 
 
@@ -398,10 +400,13 @@ class TestNodeObject(unittest.TestCase):
             'dbname': 'postgres',
             'user': 'postgres'
         })
-        name = 'dbname'
+
+        name = 'postgres'
         parent = Database(mock_server, name)
-        parent.connection = pgsmo_utils.querying.ServerConnection(mock_connection)
-        parent.connection.execute_dict = mock_executor
+        parent._oid = 123
+        parent._is_connected = False
+        mock_connection.execute_dict = mock.MagicMock(return_value=([{}, {}], mock_objs))
+        mock_server._get_connection_action = mock.MagicMock(return_value=mock_connection)
 
         # ... Patch the template rendering, and the _from_node_query
         patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
@@ -416,6 +421,7 @@ class TestNodeObject(unittest.TestCase):
         # Then:
         # ... The template path and template renderer should have been called once
         mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_server.version)
+        mock_render.assert_called_once_with('path', macro_roots=None, **{'parent_id': 123})
 
         # ... A query should have been executed
         mock_executor.assert_called_once_with('SQL')
@@ -609,12 +615,59 @@ class TestNodeObject(unittest.TestCase):
         # Then: The object I get back should be the same as the one I created
         self.assertIs(obj, sc_obj)
 
+    def test_database_get_database_node(self):
+        # If: I create a DB that is connected
+        name = 'dbname'
+        mock_server = Server(utils.MockConnection(None, name='not_connected'))
+        db = Database(mock_server, name)
+
+        # Then:
+        node = db.get_database_node()
+
+        # assert:
+        self.assertIsNotNone(node)
+        self.assertEqual(node.__class__.__name__, 'Database')
+
+    def test_Role_get_database_node(self):
+        # If: I create a DB that is connected
+        name = 'dbname'
+        mock_server = Server(utils.MockConnection(None, name='not_connected'))
+        db = Role(mock_server, name)
+
+        # Then:
+        node = db.get_database_node()
+
+        # assert:
+        self.assertIsNone(node)
+
+    def test_Table_get_database_node(self):
+        # If: I create a DB that is connected
+        mock_server = Server(utils.MockConnection(None, name='not_connected'))
+        db = Database(mock_server, 'dbname')
+        schema = Schema(mock_server, db, 'schema')
+        table = Table(mock_server, schema, 'table')
+
+        # check for schema:
+        node = schema.get_database_node()
+
+        # assert:
+        self.assertIsNotNone(node)
+        self.assertEqual(node.__class__.__name__, 'Database')
+
+        # check for table:
+        node = table.get_database_node()
+
+        # assert:
+        self.assertIsNotNone(node)
+        self.assertEqual(node.__class__.__name__, 'Database')
+
 
 def _get_node_for_parents_mock_connection():
     # ... Create a mockup of a server connection with a mock executor
+    mock_action = mock.Mock()
     mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
     mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
-    mock_server = Server(utils.MockConnection(None, version="10101"))
+    mock_server = Server(utils.MockConnection(None, version="10101"), mock_action)
     mock_server.connection.execute_dict = mock_executor
 
     return mock_server, mock_executor, mock_objs

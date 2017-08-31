@@ -3,8 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import re
+import functools
 import threading
+import psycopg2
+import psycopg2.extensions
 from typing import Dict, Optional     # noqa
 from urllib.parse import quote
 
@@ -97,7 +99,6 @@ class ObjectExplorerService(object):
             if session is not None:
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
-                self._close_database_connections(session)
                 if not connect_result:
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.info(f'Could not close the OE session with Id {session.id}')
@@ -126,7 +127,6 @@ class ObjectExplorerService(object):
             self._service_provider.logger.info('Closing all the OE sessions')
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         for key, session in self._session_map.items():
-            self._close_database_connections(session)
             connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
             if connect_result:
                 if self._service_provider.logger is not None:
@@ -152,17 +152,6 @@ class ObjectExplorerService(object):
 
             if task is not None and task.isAlive():
                 return
-
-            match_obj = re.match(r'/databases/(\d+)/', params.node_path)
-            if match_obj is not None:
-                default_database_name = session.server.connection.dsn_parameters['dbname']
-                dboid = int(match_obj.group(1))
-                selected_database = [db for db in session.server.databases if db.oid == dboid][0]
-                if default_database_name != selected_database.name and not selected_database._is_connected:
-                    conn_options = session.server.connection.dsn_parameters
-                    conn_options['dbname'] = selected_database.name
-                    conn_options.update({'password': session.connection_details.options['password']})
-                    selected_database._create_connection(conn_options)
 
             new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
             new_task.daemon = True
@@ -194,17 +183,6 @@ class ObjectExplorerService(object):
 
         request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
 
-    def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
-        for database in session.server.databases:
-            if database.is_connected:
-                close_result = database._close_connection()
-                if not close_result:
-                    if self._service_provider.logger is not None:
-                        self._service_provider.logger.info(f'could not close the connection for the database {database.name}')
-                else:
-                    if self._service_provider.logger is not None:
-                        self._service_provider.logger.info(f'closed the connection for the database {database.name}')
-
     def _get_session(self, request_context: RequestContext, params: ExpandParameters) -> Optional[ObjectExplorerSession]:
         try:
             utils.validate.is_not_none('params', params)
@@ -227,6 +205,28 @@ class ObjectExplorerService(object):
             request_context.send_error(message)
             return
 
+    def _create_connection(self, session: ObjectExplorerSession, database_name: str) -> Optional[psycopg2.extensions.connection]:
+        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+
+        doptions = session.connection_details.options
+        doptions['dbname'] = database_name
+        conn_details = ConnectionDetails.from_data(
+            session.connection_details.server_name,
+            None,
+            session.connection_details.user_name,
+            doptions
+        )
+
+        connect_request = ConnectRequestParams(conn_details, session.id + database_name, ConnectionType.OBJECT_EXLPORER)
+        connect_result = conn_service.connect(connect_request)
+        if connect_result is None:
+            raise RuntimeError(f'could not create connection for database {database_name}')   # TODO Localize
+        if connect_result.error_message is not None:
+            raise RuntimeError(connect_result.error_message)
+
+        connection = conn_service.get_connection(session.id + database_name, ConnectionType.OBJECT_EXLPORER)
+        return connection
+
     def _initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         connection = None
@@ -248,7 +248,7 @@ class ObjectExplorerService(object):
             connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
 
             # Step 3: Create the PGSMO Server object for the session and create the root node for the server
-            session.server = Server(connection)
+            session.server = Server(connection, functools.partial(self._create_connection, session))
             metadata = ObjectMetadata.from_data(0, 'Database', session.connection_details.options['dbname'])
             node = NodeInfo()
             node.label = session.connection_details.options['dbname']

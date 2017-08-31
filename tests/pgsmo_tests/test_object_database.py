@@ -5,14 +5,13 @@
 
 import unittest
 import tests.pgsmo_tests.utils as utils
-import unittest.mock as mock
-import psycopg2
+import unittest.mock as mock    # noqa
 
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.node_object import NodeCollection
 from pgsmo.objects.server.server import Server
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
-from tests.utils import MockConnection
+from tests.utils import MockConnection    # noqa
 
 
 class TestDatabase(NodeObjectTestBase, unittest.TestCase):
@@ -123,65 +122,3 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         # ... The schema node collection should not be defined
         self.assertIsNotNone(db._schemas)
         self.assertIsNotNone(db.schemas)
-
-    def test_create_connection_successful_with_server_connection(self):
-        # If: I create a DB that is connected
-        name = 'dbname'
-        mock_server = Server(utils.MockConnection(None, name=name))
-        database = Database(mock_server, name)
-        options = {}
-        database._create_connection(options)
-        self.assertIsNotNone(database.connection)
-        self.assertTrue(database.is_connected)
-
-    def test_create_connection_successful_with_other_database(self):
-        # If: I create a DB that is connected
-        name = 'dbname'
-        mock_server = Server(utils.MockConnection(None, name=name))
-        database = Database(mock_server, name)
-        database._is_connected = False
-        options = {}
-        mock_connection = MockConnection(dsn_parameters={
-            'host': 'myserver',
-            'dbname': 'postgres',
-            'user': 'postgres'
-        })
-        psycopg2.connect = mock.MagicMock(return_value=mock_connection)
-        database._create_connection(options)
-        self.assertIsNotNone(database.connection)
-        self.assertTrue(database.is_connected)
-
-    def test_create_connection_unsuccessful_with_exception(self):
-        # If: I create a DB that is connected
-        name = 'dbname'
-        mock_server = Server(utils.MockConnection(None, name=name))
-        database = Database(mock_server, name)
-        database.connection = None
-        database._is_connected = False
-        options = {}
-        error = 'Failed'
-        psycopg2.connect = mock.MagicMock(side_effect=Exception(error))
-        try:
-            database._create_connection(options)
-        except Exception as e:
-            self.assertAlmostEqual(error, str(e))
-        self.assertIsNone(database.connection)
-        self.assertFalse(database.is_connected)
-
-    def test_close_connection_successful_with_server_connection(self):
-        # If: I create a DB that is connected
-        name = 'dbname'
-        mock_server = Server(utils.MockConnection(None, name=name))
-        database = Database(mock_server, name)
-        result = database._close_connection()
-        self.assertTrue(result)
-
-    def test_close_connection_unsuccessful_with_server_connection(self):
-        # If: I create a DB that is connected
-        name = 'dbname'
-        mock_server = Server(utils.MockConnection(None, name=name))
-        database = Database(mock_server, name)
-        database._is_connected = False
-        database.connection = None
-        result = database._close_connection()
-        self.assertFalse(result)

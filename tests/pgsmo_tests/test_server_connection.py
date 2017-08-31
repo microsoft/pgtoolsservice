@@ -70,15 +70,3 @@ class TestServerConnection(unittest.TestCase):
 
         # ... The cursor should be closed
         mock_cursor.close.assert_called_once()
-
-    def test_server_conn_close(self):
-        # Setup: Create a mock connection with an 'interesting' version
-        mock_conn = utils.MockConnection(None, version='100216')
-
-        # If: I initialize a server connection
-        # noinspection PyTypeChecker
-        server_conn = pgsmo_utils.querying.ServerConnection(mock_conn)
-
-        # Then: The properties should be properly set
-        self.assertEqual(server_conn._conn, mock_conn)
-        server_conn.close()

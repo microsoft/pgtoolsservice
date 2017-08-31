@@ -19,13 +19,14 @@ class Server:
     TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
     # CONSTRUCTOR ##########################################################
-    def __init__(self, conn: connection):
+    def __init__(self, conn: connection, action=None):
         """
         Initializes a server object using the provided connection
         :param conn: psycopg2 connection
         """
         # Everything we know about the server will be based on the connection
         self._conn: utils.querying.ServerConnection = utils.querying.ServerConnection(conn)
+        self._get_connection_action = action
 
         # Declare the server properties
         props = self._conn.dsn_parameters
@@ -48,6 +49,11 @@ class Server:
     def connection(self) -> utils.querying.ServerConnection:
         """Connection to the server/db that this object will use"""
         return self._conn
+
+    @property
+    def get_connection_action(self):
+        """Connection to the server/db that this object will use"""
+        return self._get_connection_action
 
     @property
     def host(self) -> str:

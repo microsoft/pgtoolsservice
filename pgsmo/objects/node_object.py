@@ -10,6 +10,7 @@ from typing import Callable, Dict, Generic, List, Optional, Union, Type, TypeVar
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils as utils
 import pgsmo.utils.templating as templating
+from pgsmo.utils.querying import ServerConnection
 
 
 class NodeObject(metaclass=ABCMeta):
@@ -42,6 +43,11 @@ class NodeObject(metaclass=ABCMeta):
             cols, rows = root_server.connection.execute_dict(sql)
         else:
             database_node = parent_obj.get_database_node()
+            if not database_node.is_connected:
+                connection = ServerConnection(root_server.get_connection_action(database_node.name))
+                if connection.dsn_parameters['dbname'] == database_node.name:
+                    database_node.connection = connection
+                    database_node._is_connected = True
             cols, rows = database_node.connection.execute_dict(sql)
 
         return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
