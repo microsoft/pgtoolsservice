@@ -831,9 +831,14 @@ select * from t2
         self.assertEqual(len(query.batches), 5)
 
         # And each batch should have the correct location information
-        expected_selections = [(0, 0, 1, 2), (2, 0, 2, 16), (4, 0, 4, 16), (4, 18, 5, 3), (6, 0, 6, 15)]
+        expected_selections = [
+            SelectionData(start_line=0, start_column=0, end_line=1, end_column=2),
+            SelectionData(start_line=2, start_column=0, end_line=2, end_column=16),
+            SelectionData(start_line=4, start_column=0, end_line=4, end_column=16),
+            SelectionData(start_line=4, start_column=18, end_line=5, end_column=3),
+            SelectionData(start_line=6, start_column=0, end_line=6, end_column=15)]
         for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
+            self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
 
     def test_batch_selections_do_block(self):
         """Test that the query sets up batch objects with correct selection information for blocks containing statements"""
@@ -851,9 +856,33 @@ select * from t1;'''
         self.assertEqual(len(query.batches), 2)
 
         # And each batch should have the correct location information
-        expected_selections = [(0, 0, 4, 6), (5, 0, 5, 16)]
+        expected_selections = [
+            SelectionData(start_line=0, start_column=0, end_line=4, end_column=6),
+            SelectionData(start_line=5, start_column=0, end_line=5, end_column=16)]
         for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), expected_selections[index])
+            self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
+
+    def test_batches_strip_comments(self):
+        """Test that we do not attempt to execute a batch consisting only of comments"""
+        full_query = '''select * from t1;
+-- test
+-- test
+;select * from t1;
+-- test
+-- test;'''
+
+        # If I build a query that contains a batch consisting of only comments, in addition to other valid batches
+        query = Query('test_uri', full_query)
+
+        # Then there is only a batch for each non-comment statement
+        self.assertEqual(len(query.batches), 2)
+
+        # And each batch should have the correct location information
+        expected_selections = [
+            SelectionData(start_line=0, start_column=0, end_line=0, end_column=16),
+            SelectionData(start_line=3, start_column=1, end_line=3, end_column=17)]
+        for index, batch in enumerate(query.batches):
+            self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
 
 
 def get_execute_string_params() -> ExecuteStringParams:
