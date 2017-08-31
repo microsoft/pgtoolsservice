@@ -444,7 +444,7 @@ class TestObjectExplorer(unittest.TestCase):
         db._connection = MockConnection(name)
         session.server._child_objects[Database.__name__] = [db]
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
-        
+
         cs.disconnect = mock.MagicMock(return_value=True)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
@@ -480,7 +480,6 @@ class TestObjectExplorer(unittest.TestCase):
         db._connection = MockConnection(name)
         session.server._child_objects[Database.__name__] = [db]
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
-        
         cs.disconnect = mock.MagicMock(return_value=True)
 
         # shutdown the session
@@ -501,12 +500,11 @@ class TestObjectExplorer(unittest.TestCase):
         session.server = mock_server
         session.server._child_objects[Database.__name__] = []
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
-        
         cs.disconnect = mock.MagicMock(return_value=True)
 
         # shutdown the session
         oe._handle_shutdown()
-        oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')        
+        oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')
 
     def test_handle_shutdown_UnsuccessfulWithSessions(self):
         # Setup: Create an OE service and add a session to it
@@ -522,8 +520,7 @@ class TestObjectExplorer(unittest.TestCase):
         db = Database(mock_server, name)
         db._connection = MockConnection(name)
         session.server._child_objects[Database.__name__] = [db]
-        cs.get_connection = mock.MagicMock(return_value=mock_connection)        
-        
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
         cs.disconnect = mock.MagicMock(return_value=False)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
