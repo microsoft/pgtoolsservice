@@ -98,9 +98,9 @@ class ObjectExplorerService(object):
             # Try to remove the session
             session = self._session_map.pop(params.session_id, None)
             if session is not None:
-                self._close_database_connections(session)
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+                self._close_database_connections(session)
                 if not connect_result:
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.info(f'Could not close the OE session with Id {session.id}')
@@ -129,8 +129,8 @@ class ObjectExplorerService(object):
             self._service_provider.logger.info('Closing all the OE sessions')
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         for key, session in self._session_map.items():
-            self._close_database_connections(session)
             connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+            self._close_database_connections(session)
             if connect_result:
                 if self._service_provider.logger is not None:
                     self._service_provider.logger.info('Closed the OE session with Id: ' + session.id)
@@ -143,14 +143,13 @@ class ObjectExplorerService(object):
     def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         for database in session.server.databases:
-            if database.connection is not None:
-                close_result = conn_service.disconnect(session.id + database.name, ConnectionType.OBJECT_EXLPORER)
-                if not close_result:
-                    if self._service_provider.logger is not None:
-                        self._service_provider.logger.info(f'could not close the connection for the database {database.name}')
-                else:
-                    if self._service_provider.logger is not None:
-                        self._service_provider.logger.info(f'closed the connection for the database {database.name}')
+            close_result = conn_service.disconnect(session.id + database.name, ConnectionType.OBJECT_EXLPORER)
+            if not close_result:
+                if self._service_provider.logger is not None:
+                    self._service_provider.logger.info(f'could not close the connection for the database {database.name}')
+            else:
+                if self._service_provider.logger is not None:
+                    self._service_provider.logger.info(f'closed the connection for the database {database.name}')
 
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
         # Step 1: Find the session
