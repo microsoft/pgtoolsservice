@@ -304,21 +304,6 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertIsNotNone(connection)
         self.assertEqual(connection, mock_connection)
 
-    def test_create_connection_unsuccessful(self):
-        # Setup:
-        mock_connection = MockConnection('test')
-        oe = ObjectExplorerService()
-        cs = ConnectionService()
-        cs.connect = mock.MagicMock(return_value=None)
-        cs.get_connection = mock.MagicMock(return_value=mock_connection)
-        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
-        params, session_uri = self._connection_details()
-        session = ObjectExplorerSession(session_uri, params)
-
-        with self.assertRaises(RuntimeError) as context:
-            oe._create_connection(session, 'foo_database')
-        self.assertEqual('could not create connection for database foo_database', str(context.exception))
-
     def test_create_connection_failed(self):
         # Setup:
         mock_connection = MockConnection('test')
@@ -395,9 +380,9 @@ class TestObjectExplorer(unittest.TestCase):
         oe._session_map[session_uri] = session
         name = 'dbname'
         mock_server = Server(MockConnection(name))
-        db = Database(mock_server, name)
-        db._close_connection = mock.MagicMock(return_value=True)
         session.server = mock_server
+        db = Database(mock_server, name)
+        db._connection = MockConnection(name)
         session.server._child_objects[Database.__name__] = [db]
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
 
@@ -419,9 +404,17 @@ class TestObjectExplorer(unittest.TestCase):
         # Setup: Create an OE service
         cs = ConnectionService()
         oe = ObjectExplorerService()
+        mock_connection = {}
         params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
+        name = 'dbname'
+        mock_server = Server(MockConnection(name))
+        session.server = mock_server
+        db = Database(mock_server, name)
+        db._connection = MockConnection(name)
+        session.server._child_objects[Database.__name__] = [db]
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
         cs.disconnect = mock.MagicMock.side_effect = Exception()
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
@@ -439,10 +432,19 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_close_session_successful(self):
         # Setup: Create an OE service and add a session to it
         cs = ConnectionService()
+        mock_connection = {}
         oe = ObjectExplorerService()
         params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
+        name = 'dbname'
+        mock_server = Server(MockConnection(name))
+        session.server = mock_server
+        db = Database(mock_server, name)
+        db._connection = MockConnection(name)
+        session.server._child_objects[Database.__name__] = [db]
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+        
         cs.disconnect = mock.MagicMock(return_value=True)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
@@ -465,24 +467,63 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_shutdown_successfulWithSessions(self):
         # Setup: Create an OE service and add a session to it
         cs = ConnectionService()
+        mock_connection = {}
         oe = ObjectExplorerService()
         params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        name = 'dbname'
+        mock_server = Server(MockConnection(name))
+        session.server = mock_server
+        db = Database(mock_server, name)
+        db._connection = MockConnection(name)
+        session.server._child_objects[Database.__name__] = [db]
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+        
         cs.disconnect = mock.MagicMock(return_value=True)
 
         # shutdown the session
         oe._handle_shutdown()
         oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')
 
-    def test_handle_shutdown_UnsuccessfulWithSessions(self):
+    def test_handle_shutdown_successfulNoDatabase(self):
         # Setup: Create an OE service and add a session to it
         cs = ConnectionService()
+        mock_connection = {}
         oe = ObjectExplorerService()
         params, session_uri = self._connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        name = 'dbname'
+        mock_server = Server(MockConnection(name))
+        session.server = mock_server
+        session.server._child_objects[Database.__name__] = []
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+        
+        cs.disconnect = mock.MagicMock(return_value=True)
+
+        # shutdown the session
+        oe._handle_shutdown()
+        oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')        
+
+    def test_handle_shutdown_UnsuccessfulWithSessions(self):
+        # Setup: Create an OE service and add a session to it
+        cs = ConnectionService()
+        oe = ObjectExplorerService()
+        mock_connection = {}
+        params, session_uri = self._connection_details()
+        session = ObjectExplorerSession(session_uri, params)
+        oe._session_map[session_uri] = session
+        name = 'dbname'
+        mock_server = Server(MockConnection(name))
+        session.server = mock_server
+        db = Database(mock_server, name)
+        db._connection = MockConnection(name)
+        session.server._child_objects[Database.__name__] = [db]
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)        
+        
         cs.disconnect = mock.MagicMock(return_value=False)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 

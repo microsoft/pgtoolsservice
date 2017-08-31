@@ -143,7 +143,7 @@ class ObjectExplorerService(object):
     def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         for database in session.server.databases:
-            if database.is_connected:
+            if database.connection is not None:
                 close_result = conn_service.disconnect(session.id + database.name, ConnectionType.OBJECT_EXLPORER)
                 if not close_result:
                     if self._service_provider.logger is not None:
@@ -236,8 +236,6 @@ class ObjectExplorerService(object):
         key_uri = session.id + database_name
         connect_request = ConnectRequestParams(conn_details, key_uri, ConnectionType.OBJECT_EXLPORER)
         connect_result = conn_service.connect(connect_request)
-        if connect_result is None:
-            raise RuntimeError(f'could not create connection for database {database_name}')   # TODO Localize
         if connect_result.error_message is not None:
             raise RuntimeError(connect_result.error_message)
 

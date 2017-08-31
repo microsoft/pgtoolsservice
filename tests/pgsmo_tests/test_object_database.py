@@ -99,9 +99,6 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         # ... Default validation should pass
         self._init_validation(db, mock_server, None, name)
 
-        # ... The database should be connected
-        self.assertTrue(db._is_connected)
-
         # ... The schema node collection should be defined
         self.assertIsInstance(db._schemas, NodeCollection)
         self.assertIs(db.schemas, db._schemas)

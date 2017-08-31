@@ -404,7 +404,6 @@ class TestNodeObject(unittest.TestCase):
         name = 'postgres'
         parent = Database(mock_server, name)
         parent._oid = 123
-        parent._is_connected = False
         mock_server._db_connection_callback = mock.MagicMock(return_value=mock_connection)
 
         # ... Patch the template rendering, and the _from_node_query
