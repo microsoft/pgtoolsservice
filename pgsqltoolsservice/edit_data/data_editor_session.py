@@ -5,7 +5,6 @@
 
 
 from typing import Callable, Dict, List, Optional, Tuple # noqa
-
 from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate # noqa
 from pgsqltoolsservice.query_execution.result_set import ResultSet # noqa
 from pgsqltoolsservice.edit_data.contracts import EditCellResponse, InitializeEditParams, EditInitializerFilter, EditRow, EditCell

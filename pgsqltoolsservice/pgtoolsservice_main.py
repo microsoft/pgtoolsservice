@@ -21,22 +21,14 @@ from pgsqltoolsservice.object_explorer import ObjectExplorerService
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 from pgsqltoolsservice.edit_data.edit_data_service import EditDataService
+from pgsqltoolsservice.tasks import TaskService
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
 
 if __name__ == '__main__':
-    # Create the output logger
-    logger = logging.getLogger('pgsqltoolsservice')
-    try:
-        handler = logging.FileHandler(os.path.join(os.path.dirname(sys.argv[0]), 'pgsqltoolsservice.log'))
-    except Exception:
-        handler = logging.NullHandler()
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
-
     # See if we have any arguments
+    wait_for_debugger = False
+    log_dir = None
     stdin = None
     if len(sys.argv) > 1:
         for arg in sys.argv:
@@ -50,9 +42,28 @@ if __name__ == '__main__':
                 except IndexError:
                     pass
                 ptvsd.enable_attach('', address=('0.0.0.0', port))
-            if arg_parts[0] == '--enable-remote-debugging-wait':
-                logger.debug('Waiting for a debugger to attach...')
-                ptvsd.wait_for_attach()
+                if arg_parts[0] == '--enable-remote-debugging-wait':
+                    wait_for_debugger = True
+            elif arg_parts[0] == '--log-dir':
+                log_dir = arg_parts[1]
+
+    # Create the output logger
+    logger = logging.getLogger('pgsqltoolsservice')
+    try:
+        if not log_dir:
+            log_dir = os.path.dirname(sys.argv[0])
+        handler = logging.FileHandler(os.path.join(log_dir, 'pgtoolsservice.log'))
+    except Exception:
+        handler = logging.NullHandler()
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+
+    # Wait for the debugger to attach if needed
+    if wait_for_debugger:
+        logger.debug('Waiting for a debugger to attach...')
+        ptvsd.wait_for_attach()
 
     # Wrap standard in and out in io streams to add readinto support
     if stdin is None:
@@ -78,6 +89,7 @@ if __name__ == '__main__':
         constants.SCRIPTING_SERVICE_NAME: ScriptingService,
         constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
         constants.EDIT_DATA_SERVICE_NAME: EditDataService,
+        constants.TASK_SERVICE_NAME: TaskService
     }
     service_box = ServiceProvider(server, services, logger)
     service_box.initialize()

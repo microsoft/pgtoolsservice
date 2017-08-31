@@ -3,17 +3,21 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.serialization import Serializable
+
+from pgsqltoolsservice.hosting import IncomingMessageConfiguration
+from pgsqltoolsservice.edit_data.contracts import RowOperationRequest
 
 
-class SessionOperationRequest(Serializable):
-
-    def __init__(self):
-        self.owner_uri = None
-
-
-class RowOperationRequest(SessionOperationRequest):
+class RevertRowRequest(RowOperationRequest):
 
     def __init__(self):
-        SessionOperationRequest.__init__(self)
-        self.row_id = None
+        RowOperationRequest.__init__(self)
+
+
+class RevertRowResponse:
+
+    def __init__(self):
+        pass
+
+
+REVERT_ROW_REQUEST = IncomingMessageConfiguration('edit/revertRow', RevertRowRequest)

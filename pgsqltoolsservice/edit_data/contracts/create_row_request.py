@@ -4,22 +4,23 @@
 # --------------------------------------------------------------------------------------------
 
 
+from typing import List # noqa
+
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.edit_data.contracts import RowOperationRequest, EditCellResponse
+from pgsqltoolsservice.edit_data.contracts import SessionOperationRequest
 
 
-class UpdateCellRequest(RowOperationRequest):
-
-    def __init__(self):
-        RowOperationRequest.__init__(self)
-        self.column_id = None
-        self.new_value = None
-
-
-class UpdateCellResponse(EditCellResponse):
+class CreateRowRequest(SessionOperationRequest):
 
     def __init__(self):
-        EditCellResponse.__init__(self)
+        SessionOperationRequest.__init__(self)
 
 
-UPDATE_CELL_REQUEST = IncomingMessageConfiguration('edit/updateCell', UpdateCellRequest)
+class CreateRowResponse:
+
+    def __init__(self):
+        self.default_values: List[str] = []
+        self.new_row_id = None
+
+
+CREATE_ROW_REQUEST = IncomingMessageConfiguration('edit/createRow', CreateRowRequest)

@@ -257,7 +257,7 @@ class TestQueryService(unittest.TestCase):
     def test_result_set_positive(self):
         """Test that we properly generate the result set"""
         description = [("first", 0, 1, 2, 3, 4, True), ("second", 5, 6, 7, 8, 9, False)]
-        test_columns = [DbColumn(0, description[0]), DbColumn(1, description[1])]
+        test_columns = [DbColumn.from_cursor_description(0, description[0]), DbColumn.from_cursor_description(1, description[1])]
         ordinal = 0
         batch_ordinal = 0
         row_count = len(description)
