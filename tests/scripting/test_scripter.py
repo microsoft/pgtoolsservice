@@ -92,7 +92,7 @@ class TestScripter(unittest.TestCase):
         script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
 
         # ... Mock up some metadata
-        mock_metadata = ObjectMetadata.from_data(0, 'obj', 'ObjName')
+        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'obj', 'ObjName')
 
         for operation in scripter.ScriptOperation:
             # If: I attempt to perform an operation the handler doesn't support
@@ -119,7 +119,7 @@ class TestScripter(unittest.TestCase):
         script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
 
         # ... Mock up some metadata
-        mock_metadata = ObjectMetadata.from_data(0, 'obj', 'ObjName')
+        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'obj', 'ObjName')
 
         for operation in scripter.ScriptOperation:
             # If: I attempt to perform a scripting operation
@@ -154,7 +154,7 @@ class TestScripterOld(unittest.TestCase):
         self.server.get_object_by_urn = mock.MagicMock(return_value=mock_table)
 
         # If I try to get create script
-        result: str = self.scripter.script(scripter.ScriptOperation.CREATE, ObjectMetadata.from_data(0, 'Table', 'test'))
+        result: str = self.scripter.script(scripter.ScriptOperation.CREATE, ObjectMetadata.from_data('//urn/', 0, 'Table', 'test'))
 
         # The result should be the correct template value
         self.assertTrue('CREATE TABLE myschema.test' in result)
@@ -191,8 +191,7 @@ class TestScripterOld(unittest.TestCase):
                                                                                    "cltype": "TestDatatype",
                                                                                    "schema": "TestSchema",
                                                                                    "table": "TestTable"}})
-            result = mock_column.create_script()
-            return result
+            return mock_column.create_script()
 
         def scripter_mock_fn():
             mock_column.create_script = mock.MagicMock(return_value=column_mock_fn())
