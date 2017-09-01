@@ -28,6 +28,62 @@ class TestTrigger(NodeObjectTestBase, unittest.TestCase):
         }
 
     @property
+    def full_properties(self):
+        return {            
+            "lanname": "lanname",
+            "tfunction": "tfunction",
+            "name": "name",
+            "is_constraint_trigger": "is_constraint_trigger",
+            "fires": "fires",
+            "evnt_insert": "evnt_insert",
+            "evnt_delete": "evnt_delete",
+            "evnt_truncate": "evnt_truncate",
+            "evnt_update": "evnt_update",
+            "columns": "columns",
+            "schema": "schema",
+            "table": "table",
+            "tgdeferrable": "tgdeferrable",
+            "tginitdeferred": "tginitdeferred",
+            "is_row_trigger": "is_row_trigger",
+            "whenclause": "whenclause",
+            "prosrc": "prosrc",
+            "tgargs": "tgargs",
+            "description": "description",
+            "nspname": "nspname",
+            "relname": "relname",
+            "cascade": "cascade",
+            "is_enable_trigger": "is_enable_trigger"
+        }
+    
+    @property
+    def property_query(self):
+        return {
+            "lanname": "test",
+            "tfunction": "test",
+            "name": "test",
+            "is_constraint_trigger": "test_is_constraint_trigger",
+            "fires": "test",
+            "evnt_insert": "test",
+            "evnt_delete": "test",
+            "evnt_truncate": "test",
+            "evnt_update": "test",
+            "columns": "test_columns",
+            "schema": "test_schema",
+            "table": "test_table",
+            "tgdeferrable": "test",
+            "tginitdeferred": "test",
+            "is_row_trigger": "test_is_row_trigger",
+            "whenclause": "test",
+            "prosrc": "test",
+            "tgargs": "test",
+            "description": "test_description",
+            "nspname": "test",
+            "relname": "test",
+            "cascade": "test_cascade",
+            "is_enable_trigger": "test_is_enable_trigger"
+        }
+
+    @property
     def collections(self):
         return []
 

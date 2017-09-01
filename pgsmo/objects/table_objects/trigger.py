@@ -3,18 +3,20 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional
+from typing import Optional, List
 
-import pgsmo.objects.node_object as node
+from pgsmo.objects.node_object import NodeObject
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Trigger(node.NodeObject):
+class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger')
+    MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: node.NodeObject, **kwargs) -> 'Trigger':
+    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Trigger':
         """
         Creates a new Trigger object based on the results of a nodes query
         :param server: Server that owns the trigger
@@ -34,14 +36,17 @@ class Trigger(node.NodeObject):
 
         return trigger
 
-    def __init__(self, server: 's.Server', parent: node.NodeObject, name: str):
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
         """
         Initializes a new instance of a trigger
         :param server: Connection the trigger belongs to
         :param parent: Parent object of the trigger. Should be Table/View
         :param name: Name of the trigger
         """
-        super(Trigger, self).__init__(server, parent, name)
+        NodeObject.__init__(self, server, parent, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare Trigger-specific basic properties
         self._is_enabled: Optional[bool] = None
@@ -53,7 +58,179 @@ class Trigger(node.NodeObject):
         """Whether or not the trigger is enabled"""
         return self._is_enabled
 
+    # -FULL OBJECT PROPERTIES ##############################################
+    @property
+    def arguments(self) -> Optional[list]:
+        return self._full_properties.get("arguments")
+
+    @property
+    def lanname(self):
+        return self._full_properties["lanname"]
+
+    @property
+    def tfunction(self):
+        return self._full_properties["tfunction"]
+
+    @property
+    def is_constraint_trigger(self):
+        return self._full_properties["is_constraint_trigger"]
+
+    @property
+    def fires(self):
+        return self._full_properties["fires"]
+
+    @property
+    def evnt_insert(self):
+        return self._full_properties["evnt_insert"]
+
+    @property
+    def evnt_delete(self):
+        return self._full_properties["evnt_delete"]
+
+    @property
+    def evnt_truncate(self):
+        return self._full_properties["evnt_truncate"]
+
+    @property
+    def evnt_update(self):
+        return self._full_properties["evnt_update"]
+
+    @property
+    def columns(self):
+        return self._full_properties["columns"]
+
+    @property
+    def schema(self):
+        return self._full_properties["schema"]
+
+    @property
+    def table(self):
+        return self._full_properties["table"]
+
+    @property
+    def tgdeferrable(self):
+        return self._full_properties["tgdeferrable"]
+
+    @property
+    def tginitdeferred(self):
+        return self._full_properties["tginitdeferred"]
+
+    @property
+    def is_row_trigger(self):
+        return self._full_properties["is_row_trigger"]
+
+    @property
+    def whenclause(self):
+        return self._full_properties["whenclause"]
+
+    @property
+    def prosrc(self):
+        return self._full_properties["prosrc"]
+
+    @property
+    def tgargs(self):
+        return self._full_properties["tgargs"]
+
+    @property
+    def description(self):
+        return self._full_properties["description"]
+
+    @property
+    def nspname(self):
+        return self._full_properties["nspname"]
+
+    @property
+    def relname(self):
+        return self._full_properties["relname"]
+
+    @property
+    def cascade(self):
+        return self._full_properties["cascade"]
+
+    @property
+    def is_enable_trigger(self):
+        return self._full_properties["is_enable_trigger"]
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+    
+    @classmethod
+    def _macro_root(cls) -> List[str]:
+        return [cls.MACRO_ROOT]
+
+    def _create_query_data(self) -> dict:
+        """ Provides data input for create script """
+        return {
+            "data": {
+                "lanname": self.lanname,
+                "tfunction": self.tfunction,
+                "name": self.name,
+                "is_constraint_trigger": self.is_constraint_trigger,
+                "fires": self.fires,
+                "evnt_insert": self.evnt_insert,
+                "evnt_delete": self.evnt_delete,
+                "evnt_truncate": self.evnt_truncate,
+                "evnt_update": self.evnt_update,
+                "columns": self.columns,
+                "schema": self.schema,
+                "table": self.table,
+                "tgdeferrable": self.tgdeferrable,
+                "tginitdeferred": self.tginitdeferred,                
+                "is_row_trigger": self.is_row_trigger,
+                "whenclause": self.whenclause,
+                "prosrc": self.prosrc,
+                "tgargs": self.tgargs,
+                "description": self.description,
+            }
+        }
+
+    def _delete_query_data(self) -> dict:
+        """ Provides data input for delete script """
+        return {
+            "data": {
+                "name": self.name,
+                "nspname": self.nspname,
+                "relname": self.relname
+            },
+            "cascade": self.cascade
+        }
+
+    def _update_query_data(self) -> dict:
+        """ Function that returns data for update script """
+        return {
+            "data": {
+                "name": self.name,
+                "prosrc": self.prosrc,
+                "is_row_trigger": self.is_row_trigger,
+                "evnt_insert": self.evnt_insert,
+                "evnt_delete": self.evnt_delete,
+                "evnt_update": self.evnt_update,
+                "fires": self.fires,
+                "evnt_truncate": self.evnt_truncate,
+                "schema": self.schema,
+                "table": self.table,
+                "description": self.description,
+                "is_enable_trigger": self.is_enable_trigger
+            },
+            "o_data": {
+                "name": "",
+                "nspname": "",
+                "relname": "",
+                "lanname": "",
+                "prosrc": "",
+                "is_row_trigger": "",
+                "evnt_insert": "",
+                "evnt_delete": "",
+                "evnt_update": "",
+                "fires": "",
+                "evnt_truncate": "",
+                "columns": "",
+                "tgdeferrable": "",
+                "tginitdeferred": "",
+                "whenclause": "",
+                "description": "",
+                "is_enable_trigger": ""
+            }
+        }

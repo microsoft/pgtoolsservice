@@ -8,7 +8,7 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Server, Column
+from pgsmo import Table, DataType, Schema, Server, Column, Rule, Trigger
 from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
@@ -205,6 +205,60 @@ class TestScripterOld(unittest.TestCase):
         result = self.service.script_as_create()
         # The result should be the correct template value
         self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" \n\n"TestDatatype"' in result)
+    
+    def test_rule_scripting(self):
+        """ Helper function to test create script for rule """
+        # Set up the mocks
+        mock_rule = Rule(self.server, "testTable", 'testName')
+
+        def rule_mock_fn():
+            mock_rule._template_root = mock.MagicMock(return_value=Rule.TEMPLATE_ROOT)
+            mock_rule._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",
+                                                                                   "schema": "TestSchema",
+                                                                                   "view": "TestView",
+                                                                                   "event": "TestEvent",
+                                                                                   "condition": "TestCondition",
+                                                                                   "statements": "TestStatements"}})
+            result = mock_rule.create_script()
+            return result
+
+        def scripter_mock_fn():
+            mock_rule.create_script = mock.MagicMock(return_value=rule_mock_fn())
+            return mock_rule.create_script()
+
+        self.scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        self.service.script_as_create = mock.MagicMock(return_value=self.scripter.get_create_script())
+
+        # If I try to get create script
+        result = self.service.script_as_create()
+        # The result should be the correct template value
+        self.assertTrue('CREATE OR REPLACE RULE "TestName" AS\n    ON TESTEVENT TO "TestSchema"."TestView"\n\n    WHERE TestCondition\n\n    DO\n\n\n\nTestStatements;' in result)
+    
+    def test_trigger_scripting(self):
+        """ Helper function to test create script for trigger """
+        # Set up the mocks
+        mock_trigger = Trigger(self.server, "testTable", 'testName')
+
+        def trigger_mock_fn():
+            mock_trigger._template_root = mock.MagicMock(return_value=Trigger.TEMPLATE_ROOT)
+            mock_trigger._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",
+                                                                                   "evnt_insert": "TestInsertEvent",
+                                                                                   "tfunction": "TestFunction",
+                                                                                   "table": "TestTable"}})
+            result = mock_trigger.create_script()
+            return result
+
+        def scripter_mock_fn():
+            mock_trigger.create_script = mock.MagicMock(return_value=trigger_mock_fn())
+            return mock_trigger.create_script()
+
+        self.scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        self.service.script_as_create = mock.MagicMock(return_value=self.scripter.get_create_script())
+
+        # If I try to get create script
+        result = self.service.script_as_create()
+        # The result should be the correct template value
+        self.assertTrue('CREATE TRIGGER "TestName"\n\n     INSERT\n\n\n    ON "TestTable"\n\n    FOR EACH STATEMENT\n\n\n    EXECUTE PROCEDURE TestFunction();' in result)
 
     # Helper functions ##################################################################
     def _as_node_collection(self, object_list: List[Any]) -> NodeCollection[Any]:
