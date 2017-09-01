@@ -41,17 +41,17 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(self.request_context.last_notification_method, 'tasks/newtaskcreated')
         expected_params = {
             'status': TaskStatus.NOT_STARTED,
-            'serverName': self.server_name,
-            'databaseName': self.database_name,
+            'server_name': self.server_name,
+            'database_name': self.database_name,
             'name': self.task_name,
-            'providerName': self.task_provider,
+            'provider_name': self.task_provider,
             'description': self.task_description
         }
-        actual_params = self.request_context.last_notification_params
+        actual_params = self.request_context.last_notification_params.__dict__
         for param, value in expected_params.items():
             self.assertIn(param, actual_params)
             self.assertEqual(value, actual_params[param])
-        self.assertIn('taskId', actual_params)
+        self.assertIn('task_id', actual_params)
 
     def test_run_task(self):
         """Test that the task can be started, runs in a separate thread, and sends status notifications"""
@@ -102,3 +102,47 @@ class TestTasks(unittest.TestCase):
         # Then the task's status is properly marked as failed and the status message shows the error
         self.assertIs(task.status, TaskStatus.FAILED)
         self.assertEqual(task.status_message, exception_message)
+
+    def test_cancel(self):
+        """Test that canceling a task calls its cancellation callback and sets the canceled flag"""
+        # Set up the task with a cancellation callback
+        task = self.create_task()
+        task.on_cancel = mock.Mock()
+        task.status = TaskStatus.IN_PROGRESS
+
+        # If I cancel a task that is in progress
+        cancel_result = task.cancel()
+
+        # Then the cancellation handler was called and the task is marked as canceled
+        self.assertTrue(cancel_result)
+        task.on_cancel.assert_called_once()
+        self.assertTrue(task.canceled)
+
+    def test_cancel_not_in_progress(self):
+        """Test that canceling a task that is not in progress does not succeed"""
+        # Set up the task with a cancellation callback
+        task = self.create_task()
+        task.on_cancel = mock.Mock()
+        task.status = TaskStatus.NOT_STARTED
+
+        # If I cancel a task that is not in progress
+        cancel_result = task.cancel()
+
+        # Then the cancellation handler was not called and the task is not marked as canceled
+        self.assertFalse(cancel_result)
+        task.on_cancel.assert_not_called()
+        self.assertFalse(task.canceled)
+
+    def test_cancel_callback_fails(self):
+        """Test that if the cancellation callback fails, the task is not marked as canceled"""
+        # Set up the task with a cancellation callback that raises an exception when called
+        task = self.create_task()
+        task.on_cancel = mock.Mock(side_effect=Exception)
+        task.status = TaskStatus.IN_PROGRESS
+
+        # If I cancel a task and its cancellation callback raises an exception
+        cancel_result = task.cancel()
+
+        # Then the task is not marked as canceled and the call to cancel returned false
+        self.assertFalse(cancel_result)
+        self.assertFalse(task.canceled)

@@ -26,10 +26,6 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
     }
 
     @property
-    def class_for_test(self):
-        return Column
-
-    @property
     def basic_properties(self):
         return {
             'has_default_value': self.node_query['has_default_val'],
@@ -52,6 +48,56 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             'is_auto_increament': True,
 
         }
+
+    @property
+    def full_properties(self):
+        return {
+            "name": "name",
+            "cltype": "cltype",
+            "schema": "schema",
+            "table": "table",
+            "displaytypname": "displaytypname",
+            "attlen": "attlen",
+            "attprecision": "attprecision",
+            "hasSqrBracket": "hasSqrBracket",
+            "collspcname": "collspcname",
+            "attnotnull": "attnotnull",
+            "defval": "defval",
+            "description": "description",
+            "attoptions": "attoptions",
+            "attacl": "attacl",
+            "seclabels": "seclabels",
+            "attstattarget": "attstattarget",
+            "attstorage": "attstorage",
+            "is_sql": "is_sql"
+        }
+
+    @property
+    def property_query(self):
+        return {
+            "name": "test",
+            "cltype": "test",
+            "schema": "test_schema",
+            "table": "test_table",
+            "displaytypname": "test_displaytypname",
+            "attlen": "test",
+            "attprecision": "test",
+            "hasSqrBracket": "test",
+            "collspcname": "test",
+            "attnotnull": "test",
+            "defval": "test",
+            "description": "test_description",
+            "attoptions": "test",
+            "attacl": "test",
+            "seclabels": "test",
+            "attstattarget": "test",
+            "attstorage": "test",
+            "is_sql": "test"
+        }
+
+    @property
+    def class_for_test(self):
+        return Column
 
     @property
     def collections(self):

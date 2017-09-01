@@ -21,6 +21,7 @@ from pgsqltoolsservice.object_explorer import ObjectExplorerService
 from pgsqltoolsservice.query_execution import QueryExecutionService
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 from pgsqltoolsservice.edit_data.edit_data_service import EditDataService
+from pgsqltoolsservice.tasks import TaskService
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
 
@@ -51,6 +52,7 @@ if __name__ == '__main__':
     try:
         if not log_dir:
             log_dir = os.path.dirname(sys.argv[0])
+        os.makedirs(log_dir, exist_ok=True)
         handler = logging.FileHandler(os.path.join(log_dir, 'pgtoolsservice.log'))
     except Exception:
         handler = logging.NullHandler()
@@ -88,6 +90,7 @@ if __name__ == '__main__':
         constants.SCRIPTING_SERVICE_NAME: ScriptingService,
         constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
         constants.EDIT_DATA_SERVICE_NAME: EditDataService,
+        constants.TASK_SERVICE_NAME: TaskService
     }
     service_box = ServiceProvider(server, services, logger)
     service_box.initialize()
