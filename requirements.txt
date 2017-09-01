@@ -3,7 +3,8 @@ psycopg2==2.7.1
 
 # PGToolsService Requirements
 inflection
-sqlparse
+sqlparse>=0.2.2,<0.3.0
+prompt_toolkit
 
 # PGSMO Requirements
 jinja2

@@ -64,6 +64,10 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     # PROPERTIES ###########################################################
     @property
+    def schema(self):
+        return self.parent.name
+
+    @property
     def extended_vars(self):
         template_vars = {
             'scid': self.parent.oid,

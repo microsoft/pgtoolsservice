@@ -1,7 +1,7 @@
 {#
  # pgAdmin 4 - PostgreSQL Tools
  #
- # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # Copyright (C) 2013 - 2017, The pgAdmn Development Team
  # This software is released under the PostgreSQL Licence
  #}
 SELECT
@@ -10,6 +10,7 @@ SELECT
     typns.nspname AS typnsp, lanname, proargnames, oidvectortypes(proargtypes) AS proargtypenames,
     pg_get_expr(proargdefaults, 'pg_catalog.pg_class'::regclass) AS proargdefaultvals,
     pronargdefaults, proconfig, pg_get_userbyid(proowner) AS funcowner, description,
+    false proiswindow,
     (SELECT
         array_agg(provider || '=' || label)
     FROM
