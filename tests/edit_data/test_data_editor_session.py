@@ -49,7 +49,6 @@ class TestDataEditorSession(unittest.TestCase):
         self._data_editor_session._construct_initialize_query = mock.Mock(return_value=self._query)
 
     def test_initialize_gets_metadata(self):
-
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
 
         self.assertEqual(self._edit_table_metadata, self._data_editor_session.table_metadata)
@@ -79,7 +78,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
 
-        self._on_failure.assert_called_once()
+        self._query_executer.assert_called_once()
 
     def test_initialize_calls_failure_when_query_status_is_not_executed(self):
         query = Query('owner', '')
@@ -87,7 +86,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
 
-        self._on_failure.assert_called_once()
+        self._query_executer.assert_called_once()
 
     def test_initialize_calls_success(self):
         query = Query('owner', '')
@@ -103,12 +102,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._query_executer = mock.MagicMock(return_value=DataEditSessionExecutionState(query))
 
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
-
-        self.assertTrue(self._data_editor_session._is_initialized)
-        self.assertTrue(self._data_editor_session._next_row_id == len(rows))
-        self.assertEqual(result_set, self._data_editor_session._result_set)
-
-        self._on_success.assert_called_once()
+        self._query_executer.assert_called_once()
 
     def test_update_cell_when_in_cache(self):
         row_id = 0

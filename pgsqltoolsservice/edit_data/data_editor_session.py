@@ -11,10 +11,11 @@ from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate, Ed
 from pgsqltoolsservice.query_execution.result_set import ResultSet # noqa
 from pgsqltoolsservice.edit_data.contracts import (
     EditCellResponse, InitializeEditParams, EditInitializerFilter, RevertCellResponse,
-    CreateRowResponse
+    CreateRowResponse, EditRow, EditCell
 )
 from pgsqltoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
+from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset
 
 
 class DataEditSessionExecutionState:
@@ -38,24 +39,25 @@ class DataEditorSession():
         self.table_metadata: EditTableMetadata = None
 
     def initialize(self, initailize_edit_params: InitializeEditParams, connection: 'psycopg2.extensions.connection',
-                   query_executer: Callable, on_success: Callable, on_failure: Callable):
+                   query_executer: Callable[[str, Callable], None], on_success: Callable, on_failure: Callable):
         """ This method creates the metadata for the object to be edited and creates the query to be
         executed and calls query executer with it """
 
+        self.table_metadata = self._metadata_factory.get(
+            connection, initailize_edit_params.schema_name, initailize_edit_params.object_name,
+            initailize_edit_params.object_type)
+
+        query_executer(self._construct_initialize_query(connection,
+                       self.table_metadata, initailize_edit_params.filters),
+                       lambda execution_state: self.on_query_execution_complete(execution_state, on_success, on_failure))
+
+    def on_query_execution_complete(self, execution_state: DataEditSessionExecutionState, on_success: Callable, on_failure: Callable):
         try:
-            self.table_metadata = self._metadata_factory.get(
-                connection, initailize_edit_params.schema_name, initailize_edit_params.object_name,
-                initailize_edit_params.object_type)
-
-            execution_state: DataEditSessionExecutionState = query_executer(self._construct_initialize_query(connection,
-                                                                            self.table_metadata, initailize_edit_params.filters))
-
             if execution_state.query is None:
                 message = execution_state.message
                 raise Exception(message)
 
             self._validate_query_for_session(execution_state.query)
-
             self._result_set = execution_state.query.batches[0].result_set
             self._next_row_id = self._result_set.row_count
             self._is_initialized = True
@@ -63,8 +65,8 @@ class DataEditorSession():
 
             on_success()
 
-        except Exception:
-            on_failure()
+        except Exception as err:
+            on_failure(err)
 
     def update_cell(self, row_id: int, column_index: int, new_value: str) -> EditCellResponse:
 
@@ -96,7 +98,6 @@ class DataEditorSession():
             sql.Identifier(metadata.table_name),
             sql.SQL(limit_clause)
         )
-
         return query.as_string(connection)
 
     def commit_edit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
@@ -111,25 +112,7 @@ class DataEditorSession():
         thread.daemon = True
         self._commit_task = thread
 
-        thread.start()
-
-    def _do_commit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
-
-        try:
-            edit_operations = self._session_cache.values()
-            cursor = connection.cursor()
-
-            for operation in edit_operations:
-                script: EditScript = operation.get_script()
-                cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
-                operation.apply_changes()
-
-            self._session_cache.clear()
-
-            success()
-
-        except Exception:
-            failure()
+        thread.start()    
 
     def revert_row(self, row_id: int) -> None:
 
@@ -171,3 +154,39 @@ class DataEditorSession():
             default_cell_values.append(default_value)
 
         return CreateRowResponse(new_row_id, default_cell_values)
+
+    def get_rows(self, owner_uri, start_index: int, end_index: int):
+        if start_index < self._result_set.row_count:
+            subset = ResultSetSubset.from_result_set(self._result_set, start_index, end_index)
+        else:
+            subset = ResultSetSubset()
+
+        edit_rows = []
+        for index, row in enumerate(subset.rows):
+            row_id = start_index + index
+            cache = self._session_cache.get(row_id)
+            if cache is not None:
+                edit_rows.append(cache.get_edit_row(subset.rows[0]))
+            else:
+                edit_row = EditRow(row_id, [EditCell(cell, False) for cell in row])
+                edit_rows.append(edit_row)
+
+        return edit_rows
+
+    def _do_commit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
+
+        try:
+            edit_operations = self._session_cache.values()
+            cursor = connection.cursor()
+
+            for operation in edit_operations:
+                script: EditScript = operation.get_script()
+                cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
+                operation.apply_changes()
+
+            self._session_cache.clear()
+
+            success()
+
+        except Exception:
+            failure()
