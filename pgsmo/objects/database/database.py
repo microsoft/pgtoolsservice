@@ -88,10 +88,6 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
                 raise ValueError('connection create for wrong database')
 
     @property
-    def oid(self) -> int:
-        return self._oid
-
-    @property
     def is_template(self) -> bool:
         return self._is_template
 
