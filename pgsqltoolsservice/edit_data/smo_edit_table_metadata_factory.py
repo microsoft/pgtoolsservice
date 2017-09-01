@@ -22,9 +22,9 @@ class SmoEditTableMetadataFactory:
         result_object: Table = None
         object_metadata = ObjectMetadata.from_data(0, object_type, object_name, schema_name)
 
-        if object_type == 'Table':
+        if object_type.lower() == 'table':
             result_object = object_finder.find_table(server, object_metadata)
-        elif object_type == 'View':
+        elif object_type.lower() == 'view':
             result_object = object_finder.find_view(server, object_metadata)
         else:
             raise ValueError('Not supported object type')

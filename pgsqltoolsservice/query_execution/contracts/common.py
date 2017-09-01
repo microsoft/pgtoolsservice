@@ -138,11 +138,30 @@ class DbCellValue:
 
 class ResultSetSubset:
 
-    def __init__(self, results, owner_uri: str, batch_ordinal: int,
-                 result_set_ordinal: int, start_index: int, end_index: int):
-        self.rows: List[List[DbCellValue]] = self.build_db_cell_values(
+    @classmethod
+    def from_result_set(cls, result_set, start_index: int, end_index: int):
+        ''' Retrieves ResultSetSubset from Result set '''
+        instance = cls()
+        rows = cls._construct_rows(result_set, start_index, end_index)
+        instance.rows = rows
+        instance.row_count = len(rows)
+
+        return instance
+
+    @classmethod
+    def from_query_results(cls, results, owner_uri: str, batch_ordinal: int,
+                           result_set_ordinal: int, start_index: int, end_index: int):
+        ''' Retrieves ResultSetSubset from Query results '''
+        instance = cls()
+        instance.rows: List[List[DbCellValue]] = instance.build_db_cell_values(
             results, owner_uri, batch_ordinal, result_set_ordinal, start_index, end_index)
-        self.row_count: int = len(self.rows)
+        instance.row_count: int = len(instance.rows)
+
+        return instance
+
+    def __init__(self):
+        self.rows = List[List[DbCellValue]]
+        self.row_count: int = 0
 
     def build_db_cell_values(self, results, owner_uri: str, batch_ordinal: int,
                              result_set_ordinal: int, start_index: int,
@@ -178,6 +197,11 @@ class ResultSetSubset:
         utils.validate.is_within_range("result_set_ordinal", result_set_ordinal, 0, 0)
 
         result_set = batch.result_set
+
+        return ResultSetSubset._construct_rows(result_set, start_index, end_index)
+
+    @staticmethod
+    def _construct_rows(result_set, start_index: int, end_index: int):
         utils.validate.is_within_range("start_index", start_index, 0, end_index - 1)
         utils.validate.is_within_range("end_index", end_index - 1, start_index, len(result_set.rows) - 1)
 
