@@ -158,7 +158,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self.assertEqual(1, response.new_row_id)
         self.assertEqual(len(columns_metadata), len(response.default_values))
-  
+
         self.assertEqual('&lt;TBD&gt;', response.default_values[0])
         self.assertEqual('False', response.default_values[1])
 
@@ -224,7 +224,6 @@ class TestDataEditorSession(unittest.TestCase):
         self._mock_cursor.execute.assert_called_once_with(self._mock_cursor.morgified_value)
 
         mock_edit.apply_changes.assert_called_once()
-
 
 
 if __name__ == '__main__':

@@ -57,7 +57,7 @@ class TestRowDelete(unittest.TestCase):
         edit_row = self._row_delete.get_edit_row(cached_row)
 
         self.assertEqual(edit_row.id, self._row_id)
-        self.assertEqual(edit_row.state, EditRowState.DirtyDelete)
+        self.assertEqual(edit_row.state, EditRowState.DIRTY_DELETE)
 
         self.assertTrue(edit_row.cells[0].display_value is 'True')
 

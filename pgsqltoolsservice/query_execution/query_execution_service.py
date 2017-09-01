@@ -164,9 +164,6 @@ class QueryExecutionService(object):
 
         self._start_query_execution_thread(request_context, params, worker_args)
 
-    def get_query(self, owner_uri: str):
-        return self.query_results[owner_uri]
-
     def _start_query_execution_thread(self, request_context: RequestContext, params: ExecuteRequestParamsBase, worker_args: ExecuteRequestWorkerArgs= None):
 
         # Create a new query if one does not already exist or we already executed the previous one
@@ -191,9 +188,11 @@ class QueryExecutionService(object):
         request_context.send_response(self._get_result_subset(request_context, params))
 
     def _get_result_subset(self, request_context: RequestContext, params: SubsetParams) -> SubsetResult:
-        result_set_subset = ResultSetSubset(self.query_results, params.owner_uri,
-                                            params.batch_index, params.result_set_index, params.rows_start_index,
-                                            params.rows_start_index + params.rows_count)
+        result_set_subset = ResultSetSubset.from_query_results(
+            self.query_results, params.owner_uri,
+            params.batch_index, params.result_set_index, params.rows_start_index,
+            params.rows_start_index + params.rows_count)
+
         return SubsetResult(result_set_subset)
 
     def _handle_cancel_query_request(self, request_context: RequestContext, params: QueryCancelParams):

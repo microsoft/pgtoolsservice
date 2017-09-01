@@ -9,19 +9,9 @@
      ,nspname, relname, attrelid, 
      CASE WHEN typ.typtype = 'd' THEN typ.typtypmod ELSE atttypmod END AS typmod,
      CASE WHEN atthasdef THEN (SELECT pg_get_expr(adbin, cls.oid) FROM pg_attrdef WHERE adrelid = cls.oid AND adnum = attr.attnum) ELSE NULL END AS default,
-     CASE WHEN col.is_updatable = 'YES' THEN true ELSE false END AS is_updatable,
-     EXISTS (
-       SELECT * FROM pg_index
-       WHERE pg_index.indrelid = cls.oid AND
-             pg_index.indisprimary AND
-             attnum = ANY (indkey)
-     ) AS isprimarykey,
-     EXISTS (
-       SELECT * FROM pg_index
-       WHERE pg_index.indrelid = cls.oid AND
-             pg_index.indisunique AND
-             attnum = ANY (indkey)
-     ) AS isunique
+     TRUE AS is_updatable,  /* Supported only since PG 8.2 */
+     FALSE AS isprimarykey, /* Can't do ANY() on pg_index.indkey which is int2vector */
+     FALSE AS isunique      /* Can't do ANY() on pg_index.indkey which is int2vector */
 FROM pg_attribute AS attr
 JOIN pg_type AS typ ON attr.atttypid = typ.oid
 JOIN pg_class AS cls ON cls.oid = attr.attrelid

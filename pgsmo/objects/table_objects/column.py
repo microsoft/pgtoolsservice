@@ -111,7 +111,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def is_auto_increament(self) -> bool:
         return self._is_auto_increament
-    
+
     @property
     def cltype(self):
         return self._full_properties["cltype"]

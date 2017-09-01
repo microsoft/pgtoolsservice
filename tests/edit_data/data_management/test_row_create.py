@@ -56,7 +56,7 @@ class TestRowCreate(unittest.TestCase):
         edit_row = self._row_create.get_edit_row(cached_row)
 
         self.assertEqual(edit_row.id, self._row_id)
-        self.assertEqual(edit_row.state, EditRowState.DirtyInsert)
+        self.assertEqual(edit_row.state, EditRowState.DIRTY_INSERT)
 
         self.assertTrue(edit_row.cells[0].display_value is '')
 
@@ -77,7 +77,7 @@ class TestRowCreate(unittest.TestCase):
         self.assertEqual(script.query_template, expected_query_template)
         self.assertEquals(script.query_paramters[0], False)
 
-    def test_apply_changes(self):        
+    def test_apply_changes(self):
         self.assertTrue(len(self._result_set.rows) is 2)
         self._row_create.apply_changes()
 

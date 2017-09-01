@@ -25,13 +25,13 @@ class TestCellUpdate(unittest.TestCase):
         self.assertTrue(type(self._cell_update.value is str))
 
     def test_value_as_string(self):
-        
+
         value = self._cell_update.value_as_string
 
         self.assertTrue(value is self._new_cell_value)
 
     def test_as_edit_cell(self):
-        
+
         edit_cell = self._cell_update.as_edit_cell
 
         self.assertTrue(edit_cell.display_value is self._new_cell_value)

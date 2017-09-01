@@ -196,8 +196,8 @@ class ResultSetSubset:
 
         return ResultSetSubset._construct_rows(result_set, start_index, end_index)
 
-    @classmethod
-    def _construct_rows(cls, result_set, start_index: int, end_index: int):
+    @staticmethod
+    def _construct_rows(result_set, start_index: int, end_index: int):
         utils.validate.is_within_range("start_index", start_index, 0, end_index - 1)
         utils.validate.is_within_range("end_index", end_index - 1, start_index, len(result_set.rows) - 1)
 

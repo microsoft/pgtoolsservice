@@ -29,5 +29,5 @@ class DataTypeParserFactory:
             datatypes.DATATYPE_UUID: datatype_parsers.parse_uuid
         }
 
-    def get(self, column: DbColumn):
+    def get(self, column: DbColumn) -> object:
         return self.datatype_parser_map[column.data_type]

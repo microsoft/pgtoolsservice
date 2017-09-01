@@ -30,9 +30,6 @@ from pgsqltoolsservice.edit_data.contracts.revert_cell_request import (
 from pgsqltoolsservice.edit_data.contracts.revert_row_request import (
     REVERT_ROW_REQUEST, RevertRowRequest, RevertRowResponse
 )
-from pgsqltoolsservice.edit_data.contracts.editsession_ready_notification import (
-    EditSessionReadyNotificationParams, EDIT_SESSIONREADY_NOTIFICATION
-)
 from pgsqltoolsservice.edit_data.contracts.edit_row import EditRow, EditRowState
 from pgsqltoolsservice.edit_data.contracts.edit_subset_request import (
     EditSubsetParams, EDIT_SUBSET_REQUEST, EditSubsetResponse)
@@ -45,6 +42,5 @@ __all__ = [
     'CreateRowRequest', 'CreateRowResponse', 'CREATE_ROW_REQUEST', 'DELETE_ROW_REQUEST', 'DeleteRowRequest',
     'DeleteRowResponse', 'DISPOSE_REQUEST', 'DisposeRequest', 'DisposeResponse', 'EDIT_COMMIT_REQUEST',
     'EditCommitRequest', 'EditCommitResponse', 'REVERT_CELL_REQUEST', 'RevertCellRequest', 'RevertCellResponse',
-    'REVERT_ROW_REQUEST', 'RevertRowRequest', 'RevertRowResponse', 'EditSessionReadyNotificationParams',
-    'EDIT_SESSIONREADY_NOTIFICATION', 'EditRow', 'EditSubsetResponse', 'EditRowState'
+    'REVERT_ROW_REQUEST', 'RevertRowRequest', 'RevertRowResponse', 'EditRow', 'EditSubsetResponse', 'EditRowState'
     ]

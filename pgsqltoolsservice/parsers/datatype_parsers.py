@@ -53,7 +53,7 @@ def parse_date(value: str) -> datetime.date:
 
 
 def parse_time(value: str) -> datetime.time:
-    pass
+    raise NotImplementedError()
 
 
 def parse_datetime(value: str) -> datetime.datetime:
@@ -61,7 +61,7 @@ def parse_datetime(value: str) -> datetime.datetime:
 
 
 def parse_timedelta(value: str) -> datetime.timedelta:
-    pass
+    raise NotImplementedError()
 
 
 def parse_uuid(value: str) -> uuid.UUID:

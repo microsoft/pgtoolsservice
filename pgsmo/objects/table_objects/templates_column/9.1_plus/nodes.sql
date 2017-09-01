@@ -4,6 +4,7 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
+ 
  SELECT
     attname as name, attnum as OID, typ.oid AS typoid, typ.typname AS datatype, attnotnull as not_null, attr.atthasdef as has_default_val
      ,nspname, relname, attrelid, 

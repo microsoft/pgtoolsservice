@@ -4,18 +4,17 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import Callable, Dict, List, Optional, Tuple # noqa
+from psycopg2 import sql
+import threading
 
 from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete # noqa
 from pgsqltoolsservice.query_execution.result_set import ResultSet # noqa
 from pgsqltoolsservice.edit_data.contracts import (
-    EditCellResponse, InitializeEditParams, EditInitializerFilter, EditRow,
-    EditCell, RevertCellResponse, CreateRowResponse
+    EditCellResponse, InitializeEditParams, EditInitializerFilter, RevertCellResponse,
+    CreateRowResponse
 )
 from pgsqltoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
-from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset
-from psycopg2 import sql
-import threading
 
 
 class DataEditSessionExecutionState:
@@ -43,22 +42,21 @@ class DataEditorSession():
         """ This method creates the metadata for the object to be edited and creates the query to be
         executed and calls query executer with it """
 
-        self.table_metadata = self._metadata_factory.get(
-            connection, initailize_edit_params.schema_name, initailize_edit_params.object_name,
-            initailize_edit_params.object_type)
-
-        query_executer(self._construct_initialize_query(connection,
-                       self.table_metadata, initailize_edit_params.filters), lambda execution_state: self.callback(execution_state, on_success, on_failure))
-
-    def callback(self, execution_state: DataEditSessionExecutionState, on_success: Callable, on_failure: Callable):
         try:
+            self.table_metadata = self._metadata_factory.get(
+                connection, initailize_edit_params.schema_name, initailize_edit_params.object_name,
+                initailize_edit_params.object_type)
+
+            execution_state: DataEditSessionExecutionState = query_executer(self._construct_initialize_query(connection,
+                                                                            self.table_metadata, initailize_edit_params.filters))
+
             if execution_state.query is None:
                 message = execution_state.message
                 raise Exception(message)
 
             self._validate_query_for_session(execution_state.query)
+
             self._result_set = execution_state.query.batches[0].result_set
-            self._result_set.columns = [column_metadata.db_column for column_metadata in self.table_metadata.columns_metadata]
             self._next_row_id = self._result_set.row_count
             self._is_initialized = True
             self.table_metadata.extend(self._result_set.columns)
@@ -101,30 +99,11 @@ class DataEditorSession():
 
         return query.as_string(connection)
 
-    def get_rows(self, owner_uri, start_index: int, end_index: int):
-        subset: ResultSetSubset
-        if start_index < self._result_set.row_count:
-            subset = self._result_set.get_subset(start_index, end_index)
-        else:
-            subset = ResultSetSubset()
-
-        edit_rows = []
-        for index, row in enumerate(subset.rows):
-            row_id = start_index + index
-            cache = self._session_cache.get(row_id)
-            if cache is not None:
-                edit_rows.append(cache.get_edit_row(subset.rows[0]))
-            else:
-                edit_row = EditRow(row_id, [EditCell(cell, False) for cell in row])
-                edit_rows.append(edit_row)
-
-        return edit_rows
-
     def commit_edit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
 
         if self._commit_task is not None and self._commit_task.is_alive() is True:
             raise ValueError('Previous commit in progress')
-        
+
         thread = threading.Thread(
             target=self._do_commit,
             args=(connection, success, failure)
@@ -149,8 +128,8 @@ class DataEditorSession():
 
             success()
 
-        except Exception as error:
-            failure(error)
+        except Exception:
+            failure()
 
     def revert_row(self, row_id: int) -> None:
 
@@ -162,7 +141,7 @@ class DataEditorSession():
 
     def revert_cell(self, row_id: int, column_index: int) -> RevertCellResponse:
 
-        edit_row: EditRow = self._session_cache.get(row_id)
+        edit_row = self._session_cache.get(row_id)
 
         return edit_row.revert_cell(column_index)
 
@@ -181,7 +160,7 @@ class DataEditorSession():
         default_cell_values = []
 
         for index, column_metadata in enumerate(self.table_metadata.columns_metadata):
-            
+
             if column_metadata.is_calculated is True:
                 default_value = '&lt;TBD&gt;'
 

@@ -44,7 +44,7 @@ class RowEdit:
 
     @abstractmethod
     def apply_changes(self):
-        pass      
+        pass
 
     def validate_column_is_updatable(self, column_index: int):
 

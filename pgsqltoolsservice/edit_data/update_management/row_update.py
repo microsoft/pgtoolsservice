@@ -41,7 +41,7 @@ class RowUpdate(RowEdit):
         for column_index, cell in self._cell_updates.items():
             edit_cells[column_index] = cell.edit_cell
 
-        return EditRow(self.row_id, edit_cells, EditRowState.DirtyDelete)
+        return EditRow(self.row_id, edit_cells, EditRowState.DIRTY_UPDATE)
 
     def revert_cell_value(self, column_index: int) -> RevertCellResponse:
 

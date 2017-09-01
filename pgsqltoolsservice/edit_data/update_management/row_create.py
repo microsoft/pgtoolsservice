@@ -40,7 +40,7 @@ class RowCreate(RowEdit):
             db_cell_value = DbCellValue('', False, None, self.row_id) if cell is None else cell.as_db_cell_value
             edit_cells.append(EditCell(db_cell_value, True))
 
-        return EditRow(self.row_id, edit_cells, EditRowState.DirtyInsert)
+        return EditRow(self.row_id, edit_cells, EditRowState.DIRTY_INSERT)
 
     def get_script(self) -> EditScript:
         return self._generate_insert_script()
