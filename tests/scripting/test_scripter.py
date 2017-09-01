@@ -87,18 +87,22 @@ class TestScripter(unittest.TestCase):
         conn = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
         script = scripter.Scripter(conn)
 
-        # ... Mock up the server so it returns something from the urn locator
-        mock_obj = {}
-        script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
-
-        # ... Mock up some metadata
-        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'obj', 'ObjName')
-
         for operation in scripter.ScriptOperation:
+            # ... Mock up the server so it returns something from the urn locator
+            mock_obj = {}
+            script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
+
+            # ... Mock up some metadata
+            mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'obj', 'ObjName')
+
             # If: I attempt to perform an operation the handler doesn't support
-            # Then: I should get an exception
+            # Then:
+            # ... I should get an exception
             with self.assertRaises(TypeError):
                 script.script(operation, mock_metadata)
+
+            # ... The URN should have been used to get the object
+            script.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
 
     def test_script_successful(self):
         # Setup:
@@ -116,18 +120,24 @@ class TestScripter(unittest.TestCase):
         # ... Mocks for SELECT TODO: remove as per (https://github.com/Microsoft/carbon/issues/1764)
         mock_obj.name = 'table'
         mock_obj.schema = 'schema'
-        script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
-
-        # ... Mock up some metadata
-        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'obj', 'ObjName')
 
         for operation in scripter.ScriptOperation:
+            # ... Create a mock to return the object by UR
+            script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
+
+            # ... Mock up some metadata
+            mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'obj', 'ObjName')
+
             # If: I attempt to perform a scripting operation
             result = script.script(operation, mock_metadata)
 
-            # Then: I should get something back
+            # Then:
+            # ... I should get something back
             # NOTE: The actual contents of the script is tested in the PGSMO object's unit tests
             utils.assert_not_none_or_whitespace(result)
+
+            # ... The URN should have been used to get the object
+            script.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
 
 
 class TestScripterOld(unittest.TestCase):
@@ -154,10 +164,14 @@ class TestScripterOld(unittest.TestCase):
         self.server.get_object_by_urn = mock.MagicMock(return_value=mock_table)
 
         # If I try to get create script
-        result: str = self.scripter.script(scripter.ScriptOperation.CREATE, ObjectMetadata.from_data('//urn/', 0, 'Table', 'test'))
+        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'Table', 'test')
+        result: str = self.scripter.script(scripter.ScriptOperation.CREATE, mock_metadata)
 
         # The result should be the correct template value
         self.assertTrue('CREATE TABLE myschema.test' in result)
+
+        # ... The URN should have been used to get the object
+        self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
 
     def test_datatype_scripting(self):
         """ Tests create script for tables"""
