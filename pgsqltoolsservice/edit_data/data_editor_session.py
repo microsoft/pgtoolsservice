@@ -35,7 +35,7 @@ class DataEditorSession():
         self.table_metadata: EditTableMetadata = None
 
     def initialize(self, initailize_edit_params: InitializeEditParams, connection: 'psycopg2.extensions.connection',
-                   query_executer: Callable, on_success: Callable, on_failure: Callable):
+                   query_executer: Callable[[str, Callable], None], on_success: Callable, on_failure: Callable):
         """ This method creates the metadata for the object to be edited and creates the query to be
         executed and calls query executer with it """
 
@@ -107,7 +107,7 @@ class DataEditorSession():
             if cache is not None:
                 edit_rows.append(cache.get_edit_row(subset.rows[0]))
             else:
-                edit_row = EditRow(row_id, [EditCell(cell.display_value, False) for cell in row])
+                edit_row = EditRow(row_id, [EditCell(cell, False) for cell in row])
                 edit_rows.append(edit_row)
 
         return edit_rows

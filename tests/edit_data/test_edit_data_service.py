@@ -107,5 +107,6 @@ class TestEditDataService(unittest.TestCase):
         edit_session._edit_initialize(request_context, params)
         edit_session._edit_initialize.assert_called()
 
-    if __name__ == '__main__':
-        unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()
