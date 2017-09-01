@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 from typing import List  # noqa
 
-from pgsqltoolsservice.query_execution.contracts.common import (SpecialAction, ResultSetSummary, DbColumn)
+from pgsqltoolsservice.query_execution.contracts.common import SpecialAction, ResultSetSummary, DbColumn
 
 
 class ResultSet(object):

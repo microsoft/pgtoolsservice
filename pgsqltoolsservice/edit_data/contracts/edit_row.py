@@ -5,15 +5,16 @@
 
 
 from enum import Enum
-from pgsqltoolsservice.edit_data.contracts import EditCell
 from typing import List
+
+from pgsqltoolsservice.edit_data.contracts import EditCell
 
 
 class EditRowState(Enum):
-    Clean = 0
-    DirtyInsert = 1
-    DirtyDelete = 2
-    DirtyUpdate = 3
+    CLEAN = 0
+    DIRTY_INSERT = 1
+    DIRTY_DELETE = 2
+    DIRTY_UPDATE = 3
 
 
 class EditRow:
@@ -24,9 +25,9 @@ class EditRow:
 
     @property
     def is_dirty(self):
-        return self.state is not EditRowState.Clean
+        return self.state is not EditRowState.CLEAN
 
-    def __init__(self, row_id: int, cells: List[EditCell], state: EditRowState= EditRowState.Clean):
+    def __init__(self, row_id: int, cells: List[EditCell], state: EditRowState = EditRowState.CLEAN):
         self.cells = cells
         self.row_id = row_id
         self.state: EditRowState = state

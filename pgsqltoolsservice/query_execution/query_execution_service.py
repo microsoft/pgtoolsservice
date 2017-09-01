@@ -90,6 +90,9 @@ class QueryExecutionService(object):
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Query execution service successfully initialized')
 
+    def get_query(self, owner_uri: str):
+        return self.query_results[owner_uri]
+
     # REQUEST HANDLERS #####################################################
     def _handle_simple_execute_request(self, request_context: RequestContext, params: SimpleExecuteRequest):
 
@@ -248,9 +251,6 @@ class QueryExecutionService(object):
         # a query that's currently executing
         except BaseException:
             raise
-
-    def get_query(self, owner_uri: str):
-        return self.query_results[owner_uri]
 
     def _execute_query_request_worker(self, worker_args: ExecuteRequestWorkerArgs):
         """Worker method for 'handle execute query request' thread"""

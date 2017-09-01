@@ -27,23 +27,26 @@ from pgsqltoolsservice.edit_data.contracts.dispose_request import (
 from pgsqltoolsservice.edit_data.contracts.edit_commit_request import (
     EDIT_COMMIT_REQUEST, EditCommitRequest, EditCommitResponse
 )
+from pgsqltoolsservice.edit_data.contracts.edit_subset_result import (
+    EditSubsetResult
+)
+from pgsqltoolsservice.edit_data.contracts.session_ready_notification import (
+    SESSION_READY_NOTIFICATION, SessionReadyNotificationParams
+)
 from pgsqltoolsservice.edit_data.contracts.revert_cell_request import (
     REVERT_CELL_REQUEST, RevertCellRequest, RevertCellResponse
 )
 from pgsqltoolsservice.edit_data.contracts.revert_row_request import (
     REVERT_ROW_REQUEST, RevertRowRequest, RevertRowResponse
 )
-from pgsqltoolsservice.edit_data.contracts.editsession_ready_notification import (
-    EditSessionReadyNotificationParams, EDIT_SESSIONREADY_NOTIFICATION
-)
 
 
 __all__ = [
-    'InitializeEditParams', 'INITIALIZE_EDIT_REQUEST', 'EditSubsetParams', 'EDIT_SUBSET_REQUEST',
+    'InitializeEditParams', 'INITIALIZE_EDIT_REQUEST', 'EditSubsetParams', 'EditSubsetResult', 'EDIT_SUBSET_REQUEST',
     'SessionOperationRequest', 'RowOperationRequest', 'EditCell', 'EditCellResponse', 'EditRow',
     'UPDATE_CELL_REQUEST', 'UpdateCellRequest', 'UpdateCellResponse', 'EditInitializerFilter',
     'CreateRowRequest', 'CreateRowResponse', 'CREATE_ROW_REQUEST', 'DELETE_ROW_REQUEST', 'DeleteRowRequest',
     'DeleteRowResponse', 'DISPOSE_REQUEST', 'DisposeRequest', 'DisposeResponse', 'EDIT_COMMIT_REQUEST',
-    'EditCommitRequest', 'EditCommitResponse', 'REVERT_CELL_REQUEST', 'RevertCellRequest', 'RevertCellResponse',
-    'REVERT_ROW_REQUEST', 'RevertRowRequest', 'RevertRowResponse', 'EditSessionReadyNotificationParams', 'EDIT_SESSIONREADY_NOTIFICATION'
+    'EditCommitRequest', 'EditCommitResponse', 'SessionReadyNotificationParams', 'SESSION_READY_NOTIFICATION',
+    'REVERT_CELL_REQUEST', 'RevertCellRequest', 'RevertCellResponse', 'REVERT_ROW_REQUEST', 'RevertRowRequest', 'RevertRowResponse'
     ]

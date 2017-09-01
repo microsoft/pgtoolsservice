@@ -4,11 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 
-from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
+class EditSubsetResult:
 
-
-class EditCell(DbCellValue):
-
-    def __init__(self, db_cell_value: DbCellValue, is_dirty: bool):
-        super().__init__(db_cell_value.display_value, False, None, None)
-        self.is_dirty = is_dirty
+    def __init__(self, row_count: int, subset):
+        self.row_count = row_count
+        self.subset = subset

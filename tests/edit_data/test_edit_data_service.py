@@ -7,17 +7,17 @@
 import unittest
 from queue import Queue
 from unittest import mock
+import tests.utils as utils
+from unittest.mock import patch
+
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.edit_data.edit_data_service import EditDataService
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from pgsqltoolsservice.edit_data.contracts import UpdateCellRequest
+from pgsqltoolsservice.edit_data.contracts import UpdateCellRequest, InitializeEditParams
 from pgsqltoolsservice.hosting.json_message import JSONRPCMessage
-import tests.utils as utils
 from pgsqltoolsservice.hosting import RequestContext
-from pgsqltoolsservice.edit_data.contracts import InitializeEditParams
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.query_execution.query_execution_service import QueryExecutionService
-from unittest.mock import patch
 
 
 class TestEditDataService(unittest.TestCase):
@@ -105,8 +105,7 @@ class TestEditDataService(unittest.TestCase):
 
         edit_session = mock.MagicMock()
         edit_session._edit_initialize(request_context, params)
-
-        pass
+        edit_session._edit_initialize.assert_called()
 
     if __name__ == '__main__':
         unittest.main()

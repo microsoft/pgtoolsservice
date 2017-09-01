@@ -3,11 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import Callable, Dict # noqa
+from psycopg2 import sql
 
-from typing import Callable, Dict, List, Optional, Tuple # noqa
 from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate # noqa
 from pgsqltoolsservice.query_execution.result_set import ResultSet # noqa
-from pgsqltoolsservice.edit_data.contracts import EditCellResponse, InitializeEditParams, EditInitializerFilter, EditRow, EditCell
+from pgsqltoolsservice.edit_data.contracts import (
+    EditCellResponse, InitializeEditParams, EditInitializerFilter, EditRow, EditCell)
 from pgsqltoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
 from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset
@@ -42,9 +44,10 @@ class DataEditorSession():
             initailize_edit_params.object_type)
 
         query_executer(self._construct_initialize_query(connection,
-                       self.table_metadata, initailize_edit_params.filters), lambda execution_state: self.callback(execution_state, on_success, on_failure))
+                       self.table_metadata, initailize_edit_params.filters),
+                       lambda execution_state: self.on_query_execution_complete(execution_state, on_success, on_failure))
 
-    def callback(self, execution_state: DataEditSessionExecutionState, on_success: Callable, on_failure: Callable):
+    def on_query_execution_complete(self, execution_state: DataEditSessionExecutionState, on_success: Callable, on_failure: Callable):
         try:
             if execution_state.query is None:
                 message = execution_state.message
@@ -79,10 +82,19 @@ class DataEditorSession():
             raise Exception('Execution not completed')
 
     def _construct_initialize_query(self, connection: 'psycopg2.extensions.connection', metadata: EditTableMetadata, filters: EditInitializerFilter):
-        return "SELECT * FROM PUBLIC.CUSTOMERS"
+        column_names = [sql.Identifier(column.escaped_name) for column in metadata.column_metadata]
+
+        if filters.limit_results is not None and filters.limit_results > 0:
+            limit_clause = ' '.join([' LIMIT', str(filters.limit_results)])
+
+        query = sql.SQL('SELECT {0} FROM {1} {2}').format(
+            sql.SQL(', ').join(column_names),
+            sql.Identifier(metadata.escaped_multipart_name),
+            sql.SQL(limit_clause)
+        )
+        return query.as_string(connection)
 
     def get_rows(self, owner_uri, start_index: int, end_index: int):
-        subset: ResultSetSubset
         if start_index < self._result_set.row_count:
             subset = ResultSetSubset.from_result_set(self._result_set, start_index, end_index)
         else:
