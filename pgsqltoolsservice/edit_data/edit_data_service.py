@@ -10,13 +10,15 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.edit_data.contracts import (
     CREATE_ROW_REQUEST, CreateRowRequest, DELETE_ROW_REQUEST, DeleteRowRequest, DISPOSE_REQUEST, DisposeRequest,
     DisposeResponse, EDIT_COMMIT_REQUEST, EDIT_SUBSET_REQUEST, EditCommitRequest, EditCommitResponse, EditSubsetParams,
-    INITIALIZE_EDIT_REQUEST, InitializeEditParams, REVERT_CELL_REQUEST, REVERT_ROW_REQUEST, RevertCellRequest, RevertRowRequest,
-    SessionOperationRequest, UPDATE_CELL_REQUEST, UpdateCellRequest, SessionReadyNotificationParams, SESSION_READY_NOTIFICATION
-)
+    EditSubsetResponse, INITIALIZE_EDIT_REQUEST, InitializeEditParams, REVERT_CELL_REQUEST, REVERT_ROW_REQUEST, RevertCellRequest,
+    RevertRowRequest, SessionOperationRequest, UPDATE_CELL_REQUEST, UpdateCellRequest, SessionReadyNotificationParams,
+    SESSION_READY_NOTIFICATION
 )
 from pgsqltoolsservice.edit_data import DataEditorSession, SmoEditTableMetadataFactory, DataEditSessionExecutionState # noqa
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.connection.contracts import ConnectionType
+from pgsqltoolsservice.query_execution.contracts import ExecuteStringParams, RESULT_SET_COMPLETE_NOTIFICATION
+from pgsqltoolsservice.query_execution.query_execution_service import ExecuteRequestWorkerArgs
 
 
 class EditDataService(object):
@@ -73,7 +75,7 @@ class EditDataService(object):
 
         rows = session.get_rows(params.owner_uri, params.row_start_index, params.row_count - 1)
 
-        edit_subset_result = EditSubsetResult(len(rows), rows)
+        edit_subset_result = EditSubsetResponse(len(rows), rows)
 
         request_context.send_response(edit_subset_result)
 

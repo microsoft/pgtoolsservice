@@ -112,7 +112,7 @@ class DataEditorSession():
         thread.daemon = True
         self._commit_task = thread
 
-        thread.start()    
+        thread.start()
 
     def revert_row(self, row_id: int) -> None:
 
