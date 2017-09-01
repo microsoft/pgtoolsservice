@@ -80,19 +80,19 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
-    def arguments(self) -> Optional[List]:
+    def arguments(self) -> Optional[str]:
         return self._full_properties.get("arguments")
 
     @property
-    def proargdefaultvals(self) -> Optional[List]:
+    def proargdefaultvals(self) -> Optional[str]:
         return self._full_properties.get("proargdefaultvals")
 
     @property
-    def proargnames(self) -> Optional[List]:
+    def proargnames(self) -> Optional[str]:
         return self._full_properties.get("proargnames")
 
     @property
-    def proargtypenames(self) -> Optional[List]:
+    def proargtypenames(self) -> Optional[str]:
         return self._full_properties.get("proargtypenames")
 
     @property

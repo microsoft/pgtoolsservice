@@ -15,7 +15,6 @@ from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import pgsmo.utils as utils
 
-SEARCH_PATH_NAME = 'search_path'
 SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
 SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
 
@@ -46,8 +45,8 @@ class Server:
             Database.__name__:    NodeCollection(lambda: Database.get_nodes_for_parent(self, None)),
             Role.__name__:        NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
             Tablespace.__name__:  NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None)),
-            SEARCH_PATH_NAME:     NodeCollection(lambda: self._fetch_search_path()),
         }
+        self._search_path = NodeCollection(lambda: self._fetch_search_path())
 
     # PROPERTIES ###########################################################
     @property
@@ -127,7 +126,7 @@ class Server:
         The search_path for the current role. Defined at the server level as it's a global property,
         and as a collection as it is a list of schema names
         """
-        return self._child_objects[SEARCH_PATH_NAME]
+        return self._search_path
 
     # METHODS ##############################################################
     def get_object_by_urn(self, urn: str) -> NodeObject:

@@ -12,6 +12,7 @@ jinja2
 # Build/Test Requirements
 cx_freeze
 nose
+parameterized
 coverage
 autopep8
 flake8
