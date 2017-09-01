@@ -9,7 +9,10 @@ from unittest import mock
 
 from pgsqltoolsservice.edit_data.edit_data_service import EditDataService
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from pgsqltoolsservice.edit_data.contracts import UpdateCellRequest
+from pgsqltoolsservice.edit_data.contracts import (
+    UpdateCellRequest, CreateRowRequest, SessionOperationRequest, DeleteRowRequest, RevertCellRequest,
+    RevertRowRequest, EditCommitRequest, DisposeRequest
+)
 import tests.utils as utils
 
 
@@ -17,7 +20,8 @@ class TestEditDataService(unittest.TestCase):
 
     def setUp(self):
         self._service_under_test = EditDataService()
-        self._service_provider = ServiceProviderMock({'query_execution': {}})
+        self._mock_connection = mock.MagicMock()
+        self._service_provider = ServiceProviderMock({'query_execution': {}, 'connection': self._mock_connection})
         self._service_under_test.register(self._service_provider)
 
     def test_initialization(self):
@@ -54,28 +58,115 @@ class TestEditDataService(unittest.TestCase):
 
     def test_update_cell_with_active_session(self):
 
-        update_cell_request = UpdateCellRequest()
-        update_cell_request.owner_uri = 'test_owner_uri'
-        update_cell_request.row_id = 1
-        update_cell_request.column_id = 1
-        update_cell_request.new_value = 'Updates'
+        request = UpdateCellRequest()
+        request.owner_uri = 'test_owner_uri'
+        request.row_id = 1
+        request.column_id = 1
+        request.new_value = 'Updates'
 
+        self._validate_row_operations(
+            self._service_under_test._update_cell, 'update_cell', request,
+            request.row_id, request.column_id, request.new_value)
+
+    def test_create_row_operation(self):
+
+        request = CreateRowRequest()
+        request.owner_uri = 'test_owner_uri'
+
+        self._validate_row_operations(self._service_under_test._create_row, 'create_row', request, None)
+
+    def test_delete_row_operation(self):
+
+        request = DeleteRowRequest()
+        request.owner_uri = 'test_owner_uri'
+        request.row_id = 1
+
+        self._validate_row_operations(self._service_under_test._delete_row, 'delete_row', request, request.row_id)
+
+    def test_revert_row_operation(self):
+
+        request = RevertRowRequest()
+        request.owner_uri = 'test_owner_uri'
+        request.row_id = 1
+
+        self._validate_row_operations(self._service_under_test._revert_row, 'revert_row', request, request.row_id)
+
+    def test_revert_cell_operation(self):
+
+        request = RevertCellRequest()
+        request.owner_uri = 'test_owner_uri'
+        request.row_id = 1
+        request.column_id = 1
+
+        self._validate_row_operations(self._service_under_test._revert_cell, 'revert_cell', request, request.row_id, request.column_id)
+
+    def test_dispose_when_edit_session_available(self):
+        request_context = utils.MockRequestContext()
+        edit_session = mock.MagicMock()
+
+        request = DisposeRequest()
+        request.owner_uri = 'owner_uri'
+
+        self._service_under_test._active_sessions[request.owner_uri] = edit_session
+
+        self._service_under_test._dispose(request_context, request)
+
+        self.assertEqual(0, len(self._service_under_test._active_sessions))
+
+    def test_dispose_when_edit_session_is_not_available(self):
         request_context = utils.MockRequestContext()
 
+        request = DisposeRequest()
+        request.owner_uri = 'owner_uri'
+
+        self._service_under_test._dispose(request_context, request)
+
+        self.assertEqual(request_context.last_error_message, 'Edit data session not found')
+
+    def test_commit_when_edit_session_is_not_available(self):
+        request_context = utils.MockRequestContext()
+
+        request = EditCommitRequest()
+        request.owner_uri = 'owner_uri'
+
         edit_session = mock.MagicMock()
-        edit_session.update_cell = mock.Mock(return_value='Something')
+        self._service_under_test._active_sessions[request.owner_uri] = edit_session
 
-        self._service_under_test._active_sessions[update_cell_request.owner_uri] = edit_session
+        self._service_under_test._edit_commit(request_context, request)
 
-        self._service_under_test._update_cell(request_context, update_cell_request)
+        args = edit_session.commit_edit.call_args[0]
 
-        edit_session.update_cell.assert_called()
+        success_callback = args[1]
 
-        args = edit_session.update_cell.call_args[0]
+        success_callback()
 
-        self.assertEqual(update_cell_request.row_id, args[0])
-        self.assertEqual(update_cell_request.column_id, args[1])
-        self.assertEqual(update_cell_request.new_value, args[2])
+        request_context.send_response.assert_called_once()
+
+        failure_callback = args[2]
+
+        error_message = 'Test error'
+
+        failure_callback(error_message)
+
+        self.assertEqual(error_message, request_context.last_error_message)
+
+    def _validate_row_operations(self, handler, edit_session_method_name: str, request_params: SessionOperationRequest, *args):
+
+        request_context = utils.MockRequestContext()
+        edit_session = mock.MagicMock()
+        self._service_under_test._active_sessions[request_params.owner_uri] = edit_session
+
+        handler(request_context, request_params)
+
+        edit_session_call = getattr(edit_session, edit_session_method_name)
+
+        edit_session_call.assert_called_once()
+
+        actual_call_args = edit_session_call.call_args[0]
+
+        for index, arg in enumerate(args):
+            if arg is not None:
+                self.assertEqual(arg, actual_call_args[index])
 
 
 if __name__ == '__main__':

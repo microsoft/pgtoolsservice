@@ -134,11 +134,13 @@ class MockCursor:
 
     def __init__(self, query_results):
         self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
-        self.fetchall = mock.Mock(return_value=query_results)
+        self.fetchall = mock.Mock(return_value=query_results)        
         self.close = mock.Mock()
         self.connection = mock.Mock()
         self.description = None
         self.rowcount = -1
+        self._morgified_value = b'Some query'
+        self.mogrify = mock.Mock(return_value=self._morgified_value)
 
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
@@ -149,3 +151,7 @@ class MockCursor:
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
         raise psycopg2.DatabaseError()
+    
+    @property
+    def morgified_value(self):
+        return self._morgified_value

@@ -33,6 +33,14 @@ class Column(node.NodeObject):
         col._has_default_value = kwargs['has_default_val']
         col._not_null = kwargs['not_null']
 
+        col._column_ordinal = kwargs['oid'] - 1
+        col._is_key = kwargs['isprimarykey']
+        col._is_readonly = kwargs['is_updatable'] is False
+        col._is_unique = kwargs['isunique']
+        col._type_oid = kwargs['typoid']
+        col._default_value = kwargs['default'] if col._has_default_value is True else None
+        col._is_auto_increament = col._default_value is not None and col._default_value.startswith('nextval(')
+
         return col
 
     def __init__(self, server: 's.Server', parent: node.NodeObject, name: str, datatype: str):
@@ -46,9 +54,16 @@ class Column(node.NodeObject):
         super(Column, self).__init__(server, parent, name)
         self._datatype: str = datatype
 
-        # Declare the optional parameters
         self._has_default_value: Optional[bool] = None
         self._not_null: Optional[bool] = None
+
+        self._column_ordinal: int = None
+        self._is_key: bool = None
+        self._is_readonly: bool = None
+        self._is_unique: bool = None
+        self._type_oid: int = None
+        self._default_value: Optional[str] = None
+        self._is_auto_increament = None
 
     # PROPERTIES ###########################################################
     @property
@@ -62,6 +77,34 @@ class Column(node.NodeObject):
     @property
     def not_null(self) -> Optional[bool]:
         return self._not_null
+
+    @property
+    def column_ordinal(self) -> int:
+        return self._column_ordinal
+
+    @property
+    def is_key(self) -> bool:
+        return self._is_key
+
+    @property
+    def is_readonly(self) -> bool:
+        return self._is_readonly
+
+    @property
+    def is_unique(self) -> bool:
+        return self._is_unique
+
+    @property
+    def type_oid(self) -> int:
+        return self._type_oid
+
+    @property
+    def default_value(self) -> Optional[str]:
+        return self._default_value
+
+    @property
+    def is_auto_increament(self) -> bool:
+        return self._is_auto_increament
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod

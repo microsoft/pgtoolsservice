@@ -164,6 +164,9 @@ class QueryExecutionService(object):
 
         self._start_query_execution_thread(request_context, params, worker_args)
 
+    def get_query(self, owner_uri: str):
+        return self.query_results[owner_uri]
+
     def _start_query_execution_thread(self, request_context: RequestContext, params: ExecuteRequestParamsBase, worker_args: ExecuteRequestWorkerArgs= None):
 
         # Create a new query if one does not already exist or we already executed the previous one
