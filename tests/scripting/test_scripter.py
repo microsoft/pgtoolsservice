@@ -8,7 +8,7 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Server, Column, Rule, Trigger
+from pgsmo import Table, DataType, Schema, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, Rule, Trigger
 from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
@@ -206,6 +206,114 @@ class TestScripterOld(unittest.TestCase):
         # The result should be the correct template value
         self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" \n\n"TestDatatype"' in result)
     
+    def test_check_constraint_scripting(self):
+        """ Helper function to test create script for check_constraint """
+        # Set up the mocks
+        mock_check_constraint = CheckConstraint(self.server, "testTable", 'testName')
+
+        def check_constraint_mock_fn():
+            mock_check_constraint._template_root = mock.MagicMock(return_value=CheckConstraint.TEMPLATE_ROOT)
+            mock_check_constraint._create_query_data = mock.MagicMock(return_value={"data": {"schema": "TestSchema",
+                                                                                            "table": "TestTable",
+                                                                                            "name": "TestName",
+                                                                                            "consrc": "TestConsrc"}})
+            result = mock_check_constraint.create_script()
+            return result
+
+        def scripter_mock_fn():
+            mock_check_constraint.create_script = mock.MagicMock(return_value=check_constraint_mock_fn())
+            return mock_check_constraint.create_script()
+
+        self.scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        self.service.script_as_create = mock.MagicMock(return_value=self.scripter.get_create_script())
+
+        # If I try to get create script
+        result = self.service.script_as_create()
+        # The result should be the correct template value
+        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" CHECK (TestConsrc);' in result)
+
+    def test_exclusion_constraint_scripting(self):
+        """ Helper function to test create script for exclusion_constraint """
+        # Set up the mocks
+        mock_exclusion_constraint = ExclusionConstraint(self.server, "testTable", 'testName')
+
+        def exclusion_constraint_mock_fn():
+            mock_exclusion_constraint._template_root = mock.MagicMock(return_value=ExclusionConstraint.TEMPLATE_ROOT)
+            mock_exclusion_constraint._create_query_data = mock.MagicMock(return_value={"data": {"schema": "TestSchema",
+                                                                                            "table": "TestTable",
+                                                                                            "name": "TestName",
+                                                                                            "amname": "TestAmname",
+                                                                                            "fillfactor": "TestFillfactor"}})
+            result = mock_exclusion_constraint.create_script()
+            return result
+
+        def scripter_mock_fn():
+            mock_exclusion_constraint.create_script = mock.MagicMock(return_value=exclusion_constraint_mock_fn())
+            return mock_exclusion_constraint.create_script()
+
+        self.scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        self.service.script_as_create = mock.MagicMock(return_value=self.scripter.get_create_script())
+
+        # If I try to get create script
+        result = self.service.script_as_create()
+        # The result should be the correct template value
+        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" EXCLUDE USING TestAmname' in result)
+
+    def test_foreign_key_constraint_scripting(self):
+        """ Helper function to test create script for check_constraint """
+        # Set up the mocks
+        mock_foreign_key_constraint = ForeignKeyConstraint(self.server, "testTable", 'testName')
+
+        def check_foreign_key_mock_fn():
+            mock_foreign_key_constraint._template_root = mock.MagicMock(return_value=ForeignKeyConstraint.TEMPLATE_ROOT)
+            mock_foreign_key_constraint._create_query_data = mock.MagicMock(return_value={"data": {"schema": "TestSchema",
+                                                                                            "table": "TestTable",
+                                                                                            "name": "TestName",
+                                                                                            "columns": "TestColumns",
+                                                                                            "remote_schema": "TestRemoteSchema",
+                                                                                            "remote_table": "TestRemoteTable"}})
+            result = mock_foreign_key_constraint.create_script()
+            return result
+
+        def scripter_mock_fn():
+            mock_foreign_key_constraint.create_script = mock.MagicMock(return_value=check_foreign_key_mock_fn())
+            return mock_foreign_key_constraint.create_script()
+
+        self.scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        self.service.script_as_create = mock.MagicMock(return_value=self.scripter.get_create_script())
+
+        # If I try to get create script
+        result = self.service.script_as_create()
+        # The result should be the correct template value
+        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" FOREIGN KEY (None\n, None\n, None\n, None\n, None\n, None\n, None\n, None\n, None\n, None\n, None)\n    REFERENCES "TestRemoteSchema"."TestRemoteTable"' in result)
+
+    def test_index_constraint_scripting(self):
+        """ Helper function to test create script for index_constraint """
+        # Set up the mocks
+        mock_index_constraint = IndexConstraint(self.server, "testTable", 'testName')
+
+        def index_constraint_mock_fn():
+            mock_index_constraint._template_root = mock.MagicMock(return_value=IndexConstraint.TEMPLATE_ROOT)
+            mock_index_constraint._create_query_data = mock.MagicMock(return_value={"data": {"schema": "TestSchema",
+                                                                                            "table": "TestTable",
+                                                                                            "index": "TestIndex",
+                                                                                            "name": "TestName",
+                                                                                            "fillfactor": "TestFillfactor"}})
+            result = mock_index_constraint.create_script()
+            return result
+
+        def scripter_mock_fn():
+            mock_index_constraint.create_script = mock.MagicMock(return_value=index_constraint_mock_fn())
+            return mock_index_constraint.create_script()
+
+        self.scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        self.service.script_as_create = mock.MagicMock(return_value=self.scripter.get_create_script())
+
+        # If I try to get create script
+        result = self.service.script_as_create()
+        # The result should be the correct template value
+        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName"  USING INDEX "TestIndex";' in result)
+
     def test_rule_scripting(self):
         """ Helper function to test create script for rule """
         # Set up the mocks
