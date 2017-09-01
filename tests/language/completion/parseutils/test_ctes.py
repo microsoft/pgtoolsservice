@@ -10,6 +10,7 @@ def extract_column_names(sql):
     p = parse(sql)[0]
     return _extract_column_names(p)
 
+
 class TestCTEs(unittest.TestCase):
     """Methods for testing CTE Processing"""
 
@@ -22,7 +23,8 @@ class TestCTEs(unittest.TestCase):
         sql = 'SELECT * FROM \nxxx'
         p = parse(sql)[0]
         idx = p.token_index(p.tokens[-1])
-        self.assertEqual(token_start_pos(p.tokens, idx), len('SELECT * FROM \n'))
+        self.assertEqual(token_start_pos(p.tokens, idx),
+                         len('SELECT * FROM \n'))
 
     def test_single_column_name_extraction(self):
         sql = 'SELECT abc FROM xxx'
@@ -70,9 +72,9 @@ class TestCTEs(unittest.TestCase):
         ctes, remainder = extract_ctes(sql)
 
         # Verify CTE returns table name, columns, start and end position
-        self.assertTupleEqual(tuple(ctes), (('a', ('abc',), start_pos, stop_pos),))
+        self.assertTupleEqual(
+            tuple(ctes), (('a', ('abc',), start_pos, stop_pos),))
         self.assertEqual(remainder.strip(), 'SELECT * FROM a')
-
 
     def test_cte_extraction_around_comments(self):
         sql = '''--blah blah blah
@@ -84,9 +86,9 @@ class TestCTEs(unittest.TestCase):
                 WITH a AS (SELECT abc def FROM x)''')
 
         ctes, remainder = extract_ctes(sql)
-        self.assertTupleEqual(tuple(ctes), (('a', ('def',), start_pos, stop_pos),))
+        self.assertTupleEqual(
+            tuple(ctes), (('a', ('def',), start_pos, stop_pos),))
         self.assertEqual(remainder.strip(), 'SELECT * FROM a')
-
 
     def test_multiple_cte_extraction(self):
         sql = '''WITH

@@ -21,7 +21,7 @@ class TestParseUtils(unittest.TestCase):
     ])
     def test_simple_select_single_table_schema_qualified_quoted_table(self, sql):
         tables = extract_tables(sql)
-        self.assertTupleEqual(tables,(('abc', 'def', '"def"', False), ))
+        self.assertTupleEqual(tables, (('abc', 'def', '"def"', False), ))
 
     @parameterized.expand([
         'select * from abc.def',
@@ -33,15 +33,17 @@ class TestParseUtils(unittest.TestCase):
 
     def test_simple_select_single_table_double_quoted(self):
         tables = extract_tables('select * from "Abc"')
-        self.assertTupleEqual(tables,((None, 'Abc', None, False),))
+        self.assertTupleEqual(tables, ((None, 'Abc', None, False),))
 
     def test_simple_select_multiple_tables(self):
         tables = extract_tables('select * from abc, def')
-        self.assertSetEqual(set(tables), set([(None, 'abc', None, False), (None, 'def', None, False)]))
+        self.assertSetEqual(set(tables), set(
+            [(None, 'abc', None, False), (None, 'def', None, False)]))
 
     def test_simple_select_multiple_tables_double_quoted(self):
         tables = extract_tables('select * from "Abc", "Def"')
-        self.assertSetEqual(set(tables), set([(None, 'Abc', None, False), (None, 'Def', None, False)]))
+        self.assertSetEqual(set(tables), set(
+            [(None, 'Abc', None, False), (None, 'Def', None, False)]))
 
     def test_simple_select_single_table_deouble_quoted_aliased(self):
         tables = extract_tables('select * from "Abc" a')
@@ -49,11 +51,13 @@ class TestParseUtils(unittest.TestCase):
 
     def test_simple_select_multiple_tables_deouble_quoted_aliased(self):
         tables = extract_tables('select * from "Abc" a, "Def" d')
-        self.assertSetEqual(set(tables), set([(None, 'Abc', 'a', False), (None, 'Def', 'd', False)]))
+        self.assertSetEqual(set(tables), set(
+            [(None, 'Abc', 'a', False), (None, 'Def', 'd', False)]))
 
     def test_simple_select_multiple_tables_schema_qualified(self):
         tables = extract_tables('select * from abc.def, ghi.jkl')
-        self.assertSetEqual(set(tables), set([('abc', 'def', None, False), ('ghi', 'jkl', None, False)]))
+        self.assertSetEqual(set(tables), set(
+            [('abc', 'def', None, False), ('ghi', 'jkl', None, False)]))
 
     def test_simple_select_with_cols_single_table(self):
         tables = extract_tables('select a,b from abc')
@@ -65,11 +69,13 @@ class TestParseUtils(unittest.TestCase):
 
     def test_simple_select_with_cols_multiple_tables(self):
         tables = extract_tables('select a,b from abc, def')
-        self.assertSetEqual(set(tables), set([(None, 'abc', None, False), (None, 'def', None, False)]))
+        self.assertSetEqual(set(tables), set(
+            [(None, 'abc', None, False), (None, 'def', None, False)]))
 
     def test_simple_select_with_cols_multiple_qualified_tables(self):
         tables = extract_tables('select a,b from abc.def, def.ghi')
-        self.assertSetEqual(set(tables), set([('abc', 'def', None, False), ('def', 'ghi', None, False)]))
+        self.assertSetEqual(set(tables), set(
+            [('abc', 'def', None, False), ('def', 'ghi', None, False)]))
 
     def test_select_with_hanging_comma_single_table(self):
         tables = extract_tables('select a, from abc')
@@ -77,11 +83,13 @@ class TestParseUtils(unittest.TestCase):
 
     def test_select_with_hanging_comma_multiple_tables(self):
         tables = extract_tables('select a, from abc, def')
-        self.assertSetEqual(set(tables), set([(None, 'abc', None, False), (None, 'def', None, False)]))
+        self.assertSetEqual(set(tables), set(
+            [(None, 'abc', None, False), (None, 'def', None, False)]))
 
     def test_select_with_hanging_period_multiple_tables(self):
         tables = extract_tables('SELECT t1. FROM tabl1 t1, tabl2 t2')
-        self.assertSetEqual(set(tables), set([(None, 'tabl1', 't1', False), (None, 'tabl2', 't2', False)]))
+        self.assertSetEqual(set(tables), set(
+            [(None, 'tabl1', 't1', False), (None, 'tabl2', 't2', False)]))
 
     def test_simple_insert_single_table(self):
         tables = extract_tables('insert into abc (id, name) values (1, "def")')
@@ -91,11 +99,12 @@ class TestParseUtils(unittest.TestCase):
         # assert tables == ((None, 'abc', 'abc', False),)
         self.assertTupleEqual(tables, ((None, 'abc', 'abc', False),))
 
-    @unittest.expectedFailure
-    def test_simple_insert_single_table_schema_qualified(self):
-        tables = extract_tables(
-            'insert into abc.def (id, name) values (1, "def")')
-        self.assertTupleEqual(tables, ('abc', 'def', None, False),)
+    # TODO nosetest doesn't honor expectedFailure
+    # @unittest.expectedFailure
+    # def test_simple_insert_single_table_schema_qualified(self):
+    #     tables = extract_tables(
+    #         'insert into abc.def (id, name) values (1, "def")')
+    #     self.assertTupleEqual(tables, ('abc', 'def', None, False),)
 
     def test_simple_update_table_no_schema(self):
         tables = extract_tables('update abc set id = 1')
@@ -110,19 +119,22 @@ class TestParseUtils(unittest.TestCase):
         sql = 'SELECT * FROM abc a {0} JOIN def d ON a.id = d.num'.format(
             join_type)
         tables = extract_tables(sql)
-        self.assertSetEqual(set(tables), set([(None, 'abc', 'a', False), (None, 'def', 'd', False)]))
+        self.assertSetEqual(set(tables), set(
+            [(None, 'abc', 'a', False), (None, 'def', 'd', False)]))
 
     def test_join_table_schema_qualified(self):
         tables = extract_tables(
             'SELECT * FROM abc.def x JOIN ghi.jkl y ON x.id = y.num')
-        self.assertSetEqual(set(tables), set([('abc', 'def', 'x', False), ('ghi', 'jkl', 'y', False)]))
+        self.assertSetEqual(set(tables), set(
+            [('abc', 'def', 'x', False), ('ghi', 'jkl', 'y', False)]))
 
     def test_incomplete_join_clause(self):
         sql = '''select a.x, b.y
                 from abc a join bcd b
                 on a.id = '''
         tables = extract_tables(sql)
-        self.assertTupleEqual(tables, ((None, 'abc', 'a', False), (None, 'bcd', 'b', False)))
+        self.assertTupleEqual(
+            tables, ((None, 'abc', 'a', False), (None, 'bcd', 'b', False)))
 
     def test_join_as_table(self):
         tables = extract_tables('SELECT * FROM my_table AS m WHERE m.a > 5')
@@ -167,12 +179,14 @@ class TestParseUtils(unittest.TestCase):
 
     def test_simple_table_and_function(self):
         tables = extract_tables('SELECT * FROM foo JOIN bar()')
-        self.assertSetEqual(set(tables), set([(None, 'foo', None, False), (None, 'bar', None, True)]))
+        self.assertSetEqual(set(tables), set(
+            [(None, 'foo', None, False), (None, 'bar', None, True)]))
 
     def test_complex_table_and_function(self):
         tables = extract_tables('''SELECT * FROM foo.bar baz
                                 JOIN bar.qux(x, y, z) quux''')
-        self.assertSetEqual(set(tables), set([('foo', 'bar', 'baz', False), ('bar', 'qux', 'quux', True)]))
+        self.assertSetEqual(set(tables), set(
+            [('foo', 'bar', 'baz', False), ('bar', 'qux', 'quux', True)]))
 
     def test_find_prev_keyword_using(self):
         q = 'select * from tbl1 inner join tbl2 using (col1, '

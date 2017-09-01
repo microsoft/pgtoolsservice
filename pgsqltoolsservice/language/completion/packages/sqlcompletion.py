@@ -131,8 +131,9 @@ def suggest_type(full_text, text_before_cursor):
     A scope for a column category will be a list of tables.
     """
 
-    if full_text.startswith('\\i '):
-        return (Path(),)
+    # {{ PGToolsService EDIT }}
+    # if full_text.startswith('\\i '):
+    #     return (Path(),)
 
     # This is a temporary hack; the exception handling
     # here should be removed once sqlparse has been fixed
@@ -320,13 +321,13 @@ def suggest_based_on_last_token(token, stmt):
             # Suggest datatypes
             return suggest_based_on_last_token('type', stmt)
         else:
-            return (Keyword(),)
+            return tuple([Keyword()])
     else:
         token_v = token.value.lower()
 
     if not token:
         # {{ PGToolsService EDIT }}
-        return (Keyword())
+        return tuple([Keyword()])
     elif token_v.endswith('('):
         p = sqlparse.parse(stmt.text_before_cursor)[0]
 
@@ -354,7 +355,7 @@ def suggest_based_on_last_token(token, stmt):
 
             prev_tok = prev_tok.value.lower()
             if prev_tok == 'exists':
-                return (Keyword(),)
+                return tuple([Keyword()])
             else:
                 return column_suggestions
 
@@ -375,7 +376,7 @@ def suggest_based_on_last_token(token, stmt):
             # do a sub-select.
             if last_word(stmt.text_before_cursor,
                          'all_punctuations').startswith('('):
-                return (Keyword(),)
+                return tuple([Keyword()])
         prev_prev_tok = prev_tok and p.token_prev(p.token_index(prev_tok))[1]
         if prev_prev_tok and prev_prev_tok.normalized == 'INTO':
             return (
@@ -511,7 +512,7 @@ def suggest_based_on_last_token(token, stmt):
             suggestions.append(Schema())
         return tuple(suggestions)
     elif token_v in {'alter', 'create', 'drop'}:
-        return (Keyword(token_v.upper()),)
+        return tuple([Keyword(token_v.upper())])
     elif token.is_keyword:
         # token is a keyword we haven't implemented any special handling for
         # go backwards in the query until we find one we do recognize
@@ -519,9 +520,9 @@ def suggest_based_on_last_token(token, stmt):
         if prev_keyword:
             return suggest_based_on_last_token(prev_keyword, stmt)
         else:
-            return (Keyword(token_v.upper()),)
+            return tuple([Keyword(token_v.upper())])
     else:
-        return (Keyword(),)
+        return tuple([Keyword()])
 
 
 def identifies(id, ref):
