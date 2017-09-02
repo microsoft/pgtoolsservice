@@ -29,7 +29,7 @@ class TestTrigger(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def full_properties(self):
-        return {            
+        return {
             "lanname": "lanname",
             "tfunction": "tfunction",
             "name": "name",
@@ -54,7 +54,7 @@ class TestTrigger(NodeObjectTestBase, unittest.TestCase):
             "cascade": "cascade",
             "is_enable_trigger": "is_enable_trigger"
         }
-    
+
     @property
     def property_query(self):
         return {

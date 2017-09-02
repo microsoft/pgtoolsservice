@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta
 from typing import List
 
 from pgsmo.objects.node_object import NodeObject
@@ -73,12 +72,12 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
 class CheckConstraint(Constraint):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_check')
     MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
-    
+
     # -FULL OBJECT PROPERTIES ##############################################
     @property
     def consrc(self):
         return self._full_properties["consrc"]
-    
+
     @property
     def connoinherit(self):
         return self._full_properties["connoinherit"]
@@ -86,7 +85,7 @@ class CheckConstraint(Constraint):
     @property
     def nspname(self):
         return self._full_properties["nspname"]
-    
+
     @property
     def relname(self):
         return self._full_properties["relname"]
@@ -151,19 +150,19 @@ class ExclusionConstraint(Constraint):
     @property
     def amname(self):
         return self._full_properties["amname"]
-    
+
     @property
     def columns(self):
         return self._full_properties["columns"]
-    
+
     @property
     def fillfactor(self):
         return self._full_properties["fillfactor"]
-    
+
     @property
     def spcname(self):
         return self._full_properties["spcname"]
-    
+
     @property
     def condeferrable(self):
         return self._full_properties["condeferrable"]
@@ -184,7 +183,7 @@ class ExclusionConstraint(Constraint):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-    
+
     @classmethod
     def _macro_root(cls) -> List[str]:
         return [cls.MACRO_ROOT]
@@ -236,6 +235,7 @@ class ExclusionConstraint(Constraint):
                 "comment": ""
             }
         }
+
 
 class ForeignKeyConstraint(Constraint):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_fk')

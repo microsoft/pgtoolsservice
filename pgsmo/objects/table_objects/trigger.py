@@ -155,7 +155,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-    
+
     @classmethod
     def _macro_root(cls) -> List[str]:
         return [cls.MACRO_ROOT]
@@ -177,7 +177,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "schema": self.schema,
                 "table": self.table,
                 "tgdeferrable": self.tgdeferrable,
-                "tginitdeferred": self.tginitdeferred,                
+                "tginitdeferred": self.tginitdeferred,
                 "is_row_trigger": self.is_row_trigger,
                 "whenclause": self.whenclause,
                 "prosrc": self.prosrc,

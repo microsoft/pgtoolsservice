@@ -38,7 +38,7 @@ class ConstraintTestBase(NodeObjectTestBase, metaclass=ABCMeta):
 class TestCheckConstraint(ConstraintTestBase, unittest.TestCase):
     @property
     def full_properties(self):
-        return {            
+        return {
             "schema": "schema",
             "table": "table",
             "name": "name",
@@ -52,7 +52,7 @@ class TestCheckConstraint(ConstraintTestBase, unittest.TestCase):
     @property
     def property_query(self):
         return {
-            "convalidated": True,  
+            "convalidated": True,
             "schema": "test",
             "table": "test",
             "name": "test",
@@ -72,7 +72,7 @@ class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
 
     @property
     def full_properties(self):
-        return {            
+        return {
             "name": "name",
             "schema": "schema",
             "table": "table",
@@ -89,7 +89,7 @@ class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
 
     @property
     def property_query(self):
-        return {            
+        return {
             "name": "test",
             "schema": "test",
             "table": "test",
@@ -110,8 +110,6 @@ class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
 
 
 class TestForeignKeyConstraint(ConstraintTestBase, unittest.TestCase):
-
-
     @property
     def full_properties(self):
         return {

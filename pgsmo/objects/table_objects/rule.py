@@ -14,7 +14,7 @@ import pgsmo.utils.templating as templating
 class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_rule')
     MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
-    
+
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Rule':
         """
@@ -97,7 +97,7 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-    
+
     @classmethod
     def _macro_root(cls) -> List[str]:
         return [cls.MACRO_ROOT]
@@ -113,7 +113,7 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "condition": self.condition,
                 "do_instead": self.do_instead,
                 "statements": self.statements,
-                "comment": self.comment,                
+                "comment": self.comment
             },
             "display_comments": self.display_comments
         }

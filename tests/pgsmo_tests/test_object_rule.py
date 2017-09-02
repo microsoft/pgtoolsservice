@@ -29,7 +29,7 @@ class TestRule(NodeObjectTestBase, unittest.TestCase):
             "rid": "rid",
             "rulename": "rulename",
             "relname": "relname",
-            "nspname": "nspname"            
+            "nspname": "nspname"
         }
 
     @property
