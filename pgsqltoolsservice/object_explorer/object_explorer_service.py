@@ -80,7 +80,7 @@ class ObjectExplorerService(object):
         # Step 2: Connect the session and lookup the root node asynchronously
         try:
             session.init_task = threading.Thread(target=self._initialize_session, args=(request_context, session))
-            session.init_task.setDaemon(True)
+            session.init_task.daemon = True
             session.init_task.start()
         except Exception as e:
             # TODO: Localize
