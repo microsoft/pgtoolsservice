@@ -23,4 +23,4 @@ class IntelliSenseReadyParams(Serializable):
         self.owner_uri: str = None
 
 
-INTELLISENSE_READY_NOTIFICATION = IncomingMessageConfiguration('textDocument/intelliSenseReady', IntelliSenseReadyParams)
+INTELLISENSE_READY_NOTIFICATION = 'textDocument/intelliSenseReady'
