@@ -5,7 +5,6 @@
 
 """This module holds contracts for the IntelliSense Ready notification"""
 
-from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.serialization import Serializable
 
 
