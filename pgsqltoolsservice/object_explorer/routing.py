@@ -85,8 +85,7 @@ def _get_node_info(
         current_path: str,
         node_type: str,
         label: Optional[str]=None,
-        is_leaf: bool=True,
-        schema: Optional[str]=None
+        is_leaf: bool=True
 ) -> NodeInfo:
     """
     Utility method for generating a NodeInfo from a NodeObject
@@ -98,13 +97,18 @@ def _get_node_info(
     :param label: Overrides the node.name is provided, display name of the node displayed as-is
     :param is_leaf: Whether or not the node is a leaf. Default is true. If false, a trailing slash
                     will be added to the node path to indicate it behaves as a folder
-    :param schema: Optionally provides the name of the schema the object belongs to in the metadata
     :return: NodeInfo based on the NodeObject provided
     """
+    # Generate the object metadata
     metadata = ObjectMetadata()
     metadata.metadata_type = 0
     metadata.metadata_type_name = type(node).__name__
-    metadata.name = node.urn
+    metadata.name = node.name
+    metadata.urn = node.urn
+
+    # Add the schema name if it is the immediate parent
+    if node.parent is not None and isinstance(node.parent, Schema):
+        metadata.schema = node.parent.name
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
@@ -182,7 +186,7 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     """
     parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
     return [
-        _get_node_info(node, current_path, 'ScalarValuedFunction', schema=parent_obj.name)
+        _get_node_info(node, current_path, 'ScalarValuedFunction')
         for node in parent_obj.functions
     ]
 
@@ -219,7 +223,7 @@ def _get_schema_child_object(is_refresh: bool, current_path: str, session: Objec
     schema = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
     child_objects = getattr(schema, schema_propname)
     return [
-        _get_node_info(node, current_path, node_type, schema=schema.name)
+        _get_node_info(node, current_path, node_type)
         for node in child_objects
     ]
 
@@ -254,7 +258,7 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
     """
     parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
     return [
-        _get_node_info(node, current_path, 'Table', is_leaf=False, schema=parent_obj.name)
+        _get_node_info(node, current_path, 'Table', is_leaf=False)
         for node in parent_obj.tables
     ]
 
@@ -308,7 +312,7 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
       scid int: schema OID
     """
     parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['scid']), is_refresh)
-    return [_get_node_info(node, current_path, 'View', schema=parent_obj.name, is_leaf=False) for node in parent_obj.views]
+    return [_get_node_info(node, current_path, 'View', is_leaf=False) for node in parent_obj.views]
 
 
 # ROUTING TABLE ############################################################
