@@ -1,9 +1,11 @@
 from functools import partial
 from itertools import product
-from pgsqltoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata, ForeignKey
+from mock import Mock
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
-from mock import Mock
+
+from pgsqltoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata, ForeignKey
+from pgsqltoolsservice.language.completion import PGCompleter
 
 qual = ['if_more_than_one_table', 'always']
 no_qual = ['if_more_than_one_table', 'never']
@@ -193,7 +195,6 @@ class MetaData(object):
 
     def get_completer(self, settings=None, casing=None):
         metadata = self.metadata
-        from pgcli.pgcompleter import PGCompleter
         comp = PGCompleter(smart_completion=True, settings=settings)
 
         schemata, tables, tbl_cols, views, view_cols = [], [], [], [], []
