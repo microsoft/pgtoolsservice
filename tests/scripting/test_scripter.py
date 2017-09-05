@@ -8,7 +8,7 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Server, Column
+from pgsmo import Table, DataType, Schema, Server, Column, Index
 from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
@@ -218,6 +218,30 @@ class TestScripterOld(unittest.TestCase):
         result = self.service.script_as_create()
         # The result should be the correct template value
         self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" \n\n"TestDatatype"' in result)
+
+    def test_index_scripting(self):
+        """ Helper function to test create script for index """
+        # Set up the mocks
+        mock_index = Index(self.server, "testTable", 'testName')
+
+        def index_mock_fn():
+            mock_index._template_root = mock.MagicMock(return_value=Index.TEMPLATE_ROOT)
+            mock_index._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",                                                                                   
+                                                                                  "schema": "TestSchema",
+                                                                                  "table": "TestTable"}})
+            return mock_index.create_script()
+
+        def scripter_mock_fn():
+            mock_index.create_script = mock.MagicMock(return_value=index_mock_fn())
+            return mock_index.create_script()
+
+        self.scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
+        self.service.script_as_create = mock.MagicMock(return_value=self.scripter.get_create_script())
+
+        # If I try to get create script
+        result = self.service.script_as_create()
+        # The result should be the correct template value
+        self.assertTrue('CREATE INDEX "TestName"\n    ON "TestSchema"."TestTable"' in result)
 
     # Helper functions ##################################################################
     def _as_node_collection(self, object_list: List[Any]) -> NodeCollection[Any]:
