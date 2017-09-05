@@ -7,20 +7,19 @@
 from typing import Callable # noqa
 
 from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
-from pgsqltoolsservice.parsers.datatype_parser_factory import DataTypeParserFactory
+from pgsqltoolsservice.parsers.datatype_parsers import get_parser
 from pgsqltoolsservice.edit_data.contracts import EditCell # noqa
 
 
 class CellUpdate():
 
     def __init__(self, column: DbColumn, new_value: str) -> None:
-        self._datatype_parser_factory = DataTypeParserFactory()
-        parse: Callable[[str], object] = self._datatype_parser_factory.get(column)
+        parser: Callable[[str], object] = get_parser(column)
 
-        if parse is None:
+        if parser is None:
             raise AttributeError('Edits not supported')
 
-        self.value: object = parse(new_value)
+        self.value: object = parser(new_value)
         self.column = column
 
     @property

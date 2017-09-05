@@ -72,7 +72,7 @@ class TestRowCreate(unittest.TestCase):
 
         insert_template = 'INSERT INTO {0}({1}) VALUES(%s)'
 
-        expected_query_template = insert_template.format(self._table_metadata.escaped_multipart_name, self._result_set.columns[0].column_name)
+        expected_query_template = insert_template.format(self._table_metadata.multipart_name, self._result_set.columns[0].column_name)
 
         self.assertEqual(script.query_template, expected_query_template)
         self.assertEquals(script.query_paramters[0], False)
@@ -83,9 +83,6 @@ class TestRowCreate(unittest.TestCase):
 
         self.assertTrue(len(self._result_set.rows) is 3)
         self.assertTrue(self._result_set.rows[2][0] is '')
-
-    def test_(self):
-        pass
 
 
 if __name__ == '__main__':

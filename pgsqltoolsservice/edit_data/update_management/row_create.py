@@ -65,6 +65,6 @@ class RowCreate(RowEdit):
                 cell_update = self.new_cells[index]
                 query_parameters.append(cell_update.value)
 
-        query_template = str.format(insert_template, self.table_metadata.escaped_multipart_name, ', '.join(column_names))
+        query_template = str.format(insert_template, self.table_metadata.multipart_name, ', '.join(column_names))
 
         return EditScript(query_template, query_parameters)

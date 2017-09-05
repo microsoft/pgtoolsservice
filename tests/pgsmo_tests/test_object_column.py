@@ -44,8 +44,8 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             'type_oid': self.node_query['typoid'],
             '_default_value': self.node_query['default'],
             'default_value': self.node_query['default'],
-            '_is_auto_increament': True,
-            'is_auto_increament': True,
+            '_is_auto_increment': True,
+            'is_auto_increment': True,
 
         }
 

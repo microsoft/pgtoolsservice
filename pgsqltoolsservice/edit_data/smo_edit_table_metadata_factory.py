@@ -22,7 +22,7 @@ class SmoEditTableMetadataFactory:
 
         server = Server(connection)
         result_object: Table = None
-        object_metadata = ObjectMetadata.from_data(0, object_type, object_name, schema_name)
+        object_metadata = ObjectMetadata.from_data(server.urn_base, 0, object_type, object_name, schema_name)
 
         if object_type.lower() == 'table':
             result_object = object_finder.find_table(server, object_metadata)
@@ -34,7 +34,6 @@ class SmoEditTableMetadataFactory:
         edit_columns_metadata: List[EditColumnMetadata] = []
 
         for column in result_object.columns:
-            # Updated
             db_column = self.create_db_column(column)
             edit_column_metadata = EditColumnMetadata()
 

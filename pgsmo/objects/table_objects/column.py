@@ -41,7 +41,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         col._is_unique = kwargs['isunique']
         col._type_oid = kwargs['typoid']
         col._default_value = kwargs['default'] if col._has_default_value is True else None
-        col._is_auto_increament = col._default_value is not None and col._default_value.startswith('nextval(')
+        col._is_auto_increment = col._default_value is not None and col._default_value.startswith('nextval(')
 
         return col
 
@@ -69,7 +69,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         self._is_unique: bool = None
         self._type_oid: int = None
         self._default_value: Optional[str] = None
-        self._is_auto_increament = None
+        self._is_auto_increment = None
 
     # PROPERTIES ###########################################################
     @property
@@ -109,8 +109,8 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return self._default_value
 
     @property
-    def is_auto_increament(self) -> bool:
-        return self._is_auto_increament
+    def is_auto_increment(self) -> bool:
+        return self._is_auto_increment
 
     @property
     def cltype(self):

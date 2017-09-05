@@ -20,7 +20,7 @@ class EditTableMetadata():
         self.has_extended_properties: bool = False
 
     @property
-    def escaped_multipart_name(self) -> str:
+    def multipart_name(self) -> str:
         return '.'.join([self.schema_name, self.table_name])
 
     def extend(self, db_columns: List[DbColumn]):

@@ -32,6 +32,6 @@ class RowDelete(RowEdit):
     def get_script(self) -> EditScript:
         delete_template = 'DELETE FROM {0} {1}'
         where_script = self.build_where_clause()
-        query_template = delete_template.format(self.table_metadata.escaped_multipart_name, where_script.query_template)
+        query_template = delete_template.format(self.table_metadata.multipart_name, where_script.query_template)
 
         return EditScript(query_template, where_script.query_paramters)

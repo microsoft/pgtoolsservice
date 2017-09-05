@@ -22,7 +22,7 @@ class TestCellUpdate(unittest.TestCase):
     def test_value_set_to_right_text_with_str_datatype(self):
         self.assertEqual(self._new_cell_value, self._cell_update.value)
 
-        self.assertTrue(type(self._cell_update.value is str))
+        self.assertTrue(type(self._cell_update.value) is str)
 
     def test_value_as_string(self):
 

@@ -16,7 +16,7 @@ class TestSmoEditTableMetadataFactory(unittest.TestCase):
 
     def setUp(self):
         self._smo_metadata_factory = SmoEditTableMetadataFactory()
-        self._connection = MockConnection({"port": "8080", "host": "test", "dbname": "test"})
+        self._connection = MockConnection({"port": "8080", "host": "test", "dbname": "test", "user": "test"})
         self._server = Server(self._connection)
         self._schema_name = 'public'
         self._table_name = 'Employee'

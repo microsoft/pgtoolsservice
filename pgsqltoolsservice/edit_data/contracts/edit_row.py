@@ -5,8 +5,9 @@
 
 
 from enum import Enum
-from pgsqltoolsservice.edit_data.contracts import EditCell
 from typing import List
+
+from pgsqltoolsservice.edit_data.contracts import EditCell
 
 
 class EditRowState(Enum):
@@ -26,7 +27,7 @@ class EditRow:
     def is_dirty(self):
         return self.state is not EditRowState.CLEAN
 
-    def __init__(self, row_id: int, cells: List[EditCell], state: EditRowState= EditRowState.CLEAN):
+    def __init__(self, row_id: int, cells: List[EditCell], state: EditRowState = EditRowState.CLEAN):
         self.cells = cells
         self.id = row_id
         self.state: EditRowState = state

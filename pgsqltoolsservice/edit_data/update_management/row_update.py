@@ -61,7 +61,7 @@ class RowUpdate(RowEdit):
         set_join = ', '.join(set_query)
 
         where_script = self.build_where_clause()
-        query_template = query.format(self.table_metadata.escaped_multipart_name, set_join, where_script.query_template)
+        query_template = query.format(self.table_metadata.multipart_name, set_join, where_script.query_template)
         cell_values.extend(where_script.query_paramters)
 
         return EditScript(query_template, cell_values)
@@ -69,7 +69,6 @@ class RowUpdate(RowEdit):
     def apply_changes(self):
         cell_values = []
 
-        self.row
         for index, db_cell in enumerate(self.row):
             updated_cell = self._cell_updates.get(index)
             if updated_cell is None:
