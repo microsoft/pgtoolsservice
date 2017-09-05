@@ -35,18 +35,18 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
             "nspname": "nspname",
             "cascade": "cascade",
             "description": "description",
-            "indisclustered": "indisclustered",
-            "indisprimary": "indisprimary",
-            "indisunique": "indisunique",
-            "isconcurrent": "isconcurrent"
+            # "is_clustered": "indisclustered",
+            # "indisprimary": "indisprimary",
+            # "indisunique": "indisunique",
+            # "isconcurrent": "isconcurrent"
         }
 
     @property
     def property_query(self) -> dict:
         return {
             "name": "test",
-            "schema": "test_schema",
-            "table": "test_table",
+            "schema": "test",
+            "table": "test",
             "amname": "amname",
             "columns": "columns",
             "fillfactor": "fillfactor",
@@ -57,10 +57,10 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
             "nspname": "nspname",
             "cascade": "cascade",
             "description": "description",
-            "indisclustered": "indisclustered",
-            "indisprimary": "indisprimary",
-            "indisunique": "indisunique",
-            "isconcurrent": "isconcurrent"
+            # "is_clustered": "test",
+            # "indisprimary": "indisprimary",
+            # "indisunique": "indisunique",
+            # "isconcurrent": "isconcurrent"
         }
 
     @property
@@ -74,7 +74,3 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
     @property
     def node_query(self) -> dict:
         return TestIndex.NODE_ROW
-
-    @property
-    def property_query(self) -> dict:
-        return self.full_properties

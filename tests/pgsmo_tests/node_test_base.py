@@ -60,6 +60,13 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # If: I create a new object from a node row with the expected parent type
         mock_server = Server(utils.MockConnection(None))
         mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
+        
+        # if self.parent_expected_to_be_none:
+        #     mock_parent = utils.MockNodeObject(mock_server, None, 'parent')
+        #     mock_parent._parent = mock_parent
+        # else:
+        #     mock_parent = None
+
         obj = self.class_for_test._from_node_query(mock_server, mock_parent, **self.node_query)
 
         # Then:
@@ -92,7 +99,17 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # ... Create an instance of the class
         mock_server = Server(utils.MockConnection(None))
         mock_server.connection.execute_dict = mock_exec_dict
-        mock_grand_parent = utils.MockNodeObject(mock_server, None, 'grandparent') if not self.parent_expected_to_be_none else None
+        
+        # if self.parent_expected_to_be_none:
+        #     mock_parent = utils.MockNodeObject(mock_server, None, 'parent')
+        #     mock_parent._parent = mock_parent
+        # else:
+        #     mock_parent = None
+
+        # mock_parent = utils.MockNodeObject(mock_server, mock_parent, 'parent') if not self.parent_expected_to_be_none else None
+
+        mock_grand_grand_parent = utils.MockNodeObject(mock_server, None, 'grandgrandparent') if not self.parent_expected_to_be_none else None
+        mock_grand_parent = utils.MockNodeObject(mock_server, mock_grand_grand_parent, 'grandparent') if not self.parent_expected_to_be_none else None
         mock_parent = utils.MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
         name = 'test'
         obj = self.init_lambda(mock_server, mock_parent, name)
@@ -103,6 +120,13 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # If: I create an instance of the provided class
         mock_server = Server(utils.MockConnection(None))
         mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
+
+        # if self.parent_expected_to_be_none:
+        #     mock_parent = utils.MockNodeObject(mock_server, None, 'parent')
+        #     mock_parent._parent = mock_parent
+        # else:
+        #     mock_parent = None
+
         name = 'test'
         obj = self.init_lambda(mock_server, mock_parent, name)
 
@@ -130,8 +154,18 @@ class NodeObjectTestBase(metaclass=ABCMeta):
     def _test_scripting_mixins(self):
         # Setup: Create an instance of the object
         mock_server = Server(utils.MockConnection(None))
-        mock_grand_parent = utils.MockNodeObject(mock_server, None, 'grandparent') if not self.parent_expected_to_be_none else None
+        # if self.parent_expected_to_be_none:
+        #     mock_parent = utils.MockNodeObject(mock_server, None, 'parent')
+        #     mock_parent._parent = mock_parent
+        # else:
+        #     mock_parent = None
+        
+        # mock_parent = utils.MockNodeObject(mock_server, mock_parent, 'parent') if not self.parent_expected_to_be_none else None
+
+        mock_grand_grand_parent = utils.MockNodeObject(mock_server, None, 'grandgrandparent') if not self.parent_expected_to_be_none else None
+        mock_grand_parent = utils.MockNodeObject(mock_server, mock_grand_grand_parent, 'grandparent') if not self.parent_expected_to_be_none else None
         mock_parent = utils.MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
+
         name = 'test'
         obj = self.init_lambda(mock_server, mock_parent, name)
         obj._full_properties = self.property_query
@@ -158,6 +192,10 @@ class NodeObjectTestBase(metaclass=ABCMeta):
             utils.assert_is_not_none_or_whitespace(script)
 
     # TODO: Add test for PPAS server type when we support it
+
+    # def temp_helper(self):
+
+
 
     # CUSTOM TEST LOGIC ####################################################
     @staticmethod

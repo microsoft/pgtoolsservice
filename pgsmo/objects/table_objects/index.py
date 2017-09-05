@@ -66,11 +66,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def isconcurrent(self):
         return self._full_properties["isconcurrent"]
-
-    @property
-    def name(self):
-        return self._full_properties["name"]
-        
+    
     @property
     def schema(self):
         return self._full_properties["schema"]
