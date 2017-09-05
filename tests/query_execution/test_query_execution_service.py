@@ -215,8 +215,9 @@ class TestQueryService(unittest.TestCase):
 
         result_rows = query_results[owner_uri].batches[batch_ordinal].result_set.rows
         results_size = len(result_rows)
-        result_set_subset = ResultSetSubset.from_query_results(query_results, owner_uri, batch_ordinal,
-                                                               result_ordinal, 0, results_size)
+        result_set_subset = ResultSetSubset.from_query_results(
+            query_results, owner_uri, batch_ordinal, result_ordinal, 0, results_size
+            )
 
         row_size = 3
         self.assertEquals(results_size, result_set_subset.row_count)

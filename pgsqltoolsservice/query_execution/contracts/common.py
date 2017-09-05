@@ -84,7 +84,7 @@ class DbColumn:
         self.is_identity: bool = None
         self.is_key: bool = None
         self.is_long: bool = None
-        self.is_read_only: bool = None
+        self.is_read_only: bool = False
         self.is_unique: bool = None
         self.data_type = None
         self.data_type_name: str = None
@@ -94,11 +94,7 @@ class DbColumn:
         self.is_udt: bool = None
         self.is_xml: bool = None
         self.is_json: bool = None
-
-    @property
-    def is_updatable(self):
-        # TBD- Implementation Pending. This is not used anywhere currently
-        return True
+        self.is_updatable: bool = True
 
     # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) containing a 7-item sequence.

@@ -18,9 +18,9 @@ class CreateRowRequest(SessionOperationRequest):
 
 class CreateRowResponse:
 
-    def __init__(self):
-        self.default_values: List[str] = []
-        self.new_row_id = None
+    def __init__(self, new_row_id: int, default_values: List[str]):
+        self.default_values = default_values
+        self.new_row_id = new_row_id
 
 
 CREATE_ROW_REQUEST = IncomingMessageConfiguration('edit/createRow', CreateRowRequest)

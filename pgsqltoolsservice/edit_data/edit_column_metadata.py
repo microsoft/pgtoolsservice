@@ -25,3 +25,7 @@ class EditColumnMetadata:
     def extend(self, db_column: DbColumn):
         # Extend additional information from the SMO
         self.db_column = db_column
+        self.is_trustworthy_for_uniqueness = db_column.is_unique or db_column.is_read_only is False or db_column.is_auto_increment
+        self.is_key = db_column.is_key
+        self.is_calculated = db_column.is_auto_increment is True or db_column.is_updatable is False
+        self.has_extended_properties = True

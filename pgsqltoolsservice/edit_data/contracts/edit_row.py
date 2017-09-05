@@ -29,5 +29,5 @@ class EditRow:
 
     def __init__(self, row_id: int, cells: List[EditCell], state: EditRowState = EditRowState.CLEAN):
         self.cells = cells
-        self.row_id = row_id
+        self.id = row_id
         self.state: EditRowState = state

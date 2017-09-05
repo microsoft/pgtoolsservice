@@ -3,9 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import pgsqltoolsservice.parsers.datatypes
+import pgsqltoolsservice.parsers.datatype_parsers # noqa
 
-class EditSubsetResult:
-
-    def __init__(self, row_count: int, subset):
-        self.row_count = row_count
-        self.subset = subset
+__all__ = [
+    'datatypes',
+    'datatype_parsers'
+]

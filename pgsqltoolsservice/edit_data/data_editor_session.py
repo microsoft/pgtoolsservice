@@ -3,13 +3,16 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, Dict # noqa
+from typing import Callable, Dict, List, Optional, Tuple # noqa
 from psycopg2 import sql
+import threading
 
-from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate # noqa
+from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete # noqa
 from pgsqltoolsservice.query_execution.result_set import ResultSet # noqa
 from pgsqltoolsservice.edit_data.contracts import (
-    EditCellResponse, InitializeEditParams, EditInitializerFilter, EditRow, EditCell)
+    EditCellResponse, InitializeEditParams, EditInitializerFilter, RevertCellResponse,
+    CreateRowResponse, EditRow, EditCell
+)
 from pgsqltoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
 from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset
@@ -30,6 +33,7 @@ class DataEditorSession():
         self._metadata_factory = metadata_factory
         self._next_row_id = None
         self._is_initialized = False
+        self._commit_task: threading.Thread = None
 
         self._result_set: ResultSet = None
         self.table_metadata: EditTableMetadata = None
@@ -82,17 +86,74 @@ class DataEditorSession():
             raise Exception('Execution not completed')
 
     def _construct_initialize_query(self, connection: 'psycopg2.extensions.connection', metadata: EditTableMetadata, filters: EditInitializerFilter):
-        column_names = [sql.Identifier(column.escaped_name) for column in metadata.column_metadata]
+
+        column_names = [sql.Identifier(column.escaped_name) for column in metadata.columns_metadata]
 
         if filters.limit_results is not None and filters.limit_results > 0:
             limit_clause = ' '.join([' LIMIT', str(filters.limit_results)])
 
-        query = sql.SQL('SELECT {0} FROM {1} {2}').format(
+        query = sql.SQL('SELECT {0} FROM {1}.{2} {3}').format(
             sql.SQL(', ').join(column_names),
-            sql.Identifier(metadata.escaped_multipart_name),
+            sql.Identifier(metadata.schema_name),
+            sql.Identifier(metadata.table_name),
             sql.SQL(limit_clause)
         )
         return query.as_string(connection)
+
+    def commit_edit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
+
+        if self._commit_task is not None and self._commit_task.is_alive() is True:
+            raise ValueError('Previous commit in progress')
+
+        thread = threading.Thread(
+            target=self._do_commit,
+            args=(connection, success, failure)
+        )
+        thread.daemon = True
+        self._commit_task = thread
+
+        thread.start()
+
+    def revert_row(self, row_id: int) -> None:
+
+        try:
+            self._session_cache.pop(row_id)
+
+        except KeyError:
+            raise KeyError('No edit pending for row')
+
+    def revert_cell(self, row_id: int, column_index: int) -> RevertCellResponse:
+
+        edit_row = self._session_cache.get(row_id)
+
+        return edit_row.revert_cell(column_index)
+
+    def delete_row(self, row_id: int) -> None:
+        row_delete = RowDelete(row_id, self._result_set, self.table_metadata)
+
+        self._session_cache[row_id] = row_delete
+
+    def create_row(self) -> CreateRowResponse:
+        new_row_id = self._next_row_id + 1
+
+        new_row = RowCreate(new_row_id, self._result_set, self.table_metadata)
+
+        self._session_cache[new_row_id] = new_row
+
+        default_cell_values = []
+
+        for index, column_metadata in enumerate(self.table_metadata.columns_metadata):
+
+            if column_metadata.is_calculated is True:
+                default_value = '&lt;TBD&gt;'
+
+            elif column_metadata.default_value is not None:
+                cell_update = new_row.set_cell_value(index, column_metadata.default_value)
+                default_value = cell_update.cell.display_value
+
+            default_cell_values.append(default_value)
+
+        return CreateRowResponse(new_row_id, default_cell_values)
 
     def get_rows(self, owner_uri, start_index: int, end_index: int):
         if start_index < self._result_set.row_count:
@@ -111,3 +172,21 @@ class DataEditorSession():
                 edit_rows.append(edit_row)
 
         return edit_rows
+
+    def _do_commit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
+
+        try:
+            edit_operations = self._session_cache.values()
+            cursor = connection.cursor()
+
+            for operation in edit_operations:
+                script: EditScript = operation.get_script()
+                cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
+                operation.apply_changes()
+
+            self._session_cache.clear()
+
+            success()
+
+        except Exception:
+            failure()

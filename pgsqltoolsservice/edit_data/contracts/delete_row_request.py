@@ -5,13 +5,13 @@
 
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.edit_data.contracts import SessionOperationRequest
+from pgsqltoolsservice.edit_data.contracts import RowOperationRequest
 
 
-class DeleteRowRequest(SessionOperationRequest):
+class DeleteRowRequest(RowOperationRequest):
 
     def __init__(self):
-        SessionOperationRequest.__init__(self)
+        RowOperationRequest.__init__(self)
 
 
 class DeleteRowResponse:

@@ -4,7 +4,9 @@
 # --------------------------------------------------------------------------------------------
 from typing import List  # noqa
 
-from pgsqltoolsservice.query_execution.contracts.common import SpecialAction, ResultSetSummary, DbColumn
+from pgsqltoolsservice.query_execution.contracts.common import (
+    SpecialAction, ResultSetSummary, DbColumn, ResultSetSubset, DbCellValue
+)
 
 
 class ResultSet(object):
@@ -42,3 +44,19 @@ class ResultSet(object):
             return []
 
         return [DbColumn.from_cursor_description(index, desc) for index, desc in enumerate(description)]
+
+    def get_subset(self, start_index: int, end_index: int):
+        return ResultSetSubset.from_result_set(self, start_index, end_index)
+
+    def add_row(self, row: tuple):
+        self.rows.append(row)
+
+    def remove_row(self, row_id: int):
+        del self.rows[row_id]
+
+    def update_row(self, row_id: int, row: tuple):
+        self.rows[row_id] = row
+
+    def get_row(self, row_id: int) -> List[DbCellValue]:
+        row = self.rows[row_id]
+        return [DbCellValue(cell_value, cell_value is None, cell_value, row_id) for cell_value in list(row)]
