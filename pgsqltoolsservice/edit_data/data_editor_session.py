@@ -59,6 +59,9 @@ class DataEditorSession():
 
             self._validate_query_for_session(execution_state.query)
             self._result_set = execution_state.query.batches[0].result_set
+
+            self._result_set.columns = [column.db_column for column in self.table_metadata.columns_metadata]
+
             self._next_row_id = self._result_set.row_count
             self._is_initialized = True
             self.table_metadata.extend(self._result_set.columns)

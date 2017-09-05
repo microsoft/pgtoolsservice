@@ -17,7 +17,7 @@ from pgsqltoolsservice.edit_data.contracts import (
 from pgsqltoolsservice.edit_data import DataEditorSession, SmoEditTableMetadataFactory, DataEditSessionExecutionState # noqa
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.connection.contracts import ConnectionType
-from pgsqltoolsservice.query_execution.contracts import ExecuteStringParams, RESULT_SET_COMPLETE_NOTIFICATION
+from pgsqltoolsservice.query_execution.contracts import ExecuteStringParams, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION
 from pgsqltoolsservice.query_execution.query_execution_service import ExecuteRequestWorkerArgs
 
 
@@ -53,6 +53,7 @@ class EditDataService(object):
 
             def on_query_complete(query_complete_params):
                 on_query_execution_complete(DataEditSessionExecutionState(self._query_execution_service.get_query(params.owner_uri)))
+                request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
             worker_args = ExecuteRequestWorkerArgs(params.owner_uri, connection, request_context, on_resultset_complete=on_resultset_complete,
                                                    on_query_complete=on_query_complete)
