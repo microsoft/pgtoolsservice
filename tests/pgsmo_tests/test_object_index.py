@@ -16,12 +16,56 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
     }
 
     @property
-    def class_for_test(self):
-        return Index
-
-    @property
     def basic_properties(self):
         return {}
+
+    @property
+    def full_properties(self):
+        return {
+            "name": "name",
+            "schema": "schema",
+            "table": "table",
+            "amname": "amname",
+            "columns": "columns",
+            "fillfactor": "fillfactor",
+            "spcname": "spcname",
+            "indconstraint": "indconstraint",
+            "mode": "mode",
+            "index": "index",
+            "nspname": "nspname",
+            "cascade": "cascade",
+            "description": "description",
+            "indisclustered": "indisclustered",
+            "indisprimary": "indisprimary",
+            "indisunique": "indisunique",
+            "isconcurrent": "isconcurrent"
+        }
+
+    @property
+    def property_query(self) -> dict:
+        return {
+            "name": "test",
+            "schema": "test_schema",
+            "table": "test_table",
+            "amname": "amname",
+            "columns": "columns",
+            "fillfactor": "fillfactor",
+            "spcname": "spcname",
+            "indconstraint": "indconstraint",
+            "mode": "mode",
+            "index": "index",
+            "nspname": "nspname",
+            "cascade": "cascade",
+            "description": "description",
+            "indisclustered": "indisclustered",
+            "indisprimary": "indisprimary",
+            "indisunique": "indisunique",
+            "isconcurrent": "isconcurrent"
+        }
+
+    @property
+    def class_for_test(self):
+        return Index
 
     @property
     def collections(self):
@@ -30,3 +74,7 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
     @property
     def node_query(self) -> dict:
         return TestIndex.NODE_ROW
+
+    @property
+    def property_query(self) -> dict:
+        return self.full_properties
