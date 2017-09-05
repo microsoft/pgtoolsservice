@@ -51,6 +51,14 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
         # Declare constraint-specific basic properties
         self._convalidated = None
 
+    @classmethod
+    def _template_root(cls, server: 's.Server') -> str:
+        return cls.TEMPLATE_ROOT
+
+    @classmethod
+    def _macro_root(cls) -> List[str]:
+        return [cls.MACRO_ROOT]
+
     # PROPERTIES ###########################################################
     @property
     def convalidated(self):
@@ -91,13 +99,6 @@ class CheckConstraint(Constraint):
         return self._full_properties["relname"]
 
     # IMPLEMENTATION DETAILS ###############################################
-    @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
-
-    @classmethod
-    def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
@@ -180,14 +181,6 @@ class ExclusionConstraint(Constraint):
         return self._full_properties["cascade"]
 
     # IMPLEMENTATION DETAILS ###############################################
-    @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
-
-    @classmethod
-    def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
-
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {
@@ -279,13 +272,6 @@ class ForeignKeyConstraint(Constraint):
         return self._full_properties["cascade"]
 
     # IMPLEMENTATION DETAILS ###############################################
-    @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
-
-    @classmethod
-    def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
@@ -366,13 +352,6 @@ class IndexConstraint(Constraint):
         return self._full_properties["cascade"]
 
     # IMPLEMENTATION DETAILS ###############################################
-    @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
-
-    @classmethod
-    def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
