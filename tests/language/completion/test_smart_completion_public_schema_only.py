@@ -1,3 +1,8 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
 from parameterized import parameterized, param
 import unittest
 import itertools
@@ -76,6 +81,7 @@ cased_aliased_rels = [
 )]
 completers = testdata.get_completers(casing)
 
+
 def to_params(completer):
     result = []
     if not isinstance(completer, list):
@@ -84,6 +90,7 @@ def to_params(completer):
     for i in completer:
         result.append(param(i))
     return result
+
 
 class TestSmartCompletionPublicSchema(unittest.TestCase):
     """Methods for testing smart completion with just the public schema"""

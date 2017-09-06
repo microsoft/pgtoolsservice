@@ -1,6 +1,10 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
 from typing import List, Any
 import unittest
-from mock import MagicMock, Mock, patch
 
 from pgsmo import Database, NodeCollection, Schema, Server, Table
 from pgsqltoolsservice.language.metadata_executor import MetadataExecutor
@@ -24,7 +28,7 @@ class TestMetadataExecutor(unittest.TestCase):
         db._schemas = self._as_node_collection([self.schema1, self.schema2])
         self.mock_server = mock_server
         self.executor: MetadataExecutor = MetadataExecutor(mock_server)
- 
+
     def test_search_path(self):
         self.assertListEqual(self.executor.search_path(), [MYSCHEMA])
 
@@ -38,7 +42,7 @@ class TestMetadataExecutor(unittest.TestCase):
         expected_table_tuples = []
         schema1_tables = []
         schema2_tables = []
-        for x in range (0, 3):
+        for x in range(0, 3):
             s1_table_name = 's1_t%s' % x
             s2_table_name = 's2_t%s' % x
             schema1_tables.append(Table(self.mock_server, self.schema1, s1_table_name))

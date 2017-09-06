@@ -1,3 +1,8 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
 import unittest
 from mock import Mock
 from prompt_toolkit.completion import Completion
@@ -47,7 +52,6 @@ class TestNaiveCompletion(unittest.TestCase):
             Document(text=text, cursor_position=position),
             self.complete_event))
         self.assertSetEqual(result, set(map(Completion, self.completer.all_completions)))
-
 
     # {{ PGToolsService EDIT }}
     # Disabling as we will not support cli-only features

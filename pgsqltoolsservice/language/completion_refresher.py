@@ -14,7 +14,12 @@ from pgsmo import Server
 from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.metadata_executor import MetadataExecutor
 
+
 class CompletionRefresher(object):
+    """
+    Handles creating a PGCompleter object and populates it with the relevant
+    completion suggestions in a background thread.
+    """
 
     refreshers = OrderedDict()
 

@@ -1,9 +1,14 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
 from typing import List, Any
 import time
 import unittest
-from mock import MagicMock, Mock, patch
+from mock import Mock, patch
 
-from pgsmo import Database, NodeCollection, Schema, Server
+from pgsmo import NodeCollection, Server
 from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
 
 import tests.pgsmo_tests.utils as utils
@@ -28,7 +33,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         self.assertGreater(len(self.refresher.refreshers), 0)
         actual_handlers = list(self.refresher.refreshers.keys())
         expected_handlers = ['schemata', 'tables', 'views',
-                            'types', 'databases', 'casing', 'functions']
+                             'types', 'databases', 'casing', 'functions']
         self.assertListEqual(expected_handlers, actual_handlers)
 
     def test_refresh_called_once(self):

@@ -1,3 +1,8 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
 from typing import Any, Dict, List, Tuple   # noqa
 
 from pgsmo import Column, Database, Schema, Server, NodeCollection, Function, Table, View       # noqa

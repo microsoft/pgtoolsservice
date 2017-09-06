@@ -1,4 +1,9 @@
 
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
 from parameterized import parameterized, param
 import unittest
 import itertools
@@ -78,6 +83,7 @@ completers = TESTDATA.get_completers(CASING)
 
 filteredCompleters = completers(filtr=True, casing=False, qualify=no_qual)
 
+
 def to_params(completer):
     result = []
     if not isinstance(completer, list):
@@ -86,6 +92,7 @@ def to_params(completer):
     for i in completer:
         result.append(param(i))
     return result
+
 
 class TestSmartCompletionMultipleSchemata(unittest.TestCase):
     """Methods for testing smart completion with multiple schemas"""
@@ -141,7 +148,7 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
             [join(
                 'custom.shipments ON shipments.user_id = {0}.id'.format(tbl))]
         ))
-    
+
     @parameterized.expand(to_params(filteredCompleters))
     def test_suggested_column_names_from_schema_qualifed_table(self, completer):
         result = result_set(completer,

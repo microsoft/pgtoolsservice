@@ -1,3 +1,8 @@
+# --------------------------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for license information.
+# --------------------------------------------------------------------------------------------
+
 from parameterized import parameterized
 import unittest
 
@@ -24,6 +29,7 @@ SELECT 1 FROM foo;
 ';
     '''
 ]
+
 
 def cols_etc(table, schema=None, alias=None, is_function=False, parent=None,
              last_keyword=None):
@@ -53,7 +59,7 @@ class TestSqlCompletion(unittest.TestCase):
         sql = 'WITH CTE AS (SELECT F.* FROM Foo F WHERE F.Bar > 23) SELECT C.* FROM CTE C WHERE C.FooID BETWEEN 123 AND 234;'
         for i in range(len(sql)):
             try:
-                suggestions = suggest_type(sql[:i + 1], sql[:i + 1])
+                suggest_type(sql[:i + 1], sql[:i + 1])
             except Exception as e:
                 self.fail('Failed with %s' % e)
 
@@ -544,7 +550,7 @@ class TestSqlCompletion(unittest.TestCase):
         suggestions = suggest_type(sql, sql)
         tables = ((None, 'abc', 'a', False), (None, 'bcd', 'b', False))
         self.assertSetEqual(set(suggestions), set((JoinCondition(table_refs=tables, parent=None),
-                                              Alias(aliases=('a', 'b',)),)))
+                                                   Alias(aliases=('a', 'b',)),)))
 
     @parameterized.expand([
         'select abc.x, bcd.y from abc join bcd on abc.id = bcd.id AND ',
@@ -554,7 +560,7 @@ class TestSqlCompletion(unittest.TestCase):
         suggestions = suggest_type(sql, sql)
         tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
         self.assertSetEqual(set(suggestions), set((JoinCondition(table_refs=tables, parent=None),
-                                              Alias(aliases=('abc', 'bcd',)),)))
+                                                   Alias(aliases=('abc', 'bcd',)),)))
 
     @parameterized.expand([
         'select a.x, b.y from abc a join bcd b on a.id = ',
@@ -572,7 +578,7 @@ class TestSqlCompletion(unittest.TestCase):
         suggestions = suggest_type(sql, sql)
         tables = ((None, 'abc', None, False), (None, 'bcd', None, False))
         self.assertSetEqual(set(suggestions), set((JoinCondition(table_refs=tables, parent=None),
-                                              Alias(aliases=('abc', 'bcd',)),)))
+                                                   Alias(aliases=('abc', 'bcd',)),)))
 
     @parameterized.expand([
         'select * from abc inner join def using (',
@@ -646,22 +652,19 @@ class TestSqlCompletion(unittest.TestCase):
                                    'select * from a; select ')
         self.assertSetEqual(set(suggestions), cols_etc('b', last_keyword='SELECT'))
 
-    @parameterized.expand([
-'''
+    @parameterized.expand(['''
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $$
 SELECT  FROM foo;
 SELECT 2 FROM bar;
-$$ language sql; 
-''',
-'''create function func2(int, varchar)
+$$ language sql;
+''', '''create function func2(int, varchar)
 RETURNS text
 language sql AS
 $func$
 SELECT 2 FROM bar;
 SELECT  FROM foo;
 $func$
-''',
-'''
+''', '''
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $func$
 SELECT 3 FROM foo;
 SELECT 2 FROM bar;
@@ -673,8 +676,7 @@ $func$
 SELECT 2 FROM bar;
 SELECT  FROM foo;
 $func$
-''',
-'''
+''', '''
 SELECT * FROM baz;
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $func$
 SELECT  FROM foo;
@@ -688,8 +690,7 @@ SELECT 3 FROM bar;
 SELECT  FROM foo;
 $func$
 SELECT * FROM qux;
-'''
-    ])
+'''])
     def test_statements_in_function_body(self, text):
         suggestions = suggest_type(text, text[: text.find('  ') + 1])
         self.assertSetEqual(set(suggestions), set([
