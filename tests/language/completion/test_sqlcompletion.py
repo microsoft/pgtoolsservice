@@ -8,7 +8,7 @@ from pgsqltoolsservice.language.completion.packages.parseutils.tables import Tab
 
 
 FUNCTIONS = [
-'''
+    '''
 CREATE OR REPLACE FUNCTION func() RETURNS setof int AS $$
 SELECT 1 FROM foo;
 SELECT 2 FROM bar;
