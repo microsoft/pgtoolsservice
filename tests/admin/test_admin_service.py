@@ -7,7 +7,7 @@ import unittest
 import unittest.mock as mock
 
 from pgsqltoolsservice.admin import AdminService
-from pgsqltoolsservice.admin.contracts import DatabaseInfo, GET_DATABASE_INFO_REQUEST, GetDatabaseInfoParameters, GetDatabaseInfoResponse
+from pgsqltoolsservice.admin.contracts import GET_DATABASE_INFO_REQUEST, GetDatabaseInfoParameters, GetDatabaseInfoResponse
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
