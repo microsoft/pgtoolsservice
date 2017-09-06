@@ -84,7 +84,7 @@ class ObjectExplorerService(object):
         # Step 2: Connect the session and lookup the root node asynchronously
         try:
             session.init_task = threading.Thread(target=self._initialize_session, args=(request_context, session))
-            session.init_task.setDaemon(False)
+            session.init_task.daemon = True
             session.init_task.start()
         except Exception as e:
             # TODO: Localize
@@ -260,7 +260,7 @@ class ObjectExplorerService(object):
 
             # Step 3: Create the PGSMO Server object for the session and create the root node for the server
             session.server = Server(connection, functools.partial(self._create_connection, session))
-            metadata = ObjectMetadata.from_data(0, 'Database', session.connection_details.options['dbname'])
+            metadata = ObjectMetadata.from_data(session.server.urn_base, 0, 'Database', session.server.maintenance_db_name)
             node = NodeInfo()
             node.label = session.connection_details.options['dbname']
             node.is_leaf = False

@@ -202,17 +202,15 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_successful(self):
         # Setup:
         # ... Create OE service with mock connection service that returns a successful connection response
-        mock_connection = MockConnection('test')
+        mock_connection = utils.MockConnection({'host': 'myserver', 'dbname': 'postgres', 'user': 'postgres', 'port': 123})
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
-        # ... Patch the PGSMO Server class
-        mock_server = {}
-        patch_method = mock.MagicMock(return_value=mock_server)
-        patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.Server'
+        # ... Create parameters, session, request context validator
+        params, session_uri = _connection_details()
 
         # ... Create validation of success notification
         def validate_success_notification(response: SessionCreatedParameters):
@@ -225,10 +223,11 @@ class TestObjectExplorer(unittest.TestCase):
             self.assertEqual(response.root_node.node_path, session_uri)
             self.assertEqual(response.root_node.node_type, 'Database')
             self.assertIsInstance(response.root_node.metadata, ObjectMetadata)
+            self.assertEqual(response.root_node.metadata.urn, oe._session_map[session_uri].server.urn_base)
+            self.assertEqual(response.root_node.metadata.name, oe._session_map[session_uri].server.maintenance_db_name)
+            self.assertEqual(response.root_node.metadata.metadata_type_name, 'Database')
             self.assertFalse(response.root_node.is_leaf)
 
-        # ... Create parameters, session, request context validator
-        params, session_uri = _connection_details()
         rc = RequestFlowValidator()
         rc.add_expected_response(
             CreateSessionResponse,
@@ -241,8 +240,7 @@ class TestObjectExplorer(unittest.TestCase):
         )
 
         # If: I create a session
-        with mock.patch(patch_path, patch_method):
-            oe._handle_create_session_request(rc.request_context, params)
+        oe._handle_create_session_request(rc.request_context, params)
         oe._session_map[session_uri].init_task.join()
 
         # Then:
@@ -251,7 +249,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... The session should still exist and should have connection and server setup
         self.assertIn(session_uri, oe._session_map)
-        self.assertIs(oe._session_map[session_uri].server, mock_server)
+        self.assertIsInstance(oe._session_map[session_uri].server, Server)
         self.assertTrue(oe._session_map[session_uri].is_ready)
 
     def test_init_session_cancelled_connection(self):

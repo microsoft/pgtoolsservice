@@ -89,10 +89,9 @@ class Server:
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
         user = quote_plus(self.connection.dsn_parameters['user'])
-        db = quote_plus(self.maintenance_db_name)
         host = quote_plus(self.host)
         port = quote_plus(str(self.port))
-        return f'//{user}@{db}.{host}:{port}/'
+        return f'//{user}@{host}:{port}/'
         # TODO: Ensure that this formatting works with non-username/password logins
 
     @property

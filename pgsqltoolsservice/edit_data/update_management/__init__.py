@@ -5,8 +5,10 @@
 
 
 from pgsqltoolsservice.edit_data.update_management.cell_update import CellUpdate
-from pgsqltoolsservice.edit_data.update_management.row_edit import RowEdit
+from pgsqltoolsservice.edit_data.update_management.row_edit import RowEdit, EditScript
 from pgsqltoolsservice.edit_data.update_management.row_update import RowUpdate
+from pgsqltoolsservice.edit_data.update_management.row_delete import RowDelete
+from pgsqltoolsservice.edit_data.update_management.row_create import RowCreate
 
 
-__all__ = ['RowEdit', 'RowUpdate', 'CellUpdate']
+__all__ = ['RowEdit', 'RowUpdate', 'CellUpdate', 'EditScript', 'RowDelete', 'RowCreate']

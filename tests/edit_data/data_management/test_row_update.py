@@ -15,12 +15,16 @@ class TestRowUpdate(unittest.TestCase):
 
     def setUp(self):
         self._row_id = 1
-        self._rows = [("Result1", 53), ("Result2", None,)]
+        self._rows = [("Result1",), ("Result2",)]
+
+        db_column = DbColumn()
+        db_column.data_type = 'varchar'
+        db_column.column_name = 'TextType'
+
         self._result_set = ResultSet(0, 0, None, len(self._rows), self._rows)
 
-        description = [("first", 0, 1, 2, 3, 4, True), ("second", 5, 6, 7, 8, 9, False)]
+        self._result_set.columns = [db_column]
 
-        self._result_set.columns = [DbColumn.from_cursor_description(0, description[0]), DbColumn.from_cursor_description(1, description[1])]
         self._table_metadata = None
         self._column_index = 0
         self._new_value = 'Updated'
