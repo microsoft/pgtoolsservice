@@ -136,6 +136,7 @@ class NodeObject(metaclass=ABCMeta):
 
     def get_database_node(self) -> 'NodeObject':
         if self.parent is None:
+            # checking for class name here. isInstance needs importing of Database class here creates circular dependency
             if self.__class__.__name__ == 'Database':
                 return self
             else:
