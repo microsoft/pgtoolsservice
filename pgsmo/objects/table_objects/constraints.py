@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from abc import ABCMeta
 from typing import List
 
 from pgsmo.objects.node_object import NodeObject
@@ -11,10 +12,8 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    """Base class for constraints. Provides basic properties for all constraints"""
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger')
-    MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
+class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, metaclass=ABCMeta):
+    """Base class for constraints. Provides basic properties for all constraints"""    
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Constraint':
@@ -51,26 +50,10 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
         # Declare constraint-specific basic properties
         self._convalidated = None
 
-    @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
-
-    @classmethod
-    def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
-
     # PROPERTIES ###########################################################
     @property
     def convalidated(self):
         return self._convalidated
-
-    @property
-    def schema(self):
-        return self._full_properties["schema"]
-
-    @property
-    def table(self):
-        return self._full_properties["table"]
 
     @property
     def comment(self):
@@ -78,38 +61,32 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
 
 
 class CheckConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_check')
-    MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_check')    
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
-    def consrc(self):
+    def src(self):
         return self._full_properties["consrc"]
 
     @property
-    def connoinherit(self):
+    def no_inherit(self):
         return self._full_properties["connoinherit"]
 
-    @property
-    def nspname(self):
-        return self._full_properties["nspname"]
-
-    @property
-    def relname(self):
-        return self._full_properties["relname"]
-
     # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, server: 's.Server') -> str:
+        return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {
             "data": {
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "name": self.name,
-                "consrc": self.consrc,
+                "consrc": self.src,
                 "comment": self.comment,
-                "connoinherit": self.connoinherit,
+                "connoinherit": self.no_inherit,
                 "convalidated": self.convalidated
             }
         }
@@ -119,8 +96,8 @@ class CheckConstraint(Constraint):
         return {
             "data": {
                 "name": self.name,
-                "nspname": self.nspname,
-                "relname": self.relname
+                "nspname": self.parent.parent.name,
+                "relname": self.parent.name
             }
         }
 
@@ -130,7 +107,7 @@ class CheckConstraint(Constraint):
             "data": {
                 "comment": self.comment,
                 "name": self.name,
-                "table": self.table,
+                "table": self.parent.name,
                 "convalidated": self.convalidated
             },
             "o_data": {
@@ -144,8 +121,7 @@ class CheckConstraint(Constraint):
 
 
 class ExclusionConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_exclusion')
-    MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_exclusion')   
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -181,6 +157,10 @@ class ExclusionConstraint(Constraint):
         return self._full_properties["cascade"]
 
     # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, server: 's.Server') -> str:
+        return cls.TEMPLATE_ROOT
+
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {
@@ -231,8 +211,7 @@ class ExclusionConstraint(Constraint):
 
 
 class ForeignKeyConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_fk')
-    MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_fk')    
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -272,6 +251,9 @@ class ForeignKeyConstraint(Constraint):
         return self._full_properties["cascade"]
 
     # IMPLEMENTATION DETAILS ###############################################
+    @classmethod
+    def _template_root(cls, server: 's.Server') -> str:
+        return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
@@ -323,8 +305,7 @@ class ForeignKeyConstraint(Constraint):
 
 
 class IndexConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_index')
-    MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_index')    
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -353,6 +334,10 @@ class IndexConstraint(Constraint):
 
     # IMPLEMENTATION DETAILS ###############################################
 
+    @classmethod
+    def _template_root(cls, server: 's.Server') -> str:
+        return cls.TEMPLATE_ROOT
+    
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {
