@@ -360,7 +360,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         result = result_set(completer, text)
         last_word = text.split()[-1]
         expected = join('users ON users.id = u.userid', -len(last_word))
-        assert expected in result
+        self.assertTrue(expected in result)
 
     join_texts = [
         'SELECT * FROM Users JOIN ',
