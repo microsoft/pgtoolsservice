@@ -1,3 +1,0 @@
-select {% if data.columns and data.columns|length > 0 %} {% for c in data.columns %}{% if c.name %}{% if loop.index != 1 %},{% endif %}{{conn|qtIdent(c.name)}}{% endif %}{% endfor %}{% endif %}
-from {{conn|qtIdent(data.schema, data.name)}}
-LIMIT 1000
