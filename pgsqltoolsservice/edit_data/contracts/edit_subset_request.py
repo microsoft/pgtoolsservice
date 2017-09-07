@@ -4,16 +4,26 @@
 # --------------------------------------------------------------------------------------------
 
 
+from typing import List
+
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.serialization import Serializable
+from pgsqltoolsservice.edit_data.contracts import EditRow
 
 
 class EditSubsetParams(Serializable):
 
     def __init__(self):
         self.owner_uri: str = None
-        self.rows_start_index: int = None
-        self.rows_count: int = None
+        self.row_start_index: int = None
+        self.row_count: int = None
+
+
+class EditSubsetResponse:
+
+    def __init__(self, row_count: int, edit_rows: List[EditRow]):
+        self.row_count = row_count
+        self.subset = edit_rows
 
 
 EDIT_SUBSET_REQUEST = IncomingMessageConfiguration('edit/subset', EditSubsetParams)

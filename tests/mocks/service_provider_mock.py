@@ -11,7 +11,7 @@ from tests.utils import get_mock_logger
 class ServiceProviderMock:
 
     def __init__(self, services: dict={}):
-        self._setup_mocks(get_mock_logger(),  ServerMock(), services)
+        self._setup_mocks(get_mock_logger(), ServerMock(), services)
 
     def registerMock(self, server, services: dict, logger=None):
         self._setup_mocks(logger, server, services)

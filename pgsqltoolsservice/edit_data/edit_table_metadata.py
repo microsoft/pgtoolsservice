@@ -12,11 +12,30 @@ from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 
 class EditTableMetadata():
 
-    def __init__(self, columns_metadata: List[EditColumnMetadata]):
-        self.column_metadata = columns_metadata
-        self.escaped_multipart_name = None
+    OBJECT_TEMPLATE = '"{0}"'
+
+    def __init__(self, schema_name: str, table_name, columns_metadata: List[EditColumnMetadata]) -> None:
+        self.columns_metadata = columns_metadata
+        self.schema_name: str = schema_name
+        self.table_name: str = table_name
         self.key_columns: List[EditColumnMetadata] = []
+        self.has_extended_properties: bool = False
+
+    @property
+    def multipart_name(self) -> str:
+        return '.'.join([self._get_formated_entity_name(self.schema_name), self._get_formated_entity_name(self.table_name)])
 
     def extend(self, db_columns: List[DbColumn]):
-        # Extend additional properties from the SMO
-        pass
+
+        for index, column in enumerate(db_columns):
+            self.columns_metadata[index].extend(column)
+
+        self.key_columns = [column for column in self.columns_metadata if column.is_key is True]
+
+        if any(self.key_columns) is False:
+            self.key_columns = [column for column in self.columns_metadata if column.is_trustworthy_for_uniqueness is True]
+
+        self.has_extended_properties = True
+
+    def _get_formated_entity_name(self, entity_name: str) -> str:
+        return EditTableMetadata.OBJECT_TEMPLATE.format(entity_name)

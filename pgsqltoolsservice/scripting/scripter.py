@@ -56,7 +56,7 @@ class Scripter(object):
         utils.validate.is_not_none('metadata', metadata)
 
         # Get the object and make sure it supports the operation
-        obj: NodeObject = self.server.get_object_by_urn(metadata.name)
+        obj: NodeObject = self.server.get_object_by_urn(metadata.urn)
         if not isinstance(obj, handler[0]):
             # TODO: Localize
             raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation {operation}')

@@ -21,17 +21,38 @@ from pgsqltoolsservice.object_explorer.contracts import (
     CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
     ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
 )
+from pgsmo.objects.server.server import Server
+from pgsmo.objects.database.database import Database
 from pgsqltoolsservice.utils import constants
 import tests.utils as utils
+from tests.pgsmo_tests.utils import MockConnection
 from tests.mock_request_validation import RequestFlowValidator
+TEST_HOST = 'testhost'
+TEST_DBNAME = 'testdb'
+TEST_USER = 'testuser'
+TEST_PASSWORD = 'testpassword'
+
+
+def _connection_details() -> Tuple[ConnectionDetails, str]:
+    param = ConnectionDetails()
+    param.options = {
+        'host': TEST_HOST,
+        'dbname': TEST_DBNAME,
+        'user': TEST_USER
+    }
+    session_uri = ObjectExplorerService._generate_session_uri(param)
+    return param, session_uri
+
+
+def _close_session_params() -> CloseSessionParameters:
+    param = CloseSessionParameters()
+    param.database_name = TEST_DBNAME
+    param.user_name = TEST_USER
+    return param
 
 
 class TestObjectExplorer(unittest.TestCase):
     """Methods for testing the object explorer service"""
-    TEST_HOST = 'testhost'
-    TEST_DBNAME = 'testdb'
-    TEST_USER = 'testuser'
-
     def test_init(self):
         # If: I create a new OE service
         oe = ObjectExplorerService()
@@ -65,9 +86,9 @@ class TestObjectExplorer(unittest.TestCase):
     def test_generate_uri_missing_params(self):
         # Setup: Create the parameter sets that will be missing a param each
         params = [
-            ConnectionDetails.from_data(None, None, None, {'host': None, 'dbname': self.TEST_DBNAME, 'user': self.TEST_USER}),
-            ConnectionDetails.from_data(None, None, None, {'host': self.TEST_HOST, 'dbname': None, 'user': self.TEST_USER}),
-            ConnectionDetails.from_data(None, None, None, {'host': self.TEST_HOST, 'dbname': self.TEST_DBNAME, 'user': None})
+            ConnectionDetails.from_data(None, None, None, {'host': None, 'dbname': TEST_DBNAME, 'user': TEST_USER}),
+            ConnectionDetails.from_data(None, None, None, {'host': TEST_HOST, 'dbname': None, 'user': TEST_USER}),
+            ConnectionDetails.from_data(None, None, None, {'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': None})
         ]
 
         for param_set in params:
@@ -78,7 +99,7 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_generate_uri_valid_params(self):
         # If: I generate a session URI from a valid connection details object
-        params, session_uri = self._connection_details()
+        params, session_uri = _connection_details()
         output = ObjectExplorerService._generate_session_uri(params)
 
         # Then: The output should be a properly formed URI
@@ -88,9 +109,9 @@ class TestObjectExplorer(unittest.TestCase):
 
         re_match = re.match('(?P<username>\w+)@(?P<host>\w+):(?P<db_name>\w+)', parse_result.netloc)
         self.assertIsNotNone(re_match)
-        self.assertEqual(re_match.group('username'), self.TEST_USER)
-        self.assertEqual(re_match.group('host'), self.TEST_HOST)
-        self.assertEqual(re_match.group('db_name'), self.TEST_DBNAME)
+        self.assertEqual(re_match.group('username'), TEST_USER)
+        self.assertEqual(re_match.group('host'), TEST_HOST)
+        self.assertEqual(re_match.group('db_name'), TEST_DBNAME)
 
     # CREATE SESSION #######################################################
     def test_handle_create_session_missing_params(self):
@@ -132,7 +153,7 @@ class TestObjectExplorer(unittest.TestCase):
         # Setup: Create an OE service and pre-load a session
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
-        params, session_uri = self._connection_details()
+        params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
 
@@ -158,7 +179,7 @@ class TestObjectExplorer(unittest.TestCase):
         patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.threading.Thread'
         with mock.patch(patch_path, patch_mock):
             # If: I create a new session
-            params, session_uri = self._connection_details()
+            params, session_uri = _connection_details()
 
             rc = RequestFlowValidator()
             rc.add_expected_response(
@@ -181,17 +202,15 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_successful(self):
         # Setup:
         # ... Create OE service with mock connection service that returns a successful connection response
-        mock_connection = {}
+        mock_connection = utils.MockConnection({'host': 'myserver', 'dbname': 'postgres', 'user': 'postgres', 'port': 123})
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
-        # ... Patch the PGSMO Server class
-        mock_server = {}
-        patch_method = mock.MagicMock(return_value=mock_server)
-        patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.Server'
+        # ... Create parameters, session, request context validator
+        params, session_uri = _connection_details()
 
         # ... Create validation of success notification
         def validate_success_notification(response: SessionCreatedParameters):
@@ -200,14 +219,15 @@ class TestObjectExplorer(unittest.TestCase):
             self.assertIsNone(response.error_message)
 
             self.assertIsInstance(response.root_node, NodeInfo)
-            self.assertEqual(response.root_node.label, self.TEST_DBNAME)
+            self.assertEqual(response.root_node.label, TEST_DBNAME)
             self.assertEqual(response.root_node.node_path, session_uri)
             self.assertEqual(response.root_node.node_type, 'Database')
             self.assertIsInstance(response.root_node.metadata, ObjectMetadata)
+            self.assertEqual(response.root_node.metadata.urn, oe._session_map[session_uri].server.urn_base)
+            self.assertEqual(response.root_node.metadata.name, oe._session_map[session_uri].server.maintenance_db_name)
+            self.assertEqual(response.root_node.metadata.metadata_type_name, 'Database')
             self.assertFalse(response.root_node.is_leaf)
 
-        # ... Create parameters, session, request context validator
-        params, session_uri = self._connection_details()
         rc = RequestFlowValidator()
         rc.add_expected_response(
             CreateSessionResponse,
@@ -220,8 +240,7 @@ class TestObjectExplorer(unittest.TestCase):
         )
 
         # If: I create a session
-        with mock.patch(patch_path, patch_method):
-            oe._handle_create_session_request(rc.request_context, params)
+        oe._handle_create_session_request(rc.request_context, params)
         oe._session_map[session_uri].init_task.join()
 
         # Then:
@@ -230,7 +249,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... The session should still exist and should have connection and server setup
         self.assertIn(session_uri, oe._session_map)
-        self.assertIs(oe._session_map[session_uri].server, mock_server)
+        self.assertIsInstance(oe._session_map[session_uri].server, Server)
         self.assertTrue(oe._session_map[session_uri].is_ready)
 
     def test_init_session_cancelled_connection(self):
@@ -242,7 +261,7 @@ class TestObjectExplorer(unittest.TestCase):
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
         # If: I initialize a session (NOTE: We're bypassing request handler to avoid threading issues)
-        params, session_uri = self._connection_details()
+        params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
 
@@ -269,7 +288,7 @@ class TestObjectExplorer(unittest.TestCase):
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
         # If: I initialize a session (NOTE: We're bypassing request handler to avoid threading issues)
-        params, session_uri = self._connection_details()
+        params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
 
@@ -285,160 +304,40 @@ class TestObjectExplorer(unittest.TestCase):
         rc.validate()
         self.assertDictEqual(oe._session_map, {})
 
-    # CLOSE SESSION ########################################################
-
-    def test_handle_close_session_missing_params(self):
-        # Setup: Create an OE service
+    def test_create_connection_successful(self):
+        # Setup:
+        mock_connection = MockConnection('test')
         oe = ObjectExplorerService()
-        oe._service_provider = utils.get_mock_service_provider({})
-
-        # If: I close an OE session with missing params
-        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
-        oe._handle_close_session_request(rc.request_context, None)
-
-        # Then: I should get an error response
-        rc.validate()
-
-    def test_handle_close_session_incomplete_params(self):
-        # Setup: Create an OE service
-        oe = ObjectExplorerService()
-        oe._service_provider = utils.get_mock_service_provider({})
-
-        # If: I close an OE session for with missing params
-        # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
-        #       scenarios in a different test
-        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
-        params = ConnectionDetails.from_data(None, None, None, {})
-        oe._handle_close_session_request(rc.request_context, params)
-
-        # Then:
-        # ... I should get an error response
-        rc.validate()
-
-    def test_handle_close_session_nosession(self):
-        # Setup: Create an OE service
         cs = ConnectionService()
-        oe = ObjectExplorerService()
-        params, session_uri = self._connection_details()
-        cs.disconnect = mock.MagicMock(return_value=False)
+        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
-
-        # If: I close an OE session that doesn't exist
-        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
-        session_id = self._connection_details()[1]
-        params = self._close_session_params()
-        params.session_id = session_id
-        oe._handle_close_session_request(rc.request_context, params)
-
-        # Then: I should get a successful response
-        rc.validate()
-
-    def test_handle_close_session_unsuccessful(self):
-        # Setup: Create an OE service
-        cs = ConnectionService()
-        oe = ObjectExplorerService()
-        params, session_uri = self._connection_details()
+        params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
-        oe._session_map[session_uri] = session
-        cs.disconnect = mock.MagicMock(return_value=False)
-        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        connection = oe._create_connection(session, 'foo_database')
 
-        # If: I close an OE session that doesn't exist
-        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
-        session_id = self._connection_details()[1]
-        params = self._close_session_params()
-        params.session_id = session_id
-        oe._handle_close_session_request(rc.request_context, params)
+        self.assertIsNotNone(connection)
+        self.assertEqual(connection, mock_connection)
+        cs.connect.assert_called_once()
+        cs.get_connection.assert_called_once()
 
-        # Then: I should get a successful response
-        rc.validate()
-        oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id: objectexplorer://testuser@testhost:testdb/')
-
-    def test_handle_close_session_throwsException(self):
-        # Setup: Create an OE service
-        cs = ConnectionService()
+    def test_create_connection_failed(self):
+        # Setup:
         oe = ObjectExplorerService()
-        params, session_uri = self._connection_details()
+        cs = ConnectionService()
+        connect_response = ConnectionCompleteParams()
+        error = 'Failed'
+        connect_response.error_message = error
+        cs.connect = mock.MagicMock(return_value=connect_response)
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
-        oe._session_map[session_uri] = session
-        cs.disconnect = mock.MagicMock.side_effect = Exception()
-        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
 
-        # If: I close an OE session that doesn't exist
-        rc = RequestFlowValidator().add_expected_error(type(None))
-        session_id = self._connection_details()[1]
-        params = self._close_session_params()
-        params.session_id = session_id
-        oe._handle_close_session_request(rc.request_context, params)
+        with self.assertRaises(RuntimeError) as context:
+            oe._create_connection(session, 'foo_database')
+            self.assertEqual(error, str(context.exception))
 
-        # Then: I should get a successful response
-        rc.validate()
-        oe._service_provider.logger.error.assert_called_with('Failed to close OE session: \'Exception\' object is not callable')
-
-    def test_handle_close_session_successful(self):
-        # Setup: Create an OE service and add a session to it
-        cs = ConnectionService()
-        oe = ObjectExplorerService()
-        params, session_uri = self._connection_details()
-        session = ObjectExplorerSession(session_uri, params)
-        oe._session_map[session_uri] = session
-        cs.disconnect = mock.MagicMock(return_value=True)
-        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
-
-        # If: I close a session
-        rc = RequestFlowValidator().add_expected_response(bool, self.assertTrue)
-        session_id = self._connection_details()[1]
-        params = self._close_session_params()
-        params.session_id = session_id
-        oe._handle_close_session_request(rc.request_context, params)
-
-        # Then:
-        # ... I should get a successful response
-        rc.validate()
-
-        # ... The session should no longer be in the
-        self.assertDictEqual(oe._session_map, {})
-
-    # SHUTDOWN NODE #########################################################
-
-    def test_handle_shutdown_successfulWithSessions(self):
-        # Setup: Create an OE service and add a session to it
-        cs = ConnectionService()
-        oe = ObjectExplorerService()
-        params, session_uri = self._connection_details()
-        session = ObjectExplorerSession(session_uri, params)
-        oe._session_map[session_uri] = session
-        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
-        cs.disconnect = mock.MagicMock(return_value=True)
-
-        # shutdown the session
-        oe._handle_shutdown()
-        oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')
-
-    def test_handle_shutdown_UnsuccessfulWithSessions(self):
-        # Setup: Create an OE service and add a session to it
-        cs = ConnectionService()
-        oe = ObjectExplorerService()
-        params, session_uri = self._connection_details()
-        session = ObjectExplorerSession(session_uri, params)
-        oe._session_map[session_uri] = session
-        cs.disconnect = mock.MagicMock(return_value=False)
-        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
-
-        # shutdown the session
-        oe._handle_shutdown()
-        oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id: objectexplorer://testuser@testhost:testdb/')
-
-    def test_handle_shutdown_successfulNoSessions(self):
-        # Setup: Create an OE service and add no session to it
-        cs = ConnectionService()
-        oe = ObjectExplorerService()
-        cs.disconnect = mock.MagicMock(return_value=True)
-        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
-
-        # shutdown the session
-        oe._handle_shutdown()
-        oe._service_provider.logger.info.assert_called_with('Closing all the OE sessions')
+        cs.connect.assert_called_once()
 
     # EXPAND NODE ##########################################################
     @staticmethod
@@ -668,27 +567,10 @@ class TestObjectExplorer(unittest.TestCase):
         testevent.set()
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _connection_details(self) -> Tuple[ConnectionDetails, str]:
-        param = ConnectionDetails()
-        param.options = {
-            'host': self.TEST_HOST,
-            'dbname': self.TEST_DBNAME,
-            'user': self.TEST_USER
-        }
-        session_uri = ObjectExplorerService._generate_session_uri(param)
-
-        return param, session_uri
-
-    def _close_session_params(self) -> CloseSessionParameters:
-        param = CloseSessionParameters()
-        param.database_name = self.TEST_DBNAME
-        param.user_name = self.TEST_USER
-        return param
-
     def _preloaded_oe_service(self) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
-        conn_details, session_uri = self._connection_details()
+        conn_details, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, conn_details)
         session.is_ready = True
         oe._session_map[session_uri] = session
@@ -707,3 +589,141 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertIsNone(param.root_node)
         self.assertIsNotNone(param.error_message)
         self.assertNotEqual(param.error_message.strip(), '')
+
+
+class SessionTestCase(unittest.TestCase):
+    TEST_HOST = 'testhost'
+    TEST_DBNAME = 'testdb'
+    TEST_USER = 'testuser'
+    TEST_PASSWORD = 'testpassword'
+
+    def setUp(self):
+        # Setup: Create an OE service and add a session to it
+        self.cs = ConnectionService()
+        self.mock_connection = {}
+        self.oe = ObjectExplorerService()
+        params, session_uri = _connection_details()
+        self.session = ObjectExplorerSession(session_uri, params)
+        self.oe._session_map[session_uri] = self.session
+        name = 'dbname'
+        self.mock_server = Server(MockConnection(name))
+        self.session.server = self.mock_server
+        self.db = Database(self.mock_server, name)
+        self.db._connection = MockConnection(name)
+        self.session.server._child_objects[Database.__name__] = [self.db]
+        self.cs.get_connection = mock.MagicMock(return_value=self.mock_connection)
+
+        self.cs.disconnect = mock.MagicMock(return_value=True)
+        self.oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: self.cs})
+
+    # CLOSE SESSION ########################################################
+
+    def test_handle_close_session_missing_params(self):
+        # If: I close an OE session with missing params
+        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        self.oe._handle_close_session_request(rc.request_context, None)
+
+        # Then: I should get an error response
+        rc.validate()
+
+    def test_handle_close_session_incomplete_params(self):
+        # If: I close an OE session for with missing params
+        # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
+        #       scenarios in a different test
+        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        params = ConnectionDetails.from_data(None, None, None, {})
+        self.oe._handle_close_session_request(rc.request_context, params)
+
+        # Then:
+        # ... I should get an error response
+        rc.validate()
+
+    def test_handle_close_session_nosession(self):
+        # Setup: Create an empty session dictionary
+        self.oe._session_map = {}
+
+        # If: I close an OE session that doesn't exist
+        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
+        session_id = _connection_details()[1]
+        params = _close_session_params()
+        params.session_id = session_id
+        self.oe._handle_close_session_request(rc.request_context, params)
+
+        # Then: I should get a successful response
+        rc.validate()
+
+    def test_handle_close_session_unsuccessful(self):
+        self.cs.disconnect = mock.MagicMock(return_value=False)
+
+        # If: I close an OE session that doesn't exist
+        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
+        session_id = _connection_details()[1]
+        params = _close_session_params()
+        params.session_id = session_id
+        self.oe._handle_close_session_request(rc.request_context, params)
+
+        # Then: I should get a successful response
+        rc.validate()
+        self.oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id objectexplorer://testuser@testhost:testdb/')
+
+    def test_handle_close_session_throwsException(self):
+        # setup to throw exception on disconnect
+        self.cs.disconnect = mock.MagicMock(side_effect=Exception)
+
+        # If: I close an OE session that doesn't exist
+        rc = RequestFlowValidator().add_expected_error(type(None))
+        session_id = _connection_details()[1]
+        params = _close_session_params()
+        params.session_id = session_id
+        self.oe._handle_close_session_request(rc.request_context, params)
+
+        # Then: I should get a successful response
+        rc.validate()
+        self.oe._service_provider.logger.error.assert_called_once()
+
+    def test_handle_close_session_successful(self):
+
+        # If: I close a session
+        rc = RequestFlowValidator().add_expected_response(bool, self.assertTrue)
+        session_id = _connection_details()[1]
+        params = _close_session_params()
+        params.session_id = session_id
+        self.oe._handle_close_session_request(rc.request_context, params)
+
+        # Then:
+        # ... I should get a successful response
+        rc.validate()
+
+        # ... The session should no longer be in the
+        self.assertDictEqual(self.oe._session_map, {})
+
+    # SHUTDOWN NODE #########################################################
+
+    def test_handle_shutdown_successfulWithSessions(self):
+        # shutdown the session
+        self.oe._handle_shutdown()
+        self.oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')
+
+    def test_handle_shutdown_successfulNoDatabase(self):
+        # Setup: Create an OE service and add a session to it
+        self.session.server._child_objects[Database.__name__] = []
+
+        # shutdown the session
+        self.oe._handle_shutdown()
+        self.oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')
+
+    def test_handle_shutdown_UnsuccessfulWithSessions(self):
+        # Setup: Create an OE service and add a session to it
+        self.cs.disconnect = mock.MagicMock(return_value=False)
+
+        # shutdown the session
+        self.oe._handle_shutdown()
+        self.oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id: objectexplorer://testuser@testhost:testdb/')
+
+    def test_handle_shutdown_successfulNoSessions(self):
+        # Setup: Create an empty session dictionary
+        self.oe._session_map = {}
+
+        # shutdown the session
+        self.oe._handle_shutdown()
+        self.oe._service_provider.logger.info.assert_called_with('Closing all the OE sessions')

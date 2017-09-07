@@ -3,9 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.admin.contracts.get_database_info_request import (
-    DatabaseInfo, GetDatabaseInfoParameters, GetDatabaseInfoResponse, GET_DATABASE_INFO_REQUEST)
+import pgsqltoolsservice.parsers.datatypes
+import pgsqltoolsservice.parsers.datatype_parsers # noqa
 
 __all__ = [
-    'DatabaseInfo', 'GetDatabaseInfoParameters', 'GetDatabaseInfoResponse', 'GET_DATABASE_INFO_REQUEST'
+    'datatypes',
+    'datatype_parsers'
 ]

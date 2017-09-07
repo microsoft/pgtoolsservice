@@ -9,6 +9,10 @@ import unittest.mock as mock
 
 import pgsmo.objects.node_object as node
 from pgsmo.objects.server.server import Server
+from pgsmo.objects.database.database import Database
+from pgsmo.objects.role.role import Role
+from pgsmo.objects.schema.schema import Schema
+from pgsmo.objects.table.table import Table
 import tests.pgsmo_tests.utils as utils
 
 
@@ -390,18 +394,22 @@ class TestNodeObject(unittest.TestCase):
         mock_template_path = mock.MagicMock(return_value="path")
 
         # ... Create an object that will be the parent of these nodes
-        parent = utils.MockNodeObject(mock_server, None, 'parent')
+        name = 'postgres'
+        parent = Database(mock_server, name)
         parent._oid = 123
+        parent._connection = utils.MockConnection(None, version="10101")
+        parent._connection.execute_dict = mock_executor
 
         # ... Patch the template rendering, and the _from_node_query
         patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
         patch_template_path = 'pgsmo.objects.node_object.templating.get_template_path'
         patch_from_node_query = 'tests.pgsmo_tests.utils.MockNodeObject._from_node_query'
-        with mock.patch(patch_render_template, mock_render, create=True):
-            with mock.patch(patch_template_path, mock_template_path, create=True):
-                with mock.patch(patch_from_node_query, mock_from_node, create=True):
-                    # If: I ask for a collection of nodes *with a parent object*
-                    nodes = utils.MockNodeObject.get_nodes_for_parent(mock_server, parent)
+
+        with mock.patch(patch_render_template, mock_render, create=True), \
+                mock.patch(patch_template_path, mock_template_path, create=True), \
+                mock.patch(patch_from_node_query, mock_from_node, create=True):
+            # If: I ask for a collection of nodes *with a parent object*
+            nodes = utils.MockNodeObject.get_nodes_for_parent(mock_server, parent)
 
         # Then:
         # ... The template path and template renderer should have been called once
@@ -488,7 +496,7 @@ class TestNodeObject(unittest.TestCase):
         collection1.reset = mock.MagicMock()
         collection2 = node.NodeCollection(node_generator)
         collection2.reset = mock.MagicMock()
-        node_obj._child_collections = [collection1, collection2]
+        node_obj._child_collections = {'collection1': collection1, 'collection2': collection2}
 
         # ... Add a couple property collections
         prop_generator = mock.MagicMock()
@@ -600,12 +608,59 @@ class TestNodeObject(unittest.TestCase):
         # Then: The object I get back should be the same as the one I created
         self.assertIs(obj, sc_obj)
 
+    def test_database_get_database_node(self):
+        # If: I create a DB that is connected
+        name = 'dbname'
+        mock_server = Server(utils.MockConnection(None, name='not_connected'))
+        db = Database(mock_server, name)
+
+        # Then:
+        node = db.get_database_node()
+
+        # assert:
+        self.assertIsNotNone(node)
+        self.assertEqual(node.__class__.__name__, 'Database')
+
+    def test_role_get_database_node(self):
+        # If: I create a DB that is connected
+        name = 'dbname'
+        mock_server = Server(utils.MockConnection(None, name='not_connected'))
+        db = Role(mock_server, name)
+
+        # Then:
+        node = db.get_database_node()
+
+        # assert:
+        self.assertIsNone(node)
+
+    def test_table_get_database_node(self):
+        # If: I create a DB that is connected
+        mock_server = Server(utils.MockConnection(None, name='not_connected'))
+        db = Database(mock_server, 'dbname')
+        schema = Schema(mock_server, db, 'schema')
+        table = Table(mock_server, schema, 'table')
+
+        # check for schema:
+        node = schema.get_database_node()
+
+        # assert:
+        self.assertIsNotNone(node)
+        self.assertEqual(node.__class__.__name__, 'Database')
+
+        # check for table:
+        node = table.get_database_node()
+
+        # assert:
+        self.assertIsNotNone(node)
+        self.assertEqual(node.__class__.__name__, 'Database')
+
 
 def _get_node_for_parents_mock_connection():
     # ... Create a mockup of a server connection with a mock executor
+    mock_action = mock.Mock()
     mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
     mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
-    mock_server = Server(utils.MockConnection(None, version="10101"))
+    mock_server = Server(utils.MockConnection(None, version="10101"), mock_action)
     mock_server.connection.execute_dict = mock_executor
 
     return mock_server, mock_executor, mock_objs

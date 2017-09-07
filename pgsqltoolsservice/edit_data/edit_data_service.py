@@ -8,23 +8,27 @@ from typing import Callable, Dict # noqa
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.edit_data.contracts import (
-   INITIALIZE_EDIT_REQUEST, InitializeEditParams,  EditSubsetParams, EDIT_SUBSET_REQUEST, UPDATE_CELL_REQUEST,
-   UpdateCellRequest, SessionOperationRequest, CREATE_ROW_REQUEST, CreateRowRequest, DELETE_ROW_REQUEST,
-   DeleteRowRequest, DISPOSE_REQUEST, DisposeRequest, REVERT_CELL_REQUEST, RevertCellRequest,
-   REVERT_ROW_REQUEST, RevertRowRequest, EDIT_COMMIT_REQUEST, EditCommitRequest
-
+    CREATE_ROW_REQUEST, CreateRowRequest, DELETE_ROW_REQUEST, DeleteRowRequest, DISPOSE_REQUEST, DisposeRequest,
+    DisposeResponse, EDIT_COMMIT_REQUEST, EDIT_SUBSET_REQUEST, EditCommitRequest, EditCommitResponse, EditSubsetParams,
+    EditSubsetResponse, INITIALIZE_EDIT_REQUEST, InitializeEditParams, REVERT_CELL_REQUEST, REVERT_ROW_REQUEST, RevertCellRequest,
+    RevertRowRequest, SessionOperationRequest, UPDATE_CELL_REQUEST, UpdateCellRequest, SessionReadyNotificationParams,
+    SESSION_READY_NOTIFICATION
 )
-from pgsqltoolsservice.edit_data import DataEditorSession # noqa
+from pgsqltoolsservice.edit_data import DataEditorSession, SmoEditTableMetadataFactory, DataEditSessionExecutionState # noqa
 from pgsqltoolsservice.utils import constants
+from pgsqltoolsservice.connection.contracts import ConnectionType
+from pgsqltoolsservice.query_execution.contracts import ExecuteStringParams, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION
+from pgsqltoolsservice.query_execution.query_execution_service import ExecuteRequestWorkerArgs
 
 
 class EditDataService(object):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
-        self._query_execution_service = None
+        self._query_execution_service: QueryExecutionService = None
         self._active_sessions: Dict[str, DataEditorSession] = {}
         self._logger = None
+        self._connection_service: ConnectionService = None
 
         self._service_action_mapping: dict = {
             INITIALIZE_EDIT_REQUEST: self._edit_initialize,
@@ -39,10 +43,42 @@ class EditDataService(object):
         }
 
     def _edit_initialize(self, request_context: RequestContext, params: InitializeEditParams) -> None:
-        self._logger.info('Calling query')
+        connection = self._connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
+        session = DataEditorSession(SmoEditTableMetadataFactory())
+        self._active_sessions[params.owner_uri] = session
+
+        def query_executer(query: str, on_query_execution_complete: Callable):
+            def on_resultset_complete(result_set_params):
+                request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
+
+            def on_query_complete(query_complete_params):
+                on_query_execution_complete(DataEditSessionExecutionState(self._query_execution_service.get_query(params.owner_uri)))
+                request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
+
+            worker_args = ExecuteRequestWorkerArgs(params.owner_uri, connection, request_context, on_resultset_complete=on_resultset_complete,
+                                                   on_query_complete=on_query_complete)
+            execution_params = ExecuteStringParams()
+            execution_params.query = query
+            execution_params.owner_uri = params.owner_uri
+            self._query_execution_service._start_query_execution_thread(request_context, execution_params, worker_args)
+
+        def on_success():
+            request_context.send_notification(SESSION_READY_NOTIFICATION, SessionReadyNotificationParams(params.owner_uri, True, None))
+
+        def on_failure():
+            request_context.send_notification(SESSION_READY_NOTIFICATION, SessionReadyNotificationParams(params.owner_uri, False, None))
+
+        session.initialize(params, connection, query_executer, on_success, on_failure)
+        request_context.send_response({})
 
     def _edit_subset(self, request_context: RequestContext, params: EditSubsetParams) -> None:
-        self._logger.info('Edit subset')
+        session: DataEditorSession = self._active_sessions.get(params.owner_uri)
+
+        rows = session.get_rows(params.owner_uri, params.row_start_index, params.row_count - 1)
+
+        edit_subset_result = EditSubsetResponse(len(rows), rows)
+
+        request_context.send_response(edit_subset_result)
 
     def _update_cell(self, request_context: RequestContext, params: UpdateCellRequest):
         self._handle_session_request(params, request_context,
@@ -50,22 +86,46 @@ class EditDataService(object):
                                      edit_session.update_cell(params.row_id, params.column_id, params.new_value))
 
     def _create_row(self, request_context: RequestContext, params: CreateRowRequest) -> None:
-        raise NotImplementedError()
+        self._handle_session_request(params, request_context,
+                                     lambda edit_session:
+                                     edit_session.create_row())
 
     def _delete_row(self, request_context: RequestContext, params: DeleteRowRequest) -> None:
-        raise NotImplementedError()
+        self._handle_session_request(params, request_context,
+                                     lambda edit_session:
+                                     edit_session.delete_row(params.row_id))
 
     def _revert_cell(self, request_context: RequestContext, params: RevertCellRequest) -> None:
-        raise NotImplementedError()
+        self._handle_session_request(params, request_context,
+                                     lambda edit_session:
+                                     edit_session.revert_cell(params.row_id, params.column_id))
 
     def _revert_row(self, request_context: RequestContext, params: RevertRowRequest) -> None:
-        raise NotImplementedError()
+        self._handle_session_request(params, request_context,
+                                     lambda edit_session:
+                                     edit_session.revert_row(params.row_id))
 
     def _edit_commit(self, request_context: RequestContext, params: EditCommitRequest) -> None:
-        raise NotImplementedError()
+        connection = self._connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
+
+        def on_success():
+            request_context.send_response(EditCommitResponse())
+
+        def on_failure(error: str):
+            request_context.send_error(error)
+
+        edit_session = self._get_active_session(params.owner_uri)
+        edit_session.commit_edit(connection, on_success, on_failure)
 
     def _dispose(self, request_context: RequestContext, params: DisposeRequest) -> None:
-        raise NotImplementedError()
+
+        try:
+            self._active_sessions.pop(params.owner_uri)
+
+        except KeyError:
+            request_context.send_error('Edit data session not found')
+
+        request_context.send_response(DisposeResponse())
 
     def _handle_session_request(self, session_operation_request: SessionOperationRequest,
                                 request_context: RequestContext, session_operation: Callable):
@@ -88,6 +148,7 @@ class EditDataService(object):
         self._service_provider = service_provider
         self._query_execution_service = self._service_provider[constants.QUERY_EXECUTION_SERVICE_NAME]
         self._logger = service_provider.logger
+        self._connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
 
         for action in self._service_action_mapping:
             self._service_provider.server.set_request_handler(action, self._service_action_mapping[action])

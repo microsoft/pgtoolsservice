@@ -4,19 +4,32 @@
 # --------------------------------------------------------------------------------------------
 
 
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
+from typing import Callable # noqa
+
+from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
+from pgsqltoolsservice.parsers.datatype_parsers import get_parser
 from pgsqltoolsservice.edit_data.contracts import EditCell # noqa
 
 
 class CellUpdate():
 
-    @property
-    def db_cell_value(self):
-        # TBD - Implementation pending
-        return None
+    def __init__(self, column: DbColumn, new_value: str) -> None:
+        parser: Callable[[str], object] = get_parser(column)
 
-    def __init__(self, column: DbColumn, new_value: str):
-        # Need to handle different data types
-        self.value: object = new_value
+        if parser is None:
+            raise AttributeError('Edits not supported')
+
+        self.value: object = parser(new_value)
         self.column = column
-        self.edit_cell: EditCell = None
+
+    @property
+    def as_db_cell_value(self):
+        return DbCellValue(self.value_as_string, self.value is None, self.value, None)
+
+    @property
+    def as_edit_cell(self) -> EditCell:
+        return EditCell(self.as_db_cell_value, True)
+
+    @property
+    def value_as_string(self) -> str:
+        return str(self.value)

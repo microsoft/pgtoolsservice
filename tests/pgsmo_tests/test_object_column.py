@@ -17,7 +17,12 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
         'datatype': 'character',
         'oid': 123,
         'has_default_val': True,
-        'not_null': True
+        'not_null': True,
+        'isprimarykey': True,
+        'is_updatable': False,
+        'isunique': True,
+        'typoid': 1234,
+        'default': 'nextval('
     }
 
     @property
@@ -27,6 +32,21 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             '_has_default_value': self.node_query['has_default_val'],
             'not_null': self.node_query['not_null'],
             '_not_null': self.node_query['not_null'],
+            '_column_ordinal': self.node_query['oid'] - 1,
+            'column_ordinal': self.node_query['oid'] - 1,
+            '_is_key': self.node_query['isprimarykey'],
+            'is_key': self.node_query['isprimarykey'],
+            '_is_readonly': self.node_query['is_updatable'] is False,
+            'is_readonly': self.node_query['is_updatable'] is False,
+            '_is_unique': self.node_query['isunique'],
+            'is_unique': self.node_query['isunique'],
+            '_type_oid': self.node_query['typoid'],
+            'type_oid': self.node_query['typoid'],
+            '_default_value': self.node_query['default'],
+            'default_value': self.node_query['default'],
+            '_is_auto_increment': True,
+            'is_auto_increment': True,
+
         }
 
     @property

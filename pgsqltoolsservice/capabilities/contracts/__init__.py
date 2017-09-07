@@ -15,6 +15,6 @@ from pgsqltoolsservice.capabilities.contracts.initialize_request import (
 
 __all__ = [
     'CAPABILITIES_REQUEST', 'CapabilitiesRequestParams', 'CapabilitiesResult', 'DMPServerCapabilities', 'ConnectionProviderOptions', 'ConnectionOption',
-    'CategoryValue', 'ServiceOption', 'FeatureMetadataProvider', 'INITIALIZE_REQUEST', 'InitializeRequestParams', 'InitializeResult',
-    'ServerCapabilities', 'SignatureHelpOptions', 'CompletionOptions', 'TextDocumentSyncKind'
+    'CategoryValue', 'ServiceOption', 'FeatureMetadataProvider', 'INITIALIZE_REQUEST', 'InitializeRequestParams', 'InitializeResult', 'ServerCapabilities',
+    'SignatureHelpOptions', 'CompletionOptions', 'TextDocumentSyncKind'
 ]
