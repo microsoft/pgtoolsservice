@@ -56,7 +56,13 @@ def parse_date(value: str) -> datetime.date:
 
 
 def parse_time(value: str) -> datetime.time:
-    raise NotImplementedError()
+    date: datetime.datetime = date_parser.parse(value)
+    return date.time()
+
+
+def parse_time_with_timezone(value: str) -> datetime.time:
+    date: datetime.datetime = date_parser.parse(value)
+    return date.timetz()
 
 
 def parse_datetime(value: str) -> datetime.datetime:
@@ -84,7 +90,7 @@ DATATYPE_PARSER_MAP = {
             datatypes.DATATYPE_TEXT: parse_str,
             datatypes.DATATYPE_DATE: parse_date,
             datatypes.DATATYPE_TIME: parse_time,
-            datatypes.DATATYPE_TIME_WITH_TIMEZONE: parse_time,
+            datatypes.DATATYPE_TIME_WITH_TIMEZONE: parse_time_with_timezone,
             datatypes.DATATYPE_TIMESTAMP: parse_datetime,
             datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: parse_datetime,
             datatypes.DATATYPE_INTERVAL: parse_timedelta,

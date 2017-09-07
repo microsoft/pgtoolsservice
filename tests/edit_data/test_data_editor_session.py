@@ -124,7 +124,7 @@ class TestDataEditorSession(unittest.TestCase):
         Validate that create row creates new row based with new row id and returns
         CreateRowResponse
         '''
-        self._data_editor_session._next_row_id = 0
+        self._data_editor_session._last_row_id = 0
 
         calculated_column = DbColumn()
         calculated_column.is_updatable = False
@@ -204,6 +204,8 @@ class TestDataEditorSession(unittest.TestCase):
         mock_edit.get_script = mock.Mock(return_value=edit_script)
 
         self._data_editor_session._session_cache[row_id] = mock_edit
+
+        self._data_editor_session._result_set = ResultSet(rows=[(1, False)])
 
         self._data_editor_session.commit_edit(self._connection, success_callback, None)
 

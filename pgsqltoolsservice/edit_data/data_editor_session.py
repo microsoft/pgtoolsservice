@@ -31,7 +31,7 @@ class DataEditorSession():
     def __init__(self, metadata_factory: SmoEditTableMetadataFactory):
         self._session_cache: Dict[int, RowEdit] = {}
         self._metadata_factory = metadata_factory
-        self._next_row_id = None
+        self._last_row_id: int = None
         self._is_initialized = False
         self._commit_task: threading.Thread = None
 
@@ -62,7 +62,7 @@ class DataEditorSession():
 
             self._result_set.columns = [column.db_column for column in self.table_metadata.columns_metadata]
 
-            self._next_row_id = self._result_set.row_count
+            self._last_row_id = len(self._result_set.rows) - 1
             self._is_initialized = True
             self.table_metadata.extend(self._result_set.columns)
 
@@ -137,16 +137,16 @@ class DataEditorSession():
         self._session_cache[row_id] = row_delete
 
     def create_row(self) -> CreateRowResponse:
-        new_row_id = self._next_row_id + 1
+        self._last_row_id += 1
 
-        new_row = RowCreate(new_row_id, self._result_set, self.table_metadata)
+        new_row = RowCreate(self._last_row_id, self._result_set, self.table_metadata)
 
-        self._session_cache[new_row_id] = new_row
+        self._session_cache[self._last_row_id] = new_row
 
         default_cell_values = []
 
         for index, column_metadata in enumerate(self.table_metadata.columns_metadata):
-
+            default_value = None
             if column_metadata.is_calculated is True:
                 default_value = '&lt;TBD&gt;'
 
@@ -156,7 +156,7 @@ class DataEditorSession():
 
             default_cell_values.append(default_value)
 
-        return CreateRowResponse(new_row_id, default_cell_values)
+        return CreateRowResponse(self._last_row_id, default_cell_values)
 
     def get_rows(self, owner_uri, start_index: int, end_index: int):
         if start_index < self._result_set.row_count:
@@ -171,7 +171,7 @@ class DataEditorSession():
             if cache is not None:
                 edit_rows.append(cache.get_edit_row(subset.rows[0]))
             else:
-                edit_row = EditRow(row_id, [EditCell(cell, False) for cell in row])
+                edit_row = EditRow(row_id, [EditCell(cell, False, row_id) for cell in row])
                 edit_rows.append(edit_row)
 
         return edit_rows
@@ -188,8 +188,9 @@ class DataEditorSession():
                 operation.apply_changes()
 
             self._session_cache.clear()
+            self._last_row_id = len(self._result_set.rows) - 1
 
             success()
 
-        except Exception:
-            failure()
+        except Exception as error:
+            failure(str(error))
