@@ -70,11 +70,7 @@ class TestRowCreate(unittest.TestCase):
 
         script = self._row_create.get_script()
 
-        insert_template = 'INSERT INTO {0}({1}) VALUES(%s)'
-
-        expected_query_template = insert_template.format(self._table_metadata.multipart_name, self._result_set.columns[0].column_name)
-
-        self.assertEqual(script.query_template, expected_query_template)
+        self.assertEqual(script.query_template, 'INSERT INTO "public"."TestTable"("IsValid") VALUES(%s)')
         self.assertEquals(script.query_paramters[0], False)
 
     def test_apply_changes(self):

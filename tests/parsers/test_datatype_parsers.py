@@ -8,6 +8,7 @@ import unittest
 from typing import Callable # noqa
 from decimal import Decimal
 import uuid
+import datetime # noqa
 
 from pgsqltoolsservice.parsers.datatype_parsers import get_parser
 from pgsqltoolsservice.query_execution.contracts.common import DbColumn
@@ -55,17 +56,45 @@ class TestDataTypeParsers(unittest.TestCase):
         id = uuid.uuid4()
         self._test_parsers_for('uuid', str(id), uuid.UUID, id)
 
-    def _test_parsers_for(self, datatype_to_test: str, value_to_parse: str, expected_type: type, expected_parsed_value: object):
+    def test_date_parser(self):
+        date = '2017/12/12'
+        parsed_value: datetime.date = self._get_parsed_value('date', date)
 
+        self.assertEqual(12, parsed_value.day)
+        self.assertEqual(12, parsed_value.month)
+        self.assertEqual(2017, parsed_value.year)
+
+    def test_time_parser(self):
+        time = '12:30:42'
+        parsed_value: datetime.time = self._get_parsed_value('time', time)
+
+        self.assertEqual(12, parsed_value.hour)
+        self.assertEqual(30, parsed_value.minute)
+        self.assertEqual(42, parsed_value.second)
+
+    def test_time_with_timezone_parser(self):
+        time = '12:30:42+12:1'
+        parsed_value: datetime.time = self._get_parsed_value('timetz', time)
+
+        self.assertEqual(12, parsed_value.hour)
+        self.assertEqual(30, parsed_value.minute)
+        self.assertEqual(42, parsed_value.second)
+
+        self.assertIsNotNone(parsed_value.tzinfo)
+
+    def _test_parsers_for(self, datatype_to_test: str, value_to_parse: str, expected_type: type, expected_parsed_value: object):
+        parsed_value = self._get_parsed_value(datatype_to_test, value_to_parse)
+
+        self.assertEqual(type(parsed_value), expected_type)
+        self.assertEqual(parsed_value, expected_parsed_value)
+
+    def _get_parsed_value(self, datatype_to_test: str, value_to_parse: str):
         column = DbColumn()
         column.data_type = datatype_to_test
 
         parser = get_parser(column)
 
-        parsed_value = parser(value_to_parse)
-
-        self.assertEqual(type(parsed_value), expected_type)
-        self.assertEqual(parsed_value, expected_parsed_value)
+        return parser(value_to_parse)
 
 
 if __name__ == '__main__':
