@@ -8,42 +8,13 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Server, Column
+from pgsmo import Table, DataType, Schema, Server, Column, View
 from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 
 import tests.utils as utils
-
-
-class TestScriptAsSelect(unittest.TestCase):
-    def test_script_select_escapes_non_lowercased_words(self):
-        """ Tests scripting for select operations"""
-        # Given mixed, and uppercase object names
-        # When I generate a select script
-        mock_conn = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
-        mock_server = Server(mock_conn)
-
-        mock_schema = Schema(mock_server, None, 'MySchema')
-        mock_table = Table(mock_server, mock_schema, 'MyTable')
-        mixed_result: str = scripter.script_as_select(mock_table)
-
-        mock_table._name = 'MYTABLE'
-        mock_schema._name = 'MYSCHEMA'
-        upper_result: str = scripter.script_as_select(mock_table)
-
-        # Then I expect words to be escaped no matter what
-        self.assertTrue('"MySchema"."MyTable"' in mixed_result)
-        self.assertTrue('"MYSCHEMA"."MYTABLE"' in upper_result)
-
-        # Given lowercase object names
-        # When I generate a select script
-        mock_table._name = 'mytable'
-        mock_schema._name = 'myschema'
-        lower_result: str = scripter.script_as_select(mock_table)
-        # Then I expect words to be left as-is
-        self.assertTrue('myschema.mytable' in lower_result)
 
 
 class TestScripter(unittest.TestCase):
@@ -116,6 +87,7 @@ class TestScripter(unittest.TestCase):
         mock_obj.create_script = mock.MagicMock(return_value='CREATE')
         mock_obj.delete_script = mock.MagicMock(return_value='DELETE')
         mock_obj.update_script = mock.MagicMock(return_value='UPDATE')
+        mock_obj.select_script = mock.MagicMock(return_value='SELECT')
 
         # ... Mocks for SELECT TODO: remove as per (https://github.com/Microsoft/carbon/issues/1764)
         mock_obj.name = 'table'
@@ -169,6 +141,52 @@ class TestScripterOld(unittest.TestCase):
 
         # The result should be the correct template value
         self.assertTrue('CREATE TABLE myschema.test' in result)
+
+        # ... The URN should have been used to get the object
+        self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
+
+    def test_table_select_script(self):
+        """ Tests create script for tables"""
+        # Set up the mocks
+        mock_schema = Schema(self.server, None, 'testschema')
+        mock_table = Table(self.server, mock_schema, 'testTable')
+        mock_column = Column(self.server, "testTable", 'testcolumn', 'testDatatype')
+        mock_table._select_query_data = mock.MagicMock(return_value={"data": {
+            "name": "testTable",
+            "schema": "testschema",
+            "columns": {mock_column}
+        }})
+        self.server.get_object_by_urn = mock.MagicMock(return_value=mock_table)
+
+        # If I try to get create script
+        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'Table', 'testTable')
+        result: str = self.scripter.script(scripter.ScriptOperation.SELECT, mock_metadata)
+
+        # The result should be the correct template value
+        self.assertTrue('select  testcolumn\nfrom testschema."testTable"\nLIMIT 1000' in result)
+
+        # ... The URN should have been used to get the object
+        self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
+
+    def test_view_select_script(self):
+        """ Tests create script for tables"""
+        # Set up the mocks
+        mock_schema = Schema(self.server, None, 'testschema')
+        mock_view = View(self.server, mock_schema, 'testView')
+        mock_column = Column(self.server, "testView", 'testcolumn', 'testDatatype')
+        mock_view._select_query_data = mock.MagicMock(return_value={"data": {
+            "name": 'testView',
+            "schema": 'testschema',
+            "columns": {mock_column}
+        }})
+        self.server.get_object_by_urn = mock.MagicMock(return_value=mock_view)
+
+        # If I try to get create script
+        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'Table', 'testView')
+        result: str = self.scripter.script(scripter.ScriptOperation.SELECT, mock_metadata)
+
+        # The result should be the correct template value
+        self.assertTrue('select  testcolumn\nfrom testschema."testView"\nLIMIT 1000' in result)
 
         # ... The URN should have been used to get the object
         self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
