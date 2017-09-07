@@ -31,7 +31,7 @@ class DataEditorSession():
     def __init__(self, metadata_factory: SmoEditTableMetadataFactory):
         self._session_cache: Dict[int, RowEdit] = {}
         self._metadata_factory = metadata_factory
-        self._next_row_id: int = None
+        self._last_row_id: int = None
         self._is_initialized = False
         self._commit_task: threading.Thread = None
 
@@ -62,7 +62,7 @@ class DataEditorSession():
 
             self._result_set.columns = [column.db_column for column in self.table_metadata.columns_metadata]
 
-            self._next_row_id = len(self._result_set.rows) - 1
+            self._last_row_id = len(self._result_set.rows) - 1
             self._is_initialized = True
             self.table_metadata.extend(self._result_set.columns)
 
@@ -137,11 +137,11 @@ class DataEditorSession():
         self._session_cache[row_id] = row_delete
 
     def create_row(self) -> CreateRowResponse:
-        self._next_row_id += 1
+        self._last_row_id += 1
 
-        new_row = RowCreate(self._next_row_id, self._result_set, self.table_metadata)
+        new_row = RowCreate(self._last_row_id, self._result_set, self.table_metadata)
 
-        self._session_cache[self._next_row_id] = new_row
+        self._session_cache[self._last_row_id] = new_row
 
         default_cell_values = []
 
@@ -156,7 +156,7 @@ class DataEditorSession():
 
             default_cell_values.append(default_value)
 
-        return CreateRowResponse(self._next_row_id, default_cell_values)
+        return CreateRowResponse(self._last_row_id, default_cell_values)
 
     def get_rows(self, owner_uri, start_index: int, end_index: int):
         if start_index < self._result_set.row_count:
@@ -188,7 +188,7 @@ class DataEditorSession():
                 operation.apply_changes()
 
             self._session_cache.clear()
-            self._next_row_id = len(self._result_set.rows) - 1
+            self._last_row_id = len(self._result_set.rows) - 1
 
             success()
 

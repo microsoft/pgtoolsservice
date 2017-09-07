@@ -124,7 +124,7 @@ class TestDataEditorSession(unittest.TestCase):
         Validate that create row creates new row based with new row id and returns
         CreateRowResponse
         '''
-        self._data_editor_session._next_row_id = 0
+        self._data_editor_session._last_row_id = 0
 
         calculated_column = DbColumn()
         calculated_column.is_updatable = False
