@@ -58,6 +58,16 @@ class TestEditDataService(unittest.TestCase):
         self._service_under_test._edit_initialize(request_context, self._initialize_edit_request)
         mockdataeditorsession.assert_called()
 
+    def test_initialization_with_empty_schema_param(self):
+        queue = Queue()
+        message = JSONRPCMessage.from_dictionary({'id': '123', 'method': 'edit/initialize', 'params': {}})
+        request_context = RequestContext(message, queue)
+        self._initialize_edit_request.schema_name = None
+
+        # with self.assertRaises(Exception):
+        with self.assertRaises(ValueError('Parameter param.schema_name contains a None, empty, or whitespace string')):
+            self._service_under_test._edit_initialize(request_context, self._initialize_edit_request)        
+
     def test_register_should_initlialize_states(self):
         self.assertEqual(self._service_under_test._service_provider, self._service_provider)
         self.assertEqual(self._service_under_test._logger, self._service_provider.logger)

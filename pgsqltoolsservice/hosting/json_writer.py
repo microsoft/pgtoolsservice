@@ -57,4 +57,4 @@ class JSONRPCWriter:
             ))
 
             # Uncomment for verbose logging
-            # self._logger.debug(f'{json_content}')
+            self._logger.debug(f'{json_content}')

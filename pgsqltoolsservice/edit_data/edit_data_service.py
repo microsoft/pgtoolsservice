@@ -19,6 +19,9 @@ from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.contracts import ExecuteStringParams, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION
 from pgsqltoolsservice.query_execution.query_execution_service import ExecuteRequestWorkerArgs
+from pgsqltoolsservice.connection import ConnectionService  # noqa
+from pgsqltoolsservice.query_execution import QueryExecutionService  # noqa
+import pgsqltoolsservice.utils as utils
 
 
 class EditDataService(object):
@@ -43,8 +46,15 @@ class EditDataService(object):
         }
 
     def _edit_initialize(self, request_context: RequestContext, params: InitializeEditParams) -> None:
+        utils.validate.is_not_none('params', params)
+        utils.validate.is_not_none_or_whitespace('params.owner_uri', params.owner_uri)
+        utils.validate.is_not_none_or_whitespace('params.schema_name', params.schema_name)
+        utils.validate.is_not_none_or_whitespace('params.object_name', params.object_name)
+        utils.validate.is_not_none_or_whitespace('params.object_type', params.object_type)
+            
         connection = self._connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
-        session = DataEditorSession(SmoEditTableMetadataFactory())
+        session = DataEditorSession(SmoEditTableMetadataFactory())        
+
         self._active_sessions[params.owner_uri] = session
 
         def query_executer(query: str, on_query_execution_complete: Callable):

@@ -10,6 +10,7 @@ import uuid
 from pgsqltoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from pgsqltoolsservice.hosting.json_reader import JSONRPCReader
 from pgsqltoolsservice.hosting.json_writer import JSONRPCWriter
+import pgsqltoolsservice.utils as utils
 
 
 class JSONRPCServer:
@@ -273,7 +274,7 @@ class JSONRPCServer:
             else:
                 # Use the complex deserializer
                 deserialized_object = handler.class_.from_dict(message.message_params)
-            try:
+            try:                
                 handler.handler(request_context, deserialized_object)
             except Exception:
                 error_message = f'Unhandled exception while handling request method {message.message_method}'  # TODO: Localize
