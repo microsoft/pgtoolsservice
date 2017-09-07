@@ -65,7 +65,7 @@ class TestRowDelete(unittest.TestCase):
 
         script = self._row_delete.get_script()
 
-        expected_query_template = 'DELETE FROM public.TestTable WHERE "IsValid" = %s'
+        expected_query_template = 'DELETE FROM "public"."TestTable" WHERE "IsValid" = %s'
 
         self.assertEqual(script.query_template, expected_query_template)
         self.assertEquals(script.query_paramters[0], 'True')

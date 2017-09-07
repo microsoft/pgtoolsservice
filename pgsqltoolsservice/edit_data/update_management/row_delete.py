@@ -24,7 +24,7 @@ class RowDelete(RowEdit):
         raise TypeError('Set cell not supported')
 
     def get_edit_row(self, cached_row: List[DbCellValue]) -> EditRow:
-        return EditRow(self.row_id, [EditCell(cell, True) for cell in cached_row], EditRowState.DIRTY_DELETE)
+        return EditRow(self.row_id, [EditCell(cell, True, self.row_id) for cell in cached_row], EditRowState.DIRTY_DELETE)
 
     def apply_changes(self):
         self.result_set.remove_row(self.row_id)

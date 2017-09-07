@@ -38,7 +38,7 @@ class RowCreate(RowEdit):
         edit_cells = []
         for cell in self.new_cells:
             db_cell_value = DbCellValue('', False, None, self.row_id) if cell is None else cell.as_db_cell_value
-            edit_cells.append(EditCell(db_cell_value, True))
+            edit_cells.append(EditCell(db_cell_value, True, self.row_id))
 
         return EditRow(self.row_id, edit_cells, EditRowState.DIRTY_INSERT)
 
@@ -53,18 +53,26 @@ class RowCreate(RowEdit):
 
     def _generate_insert_script(self):
 
-        insert_template = 'INSERT INTO {0}({1}) VALUES(%s)'
+        insert_template = 'INSERT INTO {0}({1}) VALUES({2})'
+        colum_name_template = '"{0}"'
 
         column_names: List[str] = []
         query_parameters: List[object] = []
+        insert_values: List[str] = []
 
         for index, column in enumerate(self.result_set.columns):
             if column.is_updatable is True:
-                column_names.append(column.column_name)
+                column_names.append(str.format(colum_name_template, column.column_name))
 
                 cell_update = self.new_cells[index]
-                query_parameters.append(cell_update.value)
 
-        query_template = str.format(insert_template, self.table_metadata.multipart_name, ', '.join(column_names))
+                if cell_update is None:  # It is none when a column is not updated
+                    query_parameters.append(None)
+                else:
+                    query_parameters.append(cell_update.value)
+
+                insert_values.append('%s')
+
+        query_template = str.format(insert_template, self.table_metadata.multipart_name, ', '.join(column_names), ', '.join(insert_values))
 
         return EditScript(query_template, query_parameters)

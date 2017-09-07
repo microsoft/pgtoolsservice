@@ -205,6 +205,8 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session._session_cache[row_id] = mock_edit
 
+        self._data_editor_session._result_set = ResultSet(rows=[(1, False)])
+
         self._data_editor_session.commit_edit(self._connection, success_callback, None)
 
         self.assertTrue(len(self._data_editor_session._session_cache) is 0)
