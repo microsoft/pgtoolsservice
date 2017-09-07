@@ -79,9 +79,6 @@ class CompletionRefresher:
             # break statement.
             continue
 
-        if self._restart_refresh.is_set():
-            self._restart_refresh.clear()
-
         # Load history into pgcompleter so it can learn user preferences
         n_recent = 100
         if history:
@@ -90,6 +87,10 @@ class CompletionRefresher:
 
         for callback in callbacks:
             callback(completer)
+
+        if self._restart_refresh.is_set():
+            self._restart_refresh.clear()
+
 
 
 def refresher(name, refreshers=CompletionRefresher.refreshers):

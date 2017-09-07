@@ -48,7 +48,7 @@ class MetadataExecutor(object):
 
     def tables(self) -> List[tuple]:
         """return a 2-tuple of [schema,name]"""
-        return list(map(lambda t: tuple([t.schema, t.name]), self.all_tables))
+        return [tuple([t.schema, t.name]) for t in self.all_tables]
 
     def table_columns(self) -> List[tuple]:
         """return a 3-tuple of [schema,table,name]"""
@@ -64,7 +64,7 @@ class MetadataExecutor(object):
 
     def views(self) -> List[tuple]:
         """return a 2-tuple of [schema,name]"""
-        return list(map(lambda v: tuple([v.parent.name, v.name]), self.all_views))
+        return [tuple([v.parent.name, v.name]) for v in self.all_views]
 
     def view_columns(self) -> List[tuple]:
         """return a 3-tuple of [schema,table,name]"""
@@ -76,7 +76,7 @@ class MetadataExecutor(object):
 
     def datatypes(self) -> List[tuple]:
         """return a 2-tuple of [schema,name]"""
-        return list(map(lambda t: tuple([t.schema, t.name]), self.populate_objects_under_schemas('datatypes')))
+        return [tuple([d.schema, d.name]) for d in self.populate_objects_under_schemas('datatypes')]
 
     def casing(self) -> List[tuple]:
         # TODO Implement casing support.
