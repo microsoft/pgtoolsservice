@@ -6,7 +6,7 @@
 from typing import List, Any
 import time
 import unittest
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from pgsmo import NodeCollection, Server
 from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
