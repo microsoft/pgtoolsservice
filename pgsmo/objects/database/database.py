@@ -9,6 +9,7 @@ from pgsmo.objects.node_object import NodeCollection, NodeObject
 from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
+from pgsmo.utils.querying import ServerConnection    # noqa
 import pgsmo.utils.templating as templating
 
 
@@ -30,6 +31,8 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
             datallowconn bool: Whether or not the database can be connected to
             cancreate bool: Whether or not the database can be created by the current user
             owner int: Object ID of the user that owns the database
+            datistemplate bool: Whether or not the database is a template database
+            canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
         db = cls(server, kwargs['name'])
@@ -38,6 +41,8 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         db._allow_conn = kwargs['datallowconn']
         db._can_create = kwargs['cancreate']
         db._owner_oid = kwargs['owner']
+        db._is_template = kwargs['datistemplate']
+        db._can_connect = kwargs['canconnect']
 
         return db
 
@@ -49,24 +54,46 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
-        self._is_connected: bool = server.maintenance_db_name == name
-
         # Declare the optional parameters
         self._tablespace: Optional[str] = None
         self._allow_conn: Optional[bool] = None
+        self._is_template: Optional[bool] = None
+        self._can_connect: Optional[bool] = None
         self._can_create: Optional[bool] = None
         self._owner_oid: Optional[int] = None
+        self._connection: ServerConnection = None
+
+        if server.maintenance_db_name == name:
+            self._connection = server.connection
 
         # Declare the child items
-        self._schemas: Optional[NodeCollection[Schema]] = None
-        if self._is_connected:
-            self._schemas = self._register_child_collection(Schema)
+        self._schemas = self._register_child_collection(Schema)
 
     # PROPERTIES ###########################################################
     # -BASIC PROPERTIES ####################################################
     @property
     def allow_conn(self) -> bool:
         return self._allow_conn
+
+    @property
+    def connection(self) -> ServerConnection:
+        if self._connection is not None:
+            return self._connection
+        else:
+            connection = ServerConnection(self._server.db_connection_callback(self.name))
+            if connection.dsn_parameters['dbname'] == self.name:
+                self._connection = connection
+                return self._connection
+            else:
+                raise ValueError('connection create for wrong database')
+
+    @property
+    def is_template(self) -> bool:
+        return self._is_template
+
+    @property
+    def can_connect(self) -> bool:
+        return self._can_connect
 
     @property
     def can_create(self) -> bool:

@@ -12,6 +12,8 @@ from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 
 class EditTableMetadata():
 
+    OBJECT_TEMPLATE = '"{0}"'
+
     def __init__(self, schema_name: str, table_name, columns_metadata: List[EditColumnMetadata]) -> None:
         self.columns_metadata = columns_metadata
         self.schema_name: str = schema_name
@@ -21,7 +23,7 @@ class EditTableMetadata():
 
     @property
     def multipart_name(self) -> str:
-        return '.'.join([self.schema_name, self.table_name])
+        return '.'.join([self._get_formated_entity_name(self.schema_name), self._get_formated_entity_name(self.table_name)])
 
     def extend(self, db_columns: List[DbColumn]):
 
@@ -34,3 +36,6 @@ class EditTableMetadata():
             self.key_columns = [column for column in self.columns_metadata if column.is_trustworthy_for_uniqueness is True]
 
         self.has_extended_properties = True
+
+    def _get_formated_entity_name(self, entity_name: str) -> str:
+        return EditTableMetadata.OBJECT_TEMPLATE.format(entity_name)

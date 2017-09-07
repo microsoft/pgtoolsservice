@@ -64,9 +64,8 @@ class TestEditDataService(unittest.TestCase):
         request_context = RequestContext(message, queue)
         self._initialize_edit_request.schema_name = None
 
-        # with self.assertRaises(Exception):
-        with self.assertRaises(ValueError('Parameter param.schema_name contains a None, empty, or whitespace string')):
-            self._service_under_test._edit_initialize(request_context, self._initialize_edit_request)        
+        with self.assertRaises(ValueError, msg='Parameter param.schema_name contains a None, empty, or whitespace string'):
+            self._service_under_test._edit_initialize(request_context, self._initialize_edit_request)
 
     def test_register_should_initlialize_states(self):
         self.assertEqual(self._service_under_test._service_provider, self._service_provider)

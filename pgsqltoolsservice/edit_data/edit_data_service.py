@@ -51,10 +51,9 @@ class EditDataService(object):
         utils.validate.is_not_none_or_whitespace('params.schema_name', params.schema_name)
         utils.validate.is_not_none_or_whitespace('params.object_name', params.object_name)
         utils.validate.is_not_none_or_whitespace('params.object_type', params.object_type)
-            
-        connection = self._connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
-        session = DataEditorSession(SmoEditTableMetadataFactory())        
 
+        connection = self._connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
+        session = DataEditorSession(SmoEditTableMetadataFactory())
         self._active_sessions[params.owner_uri] = session
 
         def query_executer(query: str, on_query_execution_complete: Callable):

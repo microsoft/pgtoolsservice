@@ -194,12 +194,13 @@ class ResultSetSubset:
 
         result_set = batch.result_set
 
+        utils.validate.is_within_range("start_index", start_index, 0, end_index - 1)
+        utils.validate.is_within_range("end_index", end_index - 1, start_index, len(result_set.rows) - 1)
+
         return ResultSetSubset._construct_rows(result_set, start_index, end_index)
 
     @staticmethod
     def _construct_rows(result_set, start_index: int, end_index: int):
-        utils.validate.is_within_range("start_index", start_index, 0, end_index - 1)
-        utils.validate.is_within_range("end_index", end_index - 1, start_index, len(result_set.rows) - 1)
 
         rows_list: List[List[DbCellValue]] = []
         row_id = start_index
@@ -211,10 +212,21 @@ class ResultSetSubset:
                     cell,
                     cell is None,
                     cell,
-                    row_id) for cell in result_set.rows[row_id]]
+                    row_id) for cell in ResultSetSubset._get_row(result_set, row_id)]
             # Add our row to the overall row list
             rows_list.append(db_cell_value_row)
         return rows_list
+
+    @staticmethod
+    def _get_row(result_set, index):
+        ''' This private method returns a row tuple
+        in case a row is found within the index and returns empty
+        tuple in case the index is greater than available
+        '''
+
+        if index < len(result_set.rows):
+            return result_set.rows[index]
+        return (None,) * len(result_set.columns)
 
 
 class SubsetResult:

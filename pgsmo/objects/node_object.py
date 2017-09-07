@@ -7,7 +7,6 @@ from abc import ABCMeta, abstractmethod
 from collections import Iterator
 from urllib.parse import urljoin
 from typing import Callable, Dict, Generic, List, Optional, Union, Type, TypeVar, KeysView, ItemsView
-
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils as utils
 import pgsmo.utils.templating as templating
@@ -39,7 +38,11 @@ class NodeObject(metaclass=ABCMeta):
             macro_roots=cls._macro_root(),
             **template_vars
         )
-        cols, rows = root_server.connection.execute_dict(sql)
+        if parent_obj is None:
+            cols, rows = root_server.connection.execute_dict(sql)
+        else:
+            database_node = parent_obj.get_database_node()
+            cols, rows = database_node.connection.execute_dict(sql)
 
         return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
 
@@ -131,6 +134,16 @@ class NodeObject(metaclass=ABCMeta):
         """Refreshes and lazily loaded data"""
         self._refresh_child_collections()
 
+    def get_database_node(self) -> 'NodeObject':
+        if self.parent is None:
+            # checking for class name here. isInstance needs importing of Database class here creates circular dependency
+            if self.__class__.__name__ == 'Database':
+                return self
+            else:
+                return None
+        else:
+            return self.parent.get_database_node()
+
     # STATIC HELPERS #######################################################
     @classmethod
     def _macro_root(cls) -> Optional[List[str]]:
@@ -209,7 +222,7 @@ class NodeObject(metaclass=ABCMeta):
 
     def _refresh_child_collections(self) -> None:
         """Iterates over the registered child collections and property collections and resets them"""
-        for node_collection in self._child_collections:
+        for key, node_collection in self._child_collections.items():
             node_collection.reset()
 
         for prop_collection in self._property_collections:
