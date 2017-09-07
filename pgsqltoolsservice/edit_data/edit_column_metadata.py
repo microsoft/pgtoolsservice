@@ -9,23 +9,26 @@ from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 
 class EditColumnMetadata:
 
-    def __init__(self):
-        self.default_value = None
-        self.escaped_name = None
-        self.has_extended_properties = False
-        self.ordinal = None
-        self.is_computed = False
-        self.is_deterministic = False
-        self.is_identity = False
-        self.db_column: DbColumn = None
-        self.is_calculated = None
-        self.is_key = None
-        self.is_trustworthy_for_uniqueness = None
+    def __init__(self, db_column: DbColumn, default_value: str) -> None:
+        self.db_column: DbColumn = db_column
+        self.default_value = default_value
 
-    def extend(self, db_column: DbColumn):
-        # Extend additional information from the SMO
-        self.db_column = db_column
-        self.is_trustworthy_for_uniqueness = db_column.is_unique or db_column.is_read_only is False or db_column.is_auto_increment
-        self.is_key = db_column.is_key
-        self.is_calculated = db_column.is_auto_increment is True or db_column.is_updatable is False
-        self.has_extended_properties = True
+    @property
+    def ordinal(self) -> int:
+        return self.db_column.column_ordinal
+
+    @property
+    def name(self) -> str:
+        return self.db_column.column_name
+
+    @property
+    def is_key(self) -> bool:
+        return self.db_column.is_key
+
+    @property
+    def is_trustworthy_for_uniqueness(self) -> bool:
+        return self.db_column.is_unique or self.db_column.is_read_only is False or self.db_column.is_auto_increment
+
+    @property
+    def is_calculated(self) -> bool:
+        return self.db_column.is_auto_increment or self.db_column.is_updatable is False

@@ -18,24 +18,28 @@ class EditTableMetadata():
         self.columns_metadata = columns_metadata
         self.schema_name: str = schema_name
         self.table_name: str = table_name
-        self.key_columns: List[EditColumnMetadata] = []
-        self.has_extended_properties: bool = False
+        self._key_columns = self._get_key_columns()
 
     @property
     def multipart_name(self) -> str:
         return '.'.join([self._get_formated_entity_name(self.schema_name), self._get_formated_entity_name(self.table_name)])
 
-    def extend(self, db_columns: List[DbColumn]):
+    @property
+    def db_columns(self) -> List[DbColumn]:
+        return [column.db_column for column in self.columns_metadata]
 
-        for index, column in enumerate(db_columns):
-            self.columns_metadata[index].extend(column)
+    @property
+    def key_columns(self) -> List[EditColumnMetadata]:
+        return self._key_columns
 
-        self.key_columns = [column for column in self.columns_metadata if column.is_key is True]
+    def _get_key_columns(self)-> List[EditColumnMetadata]:
 
-        if any(self.key_columns) is False:
-            self.key_columns = [column for column in self.columns_metadata if column.is_trustworthy_for_uniqueness is True]
+        key_columns = [column for column in self.columns_metadata if column.is_key is True]
 
-        self.has_extended_properties = True
+        if any(key_columns) is False:
+            key_columns = [column for column in self.columns_metadata if column.is_trustworthy_for_uniqueness is True]
+
+        return key_columns
 
     def _get_formated_entity_name(self, entity_name: str) -> str:
         return EditTableMetadata.OBJECT_TEMPLATE.format(entity_name)
