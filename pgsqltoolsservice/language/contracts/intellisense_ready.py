@@ -5,7 +5,6 @@
 
 """This module holds contracts for the IntelliSense Ready notification"""
 
-from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.serialization import Serializable
 
 
@@ -23,4 +22,4 @@ class IntelliSenseReadyParams(Serializable):
         self.owner_uri: str = None
 
 
-INTELLISENSE_READY_NOTIFICATION = IncomingMessageConfiguration('textDocument/intelliSenseReady', IntelliSenseReadyParams)
+INTELLISENSE_READY_NOTIFICATION = 'textDocument/intelliSenseReady'

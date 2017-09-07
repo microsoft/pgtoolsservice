@@ -6,12 +6,8 @@
 from typing import Optional
 
 from pgsqltoolsservice.capabilities.contracts import (
-    CAPABILITIES_REQUEST,
-    CapabilitiesRequestParams, CompletionOptions,
-    CapabilitiesResult, DMPServerCapabilities, ConnectionProviderOptions, CategoryValue, ConnectionOption,
-    INITIALIZE_REQUEST,
-    InitializeRequestParams,
-    InitializeResult, ServerCapabilities, TextDocumentSyncKind
+    CAPABILITIES_REQUEST, CapabilitiesRequestParams, CompletionOptions, CapabilitiesResult, DMPServerCapabilities, ConnectionProviderOptions, CategoryValue,
+    ConnectionOption, INITIALIZE_REQUEST, InitializeRequestParams, InitializeResult, ServerCapabilities, TextDocumentSyncKind
 )
 from pgsqltoolsservice.disaster_recovery.contracts import BACKUP_OPTIONS, RESTORE_OPTIONS
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider

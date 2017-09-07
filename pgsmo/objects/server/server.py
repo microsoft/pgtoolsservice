@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, Mapping, Optional, Tuple                # noqa
+from typing import Dict, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
 from psycopg2.extensions import connection
@@ -19,13 +19,14 @@ class Server:
     TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
     # CONSTRUCTOR ##########################################################
-    def __init__(self, conn: connection):
+    def __init__(self, conn: connection, db_connection_callback: Callable[[str], connection] = None):
         """
         Initializes a server object using the provided connection
         :param conn: psycopg2 connection
         """
         # Everything we know about the server will be based on the connection
         self._conn: utils.querying.ServerConnection = utils.querying.ServerConnection(conn)
+        self._db_connection_callback = db_connection_callback
 
         # Declare the server properties
         props = self._conn.dsn_parameters
@@ -48,6 +49,11 @@ class Server:
     def connection(self) -> utils.querying.ServerConnection:
         """Connection to the server/db that this object will use"""
         return self._conn
+
+    @property
+    def db_connection_callback(self):
+        """Connection to the server/db that this object will use"""
+        return self._db_connection_callback
 
     @property
     def host(self) -> str:
@@ -83,10 +89,9 @@ class Server:
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
         user = quote_plus(self.connection.dsn_parameters['user'])
-        db = quote_plus(self.maintenance_db_name)
         host = quote_plus(self.host)
         port = quote_plus(str(self.port))
-        return f'//{user}@{db}.{host}:{port}/'
+        return f'//{user}@{host}:{port}/'
         # TODO: Ensure that this formatting works with non-username/password logins
 
     @property
