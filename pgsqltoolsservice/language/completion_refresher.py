@@ -92,7 +92,6 @@ class CompletionRefresher:
             self._restart_refresh.clear()
 
 
-
 def refresher(name, refreshers=CompletionRefresher.refreshers):
     """Decorator to populate the dictionary of refreshers with the current
     function.
