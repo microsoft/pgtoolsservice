@@ -27,8 +27,6 @@ class TestSqlCompletionRefresher(unittest.TestCase):
     def test_ctor(self):
         """
         Refresher object should contain a few handlers
-        :param refresher:
-        :return:
         """
         self.assertGreater(len(self.refresher.refreshers), 0)
         actual_handlers = list(self.refresher.refreshers.keys())
@@ -37,26 +35,17 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         self.assertListEqual(expected_handlers, actual_handlers)
 
     def test_refresh_called_once(self):
-        """
-
-        :param refresher:
-        :return:
-        """
         callbacks = Mock()
 
         with patch.object(self.refresher, '_bg_refresh') as bg_refresh:
             actual = self.refresher.refresh(callbacks)
-            time.sleep(0.1)  # Wait for the thread to work.
-            self.assertEqual(len(actual), 1)
-            self.assertEqual(len(actual[0]), 4)
-            self.assertEqual(actual[0][3], 'Auto-completion refresh started in the background.')
+            self.refresher._completer_thread.join()
+            self.assertEqual(actual, 'Auto-completion refresh started in the background.')
             bg_refresh.assert_called_with(callbacks, None, None)
 
     def test_refresh_called_twice(self):
         """
         If refresh is called a second time, it should be restarted
-        :param refresher:
-        :return:
         """
         callbacks = Mock()
 
@@ -66,21 +55,15 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         self.refresher._bg_refresh = dummy_bg_refresh
 
         actual1 = self.refresher.refresh(callbacks)
-        time.sleep(0.1)  # Wait for the thread to work.
-        self.assertEqual(len(actual1), 1)
-        self.assertEqual(len(actual1[0]), 4)
-        self.assertEqual(actual1[0][3], 'Auto-completion refresh started in the background.')
+        self.assertEqual(actual1, 'Auto-completion refresh started in the background.')
 
         actual2 = self.refresher.refresh(callbacks)
-        time.sleep(1)  # Wait for the thread to work.
-        self.assertEqual(len(actual2), 1)
-        self.assertEqual(len(actual2[0]), 4)
-        self.assertEqual(actual2[0][3], 'Auto-completion refresh restarted.')
+        self.refresher._completer_thread.join()
+        self.assertEqual(actual2, 'Auto-completion refresh restarted.')
 
     def test_refresh_with_callbacks(self):
         """
         Callbacks must be called
-        :param refresher:
         """
         callbacks = [Mock()]
         metadata_executor_class = Mock()
@@ -91,7 +74,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
             # Set refreshers to 0: we're not testing refresh logic here
             self.refresher.refreshers = {}
             self.refresher.refresh(callbacks)
-            time.sleep(0.1)  # Wait for the thread to work.
+            self.refresher._completer_thread.join()
             self.assertEqual(callbacks[0].call_count, 1)
 
     # Helper functions ##################################################################

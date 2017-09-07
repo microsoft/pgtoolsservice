@@ -44,7 +44,7 @@ class MetadataExecutor(object):
         return list(self.server.search_path)
 
     def databases(self) -> List[str]:
-        return list(map(lambda d: d.name, self.server.databases))
+        return [d.name for d in self.server.databases]
 
     def tables(self) -> List[tuple]:
         """return a 2-tuple of [schema,name]"""
@@ -85,8 +85,8 @@ class MetadataExecutor(object):
     def functions(self) -> List[tuple]:
         # TODO Implement FK support. This requires adding properties to the ForeignKeyConstraint class
         func_metadatas: List[FunctionMetadata] = []
-        funcs = self.populate_objects_under_schemas('functions')
-        for f in funcs:
+        functions = self.populate_objects_under_schemas('functions')
+        for f in functions:
             function: Function = f
             # TODO investigate supporting arg_modes and proisagg.
             # TODO implement proretset in properties. It's defined as a prop but not actually implemented

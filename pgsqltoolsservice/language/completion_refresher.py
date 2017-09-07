@@ -15,7 +15,7 @@ from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.metadata_executor import MetadataExecutor
 
 
-class CompletionRefresher(object):
+class CompletionRefresher:
     """
     Handles creating a PGCompleter object and populates it with the relevant
     completion suggestions in a background thread.
@@ -25,11 +25,10 @@ class CompletionRefresher(object):
 
     def __init__(self, server: Server):
         self.server = server
-        self._completer_thread = None
-        self._restart_refresh = threading.Event()
+        self._completer_thread: threading.Thread = None
+        self._restart_refresh: threading.Event = threading.Event()
 
-    def refresh(self, callbacks, history=None,
-                settings=None):
+    def refresh(self, callbacks, history=None, settings=None) -> str:
         """
         Creates a PGCompleter object and populates it with the relevant
         completion suggestions in a background thread.
@@ -41,23 +40,18 @@ class CompletionRefresher(object):
         """
         if self.is_refreshing():
             self._restart_refresh.set()
-            return [(None, None, None, 'Auto-completion refresh restarted.')]
+            return 'Auto-completion refresh restarted.'
         else:
             self._completer_thread = threading.Thread(
                 target=self._bg_refresh,
                 args=(callbacks, history, settings),
                 name='completion_refresh')
-            self._completer_thread.setDaemon(True)
+            self._completer_thread.daemon = True
             self._completer_thread.start()
-            return [(None, None, None,
-                     'Auto-completion refresh started in the background.')]
+            return 'Auto-completion refresh started in the background.'     # TODO localize
 
     def is_refreshing(self):
         return self._completer_thread and self._completer_thread.is_alive()
-
-    def do_refresh(self, callbacks, history=None, settings=None):
-        """Sync refresh method, primarily for test purposes"""
-        self._bg_refresh(callbacks, history, settings)
 
     def _bg_refresh(self, callbacks, history=None, settings=None):
         settings = settings or {}
@@ -70,7 +64,7 @@ class CompletionRefresher(object):
         if callable(callbacks):
             callbacks = [callbacks]
 
-        while 1:
+        while True:
             for do_refresh in self.refreshers.values():
                 do_refresh(completer, metadata_executor)
                 if self._restart_refresh.is_set():
@@ -84,6 +78,9 @@ class CompletionRefresher(object):
             # Start over the refresh from the beginning if the for loop hit the
             # break statement.
             continue
+
+        if self._restart_refresh.is_set():
+            self._restart_refresh.clear()
 
         # Load history into pgcompleter so it can learn user preferences
         n_recent = 100

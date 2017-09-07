@@ -172,12 +172,10 @@ class Server:
 
     def _fetch_search_path(self) -> List[str]:
         try:
-            with self._conn.connection.cursor() as cur:
-                # _logger.debug('Search path query. sql: %r', search_path_query)
-                cur.execute(SEARCH_PATH_QUERY)
-                return [x[0] for x in cur.fetchall()]
+            with self._conn.connection.cursor() as cursor:
+                cursor.execute(SEARCH_PATH_QUERY)
+                return [x[0] for x in cursor.fetchall()]
         except ProgrammingError:
-            with self._conn.connection.cursor() as cur:
-                # _logger.debug('Search path query. sql: %r', search_path_query_fallback)
-                cur.execute(SEARCH_PATH_QUERY_FALLBACK)
-                return cur.fetchone()[0]
+            with self._conn.connection.cursor() as cursor:
+                cursor.execute(SEARCH_PATH_QUERY_FALLBACK)
+                return cursor.fetchone()[0]
