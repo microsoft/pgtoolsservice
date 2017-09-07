@@ -3,7 +3,8 @@ psycopg2==2.7.1
 
 # PGToolsService Requirements
 inflection
-sqlparse
+sqlparse>=0.2.2,<0.3.0
+prompt_toolkit
 
 # PGSMO Requirements
 jinja2
@@ -11,6 +12,7 @@ jinja2
 # Build/Test Requirements
 cx_freeze
 nose
+parameterized
 coverage
 autopep8
 flake8
