@@ -33,7 +33,7 @@ class TestMetadataService(unittest.TestCase):
         self.service_provider.server.set_request_handler.assert_called_once_with(
             METADATA_LIST_REQUEST, self.metadata_service._handle_metadata_list_request)
 
-    def test_handle_metadata_list_request(self):
+    def test_metadata_list_request(self):
         """Test that the metadata list handler properly starts a thread to list metadata and responds with the list"""
         # Set up the parameters and mocks for the request
         expected_metadata = [
@@ -70,6 +70,8 @@ class TestMetadataService(unittest.TestCase):
         self.connection_service.get_connection.assert_called_once_with(self.test_uri, ConnectionType.DEFAULT)
         mock_cursor.execute.assert_called_once()
         # And the handler responded with the expected results
+        self.assertIsNone(request_context.last_error_message)
+        self.assertIsNone(request_context.last_notification_method)
         response = request_context.last_response_params
         self.assertIsInstance(response, MetadataListResponse)
         for index, actual_metadata in enumerate(response.metadata):
@@ -77,3 +79,18 @@ class TestMetadataService(unittest.TestCase):
             self.assertEqual(actual_metadata.schema, expected_metadata[index].schema)
             self.assertEqual(actual_metadata.name, expected_metadata[index].name)
             self.assertEqual(actual_metadata.metadata_type, expected_metadata[index].metadata_type)
+
+    def test_metadata_list_request_error(self):
+        """Test that the proper error response is sent if there is an error while handling a metadata list request"""
+        request_context = MockRequestContext()
+        params = MetadataListParameters()
+        params.owner_uri = self.test_uri
+        self.metadata_service._list_metadata = mock.Mock(side_effect=Exception)
+        mock_thread = MockThread()
+        with mock.patch('threading.Thread', new=mock.Mock(side_effect=mock_thread.initialize_target)):
+            # If I call the metadata list request handler and its execution raises an error
+            self.metadata_service._handle_metadata_list_request(request_context, params)
+        # Then an error response is sent
+        self.assertIsNotNone(request_context.last_error_message)
+        self.assertIsNone(request_context.last_notification_method)
+        self.assertIsNone(request_context.last_response_params)
