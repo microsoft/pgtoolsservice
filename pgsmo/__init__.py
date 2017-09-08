@@ -7,7 +7,7 @@
 from pgsmo.objects.server.server import Server
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect    # noqa
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.database.database import Database
@@ -35,7 +35,7 @@ from pgsmo.objects.view.view import View
 __all__ = [
     'NodeCollection',
     'NodeObject',
-    'ScriptableCreate', 'ScriptableDelete', 'ScriptableUpdate',
+    'ScriptableCreate', 'ScriptableDelete', 'ScriptableUpdate', 'ScriptableSelect',
 
     'Server',
     'CheckConstraint',

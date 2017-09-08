@@ -10,7 +10,7 @@ import unittest
 import unittest.mock as mock
 
 from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from pgsmo.objects.server.server import Server
 import tests.pgsmo_tests.utils as utils
 
@@ -153,6 +153,13 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         if isinstance(obj, ScriptableUpdate):
             # If: I script for update
             script = obj.update_script()
+
+            # Then: The script should successfully return
+            utils.assert_is_not_none_or_whitespace(script)
+
+        if isinstance(obj, ScriptableSelect):
+            # If: I script for select
+            script = obj.select_script()
 
             # Then: The script should successfully return
             utils.assert_is_not_none_or_whitespace(script)

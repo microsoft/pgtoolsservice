@@ -8,7 +8,7 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Server, Column, View
+from pgsmo import Table, DataType, Schema, Server, Column
 from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
@@ -141,52 +141,6 @@ class TestScripterOld(unittest.TestCase):
 
         # The result should be the correct template value
         self.assertTrue('CREATE TABLE myschema.test' in result)
-
-        # ... The URN should have been used to get the object
-        self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
-
-    def test_table_select_script(self):
-        """ Tests create script for tables"""
-        # Set up the mocks
-        mock_schema = Schema(self.server, None, 'testschema')
-        mock_table = Table(self.server, mock_schema, 'testTable')
-        mock_column = Column(self.server, "testTable", 'testcolumn', 'testDatatype')
-        mock_table._select_query_data = mock.MagicMock(return_value={"data": {
-            "name": "testTable",
-            "schema": "testschema",
-            "columns": {mock_column}
-        }})
-        self.server.get_object_by_urn = mock.MagicMock(return_value=mock_table)
-
-        # If I try to get create script
-        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'Table', 'testTable')
-        result: str = self.scripter.script(scripter.ScriptOperation.SELECT, mock_metadata)
-
-        # The result should be the correct template value
-        self.assertTrue('select  testcolumn\nfrom testschema."testTable"\nLIMIT 1000' in result)
-
-        # ... The URN should have been used to get the object
-        self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
-
-    def test_view_select_script(self):
-        """ Tests create script for tables"""
-        # Set up the mocks
-        mock_schema = Schema(self.server, None, 'testschema')
-        mock_view = View(self.server, mock_schema, 'testView')
-        mock_column = Column(self.server, "testView", 'testcolumn', 'testDatatype')
-        mock_view._select_query_data = mock.MagicMock(return_value={"data": {
-            "name": 'testView',
-            "schema": 'testschema',
-            "columns": {mock_column}
-        }})
-        self.server.get_object_by_urn = mock.MagicMock(return_value=mock_view)
-
-        # If I try to get create script
-        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'Table', 'testView')
-        result: str = self.scripter.script(scripter.ScriptOperation.SELECT, mock_metadata)
-
-        # The result should be the correct template value
-        self.assertTrue('select  testcolumn\nfrom testschema."testView"\nLIMIT 1000' in result)
 
         # ... The URN should have been used to get the object
         self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)

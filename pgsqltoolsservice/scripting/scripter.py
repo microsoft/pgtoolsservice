@@ -5,7 +5,7 @@
 
 from typing import Callable, Dict, Tuple, TypeVar
 
-from pgsmo import NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect, Server    # noqa
+from pgsmo import NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect, Server
 from pgsqltoolsservice.scripting.contracts import ScriptOperation
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.utils as utils
@@ -19,7 +19,6 @@ class Scripter(object):
         ScriptOperation.DELETE: (ScriptableDelete, lambda obj: obj.delete_script()),
         ScriptOperation.UPDATE: (ScriptableUpdate, lambda obj: obj.update_script()),
         ScriptOperation.SELECT: (ScriptableSelect, lambda obj: obj.select_script())
-        # TODO: Replace with ScriptableSelect mixin (see https://github.com/Microsoft/carbon/issues/1764)
     }
 
     def __init__(self, conn):
