@@ -50,7 +50,8 @@ class MetadataService:
             request_context.send_error('Unhandled exception while listing metadata')  # TODO: Localize
 
     def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
-        object_query = """SELECT s.nspname AS schema_name, p.proname AS object_name, 'f' as type FROM pg_proc p
+        object_query = """SELECT s.nspname AS schema_name,
+        p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), '') || ')' AS object_name, 'f' as type FROM pg_proc p
     INNER JOIN pg_namespace s ON s.oid = p.pronamespace
     WHERE s.nspname NOT ILIKE 'pg_%' AND s.nspname != 'information_schema'
 UNION SELECT schemaname AS schema_name, tablename AS object_name, 't' as type FROM pg_tables
