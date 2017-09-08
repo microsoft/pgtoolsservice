@@ -27,8 +27,8 @@ class EditColumnMetadata:
 
     @property
     def is_trustworthy_for_uniqueness(self) -> bool:
-        return self.db_column.is_unique or self.db_column.is_read_only is False or self.db_column.is_auto_increment
+        return self.db_column.is_unique or not self.db_column.is_read_only or self.db_column.is_auto_increment
 
     @property
     def is_calculated(self) -> bool:
-        return self.db_column.is_auto_increment or self.db_column.is_updatable is False
+        return self.db_column.is_auto_increment or not self.db_column.is_updatable
