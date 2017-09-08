@@ -22,7 +22,7 @@ class SmoEditTableMetadataFactory:
 
         server = Server(connection)
         result_object: Table = None
-        object_metadata = ObjectMetadata.from_data(server.urn_base, 0, object_type, object_name, schema_name)
+        object_metadata = ObjectMetadata(server.urn_base, None, object_type, object_name, schema_name)
 
         if object_type.lower() == 'table':
             result_object = object_finder.find_table(server, object_metadata)

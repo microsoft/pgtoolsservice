@@ -3,33 +3,31 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import enum
 from typing import Optional
 
 from pgsqltoolsservice.serialization import Serializable
 
 
+class MetadataType(enum.Enum):
+    """Enum for representing metadata types"""
+    TABLE = 0
+    VIEW = 1
+    FUNCTION = 3
+    SCHEMA = 4
+    DATABASE = 5
+
+
 class ObjectMetadata(Serializable):
     """Database object metadata"""
-    @classmethod
-    def from_data(
-            cls,
-            urn: str,
-            metadata_type: int,
-            metadata_type_name: str,
-            name: str,
-            schema: Optional[str]=None
-    ) -> 'ObjectMetadata':
-        obj = cls()
-        obj.metadata_type = metadata_type
-        obj.metadata_type_name = metadata_type_name
-        obj.name = name
-        obj.schema = schema
-        obj.urn = urn
-        return obj
 
-    def __init__(self):
-        self.metadata_type: int = 0
-        self.metadata_type_name: Optional[str] = None
-        self.name: Optional[str] = None
-        self.schema: Optional[str] = None
-        self.urn: Optional[str] = None
+    @classmethod
+    def get_child_serializable_types(cls):
+        return {'metadata_type': MetadataType}
+
+    def __init__(self, urn: str = None, metadata_type: MetadataType = None, metadata_type_name: str = None, name: str = None, schema: Optional[str] = None):
+        self.metadata_type: MetadataType = metadata_type
+        self.metadata_type_name: str = metadata_type_name
+        self.name: str = name
+        self.schema: str = schema
+        self.urn: str = urn

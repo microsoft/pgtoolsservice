@@ -93,7 +93,7 @@ class TestScripter(unittest.TestCase):
             script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
 
             # ... Mock up some metadata
-            mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'obj', 'ObjName')
+            mock_metadata = ObjectMetadata('//urn/', None, 'obj', 'ObjName')
 
             # If: I attempt to perform an operation the handler doesn't support
             # Then:
@@ -126,7 +126,7 @@ class TestScripter(unittest.TestCase):
             script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
 
             # ... Mock up some metadata
-            mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'obj', 'ObjName')
+            mock_metadata = ObjectMetadata('//urn/', None, 'obj', 'ObjName')
 
             # If: I attempt to perform a scripting operation
             result = script.script(operation, mock_metadata)
@@ -164,7 +164,7 @@ class TestScripterOld(unittest.TestCase):
         self.server.get_object_by_urn = mock.MagicMock(return_value=mock_table)
 
         # If I try to get create script
-        mock_metadata = ObjectMetadata.from_data('//urn/', 0, 'Table', 'test')
+        mock_metadata = ObjectMetadata('//urn/', None, 'Table', 'test')
         result: str = self.scripter.script(scripter.ScriptOperation.CREATE, mock_metadata)
 
         # The result should be the correct template value
@@ -186,7 +186,7 @@ class TestScripterOld(unittest.TestCase):
             "typeowner": "Me"
         }
         self.server.get_object_by_urn = mock.MagicMock(return_value=mock_datatype)
-        object_metadata = ObjectMetadata.from_data(0, 'DataType', 'test', 'myschema')
+        object_metadata = ObjectMetadata('test_urn', None, 'DataType', 'test', 'myschema')
 
         # Verify create, update and delete all produce correct scripts
         self._verify_create_script(object_metadata, ['CREATE TYPE myschema.test'])
