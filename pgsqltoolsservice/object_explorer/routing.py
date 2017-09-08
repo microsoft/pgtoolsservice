@@ -319,7 +319,7 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
       scid int: schema OID
     """
     parent_obj = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
-    return [_get_node_info(node, current_path, 'View', schema=parent_obj.name, is_leaf=False) for node in parent_obj.views]
+    return [_get_node_info(node, current_path, 'View', is_leaf=False) for node in parent_obj.views]
 
 
 # ROUTING TABLE ############################################################

@@ -40,7 +40,7 @@ class ScriptableDelete(ScriptableBase, metaclass=ABCMeta):
         super(ScriptableDelete, self).__init__(template_root, macro_root, server_version)
 
     def delete_script(self):
-        """Generates a script that creates an object of the inheriting type"""
+        """Generates a script that deletes an object of the inheriting type"""
         data = self._delete_query_data()
         return templating.render_template(
             templating.get_template_path(self._mxin_template_root, 'delete.sql', self._mxin_server_version),
@@ -58,7 +58,7 @@ class ScriptableUpdate(ScriptableBase, metaclass=ABCMeta):
         super(ScriptableUpdate, self).__init__(template_root, macro_root, server_version)
 
     def update_script(self):
-        """Generates a script that creates an object of the inheriting type"""
+        """Generates a script that updates/alters an object of the inheriting type"""
         data = self._update_query_data()
         return templating.render_template(
             templating.get_template_path(self._mxin_template_root, 'update.sql', self._mxin_server_version),
@@ -68,4 +68,22 @@ class ScriptableUpdate(ScriptableBase, metaclass=ABCMeta):
 
     @abstractmethod
     def _update_query_data(self) -> dict:
+        pass
+
+
+class ScriptableSelect(ScriptableBase, metaclass=ABCMeta):
+    def __init__(self, template_root: str, macro_root: List[str], server_version: Tuple[int, int, int]):
+        super(ScriptableSelect, self).__init__(template_root, macro_root, server_version)
+
+    def select_script(self):
+        """Generates a script which selects the object of the inheriting type"""
+        data = self._select_query_data()
+        return templating.render_template(
+            templating.get_template_path(self._mxin_template_root, 'select.sql', self._mxin_server_version),
+            self._mxin_macro_root,
+            **data
+        )
+
+    @abstractmethod
+    def _select_query_data(self) -> dict:
         pass
