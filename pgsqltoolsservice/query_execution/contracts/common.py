@@ -94,7 +94,7 @@ class DbColumn:
         self.is_udt: bool = None
         self.is_xml: bool = None
         self.is_json: bool = None
-        self.is_updatable: bool = True
+        self.is_updatable: bool = False
 
     # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) containing a 7-item sequence.
@@ -156,7 +156,7 @@ class ResultSetSubset:
         return instance
 
     def __init__(self):
-        self.rows = List[List[DbCellValue]]
+        self.rows: List[List[DbCellValue]] = []
         self.row_count: int = 0
 
     def build_db_cell_values(self, results, owner_uri: str, batch_ordinal: int,
