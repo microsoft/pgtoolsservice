@@ -23,6 +23,7 @@ class TestRowCreate(unittest.TestCase):
         db_column = DbColumn()
         db_column.data_type = 'bool'
         db_column.column_name = 'IsValid'
+        db_column.is_updatable = True
 
         self._result_set.columns = [db_column]
         self._table_metadata = EditTableMetadata('public', 'TestTable', [])

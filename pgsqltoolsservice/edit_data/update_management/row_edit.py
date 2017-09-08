@@ -72,7 +72,7 @@ class RowEdit:
             cell: DbCellValue = row[column.ordinal]
 
             cell_data_clause = ''
-            column_name = column.escaped_name
+            column_name = column.name
             if cell.is_null is True:
                 cell_data_clause += 'IS NULL'
             elif type(cell.raw_object) is bytearray or column.db_column.data_type.lower() is 'text':

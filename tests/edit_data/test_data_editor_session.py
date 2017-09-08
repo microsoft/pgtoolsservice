@@ -29,8 +29,9 @@ class TestDataEditorSession(unittest.TestCase):
         self._initialize_edit_request.object_name = 'Employee'
         self._initialize_edit_request.object_type = 'Table'
 
-        column = EditColumnMetadata()
-        column.escaped_name = 'TestColumn'
+        db_column = DbColumn()
+
+        column = EditColumnMetadata(db_column, None)
 
         self._columns_metadata = [column]
         self._schema_name = 'public'
@@ -128,15 +129,12 @@ class TestDataEditorSession(unittest.TestCase):
 
         calculated_column = DbColumn()
         calculated_column.is_updatable = False
-        calculated_column_metadata = EditColumnMetadata()
-        calculated_column_metadata.extend(calculated_column)
+        calculated_column_metadata = EditColumnMetadata(calculated_column, None)
 
         default_value_column = DbColumn()
         default_value_column.data_type = 'bool'
-        default_value_column_metadata = EditColumnMetadata()
-        default_value_column_metadata.extend(default_value_column)
-
-        default_value_column_metadata.default_value = '0'
+        default_value_column.is_updatable = True
+        default_value_column_metadata = EditColumnMetadata(default_value_column, '0')
 
         columns_metadata = [calculated_column_metadata, default_value_column_metadata]
 

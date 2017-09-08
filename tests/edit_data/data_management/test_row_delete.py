@@ -24,16 +24,13 @@ class TestRowDelete(unittest.TestCase):
         db_column.data_type = 'bool'
         db_column.column_name = 'IsValid'
         db_column.is_key = True
+        db_column.column_ordinal = 0
 
         self._result_set.columns = [db_column]
 
-        self._columns_metadata = [EditColumnMetadata()]
-        self._columns_metadata[0].ordinal = 0
-        self._columns_metadata[0].escaped_name = 'IsValid'
+        self._columns_metadata = [EditColumnMetadata(db_column, 'Default Value')]
 
         self._table_metadata = EditTableMetadata('public', 'TestTable',  self._columns_metadata)
-
-        self._table_metadata.extend([db_column])
 
         self._row_delete = RowDelete(self._row_id, self._result_set, self._table_metadata)
 

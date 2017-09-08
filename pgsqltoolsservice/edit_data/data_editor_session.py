@@ -15,7 +15,7 @@ from pgsqltoolsservice.edit_data.contracts import (
 )
 from pgsqltoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
-from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset
+from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset, DbColumn
 
 
 class DataEditSessionExecutionState:
@@ -39,7 +39,7 @@ class DataEditorSession():
         self.table_metadata: EditTableMetadata = None
 
     def initialize(self, initailize_edit_params: InitializeEditParams, connection: 'psycopg2.extensions.connection',
-                   query_executer: Callable[[str, Callable], None], on_success: Callable, on_failure: Callable):
+                   query_executer: Callable[[str, List[DbColumn], Callable], None], on_success: Callable, on_failure: Callable):
         """ This method creates the metadata for the object to be edited and creates the query to be
         executed and calls query executer with it """
 
@@ -49,6 +49,7 @@ class DataEditorSession():
 
         query_executer(self._construct_initialize_query(connection,
                        self.table_metadata, initailize_edit_params.filters),
+                       self.table_metadata.db_columns,
                        lambda execution_state: self.on_query_execution_complete(execution_state, on_success, on_failure))
 
     def on_query_execution_complete(self, execution_state: DataEditSessionExecutionState, on_success: Callable, on_failure: Callable):
@@ -60,16 +61,15 @@ class DataEditorSession():
             self._validate_query_for_session(execution_state.query)
             self._result_set = execution_state.query.batches[0].result_set
 
-            self._result_set.columns = [column.db_column for column in self.table_metadata.columns_metadata]
+            self._result_set.columns = self.table_metadata.db_columns
 
             self._last_row_id = len(self._result_set.rows) - 1
             self._is_initialized = True
-            self.table_metadata.extend(self._result_set.columns)
 
             on_success()
 
-        except Exception as err:
-            on_failure(err)
+        except Exception as error:
+            on_failure(str(error))
 
     def update_cell(self, row_id: int, column_index: int, new_value: str) -> EditCellResponse:
 
@@ -82,26 +82,6 @@ class DataEditorSession():
         result = edit_row.set_cell_value(column_index, new_value)
 
         return result
-
-    def _validate_query_for_session(self, query: Query):
-
-        if query.execution_state is not ExecutionState.EXECUTED:
-            raise Exception('Execution not completed')
-
-    def _construct_initialize_query(self, connection: 'psycopg2.extensions.connection', metadata: EditTableMetadata, filters: EditInitializerFilter):
-
-        column_names = [sql.Identifier(column.escaped_name) for column in metadata.columns_metadata]
-
-        if filters.limit_results is not None and filters.limit_results > 0:
-            limit_clause = ' '.join([' LIMIT', str(filters.limit_results)])
-
-        query = sql.SQL('SELECT {0} FROM {1}.{2} {3}').format(
-            sql.SQL(', ').join(column_names),
-            sql.Identifier(metadata.schema_name),
-            sql.Identifier(metadata.table_name),
-            sql.SQL(limit_clause)
-        )
-        return query.as_string(connection)
 
     def commit_edit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
 
@@ -158,7 +138,7 @@ class DataEditorSession():
 
         return CreateRowResponse(self._last_row_id, default_cell_values)
 
-    def get_rows(self, owner_uri, start_index: int, end_index: int):
+    def get_rows(self, owner_uri, start_index: int, end_index: int) -> List[EditRow]:
         if start_index < self._result_set.row_count:
             subset = ResultSetSubset.from_result_set(self._result_set, start_index, end_index)
         else:
@@ -194,3 +174,23 @@ class DataEditorSession():
 
         except Exception as error:
             failure(str(error))
+
+    def _validate_query_for_session(self, query: Query):
+
+        if query.execution_state is not ExecutionState.EXECUTED:
+            raise Exception('Execution not completed')
+
+    def _construct_initialize_query(self, connection: 'psycopg2.extensions.connection', metadata: EditTableMetadata, filters: EditInitializerFilter):
+
+        column_names = [sql.Identifier(column.name) for column in metadata.columns_metadata]
+
+        if filters.limit_results is not None and filters.limit_results > 0:
+            limit_clause = ' '.join([' LIMIT', str(filters.limit_results)])
+
+        query = sql.SQL('SELECT {0} FROM {1}.{2} {3}').format(
+            sql.SQL(', ').join(column_names),
+            sql.Identifier(metadata.schema_name),
+            sql.Identifier(metadata.table_name),
+            sql.SQL(limit_clause)
+        )
+        return query.as_string(connection)
