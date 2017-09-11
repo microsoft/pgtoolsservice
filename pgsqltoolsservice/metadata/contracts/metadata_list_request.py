@@ -16,8 +16,8 @@ class MetadataListParameters(Serializable):
 
 
 class MetadataListResponse:
-    def __init__(self):
-        self.Metadata: List[ObjectMetadata] = None
+    def __init__(self, metadata: List[ObjectMetadata]):
+        self.metadata: List[ObjectMetadata] = metadata
 
 
 METADATA_LIST_REQUEST = IncomingMessageConfiguration('metadata/list', MetadataListParameters)
