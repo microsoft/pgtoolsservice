@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.metadata.contracts import ObjectMetadata
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata  # noqa
 
 
 class NodeInfo(object):

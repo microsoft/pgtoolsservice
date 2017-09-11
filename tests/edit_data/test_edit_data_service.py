@@ -90,7 +90,7 @@ class TestEditDataService(unittest.TestCase):
         with self.assertRaises(exception_type, msg=exception_message) as cm:
             method_to_call(*args)
 
-        if(cm.exception.args is not None):
+        if cm.exception.args is not None:
             self.assertEquals(exception_message, cm.exception.args[0])
 
     def test_register_should_initlialize_states(self):

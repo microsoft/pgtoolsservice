@@ -6,6 +6,7 @@
 """Test utils.py"""
 
 import enum
+from typing import Optional
 import unittest
 
 import pgsqltoolsservice.utils as utils
@@ -50,7 +51,7 @@ class _ConversionTestClass(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'nested_object': _NestedTestClass, 'list': _NestedTestClass, 'enum': _TestEnum}
+        return {'nested_object': _NestedTestClass, 'list': _NestedTestClass, 'enum': _TestEnum, 'none_enum': Optional[_TestEnum]}
 
     def __init__(self):
         self.test_int = 1
@@ -58,6 +59,7 @@ class _ConversionTestClass(Serializable):
         self.list = [_NestedTestClass()]
         self.dict = {'test_key': _NestedTestClass()}
         self.enum = _TestEnum.SECOND_OPTION
+        self.none_enum = None
 
     def expected_dict(self):
         """The expected dictionary representation of the instance, for comparison with the utility function output"""
@@ -68,7 +70,8 @@ class _ConversionTestClass(Serializable):
             'dict': {
                 'test_key': self.nested_object.expected_dict()
             },
-            'enum': self.enum.value
+            'enum': self.enum.value,
+            'noneEnum': None
         }
 
 
