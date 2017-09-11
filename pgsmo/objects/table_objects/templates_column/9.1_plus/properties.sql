@@ -41,8 +41,8 @@ FROM pg_attribute att
   LEFT OUTER JOIN pg_collation coll ON att.attcollation=coll.oid
   LEFT OUTER JOIN pg_namespace nspc ON coll.collnamespace=nspc.oid
 WHERE att.attrelid = {{tid}}::oid
-{% if clid %}
-    AND att.attnum = {{clid}}::int
+{% if oid %}
+    AND att.attnum = {{oid}}::int
 {% endif %}
 {### To show system objects ###}
 {% if not show_sys_objects %}

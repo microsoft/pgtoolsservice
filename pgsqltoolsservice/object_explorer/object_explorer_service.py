@@ -260,7 +260,7 @@ class ObjectExplorerService(object):
 
             # Step 3: Create the PGSMO Server object for the session and create the root node for the server
             session.server = Server(connection, functools.partial(self._create_connection, session))
-            metadata = ObjectMetadata.from_data(session.server.urn_base, 0, 'Database', session.server.maintenance_db_name)
+            metadata = ObjectMetadata(session.server.urn_base, None, 'Database', session.server.maintenance_db_name)
             node = NodeInfo()
             node.label = session.connection_details.options['dbname']
             node.is_leaf = False
