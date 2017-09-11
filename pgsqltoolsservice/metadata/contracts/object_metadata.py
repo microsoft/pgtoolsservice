@@ -10,12 +10,10 @@ from pgsqltoolsservice.serialization import Serializable
 
 
 class MetadataType(enum.Enum):
-    """Enum for representing metadata types"""
+    """Contract enum for representing metadata types"""
     TABLE = 0
     VIEW = 1
     FUNCTION = 3
-    SCHEMA = 4
-    DATABASE = 5
 
 
 class ObjectMetadata(Serializable):
