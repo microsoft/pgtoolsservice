@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional, List
+from typing import Optional
 
 from pgsmo.objects.node_object import NodeObject
 from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
@@ -47,7 +47,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         self._is_clustered: Optional[bool] = None
         self._is_primary: Optional[bool] = None
         self._is_unique: Optional[bool] = None
-        
+
     # PROPERTIES ###########################################################
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -69,23 +69,23 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def is_concurrent(self):
         return self._full_properties["is_concurrent"]
-    
+
     @property
     def amname(self):
         return self._full_properties["amname"]
-        
+
     @property
     def columns(self):
         return self._full_properties["columns"]
-    
+
     @property
     def fillfactor(self):
         return self._full_properties["fillfactor"]
-    
+
     @property
     def spcname(self):
         return self._full_properties["spcname"]
-    
+
     @property
     def indconstraint(self):
         return self._full_properties["indconstraint"]
@@ -93,11 +93,11 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def mode(self):
         return self._full_properties["mode"]
-    
+
     @property
     def index(self):
-        return self._full_properties["index"]    
-    
+        return self._full_properties["index"]
+
     @property
     def cascade(self):
         return self._full_properties["cascade"]
@@ -140,7 +140,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         """ Provides data input for delete script """
         return {
             "data": {
-                "nspname": self.parent.parent.name,                
+                "nspname": self.parent.parent.name,
                 "name": self.name
             },
             "cascade": self.cascade

@@ -224,10 +224,9 @@ class TestScripterOld(unittest.TestCase):
         # Set up the mocks
         mock_index = Index(self.server, "testTable", 'testName')
         mock_index._template_root = mock.MagicMock(return_value=Index.TEMPLATE_ROOT)
-        mock_index._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",                                                                                   
+        mock_index._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",
                                                                               "schema": "TestSchema",
                                                                               "table": "TestTable"}})
-            
         # If I try to get create script
         result = mock_index.create_script()
         # The result should be the correct template value

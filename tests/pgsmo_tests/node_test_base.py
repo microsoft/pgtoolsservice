@@ -93,7 +93,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # ... Create an instance of the class
         mock_server = Server(utils.MockConnection(None))
         mock_server.connection.execute_dict = mock_exec_dict
-        
+
         mock_grand_grand_parent = utils.MockNodeObject(mock_server, None, 'grandgrandparent') if not self.parent_expected_to_be_none else None
         mock_grand_parent = utils.MockNodeObject(mock_server, mock_grand_grand_parent, 'grandparent') if not self.parent_expected_to_be_none else None
         mock_parent = utils.MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
@@ -167,8 +167,6 @@ class NodeObjectTestBase(metaclass=ABCMeta):
     # TODO: Add test for PPAS server type when we support it
 
     # def temp_helper(self):
-
-
 
     # CUSTOM TEST LOGIC ####################################################
     @staticmethod

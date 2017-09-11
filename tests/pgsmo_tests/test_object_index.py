@@ -35,7 +35,7 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
             "is_clustered": "is_clustered",
             "is_valid": "is_valid",
             "is_unique": "is_unique",
-            "is_primary": "is_primary",            
+            "is_primary": "is_primary",
             "is_concurrent": "is_concurrent"
         }
 
@@ -55,7 +55,7 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
             "is_clustered": True,
             "is_valid": True,
             "is_unique": True,
-            "is_primary": True,            
+            "is_primary": True,
             "is_concurrent": True
         }
 
