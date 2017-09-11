@@ -46,12 +46,8 @@ class EditDataService(object):
         }
 
     def _edit_initialize(self, request_context: RequestContext, params: InitializeEditParams) -> None:
-        utils.validate.is_not_none('params', params)
-        utils.validate.is_not_none_or_whitespace('params.owner_uri', params.owner_uri)
-        utils.validate.is_not_none_or_whitespace('params.schema_name', params.schema_name)
-        utils.validate.is_not_none_or_whitespace('params.object_name', params.object_name)
-        utils.validate.is_not_none_or_whitespace('params.object_type', params.object_type)
-
+        utils.validate.is_object_params_not_none_or_whitespace('params', params, 'owner_uri', 'schema_name', 'object_name', 'object_type')
+        
         connection = self._connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
         session = DataEditorSession(SmoEditTableMetadataFactory())
         self._active_sessions[params.owner_uri] = session
