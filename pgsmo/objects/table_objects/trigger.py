@@ -12,8 +12,7 @@ import pgsmo.utils.templating as templating
 
 
 class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger')
-    MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger')    
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Trigger':
@@ -136,10 +135,6 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-
-    @classmethod
-    def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
