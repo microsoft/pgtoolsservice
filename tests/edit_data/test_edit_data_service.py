@@ -96,7 +96,7 @@ class TestEditDataService(unittest.TestCase):
 
         if(cm.exception.args is not None):
             self.assertEquals(exceptionmessage, cm.exception.args[0])
-    
+
     def test_register_should_initlialize_states(self):
         self.assertEqual(self._service_under_test._service_provider, self._service_provider)
         self.assertEqual(self._service_under_test._logger, self._service_provider.logger)
