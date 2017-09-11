@@ -18,7 +18,7 @@ class TestRule(NodeObjectTestBase, unittest.TestCase):
     @property
     def full_properties(self):
         return {
-            "schema": "schema",
+            # "schema": "schema",
             "view": "view",
             "event": "event",
             "condition": "condition",
@@ -27,14 +27,22 @@ class TestRule(NodeObjectTestBase, unittest.TestCase):
             "comment": "comment",
             "display_comments": "display_comments",
             "rid": "rid",
-            "rulename": "rulename",
-            "relname": "relname",
-            "nspname": "nspname"
+            "rulename": "rulename"
         }
 
     @property
-    def property_query(self) -> dict:
-        return self.full_properties
+    def property_query(self):
+        return {
+            "view": "test",
+            "event": "test",
+            "condition": "test",
+            "do_instead": "test",
+            "statements": "test",
+            "comment": "test",
+            "display_comments": "test",
+            "rid": "test",
+            "rulename": "test"
+        }
 
     @property
     def class_for_test(self):

@@ -59,9 +59,6 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return self._is_enabled
 
     # -FULL OBJECT PROPERTIES ##############################################
-    @property
-    def arguments(self) -> Optional[list]:
-        return self._full_properties.get("arguments")
 
     @property
     def lanname(self):
@@ -100,20 +97,12 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return self._full_properties["columns"]
 
     @property
-    def schema(self):
-        return self._full_properties["schema"]
+    def deferrable(self):
+        return self._full_properties["deferrable"]
 
     @property
-    def table(self):
-        return self._full_properties["table"]
-
-    @property
-    def tgdeferrable(self):
-        return self._full_properties["tgdeferrable"]
-
-    @property
-    def tginitdeferred(self):
-        return self._full_properties["tginitdeferred"]
+    def initdeferred(self):
+        return self._full_properties["initdeferred"]
 
     @property
     def is_row_trigger(self):
@@ -128,20 +117,12 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return self._full_properties["prosrc"]
 
     @property
-    def tgargs(self):
-        return self._full_properties["tgargs"]
+    def args(self):
+        return self._full_properties["args"]
 
     @property
     def description(self):
         return self._full_properties["description"]
-
-    @property
-    def nspname(self):
-        return self._full_properties["nspname"]
-
-    @property
-    def relname(self):
-        return self._full_properties["relname"]
 
     @property
     def cascade(self):
@@ -174,14 +155,14 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "evnt_truncate": self.evnt_truncate,
                 "evnt_update": self.evnt_update,
                 "columns": self.columns,
-                "schema": self.schema,
-                "table": self.table,
-                "tgdeferrable": self.tgdeferrable,
-                "tginitdeferred": self.tginitdeferred,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
+                "tgdeferrable": self.deferrable,
+                "tginitdeferred": self.initdeferred,
                 "is_row_trigger": self.is_row_trigger,
                 "whenclause": self.whenclause,
                 "prosrc": self.prosrc,
-                "tgargs": self.tgargs,
+                "tgargs": self.args,
                 "description": self.description,
             }
         }
@@ -191,8 +172,8 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return {
             "data": {
                 "name": self.name,
-                "nspname": self.nspname,
-                "relname": self.relname
+                "nspname": self.parent.parent.name,
+                "relname": self.parent.name
             },
             "cascade": self.cascade
         }
@@ -209,8 +190,8 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "evnt_update": self.evnt_update,
                 "fires": self.fires,
                 "evnt_truncate": self.evnt_truncate,
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "description": self.description,
                 "is_enable_trigger": self.is_enable_trigger
             },

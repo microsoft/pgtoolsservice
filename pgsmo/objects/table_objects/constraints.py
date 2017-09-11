@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta
-from typing import List
 
 from pgsmo.objects.node_object import NodeObject
 from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
@@ -13,7 +12,7 @@ import pgsmo.utils.templating as templating
 
 
 class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, metaclass=ABCMeta):
-    """Base class for constraints. Provides basic properties for all constraints"""    
+    """Base class for constraints. Provides basic properties for all constraints"""
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Constraint':
@@ -61,16 +60,16 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
 
 
 class CheckConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_check')    
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_check')
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
     def src(self):
-        return self._full_properties["consrc"]
+        return self._full_properties["src"]
 
     @property
     def no_inherit(self):
-        return self._full_properties["connoinherit"]
+        return self._full_properties["no_inherit"]
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
@@ -121,7 +120,7 @@ class CheckConstraint(Constraint):
 
 
 class ExclusionConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_exclusion')   
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_exclusion')
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -141,12 +140,12 @@ class ExclusionConstraint(Constraint):
         return self._full_properties["spcname"]
 
     @property
-    def condeferrable(self):
-        return self._full_properties["condeferrable"]
+    def deferrable(self):
+        return self._full_properties["deferrable"]
 
     @property
-    def condeferred(self):
-        return self._full_properties["condeferred"]
+    def deferred(self):
+        return self._full_properties["deferred"]
 
     @property
     def constraint(self):
@@ -165,15 +164,15 @@ class ExclusionConstraint(Constraint):
         """ Provides data input for create script """
         return {
             "data": {
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "name": self.name,
                 "amname": self.amname,
                 "columns": self.columns,
                 "fillfactor": self.fillfactor,
                 "spcname": self.spcname,
-                "condeferrable": self.condeferrable,
-                "condeferred": self.condeferred,
+                "condeferrable": self.deferrable,
+                "condeferred": self.deferred,
                 "constraint": self.constraint,
                 "comment": self.comment
             }
@@ -183,8 +182,8 @@ class ExclusionConstraint(Constraint):
         """ Provides data input for delete script """
         return {
             "data": {
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "name": self.name
             },
             "cascade": self.cascade
@@ -195,8 +194,8 @@ class ExclusionConstraint(Constraint):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "spcname": self.spcname,
                 "fillfactor": self.fillfactor,
                 "comment": self.comment
@@ -211,7 +210,7 @@ class ExclusionConstraint(Constraint):
 
 
 class ForeignKeyConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_fk')    
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_fk')
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -227,24 +226,24 @@ class ForeignKeyConstraint(Constraint):
         return self._full_properties["remote_table"]
 
     @property
-    def confmatchtype(self):
-        return self._full_properties["confmatchtype"]
+    def fmatchtype(self):
+        return self._full_properties["fmatchtype"]
 
     @property
-    def confupdtype(self):
-        return self._full_properties["confupdtype"]
+    def fupdtype(self):
+        return self._full_properties["fupdtype"]
 
     @property
-    def confdeltype(self):
-        return self._full_properties["confdeltype"]
+    def fdeltype(self):
+        return self._full_properties["fdeltype"]
 
     @property
-    def condeferrable(self):
-        return self._full_properties["condeferrable"]
+    def deferrable(self):
+        return self._full_properties["deferrable"]
 
     @property
-    def condeferred(self):
-        return self._full_properties["condeferred"]
+    def deferred(self):
+        return self._full_properties["deferred"]
 
     @property
     def cascade(self):
@@ -259,17 +258,17 @@ class ForeignKeyConstraint(Constraint):
         """ Provides data input for create script """
         return {
             "data": {
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "name": self.name,
                 "columns": self.columns,
                 "remote_schema": self.remote_schema,
                 "remote_table": self.remote_table,
-                "confmatchtype": self.confmatchtype,
-                "confupdtype": self.confupdtype,
-                "confdeltype": self.confdeltype,
-                "condeferrable": self.condeferrable,
-                "condeferred": self.condeferred,
+                "confmatchtype": self.fmatchtype,
+                "confupdtype": self.fupdtype,
+                "confdeltype": self.fdeltype,
+                "condeferrable": self.deferrable,
+                "condeferred": self.deferred,
                 "convalidated": self.convalidated,
                 "comment": self.comment
             }
@@ -279,8 +278,8 @@ class ForeignKeyConstraint(Constraint):
         """ Provides data input for delete script """
         return {
             "data": {
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "name": self.name
             },
             "cascade": self.cascade
@@ -291,8 +290,8 @@ class ForeignKeyConstraint(Constraint):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "convalidated": self.convalidated,
                 "comment": self.comment
             },
@@ -305,7 +304,7 @@ class ForeignKeyConstraint(Constraint):
 
 
 class IndexConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_index')    
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_index')
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -321,12 +320,12 @@ class IndexConstraint(Constraint):
         return self._full_properties["spcname"]
 
     @property
-    def condeferrable(self):
-        return self._full_properties["condeferrable"]
+    def deferrable(self):
+        return self._full_properties["deferrable"]
 
     @property
-    def condeferred(self):
-        return self._full_properties["condeferred"]
+    def deferred(self):
+        return self._full_properties["deferred"]
 
     @property
     def cascade(self):
@@ -337,19 +336,19 @@ class IndexConstraint(Constraint):
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
-    
+
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {
             "data": {
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "name": self.name,
                 "index": self.index,
                 "fillfactor": self.fillfactor,
                 "spcname": self.spcname,
-                "condeferrable": self.condeferrable,
-                "condeferred": self.condeferred,
+                "condeferrable": self.deferrable,
+                "condeferred": self.deferred,
                 "comment": self.comment
             }
         }
@@ -358,8 +357,8 @@ class IndexConstraint(Constraint):
         """ Provides data input for delete script """
         return {
             "data": {
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "name": self.name
             },
             "cascade": self.cascade
@@ -370,8 +369,8 @@ class IndexConstraint(Constraint):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "spcname": self.spcname,
                 "fillfactor": self.fillfactor,
                 "comment": self.comment

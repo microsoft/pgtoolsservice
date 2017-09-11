@@ -39,28 +39,19 @@ class TestCheckConstraint(ConstraintTestBase, unittest.TestCase):
     @property
     def full_properties(self):
         return {
-            "schema": "schema",
-            "table": "table",
             "name": "name",
             "comment": "comment",
-            "consrc": "consrc",
-            "connoinherit": "connoinherit",
-            "nspname": "nspname",
-            "relname": "relname"
+            "src": "src",
+            "no_inherit": "no_inherit"
         }
 
     @property
     def property_query(self):
         return {
-            "convalidated": True,
-            "schema": "test",
-            "table": "test",
             "name": "test",
             "comment": "test_comment",
-            "consrc": "test",
-            "connoinherit": "test",
-            "nspname": "test_nspname",
-            "relname": "test_relname"
+            "src": "test",
+            "no_inherit": True
         }
 
     @property
@@ -73,16 +64,13 @@ class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
     @property
     def full_properties(self):
         return {
-            "name": "name",
-            "schema": "schema",
-            "table": "table",
             "comment": "comment",
             "amname": "amname",
             "columns": "columns",
             "fillfactor": "fillfactor",
             "spcname": "spcname",
-            "condeferrable": "condeferrable",
-            "condeferred": "condeferred",
+            "deferrable": "deferrable",
+            "deferred": "deferred",
             "constraint": "constraint",
             "cascade": "cascade"
         }
@@ -90,16 +78,13 @@ class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
     @property
     def property_query(self):
         return {
-            "name": "test",
-            "schema": "test",
-            "table": "test",
             "comment": "test_comment",
             "amname": "test",
             "columns": "test",
             "fillfactor": "test",
             "spcname": "test",
-            "condeferrable": "test",
-            "condeferred": "test",
+            "deferrable": True,
+            "deferred": True,
             "constraint": "test",
             "cascade": True
         }
@@ -115,16 +100,14 @@ class TestForeignKeyConstraint(ConstraintTestBase, unittest.TestCase):
         return {
             "name": "name",
             "comment": "comment",
-            "schema": "schema",
-            "table": "table",
             "columns": "columns",
             "remote_schema": "remote_schema",
             "remote_table": "remote_table",
-            "confmatchtype": "confmatchtype",
-            "confupdtype": "confupdtype",
-            "confdeltype": "confdeltype",
-            "condeferrable": "condeferrable",
-            "condeferred": "condeferred",
+            "fmatchtype": "fmatchtype",
+            "fupdtype": "fupdtype",
+            "fdeltype": "fdeltype",
+            "deferrable": "deferrable",
+            "deferred": "deferred",
             "cascade": "cascade"
         }
 
@@ -133,16 +116,14 @@ class TestForeignKeyConstraint(ConstraintTestBase, unittest.TestCase):
         return {
             "name": "test",
             "comment": "test",
-            "schema": "test",
-            "table": "test",
             "columns": "test",
             "remote_schema": "test",
             "remote_table": "test",
-            "confmatchtype": "test",
-            "confupdtype": "test",
-            "confdeltype": "test",
-            "condeferrable": "test",
-            "condeferred": "test",
+            "fmatchtype": True,
+            "fupdtype": 'c',
+            "fdeltype": 'c',
+            "deferrable": True,
+            "deferred": True,
             "cascade": True
         }
 
@@ -157,14 +138,12 @@ class TestIndexConstraint(ConstraintTestBase, unittest.TestCase):
     def full_properties(self):
         return {
             "name": "name",
-            "schema": "schema",
-            "table": "table",
             "comment": "comment",
             "index": "index",
             "fillfactor": "fillfactor",
             "spcname": "spcname",
-            "condeferrable": "condeferrable",
-            "condeferred": "condeferred",
+            "deferrable": "deferrable",
+            "deferred": "deferred",
             "cascade": "cascade"
         }
 
@@ -172,14 +151,12 @@ class TestIndexConstraint(ConstraintTestBase, unittest.TestCase):
     def property_query(self):
         return {
             "name": "test",
-            "schema": "test",
-            "table": "test",
             "comment": "test",
             "index": "test",
             "fillfactor": "test",
             "spcname": "test",
-            "condeferrable": "test",
-            "condeferred": "test",
+            "deferrable": True,
+            "deferred": True,
             "cascade": True
         }
 

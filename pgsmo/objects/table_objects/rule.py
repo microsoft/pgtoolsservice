@@ -45,9 +45,6 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
     # PROPERTIES ###########################################################
-    @property
-    def schema(self):
-        return self._full_properties["schema"]
 
     @property
     def view(self):
@@ -85,14 +82,6 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def rulename(self):
         return self._full_properties["rulename"]
 
-    @property
-    def relname(self):
-        return self._full_properties["relname"]
-
-    @property
-    def nspname(self):
-        return self._full_properties["nspname"]
-
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
@@ -107,7 +96,7 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.schema,
+                "schema": self.parent.parent.name,
                 "view": self.view,
                 "event": self.event,
                 "condition": self.condition,
@@ -123,8 +112,8 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return {
             "rid": self.rid,
             "rulename": self.rulename,
-            "relname": self.relname,
-            "nspname": self.nspname
+            "relname": self.parent.name,
+            "nspname": self.parent.parent.name
         }
 
     def _update_query_data(self) -> dict:
