@@ -13,7 +13,6 @@ import pgsmo.utils.templating as templating
 
 class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_index')
-    MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Index':
@@ -53,27 +52,23 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     # -FULL OBJECT PROPERTIES ##############################################
     @property
     def is_clustered(self) -> Optional[bool]:
-        return self._full_properties['indisclustered']
+        return self._full_properties['is_clustered']
 
     @property
-    def is_primary(self) -> Optional[bool]:
-        return self._full_properties['indisprimary']
+    def is_valid(self) -> Optional[bool]:
+        return self._full_properties['is_valid']
 
     @property
     def is_unique(self) -> Optional[bool]:
-        return self._full_properties['indisunique']
+        return self._full_properties['is_unique']
 
     @property
-    def isconcurrent(self):
-        return self._full_properties["isconcurrent"]
-    
+    def is_primary(self) -> Optional[bool]:
+        return self._full_properties['is_primary']
+
     @property
-    def schema(self):
-        return self._full_properties["schema"]
-    
-    @property
-    def table(self):
-        return self._full_properties["table"]
+    def is_concurrent(self):
+        return self._full_properties["is_concurrent"]
     
     @property
     def amname(self):
@@ -101,11 +96,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     
     @property
     def index(self):
-        return self._full_properties["index"]
-    
-    @property
-    def nspname(self):
-        return self._full_properties["nspname"]
+        return self._full_properties["index"]    
     
     @property
     def cascade(self):
@@ -127,36 +118,29 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
-    @classmethod
-    def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
-
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {
             "data": {
                 "indisunique": self.is_unique,
-                "isconcurrent": self.isconcurrent,
+                "isconcurrent": self.is_concurrent,
                 "name": self.name,
-                "schema": self.schema,
-                "table": self.table,
+                "schema": self.parent.parent.name,
+                "table": self.parent.name,
                 "amname": self.amname,
                 "columns": self.columns,
                 "fillfactor": self.fillfactor,
                 "spcname": self.spcname,
                 "indconstraint": self.indconstraint
             },
-            "mode": self.mode,
-            "loop": {
-                "index": self.index
-            }
+            "mode": self.mode
         }
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
         return {
             "data": {
-                "nspname": self.nspname,                
+                "nspname": self.parent.parent.name,                
                 "name": self.name
             },
             "cascade": self.cascade
@@ -167,11 +151,11 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.schema,
+                "schema": self.parent.parent.name,
                 "fillfactor": self.fillfactor,
                 "spcname": self.spcname,
                 "indisclustered": self.is_clustered,
-                "table": self.table,
+                "table": self.parent.name,
                 "description": self.description
             },
             "o_data": {

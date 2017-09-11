@@ -223,23 +223,13 @@ class TestScripterOld(unittest.TestCase):
         """ Helper function to test create script for index """
         # Set up the mocks
         mock_index = Index(self.server, "testTable", 'testName')
-
-        def index_mock_fn():
-            mock_index._template_root = mock.MagicMock(return_value=Index.TEMPLATE_ROOT)
-            mock_index._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",                                                                                   
-                                                                                  "schema": "TestSchema",
-                                                                                  "table": "TestTable"}})
-            return mock_index.create_script()
-
-        def scripter_mock_fn():
-            mock_index.create_script = mock.MagicMock(return_value=index_mock_fn())
-            return mock_index.create_script()
-
-        self.scripter.get_create_script = mock.MagicMock(return_value=scripter_mock_fn())
-        self.service.script_as_create = mock.MagicMock(return_value=self.scripter.get_create_script())
-
+        mock_index._template_root = mock.MagicMock(return_value=Index.TEMPLATE_ROOT)
+        mock_index._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",                                                                                   
+                                                                              "schema": "TestSchema",
+                                                                              "table": "TestTable"}})
+            
         # If I try to get create script
-        result = self.service.script_as_create()
+        result = mock_index.create_script()
         # The result should be the correct template value
         self.assertTrue('CREATE INDEX "TestName"\n    ON "TestSchema"."TestTable"' in result)
 

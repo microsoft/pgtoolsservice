@@ -23,8 +23,6 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
     def full_properties(self):
         return {
             "name": "name",
-            "schema": "schema",
-            "table": "table",
             "amname": "amname",
             "columns": "columns",
             "fillfactor": "fillfactor",
@@ -32,35 +30,33 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
             "indconstraint": "indconstraint",
             "mode": "mode",
             "index": "index",
-            "nspname": "nspname",
             "cascade": "cascade",
             "description": "description",
-            # "is_clustered": "indisclustered",
-            # "indisprimary": "indisprimary",
-            # "indisunique": "indisunique",
-            # "isconcurrent": "isconcurrent"
+            "is_clustered": "is_clustered",
+            "is_valid": "is_valid",
+            "is_unique": "is_unique",
+            "is_primary": "is_primary",            
+            "is_concurrent": "is_concurrent"
         }
 
     @property
     def property_query(self) -> dict:
         return {
             "name": "test",
-            "schema": "test",
-            "table": "test",
             "amname": "amname",
             "columns": "columns",
-            "fillfactor": "fillfactor",
+            "fillfactor": None,
             "spcname": "spcname",
             "indconstraint": "indconstraint",
-            "mode": "mode",
+            "mode": "test_mode",
             "index": "index",
-            "nspname": "nspname",
-            "cascade": "cascade",
-            "description": "description",
-            # "is_clustered": "test",
-            # "indisprimary": "indisprimary",
-            # "indisunique": "indisunique",
-            # "isconcurrent": "isconcurrent"
+            "cascade": True,
+            "description": None,
+            "is_clustered": True,
+            "is_valid": True,
+            "is_unique": True,
+            "is_primary": True,            
+            "is_concurrent": True
         }
 
     @property
