@@ -89,7 +89,7 @@ def is_not_none_or_whitespace(param_name: str, value_to_check: str) -> None:
 
 def is_object_params_not_none_or_whitespace(objname: str, obj: object, *args) -> None:
     """
-    Raises ValueError if the input object is None or any of the object parameters (args) is None or a whitespace/empty string
+    Raises ValueError if the input object is None or any of the input object parameters (args) is None or a whitespace/empty string
     """
     is_not_none(objname, obj)
     for arg in args:

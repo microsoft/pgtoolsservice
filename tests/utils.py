@@ -57,11 +57,6 @@ def get_mock_logger() -> logging.Logger:
     return mock_logger
 
 
-def callmethodwithparams(obj: object, objmethodname: str, *args):
-    '''calls an object's method with multiple input parameters'''
-    return getattr(obj, objmethodname)(*args)
-
-
 # PLEASE USE SERVICEPROVIDERMOCK from tests/mocks/service_provider_mock. #
 # This mock will be deprecated #
 def get_mock_service_provider(service_map: dict = None) -> ServiceProvider:

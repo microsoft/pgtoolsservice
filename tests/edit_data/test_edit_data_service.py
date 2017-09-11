@@ -59,43 +59,39 @@ class TestEditDataService(unittest.TestCase):
         mockdataeditorsession.assert_called()
 
     def test_initialization_with_none_as_schema_param(self):
-        # queue = Queue()
-        # message = JSONRPCMessage.from_dictionary({'id': '123', 'method': 'edit/initialize', 'params': {}})
         request_context = RequestContext(None, None)
         self._initialize_edit_request.schema_name = None
         errormsg = 'Parameter schema_name contains a None, empty, or whitespace string'
-        # with self.assertRaises(ValueError, msg='Parameter param.schema_name contains a None, empty, or whitespace string'):
-        #     self._service_under_test._edit_initialize(request_context, self._initialize_edit_request)
-        self.assertexceptiononmethodcall(ValueError, errormsg, self._service_under_test, '_edit_initialize', request_context, self._initialize_edit_request)
+        self.assert_exception_on_method_call(ValueError, errormsg, self._service_under_test._edit_initialize, request_context, self._initialize_edit_request)
 
     def test_initialization_with_none_as_owner_uri(self):
         request_context = RequestContext(None, None)
         self._initialize_edit_request.owner_uri = None
         errormsg = 'Parameter owner_uri contains a None, empty, or whitespace string'
 
-        self.assertexceptiononmethodcall(ValueError, errormsg, self._service_under_test, '_edit_initialize', request_context, self._initialize_edit_request)
+        self.assert_exception_on_method_call(ValueError, errormsg, self._service_under_test._edit_initialize, request_context, self._initialize_edit_request)
 
     def test_initialization_with_empty_object_name(self):
         request_context = RequestContext(None, None)
         self._initialize_edit_request.object_name = ' '
         errormsg = 'Parameter object_name contains a None, empty, or whitespace string'
 
-        self.assertexceptiononmethodcall(ValueError, errormsg, self._service_under_test, '_edit_initialize', request_context, self._initialize_edit_request)
+        self.assert_exception_on_method_call(ValueError, errormsg, self._service_under_test._edit_initialize, request_context, self._initialize_edit_request)
 
     def test_initialization_with_empty_object_type(self):
         request_context = RequestContext(None, None)
         self._initialize_edit_request.object_type = ' '
         errormsg = 'Parameter object_type contains a None, empty, or whitespace string'
 
-        self.assertexceptiononmethodcall(ValueError, errormsg, self._service_under_test, '_edit_initialize', request_context, self._initialize_edit_request)
+        self.assert_exception_on_method_call(ValueError, errormsg, self._service_under_test._edit_initialize, request_context, self._initialize_edit_request)
 
-    def assertexceptiononmethodcall(self, exceptiontype: type, exceptionmessage: str, obj: object, objmethodname: str, *args) -> None:
+    def assert_exception_on_method_call(self, exception_type: type, exception_message: str, method_to_call: object, *args) -> None:
         '''asserts if a method call raises 'exceptiontype' exception or not'''
-        with self.assertRaises(exceptiontype, msg=exceptionmessage) as cm:
-            utils.callmethodwithparams(obj, objmethodname, *args)
+        with self.assertRaises(exception_type, msg=exception_message) as cm:
+            method_to_call(*args)
 
         if(cm.exception.args is not None):
-            self.assertEquals(exceptionmessage, cm.exception.args[0])
+            self.assertEquals(exception_message, cm.exception.args[0])
 
     def test_register_should_initlialize_states(self):
         self.assertEqual(self._service_under_test._service_provider, self._service_provider)
