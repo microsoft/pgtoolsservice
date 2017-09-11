@@ -3,9 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, Mapping, Optional, Tuple, Callable      # noqa
+from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
+from psycopg2 import ProgrammingError
 from psycopg2.extensions import connection
 
 from pgsmo.objects.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
@@ -13,6 +14,9 @@ from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import pgsmo.utils as utils
+
+SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
+SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
 
 
 class Server:
@@ -41,8 +45,9 @@ class Server:
         self._child_objects: Mapping[str, NodeCollection] = {
             Database.__name__:    NodeCollection(lambda: Database.get_nodes_for_parent(self, None)),
             Role.__name__:        NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
-            Tablespace.__name__:  NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None))
+            Tablespace.__name__:  NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None)),
         }
+        self._search_path = NodeCollection(lambda: self._fetch_search_path())
 
     # PROPERTIES ###########################################################
     @property
@@ -120,6 +125,14 @@ class Server:
         """Tablespaces defined for the server"""
         return self._child_objects[Tablespace.__name__]
 
+    @property
+    def search_path(self) -> NodeCollection[str]:
+        """
+        The search_path for the current role. Defined at the server level as it's a global property,
+        and as a collection as it is a list of schema names
+        """
+        return self._search_path
+
     # METHODS ##############################################################
     def get_object_by_urn(self, urn: str) -> NodeObject:
         # Validate that the urn is a full urn
@@ -161,3 +174,13 @@ class Server:
         cols, rows = self._conn.execute_dict(recovery_check_sql)
         if len(rows) > 0:
             return rows[0]
+
+    def _fetch_search_path(self) -> List[str]:
+        try:
+            with self._conn.connection.cursor() as cursor:
+                cursor.execute(SEARCH_PATH_QUERY)
+                return [x[0] for x in cursor.fetchall()]
+        except ProgrammingError:
+            with self._conn.connection.cursor() as cursor:
+                cursor.execute(SEARCH_PATH_QUERY_FALLBACK)
+                return cursor.fetchone()[0]

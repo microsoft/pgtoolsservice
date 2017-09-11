@@ -18,7 +18,6 @@ from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 class SmoEditTableMetadataFactory:
 
     def get(self, connection: 'psycopg2.extensions.connection', schema_name: str, object_name: str, object_type: str) -> EditTableMetadata:
-        # Check if you can get the object metdata from the client directly
 
         server = Server(connection)
         result_object: Table = None
@@ -35,15 +34,7 @@ class SmoEditTableMetadataFactory:
 
         for column in result_object.columns:
             db_column = self.create_db_column(column)
-            edit_column_metadata = EditColumnMetadata()
-
-            edit_column_metadata.is_key = column.is_key
-            edit_column_metadata.default_value = column.default_value
-            edit_column_metadata.escaped_name = column.name
-            edit_column_metadata.ordinal = column.column_ordinal
-            edit_column_metadata.db_column = db_column
-
-            edit_columns_metadata.append(edit_column_metadata)
+            edit_columns_metadata.append(EditColumnMetadata(db_column, column.default_value))
 
         return EditTableMetadata(schema_name, object_name, edit_columns_metadata)
 

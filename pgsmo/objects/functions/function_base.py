@@ -63,6 +63,10 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
     # -BASIC PROPERTIES ####################################################
     @property
+    def schema(self):
+        return self.parent.name
+
+    @property
     def description(self) -> Optional[str]:
         return self._description
 
@@ -76,8 +80,20 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
-    def arguments(self) -> Optional[list]:
+    def arguments(self) -> Optional[str]:
         return self._full_properties.get("arguments")
+
+    @property
+    def proargdefaultvals(self) -> Optional[str]:
+        return self._full_properties.get("proargdefaultvals")
+
+    @property
+    def proargnames(self) -> Optional[str]:
+        return self._full_properties.get("proargnames")
+
+    @property
+    def proargtypenames(self) -> Optional[str]:
+        return self._full_properties.get("proargtypenames")
 
     @property
     def proretset(self):
