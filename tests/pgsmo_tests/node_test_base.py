@@ -166,8 +166,6 @@ class NodeObjectTestBase(metaclass=ABCMeta):
 
     # TODO: Add test for PPAS server type when we support it
 
-    # def temp_helper(self):
-
     # CUSTOM TEST LOGIC ####################################################
     @staticmethod
     def _custom_validate_from_node(obj, mock_server: Server):
