@@ -17,8 +17,7 @@ class TestRule(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def full_properties(self):
-        return {
-            # "schema": "schema",
+        return {            
             "view": "view",
             "event": "event",
             "condition": "condition",
