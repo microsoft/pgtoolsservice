@@ -28,6 +28,54 @@ class TestTrigger(NodeObjectTestBase, unittest.TestCase):
         }
 
     @property
+    def full_properties(self):
+        return {
+            "lanname": "lanname",
+            "tfunction": "tfunction",
+            "name": "name",
+            "is_constraint_trigger": "is_constraint_trigger",
+            "fires": "fires",
+            "evnt_insert": "evnt_insert",
+            "evnt_delete": "evnt_delete",
+            "evnt_truncate": "evnt_truncate",
+            "evnt_update": "evnt_update",
+            "columns": "columns",
+            "deferrable": "deferrable",
+            "initdeferred": "initdeferred",
+            "is_row_trigger": "is_row_trigger",
+            "whenclause": "whenclause",
+            "prosrc": "prosrc",
+            "args": "args",
+            "description": "description",
+            "cascade": "cascade",
+            "is_enable_trigger": "is_enable_trigger"
+        }
+
+    @property
+    def property_query(self):
+        return {
+            "lanname": "test",
+            "tfunction": "test",
+            "name": "test",
+            "is_constraint_trigger": True,
+            "fires": "test",
+            "evnt_insert": "test",
+            "evnt_delete": "test",
+            "evnt_truncate": "test",
+            "evnt_update": "test",
+            "columns": "test_columns",
+            "deferrable": True,
+            "initdeferred": True,
+            "is_row_trigger": True,
+            "whenclause": "test",
+            "prosrc": "test",
+            "args": 1,
+            "description": "test_description",
+            "cascade": True,
+            "is_enable_trigger": True
+        }
+
+    @property
     def collections(self):
         return []
 
