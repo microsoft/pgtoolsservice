@@ -4,7 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 
+<<<<<<< HEAD
 from typing import Callable, Dict, List # noqa
+=======
+from typing import Callable, Dict, List  # noqa
+>>>>>>> 475f7211b982bcf724676061ed726f0ae284dcfd
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.edit_data.contracts import (
@@ -14,7 +18,7 @@ from pgsqltoolsservice.edit_data.contracts import (
     RevertRowRequest, SessionOperationRequest, UPDATE_CELL_REQUEST, UpdateCellRequest, SessionReadyNotificationParams,
     SESSION_READY_NOTIFICATION
 )
-from pgsqltoolsservice.edit_data import DataEditorSession, SmoEditTableMetadataFactory, DataEditSessionExecutionState # noqa
+from pgsqltoolsservice.edit_data import DataEditorSession, SmoEditTableMetadataFactory, DataEditSessionExecutionState  # noqa
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.contracts import (
@@ -22,6 +26,9 @@ from pgsqltoolsservice.query_execution.contracts import (
     RESULT_SET_COMPLETE_NOTIFICATION
 )
 from pgsqltoolsservice.query_execution.query_execution_service import ExecuteRequestWorkerArgs
+from pgsqltoolsservice.connection import ConnectionService  # noqa
+from pgsqltoolsservice.query_execution import QueryExecutionService  # noqa
+import pgsqltoolsservice.utils as utils
 
 
 class EditDataService(object):
@@ -46,6 +53,8 @@ class EditDataService(object):
         }
 
     def _edit_initialize(self, request_context: RequestContext, params: InitializeEditParams) -> None:
+        utils.validate.is_object_params_not_none_or_whitespace('params', params, 'owner_uri', 'schema_name', 'object_name', 'object_type')
+
         connection = self._connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
         session = DataEditorSession(SmoEditTableMetadataFactory())
         self._active_sessions[params.owner_uri] = session

@@ -32,8 +32,8 @@ FROM pg_attribute att
   LEFT OUTER JOIN pg_namespace ns ON ns.oid=cs.relnamespace
   LEFT OUTER JOIN pg_index pi ON pi.indrelid=att.attrelid AND indisprimary
 WHERE att.attrelid = {{tid}}::oid
-{% if clid %}
-    AND att.attnum = {{clid}}::int
+{% if oid %}
+    AND att.attnum = {{oid}}::int
 {% endif %}
 {### To show system objects ###}
 {% if not show_sys_objects %}
