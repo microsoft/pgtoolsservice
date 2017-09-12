@@ -6,7 +6,7 @@
 from typing import List
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.constraints import (
     CheckConstraint,
@@ -21,7 +21,7 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
+class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -47,6 +47,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare child items
         self._check_constraints: NodeCollection[CheckConstraint] = self._register_child_collection(CheckConstraint)
@@ -63,6 +64,10 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         self._triggers: NodeCollection[Trigger] = self._register_child_collection(Trigger)
 
     # PROPERTIES ###########################################################
+    @property
+    def schema(self):
+        return self.parent.name
+
     @property
     def extended_vars(self):
         template_vars = {
@@ -260,4 +265,12 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             "description": self.description,
             "relacl": self.acl,
             "seclabels": self.seclabels
+        }}
+
+    def _select_query_data(self) -> dict:
+        """Provides data input for select script"""
+        return {"data": {
+            "name": self.name,
+            "schema": self.parent.name,
+            "columns": self.columns
         }}

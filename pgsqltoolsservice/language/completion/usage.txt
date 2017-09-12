@@ -1,0 +1,4 @@
+The modules in this folder are taken from https://github.com/dbcli/pgcli/ with minimal edits to support integration with PGSMO,
+to avoid supporting command-line only special syntax, and to minimize the number of dependencies required.
+
+In all other respects this should be left as-is so that future updates to pgcli can be leveraged.

@@ -4,12 +4,14 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
+import tests.pgsmo_tests.utils as utils
+import unittest.mock as mock    # noqa
 
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.node_object import NodeCollection
 from pgsmo.objects.server.server import Server
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
-import tests.pgsmo_tests.utils as utils
+from tests.utils import MockConnection    # noqa
 
 
 class TestDatabase(NodeObjectTestBase, unittest.TestCase):
@@ -19,7 +21,9 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         'spcname': 'primary',
         'datallowconn': True,
         'cancreate': True,
-        'owner': 10
+        'owner': 10,
+        'datistemplate': False,
+        'canconnect': True
     }
 
     @property
@@ -95,9 +99,6 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         # ... Default validation should pass
         self._init_validation(db, mock_server, None, name)
 
-        # ... The database should be connected
-        self.assertTrue(db._is_connected)
-
         # ... The schema node collection should be defined
         self.assertIsInstance(db._schemas, NodeCollection)
         self.assertIs(db.schemas, db._schemas)
@@ -112,9 +113,6 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         # ... Default validation should pass
         self._init_validation(db, mock_conn, None, name)
 
-        # ... The database should be connected
-        self.assertFalse(db._is_connected)
-
         # ... The schema node collection should not be defined
-        self.assertIsNone(db._schemas)
-        self.assertIsNone(db.schemas)
+        self.assertIsNotNone(db._schemas)
+        self.assertIsNotNone(db.schemas)

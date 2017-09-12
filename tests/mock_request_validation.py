@@ -7,8 +7,11 @@ from typing import Callable, List, Optional, TypeVar    # noqa
 import unittest
 import unittest.mock as mock
 
-from pgsqltoolsservice.hosting.json_message import JSONRPCMessageType
+import json
+
+from pgsqltoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from pgsqltoolsservice.hosting.json_rpc_server import RequestContext
+import pgsqltoolsservice.utils as utils
 
 
 TValidation = TypeVar(Optional[Callable[[any], None]])
@@ -34,12 +37,14 @@ class ReceivedMessage:
             message_type: JSONRPCMessageType,
             message_method: Optional[str],
             param: any,
-            param_type: type
+            param_type: type,
+            rpc_message: JSONRPCMessage
     ):
         self.message_type: JSONRPCMessageType = message_type
         self.message_method: Optional[str] = message_method
         self.param_type: type = param_type
         self.param: any = param
+        self.rpc_message: JSONRPCMessage = rpc_message
 
 
 class ReceivedError:
@@ -111,7 +116,13 @@ class RequestFlowValidator:
             # Step 3) Make sure the message method matches
             self.unittest.assertEqual(received.message_method, expected.message_method)
 
-            # Step 3) Run the validator on the param object
+            # Step 4) Make sure the RPC Message is JSON serializable
+            # This catches issues where notification methods are not a strings
+            json_content = json.dumps(utils.serialization.convert_to_dict(received.param), sort_keys=True)
+            self.unittest.assertIsNotNone(json_content)
+            self.unittest.assertNotEqual(json_content, '')
+
+            # Step 5) Make sure the params it passes validation
             self.unittest.assertIsNotNone(received.param)
             if expected.validation is not None:
                 expected.validation(received.param)
@@ -127,13 +138,16 @@ class RequestFlowValidator:
     # IMPLEMENTATION DETAILS ###############################################
     def _received_error_callback(self, message: str, data: any=None, code: int=0):
         error = ReceivedError(code, message, data)
-        received_message = ReceivedMessage(JSONRPCMessageType.ResponseError, None, error, type(data))
+        rpc_message = JSONRPCMessage.create_error(0, code, message, data)
+        received_message = ReceivedMessage(JSONRPCMessageType.ResponseError, None, error, type(data), rpc_message)
         self._received_messages.append(received_message)
 
     def _received_notification_callback(self, method: str, params: any):
-        received_message = ReceivedMessage(JSONRPCMessageType.Notification, method, params, type(params))
+        rpc_message = JSONRPCMessage.create_notification(method, params)
+        received_message = ReceivedMessage(JSONRPCMessageType.Notification, method, params, type(params), rpc_message)
         self._received_messages.append(received_message)
 
     def _received_response_callback(self, params: any):
-        received_message = ReceivedMessage(JSONRPCMessageType.ResponseSuccess, None, params, type(params))
+        rpc_message = JSONRPCMessage.create_response(0, params)
+        received_message = ReceivedMessage(JSONRPCMessageType.ResponseSuccess, None, params, type(params), rpc_message)
         self._received_messages.append(received_message)

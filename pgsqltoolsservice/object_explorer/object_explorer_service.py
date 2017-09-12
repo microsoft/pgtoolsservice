@@ -3,9 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import functools
 import threading
 from typing import Dict, Optional     # noqa
 from urllib.parse import quote
+
+import psycopg2
+import psycopg2.extensions
 
 from pgsmo import Server
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
@@ -80,7 +84,7 @@ class ObjectExplorerService(object):
         # Step 2: Connect the session and lookup the root node asynchronously
         try:
             session.init_task = threading.Thread(target=self._initialize_session, args=(request_context, session))
-            session.init_task.setDaemon(False)
+            session.init_task.daemon = True
             session.init_task.start()
         except Exception as e:
             # TODO: Localize
@@ -96,15 +100,15 @@ class ObjectExplorerService(object):
             if session is not None:
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+                self._close_database_connections(session)
                 if not connect_result:
                     if self._service_provider.logger is not None:
-                        self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
+                        self._service_provider.logger.info(f'Could not close the OE session with Id {session.id}')
                     request_context.send_response(False)
                 else:
                     request_context.send_response(True)
             else:
                 request_context.send_response(False)
-
         except Exception as e:
             message = f'Failed to close OE session: {str(e)}'   # TODO: Localize
             if self._service_provider.logger is not None:
@@ -126,6 +130,7 @@ class ObjectExplorerService(object):
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         for key, session in self._session_map.items():
             connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+            self._close_database_connections(session)
             if connect_result:
                 if self._service_provider.logger is not None:
                     self._service_provider.logger.info('Closed the OE session with Id: ' + session.id)
@@ -134,6 +139,15 @@ class ObjectExplorerService(object):
                     self._service_provider.logger.info('Could not close the OE session with Id: ' + session.id)
 
     # PRIVATE HELPERS ######################################################
+
+    def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
+        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        for database in session.server.databases:
+            close_result = conn_service.disconnect(session.id + database.name, ConnectionType.OBJECT_EXLPORER)
+            if not close_result:
+                if self._service_provider.logger is not None:
+                    self._service_provider.logger.info(f'could not close the connection for the database {database.name}')
+
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
         # Step 1: Find the session
         session = self._get_session(request_context, params)
@@ -203,6 +217,27 @@ class ObjectExplorerService(object):
             request_context.send_error(message)
             return
 
+    def _create_connection(self, session: ObjectExplorerSession, database_name: str) -> Optional[psycopg2.extensions.connection]:
+        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+
+        doptions = session.connection_details.options.copy()
+        doptions['dbname'] = database_name
+        conn_details = ConnectionDetails.from_data(
+            session.connection_details.server_name,
+            None,
+            session.connection_details.user_name,
+            doptions
+        )
+
+        key_uri = session.id + database_name
+        connect_request = ConnectRequestParams(conn_details, key_uri, ConnectionType.OBJECT_EXLPORER)
+        connect_result = conn_service.connect(connect_request)
+        if connect_result.error_message is not None:
+            raise RuntimeError(connect_result.error_message)
+
+        connection = conn_service.get_connection(key_uri, ConnectionType.OBJECT_EXLPORER)
+        return connection
+
     def _initialize_session(self, request_context: RequestContext, session: ObjectExplorerSession):
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         connection = None
@@ -224,8 +259,8 @@ class ObjectExplorerService(object):
             connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
 
             # Step 3: Create the PGSMO Server object for the session and create the root node for the server
-            session.server = Server(connection)
-            metadata = ObjectMetadata.from_data(0, 'Database', session.connection_details.options['dbname'])
+            session.server = Server(connection, functools.partial(self._create_connection, session))
+            metadata = ObjectMetadata(session.server.urn_base, None, 'Database', session.server.maintenance_db_name)
             node = NodeInfo()
             node.label = session.connection_details.options['dbname']
             node.is_leaf = False

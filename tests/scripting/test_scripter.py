@@ -8,42 +8,13 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, Rule, Trigger
+from pgsmo import Table, DataType, Schema, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, Rule, Trigger, Index
 from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 
 import tests.utils as utils
-
-
-class TestScriptAsSelect(unittest.TestCase):
-    def test_script_select_escapes_non_lowercased_words(self):
-        """ Tests scripting for select operations"""
-        # Given mixed, and uppercase object names
-        # When I generate a select script
-        mock_conn = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
-        mock_server = Server(mock_conn)
-
-        mock_schema = Schema(mock_server, None, 'MySchema')
-        mock_table = Table(mock_server, mock_schema, 'MyTable')
-        mixed_result: str = scripter.script_as_select(mock_table)
-
-        mock_table._name = 'MYTABLE'
-        mock_schema._name = 'MYSCHEMA'
-        upper_result: str = scripter.script_as_select(mock_table)
-
-        # Then I expect words to be escaped no matter what
-        self.assertTrue('"MySchema"."MyTable"' in mixed_result)
-        self.assertTrue('"MYSCHEMA"."MYTABLE"' in upper_result)
-
-        # Given lowercase object names
-        # When I generate a select script
-        mock_table._name = 'mytable'
-        mock_schema._name = 'myschema'
-        lower_result: str = scripter.script_as_select(mock_table)
-        # Then I expect words to be left as-is
-        self.assertTrue('myschema.mytable' in lower_result)
 
 
 class TestScripter(unittest.TestCase):
@@ -87,18 +58,22 @@ class TestScripter(unittest.TestCase):
         conn = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
         script = scripter.Scripter(conn)
 
-        # ... Mock up the server so it returns something from the urn locator
-        mock_obj = {}
-        script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
-
-        # ... Mock up some metadata
-        mock_metadata = ObjectMetadata.from_data(0, 'obj', 'ObjName')
-
         for operation in scripter.ScriptOperation:
+            # ... Mock up the server so it returns something from the urn locator
+            mock_obj = {}
+            script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
+
+            # ... Mock up some metadata
+            mock_metadata = ObjectMetadata('//urn/', None, 'obj', 'ObjName')
+
             # If: I attempt to perform an operation the handler doesn't support
-            # Then: I should get an exception
+            # Then:
+            # ... I should get an exception
             with self.assertRaises(TypeError):
                 script.script(operation, mock_metadata)
+
+            # ... The URN should have been used to get the object
+            script.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
 
     def test_script_successful(self):
         # Setup:
@@ -112,22 +87,29 @@ class TestScripter(unittest.TestCase):
         mock_obj.create_script = mock.MagicMock(return_value='CREATE')
         mock_obj.delete_script = mock.MagicMock(return_value='DELETE')
         mock_obj.update_script = mock.MagicMock(return_value='UPDATE')
+        mock_obj.select_script = mock.MagicMock(return_value='SELECT')
 
         # ... Mocks for SELECT TODO: remove as per (https://github.com/Microsoft/carbon/issues/1764)
         mock_obj.name = 'table'
         mock_obj.schema = 'schema'
-        script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
-
-        # ... Mock up some metadata
-        mock_metadata = ObjectMetadata.from_data(0, 'obj', 'ObjName')
 
         for operation in scripter.ScriptOperation:
+            # ... Create a mock to return the object by UR
+            script.server.get_object_by_urn = mock.MagicMock(return_value=mock_obj)
+
+            # ... Mock up some metadata
+            mock_metadata = ObjectMetadata('//urn/', None, 'obj', 'ObjName')
+
             # If: I attempt to perform a scripting operation
             result = script.script(operation, mock_metadata)
 
-            # Then: I should get something back
+            # Then:
+            # ... I should get something back
             # NOTE: The actual contents of the script is tested in the PGSMO object's unit tests
             utils.assert_not_none_or_whitespace(result)
+
+            # ... The URN should have been used to get the object
+            script.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
 
 
 class TestScripterOld(unittest.TestCase):
@@ -154,10 +136,14 @@ class TestScripterOld(unittest.TestCase):
         self.server.get_object_by_urn = mock.MagicMock(return_value=mock_table)
 
         # If I try to get create script
-        result: str = self.scripter.script(scripter.ScriptOperation.CREATE, ObjectMetadata.from_data(0, 'Table', 'test'))
+        mock_metadata = ObjectMetadata('//urn/', None, 'Table', 'test')
+        result: str = self.scripter.script(scripter.ScriptOperation.CREATE, mock_metadata)
 
         # The result should be the correct template value
         self.assertTrue('CREATE TABLE myschema.test' in result)
+
+        # ... The URN should have been used to get the object
+        self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
 
     def test_datatype_scripting(self):
         """ Tests create script for tables"""
@@ -172,7 +158,7 @@ class TestScripterOld(unittest.TestCase):
             "typeowner": "Me"
         }
         self.server.get_object_by_urn = mock.MagicMock(return_value=mock_datatype)
-        object_metadata = ObjectMetadata.from_data(0, 'DataType', 'test', 'myschema')
+        object_metadata = ObjectMetadata('test_urn', None, 'DataType', 'test', 'myschema')
 
         # Verify create, update and delete all produce correct scripts
         self._verify_create_script(object_metadata, ['CREATE TYPE myschema.test'])
@@ -191,8 +177,7 @@ class TestScripterOld(unittest.TestCase):
                                                                                    "cltype": "TestDatatype",
                                                                                    "schema": "TestSchema",
                                                                                    "table": "TestTable"}})
-            result = mock_column.create_script()
-            return result
+            return mock_column.create_script()
 
         def scripter_mock_fn():
             mock_column.create_script = mock.MagicMock(return_value=column_mock_fn())
@@ -299,6 +284,19 @@ class TestScripterOld(unittest.TestCase):
         # The result should be the correct template value
         self.assertTrue('CREATE TRIGGER "TestName"\n\n     INSERT\n\n\n    ON "TestTable"\n\n    '
                         'FOR EACH STATEMENT\n\n\n    EXECUTE PROCEDURE TestFunction();' in result)
+
+    def test_index_scripting(self):
+        """ Helper function to test create script for index """
+        # Set up the mocks
+        mock_index = Index(self.server, "testTable", 'testName')
+        mock_index._template_root = mock.MagicMock(return_value=Index.TEMPLATE_ROOT)
+        mock_index._create_query_data = mock.MagicMock(return_value={"data": {"name": "TestName",
+                                                                              "schema": "TestSchema",
+                                                                              "table": "TestTable"}})
+        # If I try to get create script
+        result = mock_index.create_script()
+        # The result should be the correct template value
+        self.assertTrue('CREATE INDEX "TestName"\n    ON "TestSchema"."TestTable"' in result)
 
     # Helper functions ##################################################################
     def _as_node_collection(self, object_list: List[Any]) -> NodeCollection[Any]:

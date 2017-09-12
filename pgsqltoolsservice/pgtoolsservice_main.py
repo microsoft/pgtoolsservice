@@ -52,6 +52,7 @@ if __name__ == '__main__':
     try:
         if not log_dir:
             log_dir = os.path.dirname(sys.argv[0])
+        os.makedirs(log_dir, exist_ok=True)
         handler = logging.FileHandler(os.path.join(log_dir, 'pgtoolsservice.log'))
     except Exception:
         handler = logging.NullHandler()

@@ -111,10 +111,11 @@ class TestScriptingService(unittest.TestCase):
             scripter_patch.return_value = mock_scripter
 
             params_metadata = {
-                'metadata_type': 0,
-                'metadata_type_name': 'Table',
+                'metadataType': 0,
+                'metadataTypeName': 'Table',
                 'name': 'test_table',
-                'schema': 'test_schema'
+                'schema': 'test_schema',
+                'urn': '//urn/'
             }
 
             # For each operation supported

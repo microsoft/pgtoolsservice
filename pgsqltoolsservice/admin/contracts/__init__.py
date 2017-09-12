@@ -3,8 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.admin.contracts.get_databaseinfo_request import GetDatabaseInfoParameters, GetDatabaseInfoResponse, GET_DATABASEINFO_REQUEST
+from pgsqltoolsservice.admin.contracts.get_database_info_request import (
+    DatabaseInfo, GetDatabaseInfoParameters, GetDatabaseInfoResponse, GET_DATABASE_INFO_REQUEST)
 
 __all__ = [
-    'GetDatabaseInfoParameters', 'GetDatabaseInfoResponse', 'GET_DATABASEINFO_REQUEST'
+    'DatabaseInfo', 'GetDatabaseInfoParameters', 'GetDatabaseInfoResponse', 'GET_DATABASE_INFO_REQUEST'
 ]
