@@ -12,8 +12,9 @@ from collections import namedtuple, defaultdict, OrderedDict
 # {{ PGToolsService EDIT }}
 # from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
-from prompt_toolkit.contrib.completers import PathCompleter
-from prompt_toolkit.document import Document
+
+# {{ PGToolsService EDIT }}
+# from prompt_toolkit.document import Document
 # {{ PGToolsService EDIT }}
 from .packages.sqlcompletion import (   # noqa
     FromClauseItem, suggest_type, Database, Schema, Table, Function, Column, View,
@@ -837,14 +838,14 @@ class PGCompleter(Completer):
         return self.find_matches(word_before_cursor, keywords,
                                  mode='strict', meta='keyword')
 
-    def get_path_matches(self, _, word_before_cursor):
-        completer = PathCompleter(expanduser=True)
-        document = Document(text=word_before_cursor,
-                            cursor_position=len(word_before_cursor))
-        for c in completer.get_completions(document, None):
-            yield Match(completion=c, priority=(0,))
-
     # {{ PGToolsService EDIT }}
+    # def get_path_matches(self, _, word_before_cursor):
+    #     completer = PathCompleter(expanduser=True)
+    #     document = Document(text=word_before_cursor,
+    #                         cursor_position=len(word_before_cursor))
+    #     for c in completer.get_completions(document, None):
+    #         yield Match(completion=c, priority=(0,))
+
     # def get_special_matches(self, _, word_before_cursor):
     #     if not self.pgspecial:
     #         return []
@@ -888,7 +889,7 @@ class PGCompleter(Completer):
         Datatype: get_datatype_matches,
         # {{ PGToolsService EDIT }}
         # NamedQuery: get_namedquery_matches,
-        Path: get_path_matches,
+        # Path: get_path_matches,
     }
 
     def populate_scoped_cols(self, scoped_tbls, local_tbls=()):

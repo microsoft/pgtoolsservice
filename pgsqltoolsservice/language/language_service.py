@@ -25,7 +25,9 @@ from pgsqltoolsservice.language.contracts import (
     DOCUMENT_RANGE_FORMATTING_REQUEST, DocumentRangeFormattingParams,
     TextEdit, FormattingOptions
 )
+from pgsqltoolsservice.language.connected_queue import OperationsQueue
 from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
+from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo
 from pgsqltoolsservice.language.text import TextUtilities
 import pgsqltoolsservice.utils as utils
 
@@ -41,6 +43,10 @@ class LanguageService:
         self._logger: [Logger, None] = None
         self._non_pgsql_uris: Set[str] = set()
         self._completion_helper = DefaultCompletionHelper()
+        self._script_map: Dict[str, 'ScriptParseInfo'] = {}
+        self._script_map_lock: threading.Lock = threading.Lock()
+        self._binding_queue_map: Dict[str, 'ScriptParseInfo'] = {}
+        self._operations_queue: OperationsQueue = None
 
     def register(self, service_provider: ServiceProvider) -> None:
         """
@@ -49,6 +55,7 @@ class LanguageService:
         self._service_provider = service_provider
         self._logger = service_provider.logger
         self._server = service_provider.server
+        self._operations_queue = OperationsQueue(service_provider)
 
         # Register request handlers
         self._server.set_request_handler(COMPLETION_REQUEST, self.handle_completion_request)
@@ -196,8 +203,15 @@ class LanguageService:
 
     def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
         # TODO build the cache. For now, sending intellisense ready as a test
-        response = IntelliSenseReadyParams.from_data(conn_info.owner_uri)
-        self._server.send_notification(INTELLISENSE_READY_NOTIFICATION, response)
+        scriptparseinfo: ScriptParseInfo = self._get_scriptparseinfo(conn_info.owner_uri, create_if_not_exists=True)
+        if scriptparseinfo is not None:
+            # This is a connection for an actual script in the workspace. Build the intellisense cache for it
+            # Wait until the 
+            intellisense_ready_event: threading.Event = self._operations_queue.add_connection_context(conn_info, False)
+            intellisense_ready_event.wait()
+            response = IntelliSenseReadyParams.from_data(conn_info.owner_uri)
+            self._server.send_notification(INTELLISENSE_READY_NOTIFICATION, response)
+            # TODO Ideally would support connected diagnostics for missing references
 
     def _get_sqlparse_options(self, options: FormattingOptions) -> Dict[str, Any]:
         sqlparse_options = {}
@@ -224,3 +238,13 @@ class LanguageService:
         options = self._get_sqlparse_options(params.options)
         edit.new_text = sqlparse.format(text, **options)
         response.append(edit)
+
+    def _get_scriptparseinfo(self, owner_uri, create_if_not_exists=False) -> ScriptParseInfo:
+        with self._script_map_lock:
+            if owner_uri in self._script_map:
+                return self._script_map[owner_uri]
+            if create_if_not_exists:
+                scriptparseinfo = ScriptParseInfo()
+                self._script_map[owner_uri] = scriptparseinfo
+                return scriptparseinfo
+            return None

@@ -23,8 +23,9 @@ class CompletionRefresher:
 
     refreshers = OrderedDict()
 
-    def __init__(self, server: Server):
-        self.server = server
+    def __init__(self, connection: 'psycopg2.extensions.connection'):
+        self.connection = connection
+        self.server: Server = None
         self._completer_thread: threading.Thread = None
         self._restart_refresh: threading.Event = threading.Event()
 
@@ -38,6 +39,10 @@ class CompletionRefresher:
                     has completed the refresh. The newly created completion
                     object will be passed in as an argument to each callback.
         """
+        if self.server is None:
+            # Delay server creation until on background thread
+            self.server = Server(self.connection)
+
         if self.is_refreshing():
             self._restart_refresh.set()
             return 'Auto-completion refresh restarted.'

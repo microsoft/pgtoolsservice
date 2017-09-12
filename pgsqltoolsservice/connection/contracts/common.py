@@ -32,7 +32,7 @@ class ConnectionDetails(Serializable):
         return obj
 
     def __init__(self):
-        self.options: dict = None
+        self.options: dict = {}
         self.server_name: str = None
         self.database_name: str = None
         self.user_name: str = None

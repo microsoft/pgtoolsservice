@@ -198,19 +198,39 @@ class TestLanguageService(unittest.TestCase):
 
     def test_on_connect_sends_notification(self):
         """
-        Test that the service sends an intellisense ready notification after handling an on connect notification from the connection service
+        Test that the service sends an intellisense ready notification after handling an on connect notification from the connection service.
+        This is a slightly more end-to-end test that verifies calling through to the queue layer
         """
         # If: I create a new language service
         service: LanguageService = self._init_service_with_flow_validator()
-        conn_info = ConnectionInfo('file://msuri.sql', ConnectionDetails())
+        conn_info = ConnectionInfo('file://msuri.sql',
+                                   ConnectionDetails.from_data(None, None, None, {'host': None, 'dbname': 'TEST_DBNAME', 'user': 'TEST_USER'}))
+
+        connect_result = mock.MagicMock()
+        connect_result.error_message = None
+        self.mock_connection_service.get_connection = mock.Mock(return_value=mock.MagicMock())
+        self.mock_connection_service.connect = mock.MagicMock(return_value=connect_result)
 
         def validate_success_notification(response: IntelliSenseReadyParams):
             self.assertEqual(response.owner_uri, conn_info.owner_uri)
 
         # When: I notify of a connection complete for a given URI
         self.flow_validator.add_expected_notification(IntelliSenseReadyParams, INTELLISENSE_READY_NOTIFICATION, validate_success_notification)
-        task: threading.Thread = service.on_connect(conn_info)
-        task.join()
+
+        refresher_mock = mock.MagicMock()
+        refresh_method_mock = mock.MagicMock()
+        refresher_mock.refresh = refresh_method_mock
+        patch_path = 'pgsqltoolsservice.language.connected_queue.CompletionRefresher'
+        with mock.patch(patch_path) as scripter_patch:
+            scripter_patch.return_value = refresher_mock
+            task: threading.Thread = service.on_connect(conn_info)
+            # And when refresh is "complete"
+            refresh_method_mock.assert_called_once()
+            callback = refresh_method_mock.call_args[0][0]
+            self.assertIsNotNone(callback)
+            callback(None)
+            # Wait for task to return
+            task.join(1)
 
         # Then:
         # an intellisense ready notification should be sent for that URI
