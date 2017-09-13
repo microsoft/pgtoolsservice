@@ -24,18 +24,25 @@ POLL_TIMEOUT = 1     # wait 1 second before checking cancelation
 INTELLISENSE_URI = 'intellisense://'
 
 
+class ConnectionContext:
+    """Context information needed to look up connections"""
+    def __init__(self, key: str, intellisense_complete: threading.Event):
+        self.key = key
+        self.intellisense_complete = intellisense_complete
+
+
 class QueuedOperation:
     """Information about an operation to be queued"""
 
-    def __init__(self, key: str, task: Callable[[PGCompleter], None], timeout_task: Callable[[None], None]):
+    def __init__(self, key: str, task: Callable[[PGCompleter], bool], timeout_task: Callable[[None], bool]):
         """
         Initializes a queued operation with a key defining the connection it maps to,
         a task to be run for a connected queue, and a timeout task. Currently the timeout
         task is just used if the queue is not yet connected
         """
         self.key = key
-        self.task: Callable[[PGCompleter], None] = task
-        self.timeout_task: Callable[[None], None] = timeout_task
+        self.task: Callable[[PGCompleter], bool] = task
+        self.timeout_task: Callable[[None], bool] = timeout_task
 
 
 class ConnectedQueue:
@@ -87,10 +94,12 @@ class ConnectedQueue:
                 operation: QueuedOperation = self.queue.get(True, POLL_TIMEOUT)
                 if self.is_canceled:
                     break
-                if not self.is_connected:
+                
+                run_timeout_task = not self.is_connected
+                if self.is_connected:
+                    run_timeout_task = operation.task(self.pgcompleter)
+                if run_timeout_task:
                     operation.timeout_task()
-                else:
-                    operation.task(self.pgcompleter)
                 
                 self.queue.task_done()
             except Empty as e:
@@ -127,7 +136,7 @@ class OperationsQueue:
         key: str = self._create_key(conn_info)
         return key in self.queue_map
 
-    def add_connection_context(self, conn_info: ConnectionInfo, overwrite=False) -> threading.Event:
+    def add_connection_context(self, conn_info: ConnectionInfo, overwrite=False) -> ConnectionContext:
         """
         Adds a connection context and returns the notification event.
         If a connection queue exists alread, will overwrite if necesary
@@ -146,7 +155,7 @@ class OperationsQueue:
             conn = self._create_connection(key, conn_info)
             # Create a new queue and return the awaitable event for intellisense to be ready
             queue = ConnectedQueue(key, conn)
-            return queue.intellisense_complete
+            return ConnectionContext(key, queue.intellisense_complete)
 
     def disconnect(self, connection_key: str):
         """
