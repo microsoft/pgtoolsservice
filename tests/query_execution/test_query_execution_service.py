@@ -654,11 +654,33 @@ class TestQueryService(unittest.TestCase):
         # is the query string to cancel the ongoing query
         self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
 
-    def test_get_query_text_from_execute_params_for_doc_statement(self):
+    def test_get_query_text_from_execute_params_for_doc_statement_cur_in_first_batch(self):
+        ''' This test actually for multiple batch and returns the query for first batch as the cursor is on the
+        first query'''
+        request = ExecuteDocumentStatementParams()
+        request.line = 3
+        request.column = 2
+        request.owner_uri = 'Test Owner Url'
+
+        self.verify_get_query_text_from_execute_params_for_doc_statement(request, 1, 0, 3, 10)
+
+    def test_get_query_text_from_execute_params_for_doc_statement_cur_in_second_batch(self):
+        ''' This test actually for multiple batch and returns the query for second batch as the cursor is on the
+        second query'''
         request = ExecuteDocumentStatementParams()
         request.line = 7
-        request.column = 17
+        request.column = 8
         request.owner_uri = 'Test Owner Url'
+
+        self.verify_get_query_text_from_execute_params_for_doc_statement(request, 6, 0, 8, 9)
+
+    def verify_get_query_text_from_execute_params_for_doc_statement(
+        self, request: ExecuteDocumentStatementParams,
+        start_line_index: int,
+        start_column_index: int,
+        end_line_index: int,
+        end_column_index: int,
+    ):
 
         query = '\r\nselect *\r\nfrom public.foo\r\nLIMIT 1000;\r\n\r\n\r\nselect  *\r\nfrom public."BasicDataTypes"\r\nLIMIT 1000'
 
@@ -676,11 +698,11 @@ class TestQueryService(unittest.TestCase):
 
         selection_data = final_call[1]
 
-        self.assertEqual(selection_data.start.line, 6)
-        self.assertEqual(selection_data.start.character, 0)
+        self.assertEqual(selection_data.start.line, start_line_index)
+        self.assertEqual(selection_data.start.character, start_column_index)
 
-        self.assertEqual(selection_data.end.line, 8)
-        self.assertEqual(selection_data.end.character, 9)
+        self.assertEqual(selection_data.end.line, end_line_index)
+        self.assertEqual(selection_data.end.character, end_column_index)
 
     def test_start_query_execution_thread_sends_true_when_show_plan_is_enabled(self):
 
@@ -695,7 +717,7 @@ class TestQueryService(unittest.TestCase):
 
         query = self.query_execution_service.get_query(request.owner_uri)
 
-        self.assertEqual('EXPLAIN ANALYZE Test Query', query.batches[0].batch_text)
+        self.assertEqual('EXPLAIN Test Query', query.batches[0].batch_text)
 
     def test_execution_error_rolls_back_transaction(self):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""

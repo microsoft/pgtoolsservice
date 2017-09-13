@@ -20,7 +20,7 @@ class ExecutionState(Enum):
 class Query:
     """Object representing a single query, consisting of one or more batches"""
 
-    EXPLAIN_ANALYZE_QUERY_TEMPLATE = 'EXPLAIN ANALYZE {0}'
+    EXPLAIN_QUERY_TEMPLATE = 'EXPLAIN {0}'
 
     def __init__(self, owner_uri: str, query_text: str, show_plan: bool = False) -> None:
         self.execution_state: ExecutionState = ExecutionState.NOT_STARTED
@@ -39,7 +39,7 @@ class Query:
             if not formatted_text or formatted_text == ';':
                 continue
             # Create and save the batch
-            formatted_text = Query.EXPLAIN_ANALYZE_QUERY_TEMPLATE.format(formatted_text) if show_plan else formatted_text
+            formatted_text = Query.EXPLAIN_QUERY_TEMPLATE.format(formatted_text) if show_plan else formatted_text
 
             batch = Batch(formatted_text, len(self.batches), selection_data[index])
             self.batches.append(batch)

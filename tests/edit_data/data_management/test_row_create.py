@@ -59,7 +59,7 @@ class TestRowCreate(unittest.TestCase):
         self.assertEqual(edit_row.id, self._row_id)
         self.assertEqual(edit_row.state, EditRowState.DIRTY_INSERT)
 
-        self.assertTrue(edit_row.cells[0].display_value is '')
+        self.assertTrue(edit_row.cells[0].display_value is None)
 
     def test_get_script(self):
         column_index = 0
@@ -79,7 +79,7 @@ class TestRowCreate(unittest.TestCase):
         self._row_create.apply_changes()
 
         self.assertTrue(len(self._result_set.rows) is 3)
-        self.assertTrue(self._result_set.rows[2][0] is '')
+        self.assertTrue(self._result_set.rows[2][0] is None)
 
 
 if __name__ == '__main__':

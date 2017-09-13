@@ -342,7 +342,11 @@ class QueryExecutionService(object):
             selection_data_list: List[SelectionData] = compute_batches(sqlparse.split(query), query)
 
             for selection_data in selection_data_list:
-                if selection_data.start_line <= params.line and selection_data.end_line >= params.line:
+                if(selection_data.start_line <= params.line and
+                    selection_data.end_line >= params.line and
+                    selection_data.start_column <= params.column and
+                        selection_data.end_column >= params.column):
+
                     return workspace_service.get_text(params.owner_uri, selection_data.to_range())
 
             return ''
