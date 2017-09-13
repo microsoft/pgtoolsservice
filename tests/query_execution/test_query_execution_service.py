@@ -23,7 +23,8 @@ from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMe
 from pgsqltoolsservice.query_execution.contracts import (
     DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
-    QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest)
+    QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams
+)
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
@@ -652,6 +653,49 @@ class TestQueryService(unittest.TestCase):
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
         self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+
+    def test_get_query_text_from_execute_params_for_doc_statement(self):
+        request = ExecuteDocumentStatementParams()
+        request.line = 7
+        request.column = 17
+        request.owner_uri = 'Test Owner Url'
+
+        query = '\r\nselect *\r\nfrom public.foo\r\nLIMIT 1000;\r\n\r\n\r\nselect  *\r\nfrom public."BasicDataTypes"\r\nLIMIT 1000'
+
+        mock_workspace_service = mock.Mock()
+        mock_workspace_service.get_text = mock.Mock(return_value=query)
+        self.query_execution_service._service_provider = {constants.WORKSPACE_SERVICE_NAME: mock_workspace_service}
+
+        self.query_execution_service._get_query_text_from_execute_params(request)
+
+        self.assertEqual(mock_workspace_service.get_text.call_count, 2)
+
+        final_call = mock_workspace_service.get_text.call_args_list[1][0]
+
+        self.assertEquals(request.owner_uri, final_call[0])
+
+        selection_data = final_call[1]
+
+        self.assertEqual(selection_data.start.line, 6)
+        self.assertEqual(selection_data.start.character, 0)
+
+        self.assertEqual(selection_data.end.line, 8)
+        self.assertEqual(selection_data.end.character, 9)
+
+    def test_start_query_execution_thread_sends_true_when_show_plan_is_enabled(self):
+
+        request = ExecuteStringParams()
+        request.execution_plan_options = {'show_plan': True}
+        request.owner_uri = 'Test Owner Uri'
+        request.query = 'Test Query'
+
+        worker_args = ExecuteRequestWorkerArgs(request.owner_uri, self.connection, self.request_context)
+
+        self.query_execution_service._start_query_execution_thread(self.request_context, request, worker_args)
+
+        query = self.query_execution_service.get_query(request.owner_uri)
+
+        self.assertEqual('EXPLAIN ANALYZE Test Query', query.batches[0].batch_text)
 
     def test_execution_error_rolls_back_transaction(self):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""

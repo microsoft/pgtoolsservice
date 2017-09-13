@@ -9,7 +9,8 @@ from pgsqltoolsservice.query_execution.contracts.batch_notification import (
 )
 from pgsqltoolsservice.query_execution.contracts.execute_request import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase,
-    ExecuteResult, EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST
+    ExecuteResult, EXECUTE_DOCUMENT_SELECTION_REQUEST, EXECUTE_STRING_REQUEST,
+    ExecuteDocumentStatementParams, EXECUTE_DOCUMENT_STATEMENT_REQUEST
 )
 from pgsqltoolsservice.query_execution.contracts.query_request import (
     SubsetParams, SUBSET_REQUEST, QueryCancelParams, CANCEL_REQUEST,
@@ -35,6 +36,9 @@ from pgsqltoolsservice.query_execution.contracts.common import (
 from pgsqltoolsservice.query_execution.contracts.simple_execute_request import (
     SimpleExecuteRequest, SIMPLE_EXECUTE_REQUEST, SimpleExecuteResponse
 )
+from pgsqltoolsservice.query_execution.contracts.query_execution_plan_request import (
+    QUERY_EXECUTION_PLAN_REQUEST, QueryExecutionPlanRequest
+)
 
 __all__ = [
     'BatchNotificationParams',
@@ -47,7 +51,8 @@ __all__ = [
     'BatchSummary', 'ResultMessage', 'SelectionData', 'DbColumn',
     'DbCellValue', 'ResultSetSubset', 'SubsetResult', 'SpecialAction', 'SubsetParams',
     'SUBSET_REQUEST', 'CANCEL_REQUEST', 'QueryCancelResult', 'QueryCancelParams',
-    'QueryDisposeParams', 'DISPOSE_REQUEST', 'SIMPLE_EXECUTE_REQUEST', 'SimpleExecuteRequest',
-    'SimpleExecuteResponse'
+    'QueryDisposeParams', 'QUERY_EXECUTION_PLAN_REQUEST', 'QueryExecutionPlanRequest', 'DISPOSE_REQUEST',
+    'SIMPLE_EXECUTE_REQUEST', 'SimpleExecuteRequest', 'SimpleExecuteResponse', 'EXECUTE_DOCUMENT_STATEMENT_REQUEST',
+    'ExecuteDocumentStatementParams'
 
 ]
