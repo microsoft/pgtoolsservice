@@ -43,6 +43,19 @@ EXECUTE_DOCUMENT_SELECTION_REQUEST = IncomingMessageConfiguration(
 )
 
 
+class ExecuteDocumentStatementParams(ExecuteRequestParamsBase):
+    def __init__(self):
+        super().__init__()
+        self.line: int = None
+        self.column: int = None
+
+
+EXECUTE_DOCUMENT_STATEMENT_REQUEST = IncomingMessageConfiguration(
+    'query/executedocumentstatement',
+    ExecuteDocumentStatementParams
+)
+
+
 class ExecuteResult:
     """
     Parameters for the query execute result. Reserved for future use
