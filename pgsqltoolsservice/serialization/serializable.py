@@ -58,7 +58,7 @@ def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwarg
 
         value = dictionary[attr]
 
-        if pythonic_attr in kwargs:
+        if pythonic_attr in kwargs and value is not None:
             # Caller provided a class to deserialize to. Use that
             if isinstance(value, list):
                 # Value is a list. Use a list comprehension to deserialize all instances
@@ -71,7 +71,7 @@ def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwarg
                 deserialized_value = kwargs[pythonic_attr].from_dict(dictionary[attr])
         else:
             # Object can be assigned directly
-            deserialized_value = dictionary[attr]
+            deserialized_value = value
 
         # Store the value in the instance of the object
         setattr(instance, pythonic_attr, deserialized_value)

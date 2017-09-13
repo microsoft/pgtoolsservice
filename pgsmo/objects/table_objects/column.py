@@ -189,6 +189,12 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
+    @property
+    def extended_vars(self):
+        return {
+            'tid': self.parent.oid
+        }
+
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {

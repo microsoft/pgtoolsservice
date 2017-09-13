@@ -16,6 +16,34 @@ class TestRule(NodeObjectTestBase, unittest.TestCase):
     }
 
     @property
+    def full_properties(self):
+        return {
+            "view": "view",
+            "event": "event",
+            "condition": "condition",
+            "do_instead": "do_instead",
+            "statements": "statements",
+            "comment": "comment",
+            "display_comments": "display_comments",
+            "rid": "rid",
+            "rulename": "rulename"
+        }
+
+    @property
+    def property_query(self):
+        return {
+            "view": "test",
+            "event": "test",
+            "condition": "test",
+            "do_instead": "test",
+            "statements": "test",
+            "comment": "test",
+            "display_comments": "test",
+            "rid": "test",
+            "rulename": "test"
+        }
+
+    @property
     def class_for_test(self):
         return Rule
 
