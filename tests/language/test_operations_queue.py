@@ -5,7 +5,7 @@
 
 
 import threading    # noqa
-from typing import List, Tuple, Optional
+from typing import Callable, List, Optional, Tuple
 import unittest
 from unittest import mock
 
@@ -60,16 +60,6 @@ class TestOperationsQueue(unittest.TestCase):
         operations_queue.stop()
         operations_queue._operations_consumer.join(2)
         self.assertFalse(operations_queue._operations_consumer.isAlive())
-
-    def test_add_none_operation_throws(self):
-        operations_queue = OperationsQueue(self.mock_service_provider)
-        with self.assertRaises(ValueError):
-            operations_queue.add_operation(None)
-
-    def test_add_operation_without_context_throws(self):
-        operations_queue = OperationsQueue(self.mock_service_provider)
-        with self.assertRaises(KeyError):
-            operations_queue.add_operation(QueuedOperation('something', None, None))
 
     def test_add_context_creates_new_context(self):
         # Given a connection will be created on a connect request
@@ -134,28 +124,24 @@ class TestOperationsQueue(unittest.TestCase):
             disconnect_mock: mock.MagicMock = self.mock_connection_service.disconnect
             disconnect_mock.assert_called_once()
 
+    def test_add_none_operation_throws(self):
+        operations_queue = OperationsQueue(self.mock_service_provider)
+        with self.assertRaises(ValueError):
+            operations_queue.add_operation(None)
+
+    def test_add_operation_without_context_throws(self):
+        operations_queue = OperationsQueue(self.mock_service_provider)
+        with self.assertRaises(KeyError):
+            operations_queue.add_operation(QueuedOperation('something', None, None))
+
 
 class TestConnectionContextQueue(unittest.TestCase):
     """Methods for testing the OperationsQueue"""
 
     def setUp(self):
-        """Constructor"""
-        self.default_connection_key = 'server_db_user'
-        self.mock_connection_service = ConnectionService()
-        self.mock_server = JSONRPCServer(None, None)
-        self.mock_service_provider = ServiceProvider(self.mock_server, {}, None)
-        self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
-        self.mock_service_provider._is_initialized = True
-
         # Create connection information for use in the tests
-        self.connection_details = ConnectionDetails.from_data({})
-        self.connection_details.server_name = 'test_host'
-        self.connection_details.database_name = 'test_db'
-        self.connection_details.user_name = 'user'
         self.expected_context_key = 'test_host|test_db|user'
         self.expected_connection_uri = INTELLISENSE_URI + self.expected_context_key
-        self.test_uri = 'test_uri'
-        self.connection_info = ConnectionInfo(self.test_uri, self.connection_details)
 
         # Create mock CompletionRefresher to avoid calls to create separate thread
         self.refresher_mock = mock.MagicMock()
@@ -163,6 +149,32 @@ class TestConnectionContextQueue(unittest.TestCase):
         self.refresher_mock.refresh = self.refresh_method_mock
 
     def test_init(self):
-        operations_queue = OperationsQueue(self.mock_service_provider)
-        self.assertFalse(operations_queue.stop_requested)
-        self.assertTrue(operations_queue.queue.empty)
+        connection_context = ConnectionContext(self.expected_context_key)
+        self.assertEqual(connection_context.key, self.expected_context_key)
+        self.assertFalse(connection_context.intellisense_complete.is_set())
+        self.assertIsNone(connection_context.pgcompleter)
+        self.assertFalse(connection_context.is_connected)
+
+    def test_on_completions_refreshed(self):
+        connection = mock.Mock()
+        def do_test():
+            # When I call refresh_metadata and refresh completes
+            connection_context = ConnectionContext(self.expected_context_key)
+            connection_context.refresh_metadata(connection)
+            completer = mock.Mock()
+            self._complete_refresh(completer)
+            # Then the completer object should be saved and an event raised
+            self.assertEqual(connection_context.pgcompleter, completer)
+            self.assertTrue(connection_context.is_connected)
+            self.assertTrue(connection_context.intellisense_complete.is_set())
+        self._run_with_mock_refresher(do_test)
+
+    def _complete_refresh(self, completer):
+        callback = self.refresh_method_mock.call_args[0][0]
+        self.assertIsNotNone(callback)
+        callback(completer)
+
+    def _run_with_mock_refresher(self, test: Callable[[None], None]):
+        with mock.patch(COMPLETIONREFRESHER_PATH_PATH) as refresher_patch:
+            refresher_patch.return_value = self.refresher_mock
+            test()
