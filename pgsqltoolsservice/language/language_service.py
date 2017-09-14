@@ -29,7 +29,7 @@ from pgsqltoolsservice.language.contracts import (
     TextEdit, FormattingOptions
 )
 from pgsqltoolsservice.language.completion import PGCompleter
-from pgsqltoolsservice.language.connected_queue import ConnectionContext, OperationsQueue, QueuedOperation
+from pgsqltoolsservice.language.operations_queue import ConnectionContext, OperationsQueue, QueuedOperation
 from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
 from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo
 from pgsqltoolsservice.language.text import TextUtilities
@@ -86,6 +86,7 @@ class LanguageService:
 
         # Register internal service notification handlers
         self._connection_service.register_on_connect_callback(self.on_connect)
+        self._service_provider.server.add_shutdown_handler(self._handle_shutdown)
 
     # REQUEST HANDLERS #####################################################
     def handle_completion_request(self, request_context: RequestContext, params: TextDocumentPosition) -> None:
@@ -210,6 +211,11 @@ class LanguageService:
         return self._workspace_service.configuration.sql.intellisense.enable_lowercase_suggestions
 
     # METHODS ##############################################################
+    def _handle_shutdown(self) -> None:
+        """Stop the operations queue on shutdown"""
+        if self._operations_queue is not None:
+            self._operations_queue.stop()
+
     def should_skip_intellisense(self, uri: str) -> bool:
         return not self._workspace_service.configuration.sql.intellisense.enable_intellisense or not self.is_pgsql_uri(uri)
 
@@ -282,7 +288,11 @@ class LanguageService:
         return True
 
     def _send_connected_completions(self, request_context: RequestContext, scriptparseinfo: ScriptParseInfo, 
-                                    params: TextDocumentPosition, completer: PGCompleter) -> bool:
+                                    params: TextDocumentPosition, context: ConnectionContext) -> bool:
+        if not context or not context.is_connected:
+            return False
+        # Else use the completer to query for completions
+        completer: PGCompleter = context.pgcompleter
         completions: List[Completion] = completer.get_completions(scriptparseinfo.document, None)
         if completions:
             response = [LanguageService._to_completion_item(completion, scriptparseinfo, params) for completion in completions]

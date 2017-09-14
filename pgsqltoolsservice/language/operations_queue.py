@@ -26,9 +26,22 @@ INTELLISENSE_URI = 'intellisense://'
 
 class ConnectionContext:
     """Context information needed to look up connections"""
-    def __init__(self, key: str, intellisense_complete: threading.Event):
+    def __init__(self, key: str):
         self.key = key
-        self.intellisense_complete = intellisense_complete
+        self.intellisense_complete: threading.Event = threading.Event()
+        self.pgcompleter: PGCompleter = None
+        self.is_connected: bool = False
+
+    def refresh_metadata(self, connection: 'psycopg2.extensions.connection'):
+        # Start metadata refresh so operations can be completed
+        completion_refresher = CompletionRefresher(connection)
+        completion_refresher.refresh(self._on_completions_refreshed)
+
+    # IMPLEMENTATION DETAILS ###############################################
+    def _on_completions_refreshed(self, new_completer: PGCompleter):
+        self.pgcompleter = new_completer
+        self.is_connected = True
+        self.intellisense_complete.set()
 
 
 class QueuedOperation:
@@ -43,90 +56,58 @@ class QueuedOperation:
         self.key = key
         self.task: Callable[[PGCompleter], bool] = task
         self.timeout_task: Callable[[None], bool] = timeout_task
-
-
-class ConnectedQueue:
-    """A Queue for a single connection"""
-
-    def __init__(self, connection_key: str, connection: 'psycopg2.extensions.connection'):
-        # Define core params
-        self.connection_key = connection_key
-        self.pgcompleter: PGCompleter = None
-        self.is_connected: bool = False
-        self.queue: Queue = Queue()
-        self.is_canceled = False
-        self.intellisense_complete: threading.Event = threading.Event()
-        # Start metadata refresh so operations can be completed
-        completion_refresher = CompletionRefresher(connection)
-        completion_refresher.refresh(self._on_completions_refreshed)
-        # Start the thread to process work
-        thread = threading.Thread(target=self._process_queue)
-        thread.daemon = True
-        thread.start()
-
-    # PUBLIC METHODS ###############################################
-    def add_operation(self, operation: QueuedOperation) -> None:
-        # TODO should we wait for a fixed time?
-        if self.is_canceled:
-            raise RuntimeError('Queue has been canceled, no more operations should be send to it')   # TODO Localize 
-        self.queue.put(operation)
-
-    def cancel(self):
-        """
-        Cancels queue processing. Next time through the while loop the processor will break and the thread
-        will complete
-        """
-        self.is_canceled = True
-
-    # IMPLEMENTATION DETAILS ###############################################
-    def _on_completions_refreshed(self, new_completer: PGCompleter):
-        self.pgcompleter = new_completer
-        self.is_connected = True
-        self.intellisense_complete.set()
-
-    def _process_queue(self):
-        """
-        Threaded operation that runs to process the queue.
-        Thread completes on cancelation
-        """
-        while not self.is_canceled:
-            try:
-                operation: QueuedOperation = self.queue.get(True, POLL_TIMEOUT)
-                if self.is_canceled:
-                    break
-                
-                run_timeout_task = not self.is_connected
-                if self.is_connected:
-                    run_timeout_task = operation.task(self.pgcompleter)
-                if run_timeout_task:
-                    operation.timeout_task()
-                
-                self.queue.task_done()
-            except Empty as e:
-                # Nothing to process in the timeout period
-                pass
-
+        self.context: ConnectionContext = None
 
 class OperationsQueue:
     """
     Handles requests to queue operations that require a connection. Currently this works
     by having a single queue per connection.
     """
+    # CONSTANTS ############################################################
+    OPERATIONS_THREAD_NAME = u"Language_Service_Operations_Thread"
 
     def __init__(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
-        self.lock: threading.Lock = threading.Lock()
-        self.queue_map: Dict[str, ConnectedQueue] = {}
+        self.lock: threading.RLock = threading.RLock()
+        self.queue: Queue = Queue()
+        self._context_map: Dict[str, ConnectionContext] = {}
+        self.stop_requested = False
+        # TODO consider thread pool for multiple messages? Or full
+        # Process queue using multi-threading
+        self._operations_consumer: threading.Thread = None
 
     # PUBLIC METHODS ###############################################
+    def start(self):
+        """
+        Starts the thread that processes operations
+        """
+        self._log_info('Language Service Operations Queue starting...')
+        self._operations_consumer = threading.Thread(
+            target=self._process_operations,
+            name=self.OPERATIONS_THREAD_NAME
+        )
+        self._operations_consumer.daemon = True
+        self._operations_consumer.start()
+
+    def stop(self):
+        self.stop_requested = True
+        # Enqueue None to optimistically unblock output thread so it can check for the cancellation flag
+        self.queue.put(None)
+        self._log_info('Language Service Operations Queue stopping...')
+
     def add_operation(self, operation: QueuedOperation):
         """
         Adds an operation to the correct queue. Raises KeyError if no queue exists for this connection
         """
+        if not operation:
+            # Must throw in this case, as a None operation is used to close the
+            # queue
+            raise ValueError('Operation must not be None')
         with self.lock:
-            # Get the queue or throw KeyError if not found
-            queue: ConnectedQueue = self.queue_map[operation.key]
-            queue.add_operation(operation)
+            # Get the connection context or throw KeyError if not found
+            context: ConnectionContext = self._context_map[operation.key]
+            operation.context = context
+            self.queue.put(operation)
 
     def has_connection_context(self, conn_info: ConnectionInfo) -> bool:
         """
@@ -134,7 +115,7 @@ class OperationsQueue:
         Intentional does not lock as this is intended for quick lookup
         """
         key: str = self._create_key(conn_info)
-        return key in self.queue_map
+        return key in self._context_map
 
     def add_connection_context(self, conn_info: ConnectionInfo, overwrite=False) -> ConnectionContext:
         """
@@ -143,19 +124,19 @@ class OperationsQueue:
         """
         with self.lock:
             key: str = self._create_key(conn_info)
-            queue: ConnectedQueue = self.queue_map.get(key)
-            if queue:
+            context: ConnectionContext = self._context_map.get(key)
+            if context:
                 if overwrite:
-                    queue.cancel()
-                    self.queue_map.pop(key, None)
+                    self.disconnect(key)
                 else:
                     # Notify ready and return immediately, the queue exists
-                    return queue.intellisense_complete
-            # Connection is required
+                    return context.intellisense_complete
+            # Create the context and start refresh
+            context = ConnectionContext(key)
             conn = self._create_connection(key, conn_info)
-            # Create a new queue and return the awaitable event for intellisense to be ready
-            queue = ConnectedQueue(key, conn)
-            return ConnectionContext(key, queue.intellisense_complete)
+            context.refresh_metadata(conn)
+            self._context_map[key] = context
+            return context
 
     def disconnect(self, connection_key: str):
         """
@@ -163,9 +144,8 @@ class OperationsQueue:
         """
         with self.lock:
             # Pop the key from the queue as it's no longer needed
-            queue: ConnectedQueue = self.queue_map.pop(connection_key, None)
-            if queue:
-                queue.cancel()
+            context: ConnectionContext = self._context_map.pop(connection_key, None)
+            if context:
                 key_uri = INTELLISENSE_URI + connection_key
                 try:
                     self._connection_service.disconnect(key_uri, ConnectionType.INTELLISENSE)
@@ -174,7 +154,7 @@ class OperationsQueue:
 
     # IMPLEMENTATION DETAILS ###############################################
     def _create_key(self, conn_info: ConnectionInfo) -> str:
-        return '{0}_{1}_{2}'.format(conn_info.details.server_name, conn_info.details.database_name, conn_info.details.user_name)
+        return '{0}|{1}|{2}'.format(conn_info.details.server_name, conn_info.details.database_name, conn_info.details.user_name)
 
     def _create_connection(self, connection_key: str, conn_info: ConnectionInfo) -> Optional[psycopg2.extensions.connection]:
         conn_service = self._connection_service
@@ -186,6 +166,32 @@ class OperationsQueue:
 
         connection = conn_service.get_connection(key_uri, ConnectionType.INTELLISENSE)
         return connection
+
+    def _process_operations(self):
+        """
+        Threaded operation that runs to process the queue.
+        Thread completes on cancelation
+        """
+        while not self.stop_requested:
+            try:
+                # Block until queue contains a message to send
+                operation: QueuedOperation = self.queue.get()
+                if operation is not None: 
+                    # Try to process the task, falling back to the timeout
+                    # task if disconnected or regular task failed
+                    is_connected = operation.context is not None and operation.context.is_connected
+                    run_timeout_task = not is_connected
+                    if is_connected:
+                        run_timeout_task = operation.task(operation.context)
+                    if run_timeout_task:
+                        operation.timeout_task()
+            except ValueError as error:
+                # Stream is closed, break out of the loop
+                self._log_thread_exception(error)
+                break
+            except Exception as error:
+                # Catch generic exceptions without breaking out of loop
+                self._log_thread_exception(error)
 
     @property
     def _connection_service(self) -> ConnectionService:
@@ -200,3 +206,10 @@ class OperationsQueue:
         logger = self._service_provider.logger
         if logger is not None:
             logger.info(message)
+
+    def _log_thread_exception(self, ex):
+        """
+        Logs an exception if the logger is defined
+        :param ex: Exception to log
+        """
+        self._log_exception('Thread {0} encountered exception {1}'.format(threading.currentThread(), ex))

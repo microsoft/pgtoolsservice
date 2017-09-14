@@ -23,19 +23,43 @@ class ConnectionDetails(Serializable):
     connection request
     """
     @classmethod
-    def from_data(cls, server_name: str, database_name: str, user_name: str, opts: dict):
+    def from_data(cls, opts: dict):
         obj = cls()
-        obj.user_name = user_name
-        obj.database_name = database_name
-        obj.server_name = server_name
         obj.options = opts
         return obj
 
     def __init__(self):
         self.options: dict = {}
-        self.server_name: str = None
-        self.database_name: str = None
-        self.user_name: str = None
+
+    @property
+    def server_name(self) -> str:
+        if not self.options:
+            return None
+        return self.options.get('host', None)
+
+    @server_name.setter
+    def server_name(self, value):
+        self.options['host'] = value
+
+    @property
+    def database_name(self) -> str:
+        if not self.options:
+            return None
+        return self.options.get('dbname', None)
+
+    @database_name.setter
+    def database_name(self, value):
+        self.options['dbname'] = value
+
+    @property
+    def user_name(self) -> str:
+        if not self.options:
+            return None
+        return self.options.get('user', None)
+
+    @user_name.setter
+    def user_name(self, value):
+        self.options['user'] = value
 
 
 class ConnectionType(enum.Enum):

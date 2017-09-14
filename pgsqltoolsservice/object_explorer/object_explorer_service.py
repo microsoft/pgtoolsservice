@@ -222,12 +222,7 @@ class ObjectExplorerService(object):
 
         doptions = session.connection_details.options.copy()
         doptions['dbname'] = database_name
-        conn_details = ConnectionDetails.from_data(
-            session.connection_details.server_name,
-            None,
-            session.connection_details.user_name,
-            doptions
-        )
+        conn_details = ConnectionDetails.from_data(doptions)
 
         key_uri = session.id + database_name
         connect_request = ConnectRequestParams(conn_details, key_uri, ConnectionType.OBJECT_EXLPORER)

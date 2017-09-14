@@ -120,7 +120,12 @@ class TestConnectionService(unittest.TestCase):
         psycopg2.connect = Mock(return_value=mock_connection)
 
         # Insert a ConnectionInfo object into the connection service's map
-        old_connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {'abc': 123})
+        old_connection_details = ConnectionDetails.from_data({
+            'host': 'myserver',
+            'dbname': 'postgres',
+            'user': 'postgres',
+            'abc': 123
+        })
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type, mock_connection)
         self.connection_service.owner_to_connection_map[connection_uri] = old_connection_info
@@ -130,10 +135,10 @@ class TestConnectionService(unittest.TestCase):
             'ownerUri': connection_uri,
             'type': connection_type,
             'connection': {
-                'serverName': 'myserver',
-                'databaseName': 'postgres',
-                'userName': 'postgres',
                 'options': {
+                    'host': 'myserver',
+                    'dbname': 'postgres',
+                    'user': 'postgres',
                     'abc': 234
                 }
             }
@@ -156,7 +161,12 @@ class TestConnectionService(unittest.TestCase):
         psycopg2.connect = Mock(return_value=mock_connection)
 
         # Insert a ConnectionInfo object into the connection service's map
-        old_connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {'abc': 123})
+        old_connection_details = ConnectionDetails.from_data({
+            'host': 'myserver',
+            'dbname': 'postgres',
+            'user': 'postgres',
+            'abc': 123
+        })
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type, mock_connection)
         self.connection_service.owner_to_connection_map[connection_uri] = old_connection_info
@@ -166,9 +176,6 @@ class TestConnectionService(unittest.TestCase):
             'ownerUri': connection_uri,
             'type': connection_type,
             'connection': {
-                'serverName': 'myserver',
-                'databaseName': 'postgres',
-                'userName': 'postgres',
                 'options': old_connection_details.options
             }
         })
@@ -264,7 +271,7 @@ class TestConnectionService(unittest.TestCase):
         })
 
         # Insert a ConnectionInfo object into the connection service's map
-        old_connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {'abc': 123})
+        old_connection_details = ConnectionDetails.from_data({'abc': 123})
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type_1, mock_connection_1)
         old_connection_info.add_connection(connection_type_2, mock_connection_2)
@@ -294,7 +301,7 @@ class TestConnectionService(unittest.TestCase):
         })
 
         # Insert a ConnectionInfo object into the connection service's map
-        old_connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {'abc': 123})
+        old_connection_details = ConnectionDetails.from_data({'abc': 123})
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type_1, mock_connection_1)
         old_connection_info.add_connection(connection_type_2, mock_connection_2)
@@ -318,7 +325,7 @@ class TestConnectionService(unittest.TestCase):
         })
 
         # Insert a ConnectionInfo object into the connection service's map
-        old_connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {'abc': 123})
+        old_connection_details = ConnectionDetails.from_data({'abc': 123})
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type_1, mock_connection_1)
         self.connection_service.owner_to_connection_map[connection_uri] = old_connection_info
@@ -400,7 +407,7 @@ class TestConnectionService(unittest.TestCase):
         mock_request_context = utils.MockRequestContext()
 
         # Insert a ConnectionInfo object into the connection service's map
-        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
@@ -426,7 +433,7 @@ class TestConnectionService(unittest.TestCase):
         psycopg2.connect = Mock(return_value=mock_connection)
 
         # Insert a ConnectionInfo object into the connection service's map
-        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
@@ -449,8 +456,7 @@ class TestConnectionService(unittest.TestCase):
         psycopg2.connect = Mock(return_value=mock_connection)
 
         # Insert a ConnectionInfo object into the connection service's map
-        connection_details = ConnectionDetails.from_data(
-            'myserver', 'postgres', 'postgres', {})
+        connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
@@ -497,8 +503,7 @@ class TestConnectionService(unittest.TestCase):
         mock_request_context = utils.MockRequestContext()
 
         # Insert a ConnectionInfo object into the connection service's map
-        connection_details = ConnectionDetails.from_data(
-            'myserver', 'postgres', 'postgres', {})
+        connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
@@ -525,8 +530,7 @@ class TestConnectionService(unittest.TestCase):
             'user': user
         })
         connection_type = ConnectionType.EDIT
-        connection_details = ConnectionDetails.from_data(
-            server_name=server_name, database_name=db_name, user_name=user, opts={})
+        connection_details = ConnectionDetails.from_data(opts={})
         owner_uri = 'test_uri'
         connection_info = ConnectionInfo(owner_uri, connection_details)
         connection_info._connection_map = {connection_type: mock_connection}
@@ -608,7 +612,7 @@ class TestConnectionService(unittest.TestCase):
         connection_uri = 'someuri'
 
         # Insert a ConnectionInfo object into the connection service's map
-        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 

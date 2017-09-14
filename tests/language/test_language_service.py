@@ -204,7 +204,7 @@ class TestLanguageService(unittest.TestCase):
         # If: I create a new language service
         service: LanguageService = self._init_service_with_flow_validator()
         conn_info = ConnectionInfo('file://msuri.sql',
-                                   ConnectionDetails.from_data(None, None, None, {'host': None, 'dbname': 'TEST_DBNAME', 'user': 'TEST_USER'}))
+                                   ConnectionDetails.from_data({'host': None, 'dbname': 'TEST_DBNAME', 'user': 'TEST_USER'}))
 
         connect_result = mock.MagicMock()
         connect_result.error_message = None
@@ -220,9 +220,9 @@ class TestLanguageService(unittest.TestCase):
         refresher_mock = mock.MagicMock()
         refresh_method_mock = mock.MagicMock()
         refresher_mock.refresh = refresh_method_mock
-        patch_path = 'pgsqltoolsservice.language.connected_queue.CompletionRefresher'
-        with mock.patch(patch_path) as scripter_patch:
-            scripter_patch.return_value = refresher_mock
+        patch_path = 'pgsqltoolsservice.language.operations_queue.CompletionRefresher'
+        with mock.patch(patch_path) as refresher_patch:
+            refresher_patch.return_value = refresher_mock
             task: threading.Thread = service.on_connect(conn_info)
             # And when refresh is "complete"
             refresh_method_mock.assert_called_once()
@@ -230,7 +230,7 @@ class TestLanguageService(unittest.TestCase):
             self.assertIsNotNone(callback)
             callback(None)
             # Wait for task to return
-            task.join(1)
+            task.join()
 
         # Then:
         # an intellisense ready notification should be sent for that URI
