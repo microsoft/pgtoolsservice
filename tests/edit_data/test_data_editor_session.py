@@ -237,7 +237,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self.assertEqual(len(edit_rows), 1)
         self.assertEqual(edit_row, edit_rows[0])
-        edit_row.get_edit_row.assassert_called_once()
+        edit_row.get_edit_row.assert_called_once()
 
     def test_commit_when_its_a_new_row_thats_being_deleted(self):
         rows = []

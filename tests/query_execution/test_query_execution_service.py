@@ -700,6 +700,18 @@ class TestQueryService(unittest.TestCase):
 
         self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 40, 1, 36, query)
 
+    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_first_line_second_batch(self):
+        ''' Multiple batch in Different lines test with cursor on 2nd batch in first row, returns the query for second batch '''
+        request = ExecuteDocumentStatementParams()
+        request.line = 0
+        request.column = 42
+        request.owner_uri = 'Test Owner Url'
+
+        query = '''select * from public.foobar LIMIT 1000; select *
+         from public.foo LIMIT 1000;'''
+
+        self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 40, 1, 36, query)
+
     def verify_get_query_text_from_execute_params_for_doc_statement(
         self, request: ExecuteDocumentStatementParams,
         start_line_index: int,

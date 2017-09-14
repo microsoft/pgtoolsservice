@@ -341,20 +341,12 @@ class QueryExecutionService(object):
             query = workspace_service.get_text(params.owner_uri, None)
             selection_data_list: List[SelectionData] = compute_batches(sqlparse.split(query), query)
 
-            # First loop to check if the all the batches are in same line
-            # then check their column position
             for selection_data in selection_data_list:
-                if(selection_data.start_line is params.line and
-                    selection_data.end_line is params.line and
-                    selection_data.start_column <= params.column and
-                        selection_data.end_column >= params.column):
-                        return workspace_service.get_text(params.owner_uri, selection_data.to_range())
-
-            # If the first one doesnt find the batch then just check the line position
-            for selection_data in selection_data_list:
-                if(selection_data.start_line <= params.line and
-                        selection_data.end_line >= params.line):
-                        return workspace_service.get_text(params.owner_uri, selection_data.to_range())
+                if selection_data.start_line <= params.line and selection_data.end_line >= params.line:
+                    if (selection_data.end_line == params.line and selection_data.end_column < params.column or
+                            selection_data.start_line == params.line and selection_data.start_column > params.column):
+                        continue
+                    return workspace_service.get_text(params.owner_uri, selection_data.to_range())
 
             return ''
 
