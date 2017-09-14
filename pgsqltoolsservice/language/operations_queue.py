@@ -4,18 +4,14 @@
 # --------------------------------------------------------------------------------------------
 
 """A module that handles queueing """
-import functools
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional   # noqa
 import threading
-from queue import Queue, Empty
+from queue import Queue
 import psycopg2
 
 from pgsqltoolsservice.hosting import ServiceProvider
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
-from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
-from pgsqltoolsservice.language.contracts import (
-    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams
-)
+from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionType
 from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
 import pgsqltoolsservice.utils as utils
@@ -57,6 +53,7 @@ class QueuedOperation:
         self.task: Callable[[PGCompleter], bool] = task
         self.timeout_task: Callable[[None], bool] = timeout_task
         self.context: ConnectionContext = None
+
 
 class OperationsQueue:
     """
@@ -176,7 +173,7 @@ class OperationsQueue:
             try:
                 # Block until queue contains a message to send
                 operation: QueuedOperation = self.queue.get()
-                if operation is not None: 
+                if operation is not None:
                     # Try to process the task, falling back to the timeout
                     # task if disconnected or regular task failed
                     is_connected = operation.context is not None and operation.context.is_connected
@@ -195,7 +192,7 @@ class OperationsQueue:
 
     @property
     def _connection_service(self) -> ConnectionService:
-        return  self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        return self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
 
     def _log_exception(self, message: str) -> None:
         logger = self._service_provider.logger

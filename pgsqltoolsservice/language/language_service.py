@@ -28,7 +28,7 @@ from pgsqltoolsservice.language.contracts import (
     DOCUMENT_RANGE_FORMATTING_REQUEST, DocumentRangeFormattingParams,
     TextEdit, FormattingOptions
 )
-from pgsqltoolsservice.language.completion import PGCompleter
+from pgsqltoolsservice.language.completion import PGCompleter   # noqa
 from pgsqltoolsservice.language.operations_queue import ConnectionContext, OperationsQueue, QueuedOperation
 from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
 from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo
@@ -51,6 +51,7 @@ DISPLAY_META_MAP: Dict[str, CompletionItemKind] = {
     'table alias': CompletionItemKind.File,
     'view': CompletionItemKind.File
 }
+
 
 class LanguageService:
     """
@@ -111,7 +112,7 @@ class LanguageService:
         if not scriptparseinfo or not scriptparseinfo.can_queue():
             self._send_default_completions(request_context, script_file, params)
         else:
-            text: str = script_file.get_text_in_range(Range.from_data(0,0, params.position.start, params.position.end))
+            text: str = script_file.get_text_in_range(Range.from_data(0, 0, params.position.start, params.position.end))
             scriptparseinfo.document = Document(text, len(text))
             operation = QueuedOperation(scriptparseinfo.connection_key,
                                         functools.partial(self._send_connected_completions, request_context, scriptparseinfo, params),
@@ -287,7 +288,7 @@ class LanguageService:
         request_context.send_response(response)
         return True
 
-    def _send_connected_completions(self, request_context: RequestContext, scriptparseinfo: ScriptParseInfo, 
+    def _send_connected_completions(self, request_context: RequestContext, scriptparseinfo: ScriptParseInfo,
                                     params: TextDocumentPosition, context: ConnectionContext) -> bool:
         if not context or not context.is_connected:
             return False
@@ -323,5 +324,3 @@ class LanguageService:
             # Should not happen - for now, just set to 0 and assume it's a mistake
             start_col = 0
         return Position(end.line, start_col)
-
-        
