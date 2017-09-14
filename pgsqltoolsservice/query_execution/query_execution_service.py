@@ -343,6 +343,9 @@ class QueryExecutionService(object):
 
             for selection_data in selection_data_list:
                 if selection_data.start_line <= params.line and selection_data.end_line >= params.line:
+                    if (selection_data.end_line == params.line and selection_data.end_column < params.column or
+                            selection_data.start_line == params.line and selection_data.start_column > params.column):
+                        continue
                     return workspace_service.get_text(params.owner_uri, selection_data.to_range())
 
             return ''
