@@ -134,7 +134,69 @@ class TestOperationsQueue(unittest.TestCase):
         # Then I expect the operation to be added successfully to the queue
         operation: QueuedOperation = operations_queue.queue.get_nowait()
         self.assertEqual(operation.key, self.expected_context_key)
+        # ... and I expect the context to have been set automatically
+        self.assertEqual(operation.context, operations_queue._context_map[self.expected_context_key])
 
+    def test_execute_operation_ignores_none_param(self):
+        operations_queue = OperationsQueue(self.mock_service_provider)
+        try:
+            operations_queue.execute_operation(None)
+        except Exception as e:
+            self.fail(e)
+
+    def test_execute_operation_calls_timeout_if_not_connected(self):
+        # Given an operation with a non-connected context
+        task = mock.Mock()
+        timeout_task = mock.Mock()
+        operations_queue = OperationsQueue(self.mock_service_provider)
+        operation = QueuedOperation(self.expected_context_key, task, timeout_task)
+        operation.context = ConnectionContext(self.expected_context_key)
+        # When I execute the operation
+        operations_queue.execute_operation(operation)
+        # Then I expect the timeout task to be called
+        timeout_task.assert_called_once()
+        # ... and I do not expect the regular task to be called
+        task.assert_not_called()
+
+    def test_execute_operation_calls_task_if_connected(self):
+        # Given an operation with a connected context
+        context = ConnectionContext(self.expected_context_key)
+        context.is_connected = True
+        context.pgcompleter = mock.Mock()
+        task = mock.MagicMock(return_value=True)
+        timeout_task = mock.Mock()
+        operations_queue = OperationsQueue(self.mock_service_provider)
+        operation = QueuedOperation(self.expected_context_key, task, timeout_task)
+        operation.context = context
+        # When I execute the operation
+        operations_queue.execute_operation(operation)
+        # Then I expect the regular task to be called
+        task.assert_called_once()
+        actual_context = task.call_args[0][0]
+        self.assertEqual(actual_context, context)
+        # ... and I do not expect the timeout task to be called
+        timeout_task.assert_not_called()
+    
+    def test_execute_operation_calls_task_and_timouttask_if_task_fails(self):
+        # Given an operation where the task will fail (return false)
+        context = ConnectionContext(self.expected_context_key)
+        context.is_connected = True
+        context.pgcompleter = mock.Mock()
+        task = mock.MagicMock(return_value=False)
+        timeout_task = mock.Mock()
+        operations_queue = OperationsQueue(self.mock_service_provider)
+        operation = QueuedOperation(self.expected_context_key, task, timeout_task)
+        operation.context = context
+        # When I execute the operation
+        operations_queue.execute_operation(operation)
+        # Then I expect the regular task to be called
+        task.assert_called_once()
+        actual_context = task.call_args[0][0]
+        self.assertEqual(actual_context, context)
+        # ... and I also expect the timeout task to be called
+        timeout_task.assert_called_once()
+
+    # HELPER METHODS ###############################################
     def _run_with_mock_connection(self, test: Callable[[None], None]):
         connect_result = mock.MagicMock()
         connect_result.error_message = None

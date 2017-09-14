@@ -173,15 +173,7 @@ class OperationsQueue:
             try:
                 # Block until queue contains a message to send
                 operation: QueuedOperation = self.queue.get()
-                if operation is not None:
-                    # Try to process the task, falling back to the timeout
-                    # task if disconnected or regular task failed
-                    is_connected = operation.context is not None and operation.context.is_connected
-                    run_timeout_task = not is_connected
-                    if is_connected:
-                        run_timeout_task = operation.task(operation.context)
-                    if run_timeout_task:
-                        operation.timeout_task()
+                self.execute_operation(operation)
             except ValueError as error:
                 # Stream is closed, break out of the loop
                 self._log_thread_exception(error)
@@ -189,6 +181,20 @@ class OperationsQueue:
             except Exception as error:
                 # Catch generic exceptions without breaking out of loop
                 self._log_thread_exception(error)
+
+    def execute_operation(self, operation: QueuedOperation):
+        """
+        Processes an operation. Seperated for test purposes from the threaded logic
+        """
+        if operation is not None:
+            # Try to process the task, falling back to the timeout
+            # task if disconnected or regular task failed
+            is_connected = operation.context is not None and operation.context.is_connected
+            run_timeout_task = not is_connected
+            if is_connected:
+                run_timeout_task = not operation.task(operation.context)
+            if run_timeout_task:
+                operation.timeout_task()
 
     @property
     def _connection_service(self) -> ConnectionService:
