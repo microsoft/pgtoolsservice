@@ -20,11 +20,35 @@ We follow Python's [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008)
     - On Windows: `.\scripts\flake8.ps1`
 
 ## Running Tests
+The following directions can be used to run all tests:
 1. Run `pip3 install -r requirements.txt` if you haven't already
 2. `nosetests` (from the project's base directory)
     - To run with coverage:
-        1. `nosetests --with-coverage --cover-package=pgsqltoolsservice,pgsmo --cover-html`
+        1. `nosetests --with-coverage --cover-package="pgsqltoolsservice,pgsmo" --cover-html`
         2. `open cover/index.html` (to view coverage results)
+
+If you only want to run **unit tests**, replace `nosetests` in the above directions with `./scripts/test-unit.sh` or `scripts\test-unit.ps1` as needed for your platform.
+
+If you only want to run **integration tests**, replace `nosetests` in the above directions with `./scripts/test-integration.sh` or `scripts\test-integration.ps1` as needed for your platform. See the section below for more specific details on integration tests.
+
+You can also use `scripts/test-all.sh` or `scripts\test-all.ps1` to run all tests instead of using the `nosetests` command. All of these scripts will accept any arguments that you give and pass them directly to `nosetests`. 
+
+## Integration Tests
+The PostgreSQL Tools Service supports tests that connect to a real Postgres database, which we call integration tests. These can be run by calling `./scripts/test-integration.sh` or `scripts\test-integration.ps1` from the project's root directory.
+
+### Configuring Integration Tests
+Integration tests require a local config file that contains the options for connecting to your test database. The template config file is located in `tests/integration_tests/config.json.txt`. Copy this file to `tests/integration_tests/config.json` and modify values as appropriate. The template lists the most common options, but any options that can be used when establishing a psycopg2 connection can also be set in the config file.
+
+### Creating Integration Tests
+Integration tests can be inserted in line with our unit tests. The `tests.integration` module exports a `integration_test` decorator and a `get_connection` function that can be used in integration tests.
+
+To declare that a test is an integration test, mark it with the imported `@integration_test` decorator. This will automatically patch `psycopg2.connect` in your test to return the test database connection from your config file, and will let you use the `get_connection` function to retrieve that connection if you need it elsewhere.
+
+By default, any SQL commands executed during your test will be executed in a single transaction and rolled back at the end of the test. If you need more control over transactions in your test, pass `False` as the decorator's `auto_cleanup` parameter, like this: `@integration_test(False)`.
+
+Make sure your test leaves the database unmodified when it completes, or it could cause other tests to fail.
+
+You can find an integration test example in code in `tests/query_execution/test_query_execution_service.py`'s `test_query_execution_and_retrieval` method.
 
 ## Manual Testing
 1. Update your PYTHONPATH environment variable to contain the source directory. From within the project's main directory, run the following commands:
@@ -49,29 +73,6 @@ You can set configuration options in Carbon to let you attach the remote debugge
     "pgsql.enableStartupDebugging": true
 ```
 If you get "ptvsd module not found" error - ensure you have python 3 or above installed and user environment variable "path" pointing to latest python scripts. For eg. on a windows machine path value looks like "< path to current useraccount >\APPDATA\LOCAL\PROGRAMS\PYTHON\PYTHON36\SCRIPTS\".
-
-### Example Inputs
-```
-Content-Length: 106
-
-{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":4155,"capabilities":{},"trace":"off"}}Content-Length: 44
-
-{"jsonrpc":"2.0","id":0,"method":"shutdown"}Content-Length: 40
-
-{"jsonrpc":"2.0","id":0,"method":"exit"}
-```
-
-```
-Content-Length: 106
-
-{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":4155,"capabilities":{},"trace":"off"}}Content-Length: 170
-
-{"jsonrpc":"2.0","id":0,"method":"connection/connect","params":{"connectionstring":"dbname=postgres user=postgres password=password host=MAIRVINE-PC connect_timeout=10"}}Content-Length: 57
-
-{"jsonrpc":"2.0","id":0,"method":"connection/disconnect"}Content-Length: 40
-
-{"jsonrpc":"2.0","id":0,"method":"exit"}
-```
 
 ## Building Executables
 To build an executable, run the following commands starting from the main source code directory on the platform you want to build for. The output will be placed in a folder called build.
