@@ -234,7 +234,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._data_editor_session._last_row_id = 2
         current_row_id = 3
 
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(IndexError) as cm:
             self._data_editor_session.update_cell(current_row_id, 4, 'abcd')
 
         if cm.exception.args is not None:
