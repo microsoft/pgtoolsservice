@@ -225,7 +225,7 @@ class TestDataEditorSession(unittest.TestCase):
 
     def test_update_cell_not_initialized(self):
         session = DataEditorSession(self._metadata_factory)
-        with self.assertRaises(Exception):
+        with self.assertRaises(RuntimeError):
             session.update_cell(0, 3, 'abcd')
 
     def test_update_row_with_rowid_out_of_range(self):

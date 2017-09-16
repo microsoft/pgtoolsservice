@@ -73,7 +73,7 @@ class DataEditorSession():
 
     def update_cell(self, row_id: int, column_index: int, new_value: str) -> EditCellResponse:
         if not self._is_initialized:
-            raise Exception("Edit session has not been initialized")
+            raise RuntimeError("Edit session has not been initialized")
 
         if row_id > self._last_row_id or row_id < 0:
             raise IndexError(f"Parameter row_id with value {row_id} is out of range")
