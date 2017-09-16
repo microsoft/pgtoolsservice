@@ -116,6 +116,8 @@ class TestDataEditorSession(unittest.TestCase):
         edit_row.set_cell_value = mock.MagicMock(return_value=new_value)
 
         self._data_editor_session._session_cache[row_id] = edit_row
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session._last_row_id = 10
 
         result = self._data_editor_session.update_cell(row_id, column_index, new_value)
 
@@ -220,6 +222,23 @@ class TestDataEditorSession(unittest.TestCase):
         self._mock_cursor.execute.assert_called_once_with(self._mock_cursor.morgified_value)
 
         mock_edit.apply_changes.assert_called_once()
+
+    def test_update_cell_not_initialized(self):
+        session = DataEditorSession(self._metadata_factory)
+        with self.assertRaises(RuntimeError):
+            session.update_cell(0, 3, 'abcd')
+
+    def test_update_row_with_rowid_out_of_range(self):
+        self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session._last_row_id = 2
+        current_row_id = 3
+
+        with self.assertRaises(IndexError) as cm:
+            self._data_editor_session.update_cell(current_row_id, 4, 'abcd')
+
+        if cm.exception.args is not None:
+            self.assertEquals(f"Parameter row_id with value {current_row_id} is out of range", cm.exception.args[0])
 
     def test_get_rows_when_start_index_is_equal_to_row_count(self):
         rows = []
