@@ -71,7 +71,6 @@ class CompletionRefresher:
         if callable(callbacks):
             callbacks = [callbacks]
 
-
         try:
             while True:
                 for do_refresh in self.refreshers.values():

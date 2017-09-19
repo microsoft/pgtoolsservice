@@ -9,18 +9,17 @@ import threading    # noqa
 from typing import List, Tuple, Optional
 import unittest
 from unittest import mock
-from parameterized import parameterized, param
+from parameterized import parameterized
 
 from prompt_toolkit.completion import Completion
 
-from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition, Position
+from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition, Position     # noqa
 from pgsqltoolsservice.hosting import (     # noqa
     JSONRPCServer,
     NotificationContext,
     RequestContext,
     ServiceProvider
 )
-from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo
 from pgsqltoolsservice.language import LanguageService
 from pgsqltoolsservice.language.contracts import (      # noqa
     LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
@@ -117,13 +116,11 @@ class TestLanguageService(unittest.TestCase):
         context.send_response.assert_called_once()
         self.assertEqual(context.last_response_params, [])
 
-
     @parameterized.expand([
         (0, 10),
         (-2, 8),
-        (2, 12),
     ])
-    def completion_to_completion_item(self, relative_start_pos, expected_start_char):
+    def test_completion_to_completion_item(self, relative_start_pos, expected_start_char):
         """
         Tests that PGCompleter's Completion objects get converted to CompletionItems as expected
         """
@@ -134,19 +131,29 @@ class TestLanguageService(unittest.TestCase):
         completion_item: CompletionItem = LanguageService.to_completion_item(completion, self.default_text_position)
         self.assertEqual(completion_item.label, text)
         self.assertEqual(completion_item.text_edit.new_text, text)
-        text_pos: Position = self.default_text_position.position    #pylint: disable=maybe-no-member
-        self.assertEqual(completion_item.text_edit.range.start.line, text_pos.position.line)
+        text_pos: Position = self.default_text_position.position    # pylint: disable=maybe-no-member
+        self.assertEqual(completion_item.text_edit.range.start.line, text_pos.line)
         self.assertEqual(completion_item.text_edit.range.start.character, expected_start_char)
         self.assertEqual(completion_item.text_edit.range.end.line, text_pos.line)
         self.assertEqual(completion_item.text_edit.range.end.character, text_pos.character)
         self.assertEqual(completion_item.detail, display)
         self.assertEqual(completion_item.label, text)
 
-    def completion_keyword_completion_sort_text(self):
+    def test_completion_keyword_completion_sort_text(self):
         """
         Tests that a Keyword Completion is converted with sort text that puts it after other objects
         """
+        text = 'item'
+        display = 'item is something'
+        # Given I have anything other than a keyword, I expect label to match key
+        table_completion = Completion(text, 0, display, 'table')
+        completion_item: CompletionItem = LanguageService.to_completion_item(table_completion, self.default_text_position)
+        self.assertEqual(completion_item.sort_text, text)
 
+        # Given I have a keyword, I expect
+        keyword_completion = Completion(text, 0, display, 'keyword')
+        completion_item: CompletionItem = LanguageService.to_completion_item(keyword_completion, self.default_text_position)
+        self.assertEqual(completion_item.sort_text, '~' + text)
 
     def test_completion_file_not_found(self):
         """

@@ -176,7 +176,7 @@ class TestOperationsQueue(unittest.TestCase):
         self.assertEqual(actual_context, context)
         # ... and I do not expect the timeout task to be called
         timeout_task.assert_not_called()
-    
+
     def test_execute_operation_calls_task_and_timouttask_if_task_fails(self):
         # Given an operation where the task will fail (return false)
         context = ConnectionContext(self.expected_context_key)
@@ -228,7 +228,7 @@ class TestConnectionContextQueue(unittest.TestCase):
 
     def test_on_completions_refreshed(self):
         connection = mock.Mock()
-        
+
         def do_test():
             # When I call refresh_metadata and refresh completes
             connection_context = ConnectionContext(self.expected_context_key)

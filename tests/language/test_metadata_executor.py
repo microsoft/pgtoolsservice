@@ -8,15 +8,13 @@ import unittest
 from unittest import mock
 import psycopg2
 
-from pgsmo import Database, NodeCollection, Schema, Server, Table
+from pgsmo import Database, NodeCollection, Schema, Server
 from pgsqltoolsservice.language.metadata_executor import MetadataExecutor
 
 import tests.pgsmo_tests.utils as utils
 
 MYSCHEMA = 'myschema'
 MYSCHEMA2 = 'myschema2'
-
-
 
 
 class MockCursor:
@@ -110,7 +108,5 @@ class TestMetadataExecutor(unittest.TestCase):
             self.assertTrue(expected in actual_table_tuples)
 
     # Helper functions ##################################################################
-
-
     def _as_node_collection(self, object_list: List[Any]) -> NodeCollection[Any]:
         return NodeCollection(lambda: object_list)
