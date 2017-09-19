@@ -101,12 +101,12 @@ class TestLanguageService(unittest.TestCase):
 
     def test_handle_shutdown(self):
         # Given a language service
-        service: LanguageService = self._init_service()
-        self.assertFalse(service._operations_queue.stop_requested)
+        service: LanguageService = self._init_service(stop_operations_queue=False)
+        self.assertFalse(service.operations_queue.stop_requested)
         # When I shutdown the service
         service._handle_shutdown()
         # Then the language service should be cleaned up
-        self.assertTrue(service._operations_queue.stop_requested)
+        self.assertTrue(service.operations_queue.stop_requested)
 
     def test_completion_intellisense_off(self):
         """
@@ -127,45 +127,6 @@ class TestLanguageService(unittest.TestCase):
         # ... An empty completion should be sent over the notification
         context.send_response.assert_called_once()
         self.assertEqual(context.last_response_params, [])
-
-    @parameterized.expand([
-        (0, 10),
-        (-2, 8),
-    ])
-    def test_completion_to_completion_item(self, relative_start_pos, expected_start_char):
-        """
-        Tests that PGCompleter's Completion objects get converted to CompletionItems as expected
-        """
-        text = 'item'
-        display = 'item is a table'
-        display_meta = 'table'
-        completion = Completion(text, relative_start_pos, display, display_meta)
-        completion_item: CompletionItem = LanguageService.to_completion_item(completion, self.default_text_position)
-        self.assertEqual(completion_item.label, text)
-        self.assertEqual(completion_item.text_edit.new_text, text)
-        text_pos: Position = self.default_text_position.position    # pylint: disable=maybe-no-member
-        self.assertEqual(completion_item.text_edit.range.start.line, text_pos.line)
-        self.assertEqual(completion_item.text_edit.range.start.character, expected_start_char)
-        self.assertEqual(completion_item.text_edit.range.end.line, text_pos.line)
-        self.assertEqual(completion_item.text_edit.range.end.character, text_pos.character)
-        self.assertEqual(completion_item.detail, display)
-        self.assertEqual(completion_item.label, text)
-
-    def test_completion_keyword_completion_sort_text(self):
-        """
-        Tests that a Keyword Completion is converted with sort text that puts it after other objects
-        """
-        text = 'item'
-        display = 'item is something'
-        # Given I have anything other than a keyword, I expect label to match key
-        table_completion = Completion(text, 0, display, 'table')
-        completion_item: CompletionItem = LanguageService.to_completion_item(table_completion, self.default_text_position)
-        self.assertEqual(completion_item.sort_text, text)
-
-        # Given I have a keyword, I expect
-        keyword_completion = Completion(text, 0, display, 'keyword')
-        completion_item: CompletionItem = LanguageService.to_completion_item(keyword_completion, self.default_text_position)
-        self.assertEqual(completion_item.sort_text, '~' + text)
 
     def test_completion_file_not_found(self):
         """
@@ -190,7 +151,7 @@ class TestLanguageService(unittest.TestCase):
         Test that the completion handler returns a set of default values
         when not connected to any URI
         """
-        # If: The script file doesn't exist (there is an empty workspace)
+        # If: The script file exists
         input_text = 'create tab'
         doc_position = TextDocumentPosition.from_dict({
             'text_document': {
@@ -213,7 +174,7 @@ class TestLanguageService(unittest.TestCase):
         service.handle_completion_request(context, doc_position)
 
         # Then:
-        # ... An empty completion should be sent over the notification
+        # ... An default completion set should be sent over the notification
         context.send_response.assert_called_once()
         completions: List[CompletionItem] = context.last_response_params
         self.assertTrue(len(completions) > 0)
@@ -412,9 +373,55 @@ class TestLanguageService(unittest.TestCase):
         self.assert_range_equals(edits[0].range, format_params.range)
         self.assertEqual(edits[0].new_text, expected_output)
 
-    def _init_service(self) -> LanguageService:
+    @parameterized.expand([
+        (0, 10),
+        (-2, 8),
+    ])
+    def test_completion_to_completion_item(self, relative_start_pos, expected_start_char):
+        """
+        Tests that PGCompleter's Completion objects get converted to CompletionItems as expected
+        """
+        text = 'item'
+        display = 'item is a table'
+        display_meta = 'table'
+        completion = Completion(text, relative_start_pos, display, display_meta)
+        completion_item: CompletionItem = LanguageService.to_completion_item(completion, self.default_text_position)
+        self.assertEqual(completion_item.label, text)
+        self.assertEqual(completion_item.text_edit.new_text, text)
+        text_pos: Position = self.default_text_position.position    # pylint: disable=maybe-no-member
+        self.assertEqual(completion_item.text_edit.range.start.line, text_pos.line)
+        self.assertEqual(completion_item.text_edit.range.start.character, expected_start_char)
+        self.assertEqual(completion_item.text_edit.range.end.line, text_pos.line)
+        self.assertEqual(completion_item.text_edit.range.end.character, text_pos.character)
+        self.assertEqual(completion_item.detail, display)
+        self.assertEqual(completion_item.label, text)
+
+    def test_completion_keyword_completion_sort_text(self):
+        """
+        Tests that a Keyword Completion is converted with sort text that puts it after other objects
+        """
+        text = 'item'
+        display = 'item is something'
+        # Given I have anything other than a keyword, I expect label to match key
+        table_completion = Completion(text, 0, display, 'table')
+        completion_item: CompletionItem = LanguageService.to_completion_item(table_completion, self.default_text_position)
+        self.assertEqual(completion_item.sort_text, text)
+
+        # Given I have a keyword, I expect
+        keyword_completion = Completion(text, 0, display, 'keyword')
+        completion_item: CompletionItem = LanguageService.to_completion_item(keyword_completion, self.default_text_position)
+        self.assertEqual(completion_item.sort_text, '~' + text)
+
+    def _init_service(self, stop_operations_queue=True) -> LanguageService:
+        """
+        Initializes a simple service instance. By default stops the threaded queue since
+        this could cause issues debugging multiple tests, and the class can be tested
+        without this running the queue
+        """
         service = LanguageService()
         service.register(self.mock_service_provider)
+        if stop_operations_queue:
+            service.operations_queue.stop()
         return service
 
     def _init_service_with_flow_validator(self) -> LanguageService:

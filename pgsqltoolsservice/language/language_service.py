@@ -67,7 +67,7 @@ class LanguageService:
         self._script_map: Dict[str, 'ScriptParseInfo'] = {}
         self._script_map_lock: threading.Lock = threading.Lock()
         self._binding_queue_map: Dict[str, 'ScriptParseInfo'] = {}
-        self._operations_queue: OperationsQueue = None
+        self.operations_queue: OperationsQueue = None
 
     def register(self, service_provider: ServiceProvider) -> None:
         """
@@ -76,8 +76,8 @@ class LanguageService:
         self._service_provider = service_provider
         self._logger = service_provider.logger
         self._server = service_provider.server
-        self._operations_queue = OperationsQueue(service_provider)
-        self._operations_queue.start()
+        self.operations_queue = OperationsQueue(service_provider)
+        self.operations_queue.start()
 
         # Register request handlers
         self._server.set_request_handler(COMPLETION_REQUEST, self.handle_completion_request)
@@ -117,9 +117,9 @@ class LanguageService:
             text: str = script_file.get_all_text()
             scriptparseinfo.document = Document(text, cursor_pos)
             operation = QueuedOperation(scriptparseinfo.connection_key,
-                                        functools.partial(self._send_connected_completions, request_context, scriptparseinfo, params),
+                                        functools.partial(self.send_connected_completions, request_context, scriptparseinfo, params),
                                         functools.partial(self._send_default_completions, request_context, script_file, params))
-            self._operations_queue.add_operation(operation)
+            self.operations_queue.add_operation(operation)
 
     def handle_completion_resolve_request(self, request_context: RequestContext, params: CompletionItem) -> None:
         """Fill in additional details for a CompletionItem. Returns the same CompletionItem over the wire"""
@@ -216,8 +216,8 @@ class LanguageService:
     # METHODS ##############################################################
     def _handle_shutdown(self) -> None:
         """Stop the operations queue on shutdown"""
-        if self._operations_queue is not None:
-            self._operations_queue.stop()
+        if self.operations_queue is not None:
+            self.operations_queue.stop()
 
     def should_skip_intellisense(self, uri: str) -> bool:
         return not self._workspace_service.configuration.sql.intellisense.enable_intellisense or not self.is_pgsql_uri(uri)
@@ -236,7 +236,7 @@ class LanguageService:
         scriptparseinfo: ScriptParseInfo = self.get_scriptparseinfo(conn_info.owner_uri, create_if_not_exists=True)
         if scriptparseinfo is not None:
             # This is a connection for an actual script in the workspace. Build the intellisense cache for it
-            connection_context: ConnectionContext = self._operations_queue.add_connection_context(conn_info, False)
+            connection_context: ConnectionContext = self.operations_queue.add_connection_context(conn_info, False)
             # Wait until the intellisense is completed before sending back the message and caching the key
             connection_context.intellisense_complete.wait()
             scriptparseinfo.connection_key = connection_context.key
@@ -290,8 +290,8 @@ class LanguageService:
         request_context.send_response(response)
         return True
 
-    def _send_connected_completions(self, request_context: RequestContext, scriptparseinfo: ScriptParseInfo,
-                                    params: TextDocumentPosition, context: ConnectionContext) -> bool:
+    def send_connected_completions(self, request_context: RequestContext, scriptparseinfo: ScriptParseInfo,
+                                   params: TextDocumentPosition, context: ConnectionContext) -> bool:
         if not context or not context.is_connected:
             return False
         # Else use the completer to query for completions
