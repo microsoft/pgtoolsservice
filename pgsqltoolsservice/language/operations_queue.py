@@ -112,7 +112,7 @@ class OperationsQueue:
         Checks if there's a connection context for a given connection in the map.
         Intentional does not lock as this is intended for quick lookup
         """
-        key: str = self._create_key(conn_info)
+        key: str = OperationsQueue.create_key(conn_info)
         return key in self._context_map
 
     def add_connection_context(self, conn_info: ConnectionInfo, overwrite=False) -> ConnectionContext:
@@ -121,7 +121,7 @@ class OperationsQueue:
         If a connection queue exists alread, will overwrite if necesary
         """
         with self.lock:
-            key: str = self._create_key(conn_info)
+            key: str = OperationsQueue.create_key(conn_info)
             context: ConnectionContext = self._context_map.get(key)
             if context:
                 if overwrite:
@@ -151,7 +151,11 @@ class OperationsQueue:
                     self._log_exception('error during disconnect, ignoring as assume already disconnected: {0}'.format(ex))
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _create_key(self, conn_info: ConnectionInfo) -> str:
+    @classmethod
+    def create_key(cls, conn_info: ConnectionInfo) -> str:
+        """
+        Creates a key uniquely identifying a ConnectionInfo object for use in caching
+        """
         return '{0}|{1}|{2}'.format(conn_info.details.server_name, conn_info.details.database_name, conn_info.details.user_name)
 
     def _create_connection(self, connection_key: str, conn_info: ConnectionInfo) -> Optional[psycopg2.extensions.connection]:

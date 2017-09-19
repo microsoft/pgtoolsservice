@@ -21,6 +21,8 @@ from pgsqltoolsservice.hosting import (     # noqa
     ServiceProvider
 )
 from pgsqltoolsservice.language import LanguageService
+from pgsqltoolsservice.language.operations_queue import OperationsQueue
+from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo    # noqa
 from pgsqltoolsservice.language.contracts import (      # noqa
     LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
     INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
@@ -92,9 +94,19 @@ class TestLanguageService(unittest.TestCase):
         server.set_notification_handler.assert_called()
         server.set_request_handler.assert_called()
         self.assertEqual(1, len(conn_service._on_connect_callbacks))
+        self.assertEqual(1, server.count_shutdown_handlers())
 
         # ... The service provider should have been stored
         self.assertIs(service._service_provider, provider)  # noqa
+
+    def test_handle_shutdown(self):
+        # Given a language service
+        service: LanguageService = self._init_service()
+        self.assertFalse(service._operations_queue.stop_requested)
+        # When I shutdown the service
+        service._handle_shutdown()
+        # Then the language service should be cleaned up
+        self.assertTrue(service._operations_queue.stop_requested)
 
     def test_completion_intellisense_off(self):
         """
@@ -277,6 +289,11 @@ class TestLanguageService(unittest.TestCase):
         # Then:
         # an intellisense ready notification should be sent for that URI
         self.flow_validator.validate()
+        # ... and the scriptparseinfo should be created
+        info: ScriptParseInfo = service.get_scriptparseinfo(conn_info.owner_uri)
+        self.assertIsNotNone(info)
+        # ... and the info should have the connection key set
+        self.assertEqual(info.connection_key, OperationsQueue.create_key(conn_info))
 
     def test_format_doc_no_pgsql_format(self):
         """

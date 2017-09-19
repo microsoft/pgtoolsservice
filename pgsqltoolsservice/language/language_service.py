@@ -109,7 +109,7 @@ class LanguageService:
             do_send_response()
             return
 
-        scriptparseinfo: ScriptParseInfo = self._get_scriptparseinfo(params.text_document.uri, create_if_not_exists=False)
+        scriptparseinfo: ScriptParseInfo = self.get_scriptparseinfo(params.text_document.uri, create_if_not_exists=False)
         if not scriptparseinfo or not scriptparseinfo.can_queue():
             self._send_default_completions(request_context, script_file, params)
         else:
@@ -233,7 +233,7 @@ class LanguageService:
 
     def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
         # TODO build the cache. For now, sending intellisense ready as a test
-        scriptparseinfo: ScriptParseInfo = self._get_scriptparseinfo(conn_info.owner_uri, create_if_not_exists=True)
+        scriptparseinfo: ScriptParseInfo = self.get_scriptparseinfo(conn_info.owner_uri, create_if_not_exists=True)
         if scriptparseinfo is not None:
             # This is a connection for an actual script in the workspace. Build the intellisense cache for it
             connection_context: ConnectionContext = self._operations_queue.add_connection_context(conn_info, False)
@@ -270,7 +270,7 @@ class LanguageService:
         edit.new_text = sqlparse.format(text, **options)
         response.append(edit)
 
-    def _get_scriptparseinfo(self, owner_uri, create_if_not_exists=False) -> ScriptParseInfo:
+    def get_scriptparseinfo(self, owner_uri, create_if_not_exists=False) -> ScriptParseInfo:
         with self._script_map_lock:
             if owner_uri in self._script_map:
                 return self._script_map[owner_uri]

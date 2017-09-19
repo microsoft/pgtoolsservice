@@ -72,6 +72,12 @@ class JSONRPCServer:
         """
         self._shutdown_handlers.append(handler)
 
+    def count_shutdown_handlers(self) -> int:
+        """
+        Returns the number of shutdown handlers registered
+        """
+        return len(self._shutdown_handlers)
+
     def start(self):
         """
         Starts the background threads to listen for responses and requests from the underlying
