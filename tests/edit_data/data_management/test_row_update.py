@@ -32,6 +32,7 @@ class TestRowUpdate(unittest.TestCase):
         self._row_update = RowUpdate(self._row_id, self._result_set, self._table_metadata)
 
     def test_set_cell_value_with_no_value_changed(self):
+        self._row_update.result_set.columns[self._column_index].is_updatable = True
         response = self._row_update.set_cell_value(self._column_index, 'Result2')
 
         self.assertFalse(response.is_row_dirty)
@@ -41,6 +42,7 @@ class TestRowUpdate(unittest.TestCase):
         self.assertIsNone(cell_updates)
 
     def test_set_cell_value_with_value_changed(self):
+        self._row_update.result_set.columns[self._column_index].is_updatable = True
         response = self._row_update.set_cell_value(self._column_index, self._new_value)
 
         self.assertTrue(response.is_row_dirty)

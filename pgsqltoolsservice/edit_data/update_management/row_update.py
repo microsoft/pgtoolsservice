@@ -21,6 +21,7 @@ class RowUpdate(RowEdit):
         self._cell_updates: Dict[int, CellUpdate] = {}
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
+        self.validate_column_is_updatable(column_index)
         cell_update = CellUpdate(self.result_set.columns[column_index], new_value)
 
         if cell_update.value is self.row[column_index].raw_object:
