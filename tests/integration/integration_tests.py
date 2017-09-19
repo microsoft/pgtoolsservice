@@ -12,41 +12,21 @@ from unittest import mock
 import psycopg2
 
 
-def integration_test(auto_cleanup=True):
-    """
-    Decorator used to mock psycopg2.connect in integration tests
+def integration_test(test):
+    """Decorator used to indicate that a test is an integration test, giving it a connection"""
 
-    :param auto_cleanup: True if all SQL executed by the connection should be done in a single
-    transaction and rolled back at the end of the test, False to indicate that the test's author
-    will manually clean up any changes to the database made by their test
-    """
-
-    def internal_decorator(test):
-        def new_test(*args):
-            _ConnectionManager.current_test_is_integration_test = True
-            connection = get_connection()
-            connection.autocommit = not auto_cleanup
-            try:
-                with mock.patch('psycopg2.connect', mock.Mock(return_value=connection)):
-                    test(*args)
-            finally:
-                _ConnectionManager.current_test_is_integration_test = False
-                if auto_cleanup:
-                    connection.rollback()
-                elif connection.get_transaction_status() is not psycopg2.extensions.TRANSACTION_STATUS_IDLE:
-                    # Then a non auto_cleanup test failed to clean up. Roll back the transaction so other tests might continue
-                    connection.cursor().execute('ROLLBACK')
-                    raise RuntimeError('The test did not clean up its database modifications. This can cause other tests to fail!')
-        new_test.is_integration_test = True
-        return new_test
-
-    # If the parameter is a function (i.e. the decorated test) instead of a boolean then the
-    # decorator was called without parentheses, so apply the decorator directly to the test
-    if callable(auto_cleanup):
-        return internal_decorator(auto_cleanup)
-
-    # Otherwise return a function that will take the test as a parameter
-    return internal_decorator
+    def new_test(*args):
+        _ConnectionManager.current_test_is_integration_test = True
+        connection = get_connection()
+        connection.autocommit = False
+        try:
+            with mock.patch('psycopg2.connect', mock.Mock(return_value=connection)):
+                test(*args)
+        finally:
+            _ConnectionManager.current_test_is_integration_test = False
+            connection.rollback()
+    new_test.is_integration_test = True
+    return new_test
 
 
 # Indicate that nose should not treat the decorator as its own test
