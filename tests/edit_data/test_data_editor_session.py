@@ -15,6 +15,7 @@ from pgsqltoolsservice.query_execution.query import Query, Batch, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 from pgsqltoolsservice.edit_data.update_management.row_edit import EditScript
+from pgsqltoolsservice.edit_data.update_management import RowDelete
 
 
 class TestDataEditorSession(unittest.TestCase):
@@ -115,6 +116,8 @@ class TestDataEditorSession(unittest.TestCase):
         edit_row.set_cell_value = mock.MagicMock(return_value=new_value)
 
         self._data_editor_session._session_cache[row_id] = edit_row
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session._last_row_id = 10
 
         result = self._data_editor_session.update_cell(row_id, column_index, new_value)
 
@@ -191,6 +194,7 @@ class TestDataEditorSession(unittest.TestCase):
     def test_commit_edit_fire_success(self):
 
         mock_edit = mock.MagicMock()
+        mock_edit.row_id = 0
         row_id = 1
         success_callback = mock.MagicMock()
 
@@ -218,6 +222,78 @@ class TestDataEditorSession(unittest.TestCase):
         self._mock_cursor.execute.assert_called_once_with(self._mock_cursor.mogrified_value)
 
         mock_edit.apply_changes.assert_called_once()
+
+    def test_update_cell_not_initialized(self):
+        session = DataEditorSession(self._metadata_factory)
+        with self.assertRaises(RuntimeError):
+            session.update_cell(0, 3, 'abcd')
+
+    def test_update_row_with_rowid_out_of_range(self):
+        self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session._last_row_id = 2
+        current_row_id = 3
+
+        with self.assertRaises(IndexError) as cm:
+            self._data_editor_session.update_cell(current_row_id, 4, 'abcd')
+
+        if cm.exception.args is not None:
+            self.assertEquals(f"Parameter row_id with value {current_row_id} is out of range", cm.exception.args[0])
+
+    def test_get_rows_when_start_index_is_equal_to_row_count(self):
+        rows = []
+        result_set = ResultSet(0, 0, None, len(rows), rows)
+
+        self._data_editor_session._result_set = result_set
+
+        edit_row = mock.MagicMock()
+
+        edit_row.get_edit_row = mock.Mock(return_value=edit_row)
+
+        self._data_editor_session._session_cache[0] = edit_row
+
+        edit_rows = self._data_editor_session.get_rows('Test Uri', 0, 1)
+
+        self.assertEqual(len(edit_rows), 1)
+        self.assertEqual(edit_row, edit_rows[0])
+        edit_row.get_edit_row.assert_called_once()
+
+    def test_commit_when_its_a_new_row_thats_being_deleted(self):
+        rows = []
+        result_set = ResultSet(0, 0, None, len(rows), rows)
+
+        row_delete = RowDelete(0, result_set, self._edit_table_metadata)
+
+        row_delete.get_script = mock.Mock(return_value="Some query")
+
+        self._data_editor_session._session_cache[0] = row_delete
+        self._data_editor_session._result_set = result_set
+
+        self._data_editor_session.commit_edit(self._connection, mock.MagicMock(), mock.MagicMock())
+
+        row_delete.get_script.assert_not_called()
+        self.assertFalse(bool(self._data_editor_session._session_cache))
+
+    def test_commit_when_its_a_existing_row_thats_being_deleted(self):
+        rows = [("Result1", 53), ("Result2", None,)]
+        result_set = ResultSet(0, 0, None, len(rows), rows)
+
+        script_template = 'script'
+        query_params = []
+
+        edit_script = EditScript(script_template, query_params)
+
+        row_delete = RowDelete(0, result_set, self._edit_table_metadata)
+
+        row_delete.get_script = mock.Mock(return_value=edit_script)
+
+        self._data_editor_session._session_cache[0] = row_delete
+        self._data_editor_session._result_set = result_set
+
+        self._data_editor_session.commit_edit(self._connection, mock.MagicMock(), mock.MagicMock())
+
+        row_delete.get_script.assert_called_once()
+        self.assertFalse(bool(self._data_editor_session._session_cache))
 
 
 if __name__ == '__main__':
