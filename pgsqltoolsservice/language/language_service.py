@@ -77,6 +77,7 @@ class LanguageService:
         self._logger = service_provider.logger
         self._server = service_provider.server
         self._operations_queue = OperationsQueue(service_provider)
+        self._operations_queue.start()
 
         # Register request handlers
         self._server.set_request_handler(COMPLETION_REQUEST, self.handle_completion_request)
@@ -112,8 +113,9 @@ class LanguageService:
         if not scriptparseinfo or not scriptparseinfo.can_queue():
             self._send_default_completions(request_context, script_file, params)
         else:
-            text: str = script_file.get_text_in_range(Range.from_data(0, 0, params.position.start, params.position.end))
-            scriptparseinfo.document = Document(text, len(text))
+            cursor_pos: int = len(script_file.get_text_in_range(Range.from_data(0, 0, params.position.line, params.position.character)))
+            text: str = script_file.get_all_text()
+            scriptparseinfo.document = Document(text, cursor_pos)
             operation = QueuedOperation(scriptparseinfo.connection_key,
                                         functools.partial(self._send_connected_completions, request_context, scriptparseinfo, params),
                                         functools.partial(self._send_default_completions, request_context, script_file, params))
@@ -296,16 +298,16 @@ class LanguageService:
         completer: PGCompleter = context.pgcompleter
         completions: List[Completion] = completer.get_completions(scriptparseinfo.document, None)
         if completions:
-            response = [LanguageService._to_completion_item(completion, scriptparseinfo, params) for completion in completions]
+            response = [LanguageService.to_completion_item(completion, params) for completion in completions]
             request_context.send_response(response)
             return True
         # Else return false so the timeout task can be sent instead
         return False
 
     @classmethod
-    def _to_completion_item(cls, completion: Completion, scriptparseinfo: ScriptParseInfo, params: TextDocumentPosition) -> CompletionItem:
+    def to_completion_item(cls, completion: Completion, params: TextDocumentPosition) -> CompletionItem:
         key = completion.text
-        start_position = LanguageService._get_start_position(params.position, completion.start_position, scriptparseinfo.document.cursor_position)
+        start_position = LanguageService._get_start_position(params.position, completion.start_position)
         text_range = Range(start=start_position, end=params.position)
         kind = DISPLAY_META_MAP.get(completion.display_meta, CompletionItemKind.Unit)
         completion_item = CompletionItem()
@@ -314,12 +316,13 @@ class LanguageService:
         completion_item.insert_text = key
         completion_item.kind = kind
         completion_item.text_edit = TextEdit.from_data(text_range, key)
+        # Add a sort text to put keywords after all other items
+        completion_item.sort_text = f'~{key}' if completion_item.kind == CompletionItemKind.Keyword else key
         return completion_item
 
     @classmethod
-    def _get_start_position(cls, end: Position, start_index, end_index) -> Position:
-        diff = end_index - start_index
-        start_col = end.character - diff
+    def _get_start_position(cls, end: Position, start_index: int) -> Position:
+        start_col = end.character + start_index
         if start_col < 0:
             # Should not happen - for now, just set to 0 and assume it's a mistake
             start_col = 0

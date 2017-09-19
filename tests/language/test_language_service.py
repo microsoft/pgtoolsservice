@@ -9,14 +9,18 @@ import threading    # noqa
 from typing import List, Tuple, Optional
 import unittest
 from unittest import mock
+from parameterized import parameterized, param
 
-from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition
+from prompt_toolkit.completion import Completion
+
+from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition, Position
 from pgsqltoolsservice.hosting import (     # noqa
     JSONRPCServer,
     NotificationContext,
     RequestContext,
     ServiceProvider
 )
+from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo
 from pgsqltoolsservice.language import LanguageService
 from pgsqltoolsservice.language.contracts import (      # noqa
     LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
@@ -58,8 +62,8 @@ class TestLanguageService(unittest.TestCase):
                 'uri': self.default_uri
             },
             'position': {
-                'line': 1,
-                'character': 1
+                'line': 3,
+                'character': 10
             }
         })
         self.default_text_document_id = TextDocumentIdentifier.from_dict({
@@ -112,6 +116,37 @@ class TestLanguageService(unittest.TestCase):
         # ... An empty completion should be sent over the notification
         context.send_response.assert_called_once()
         self.assertEqual(context.last_response_params, [])
+
+
+    @parameterized.expand([
+        (0, 10),
+        (-2, 8),
+        (2, 12),
+    ])
+    def completion_to_completion_item(self, relative_start_pos, expected_start_char):
+        """
+        Tests that PGCompleter's Completion objects get converted to CompletionItems as expected
+        """
+        text = 'item'
+        display = 'item is a table'
+        display_meta = 'table'
+        completion = Completion(text, relative_start_pos, display, display_meta)
+        completion_item: CompletionItem = LanguageService.to_completion_item(completion, self.default_text_position)
+        self.assertEqual(completion_item.label, text)
+        self.assertEqual(completion_item.text_edit.new_text, text)
+        text_pos: Position = self.default_text_position.position    #pylint: disable=maybe-no-member
+        self.assertEqual(completion_item.text_edit.range.start.line, text_pos.position.line)
+        self.assertEqual(completion_item.text_edit.range.start.character, expected_start_char)
+        self.assertEqual(completion_item.text_edit.range.end.line, text_pos.line)
+        self.assertEqual(completion_item.text_edit.range.end.character, text_pos.character)
+        self.assertEqual(completion_item.detail, display)
+        self.assertEqual(completion_item.label, text)
+
+    def completion_keyword_completion_sort_text(self):
+        """
+        Tests that a Keyword Completion is converted with sort text that puts it after other objects
+        """
+
 
     def test_completion_file_not_found(self):
         """

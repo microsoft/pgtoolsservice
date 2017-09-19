@@ -215,7 +215,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._mock_cursor.mogrify.assert_called_once()
 
-        self._mock_cursor.execute.assert_called_once_with(self._mock_cursor.morgified_value)
+        self._mock_cursor.execute.assert_called_once_with(self._mock_cursor.mogrified_value)
 
         mock_edit.apply_changes.assert_called_once()
 

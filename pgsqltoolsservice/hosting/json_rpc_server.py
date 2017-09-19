@@ -275,8 +275,8 @@ class JSONRPCServer:
                 deserialized_object = handler.class_.from_dict(message.message_params)
             try:
                 handler.handler(request_context, deserialized_object)
-            except Exception:
-                error_message = f'Unhandled exception while handling request method {message.message_method}'  # TODO: Localize
+            except Exception as e:
+                error_message = f'Unhandled exception while handling request method {message.message_method}: "{e}"'  # TODO: Localize
                 if self._logger is not None:
                     self._logger.exception(error_message)
                 request_context.send_error(error_message, code=-32603)

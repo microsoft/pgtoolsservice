@@ -139,8 +139,8 @@ class MockCursor:
         self.connection = mock.Mock()
         self.description = None
         self.rowcount = -1
-        self._morgified_value = b'Some query'
-        self.mogrify = mock.Mock(return_value=self._morgified_value)
+        self._mogrified_value = b'Some query'
+        self.mogrify = mock.Mock(return_value=self._mogrified_value)
 
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
@@ -159,8 +159,8 @@ class MockCursor:
         pass
 
     @property
-    def morgified_value(self):
-        return self._morgified_value
+    def mogrified_value(self):
+        return self._mogrified_value
 
 
 class MockThread():

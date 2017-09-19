@@ -61,7 +61,7 @@ class OperationsQueue:
     by having a single queue per connection.
     """
     # CONSTANTS ############################################################
-    OPERATIONS_THREAD_NAME = u"Language_Service_Operations_Thread"
+    OPERATIONS_THREAD_NAME = u"LANG_SVC_Operations"
 
     def __init__(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -81,6 +81,7 @@ class OperationsQueue:
         self._log_info('Language Service Operations Queue starting...')
         self._operations_consumer = threading.Thread(
             target=self._process_operations,
+            args=(),
             name=self.OPERATIONS_THREAD_NAME
         )
         self._operations_consumer.daemon = True
