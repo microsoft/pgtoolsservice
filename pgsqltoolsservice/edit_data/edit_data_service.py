@@ -14,7 +14,7 @@ from pgsqltoolsservice.edit_data.contracts import (
     RevertRowRequest, SessionOperationRequest, UPDATE_CELL_REQUEST, UpdateCellRequest, SessionReadyNotificationParams,
     SESSION_READY_NOTIFICATION
 )
-from pgsqltoolsservice.edit_data import DataEditorSession, SmoEditTableMetadataFactory, DataEditSessionExecutionState # noqa
+from pgsqltoolsservice.edit_data import DataEditorSession, SmoEditTableMetadataFactory, DataEditSessionExecutionState  # noqa
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.contracts import (
@@ -22,6 +22,9 @@ from pgsqltoolsservice.query_execution.contracts import (
     RESULT_SET_COMPLETE_NOTIFICATION
 )
 from pgsqltoolsservice.query_execution.query_execution_service import ExecuteRequestWorkerArgs
+from pgsqltoolsservice.connection import ConnectionService  # noqa
+from pgsqltoolsservice.query_execution import QueryExecutionService  # noqa
+import pgsqltoolsservice.utils as utils
 
 
 class EditDataService(object):
@@ -46,6 +49,8 @@ class EditDataService(object):
         }
 
     def _edit_initialize(self, request_context: RequestContext, params: InitializeEditParams) -> None:
+        utils.validate.is_object_params_not_none_or_whitespace('params', params, 'owner_uri', 'schema_name', 'object_name', 'object_type')
+
         connection = self._connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
         session = DataEditorSession(SmoEditTableMetadataFactory())
         self._active_sessions[params.owner_uri] = session
@@ -133,13 +138,17 @@ class EditDataService(object):
 
     def _handle_session_request(self, session_operation_request: SessionOperationRequest,
                                 request_context: RequestContext, session_operation: Callable):
-
         edit_session = self._get_active_session(session_operation_request.owner_uri)
-        result = session_operation(edit_session)
+        try:
+            result = session_operation(edit_session)
+            request_context.send_response(result)
 
-        request_context.send_response(result)
+        except Exception as ex:
+            request_context.send_error(str(ex))
+            self._logger.error(str(ex))
 
     def _get_active_session(self, owner_uri: str):
+        utils.validate.is_not_none_or_whitespace('owner_uri', owner_uri)
 
         edit_session = self._active_sessions.get(owner_uri)
 

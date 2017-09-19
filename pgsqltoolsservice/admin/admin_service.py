@@ -37,10 +37,9 @@ class AdminService(object):
         # Get database info
         database_name = connection.get_dsn_parameters()['dbname']
         owner_query = 'SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = %s'
-        cursor = connection.cursor()
-        cursor.execute(owner_query, (database_name,))
-        owner_result = cursor.fetchall()[0][0]
-        cursor.close()
+        with connection.cursor() as cursor:
+            cursor.execute(owner_query, (database_name,))
+            owner_result = cursor.fetchall()[0][0]
 
         # Set up and send the response
         options = {

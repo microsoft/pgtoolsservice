@@ -20,7 +20,9 @@ class ExecutionState(Enum):
 class Query:
     """Object representing a single query, consisting of one or more batches"""
 
-    def __init__(self, owner_uri: str, query_text: str) -> None:
+    EXPLAIN_QUERY_TEMPLATE = 'EXPLAIN {0}'
+
+    def __init__(self, owner_uri: str, query_text: str, show_plan: bool = False) -> None:
         self.execution_state: ExecutionState = ExecutionState.NOT_STARTED
         self.is_canceled = False
         self.owner_uri: str = owner_uri
@@ -30,13 +32,15 @@ class Query:
 
         # Initialize the batches
         statements = sqlparse.split(query_text)
-        selection_data = _compute_selection_data_for_batches(statements, query_text)
+        selection_data = compute_selection_data_for_batches(statements, query_text)
         for index, batch_text in enumerate(statements):
             # Skip any empty text
             formatted_text = sqlparse.format(batch_text, strip_comments=True).strip()
             if not formatted_text or formatted_text == ';':
                 continue
             # Create and save the batch
+            formatted_text = Query.EXPLAIN_QUERY_TEMPLATE.format(formatted_text) if show_plan else formatted_text
+
             batch = Batch(formatted_text, len(self.batches), selection_data[index])
             self.batches.append(batch)
 
@@ -72,7 +76,7 @@ class Query:
             self.execution_state = ExecutionState.EXECUTED
 
 
-def _compute_selection_data_for_batches(batches: List[str], full_text: str) -> List[SelectionData]:
+def compute_selection_data_for_batches(batches: List[str], full_text: str) -> List[SelectionData]:
     # Map the starting index of each line to the line number
     line_map: Dict[int, int] = {}
     search_offset = 0
@@ -95,7 +99,7 @@ def _compute_selection_data_for_batches(batches: List[str], full_text: str) -> L
         end_index = start_index + len(batch)
         end_line_index = max(filter(lambda line_index: line_index < end_index, line_map.keys()))
         end_line_num = line_map[end_line_index]
-        end_col_num = end_index - end_line_index - 1
+        end_col_num = end_index - end_line_index
 
         # Create a SelectionData object with the results and update the search offset to exclude batches that have been processed
         selection_data.append(SelectionData(start_line_num, start_col_num, end_line_num, end_col_num))

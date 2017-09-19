@@ -496,6 +496,12 @@ class TestObjectExplorer(unittest.TestCase):
                 lambda param: self._validate_expand_error(param, session_uri, '/'))
             params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
             method(oe, rc.request_context, params)
+
+        # Joining the threads to avoid rc.validate failure
+        for task in session.expand_tasks.values():
+            task.join()
+        for task in session.refresh_tasks.values():
+            task.join()
         # Then:
         # ... An error notification should have been sent
         rc.validate()
@@ -523,6 +529,11 @@ class TestObjectExplorer(unittest.TestCase):
         params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': '/'})
         method(oe, rc.request_context, params)
 
+        # Joining the threads to avoid rc.validate failure
+        for task in session.expand_tasks.values():
+            task.join()
+        for task in session.refresh_tasks.values():
+            task.join()
         # Then:
         # ... I should have gotten a completed successfully message
         rc.validate()

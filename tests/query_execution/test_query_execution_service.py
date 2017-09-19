@@ -23,7 +23,8 @@ from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMe
 from pgsqltoolsservice.query_execution.contracts import (
     DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
-    QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest)
+    QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams
+)
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
@@ -653,6 +654,108 @@ class TestQueryService(unittest.TestCase):
         # is the query string to cancel the ongoing query
         self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
 
+    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_first_batch(self):
+        ''' Multiple batch in SAME line test with cursor on 1st batch, returns the query for first batch '''
+        request = ExecuteDocumentStatementParams()
+        request.line = 0
+        request.column = 2
+        request.owner_uri = 'Test Owner Url'
+
+        query = 'select * from public.foobar LIMIT 1000; select * from public.foo LIMIT 1000;'
+
+        self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 0, 0, 39, query)
+
+    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_second_batch(self):
+        ''' Multiple batch in SAME line test with cursor on 2nd batch, returns the query for second batch '''
+        request = ExecuteDocumentStatementParams()
+        request.line = 0
+        request.column = 41
+        request.owner_uri = 'Test Owner Url'
+
+        query = 'select * from public.foobar LIMIT 1000; select * from public.foo LIMIT 1000;'
+
+        self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 40, 0, 76, query)
+
+    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_first_batch(self):
+        ''' Multiple batch in Different lines test with cursor on 1st batch, returns the query for first batch '''
+        request = ExecuteDocumentStatementParams()
+        request.line = 0
+        request.column = 2
+        request.owner_uri = 'Test Owner Url'
+
+        query = '''select * from public.foobar LIMIT 1000; select *
+         from public.foo LIMIT 1000;'''
+
+        self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 0, 0, 39, query)
+
+    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_second_batch(self):
+        ''' Multiple batch in Different lines test with cursor on 2nd batch, returns the query for second batch '''
+        request = ExecuteDocumentStatementParams()
+        request.line = 1
+        request.column = 2
+        request.owner_uri = 'Test Owner Url'
+
+        query = '''select * from public.foobar LIMIT 1000; select *
+         from public.foo LIMIT 1000;'''
+
+        self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 40, 1, 36, query)
+
+    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_first_line_second_batch(self):
+        ''' Multiple batch in Different lines test with cursor on 2nd batch in first row, returns the query for second batch '''
+        request = ExecuteDocumentStatementParams()
+        request.line = 0
+        request.column = 42
+        request.owner_uri = 'Test Owner Url'
+
+        query = '''select * from public.foobar LIMIT 1000; select *
+         from public.foo LIMIT 1000;'''
+
+        self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 40, 1, 36, query)
+
+    def verify_get_query_text_from_execute_params_for_doc_statement(
+        self, request: ExecuteDocumentStatementParams,
+        start_line_index: int,
+        start_column_index: int,
+        end_line_index: int,
+        end_column_index: int,
+        query: str
+    ):
+
+        mock_workspace_service = mock.Mock()
+        mock_workspace_service.get_text = mock.Mock(return_value=query)
+        self.query_execution_service._service_provider = {constants.WORKSPACE_SERVICE_NAME: mock_workspace_service}
+
+        self.query_execution_service._get_query_text_from_execute_params(request)
+
+        self.assertEqual(mock_workspace_service.get_text.call_count, 2)
+
+        final_call = mock_workspace_service.get_text.call_args_list[1][0]
+
+        self.assertEquals(request.owner_uri, final_call[0])
+
+        selection_data = final_call[1]
+
+        self.assertEqual(selection_data.start.line, start_line_index)
+        self.assertEqual(selection_data.start.character, start_column_index)
+
+        self.assertEqual(selection_data.end.line, end_line_index)
+        self.assertEqual(selection_data.end.character, end_column_index)
+
+    def test_start_query_execution_thread_sends_true_when_show_plan_is_enabled(self):
+
+        request = ExecuteStringParams()
+        request.execution_plan_options = {'show_plan': True}
+        request.owner_uri = 'Test Owner Uri'
+        request.query = 'Test Query'
+
+        worker_args = ExecuteRequestWorkerArgs(request.owner_uri, self.connection, self.request_context)
+
+        self.query_execution_service._start_query_execution_thread(self.request_context, request, worker_args)
+
+        query = self.query_execution_service.get_query(request.owner_uri)
+
+        self.assertEqual('EXPLAIN Test Query', query.batches[0].batch_text)
+
     def test_execution_error_rolls_back_transaction(self):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
@@ -833,11 +936,11 @@ select * from t2
 
         # And each batch should have the correct location information
         expected_selections = [
-            SelectionData(start_line=0, start_column=0, end_line=1, end_column=2),
-            SelectionData(start_line=2, start_column=0, end_line=2, end_column=16),
-            SelectionData(start_line=4, start_column=0, end_line=4, end_column=16),
-            SelectionData(start_line=4, start_column=18, end_line=5, end_column=3),
-            SelectionData(start_line=6, start_column=0, end_line=6, end_column=15)]
+            SelectionData(start_line=0, start_column=0, end_line=1, end_column=3),
+            SelectionData(start_line=2, start_column=0, end_line=2, end_column=17),
+            SelectionData(start_line=4, start_column=0, end_line=4, end_column=17),
+            SelectionData(start_line=4, start_column=18, end_line=5, end_column=4),
+            SelectionData(start_line=6, start_column=0, end_line=6, end_column=16)]
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
 
@@ -858,8 +961,8 @@ select * from t1;'''
 
         # And each batch should have the correct location information
         expected_selections = [
-            SelectionData(start_line=0, start_column=0, end_line=4, end_column=6),
-            SelectionData(start_line=5, start_column=0, end_line=5, end_column=16)]
+            SelectionData(start_line=0, start_column=0, end_line=4, end_column=7),
+            SelectionData(start_line=5, start_column=0, end_line=5, end_column=17)]
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
 
@@ -880,8 +983,8 @@ select * from t1;'''
 
         # And each batch should have the correct location information
         expected_selections = [
-            SelectionData(start_line=0, start_column=0, end_line=0, end_column=16),
-            SelectionData(start_line=3, start_column=1, end_line=3, end_column=17)]
+            SelectionData(start_line=0, start_column=0, end_line=0, end_column=17),
+            SelectionData(start_line=3, start_column=1, end_line=3, end_column=18)]
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
 

@@ -7,6 +7,7 @@ from datetime import datetime
 import threading
 import uuid
 from typing import Callable, Dict, List, Optional  # noqa
+import sqlparse
 
 import psycopg2
 import psycopg2.errorcodes
@@ -14,9 +15,11 @@ import psycopg2.errorcodes
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
-    BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, ResultSetNotificationParams,
+    BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, EXECUTE_DOCUMENT_STATEMENT_REQUEST,
+    ExecuteDocumentStatementParams, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
-    QUERY_COMPLETE_NOTIFICATION, SUBSET_REQUEST, ExecuteDocumentSelectionParams,
+    QUERY_COMPLETE_NOTIFICATION, QUERY_EXECUTION_PLAN_REQUEST, QueryExecutionPlanRequest,
+    SUBSET_REQUEST, ExecuteDocumentSelectionParams,
     BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams,
     BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams,
     DISPOSE_REQUEST, SIMPLE_EXECUTE_REQUEST, SimpleExecuteRequest, ExecuteStringParams,
@@ -30,6 +33,7 @@ from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
 import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.query_execution.query import compute_selection_data_for_batches as compute_batches
 
 
 CANCELATION_QUERY = 'SELECT pg_cancel_backend (%s)'
@@ -62,31 +66,24 @@ class QueryExecutionService(object):
         self.query_results: Dict[str, Query] = {}
         self.owner_to_thread_map: dict = {}  # Only used for testing
 
+        self._service_action_mapping: dict = {
+            EXECUTE_STRING_REQUEST: self._handle_execute_query_request,
+            EXECUTE_DOCUMENT_SELECTION_REQUEST: self._handle_execute_query_request,
+            EXECUTE_DOCUMENT_STATEMENT_REQUEST: self._handle_execute_query_request,
+            SUBSET_REQUEST: self._handle_subset_request,
+            CANCEL_REQUEST: self._handle_cancel_query_request,
+            SIMPLE_EXECUTE_REQUEST: self._handle_simple_execute_request,
+            DISPOSE_REQUEST: self._handle_dispose_request,
+            QUERY_EXECUTION_PLAN_REQUEST: self._handle_query_execution_plan_request
+        }
+
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
         # Register the request handlers with the server
-        self._service_provider.server.set_request_handler(
-            EXECUTE_STRING_REQUEST, self._handle_execute_query_request
-        )
-        self._service_provider.server.set_request_handler(
-            EXECUTE_DOCUMENT_SELECTION_REQUEST, self._handle_execute_query_request
-        )
 
-        self._service_provider.server.set_request_handler(
-            SUBSET_REQUEST, self._handle_subset_request
-        )
+        for action in self._service_action_mapping:
+            self._service_provider.server.set_request_handler(action, self._service_action_mapping[action])
 
-        self._service_provider.server.set_request_handler(
-            CANCEL_REQUEST, self._handle_cancel_query_request
-        )
-
-        self._service_provider.server.set_request_handler(
-            SIMPLE_EXECUTE_REQUEST, self._handle_simple_execute_request
-        )
-
-        self._service_provider.server.set_request_handler(
-            DISPOSE_REQUEST, self._handle_dispose_request
-        )
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Query execution service successfully initialized')
 
@@ -94,6 +91,9 @@ class QueryExecutionService(object):
         return self.query_results[owner_uri]
 
     # REQUEST HANDLERS #####################################################
+    def _handle_query_execution_plan_request(self, request_context: RequestContext, params: QueryExecutionPlanRequest):
+        raise NotImplementedError()
+
     def _handle_simple_execute_request(self, request_context: RequestContext, params: SimpleExecuteRequest):
 
         new_owner_uri = str(uuid.uuid4())
@@ -171,7 +171,10 @@ class QueryExecutionService(object):
 
         # Create a new query if one does not already exist or we already executed the previous one
         if params.owner_uri not in self.query_results or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED:
-            self.query_results[params.owner_uri] = Query(params.owner_uri, self._get_query_text_from_execute_params(params))
+            query_text = self._get_query_text_from_execute_params(params)
+            show_query_plan = bool(params.execution_plan_options)
+
+            self.query_results[params.owner_uri] = Query(params.owner_uri, query_text, show_query_plan)
         elif self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTING:
             request_context.send_error('Another query is currently executing.')  # TODO: Localize
             return
@@ -330,7 +333,23 @@ class QueryExecutionService(object):
         if isinstance(params, ExecuteDocumentSelectionParams):
             workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
             selection_range = params.query_selection.to_range() if params.query_selection is not None else None
+
             return workspace_service.get_text(params.owner_uri, selection_range)
+
+        elif isinstance(params, ExecuteDocumentStatementParams):
+            workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
+            query = workspace_service.get_text(params.owner_uri, None)
+            selection_data_list: List[SelectionData] = compute_batches(sqlparse.split(query), query)
+
+            for selection_data in selection_data_list:
+                if selection_data.start_line <= params.line and selection_data.end_line >= params.line:
+                    if (selection_data.end_line == params.line and selection_data.end_column < params.column or
+                            selection_data.start_line == params.line and selection_data.start_column > params.column):
+                        continue
+                    return workspace_service.get_text(params.owner_uri, selection_data.to_range())
+
+            return ''
+
         else:
             # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
             return params.query

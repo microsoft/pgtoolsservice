@@ -72,6 +72,11 @@ class DataEditorSession():
             on_failure(str(error))
 
     def update_cell(self, row_id: int, column_index: int, new_value: str) -> EditCellResponse:
+        if not self._is_initialized:
+            raise RuntimeError("Edit session has not been initialized")
+
+        if row_id > self._last_row_id or row_id < 0:
+            raise IndexError(f"Parameter row_id with value {row_id} is out of range")
 
         edit_row = self._session_cache.get(row_id)
 
@@ -139,7 +144,7 @@ class DataEditorSession():
         return CreateRowResponse(self._last_row_id, default_cell_values)
 
     def get_rows(self, owner_uri, start_index: int, end_index: int) -> List[EditRow]:
-        if start_index < self._result_set.row_count:
+        if start_index <= len(self._result_set.rows):
             subset = ResultSetSubset.from_result_set(self._result_set, start_index, end_index)
         else:
             subset = ResultSetSubset()
@@ -163,9 +168,14 @@ class DataEditorSession():
             cursor = connection.cursor()
 
             for operation in edit_operations:
-                script: EditScript = operation.get_script()
-                cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
-                operation.apply_changes()
+                # If its a new row that’s being added and tried to delete without committing we just clear it
+                # from cache
+                if isinstance(operation, RowDelete) and operation.row_id >= len(self._result_set.rows):
+                    pass
+                else:
+                    script: EditScript = operation.get_script()
+                    cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
+                    operation.apply_changes()
 
             self._session_cache.clear()
             self._last_row_id = len(self._result_set.rows) - 1

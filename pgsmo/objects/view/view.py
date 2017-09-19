@@ -6,7 +6,7 @@
 from typing import List
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.rule import Rule
 from pgsmo.objects.table_objects.trigger import Trigger
@@ -14,7 +14,7 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
+class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
@@ -40,6 +40,7 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         # Declare child items
         self._columns: NodeCollection[Column] = self._register_child_collection(Column)
@@ -126,3 +127,11 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def _update_query_data(self) -> dict:
         """ Provides data input for update script """
         return {"data": {}}
+
+    def _select_query_data(self) -> dict:
+        """Provides data input for select script"""
+        return {"data": {
+            "name": self.name,
+            "schema": self.parent.name,
+            "columns": self.columns
+        }}
