@@ -87,11 +87,11 @@ class TestEditDataService(unittest.TestCase):
 
     def assert_exception_on_method_call(self, exception_type: type, exception_message: str, method_to_call: object, *args) -> None:
         '''asserts if a method call raises 'exceptiontype' exception or not'''
-        with self.assertRaises(exception_type, msg=exception_message) as cm:
+        with self.assertRaises(exception_type, msg=exception_message) as context_manager:
             method_to_call(*args)
 
-        if cm.exception.args is not None:
-            self.assertEquals(exception_message, cm.exception.args[0])
+        if context_manager.exception.args is not None:
+            self.assertEquals(exception_message, context_manager.exception.args[0])
 
     def test_register_should_initlialize_states(self):
         self.assertEqual(self._service_under_test._service_provider, self._service_provider)

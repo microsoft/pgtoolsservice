@@ -20,8 +20,9 @@ import pgsqltoolsservice.connection.connection_service
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.utils.cancellation import CancellationToken
 from pgsqltoolsservice.workspace import WorkspaceService
+from tests.integration import get_connection, integration_test
 import tests.utils as utils
-from tests.utils import MockConnection, MockCursor
+from tests.utils import MockConnection, MockCursor, MockRequestContext
 
 
 class TestConnectionService(unittest.TestCase):
@@ -771,6 +772,28 @@ class TestConnectionCancellation(unittest.TestCase):
         """Implementation for the mock psycopg2.connect method that saves the current cancellation token"""
         self.token_store.append(self.connection_service._cancellation_map[(self.owner_uri, self.connection_type)])
         return self.mock_connection
+
+
+class ConnectionServiceIntegrationTests(unittest.TestCase):
+    """Methods for testing the connection service"""
+
+    @integration_test
+    def test_list_databases(self):
+        """Test that the list databases handler correctly lists the connection's databases"""
+        connection_service = ConnectionService()
+        connection_uri = 'someuri'
+        request_context = MockRequestContext()
+        params = ListDatabasesParams()
+        params.owner_uri = connection_uri
+        connection_service.get_connection = mock.Mock(return_value=get_connection())
+
+        # If I call the list database handler
+        connection_service.handle_list_databases(request_context, params)
+
+        # Then a response is returned that lists all the databases
+        database_names = request_context.last_response_params.database_names
+        self.assertGreater(len(database_names), 0)
+        self.assertIn(get_connection().get_dsn_parameters()['dbname'], database_names)
 
 
 if __name__ == '__main__':
