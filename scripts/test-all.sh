@@ -12,4 +12,4 @@ then
   exit
 fi
 
-nosetests "$@"
+nosetests --processes=-1 "$@"
