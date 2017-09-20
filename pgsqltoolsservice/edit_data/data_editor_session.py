@@ -16,6 +16,7 @@ from pgsqltoolsservice.edit_data.contracts import (
 from pgsqltoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
 from pgsqltoolsservice.query_execution.query import ExecutionState, Query
 from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset, DbColumn
+import pgsqltoolsservice.utils as utils
 
 
 class DataEditSessionExecutionState:
@@ -89,6 +90,12 @@ class DataEditorSession():
         return result
 
     def commit_edit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
+        if not self._is_initialized:
+            raise RuntimeError("Edit session has not been initialized")
+
+        utils.validate.is_not_none('connection', connection)
+        utils.validate.is_not_none('onsuccess', success)
+        utils.validate.is_not_none('onfailure', failure)
 
         if self._commit_task is not None and self._commit_task.is_alive() is True:
             raise ValueError('Previous commit in progress')
@@ -103,6 +110,11 @@ class DataEditorSession():
         thread.start()
 
     def revert_row(self, row_id: int) -> None:
+        if not self._is_initialized:
+            raise RuntimeError("Edit session has not been initialized")
+
+        if self._last_row_id is None or (row_id > self._last_row_id or row_id < 0):
+            raise IndexError(f"Parameter row_id with value {row_id} is out of range")
 
         try:
             self._session_cache.pop(row_id)
@@ -111,17 +123,28 @@ class DataEditorSession():
             raise KeyError('No edit pending for row')
 
     def revert_cell(self, row_id: int, column_index: int) -> RevertCellResponse:
+        if not self._is_initialized:
+            raise RuntimeError("Edit session has not been initialized")
 
         edit_row = self._session_cache.get(row_id)
 
         return edit_row.revert_cell(column_index)
 
     def delete_row(self, row_id: int) -> None:
+        if not self._is_initialized:
+            raise RuntimeError("Edit session has not been initialized")
+
+        if self._last_row_id is None or (row_id > self._last_row_id or row_id < 0):
+            raise IndexError(f"Parameter row_id with value {row_id} is out of range")
+
         row_delete = RowDelete(row_id, self._result_set, self.table_metadata)
 
         self._session_cache[row_id] = row_delete
 
     def create_row(self) -> CreateRowResponse:
+        if not self._is_initialized:
+            raise RuntimeError("Edit session has not been initialized")
+
         self._last_row_id += 1
 
         new_row = RowCreate(self._last_row_id, self._result_set, self.table_metadata)
@@ -165,6 +188,7 @@ class DataEditorSession():
 
         try:
             edit_operations = self._session_cache.values()
+
             cursor = connection.cursor()
 
             for operation in edit_operations:

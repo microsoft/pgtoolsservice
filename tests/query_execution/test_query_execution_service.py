@@ -28,9 +28,10 @@ from pgsqltoolsservice.query_execution.contracts import (
 from pgsqltoolsservice.query_execution.batch import Batch
 from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
-import tests.utils as utils
 from pgsqltoolsservice.connection.contracts import ConnectionType, ConnectionDetails
 from pgsqltoolsservice.query_execution.contracts.common import SubsetResult
+from tests.integration import integration_test, get_connection
+import tests.utils as utils
 
 
 class TestQueryService(unittest.TestCase):
@@ -832,6 +833,54 @@ class TestQueryService(unittest.TestCase):
 
         with mock.patch('uuid.uuid4', new=mock.Mock(return_value=new_owner_uri)):
             self.query_execution_service._handle_simple_execute_request(self.request_context, simple_execution_request)
+
+    @integration_test
+    def test_query_execution_and_retrieval(self):
+        """Perform an end-to-end test of query execution"""
+        # Set up the test with request parameters, a connection, and mock threading
+        query_params = ExecuteStringParams()
+        query_params.query = 'select usename, usesysid from pg_catalog.pg_user'
+        query_params.owner_uri = 'test_uri'
+
+        self.connection_service.get_connection = mock.Mock(return_value=get_connection())
+
+        mock_thread = utils.MockThread()
+        with mock.patch('threading.Thread', new=mock.Mock(side_effect=mock_thread.initialize_target)):
+            # If I execute a query
+            self.query_execution_service._handle_execute_query_request(self.request_context, query_params)
+
+        # Then a successful response should have been sent, along with the expected notifications
+        self.assertEqual(self.request_context.last_response_params, {})
+        notifications = {call[1][0]: call[1][1] for call in self.request_context.send_notification.mock_calls}
+        notification_methods = list(notifications.keys())
+        expected_methods = ['query/batchStart', 'query/resultSetComplete', 'query/message', 'query/batchComplete', 'query/complete']
+        self.assertEqual(notification_methods, expected_methods)
+
+        # And the query results can be retrieved using a query/subset request
+        row_count = notifications['query/complete'].batch_summaries[0].result_set_summaries[0].row_count
+        subset_params = SubsetParams().from_dict({
+            'ownerUri': query_params.owner_uri,
+            'resultSetIndex': 0,
+            'rowsCount': row_count,
+            'rowsStartIndex': 0,
+            'batchIndex': 0
+        })
+        self.query_execution_service._handle_subset_request(self.request_context, subset_params)
+
+        # And the number of rows retrieved matches the number of rows requested
+        query_results = self.request_context.last_response_params.result_subset
+        query_results_row_count = query_results.row_count
+        self.assertEqual(query_results_row_count, row_count)
+
+        # And the results match the results when running the same query directly
+        cursor = get_connection().cursor()
+        cursor.execute(query_params.query)
+        expected_results = cursor.fetchall()
+        for row_index, expected_row in enumerate(expected_results):
+            for cell_index, expected_value in enumerate(expected_row):
+                actual_cell = query_results.rows[row_index][cell_index]
+                self.assertEqual(actual_cell.raw_object, expected_value)
+                self.assertEqual(actual_cell.display_value, str(expected_value))
 
 
 class SubsetMock:

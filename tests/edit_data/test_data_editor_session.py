@@ -149,6 +149,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session._result_set = result_set
 
+        self._data_editor_session._is_initialized = True
         response: CreateRowResponse = self._data_editor_session.create_row()
 
         self.assertEqual(1, response.new_row_id)
@@ -157,11 +158,21 @@ class TestDataEditorSession(unittest.TestCase):
         self.assertEqual('&lt;TBD&gt;', response.default_values[0])
         self.assertEqual('False', response.default_values[1])
 
+    def test_create_row_not_initialized(self):
+        with self.assertRaises(RuntimeError) as context_manager:
+            self._data_editor_session.create_row()
+
+        if context_manager.exception.args is not None:
+            self.assertEqual("Edit session has not been initialized", context_manager.exception.args[0])
+
     def test_delete_row(self):
         '''
         Verify that it creates and DeleteRow and adds it to session cache
         '''
         row_id = 1
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session._last_row_id = 3
+
         self._data_editor_session.delete_row(row_id)
 
         delete_row = self._data_editor_session._session_cache.get(row_id)
@@ -170,6 +181,25 @@ class TestDataEditorSession(unittest.TestCase):
         self.assertEqual(None, self._data_editor_session._result_set)
         self.assertEqual(None, self._data_editor_session.table_metadata)
 
+    def test_delete_row_not_initialized(self):
+        with self.assertRaises(RuntimeError) as context_manager:
+            self._data_editor_session.delete_row(2)
+
+        if context_manager.exception.args is not None:
+            self.assertEqual("Edit session has not been initialized", context_manager.exception.args[0])
+
+    def test_delete_row_with_rowid_out_of_range(self):
+        self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session._last_row_id = 2
+        delete_row_id = 3
+
+        with self.assertRaises(IndexError) as context_manager:
+            self._data_editor_session.delete_row(delete_row_id)
+
+        if context_manager.exception.args is not None:
+            self.assertEqual(f"Parameter row_id with value {delete_row_id} is out of range", context_manager.exception.args[0])
+
     def test_revert_row_when_row_exists(self):
         '''
         Verify that it removes the row from the cache
@@ -177,16 +207,39 @@ class TestDataEditorSession(unittest.TestCase):
         row_id = 1
 
         self._data_editor_session._session_cache[row_id] = {}
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session._last_row_id = 3
 
         self._data_editor_session.revert_row(row_id)
 
         self.assertEqual(0, len(self._data_editor_session._session_cache))
+
+    def test_revert_row_not_initialized(self):
+        with self.assertRaises(RuntimeError) as context_manager:
+            self._data_editor_session.revert_row(3)
+
+        if context_manager.exception.args is not None:
+            self.assertEqual("Edit session has not been initialized", context_manager.exception.args[0])
+
+    def test_revert_row_with_rowid_out_of_range(self):
+        self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session._last_row_id = 2
+        revert_row_id = 3
+
+        with self.assertRaises(IndexError) as context_manager:
+            self._data_editor_session.revert_row(revert_row_id)
+
+        if context_manager.exception.args is not None:
+            self.assertEqual(f"Parameter row_id with value {revert_row_id} is out of range", context_manager.exception.args[0])
 
     def test_revert_row_when_row_does_not_exists(self):
         '''
         Verify that it throws exception when row is not in cache
         '''
         row_id = 1
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session._last_row_id = 3
 
         with self.assertRaises(KeyError):
             self._data_editor_session.revert_row(row_id)
@@ -209,7 +262,8 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session._result_set = ResultSet(rows=[(1, False)])
 
-        self._data_editor_session.commit_edit(self._connection, success_callback, None)
+        self._data_editor_session._is_initialized = True
+        self._data_editor_session.commit_edit(self._connection, success_callback, mock.MagicMock())
 
         self.assertTrue(len(self._data_editor_session._session_cache) is 0)
 
@@ -223,22 +277,56 @@ class TestDataEditorSession(unittest.TestCase):
 
         mock_edit.apply_changes.assert_called_once()
 
+    def test_commit_edit_not_initialized(self):
+        with self.assertRaises(RuntimeError):
+            self._data_editor_session.commit_edit(self._connection, mock.MagicMock(), mock.MagicMock())
+
+    def test_commit_edit_with_null_connection(self):
+        self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
+        self._data_editor_session._is_initialized = True
+
+        with self.assertRaises(ValueError) as context_manager:
+            self._data_editor_session.commit_edit(None, mock.MagicMock(), mock.MagicMock())
+
+        if context_manager.exception.args is not None:
+            self.assertEqual(f"connection is None", context_manager.exception.args[0])
+
+    def test_commit_edit_with_none_success_handler(self):
+        self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
+        self._data_editor_session._is_initialized = True
+
+        with self.assertRaises(ValueError) as context_manager:
+            self._data_editor_session.commit_edit(self._connection, None, mock.MagicMock())
+
+        if context_manager.exception.args is not None:
+            self.assertEqual(f"onsuccess is None", context_manager.exception.args[0])
+
+    def test_commit_edit_with_none_failure_handler(self):
+        self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
+        self._data_editor_session._is_initialized = True
+
+        with self.assertRaises(ValueError) as context_manager:
+            self._data_editor_session.commit_edit(self._connection, mock.MagicMock(), None)
+
+        if context_manager.exception.args is not None:
+            self.assertEqual(f"onfailure is None", context_manager.exception.args[0])
+
     def test_update_cell_not_initialized(self):
         session = DataEditorSession(self._metadata_factory)
         with self.assertRaises(RuntimeError):
             session.update_cell(0, 3, 'abcd')
 
-    def test_update_row_with_rowid_out_of_range(self):
+    def test_update_cell_with_rowid_out_of_range(self):
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
         self._data_editor_session._is_initialized = True
         self._data_editor_session._last_row_id = 2
         current_row_id = 3
 
-        with self.assertRaises(IndexError) as cm:
+        with self.assertRaises(IndexError) as context_manager:
             self._data_editor_session.update_cell(current_row_id, 4, 'abcd')
 
-        if cm.exception.args is not None:
-            self.assertEquals(f"Parameter row_id with value {current_row_id} is out of range", cm.exception.args[0])
+        if context_manager.exception.args is not None:
+            self.assertEqual(f"Parameter row_id with value {current_row_id} is out of range", context_manager.exception.args[0])
 
     def test_get_rows_when_start_index_is_equal_to_row_count(self):
         rows = []
@@ -269,6 +357,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._data_editor_session._session_cache[0] = row_delete
         self._data_editor_session._result_set = result_set
 
+        self._data_editor_session._is_initialized = True
         self._data_editor_session.commit_edit(self._connection, mock.MagicMock(), mock.MagicMock())
 
         row_delete.get_script.assert_not_called()
@@ -290,6 +379,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._data_editor_session._session_cache[0] = row_delete
         self._data_editor_session._result_set = result_set
 
+        self._data_editor_session._is_initialized = True
         self._data_editor_session.commit_edit(self._connection, mock.MagicMock(), mock.MagicMock())
 
         row_delete.get_script.assert_called_once()
