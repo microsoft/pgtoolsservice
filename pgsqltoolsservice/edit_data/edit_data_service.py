@@ -83,7 +83,7 @@ class EditDataService(object):
     def _edit_subset(self, request_context: RequestContext, params: EditSubsetParams) -> None:
         session: DataEditorSession = self._active_sessions.get(params.owner_uri)
 
-        rows = session.get_rows(params.owner_uri, params.row_start_index, params.row_count - 1)
+        rows = session.get_rows(params.owner_uri, params.row_start_index, params.row_start_index + params.row_count )
 
         edit_subset_result = EditSubsetResponse(len(rows), rows)
 
