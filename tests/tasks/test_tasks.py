@@ -70,12 +70,13 @@ class TestTasks(unittest.TestCase):
         first_call_params = notification_calls[1][1][1]
         expected_first_params = {
             'status': TaskStatus.IN_PROGRESS,
-            'message': '',
-            'duration': 0
+            'message': ''
         }
         for param, value in expected_first_params.items():
             self.assertIn(param, first_call_params)
             self.assertEqual(value, first_call_params[param])
+        self.assertIn('duration', first_call_params)
+        self.assertGreaterEqual(first_call_params['duration'], 0)
         self.assertIn('taskId', first_call_params)
         second_call_method = notification_calls[2][1][0]
         self.assertEqual(second_call_method, expected_method)
