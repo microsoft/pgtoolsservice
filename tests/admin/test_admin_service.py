@@ -6,11 +6,13 @@
 import unittest
 import unittest.mock as mock
 
+import psycopg2
+
 from pgsqltoolsservice.admin import AdminService
 from pgsqltoolsservice.admin.contracts import GET_DATABASE_INFO_REQUEST, GetDatabaseInfoParameters, GetDatabaseInfoResponse
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.utils import constants
-from tests.integration import get_connection, integration_test
+from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.utils import MockConnection, MockCursor, MockRequestContext
 
@@ -68,7 +70,8 @@ class TestAdminService(unittest.TestCase):
         request_context = MockRequestContext()
 
         # Set up the connection service to return our connection
-        self.connection_service.get_connection = mock.Mock(return_value=get_connection())
+        connection = psycopg2.connect(**get_connection_details())
+        self.connection_service.get_connection = mock.Mock(return_value=connection)
 
         # If I send a get_database_info request
         self.admin_service._handle_get_database_info_request(request_context, params)
@@ -76,7 +79,7 @@ class TestAdminService(unittest.TestCase):
         # Then the service responded with a valid database owner
         owner = request_context.last_response_params.database_info.options['owner']
 
-        cursor = get_connection().cursor()
+        cursor = connection.cursor()
         cursor.execute('select usename from pg_catalog.pg_user')
         usernames = [row[0] for row in cursor.fetchall()]
         self.assertIn(owner, usernames)
