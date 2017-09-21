@@ -11,7 +11,7 @@ import sys
 import ptvsd
 
 from pgsqltoolsservice.admin import AdminService
-from pgsqltoolsservice.capabilities import CapabilitiesService
+from pgsqltoolsservice.capabilities.capabilities_service import CapabilitiesService
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.disaster_recovery.disaster_recovery_service import DisasterRecoveryService
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
