@@ -7,7 +7,7 @@ import unittest
 
 import unittest.mock as mock
 
-from pgsqltoolsservice.capabilities import CapabilitiesService
+from pgsqltoolsservice.capabilities.capabilities_service import CapabilitiesService
 from pgsqltoolsservice.capabilities.contracts import InitializeResult, CapabilitiesResult
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 from pgsqltoolsservice.utils import constants
