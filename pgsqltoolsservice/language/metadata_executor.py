@@ -393,29 +393,29 @@ class MetadataExecutor:
 
     def table_columns(self) -> List[tuple]:
         """return a 3-tuple of [schema,table,name]"""
-        return [self.lightweight_metadata.table_columns()]
+        return [c for c in self.lightweight_metadata.table_columns()]
 
     def foreignkeys(self) -> List[tuple]:
         return self.lightweight_metadata.foreignkeys()
 
     def views(self) -> List[tuple]:
         """return a 2-tuple of [schema,name]"""
-        return [self.lightweight_metadata.views()]
+        return [v for v in self.lightweight_metadata.views()]
 
     def view_columns(self) -> List[tuple]:
         """return a 3-tuple of [schema,table,name]"""
-        return [self.lightweight_metadata.view_columns()]
+        return [c for c in self.lightweight_metadata.view_columns()]
 
     def datatypes(self) -> List[tuple]:
         """return a 2-tuple of [schema,name]"""
-        return self.lightweight_metadata.datatypes()
+        return [d for d in self.lightweight_metadata.datatypes()]
 
     def casing(self) -> List[tuple]:
-        return [self.lightweight_metadata.casing()]
+        return [c for c in self.lightweight_metadata.casing()]
 
     def functions(self) -> List[tuple]:
         """
         In order to avoid iterating over full properties queries for each function, this must always
         use the lightweight metadata query as it'll have N queries for N functions otherwise
         """
-        return [self.lightweight_metadata.functions()]
+        return [f for f in self.lightweight_metadata.functions()]

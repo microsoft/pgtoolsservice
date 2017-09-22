@@ -128,7 +128,7 @@ class OperationsQueue:
                     self.disconnect(key)
                 else:
                     # Notify ready and return immediately, the queue exists
-                    return context.intellisense_complete
+                    return context
             # Create the context and start refresh
             context = ConnectionContext(key)
             conn = self._create_connection(key, conn_info)
