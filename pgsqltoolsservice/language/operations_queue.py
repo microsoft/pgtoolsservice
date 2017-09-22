@@ -16,7 +16,6 @@ from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
 import pgsqltoolsservice.utils as utils
 
-POLL_TIMEOUT = 1     # wait 1 second before checking cancelation
 INTELLISENSE_URI = 'intellisense://'
 
 

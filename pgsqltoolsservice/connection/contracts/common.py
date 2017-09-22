@@ -35,7 +35,7 @@ class ConnectionDetails(Serializable):
     def server_name(self) -> str:
         if not self.options:
             return None
-        return self.options.get('host', None)
+        return self.options.get('host')
 
     @server_name.setter
     def server_name(self, value):
@@ -45,7 +45,7 @@ class ConnectionDetails(Serializable):
     def database_name(self) -> str:
         if not self.options:
             return None
-        return self.options.get('dbname', None)
+        return self.options.get('dbname')
 
     @database_name.setter
     def database_name(self, value):
@@ -55,7 +55,7 @@ class ConnectionDetails(Serializable):
     def user_name(self) -> str:
         if not self.options:
             return None
-        return self.options.get('user', None)
+        return self.options.get('user')
 
     @user_name.setter
     def user_name(self, value):
