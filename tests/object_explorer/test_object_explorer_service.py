@@ -86,9 +86,9 @@ class TestObjectExplorer(unittest.TestCase):
     def test_generate_uri_missing_params(self):
         # Setup: Create the parameter sets that will be missing a param each
         params = [
-            ConnectionDetails.from_data(None, None, None, {'host': None, 'dbname': TEST_DBNAME, 'user': TEST_USER}),
-            ConnectionDetails.from_data(None, None, None, {'host': TEST_HOST, 'dbname': None, 'user': TEST_USER}),
-            ConnectionDetails.from_data(None, None, None, {'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': None})
+            ConnectionDetails.from_data({'host': None, 'dbname': TEST_DBNAME, 'user': TEST_USER}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': None, 'user': TEST_USER}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': None})
         ]
 
         for param_set in params:
@@ -139,7 +139,7 @@ class TestObjectExplorer(unittest.TestCase):
         # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
         #       scenarios in a different test
         rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
-        params = ConnectionDetails.from_data(None, None, None, {})
+        params = ConnectionDetails.from_data({})
         oe._handle_create_session_request(rc.request_context, params)
 
         # Then:
@@ -642,7 +642,7 @@ class SessionTestCase(unittest.TestCase):
         # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
         #       scenarios in a different test
         rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
-        params = ConnectionDetails.from_data(None, None, None, {})
+        params = ConnectionDetails.from_data({})
         self.oe._handle_close_session_request(rc.request_context, params)
 
         # Then:

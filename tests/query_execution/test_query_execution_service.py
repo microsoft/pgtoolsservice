@@ -782,7 +782,7 @@ class TestQueryService(unittest.TestCase):
         simple_execution_request.query_string = 'Select something'
         connection_uri = 'test_connection_url'
 
-        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
 
         def get_connection_info(uri):

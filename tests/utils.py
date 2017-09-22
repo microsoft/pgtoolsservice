@@ -169,8 +169,8 @@ class MockCursor:
         pass
 
     @property
-    def morgified_value(self):
-        return self._morgified_value
+    def mogrified_value(self):
+        return self._mogrified_value
 
 
 class MockThread():

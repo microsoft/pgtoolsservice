@@ -6,6 +6,7 @@
 """A module that handles autocompletion metadata querying and initialization of the completion object."""
 
 import threading
+from logging import Logger  # noqa
 import os
 from collections import OrderedDict
 
@@ -23,8 +24,10 @@ class CompletionRefresher:
 
     refreshers = OrderedDict()
 
-    def __init__(self, server: Server):
-        self.server = server
+    def __init__(self, connection: 'psycopg2.extensions.connection', logger: Logger=None):
+        self.connection = connection
+        self.logger: Logger = logger
+        self.server: Server = None
         self._completer_thread: threading.Thread = None
         self._restart_refresh: threading.Event = threading.Event()
 
@@ -38,6 +41,10 @@ class CompletionRefresher:
                     has completed the refresh. The newly created completion
                     object will be passed in as an argument to each callback.
         """
+        if self.server is None:
+            # Delay server creation until on background thread
+            self.server = Server(self.connection)
+
         if self.is_refreshing():
             self._restart_refresh.set()
             return 'Auto-completion refresh restarted.'
@@ -64,26 +71,31 @@ class CompletionRefresher:
         if callable(callbacks):
             callbacks = [callbacks]
 
-        while True:
-            for do_refresh in self.refreshers.values():
-                do_refresh(completer, metadata_executor)
-                if self._restart_refresh.is_set():
-                    self._restart_refresh.clear()
+        try:
+            while True:
+                for do_refresh in self.refreshers.values():
+                    do_refresh(completer, metadata_executor)
+                    if self._restart_refresh.is_set():
+                        self._restart_refresh.clear()
+                        break
+                else:
+                    # Break out of while loop if the for loop finishes natually
+                    # without hitting the break statement.
                     break
-            else:
-                # Break out of while loop if the for loop finishes natually
-                # without hitting the break statement.
-                break
 
-            # Start over the refresh from the beginning if the for loop hit the
-            # break statement.
-            continue
+                # Start over the refresh from the beginning if the for loop hit the
+                # break statement.
+                continue
 
-        # Load history into pgcompleter so it can learn user preferences
-        n_recent = 100
-        if history:
-            for recent in history[-n_recent:]:
-                completer.extend_query_history(recent, is_init=True)
+            # Load history into pgcompleter so it can learn user preferences
+            n_recent = 100
+            if history:
+                for recent in history[-n_recent:]:
+                    completer.extend_query_history(recent, is_init=True)
+
+        except Exception as e:
+            if self.logger:
+                self.logger.exception('Error during metadata refresh: {0}', e)
 
         for callback in callbacks:
             callback(completer)
