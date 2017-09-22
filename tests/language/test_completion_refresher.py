@@ -3,12 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Any
+from typing import List     # noqa
 import time
 import unittest
 from unittest.mock import Mock, patch
 
-from pgsmo import NodeCollection, Server
 from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
 
 import tests.pgsmo_tests.utils as utils
@@ -21,8 +20,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
     """Methods for testing the SqlCompletion refresher module"""
 
     def setUp(self):
-        mock_server = Server(utils.MockConnection(None))
-        self.refresher: CompletionRefresher = CompletionRefresher(mock_server)
+        self.refresher: CompletionRefresher = CompletionRefresher(utils.MockConnection(None))
 
     def test_ctor(self):
         """
@@ -76,7 +74,3 @@ class TestSqlCompletionRefresher(unittest.TestCase):
             self.refresher.refresh(callbacks)
             self.refresher._completer_thread.join()
             self.assertEqual(callbacks[0].call_count, 1)
-
-    # Helper functions ##################################################################
-    def _as_node_collection(self, object_list: List[Any]) -> NodeCollection[Any]:
-        return NodeCollection(lambda: object_list)

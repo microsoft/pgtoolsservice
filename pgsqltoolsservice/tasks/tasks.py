@@ -110,5 +110,6 @@ class Task:
             'duration': int((time.clock() - self._start_time) * 1000) if self._is_completed else 0
         })
 
+    @property
     def _is_completed(self) -> bool:
         return self.status in [TaskStatus.CANCELED, TaskStatus.FAILED, TaskStatus.SUCCEEDED, TaskStatus.SUCCEEDED_WITH_WARNING]

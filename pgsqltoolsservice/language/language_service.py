@@ -5,19 +5,22 @@
 """
     Language Service Implementation
 """
+import functools
 from logging import Logger          # noqa
 import threading
 from typing import Any, Dict, Set, List  # noqa
 
+from prompt_toolkit.completion import Completion    # noqa
+from prompt_toolkit.document import Document    # noqa
 import sqlparse
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
 from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
-from pgsqltoolsservice.workspace.contracts import TextDocumentPosition, Range
+from pgsqltoolsservice.workspace.contracts import Position, TextDocumentPosition, Range
 from pgsqltoolsservice.workspace import WorkspaceService    # noqa
 from pgsqltoolsservice.workspace.script_file import ScriptFile  # noqa
 from pgsqltoolsservice.language.contracts import (
-    COMPLETION_REQUEST, CompletionItem,
+    COMPLETION_REQUEST, CompletionItem, CompletionItemKind,
     COMPLETION_RESOLVE_REQUEST,
     LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams,
     INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
@@ -25,9 +28,29 @@ from pgsqltoolsservice.language.contracts import (
     DOCUMENT_RANGE_FORMATTING_REQUEST, DocumentRangeFormattingParams,
     TextEdit, FormattingOptions
 )
+from pgsqltoolsservice.language.completion import PGCompleter   # noqa
+from pgsqltoolsservice.language.operations_queue import ConnectionContext, OperationsQueue, QueuedOperation
 from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
+from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo
 from pgsqltoolsservice.language.text import TextUtilities
 import pgsqltoolsservice.utils as utils
+
+# Map of meta or display_meta values to completion items. Based on SqlToolsService definitions
+DISPLAY_META_MAP: Dict[str, CompletionItemKind] = {
+    'column': CompletionItemKind.Field,
+    'columns': CompletionItemKind.Field,
+    'database': CompletionItemKind.Method,
+    'datatype': CompletionItemKind.Unit,    # TODO review this
+    'fk join': CompletionItemKind.Reference,       # TODO review this. As it's an FK join, that's like a reference?
+    'function': CompletionItemKind.Function,
+    'join': CompletionItemKind.Snippet,    # TODO review this. Join suggest is kind of like a snippet?
+    'keyword': CompletionItemKind.Keyword,
+    'name join': CompletionItemKind.Snippet,    # TODO review this. Join suggest is kind of like a snippet?
+    'schema': CompletionItemKind.Module,
+    'table': CompletionItemKind.File,
+    'table alias': CompletionItemKind.File,
+    'view': CompletionItemKind.File
+}
 
 
 class LanguageService:
@@ -41,6 +64,10 @@ class LanguageService:
         self._logger: [Logger, None] = None
         self._non_pgsql_uris: Set[str] = set()
         self._completion_helper = DefaultCompletionHelper()
+        self._script_map: Dict[str, 'ScriptParseInfo'] = {}
+        self._script_map_lock: threading.Lock = threading.Lock()
+        self._binding_queue_map: Dict[str, 'ScriptParseInfo'] = {}
+        self.operations_queue: OperationsQueue = None
 
     def register(self, service_provider: ServiceProvider) -> None:
         """
@@ -49,6 +76,8 @@ class LanguageService:
         self._service_provider = service_provider
         self._logger = service_provider.logger
         self._server = service_provider.server
+        self.operations_queue = OperationsQueue(service_provider)
+        self.operations_queue.start()
 
         # Register request handlers
         self._server.set_request_handler(COMPLETION_REQUEST, self.handle_completion_request)
@@ -59,6 +88,7 @@ class LanguageService:
 
         # Register internal service notification handlers
         self._connection_service.register_on_connect_callback(self.on_connect)
+        self._service_provider.server.add_shutdown_handler(self._handle_shutdown)
 
     # REQUEST HANDLERS #####################################################
     def handle_completion_request(self, request_context: RequestContext, params: TextDocumentPosition) -> None:
@@ -74,20 +104,22 @@ class LanguageService:
         if self.should_skip_intellisense(params.text_document.uri):
             do_send_response()
             return
-        file: ScriptFile = self._workspace_service.workspace.get_file(params.text_document.uri)
-        if file is None:
+        script_file: ScriptFile = self._workspace_service.workspace.get_file(params.text_document.uri)
+        if script_file is None:
             do_send_response()
             return
 
-        line: str = file.get_line(params.position.line)
-        (token_text, text_range) = TextUtilities.get_text_and_range(params.position, line)
-        if token_text:
-            completions = self._completion_helper.get_matches(token_text,
-                                                              text_range,
-                                                              self.should_lowercase)
-            response = completions
-        # Finally send response
-        do_send_response()
+        scriptparseinfo: ScriptParseInfo = self.get_scriptparseinfo(params.text_document.uri, create_if_not_exists=False)
+        if not scriptparseinfo or not scriptparseinfo.can_queue():
+            self._send_default_completions(request_context, script_file, params)
+        else:
+            cursor_pos: int = len(script_file.get_text_in_range(Range.from_data(0, 0, params.position.line, params.position.character)))
+            text: str = script_file.get_all_text()
+            scriptparseinfo.document = Document(text, cursor_pos)
+            operation = QueuedOperation(scriptparseinfo.connection_key,
+                                        functools.partial(self.send_connected_completions, request_context, scriptparseinfo, params),
+                                        functools.partial(self._send_default_completions, request_context, script_file, params))
+            self.operations_queue.add_operation(operation)
 
     def handle_completion_resolve_request(self, request_context: RequestContext, params: CompletionItem) -> None:
         """Fill in additional details for a CompletionItem. Returns the same CompletionItem over the wire"""
@@ -182,6 +214,11 @@ class LanguageService:
         return self._workspace_service.configuration.sql.intellisense.enable_lowercase_suggestions
 
     # METHODS ##############################################################
+    def _handle_shutdown(self) -> None:
+        """Stop the operations queue on shutdown"""
+        if self.operations_queue is not None:
+            self.operations_queue.stop()
+
     def should_skip_intellisense(self, uri: str) -> bool:
         return not self._workspace_service.configuration.sql.intellisense.enable_intellisense or not self.is_pgsql_uri(uri)
 
@@ -196,8 +233,16 @@ class LanguageService:
 
     def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
         # TODO build the cache. For now, sending intellisense ready as a test
-        response = IntelliSenseReadyParams.from_data(conn_info.owner_uri)
-        self._server.send_notification(INTELLISENSE_READY_NOTIFICATION, response)
+        scriptparseinfo: ScriptParseInfo = self.get_scriptparseinfo(conn_info.owner_uri, create_if_not_exists=True)
+        if scriptparseinfo is not None:
+            # This is a connection for an actual script in the workspace. Build the intellisense cache for it
+            connection_context: ConnectionContext = self.operations_queue.add_connection_context(conn_info, False)
+            # Wait until the intellisense is completed before sending back the message and caching the key
+            connection_context.intellisense_complete.wait()
+            scriptparseinfo.connection_key = connection_context.key
+            response = IntelliSenseReadyParams.from_data(conn_info.owner_uri)
+            self._server.send_notification(INTELLISENSE_READY_NOTIFICATION, response)
+            # TODO Ideally would support connected diagnostics for missing references
 
     def _get_sqlparse_options(self, options: FormattingOptions) -> Dict[str, Any]:
         sqlparse_options = {}
@@ -224,3 +269,61 @@ class LanguageService:
         options = self._get_sqlparse_options(params.options)
         edit.new_text = sqlparse.format(text, **options)
         response.append(edit)
+
+    def get_scriptparseinfo(self, owner_uri, create_if_not_exists=False) -> ScriptParseInfo:
+        with self._script_map_lock:
+            if owner_uri in self._script_map:
+                return self._script_map[owner_uri]
+            if create_if_not_exists:
+                scriptparseinfo = ScriptParseInfo()
+                self._script_map[owner_uri] = scriptparseinfo
+                return scriptparseinfo
+            return None
+
+    def _send_default_completions(self, request_context: RequestContext, script_file: ScriptFile, params: TextDocumentPosition) -> bool:
+        response = []
+        line: str = script_file.get_line(params.position.line)
+        (token_text, text_range) = TextUtilities.get_text_and_range(params.position, line)
+        if token_text:
+            completions = self._completion_helper.get_matches(token_text, text_range, self.should_lowercase)
+            response = completions
+        request_context.send_response(response)
+        return True
+
+    def send_connected_completions(self, request_context: RequestContext, scriptparseinfo: ScriptParseInfo,
+                                   params: TextDocumentPosition, context: ConnectionContext) -> bool:
+        if not context or not context.is_connected:
+            return False
+        # Else use the completer to query for completions
+        completer: PGCompleter = context.pgcompleter
+        completions: List[Completion] = completer.get_completions(scriptparseinfo.document, None)
+        if completions:
+            response = [LanguageService.to_completion_item(completion, params) for completion in completions]
+            request_context.send_response(response)
+            return True
+        # Else return false so the timeout task can be sent instead
+        return False
+
+    @classmethod
+    def to_completion_item(cls, completion: Completion, params: TextDocumentPosition) -> CompletionItem:
+        key = completion.text
+        start_position = LanguageService._get_start_position(params.position, completion.start_position)
+        text_range = Range(start=start_position, end=params.position)
+        kind = DISPLAY_META_MAP.get(completion.display_meta, CompletionItemKind.Unit)
+        completion_item = CompletionItem()
+        completion_item.label = key
+        completion_item.detail = completion.display
+        completion_item.insert_text = key
+        completion_item.kind = kind
+        completion_item.text_edit = TextEdit.from_data(text_range, key)
+        # Add a sort text to put keywords after all other items
+        completion_item.sort_text = f'~{key}' if completion_item.kind == CompletionItemKind.Keyword else key
+        return completion_item
+
+    @classmethod
+    def _get_start_position(cls, end: Position, start_index: int) -> Position:
+        start_col = end.character + start_index
+        if start_col < 0:
+            # Should not happen - for now, just set to 0 and assume it's a mistake
+            start_col = 0
+        return Position(end.line, start_col)
