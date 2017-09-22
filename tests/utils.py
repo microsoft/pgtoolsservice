@@ -140,8 +140,8 @@ class MockCursor:
         self.connection = mock.Mock()
         self.description = None
         self.rowcount = -1
-        self._morgified_value = b'Some query'
-        self.mogrify = mock.Mock(return_value=self._morgified_value)
+        self._mogrified_value = b'Some query'
+        self.mogrify = mock.Mock(return_value=self._mogrified_value)
         self._query_results = query_results
         self._fetched_count = 0
 
