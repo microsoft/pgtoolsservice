@@ -4,9 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 from enum import Enum
-
 from typing import List  # noqa
 from datetime import datetime
+
 import psycopg2
 import uuid
 import sqlparse
