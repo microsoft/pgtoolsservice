@@ -153,7 +153,7 @@ class MockCursor:
 
         if next_row is None:
             raise StopIteration
-        
+
         return next_row
 
     def execute_success_side_effects(self, *args):
