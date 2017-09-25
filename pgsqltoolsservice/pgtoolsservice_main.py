@@ -25,6 +25,31 @@ from pgsqltoolsservice.tasks import TaskService
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
 
+
+def _create_server(input_stream, output_stream, server_logger):
+    # Create the server, but don't start it yet
+    rpc_server = JSONRPCServer(input_stream, output_stream, server_logger)
+
+    # Create the service provider and add the providers to it
+    services = {
+        constants.ADMIN_SERVICE_NAME: AdminService,
+        constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
+        constants.CONNECTION_SERVICE_NAME: ConnectionService,
+        constants.DISASTER_RECOVERY_SERVICE_NAME: DisasterRecoveryService,
+        constants.LANGUAGE_SERVICE_NAME: LanguageService,
+        constants.METADATA_SERVICE_NAME: MetadataService,
+        constants.OBJECT_EXPLORER_NAME: ObjectExplorerService,
+        constants.QUERY_EXECUTION_SERVICE_NAME: QueryExecutionService,
+        constants.SCRIPTING_SERVICE_NAME: ScriptingService,
+        constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
+        constants.EDIT_DATA_SERVICE_NAME: EditDataService,
+        constants.TASK_SERVICE_NAME: TaskService
+    }
+    service_box = ServiceProvider(rpc_server, services, server_logger)
+    service_box.initialize()
+    return rpc_server
+
+
 if __name__ == '__main__':
     # See if we have any arguments
     wait_for_debugger = False
@@ -75,25 +100,7 @@ if __name__ == '__main__':
     logger.info('PostgreSQL Tools Service is starting up...')
 
     # Create the server, but don't start it yet
-    server = JSONRPCServer(stdin, std_out_wrapped, logger)
-
-    # Create the service provider and add the providers to it
-    services = {
-        constants.ADMIN_SERVICE_NAME: AdminService,
-        constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
-        constants.CONNECTION_SERVICE_NAME: ConnectionService,
-        constants.DISASTER_RECOVERY_SERVICE_NAME: DisasterRecoveryService,
-        constants.LANGUAGE_SERVICE_NAME: LanguageService,
-        constants.METADATA_SERVICE_NAME: MetadataService,
-        constants.OBJECT_EXPLORER_NAME: ObjectExplorerService,
-        constants.QUERY_EXECUTION_SERVICE_NAME: QueryExecutionService,
-        constants.SCRIPTING_SERVICE_NAME: ScriptingService,
-        constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
-        constants.EDIT_DATA_SERVICE_NAME: EditDataService,
-        constants.TASK_SERVICE_NAME: TaskService
-    }
-    service_box = ServiceProvider(server, services, logger)
-    service_box.initialize()
+    server = _create_server(stdin, std_out_wrapped, logger)
 
     # Start the server
     server.start()
