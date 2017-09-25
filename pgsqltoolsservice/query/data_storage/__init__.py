@@ -4,8 +4,5 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.query.data_storage.storage_data_reader import StorageDataReader
-import pgsqltoolsservice.query.data_storage.service_buffer_file_stream # noqa
 
-__all__ = [
-    'service_buffer_file_stream', 'StorageDataReader'
-]
+__all__ = ['StorageDataReader']

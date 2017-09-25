@@ -19,10 +19,16 @@ class StorageDataReader:
         pass
 
     def read_row(self) -> bool:
-        row = self._cursor.fetchone()
-        row_found = row is not None
+        '''
+        read_row uses the cursor to iterate over. It iterates over the cursor one at a time
+        and returns True if it finds the row and False if it doesn’t
+        '''
 
-        if row_found:
+        row_found = False
+
+        for row in self._cursor:
             self._current_row = row
+            row_found = True
+            break
 
         return row_found

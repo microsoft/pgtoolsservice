@@ -145,6 +145,17 @@ class MockCursor:
         self._query_results = query_results
         self._fetched_count = 0
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        next_row = self.execute_fetch_one_side_effects()
+
+        if next_row is None:
+            raise StopIteration
+        
+        return next_row
+
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
@@ -156,7 +167,6 @@ class MockCursor:
         raise psycopg2.DatabaseError()
 
     def execute_fetch_one_side_effects(self, *args):
-
         if self._fetched_count < len(self._query_results):
             row = self._query_results[self._fetched_count]
             self._fetched_count += 1

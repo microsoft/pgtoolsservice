@@ -3,13 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from enum import Enum
 
 from typing import List  # noqa
 from datetime import datetime
 import psycopg2
 import uuid
 import sqlparse
-from enum import Enum
 
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query_execution.contracts.common import SelectionData
@@ -92,7 +92,7 @@ class Batch:
 
     def execute(self, connection: 'psycopg2.extensions.connection') -> None:
         """
-        Execute the batch using the given psycopg2 cursor
+        Execute the batch using the psycopg2 cursor retrieved from the given connection
 
         :raises psycopg2.DatabaseError: if an error is encountered while running the batch's query
         """
