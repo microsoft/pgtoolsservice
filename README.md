@@ -44,9 +44,7 @@ Integration tests can be inserted in line with our unit tests. The `tests.integr
 
 To declare that a test is an integration test, mark it with the imported `@integration_test` decorator. This will automatically patch `psycopg2.connect` in your test to return the test database connection from your config file, and will let you use the `get_connection` function to retrieve that connection if you need it elsewhere.
 
-By default, any SQL commands executed during your test will be executed in a single transaction and rolled back at the end of the test. If you need more control over transactions in your test, pass `False` as the decorator's `auto_cleanup` parameter, like this: `@integration_test(False)`.
-
-Make sure your test leaves the database unmodified when it completes, or it could cause other tests to fail.
+Each integration test will run with its own database, which will be created before the test starts and dropped when the test ends.
 
 You can find an integration test example in code in `tests/query_execution/test_query_execution_service.py`'s `test_query_execution_and_retrieval` method.
 

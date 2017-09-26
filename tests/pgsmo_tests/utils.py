@@ -57,13 +57,13 @@ def get_mock_results(col_count: int=5, row_count: int=5) -> Tuple[List[Column], 
 
 
 class MockCursor:
-    def __init__(self, results: Optional[Tuple[List[Column], List[dict]]], throw_on_execute=False):
+    def __init__(self, results: Optional[Tuple[List[Column], List[dict]]], throw_on_execute=False, mogrified_value='SomeQuery'):
         # Setup the results, that will change value once the cursor is executed
         self.description = None
         self.rowcount = None
         self._results = results
         self._throw_on_execute = throw_on_execute
-
+        self._mogrified_value = mogrified_value
         # Define iterator state
         self._has_been_read = False
         self._iter_index = 0
@@ -71,6 +71,7 @@ class MockCursor:
         # Define mocks for the methods of the cursor
         self.execute = mock.MagicMock(side_effect=self._execute)
         self.close = mock.MagicMock()
+        self.mogrify = mock.Mock(return_value=self._mogrified_value)
 
     def __iter__(self):
         # If we haven't read yet, raise an error
@@ -82,7 +83,17 @@ class MockCursor:
         yield list(self._results[1][self._iter_index].values())
         self._iter_index += 1
 
-    def _execute(self, query, params):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    @property
+    def mogrified_value(self):
+        return self._mogrified_value
+
+    def _execute(self, query, params=None):
         # Raise error if that was expected, otherwise set the output
         if self._throw_on_execute:
             raise DatabaseError()

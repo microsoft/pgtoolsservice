@@ -12,4 +12,4 @@ then
   exit
 fi
 
-nosetests -a is_integration_test=True "$@"
+nosetests -a is_integration_test=True --processes=-1 "$@"

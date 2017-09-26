@@ -30,7 +30,7 @@ from pgsqltoolsservice.query_execution.query import Query, ExecutionState
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 from pgsqltoolsservice.connection.contracts import ConnectionType, ConnectionDetails
 from pgsqltoolsservice.query_execution.contracts.common import SubsetResult
-from tests.integration import integration_test, get_connection
+from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
 
 
@@ -782,7 +782,7 @@ class TestQueryService(unittest.TestCase):
         simple_execution_request.query_string = 'Select something'
         connection_uri = 'test_connection_url'
 
-        connection_details = ConnectionDetails.from_data('myserver', 'postgres', 'postgres', {})
+        connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
 
         def get_connection_info(uri):
@@ -842,7 +842,8 @@ class TestQueryService(unittest.TestCase):
         query_params.query = 'select usename, usesysid from pg_catalog.pg_user'
         query_params.owner_uri = 'test_uri'
 
-        self.connection_service.get_connection = mock.Mock(return_value=get_connection())
+        connection = psycopg2.connect(**get_connection_details())
+        self.connection_service.get_connection = mock.Mock(return_value=connection)
 
         mock_thread = utils.MockThread()
         with mock.patch('threading.Thread', new=mock.Mock(side_effect=mock_thread.initialize_target)):
@@ -873,7 +874,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(query_results_row_count, row_count)
 
         # And the results match the results when running the same query directly
-        cursor = get_connection().cursor()
+        cursor = connection.cursor()
         cursor.execute(query_params.query)
         expected_results = cursor.fetchall()
         for row_index, expected_row in enumerate(expected_results):

@@ -9,8 +9,11 @@ import threading    # noqa
 from typing import List, Tuple, Optional
 import unittest
 from unittest import mock
+from parameterized import parameterized
 
-from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition
+from prompt_toolkit.completion import Completion
+
+from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition, Position     # noqa
 from pgsqltoolsservice.hosting import (     # noqa
     JSONRPCServer,
     NotificationContext,
@@ -18,6 +21,8 @@ from pgsqltoolsservice.hosting import (     # noqa
     ServiceProvider
 )
 from pgsqltoolsservice.language import LanguageService
+from pgsqltoolsservice.language.operations_queue import OperationsQueue
+from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo    # noqa
 from pgsqltoolsservice.language.contracts import (      # noqa
     LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
     INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
@@ -58,8 +63,8 @@ class TestLanguageService(unittest.TestCase):
                 'uri': self.default_uri
             },
             'position': {
-                'line': 1,
-                'character': 1
+                'line': 3,
+                'character': 10
             }
         })
         self.default_text_document_id = TextDocumentIdentifier.from_dict({
@@ -89,9 +94,19 @@ class TestLanguageService(unittest.TestCase):
         server.set_notification_handler.assert_called()
         server.set_request_handler.assert_called()
         self.assertEqual(1, len(conn_service._on_connect_callbacks))
+        self.assertEqual(1, server.count_shutdown_handlers())
 
         # ... The service provider should have been stored
         self.assertIs(service._service_provider, provider)  # noqa
+
+    def test_handle_shutdown(self):
+        # Given a language service
+        service: LanguageService = self._init_service(stop_operations_queue=False)
+        self.assertFalse(service.operations_queue.stop_requested)
+        # When I shutdown the service
+        service._handle_shutdown()
+        # Then the language service should be cleaned up
+        self.assertTrue(service.operations_queue.stop_requested)
 
     def test_completion_intellisense_off(self):
         """
@@ -136,7 +151,7 @@ class TestLanguageService(unittest.TestCase):
         Test that the completion handler returns a set of default values
         when not connected to any URI
         """
-        # If: The script file doesn't exist (there is an empty workspace)
+        # If: The script file exists
         input_text = 'create tab'
         doc_position = TextDocumentPosition.from_dict({
             'text_document': {
@@ -159,7 +174,7 @@ class TestLanguageService(unittest.TestCase):
         service.handle_completion_request(context, doc_position)
 
         # Then:
-        # ... An empty completion should be sent over the notification
+        # ... An default completion set should be sent over the notification
         context.send_response.assert_called_once()
         completions: List[CompletionItem] = context.last_response_params
         self.assertTrue(len(completions) > 0)
@@ -198,23 +213,48 @@ class TestLanguageService(unittest.TestCase):
 
     def test_on_connect_sends_notification(self):
         """
-        Test that the service sends an intellisense ready notification after handling an on connect notification from the connection service
+        Test that the service sends an intellisense ready notification after handling an on connect notification from the connection service.
+        This is a slightly more end-to-end test that verifies calling through to the queue layer
         """
         # If: I create a new language service
         service: LanguageService = self._init_service_with_flow_validator()
-        conn_info = ConnectionInfo('file://msuri.sql', ConnectionDetails())
+        conn_info = ConnectionInfo('file://msuri.sql',
+                                   ConnectionDetails.from_data({'host': None, 'dbname': 'TEST_DBNAME', 'user': 'TEST_USER'}))
+
+        connect_result = mock.MagicMock()
+        connect_result.error_message = None
+        self.mock_connection_service.get_connection = mock.Mock(return_value=mock.MagicMock())
+        self.mock_connection_service.connect = mock.MagicMock(return_value=connect_result)
 
         def validate_success_notification(response: IntelliSenseReadyParams):
             self.assertEqual(response.owner_uri, conn_info.owner_uri)
 
         # When: I notify of a connection complete for a given URI
         self.flow_validator.add_expected_notification(IntelliSenseReadyParams, INTELLISENSE_READY_NOTIFICATION, validate_success_notification)
-        task: threading.Thread = service.on_connect(conn_info)
-        task.join()
+
+        refresher_mock = mock.MagicMock()
+        refresh_method_mock = mock.MagicMock()
+        refresher_mock.refresh = refresh_method_mock
+        patch_path = 'pgsqltoolsservice.language.operations_queue.CompletionRefresher'
+        with mock.patch(patch_path) as refresher_patch:
+            refresher_patch.return_value = refresher_mock
+            task: threading.Thread = service.on_connect(conn_info)
+            # And when refresh is "complete"
+            refresh_method_mock.assert_called_once()
+            callback = refresh_method_mock.call_args[0][0]
+            self.assertIsNotNone(callback)
+            callback(None)
+            # Wait for task to return
+            task.join()
 
         # Then:
         # an intellisense ready notification should be sent for that URI
         self.flow_validator.validate()
+        # ... and the scriptparseinfo should be created
+        info: ScriptParseInfo = service.get_scriptparseinfo(conn_info.owner_uri)
+        self.assertIsNotNone(info)
+        # ... and the info should have the connection key set
+        self.assertEqual(info.connection_key, OperationsQueue.create_key(conn_info))
 
     def test_format_doc_no_pgsql_format(self):
         """
@@ -333,9 +373,55 @@ class TestLanguageService(unittest.TestCase):
         self.assert_range_equals(edits[0].range, format_params.range)
         self.assertEqual(edits[0].new_text, expected_output)
 
-    def _init_service(self) -> LanguageService:
+    @parameterized.expand([
+        (0, 10),
+        (-2, 8),
+    ])
+    def test_completion_to_completion_item(self, relative_start_pos, expected_start_char):
+        """
+        Tests that PGCompleter's Completion objects get converted to CompletionItems as expected
+        """
+        text = 'item'
+        display = 'item is a table'
+        display_meta = 'table'
+        completion = Completion(text, relative_start_pos, display, display_meta)
+        completion_item: CompletionItem = LanguageService.to_completion_item(completion, self.default_text_position)
+        self.assertEqual(completion_item.label, text)
+        self.assertEqual(completion_item.text_edit.new_text, text)
+        text_pos: Position = self.default_text_position.position    # pylint: disable=maybe-no-member
+        self.assertEqual(completion_item.text_edit.range.start.line, text_pos.line)
+        self.assertEqual(completion_item.text_edit.range.start.character, expected_start_char)
+        self.assertEqual(completion_item.text_edit.range.end.line, text_pos.line)
+        self.assertEqual(completion_item.text_edit.range.end.character, text_pos.character)
+        self.assertEqual(completion_item.detail, display)
+        self.assertEqual(completion_item.label, text)
+
+    def test_completion_keyword_completion_sort_text(self):
+        """
+        Tests that a Keyword Completion is converted with sort text that puts it after other objects
+        """
+        text = 'item'
+        display = 'item is something'
+        # Given I have anything other than a keyword, I expect label to match key
+        table_completion = Completion(text, 0, display, 'table')
+        completion_item: CompletionItem = LanguageService.to_completion_item(table_completion, self.default_text_position)
+        self.assertEqual(completion_item.sort_text, text)
+
+        # Given I have a keyword, I expect
+        keyword_completion = Completion(text, 0, display, 'keyword')
+        completion_item: CompletionItem = LanguageService.to_completion_item(keyword_completion, self.default_text_position)
+        self.assertEqual(completion_item.sort_text, '~' + text)
+
+    def _init_service(self, stop_operations_queue=True) -> LanguageService:
+        """
+        Initializes a simple service instance. By default stops the threaded queue since
+        this could cause issues debugging multiple tests, and the class can be tested
+        without this running the queue
+        """
         service = LanguageService()
         service.register(self.mock_service_provider)
+        if stop_operations_queue:
+            service.operations_queue.stop()
         return service
 
     def _init_service_with_flow_validator(self) -> LanguageService:

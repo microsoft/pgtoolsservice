@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from tests.integration.integration_tests import get_connection_details, integration_test
+from pgsqltoolsservice.query.contracts.batch_summary import BatchSummary
+from pgsqltoolsservice.query.contracts.result_set_summary import ResultSetSummary
 
-__all__ = ['get_connection_details', 'integration_test']
+
+__all__ = ['BatchSummary', 'ResultSetSummary']

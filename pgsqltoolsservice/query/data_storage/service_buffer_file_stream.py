@@ -3,6 +3,20 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from tests.integration.integration_tests import get_connection_details, integration_test
+import tempfile # noqa
 
-__all__ = ['get_connection_details', 'integration_test']
+
+def create_file():
+    pass
+
+
+def get_reader(file_name: str):
+    pass
+
+
+def get_writer(file_name: str):
+    pass
+
+
+def delete_file(file_name: str):
+    pass
