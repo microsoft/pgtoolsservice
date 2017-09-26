@@ -8,11 +8,13 @@ from typing import Callable # noqa
 
 from pgsqltoolsservice.parsers import datatypes
 
+
 class FileSeekPositionType(Enum):
     """ enum of args for seek method"""
     Begin = 0
     Current = 1
     End = 2
+
 
 class ServiceBufferFileStreamWriter:
     """ Writer for service buffer formatted file streams """
@@ -24,14 +26,14 @@ class ServiceBufferFileStreamWriter:
     WRITER_DATA_WRITE_ERROR = "Data write error"
 
     def __init__(self, stream) -> None:
-        
+
         if stream is None:
-            raise ValueError(ServiceBufferFileStreamWriter.WRITER_STREAM_NONE_ERROR)    
-        
+            raise ValueError(ServiceBufferFileStreamWriter.WRITER_STREAM_NONE_ERROR)
+
         if not stream.writable():
             raise ValueError(ServiceBufferFileStreamWriter.WRITER_STREAM_NOT_SUPPORT_WRITING_ERROR)
 
-        self._file_stream = stream        
+        self._file_stream = stream
 
         self._close_stream_flag = False
 
@@ -56,62 +58,62 @@ class ServiceBufferFileStreamWriter:
         }
 
     def _write_null(self):
-        ba=bytearray([])
+        ba = bytearray([])
         return self._write_to_file(self._file_stream, ba)
 
-    def _write_bool(self, val):    
-        ba=bytearray(struct.pack("?", val)) 
+    def _write_bool(self, val):
+        ba = bytearray(struct.pack("?", val))
         return self._write_to_file(self._file_stream, ba)
 
-    def _write_float(self, val):    
+    def _write_float(self, val):
         ba = bytearray(struct.pack("f", val))
-        return self._write_to_file(self._file_stream, ba)            
+        return self._write_to_file(self._file_stream, ba)
 
     def _write_int(self, val):
-        ba=bytearray(struct.pack("i", val))      
+        ba = bytearray(struct.pack("i", val))
         return self._write_to_file(self._file_stream, ba)
 
-    def _write_decimal(self, val):  
-        ba=bytearray(struct.pack("i", int(val)))    
-        return self._write_to_file(self._file_stream, ba)            
+    def _write_decimal(self, val):
+        ba = bytearray(struct.pack("i", int(val)))
+        return self._write_to_file(self._file_stream, ba)
 
     def _write_char(self, val):
         if len(val) != 1:
-            raise ValueError(ServiceBufferFileStreamWriter.WRITER_DATA_TYPE_NOT_CHAR_ERROR)    
+            raise ValueError(ServiceBufferFileStreamWriter.WRITER_DATA_TYPE_NOT_CHAR_ERROR)
         ba = bytearray(val.encode())
-        return self._write_to_file(self._file_stream, ba)            
+        return self._write_to_file(self._file_stream, ba)
 
-    def _write_str(self, val):    
+    def _write_str(self, val):
         ba = bytearray(val.encode())
-        return self._write_to_file(self._file_stream, ba)            
+        return self._write_to_file(self._file_stream, ba)
 
-    def _write_date(self, val):            
-        val_str = val.isoformat() # isoformat is 'YYYY-MM-DD'
+    def _write_date(self, val):
+        val_str = val.isoformat()  # isoformat is 'YYYY-MM-DD'
         ba = bytearray(val_str.encode())
-        return self._write_to_file(self._file_stream, ba)            
+        return self._write_to_file(self._file_stream, ba)
 
-    def _write_time(self, val):     
-        val_str = val.isoformat() # isoformat is 'HH:MM:SS'
+    def _write_time(self, val):
+        val_str = val.isoformat()  # isoformat is 'HH:MM:SS'
         ba = bytearray(val_str.encode())
-        return self._write_to_file(self._file_stream, ba)            
+        return self._write_to_file(self._file_stream, ba)
 
-    def _write_time_with_timezone(self, val):   
+    def _write_time_with_timezone(self, val):
         ba = bytearray(val.encode())
-        return self._write_to_file(self._file_stream, ba)            
+        return self._write_to_file(self._file_stream, ba)
 
     def _write_datetime(self, val):
-        val_str = val.isoformat() # isoformat is 'YYYY-MM-DDTHH:MM:SS.mmmmmm'
+        val_str = val.isoformat()  # isoformat is 'YYYY-MM-DDTHH:MM:SS.mmmmmm'
         ba = bytearray(val_str.encode())
-        return self._write_to_file(self._file_stream, ba)            
+        return self._write_to_file(self._file_stream, ba)
 
     def _write_timedelta(self, val):
-        val_in_seconds: float = val.total_seconds()   
+        val_in_seconds: float = val.total_seconds()
         ba = bytearray(struct.pack("f", val_in_seconds))
-        return self._write_to_file(self._file_stream, ba)            
+        return self._write_to_file(self._file_stream, ba)
 
     def _write_uuid(self, val):
         ba = bytearray(str(val).encode())
-        return self._write_to_file(self._file_stream, ba)            
+        return self._write_to_file(self._file_stream, ba)
 
     def _write_to_file(self, stream, byte_array):
         try:
@@ -123,30 +125,30 @@ class ServiceBufferFileStreamWriter:
     def _get_data_writer(self, type_val: str) -> Callable[[str], object]:
         return self._DATATYPE_WRITER_MAP[type_val]
 
-    def write_row(self, reader):              
+    def write_row(self, reader):
         """   Write a row to a file   """
         # Define a object list to store multiple columns in a row
         len_columns_info = len(reader.columns_info)
         values = [len_columns_info]
 
-        #Loop over all the columns and write the values to the temp file
+        # Loop over all the columns and write the values to the temp file
         rowBytes = 0
         for i in range(0, len_columns_info):
-            #If it's the last column data, then set the flag to true and close the file stream
+            # If it's the last column data, then set the flag to true and close the file stream
             if i == len_columns_info - 1:
                 self._close_stream_flag = True
- 
-            ci = reader.columns_info[i]        
+
+            ci = reader.columns_info[i]
 
             values.append(reader.get_value(i))
             type_val = ci.data_type_name
 
-            #write the object into the temp file
+            # Write the object into the temp file
             if type_val == datatypes.DATATYPE_NULL:
                 rowBytes += self._write_null()
             else:
                 if ci.is_sql_variant:
-                    #serialize type information as a string before the value
+                    # Serialize type information as a string before the value
                     rowBytes += self._write_str(str(type_val))
 
                 data_writer = self._get_data_writer(type_val)
@@ -155,11 +157,11 @@ class ServiceBufferFileStreamWriter:
                     raise TypeError(ServiceBufferFileStreamWriter.WRITER_DATA_TYPE_NOT_EXIST_ERROR)
 
                 rowBytes += data_writer(values[i])
-            
+
             if self._close_stream_flag:
                 self._file_stream.close()
 
         return rowBytes
-    
+
     def seek(self, offset):
         self._file_stream.seek(offset, FileSeekPositionType.Begin)
