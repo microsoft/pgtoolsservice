@@ -226,6 +226,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # ... The properties based on the properties query should be available
         for prop, key in self.full_properties.items():
             NodeObjectTestBase.unittest.assertEqual(getattr(obj, prop), self.property_query[key])
+            print(prop, self.property_query[key])
 
         # ... The generator should have been called once
         if len(self.full_properties) > 1:

@@ -11,8 +11,11 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestView(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'viewname',
-        'oid': 123
+        'name': 'public.viewname',
+        'oid': 123,
+        'schema': 'public',
+        'schemaoid': 456,
+        'objectname': 'viewname'
     }
 
     @property
@@ -38,7 +41,6 @@ class TestView(NodeObjectTestBase, unittest.TestCase):
     @property
     def full_properties(self):
         return {
-            "schema": "schema",
             "definition": "definition",
             "owner": "owner",
             "comment": "comment",

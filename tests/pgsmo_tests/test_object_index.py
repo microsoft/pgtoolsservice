@@ -12,7 +12,10 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 class TestIndex(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
         'name': 'idxname',
-        'oid': 123
+        'oid': 123,
+        'indisclustered': True,
+        'indisprimary': True,
+        'indisunique': True
     }
 
     @property

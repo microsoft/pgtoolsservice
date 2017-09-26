@@ -5,10 +5,18 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT
-    pr.oid, pr.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(pr.oid), '') || ')' AS name,
-    lanname, pg_get_userbyid(proowner) AS funcowner, description
+    pr.oid, 
+    nsp.nspname || '.'  || pr.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(pr.oid), '') || ')' as name,
+    lanname, 
+    pg_get_userbyid(proowner) as funcowner, 
+    description,
+    nsp.nspname AS schema,
+    nsp.oid AS schemaoid,
+    pr.proname AS objectname
 FROM
     pg_proc pr
+INNER JOIN 
+    pg_namespace nsp ON pr.pronamespace= nsp.oid
 JOIN
     pg_type typ ON typ.oid=prorettype
 JOIN
@@ -20,9 +28,6 @@ WHERE
     AND pr.protype = '0'::char
 {% if fnid %}
     AND pr.oid = {{ fnid|qtLiteral }}
-{% endif %}
-{% if parent_id %}
-    AND pronamespace = {{parent_id}}::oid
 {% endif %}
     AND typname NOT IN ('trigger', 'event_trigger')
 ORDER BY

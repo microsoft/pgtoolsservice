@@ -11,8 +11,11 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestDatatype(NodeObjectTestBase, unittest.TestCase):
     NODE_QUERY = {
-        'name': 'datatype',
-        'oid': 123
+        'name': 'public.datatype',
+        'oid': 123,
+        'schema': 'public',
+        'schemaoid': 456,
+        'objectname': 'datatype'
     }
 
     @property

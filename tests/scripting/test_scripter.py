@@ -8,7 +8,7 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, Rule, Trigger, Index
+from pgsmo import Table, DataType, Schema, Database, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, Rule, Trigger, Index
 from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
@@ -148,17 +148,17 @@ class TestScripterOld(unittest.TestCase):
     def test_datatype_scripting(self):
         """ Tests create script for tables"""
         # Set up the mocks
-        mock_schema = Schema(self.server, None, 'myschema')
-        mock_datatype = DataType(self.server, mock_schema, 'test')
+        mock_database = Database(self.server, 'dbname')
+        mock_datatype = DataType(self.server, mock_database, 'myschema.test')
         mock_datatype._additional_properties = {}
         mock_datatype._full_properties = {
-            "name": "test",
-            "schema": "myschema",
             "typtype": "p",
-            "typeowner": "Me"
+            "typeowner": "Me",
         }
+        mock_datatype._relname = 'test'
+        mock_datatype._schema = 'myschema'
         self.server.get_object_by_urn = mock.MagicMock(return_value=mock_datatype)
-        object_metadata = ObjectMetadata('test_urn', None, 'DataType', 'test', 'myschema')
+        object_metadata = ObjectMetadata('test_urn', None, 'DataType', 'myschema.test', 'myschema')
 
         # Verify create, update and delete all produce correct scripts
         self._verify_create_script(object_metadata, ['CREATE TYPE myschema.test'])

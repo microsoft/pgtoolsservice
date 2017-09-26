@@ -32,6 +32,9 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         """
         view = cls(server, parent, kwargs['name'])
         view._oid = kwargs['oid']
+        view._schema = kwargs['schema']
+        view._scid = kwargs['schemaoid']
+        view._relname = kwargs['objectname']
 
         return view
 
@@ -41,7 +44,9 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
-
+        self._schema: str = None
+        self._scid: int = None
+        self._relname: str = None
         # Declare child items
         self._columns: NodeCollection[Column] = self._register_child_collection(Column)
         self._rules: NodeCollection[Rule] = self._register_child_collection(Rule)
@@ -51,7 +56,8 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
     @property
     def extended_vars(self):
         template_vars = {
-            'scid': self.parent.oid
+            'scid': self.scid,
+            'did': self.parent.oid
         }
         return template_vars
 
@@ -71,11 +77,19 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
     # -FULL OBJECT PROPERTIES ##############################################
     @property
     def schema(self):
-        return self._full_properties.get("schema", "")
+        return self._schema
 
     @property
     def definition(self):
         return self._full_properties.get("definition", "")
+    
+    @property
+    def relname(self):
+        return self._relname
+
+    @property
+    def scid(self):
+        return self._scid
 
     @property
     def owner(self):
@@ -109,8 +123,8 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {"data": {
-            "name": self.name,
-            "schema": self.parent.name,
+            "name": self.relname,
+            "schema": self.schema,
             "definition": self.definition,
             "check_option": self.check_option,
             "security_barrier": self.security_barrier
@@ -120,8 +134,8 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         """ Provides data input for delete script """
         return {
             "vid": self._oid,
-            "name": self.name,
-            "nspname": self.nspname
+            "name": self.relname,
+            "nspname": self.schema
         }
 
     def _update_query_data(self) -> dict:
@@ -131,7 +145,7 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
     def _select_query_data(self) -> dict:
         """Provides data input for select script"""
         return {"data": {
-            "name": self.name,
-            "schema": self.parent.name,
+            "name": self.relname,
+            "schema": self.schema,
             "columns": self.columns
         }}

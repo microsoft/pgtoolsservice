@@ -28,6 +28,9 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         """
         idx = cls(server, parent, kwargs['name'])
         idx._oid = kwargs['oid']
+        idx._is_clustered = kwargs['indisclustered']
+        idx._is_primary = kwargs['indisprimary']
+        idx._is_unique = kwargs['indisunique']
 
         return idx
 
@@ -43,7 +46,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
-        # Full Object Properties
+        # # Full Object Properties
         self._is_clustered: Optional[bool] = None
         self._is_primary: Optional[bool] = None
         self._is_unique: Optional[bool] = None
@@ -51,24 +54,24 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     # PROPERTIES ###########################################################
     # -FULL OBJECT PROPERTIES ##############################################
     @property
-    def is_clustered(self) -> Optional[bool]:
-        return self._full_properties['is_clustered']
+    def is_clustered(self):
+        return self._is_clustered
 
     @property
     def is_valid(self) -> Optional[bool]:
-        return self._full_properties['is_valid']
+        return self._full_properties['indisvalid']
 
     @property
-    def is_unique(self) -> Optional[bool]:
-        return self._full_properties['is_unique']
+    def is_unique(self):
+        return self._is_unique
 
     @property
-    def is_primary(self) -> Optional[bool]:
-        return self._full_properties['is_primary']
+    def is_primary(self):
+        return self._is_primary
 
     @property
     def is_concurrent(self):
-        return self._full_properties["is_concurrent"]
+        return self._full_properties["indisconcurrent"]
 
     @property
     def amname(self):
@@ -110,7 +113,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def extended_vars(self):
         return {
             'tid': self.parent.oid,                 # Table/view OID
-            'did': self.parent.parent.parent.oid    # Database OID
+            'did': self.parent.parent.oid    # Database OID
         }
     # IMPLEMENTATION DETAILS ###############################################
 
@@ -125,7 +128,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "indisunique": self.is_unique,
                 "isconcurrent": self.is_concurrent,
                 "name": self.name,
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "amname": self.amname,
                 "columns": self.columns,
@@ -140,7 +143,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         """ Provides data input for delete script """
         return {
             "data": {
-                "nspname": self.parent.parent.name,
+                "nspname": self.parent.schema,
                 "name": self.name
             },
             "cascade": self.cascade
@@ -151,7 +154,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "fillfactor": self.fillfactor,
                 "spcname": self.spcname,
                 "indisclustered": self.is_clustered,
