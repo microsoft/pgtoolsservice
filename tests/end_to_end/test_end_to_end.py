@@ -12,26 +12,56 @@ import os
 import queue
 import re
 import threading
-import time
+from typing import Callable, List, Optional, Tuple
 import unittest
 from unittest import mock
 
+from pgsqltoolsservice.hosting.json_message import JSONRPCMessageType
 import pgsqltoolsservice.pgtoolsservice_main as pgtoolsservice_main
-from pgsqltoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
-from pgsqltoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 
 
-class RPCMessage:
+class RPCTestMessage:
+    """
+    Class representing an individual JSON RPC message sent as part of an end-to-end integration test
+
+    :param method: The name of the JSON RPC method (e.g. 'connection/connect')
+    :param message_type: The JSONRpcMessageType for the message
+    :param expect_error_response: Whether the server will respond to this message with an error.
+    This parameter will be ignored for non-request messages. Default is False.
+    :param response_verifier: An optional callback that will be called with the response object,
+    which can be used to verify that the response is the expected one. This parameter will be
+    ignored for non-request messages. For request messages, if this is not provided, the test will
+    verify that some response was sent, but will not verify its details.
+    :param notification_verifiers: An optional list of verifiers that can be used to verify that
+    the server sent the expected notifications following this message. Each verifier is a tuple
+    where the first element is a filter function to determine if a given notification was sent in
+    response to this message, and the second element is an optional verifier that will be called
+    for each notification that the filter function returns True for. If the message causes the
+    server to send back notifications, this argument must be provided.
+    """
     request_id = 0
 
-    def __init__(self, method: str, params: str, message_type: JSONRPCMessageType):
+    def __init__(self, method: str, params: str, message_type: JSONRPCMessageType, expect_error_response: bool = False,
+                 response_verifier: Callable[[dict], None] = None,
+                 notification_verifiers: List[Tuple[Callable[[dict], bool], Optional[Callable[[dict], None]]]] = None):
         self.method = method
         self.params = json.loads(params) if params is not None else None
         self.message_type = message_type
         if self.message_type is JSONRPCMessageType.Request:
-            self.request_id = RPCMessage.request_id
-            RPCMessage.request_id += 1
+            self.request_id = None
+        self.expect_error_response = expect_error_response
+        self.response_verifier = response_verifier
+        self.notification_verifiers = notification_verifiers
+
+    def initialize_request_id(self):
+        """For a request message, initialize its request ID"""
+        if self.message_type is not JSONRPCMessageType.Request:
+            raise RuntimeError('initialize_request_id can only be called on request messages')
+        elif self.request_id is not None:
+            raise RuntimeError('Request ID already initialized')
+        self.request_id = RPCTestMessage.request_id
+        RPCTestMessage.request_id += 1
 
     def __str__(self):
         message_dictionary = {
@@ -41,48 +71,41 @@ class RPCMessage:
         if self.params is not None:
             message_dictionary['params'] = self.params
         if self.message_type is JSONRPCMessageType.Request:
+            if self.request_id is None:
+                self.initialize_request_id()
             message_dictionary['id'] = self.request_id
         return json.dumps(message_dictionary)
 
 
-class EndToEndIntegrationTests(unittest.TestCase):
+class EndToEndTestCase:
+    def __init__(self, test_messages: List[RPCTestMessage]):
+        initialization_messages = [
+            DefaultRPCTestMessages.initialize(),
+            DefaultRPCTestMessages.version(),
+            DefaultRPCTestMessages.change_configuration(),
+            DefaultRPCTestMessages.list_capabilities()]
+        shutdown_messages = [DefaultRPCTestMessages.shutdown()]
+        self.messages = initialization_messages + test_messages + shutdown_messages
 
-    @integration_test
-    def test_all(self):
-        server, input_stream, output_stream, log_stream, output_bytes_written = self.start_service()
-        error_connection_details = get_connection_details()
-        error_connection_details['dbname'] += '_error'
-        test_messages = [
-            self.initialize(),
-            self.version(),
-            self.change_configuration(),
-            self.list_capabilities(),
-            self.connection_request('error_connection', error_connection_details),
-            self.connection_request('good_connection', get_connection_details()),
-            self.shutdown()]
-        flat_messages = []
-        for message in test_messages:
-            if not isinstance(message, list):
-                flat_messages.append(message)
-            else:
-                flat_messages.extend(message)
-        requests = []
-        for message in flat_messages:
+    def run(self):
+        # Start the server
+        server, input_stream, output_stream, log_stream, output_bytes_written = EndToEndTestCase.start_service()
+
+        # Send all messages to the server
+        for message in self.messages:
             bytes_message = b'Content-Length: ' + str.encode(str(len(str(message)))) + b'\r\n\r\n' + str.encode(str(message))
             input_stream.write(bytes_message)
             input_stream.flush()
-            if message.message_type is JSONRPCMessageType.Request:
-                requests.append(message)
 
         # Wait for all threads to finish, in case the server is still doing work
-        expected_threads = {threading.current_thread().name}
         while True:
-            current_threads = threading.enumerate()
-            for thread in current_threads:
-                if thread.name not in expected_threads:
-                    break
-            else:
+            all_threads = threading.enumerate()
+            if len(all_threads) == 1:
                 break
+            else:
+                for thread in all_threads:
+                    if thread is not threading.current_thread():
+                        thread.join()
         server.wait_for_exit()
 
         # Dequeue any remaining messages if needed
@@ -94,26 +117,61 @@ class EndToEndIntegrationTests(unittest.TestCase):
         except queue.Empty:
             pass
 
-        print(log_stream.getvalue())
-        # print(output_stream.read(output_bytes_written[0]))
+        # Process the output into responses and notifications
         output = output_stream.read(output_bytes_written[0]).decode()
         messages = re.split(r'Content-Length: .+\s+', output)
-        result_dict = {}
+        response_dict = {}
+        notifications = []
         for message_str in messages:
             if not message_str:
                 continue
-            print('\n\n\n\n\n')
-            print(message_str)
             message = json.loads(message_str.strip())
             if 'id' in message:
-                result_dict[message['id']] = message['result']
+                message_id = message['id']
+                if message_id in response_dict:
+                    raise RuntimeError(f'Server sent multiple responses with ID {message_id}')
+                response_dict[message_id] = message
+            else:
+                notifications.append(message)
+
         # Verify that each request has a response
+        requests = [message for message in self.messages if message.message_type is JSONRPCMessageType.Request]
+        responses_to_verify = {response['id'] for response in response_dict.values()}
         for request in requests:
             if request.method == 'shutdown':
                 continue
-            self.assertIn(request.request_id, result_dict)
+            response = response_dict.get(request.request_id)
+            if response is None:
+                raise RuntimeError(f'Request ID {request.request_id} (method {request.method}) has no response')
+            # Run the response verifier if present
+            responses_to_verify.remove(response['id'])
+            if request.response_verifier is not None:
+                request.response_verifier(response)
+        if responses_to_verify:
+            raise RuntimeError('Server sent the following responses that had no corresponding request:\n{}'.format('\n'.join(
+                [json.dumps(response_dict[response_id]) for response_id in responses_to_verify])))
 
-    def start_service(self):
+        # Verify the notifications
+        notifications_to_verify = {index for index, _ in enumerate(notifications)}
+        for message in self.messages:
+            verifiers = message.notification_verifiers
+            if not verifiers:
+                continue
+            for filter_function, verification_function in verifiers:
+                filtered_notifications = [(index, notification) for index, notification in enumerate(notifications) if filter_function(notification)]
+                notification_count = len(filtered_notifications)
+                if notification_count != 1:
+                    raise RuntimeError(f'Expected 1 notification for request with method {message.method} but got {notification_count}')
+                notification = filtered_notifications[0][1]
+                notifications_to_verify.remove(filtered_notifications[0][0])
+                if verification_function is not None:
+                    verification_function(notification)
+        if notifications_to_verify:
+            raise RuntimeError('Server sent the following unexpected notifications:\n{}'.format('\n'.join(
+                [json.dumps(notifications[index]) for index in notifications_to_verify])))
+
+    @staticmethod
+    def start_service():
         # Set up the server's input and output
         input_r, input_w = os.pipe()
         output_r, output_w = os.pipe()
@@ -137,42 +195,99 @@ class EndToEndIntegrationTests(unittest.TestCase):
         server.start()
         return server, test_input_stream, test_output_stream, log_stream, output_bytes_written
 
-    def initialize(self):
-        return RPCMessage(
+
+class DefaultRPCTestMessages:
+    @staticmethod
+    def initialize():
+        return RPCTestMessage(
             'initialize',
             '{"processId": 4340, "capabilities": {}, "trace": "off"}',
             JSONRPCMessageType.Request
         )
 
-    def version(self):
-        return RPCMessage('version', None, JSONRPCMessageType.Request)
+    @staticmethod
+    def version():
+        return RPCTestMessage('version', None, JSONRPCMessageType.Request)
 
-    def change_configuration(self):
-        return RPCMessage(
+    @staticmethod
+    def change_configuration():
+        return RPCTestMessage(
             'workspace/didChangeConfiguration',
             '{"settings":{"pgsql":{"logDebugInfo":false,"enabled":true,"defaultDatabase":"postgres","format":{"keywordCase":null,"identifierCase":null,"stripComments":false,"reindent":true}}}}',  # noqa
             JSONRPCMessageType.Notification
         )
 
-    def list_capabilities(self):
-        return RPCMessage(
+    @staticmethod
+    def list_capabilities():
+        return RPCTestMessage(
             'capabilities/list',
             '{"hostName":"carbon","hostVersion":"1.0"}',
             JSONRPCMessageType.Request
         )
 
-    def connection_request(self, owner_uri, connection_options):
-        connection_request = RPCMessage(
+    @staticmethod
+    def connection_request(owner_uri, connection_options):
+        connection_request = RPCTestMessage(
             'connection/connect',
             '{"ownerUri":"%s","connection":{"options":%s}}' % (owner_uri, json.dumps(connection_options)),
-            JSONRPCMessageType.Request
+            JSONRPCMessageType.Request,
+            notification_verifiers=[(
+                lambda notification: notification['method'] == 'connection/complete' and notification['params']['ownerUri'] == owner_uri,
+                None
+            )]
         )
-        language_flavor_notification = RPCMessage(
+        language_flavor_notification = RPCTestMessage(
             'connection/languageflavorchanged',
             '{"uri":"%s","language":"sql","flavor":"PGSQL"}' % owner_uri,
-            JSONRPCMessageType.Notification
+            JSONRPCMessageType.Notification,
+            notification_verifiers=[(
+                lambda notification: notification['method'] == 'textDocument/intelliSenseReady' and notification['params']['ownerUri'] == owner_uri,
+                None
+            )]
         )
-        return [connection_request, language_flavor_notification]
+        return (connection_request, language_flavor_notification)
 
-    def shutdown(self):
-        return RPCMessage('shutdown', None, JSONRPCMessageType.Request)
+    @staticmethod
+    def shutdown():
+        return RPCTestMessage('shutdown', None, JSONRPCMessageType.Request)
+
+
+class EndToEndIntegrationTests(unittest.TestCase):
+    @integration_test
+    def test_connection_successful(self):
+        owner_uri = 'test_uri'
+        connection_details = get_connection_details()
+        connection_request, language_flavor_notification = DefaultRPCTestMessages.connection_request(owner_uri, connection_details)
+
+        def verify_connection_complete(notification):
+            params = notification['params']
+            self.assertIn('connectionSummary', params)
+            connection_summary = params['connectionSummary']
+            self.assertEqual(connection_summary['databaseName'], connection_details['dbname'])
+            self.assertEqual(connection_summary['serverName'], connection_details['host'])
+            self.assertEqual(connection_summary['userName'], connection_details['user'])
+            self.assertIsNone(params['errorMessage'])
+            self.assertIn('serverInfo', params)
+
+        connection_request.notification_verifiers[0] = (connection_request.notification_verifiers[0][0], verify_connection_complete)
+        test_case = EndToEndTestCase([connection_request, language_flavor_notification])
+        test_case.run()
+
+    @integration_test
+    def test_connection_fails(self):
+        owner_uri = 'test_uri'
+        connection_details = get_connection_details()
+        connection_details['dbname'] += '_fail'
+        connection_request, language_flavor_notification = DefaultRPCTestMessages.connection_request(owner_uri, connection_details)
+
+        def verify_connection_complete(notification):
+            params = notification['params']
+            self.assertIsNone(params['connectionSummary'])
+            self.assertIsNotNone(params['errorMessage'])
+            self.assertIsNotNone(params['messages'])
+            self.assertIsNone(params['serverInfo'])
+
+        connection_request.notification_verifiers[0] = (connection_request.notification_verifiers[0][0], verify_connection_complete)
+        language_flavor_notification.notification_verifiers = None
+        test_case = EndToEndTestCase([connection_request, language_flavor_notification])
+        test_case.run()
