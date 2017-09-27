@@ -100,7 +100,7 @@ if __name__ == '__main__':
     logger.info('PostgreSQL Tools Service is starting up...')
 
     # Create the server, but don't start it yet
-    server = _create_server(stdin, std_out_wrapped, logger)
+    server, _ = _create_server(stdin, std_out_wrapped, logger)
 
     # Start the server
     server.start()

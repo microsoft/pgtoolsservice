@@ -11,12 +11,14 @@ import logging
 import os
 import queue
 import re
+import threading
 import time
 import unittest
 from unittest import mock
 
 import pgsqltoolsservice.pgtoolsservice_main as pgtoolsservice_main
 from pgsqltoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
+from pgsqltoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 
 
@@ -71,7 +73,18 @@ class EndToEndIntegrationTests(unittest.TestCase):
             input_stream.flush()
             if message.message_type is JSONRPCMessageType.Request:
                 requests.append(message)
+
+        # Wait for all threads to finish, in case the server is still doing work
+        expected_threads = {threading.current_thread().name}
+        while True:
+            current_threads = threading.enumerate()
+            for thread in current_threads:
+                if thread.name not in expected_threads:
+                    break
+            else:
+                break
         server.wait_for_exit()
+
         # Dequeue any remaining messages if needed
         try:
             while True:
