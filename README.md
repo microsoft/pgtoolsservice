@@ -48,6 +48,8 @@ Each integration test will run with its own database, which will be created befo
 
 You can find an integration test example in code in `tests/query_execution/test_query_execution_service.py`'s `test_query_execution_and_retrieval` method.
 
+You can also create end-to-end JSON RPC integration tests, which test the entire service using JSON RPC inputs and outputs. Examples of these tests are located in `tests/json_rpc_tests/json_rpc_tests.py`.
+
 ## Manual Testing
 1. Update your PYTHONPATH environment variable to contain the source directory. From within the project's main directory, run the following commands:
     - On Mac/Linux: `export PYTHONPATH=$(pwd)`
