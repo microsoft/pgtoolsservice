@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import tempfile # noqa
+import tempfile  # noqa
 
 
 def create_file():

@@ -26,7 +26,11 @@ class ScriptAsParameters(Serializable):
     def __init__(self):
         self.owner_uri: str = None
         self.operation: ScriptOperation = None
-        self.metadata: ObjectMetadata = None
+        self.scripting_objects = None
+
+    @classmethod
+    def ignore_extra_attributes(cls):
+        return True
 
 
 class ScriptAsResponse(Serializable):
@@ -36,4 +40,4 @@ class ScriptAsResponse(Serializable):
         self.script: str = script
 
 
-SCRIPTAS_REQUEST = IncomingMessageConfiguration('scripting/scriptas', ScriptAsParameters)
+SCRIPTAS_REQUEST = IncomingMessageConfiguration('scripting/script', ScriptAsParameters)

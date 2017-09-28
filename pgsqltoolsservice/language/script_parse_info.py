@@ -9,6 +9,7 @@ from prompt_toolkit.document import Document    # noqa
 
 class ScriptParseInfo(object):
     """Represents information about a parsed document used in autocomplete"""
+
     def __init__(self):
         self.connection_key: str = None
         self.is_connected: bool = False

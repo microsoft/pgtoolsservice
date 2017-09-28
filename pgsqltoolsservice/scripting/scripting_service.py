@@ -6,6 +6,7 @@
 from typing import Optional       # noqa
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
+from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from pgsqltoolsservice.scripting.scripter import Scripter
 from pgsqltoolsservice.scripting.contracts import (
     ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST
@@ -16,6 +17,7 @@ import pgsqltoolsservice.utils as utils
 
 class ScriptingService(object):
     """Service for scripting database objects"""
+
     def __init__(self):
         self._service_provider: Optional[ServiceProvider] = None
 
@@ -28,6 +30,15 @@ class ScriptingService(object):
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Scripting service successfully initialized')
 
+    def createMetadata(self, params: ScriptAsParameters):
+        """Helper function to convert a ScriptingObjects into ObjectMetadata"""
+        scripting_object = params.scripting_objects[0]
+        objectMetadata = ObjectMetadata()
+        objectMetadata.metadata_type_name = scripting_object['type']
+        objectMetadata.schema = scripting_object['schema']
+        objectMetadata.name = scripting_object['name']
+        return objectMetadata
+
     # REQUEST HANDLERS #####################################################
     def _handle_scriptas_request(self, request_context: RequestContext, params: ScriptAsParameters) -> None:
         try:
@@ -37,8 +48,10 @@ class ScriptingService(object):
             connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
             connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
 
+            object_metadata = self.createMetadata(params)
             scripter = Scripter(connection)
-            script = scripter.script(scripting_operation, params.metadata)
+
+            script = scripter.script(scripting_operation, object_metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:
             if self._service_provider.logger is not None:

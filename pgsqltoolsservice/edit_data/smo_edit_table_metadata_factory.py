@@ -4,11 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import List # noqa
+from typing import List  # noqa
 
 from pgsmo import Server
-from pgsmo.objects.table.table import Table # noqa
-from pgsmo.objects.table_objects.column import Column # noqa
+from pgsmo.objects.table.table import Table  # noqa
+from pgsmo.objects.table_objects.column import Column  # noqa
 from pgsqltoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
 from pgsqltoolsservice.utils import object_finder
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata

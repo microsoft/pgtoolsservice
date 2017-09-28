@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Optional # noqa
+from typing import Optional  # noqa
 
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
