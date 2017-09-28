@@ -8,14 +8,7 @@ from typing import List, Optional
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
 from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.collation.collation import Collation
-from pgsmo.objects.datatype.datatype import DataType
-from pgsmo.objects.functions.function import Function
-from pgsmo.objects.functions.trigger_function import TriggerFunction
-from pgsmo.objects.sequence.sequence import Sequence
 from pgsmo.objects.server import server as s    # noqa
-from pgsmo.objects.table.table import Table
-from pgsmo.objects.view.view import View
 import pgsmo.utils.templating as templating
 
 
@@ -54,15 +47,6 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         self._can_create: Optional[bool] = None
         self._has_usage: Optional[bool] = None
 
-        # Declare the child items
-        self._collations: NodeCollection = self._register_child_collection(Collation)
-        self._datatypes: NodeCollection = self._register_child_collection(DataType)
-        self._functions: NodeCollection = self._register_child_collection(Function)
-        self._sequences: NodeCollection = self._register_child_collection(Sequence)
-        self._tables: NodeCollection = self._register_child_collection(Table)
-        self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
-        self._views: NodeCollection = self._register_child_collection(View)
-
     # PROPERTIES ###########################################################
     @property
     def can_create(self) -> Optional[bool]:
@@ -75,31 +59,31 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     # -CHILD OBJECTS #######################################################
     @property
     def collations(self) -> NodeCollection:
-        return self._collations
+        return [collation for collation in self.parent.collations if collation.scid == self.oid]
 
     @property
     def datatypes(self) -> NodeCollection:
-        return self._datatypes
+        return [datatype for datatype in self.parent.datatypes if datatype.scid == self.oid]
 
     @property
     def functions(self) -> NodeCollection:
-        return self._functions
+        return [function for function in self.parent.functions if function.scid == self.oid]
 
     @property
     def sequences(self) -> NodeCollection:
-        return self._sequences
+        return [sequence for sequence in self.parent.sequences if sequence.scid == self.oid]
 
     @property
     def tables(self) -> NodeCollection:
-        return self._tables
+        return [table for table in self.parent.tables if table.scid == self.oid]
 
     @property
     def trigger_functions(self) -> NodeCollection:
-        return self._trigger_functions
+        return [trigger for trigger in self.parent.trigger_functions if trigger.scid == self.oid]
 
     @property
     def views(self) -> NodeCollection:
-        return self._views
+        return [view for view in self.parent.views if view.scid == self.oid]
 
     @property
     def namespaceowner(self):

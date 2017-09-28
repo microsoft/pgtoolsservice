@@ -89,7 +89,7 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "view": self.view,
                 "event": self.event,
                 "condition": self.condition,
@@ -106,7 +106,7 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             "rid": self.rid,
             "rulename": self.rulename,
             "relname": self.parent.name,
-            "nspname": self.parent.parent.name
+            "nspname": self.parent.schema
         }
 
     def _update_query_data(self) -> dict:

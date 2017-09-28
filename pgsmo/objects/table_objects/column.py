@@ -130,15 +130,27 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def attlen(self):
-        return self._full_properties["attlen"]
+        length, precision, typeval = self.get_length_precision(self.elemoid)
+        if length:
+            return self._full_properties["attlen"]
+        else:
+            return None
+
+    @property
+    def elemoid(self):
+        return self._full_properties["elemoid"]
 
     @property
     def attprecision(self):
-        return self._full_properties["attprecision"]
+        length, precision, typeval = self.get_length_precision(self.elemoid)
+        return precision
 
     @property
     def hasSqrBracket(self):
-        return self._full_properties["hasSqrBracket"]
+        if '[]' in self.cltype:
+            return True
+        else:
+            return False
 
     @property
     def collspcname(self):
@@ -178,7 +190,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def is_sql(self):
-        return self._full_properties["is_sql"]
+        return True
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
@@ -260,3 +272,28 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "attstorage": ""
             }
         }
+
+    def get_length_precision(self, elemoid):
+        precision = False
+        length = False
+        typeval = ''
+
+        # Check against PGOID for specific type
+        if elemoid:
+            if elemoid in (1560, 1561, 1562, 1563, 1042, 1043, 1014, 1015):
+                typeval = 'L'
+            elif elemoid in (1083, 1114, 1115, 1183, 1184, 1185, 1186, 1187, 1266, 1270):
+                typeval = 'D'
+            elif elemoid in (1231, 1700):
+                typeval = 'P'
+            else:
+                typeval = ' '
+
+        # Set precision & length/min/max values
+        if typeval == 'P':
+            precision = True
+
+        if precision or typeval in ('L', 'D'):
+            length = True
+
+        return length, precision, typeval
