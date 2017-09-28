@@ -50,6 +50,7 @@ class _ConnectionManager:
             raise RuntimeError('get_connection_details can only be called from tests with an integration_test decorator')
         if not cls._current_test_connection_details:
             cls._create_test_database()
+        # Return a copy of the test connection details dictionary
         return dict(cls._current_test_connection_details)
 
     @classmethod
