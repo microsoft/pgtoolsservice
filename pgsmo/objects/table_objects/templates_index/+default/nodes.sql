@@ -10,8 +10,7 @@ SELECT DISTINCT ON(cls.relname)
                 indisclustered, 
                 indisunique, 
                 indisprimary,
-                indisvalid,
-                indisconcurrent
+                indisvalid
 FROM pg_index idx
     JOIN pg_class cls ON cls.oid=indexrelid
     JOIN pg_class tab ON tab.oid=indrelid

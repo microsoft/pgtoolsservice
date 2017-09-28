@@ -32,7 +32,6 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         idx._is_primary = kwargs['indisprimary']
         idx._is_unique = kwargs['indisunique']
         idx._is_valid = kwargs['indisvalid']
-        idx._is_concurrent = kwargs['indisconcurrent']
         return idx
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
@@ -115,8 +114,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def extended_vars(self):
         return {
-            'tid': self.parent.oid,                 # Table/view OID
-            'did': self.parent.parent.oid    # Database OID
+            'tid': self.parent.oid                 # Table/view OID
         }
     # IMPLEMENTATION DETAILS ###############################################
 

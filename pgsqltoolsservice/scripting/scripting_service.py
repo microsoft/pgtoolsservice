@@ -32,10 +32,6 @@ class ScriptingService(object):
     def _handle_scriptas_request(self, request_context: RequestContext, params: ScriptAsParameters) -> None:
         try:
             utils.validate.is_not_none('params', params)
-            value = getattr(params.metadata, 'name')
-            if value is not None and value.find(".") > 0:
-                setattr(params.metadata, 'schema', value.split('.')[0])
-                setattr(params, 'name', value.split('.')[1])
 
             scripting_operation = params.operation
             connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]

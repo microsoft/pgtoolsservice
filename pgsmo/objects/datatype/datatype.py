@@ -56,7 +56,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
     @property
     def schema(self):
         return self._schema
-    
+
     @property
     def scid(self):
         return self._scid
@@ -98,7 +98,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
     @property
     def typtype(self) -> str:
         return self._full_properties.get("typtype", "")
-    
+
     @property
     def typname(self):
         return self._additional_properties.get("typname", "")
@@ -184,4 +184,3 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
             "cascade": False
         }
         return data
-    

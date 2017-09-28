@@ -8,7 +8,8 @@ from typing import List, Any
 import unittest
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Database, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, Rule, Trigger, Index
+from pgsmo import Table, DataType, Schema, Database, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, \
+    Rule, Trigger, Index
 from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter

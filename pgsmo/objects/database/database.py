@@ -82,7 +82,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         self._functions: NodeCollection = self._register_child_collection(Function)
         self._sequences: NodeCollection = self._register_child_collection(Sequence)
         self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
-        
+
     # PROPERTIES ###########################################################
     # -BASIC PROPERTIES ####################################################
     @property
@@ -146,7 +146,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def schemas(self) -> NodeCollection[Schema]:
         return self._schemas
-    
+
     @property
     def collations(self) -> NodeCollection:
         return self._collations

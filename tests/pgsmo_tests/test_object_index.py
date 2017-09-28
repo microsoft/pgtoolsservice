@@ -16,8 +16,7 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
         'indisclustered': True,
         'indisprimary': True,
         'indisunique': True,
-        'indisvalid': True,
-        'indisconcurrent': True
+        'indisvalid': True
     }
 
     @property
@@ -57,11 +56,11 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
             "index": "index",
             "cascade": True,
             "description": None,
-            "is_clustered": True,
-            "is_valid": True,
-            "is_unique": True,
-            "is_primary": True,
-            "is_concurrent": True
+            "is_clustered": None,
+            "is_valid": None,
+            "is_unique": None,
+            "is_primary": None,
+            "is_concurrent": None
         }
 
     @property
