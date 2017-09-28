@@ -86,6 +86,7 @@ class JSONRPCTestCase:
     def run(self):
         # Start the server
         input_stream, output_stream, output_info = JSONRPCTestCase.start_service()
+        output = ""
 
         # Send all messages to the server
         for message in self.messages:
@@ -93,6 +94,8 @@ class JSONRPCTestCase:
                                                          (1 if message.message_type is JSONRPCMessageType.Request else 0))
             bytes_message = b'Content-Length: ' + str.encode(str(len(str(message)))) + b'\r\n\r\n' + str.encode(str(message))
             output_info[2].acquire()
+            output += output_stream.read(output_info[0]).decode()
+            output_info[0] = 0
             input_stream.write(bytes_message)
             input_stream.flush()
             if message.method == 'shutdown':
@@ -102,7 +105,7 @@ class JSONRPCTestCase:
                 raise RuntimeError(f'Timed out waiting for response or notification for method {message.method}')
 
         # Process the output into responses and notifications
-        output = output_stream.read(output_info[0]).decode()
+        output += output_stream.read(output_info[0]).decode()
         messages = re.split(r'Content-Length: .+\s+', output)
         response_dict = {}
         notifications = []
