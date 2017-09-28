@@ -6,8 +6,6 @@
 import unittest
 from unittest import mock
 from decimal import Decimal
-from datetime import timedelta
-import datetime
 import uuid
 import struct
 import io
@@ -17,13 +15,14 @@ from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 from pgsqltoolsservice.parsers import datatypes
 import tests.utils as utils
 
+
 class TestServiceBufferFileStreamWriter(unittest.TestCase):
 
     def setUp(self):
 
         self._file_stream = io.BytesIO()
         self._writer = ServiceBufferFileStreamWriter(self._file_stream)
-        self._cursor = utils.MockCursor([tuple([11, 22, 33]), tuple([55, 66, 77])])        
+        self._cursor = utils.MockCursor([tuple([11, 22, 33]), tuple([55, 66, 77])])
 
     def tearDown(self):
         pass
@@ -45,7 +44,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_BOOL
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(1, res)
@@ -57,7 +56,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_REAL
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(4, res)
@@ -69,7 +68,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_INTEGER
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(4, res)
@@ -81,7 +80,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_NUMERIC
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_val)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_val)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(4, res)
@@ -93,7 +92,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_CHAR
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(1, res)
@@ -105,7 +104,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_TEXT
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(len(test_value), res)
@@ -117,7 +116,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_DATE
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(len(test_value), res)
@@ -129,7 +128,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_TIME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(len(test_value), res)
@@ -141,7 +140,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_TIME_WITH_TIMEZONE
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(len(test_value), res)
@@ -153,7 +152,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_TIMESTAMP
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(len(test_value), res)
@@ -165,11 +164,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_INTERVAL
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(len(test_value), res)
-
 
     def test_write_uuid(self):
         test_value = uuid.uuid4()
@@ -178,7 +176,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         col.data_type_name = datatypes.DATATYPE_UUID
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value = test_value)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(36, res)  # UUID standard len is 36
@@ -197,7 +195,6 @@ class MockStorageDataReader(MockType):
     def __init__(self, cursor, columns_info):
         self._cursor = cursor
         self.columns_info = columns_info
-
 
     def get_value(self, i):
         pass

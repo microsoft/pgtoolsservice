@@ -11,15 +11,15 @@ import struct
 from pgsqltoolsservice.parsers import datatypes
 
 
-def convert_bool(value: bool):    
+def convert_bool(value: bool):
     return bytearray(struct.pack("?", value))
 
 
-def convert_float(value: float):    
+def convert_float(value: float):
     return bytearray(struct.pack("f", value))
 
 
-def convert_int(value: int):    
+def convert_int(value: int):
     return bytearray(struct.pack("i", value))
 
 
@@ -29,7 +29,7 @@ def convert_decimal(value: decimal.Decimal):
 
 def convert_char(value: str):
     if len(value) > 1:
-        raise ValueError("value provided is not a character")    
+        raise ValueError("value provided is not a character")
     return bytearray(value.encode())
 
 
@@ -57,7 +57,7 @@ def convert_timedelta(value: str):
     return bytearray(value.encode())
 
 
-def convert_uuid(value: str):    
+def convert_uuid(value: str):
     return bytearray(str(value).encode())
 
 
