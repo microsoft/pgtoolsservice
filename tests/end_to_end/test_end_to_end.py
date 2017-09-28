@@ -5,6 +5,7 @@
 
 """Module for testing expected JSON RPC input/outputs when the tools service is being used"""
 
+import functools
 import io
 import json
 import logging
@@ -89,36 +90,24 @@ class EndToEndTestCase:
 
     def run(self):
         # Start the server
-        server, input_stream, output_stream, log_stream, output_bytes_written = EndToEndTestCase.start_service()
+        server, input_stream, output_stream, log_stream, output_info = EndToEndTestCase.start_service()
 
         # Send all messages to the server
         for message in self.messages:
+            expected_write_calls = output_info[1] + 2 * ((len(message.notification_verifiers) if message.notification_verifiers is not None else 0) +
+                                                         (1 if message.message_type is JSONRPCMessageType.Request else 0))
             bytes_message = b'Content-Length: ' + str.encode(str(len(str(message)))) + b'\r\n\r\n' + str.encode(str(message))
+            output_info[2].acquire()
             input_stream.write(bytes_message)
             input_stream.flush()
-
-        # Wait for all threads to finish, in case the server is still doing work
-        while True:
-            all_threads = threading.enumerate()
-            if len(all_threads) == 1:
-                break
-            else:
-                for thread in all_threads:
-                    if thread is not threading.current_thread():
-                        thread.join()
-        server.wait_for_exit()
-
-        # Dequeue any remaining messages if needed
-        try:
-            while True:
-                last_message = server._output_queue.get_nowait()
-                if last_message is not None:
-                    server.writer.send_message(last_message)
-        except queue.Empty:
-            pass
+            if message.method == 'shutdown':
+                continue
+            output_info[2].wait_for(lambda: output_info[1] >= expected_write_calls, 5)
+            if output_info[1] < expected_write_calls:
+                raise RuntimeError(f'Timed out waiting for response or notification for method {message.method}')
 
         # Process the output into responses and notifications
-        output = output_stream.read(output_bytes_written[0]).decode()
+        output = output_stream.read(output_info[0]).decode()
         messages = re.split(r'Content-Length: .+\s+', output)
         response_dict = {}
         notifications = []
@@ -143,6 +132,13 @@ class EndToEndTestCase:
             response = response_dict.get(request.request_id)
             if response is None:
                 raise RuntimeError(f'Request ID {request.request_id} (method {request.method}) has no response')
+            # Verify that the response is or is not an error, as expected
+            if request.expect_error_response:
+                if 'error' not in response:
+                    raise RuntimeError(f'Expected error response to request method {request.method} but got \n{json.dumps(response)}')
+            else:
+                if 'result' not in response:
+                    raise RuntimeError(f'Expected successful response to request method {request.method} but got \n{json.dumps(response)}')
             # Run the response verifier if present
             responses_to_verify.remove(response['id'])
             if request.response_verifier is not None:
@@ -160,10 +156,17 @@ class EndToEndTestCase:
             for filter_function, verification_function in verifiers:
                 filtered_notifications = [(index, notification) for index, notification in enumerate(notifications) if filter_function(notification)]
                 notification_count = len(filtered_notifications)
-                if notification_count != 1:
-                    raise RuntimeError(f'Expected 1 notification for request with method {message.method} but got {notification_count}')
-                notification = filtered_notifications[0][1]
-                notifications_to_verify.remove(filtered_notifications[0][0])
+                if notification_count == 0:
+                    raise RuntimeError(f'Expected 1 notification for request with method {message.method} but got 0')
+                # If there was more than 1 notification matching the filter, take the first one that matches
+                index = None
+                notification = None
+                for filtered_notification in filtered_notifications:
+                    index = filtered_notification[0]
+                    notification = filtered_notification[1]
+                    if index in notifications_to_verify:
+                        break
+                notifications_to_verify.remove(index)
                 if verification_function is not None:
                     verification_function(notification)
         if notifications_to_verify:
@@ -180,20 +183,27 @@ class EndToEndTestCase:
         server_output_stream.close = mock.Mock()
         test_input_stream = open(input_w, 'wb', buffering=0, closefd=False)
         test_output_stream = open(output_r, 'rb', buffering=0, closefd=False)
-        output_bytes_written = [0]
+        output_info = [0, 0, threading.Condition()]  # Bytes written, Number of times write called, Condition variable for monitoring info
 
         # Mock the server output stream's write method so that the test knows how many bytes have been written
+        old_write_method = server_output_stream.write
+
         def mock_write(message):
-            output_bytes_written[0] += len(message)
-            return mock.DEFAULT
-        server_output_stream.write = mock.Mock(side_effect=mock_write, wraps=server_output_stream.write)
+            output_info[2].acquire()
+            bytes_written = old_write_method(message)
+            output_info[0] += bytes_written
+            output_info[1] += 1
+            output_info[2].notify()
+            output_info[2].release()
+            return bytes_written
+        server_output_stream.write = mock.Mock(side_effect=mock_write)
 
         log_stream = io.StringIO()
         logger = logging.Logger('test')
         logger.addHandler(logging.StreamHandler(log_stream))
         server = pgtoolsservice_main._create_server(server_input_stream, server_output_stream, logger)
         server.start()
-        return server, test_input_stream, test_output_stream, log_stream, output_bytes_written
+        return server, test_input_stream, test_output_stream, log_stream, output_info
 
 
 class DefaultRPCTestMessages:
@@ -291,3 +301,80 @@ class EndToEndIntegrationTests(unittest.TestCase):
         language_flavor_notification.notification_verifiers = None
         test_case = EndToEndTestCase([connection_request, language_flavor_notification])
         test_case.run()
+
+    @integration_test
+    def test_object_explorer(self):
+        owner_uri = 'test_uri'
+        connection_details = get_connection_details()
+        connection_messages = DefaultRPCTestMessages.connection_request(owner_uri, connection_details)
+        test_messages = [connection_messages[0], connection_messages[1]]
+        expected_session_id = f'objectexplorer://{connection_details["user"]}@{connection_details["host"]}:{connection_details["dbname"]}/'
+
+        def session_created_verifier(notification):
+            params = notification['params']
+            self.assertIsNone(params['errorMessage'])
+            self.assertTrue(params['success'])
+            self.assertIn('rootNode', params)
+            root_node = params['rootNode']
+            self.assertEqual(root_node['label'], connection_details['dbname'])
+            self.assertEqual(root_node['nodeType'], 'Database')
+            self.assertIn('metadata', root_node)
+            metadata = root_node['metadata']
+            self.assertEqual(metadata['metadataTypeName'], 'Database')
+            self.assertEqual(metadata['name'], connection_details['dbname'])
+
+        create_session_request = RPCTestMessage(
+            'objectexplorer/createsession',
+            '{{"options":{}}}'.format(json.dumps(connection_details)),
+            JSONRPCMessageType.Request,
+            response_verifier=lambda response: self.assertEqual(response['result']['sessionId'], expected_session_id),
+            notification_verifiers=[(lambda notification: notification['method'] == 'objectexplorer/sessioncreated', session_created_verifier)])
+
+        def expand_completed_verifier(node_path, expected_nodes, exact_node_match, notification):
+            params = notification['params']
+            self.assertIsNone(params['errorMessage'])
+            self.assertEqual(params['nodePath'], node_path)
+            nodes = params['nodes']
+            self.assertGreater(len(nodes), 0)
+            found_nodes = set()
+            for node in nodes:
+                self.assertIsNone(node['errorMessage'])
+                found_nodes.add(node['label'])
+            if exact_node_match:
+                self.assertEqual(found_nodes, expected_nodes)
+            else:
+                for node in expected_nodes:
+                    self.assertIn(node, found_nodes)
+
+        expand_server_request = RPCTestMessage(
+            'objectexplorer/expand',
+            '{{"sessionId":"{session_id}","nodePath":"{session_id}"}}'.format(session_id=expected_session_id),
+            JSONRPCMessageType.Request,
+            response_verifier=lambda response: self.assertTrue(response['result']),
+            notification_verifiers=[(
+                lambda notification: notification['method'] == 'objectexplorer/expandCompleted' and notification['params']['nodePath'] == expected_session_id,
+                functools.partial(expand_completed_verifier, expected_session_id, {'Databases', 'Roles', 'Tablespaces'}, True))]
+        )
+
+        expand_databases_request = RPCTestMessage(
+            'objectexplorer/expand',
+            '{{"sessionId":"{session_id}","nodePath":"/databases/"}}'.format(session_id=expected_session_id),
+            JSONRPCMessageType.Request,
+            response_verifier=lambda response: self.assertTrue(response['result']),
+            notification_verifiers=[(
+                lambda notification: notification['method'] == 'objectexplorer/expandCompleted' and notification['params']['nodePath'] == '/databases/',
+                functools.partial(expand_completed_verifier, '/databases/', {connection_details['dbname']}, False))]
+        )
+
+        refresh_databases_request = RPCTestMessage(
+            'objectexplorer/refresh',
+            '{{"sessionId":"{session_id}","nodePath":"/databases/"}}'.format(session_id=expected_session_id),
+            JSONRPCMessageType.Request,
+            response_verifier=lambda response: self.assertTrue(response['result']),
+            notification_verifiers=[(
+                lambda notification: notification['method'] == 'objectexplorer/expandCompleted' and notification['params']['nodePath'] == '/databases/',
+                functools.partial(expand_completed_verifier, '/databases/', {connection_details['dbname']}, False))]
+        )
+
+        test_messages += [create_session_request, expand_server_request, expand_databases_request, refresh_databases_request]
+        EndToEndTestCase(test_messages).run()
