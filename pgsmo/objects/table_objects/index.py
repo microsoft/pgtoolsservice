@@ -31,7 +31,8 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         idx._is_clustered = kwargs['indisclustered']
         idx._is_primary = kwargs['indisprimary']
         idx._is_unique = kwargs['indisunique']
-
+        idx._is_valid = kwargs['indisvalid']
+        idx._is_concurrent = kwargs['indisconcurrent']
         return idx
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
@@ -46,10 +47,12 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
-        # # Full Object Properties
+        # Object Properties
         self._is_clustered: Optional[bool] = None
         self._is_primary: Optional[bool] = None
         self._is_unique: Optional[bool] = None
+        self._is_valid: Optional[bool] = None
+        self._is_concurrent: Optional[bool] = None
 
     # PROPERTIES ###########################################################
     # -FULL OBJECT PROPERTIES ##############################################
@@ -59,7 +62,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def is_valid(self) -> Optional[bool]:
-        return self._full_properties['indisvalid']
+        return self._is_valid
 
     @property
     def is_unique(self):
@@ -71,7 +74,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def is_concurrent(self):
-        return self._full_properties["indisconcurrent"]
+        return self._is_concurrent
 
     @property
     def amname(self):

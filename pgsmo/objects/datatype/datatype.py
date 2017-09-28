@@ -35,7 +35,6 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         datatype._oid = kwargs['oid']
         datatype._schema = kwargs['schema']
         datatype._scid = kwargs['schemaoid']
-        datatype._relname = kwargs['objectname']
 
         return datatype
 
@@ -51,7 +50,6 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         ScriptableUpdate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
         self._schema: str = None
         self._scid: int = None
-        self._relname: str = None
         self._additional_properties: NodeLazyPropertyCollection = self._register_property_collection(self._additional_property_generator)
 
     # PROPERTIES ###########################################################
@@ -59,10 +57,6 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
     def schema(self):
         return self._schema
     
-    @property
-    def relname(self):
-        return self._relname
-
     @property
     def scid(self):
         return self._scid
@@ -148,7 +142,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         # TODO support enum value
         return {
             "data": {
-                "name": self.relname,
+                "name": self.name,
                 "schema": self.schema,
                 "typtype": self.typtype,
                 "collname": self.collname,
@@ -164,7 +158,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         """ Gives the data object for update query """
         return {
             "data": {
-                "name": self.relname,
+                "name": self.name,
                 "typeowner": self.typeowner,
                 "description": self.description,
                 "schema": self.schema,
@@ -182,7 +176,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         """ Provides data input for delete script """
         data = {
             "data": {
-                "name": self.relname,
+                "name": self.name,
                 "schema": self.schema
             },
             # See issue https://github.com/Microsoft/carbon/issues/1715, Cascade should be configured

@@ -41,7 +41,6 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         table._oid = kwargs['oid']
         table._schema = kwargs['schema']
         table._scid = kwargs['schemaoid']
-        table._relname = kwargs['objectname']
 
         return table
 
@@ -53,7 +52,6 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
         self._schema: str = None
         self._scid: int = None
-        self._relname: str = None
         # Declare child items
         self._check_constraints: NodeCollection[CheckConstraint] = self._register_child_collection(CheckConstraint)
         self._columns: NodeCollection[Column] = self._register_child_collection(Column)
@@ -72,10 +70,6 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
     @property
     def schema(self):
         return self._schema
-
-    @property
-    def relname(self):
-        return self._relname
 
     @property
     def scid(self):
@@ -232,7 +226,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {"data": {
-            "name": self.relname,
+            "name": self.name,
             "coll_inherits": self.coll_inherits,
             "columns": self.columns,
             "typname": self.typname,
@@ -252,7 +246,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         """ Provides data input for delete script """
         return {
             "data": {
-                "name": self.relname,
+                "name": self.name,
                 "schema": self.schema
             },
             "cascade": self.cascade
@@ -261,7 +255,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
     def _update_query_data(self) -> dict:
         """ Provides data input for update script """
         return {"data": {
-            "name": self.relname,
+            "name": self.name,
             "schema": self.schema,
             "relowner": self.owner,
             "coll_inherits_added": self.coll_inherits_added,
@@ -283,7 +277,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
     def _select_query_data(self) -> dict:
         """Provides data input for select script"""
         return {"data": {
-            "name": self.relname,
+            "name": self.name,
             "schema": self.schema,
             "columns": self.columns
         }}

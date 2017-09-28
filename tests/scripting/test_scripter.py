@@ -149,16 +149,16 @@ class TestScripterOld(unittest.TestCase):
         """ Tests create script for tables"""
         # Set up the mocks
         mock_database = Database(self.server, 'dbname')
-        mock_datatype = DataType(self.server, mock_database, 'myschema.test')
+        mock_datatype = DataType(self.server, mock_database, 'test')
         mock_datatype._additional_properties = {}
         mock_datatype._full_properties = {
+            "name": "test",
             "typtype": "p",
             "typeowner": "Me",
         }
-        mock_datatype._relname = 'test'
         mock_datatype._schema = 'myschema'
         self.server.get_object_by_urn = mock.MagicMock(return_value=mock_datatype)
-        object_metadata = ObjectMetadata('test_urn', None, 'DataType', 'myschema.test', 'myschema')
+        object_metadata = ObjectMetadata('test_urn', None, 'DataType', 'test', 'myschema')
 
         # Verify create, update and delete all produce correct scripts
         self._verify_create_script(object_metadata, ['CREATE TYPE myschema.test'])

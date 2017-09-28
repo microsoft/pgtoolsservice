@@ -6,13 +6,12 @@
  #}
 SELECT
     pr.oid, 
-    nsp.nspname || '.'  || pr.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(pr.oid), '') || ')' as name,
+    pr.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(pr.oid), '') || ')' as name,
     lanname, 
     pg_get_userbyid(proowner) as funcowner, 
     description,
     nsp.nspname AS schema,
-    nsp.oid AS schemaoid,
-    pr.proname AS objectname
+    nsp.oid AS schemaoid
 FROM
     pg_proc pr
 INNER JOIN 

@@ -11,7 +11,7 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestView(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'public.viewname',
+        'name': 'viewname',
         'oid': 123,
         'schema': 'public',
         'schemaoid': 456,

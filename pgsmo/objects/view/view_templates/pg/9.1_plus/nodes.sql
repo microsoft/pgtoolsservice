@@ -6,10 +6,9 @@
  #}
 SELECT
     rel.oid,
-    nsp.nspname || '.' || rel.relname AS name,
+    rel.relname AS name,
     nsp.nspname AS schema,
-    nsp.oid AS schemaoid,
-    rel.relname AS objectname
+    nsp.oid AS schemaoid
 FROM pg_class rel
 INNER JOIN pg_namespace nsp ON rel.relnamespace= nsp.oid
 WHERE

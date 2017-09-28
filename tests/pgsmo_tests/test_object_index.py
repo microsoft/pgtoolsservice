@@ -15,7 +15,9 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
         'oid': 123,
         'indisclustered': True,
         'indisprimary': True,
-        'indisunique': True
+        'indisunique': True,
+        'indisvalid': True,
+        'indisconcurrent': True
     }
 
     @property

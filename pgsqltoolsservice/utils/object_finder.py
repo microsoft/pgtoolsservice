@@ -83,7 +83,7 @@ def find_schema_child_object(server, prop_name: str, metadata):
         obj_collection = getattr(parent_schema, prop_name)
         if not obj_collection:
             return None
-        obj = next((table for table in obj_collection if table.relname == obj_name), None)
+        obj = next((object for object in obj_collection if object.name == obj_name), None)
         return obj
     except Exception:
         return None

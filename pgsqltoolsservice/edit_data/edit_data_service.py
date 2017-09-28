@@ -49,10 +49,6 @@ class EditDataService(object):
         }
 
     def _edit_initialize(self, request_context: RequestContext, params: InitializeEditParams) -> None:
-        value = getattr(params, 'object_name')
-        if value is not None and value.find(".") > 0:
-            setattr(params, 'schema_name', value.split('.')[0])
-            setattr(params, 'object_name', value.split('.')[1])
         utils.validate.is_object_params_not_none_or_whitespace('params', params, 'owner_uri', 'schema_name', 'object_name', 'object_type')
 
         connection = self._connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)

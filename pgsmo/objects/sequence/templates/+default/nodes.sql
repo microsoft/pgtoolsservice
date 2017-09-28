@@ -5,10 +5,9 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT  rel.oid as oid, 
-        nsp.nspname ||'.'|| rel.relname as name, 
+        rel.relname as name, 
         nsp.nspname as schema,
-        nsp.oid AS schemaoid,
-        rel.relname AS objectname
+        nsp.oid AS schemaoid
 FROM pg_class rel
 INNER JOIN 
     pg_namespace nsp ON rel.relnamespace= nsp.oid

@@ -31,7 +31,6 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         seq._oid = kwargs['oid']
         seq._schema = kwargs['schema']
         seq._scid = kwargs['schemaoid']
-        seq._relname = kwargs['objectname']
 
         return seq
 
@@ -42,16 +41,11 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         self._schema: str = None
         self._scid: int = None
-        self._relname: str = None
 
     # PROPERTIES ###########################################################
     @property
     def schema(self):
         return self._schema
-
-    @property
-    def relname(self):
-        return self._relname
 
     @property
     def scid(self):
@@ -114,7 +108,7 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         """ Gives the data object for create query """
         return {"data": {
             "schema": self.schema,
-            "name": self.relname,
+            "name": self.name,
             "cycled": self.cycled,
             "increment": self.increment,
             "start": self.start,
@@ -129,7 +123,7 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         return {
             "data": {
                 "schema": self.schema,
-                "name": self.relname,
+                "name": self.name,
                 "cycled": self.cycled,
                 "increment": self.increment,
                 "start": self.start,
@@ -151,7 +145,7 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         return {
             "data": {
                 "schema": self.schema,
-                "name": self.relname,
+                "name": self.name,
                 "cycled": self.cycled,
                 "increment": self.increment,
                 "start": self.start,

@@ -101,11 +101,9 @@ def _get_node_info(
     """
     # Generate the object metadata
     metadata = ObjectMetadata(node.urn, None, type(node).__name__, node.name, None)
-
     # Add the schema name if it is the immediate parent
-    if node.parent is not None and isinstance(node.parent, Schema):
-        metadata.schema = node.parent.name
-
+    if node.parent is not None and node.parent.parent is None and hasattr(node, 'schema'):
+        metadata.schema = node.schema
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
     node_info.label = label if label is not None else node.name
@@ -181,7 +179,7 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     """
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
-        _get_node_info(node, current_path, 'ScalarValuedFunction')
+        _get_node_info(node, current_path, 'ScalarValuedFunction', label=f'{node.schema}.{node.name}')
         for node in parent_obj.functions
     ]
 
@@ -194,7 +192,7 @@ def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     """
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
-        _get_node_info(node, current_path, 'collations')
+        _get_node_info(node, current_path, 'collations', label=f'{node.schema}.{node.name}')
         for node in parent_obj.collations
     ]
 
@@ -207,7 +205,7 @@ def _datatypes(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     """
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
-        _get_node_info(node, current_path, 'Datatypes')
+        _get_node_info(node, current_path, 'Datatypes', label=f'{node.schema}.{node.name}')
         for node in parent_obj.datatypes
     ]
 
@@ -220,7 +218,7 @@ def _sequences(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     """
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
-        _get_node_info(node, current_path, 'Sequence')
+        _get_node_info(node, current_path, 'Sequence', label=f'{node.schema}.{node.name}')
         for node in parent_obj.sequences
     ]
 
@@ -265,7 +263,7 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
     """
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
-        _get_node_info(node, current_path, 'Table', is_leaf=False)
+        _get_node_info(node, current_path, 'Table', is_leaf=False, label=f'{node.schema}.{node.name}')
         for node in parent_obj.tables
     ]
 
@@ -326,7 +324,7 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
       scid int: schema OID
     """
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
-    return [_get_node_info(node, current_path, 'View', is_leaf=False) for node in parent_obj.views]
+    return [_get_node_info(node, current_path, 'View', label=f'{node.schema}.{node.name}', is_leaf=False) for node in parent_obj.views]
 
 
 # ROUTING TABLE ############################################################

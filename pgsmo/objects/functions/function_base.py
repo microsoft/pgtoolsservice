@@ -39,7 +39,6 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         func._description = kwargs['description']
         func._schema = kwargs['schema']
         func._scid = kwargs['schemaoid']
-        func._relname = kwargs['objectname']
 
         return func
 
@@ -55,7 +54,6 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         self._owner: Optional[str] = None
         self._schema: str = None
         self._scid: int = None
-        self._relname: str = None
 
     # PROPERTIES ###########################################################
     @property
@@ -71,10 +69,6 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     @property
     def schema(self):
         return self._schema
-
-    @property
-    def relname(self):
-        return self._relname
 
     @property
     def scid(self):
@@ -197,7 +191,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {"data": {
-            "name": self.relname,
+            "name": self.name,
             "pronamespace": self.schema,
             "arguments": self.arguments,
             "proretset": self.proretset,
@@ -234,7 +228,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         """ Function that returns data for update script """
         return {
             "data": {
-                "name": self.relname,
+                "name": self.name,
                 "pronamespace": self.schema,
                 "arguments": self.arguments,
                 "lanname": self.language_name,

@@ -5,10 +5,9 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT  t.oid,
-		nsp.nspname ||'.'|| t.typname AS name, 
+		t.typname AS name, 
         nsp.nspname as schema,
-        nsp.oid AS schemaoid,
-        t.typname AS objectname
+        nsp.oid AS schemaoid
 FROM pg_type t
     LEFT OUTER JOIN pg_type e ON e.oid=t.typelem
     LEFT OUTER JOIN pg_class ct ON ct.oid=t.typrelid AND ct.relkind <> 'c'
