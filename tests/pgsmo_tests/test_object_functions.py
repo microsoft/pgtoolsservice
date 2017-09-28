@@ -12,7 +12,7 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class FunctionsTestBase(NodeObjectTestBase, metaclass=ABCMeta):
     NODE_ROW = {
-        'name': 'public.funcname(arg1 int)',
+        'name': 'funcname(arg1 int)',
         'oid': 123,
         'description': 'func description',
         'lanname': 'sql',

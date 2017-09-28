@@ -11,7 +11,7 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestSequence(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'public.sequencename',
+        'name': 'sequencename',
         'oid': 123,
         'schema': 'public',
         'schemaoid': 456,
