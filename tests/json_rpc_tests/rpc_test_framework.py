@@ -5,6 +5,7 @@
 
 """Module for testing expected JSON RPC input/outputs when the tools service is being used"""
 
+import io
 import json
 import logging
 import os
@@ -94,8 +95,8 @@ class JSONRPCTestCase:
                                                          (1 if message.message_type is JSONRPCMessageType.Request else 0))
             bytes_message = b'Content-Length: ' + str.encode(str(len(str(message)))) + b'\r\n\r\n' + str.encode(str(message))
             output_info[2].acquire()
-            output += output_stream.read(output_info[0]).decode()
-            output_info[0] = 0
+            # output += output_stream.read(output_info[0]).decode()
+            # output_info[0] = 0
             input_stream.write(bytes_message)
             input_stream.flush()
             if message.method == 'shutdown':
@@ -105,7 +106,8 @@ class JSONRPCTestCase:
                 raise RuntimeError(f'Timed out waiting for response or notification for method {message.method}')
 
         # Process the output into responses and notifications
-        output += output_stream.read(output_info[0]).decode()
+        # output += output_stream.read(output_info[0]).decode()
+        output = output_stream.getvalue().decode()
         messages = re.split(r'Content-Length: .+\s+', output)
         response_dict = {}
         notifications = []
@@ -175,12 +177,14 @@ class JSONRPCTestCase:
     def start_service():
         # Set up the server's input and output
         input_r, input_w = os.pipe()
-        output_r, output_w = os.pipe()
+        # output_r, output_w = os.pipe()
         server_input_stream = open(input_r, 'rb', buffering=0, closefd=False)
-        server_output_stream = open(output_w, 'wb', buffering=0, closefd=False)
-        server_output_stream.close = mock.Mock()
+        # server_output_stream = open(output_w, 'wb', buffering=0, closefd=False)
+        # server_output_stream.close = mock.Mock()
         test_input_stream = open(input_w, 'wb', buffering=0, closefd=False)
-        test_output_stream = open(output_r, 'rb', buffering=0, closefd=False)
+        # test_output_stream = open(output_r, 'rb', buffering=0, closefd=False)
+        server_output_stream = io.BytesIO()
+        server_output_stream.close = mock.Mock()
         output_info = [0, 0, threading.Condition()]  # Bytes written, Number of times write called, Condition variable for monitoring info
 
         # Mock the server output stream's write method so that the test knows how many bytes have been written
@@ -200,7 +204,7 @@ class JSONRPCTestCase:
         logger.addHandler(logging.NullHandler())
         server = pgtoolsservice_main._create_server(server_input_stream, server_output_stream, logger)
         server.start()
-        return test_input_stream, test_output_stream, output_info
+        return test_input_stream, server_output_stream, output_info
 
 
 class DefaultRPCTestMessages:
