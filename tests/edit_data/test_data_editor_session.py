@@ -8,7 +8,7 @@ import unittest
 from unittest import mock
 
 from pgsqltoolsservice.edit_data import DataEditorSession
-from pgsqltoolsservice.edit_data.contracts import InitializeEditParams, EditInitializerFilter, CreateRowResponse # noqa
+from pgsqltoolsservice.edit_data.contracts import InitializeEditParams, EditInitializerFilter, CreateRowResponse  # noqa
 from tests.utils import MockConnection, MockCursor
 from pgsqltoolsservice.edit_data import EditTableMetadata, EditColumnMetadata, DataEditSessionExecutionState
 from pgsqltoolsservice.query_execution.query import Query, Batch, ExecutionState

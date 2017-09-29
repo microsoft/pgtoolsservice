@@ -74,7 +74,7 @@ def generate_alias(tbl):
     param tbl - unescaped name of the table to alias
     """
     return ''.join([l for l in tbl if l.isupper()] or
-                   [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
+                   [l for l, prev in zip(tbl, '_' + tbl) if prev == '_' and l != '_'])
 
 
 class PGCompleter(Completer):
@@ -484,7 +484,8 @@ class PGCompleter(Completer):
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
         do_qualify = suggestion.qualifiable and {'always': True, 'never': False, 'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
-        qualify = lambda col, tbl: ((tbl + '.' + self.case(col)) if do_qualify else self.case(col))     # noqa
+
+        def qualify(col, tbl): return ((tbl + '.' + self.case(col)) if do_qualify else self.case(col))     # noqa
         self._log(False, "Completion column scope: %r", tables)
         scoped_cols = self.populate_scoped_cols(tables, suggestion.local_tables)
 
@@ -594,8 +595,8 @@ class PGCompleter(Completer):
             # Schema-qualify if (1) new table in same schema as old, and old
             # is schema-qualified, or (2) new in other schema, except public
             if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)]
-               and left.schema == right.schema
-               or left.schema not in(right.schema, 'public')):
+                                          and left.schema == right.schema
+                                          or left.schema not in(right.schema, 'public')):
                 join = left.schema + '.' + join
             prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
                 0 if (left.schema, left.tbl) in other_tbls else 1)
@@ -721,7 +722,7 @@ class PGCompleter(Completer):
 
         """
         template = {
-            'call':  self.call_arg_style,
+            'call': self.call_arg_style,
             'call_display': self.call_arg_display_style,
             'signature': self.signature_arg_style
         }[usage]

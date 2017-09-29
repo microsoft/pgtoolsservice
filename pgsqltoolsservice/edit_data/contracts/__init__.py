@@ -47,4 +47,4 @@ __all__ = [
     'EditCommitRequest', 'EditCommitResponse', 'REVERT_CELL_REQUEST', 'RevertCellRequest', 'RevertCellResponse',
     'REVERT_ROW_REQUEST', 'RevertRowRequest', 'RevertRowResponse', 'EditSubsetResponse', 'EditRowState',
     'SessionReadyNotificationParams', 'SESSION_READY_NOTIFICATION'
-    ]
+]

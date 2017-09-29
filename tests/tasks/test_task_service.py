@@ -18,6 +18,7 @@ from tests.mocks.service_provider_mock import ServiceProviderMock
 
 class TaskServiceTests(unittest.TestCase):
     """Methods for testing the task service"""
+
     def setUp(self):
         self.task_service = TaskService()
         self.service_provider = ServiceProviderMock({constants.TASK_SERVICE_NAME: self.task_service})

@@ -13,7 +13,7 @@ import sqlparse
 
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query_execution.contracts.common import SelectionData
-from pgsqltoolsservice.query.result_set import ResultSet # noqa
+from pgsqltoolsservice.query.result_set import ResultSet  # noqa
 from pgsqltoolsservice.query.contracts import BatchSummary
 from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
 from pgsqltoolsservice.query.in_memory_result_set import InMemoryResultSet
