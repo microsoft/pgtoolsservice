@@ -180,7 +180,7 @@ class JSONRPCTestCase:
         server_output_stream.close = mock.Mock()
         output_info = [0, threading.Condition()]  # Number of times write called, Condition variable for monitoring info
 
-        # Mock the server output stream's write method so that the test knows how many bytes have been written
+        # Mock the server output stream's write method so that the test knows how many messages have been written
         old_write_method = server_output_stream.write
 
         def mock_write(message):
