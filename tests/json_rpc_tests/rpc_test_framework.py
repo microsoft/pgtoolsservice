@@ -91,22 +91,19 @@ class JSONRPCTestCase:
 
         # Send all messages to the server
         for message in self.messages:
-            expected_write_calls = output_info[1] + 2 * ((len(message.notification_verifiers) if message.notification_verifiers is not None else 0) +
+            expected_write_calls = output_info[0] + 2 * ((len(message.notification_verifiers) if message.notification_verifiers is not None else 0) +
                                                          (1 if message.message_type is JSONRPCMessageType.Request else 0))
             bytes_message = b'Content-Length: ' + str.encode(str(len(str(message)))) + b'\r\n\r\n' + str.encode(str(message))
-            output_info[2].acquire()
-            # output += output_stream.read(output_info[0]).decode()
-            # output_info[0] = 0
+            output_info[1].acquire()
             input_stream.write(bytes_message)
             input_stream.flush()
             if message.method == 'shutdown':
                 continue
-            output_info[2].wait_for(lambda: output_info[1] >= expected_write_calls, 5)
-            if output_info[1] < expected_write_calls:
+            output_info[1].wait_for(lambda: output_info[0] >= expected_write_calls, 5)
+            if output_info[0] < expected_write_calls:
                 raise RuntimeError(f'Timed out waiting for response or notification for method {message.method}')
 
         # Process the output into responses and notifications
-        # output += output_stream.read(output_info[0]).decode()
         output = output_stream.getvalue().decode()
         messages = re.split(r'Content-Length: .+\s+', output)
         response_dict = {}
@@ -177,26 +174,21 @@ class JSONRPCTestCase:
     def start_service():
         # Set up the server's input and output
         input_r, input_w = os.pipe()
-        # output_r, output_w = os.pipe()
         server_input_stream = open(input_r, 'rb', buffering=0, closefd=False)
-        # server_output_stream = open(output_w, 'wb', buffering=0, closefd=False)
-        # server_output_stream.close = mock.Mock()
         test_input_stream = open(input_w, 'wb', buffering=0, closefd=False)
-        # test_output_stream = open(output_r, 'rb', buffering=0, closefd=False)
         server_output_stream = io.BytesIO()
         server_output_stream.close = mock.Mock()
-        output_info = [0, 0, threading.Condition()]  # Bytes written, Number of times write called, Condition variable for monitoring info
+        output_info = [0, threading.Condition()]  # Number of times write called, Condition variable for monitoring info
 
         # Mock the server output stream's write method so that the test knows how many bytes have been written
         old_write_method = server_output_stream.write
 
         def mock_write(message):
-            output_info[2].acquire()
+            output_info[1].acquire()
             bytes_written = old_write_method(message)
-            output_info[0] += bytes_written
-            output_info[1] += 1
-            output_info[2].notify()
-            output_info[2].release()
+            output_info[0] += 1
+            output_info[1].notify()
+            output_info[1].release()
             return bytes_written
         server_output_stream.write = mock.Mock(side_effect=mock_write)
 
