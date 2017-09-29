@@ -26,7 +26,7 @@ class ScriptAsParameters(Serializable):
     def __init__(self):
         self.owner_uri: str = None
         self.operation: ScriptOperation = None
-        self.scripting_objects = None
+        self.scripting_objects: List[ObjectMetadata] = None
 
     @classmethod
     def ignore_extra_attributes(cls):

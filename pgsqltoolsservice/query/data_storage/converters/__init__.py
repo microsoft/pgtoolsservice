@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsqltoolsservice.query.data_storage.converters.bytes_converter # noqa
+import pgsqltoolsservice.query.data_storage.converters.bytes_converter  # noqa
 
 __all__ = [
     'bytes_converter'

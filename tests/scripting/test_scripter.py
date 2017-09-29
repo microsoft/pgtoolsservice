@@ -20,6 +20,7 @@ import tests.utils as utils
 
 class TestScripter(unittest.TestCase):
     """Methods for testing the scripter module"""
+
     def test_init(self):
         # Setup: Create a mock connection
         conn = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})

@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import io
-from typing import Callable # noqa
+from typing import Callable  # noqa
 
 from pgsqltoolsservice.parsers import datatypes
 from pgsqltoolsservice.query.data_storage.converters.bytes_converter import get_bytes_converter

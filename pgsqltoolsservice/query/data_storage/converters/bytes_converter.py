@@ -62,24 +62,24 @@ def convert_uuid(value: str):
 
 
 DATATYPE_WRITER_MAP = {
-            datatypes.DATATYPE_BOOL: convert_bool,
-            datatypes.DATATYPE_REAL: convert_float,
-            datatypes.DATATYPE_DOUBLE: convert_float,
-            datatypes.DATATYPE_SMALLINT: convert_int,
-            datatypes.DATATYPE_INTEGER: convert_int,
-            datatypes.DATATYPE_BIGINT: convert_int,
-            datatypes.DATATYPE_NUMERIC: convert_decimal,
-            datatypes.DATATYPE_CHAR: convert_char,
-            datatypes.DATATYPE_VARCHAR: convert_str,
-            datatypes.DATATYPE_TEXT: convert_str,
-            datatypes.DATATYPE_DATE: convert_date,
-            datatypes.DATATYPE_TIME: convert_time,
-            datatypes.DATATYPE_TIME_WITH_TIMEZONE: convert_time_with_timezone,
-            datatypes.DATATYPE_TIMESTAMP: convert_datetime,
-            datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_datetime,
-            datatypes.DATATYPE_INTERVAL: convert_timedelta,
-            datatypes.DATATYPE_UUID: convert_uuid
-        }
+    datatypes.DATATYPE_BOOL: convert_bool,
+    datatypes.DATATYPE_REAL: convert_float,
+    datatypes.DATATYPE_DOUBLE: convert_float,
+    datatypes.DATATYPE_SMALLINT: convert_int,
+    datatypes.DATATYPE_INTEGER: convert_int,
+    datatypes.DATATYPE_BIGINT: convert_int,
+    datatypes.DATATYPE_NUMERIC: convert_decimal,
+    datatypes.DATATYPE_CHAR: convert_char,
+    datatypes.DATATYPE_VARCHAR: convert_str,
+    datatypes.DATATYPE_TEXT: convert_str,
+    datatypes.DATATYPE_DATE: convert_date,
+    datatypes.DATATYPE_TIME: convert_time,
+    datatypes.DATATYPE_TIME_WITH_TIMEZONE: convert_time_with_timezone,
+    datatypes.DATATYPE_TIMESTAMP: convert_datetime,
+    datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_datetime,
+    datatypes.DATATYPE_INTERVAL: convert_timedelta,
+    datatypes.DATATYPE_UUID: convert_uuid
+}
 
 
 def get_bytes_converter(type_value: str) -> Callable[[str], bytearray]:
