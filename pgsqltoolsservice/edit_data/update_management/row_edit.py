@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List # noqa
+from typing import List  # noqa
 from abc import abstractmethod
 
 from pgsqltoolsservice.query import ResultSet
@@ -75,7 +75,7 @@ class RowEdit:
             column_name = column.name
             if cell.is_null is True:
                 cell_data_clause += 'IS NULL'
-            elif type(cell.raw_object) is bytearray or column.db_column.data_type.lower() is 'text':
+            elif isinstance(cell.raw_object, bytearray) or column.db_column.data_type.lower() is 'text':
                 cell_data_clause += 'IS NOT NULL'
             else:
                 cell_data_clause += '= %s'

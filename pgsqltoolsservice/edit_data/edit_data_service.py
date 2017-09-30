@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Callable, Dict, List # noqa
+from typing import Callable, Dict, List  # noqa
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.edit_data.contracts import (

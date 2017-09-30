@@ -199,6 +199,7 @@ class MockCursor:
 
 class MockThread():
     """Mock thread class that mocks the thread's start method to run target code without actually starting a thread"""
+
     def __init__(self):
         self.target = None
         self.args = None

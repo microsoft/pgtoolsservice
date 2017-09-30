@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Dict, List # noqa
+from typing import Dict, List  # noqa
 
 from pgsqltoolsservice.edit_data.update_management import RowEdit, CellUpdate, EditScript
 from pgsqltoolsservice.query import ResultSet

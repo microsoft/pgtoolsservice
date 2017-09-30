@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import List # noqa
+from typing import List  # noqa
 
 from pgsqltoolsservice.edit_data import EditColumnMetadata
 from pgsqltoolsservice.query.contracts import DbColumn

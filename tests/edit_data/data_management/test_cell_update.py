@@ -22,7 +22,7 @@ class TestCellUpdate(unittest.TestCase):
     def test_value_set_to_right_text_with_str_datatype(self):
         self.assertEqual(self._new_cell_value, self._cell_update.value)
 
-        self.assertTrue(type(self._cell_update.value) is str)
+        self.assertTrue(isinstance(self._cell_update.value, str))
 
     def test_value_as_string(self):
 
@@ -36,7 +36,7 @@ class TestCellUpdate(unittest.TestCase):
 
         self.assertTrue(edit_cell.display_value is self._new_cell_value)
         self.assertTrue(edit_cell.is_dirty)
-        self.assertTrue(type(edit_cell) is EditCell)
+        self.assertTrue(isinstance(edit_cell, EditCell))
 
     def test_as_db_cell_value(self):
 
@@ -45,7 +45,7 @@ class TestCellUpdate(unittest.TestCase):
         self.assertTrue(db_cell_value.display_value is self._cell_update.value_as_string)
         self.assertTrue(db_cell_value.is_null is False)
         self.assertTrue(db_cell_value.raw_object is self._cell_update.value)
-        self.assertTrue(type(db_cell_value) is DbCellValue)
+        self.assertTrue(isinstance(db_cell_value, DbCellValue))
 
 
 if __name__ == '__main__':

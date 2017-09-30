@@ -150,7 +150,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "evnt_truncate": self.evnt_truncate,
                 "evnt_update": self.evnt_update,
                 "columns": self.columns,
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "tgdeferrable": self.deferrable,
                 "tginitdeferred": self.initdeferred,
@@ -167,7 +167,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return {
             "data": {
                 "name": self.name,
-                "nspname": self.parent.parent.name,
+                "nspname": self.parent.schema,
                 "relname": self.parent.name
             },
             "cascade": self.cascade
@@ -185,7 +185,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "evnt_update": self.evnt_update,
                 "fires": self.fires,
                 "evnt_truncate": self.evnt_truncate,
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "description": self.description,
                 "is_enable_trigger": self.is_enable_trigger

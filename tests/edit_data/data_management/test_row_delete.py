@@ -35,7 +35,7 @@ class TestRowDelete(unittest.TestCase):
 
         self._columns_metadata = [EditColumnMetadata(db_column, 'Default Value')]
 
-        self._table_metadata = EditTableMetadata('public', 'TestTable',  self._columns_metadata)
+        self._table_metadata = EditTableMetadata('public', 'TestTable', self._columns_metadata)
 
         self._row_delete = RowDelete(self._row_id, self._result_set, self._table_metadata)
 

@@ -8,7 +8,7 @@ import unittest
 from unittest import mock
 
 from pgsqltoolsservice.edit_data import DataEditorSession
-from pgsqltoolsservice.edit_data.contracts import InitializeEditParams, EditInitializerFilter, CreateRowResponse # noqa
+from pgsqltoolsservice.edit_data.contracts import InitializeEditParams, EditInitializerFilter, CreateRowResponse  # noqa
 from tests.utils import MockConnection, MockCursor
 from pgsqltoolsservice.edit_data import EditTableMetadata, EditColumnMetadata, DataEditSessionExecutionState
 from pgsqltoolsservice.query import (
@@ -272,6 +272,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session._is_initialized = True
         self._data_editor_session.commit_edit(self._connection, success_callback, mock.MagicMock())
+        self._data_editor_session._commit_task.join()
 
         self.assertTrue(len(self._data_editor_session._session_cache) is 0)
 
@@ -367,6 +368,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session._is_initialized = True
         self._data_editor_session.commit_edit(self._connection, mock.MagicMock(), mock.MagicMock())
+        self._data_editor_session._commit_task.join()
 
         row_delete.get_script.assert_not_called()
         self.assertFalse(bool(self._data_editor_session._session_cache))
@@ -389,6 +391,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session._is_initialized = True
         self._data_editor_session.commit_edit(self._connection, mock.MagicMock(), mock.MagicMock())
+        self._data_editor_session._commit_task.join()
 
         row_delete.get_script.assert_called_once()
         self.assertFalse(bool(self._data_editor_session._session_cache))

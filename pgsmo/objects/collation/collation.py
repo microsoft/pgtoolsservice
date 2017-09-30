@@ -29,7 +29,7 @@ class Collation(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate
 
         return collation
 
-    def __init__(self,  server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)

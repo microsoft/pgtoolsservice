@@ -8,7 +8,7 @@ from typing import Callable
 import decimal
 import datetime
 import uuid
-from dateutil import parser as date_parser # noqa
+from dateutil import parser as date_parser  # noqa
 
 from pgsqltoolsservice.parsers import datatypes
 from pgsqltoolsservice.query.contracts import DbColumn
@@ -78,24 +78,24 @@ def parse_uuid(value: str) -> uuid.UUID:
 
 
 DATATYPE_PARSER_MAP = {
-            datatypes.DATATYPE_BOOL: parse_bool,
-            datatypes.DATATYPE_REAL: parse_float,
-            datatypes.DATATYPE_DOUBLE: parse_float,
-            datatypes.DATATYPE_SMALLINT: parse_int,
-            datatypes.DATATYPE_INTEGER: parse_int,
-            datatypes.DATATYPE_BIGINT: parse_int,
-            datatypes.DATATYPE_NUMERIC: parse_decimal,
-            datatypes.DATATYPE_CHAR: parse_char,
-            datatypes.DATATYPE_VARCHAR: parse_str,
-            datatypes.DATATYPE_TEXT: parse_str,
-            datatypes.DATATYPE_DATE: parse_date,
-            datatypes.DATATYPE_TIME: parse_time,
-            datatypes.DATATYPE_TIME_WITH_TIMEZONE: parse_time_with_timezone,
-            datatypes.DATATYPE_TIMESTAMP: parse_datetime,
-            datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: parse_datetime,
-            datatypes.DATATYPE_INTERVAL: parse_timedelta,
-            datatypes.DATATYPE_UUID: parse_uuid
-        }
+    datatypes.DATATYPE_BOOL: parse_bool,
+    datatypes.DATATYPE_REAL: parse_float,
+    datatypes.DATATYPE_DOUBLE: parse_float,
+    datatypes.DATATYPE_SMALLINT: parse_int,
+    datatypes.DATATYPE_INTEGER: parse_int,
+    datatypes.DATATYPE_BIGINT: parse_int,
+    datatypes.DATATYPE_NUMERIC: parse_decimal,
+    datatypes.DATATYPE_CHAR: parse_char,
+    datatypes.DATATYPE_VARCHAR: parse_str,
+    datatypes.DATATYPE_TEXT: parse_str,
+    datatypes.DATATYPE_DATE: parse_date,
+    datatypes.DATATYPE_TIME: parse_time,
+    datatypes.DATATYPE_TIME_WITH_TIMEZONE: parse_time_with_timezone,
+    datatypes.DATATYPE_TIMESTAMP: parse_datetime,
+    datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: parse_datetime,
+    datatypes.DATATYPE_INTERVAL: parse_timedelta,
+    datatypes.DATATYPE_UUID: parse_uuid
+}
 
 
 def get_parser(column: DbColumn) -> Callable[[str], object]:
