@@ -11,7 +11,7 @@ import uuid
 from dateutil import parser as date_parser # noqa
 
 from pgsqltoolsservice.parsers import datatypes
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
+from pgsqltoolsservice.query.contracts import DbColumn
 
 VALID_TRUE_VALUES = ['true', 't', 'y', 'yes', '1']
 VALID_FALSE_VALUES = ['false', 'f', 'n', 'no', '0']

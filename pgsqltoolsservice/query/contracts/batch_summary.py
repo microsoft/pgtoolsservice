@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.query_execution.contracts.common import SelectionData
+from pgsqltoolsservice.query.contracts import SelectionData
 
 
 class BatchSummary:

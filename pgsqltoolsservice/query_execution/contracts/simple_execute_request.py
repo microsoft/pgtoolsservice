@@ -6,7 +6,7 @@
 from typing import List
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
 from pgsqltoolsservice.serialization import Serializable
 
 

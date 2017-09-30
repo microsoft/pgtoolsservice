@@ -110,6 +110,7 @@ class MockConnection(object):
         self.cursor = mock.Mock(return_value=cursor)
         self.get_backend_pid = mock.Mock(return_value=0)
         self.notices = []
+        self.autocommit = True
         self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
 
     @property
@@ -132,13 +133,13 @@ class MockConnection(object):
 class MockCursor:
     """Class used to mock psycopg2 cursor objects for testing"""
 
-    def __init__(self, query_results):
+    def __init__(self, query_results, columns_names=[]):
         self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
         self.fetchall = mock.Mock(return_value=query_results)
         self.fetchone = mock.Mock(side_effect=self.execute_fetch_one_side_effects)
         self.close = mock.Mock()
         self.connection = mock.Mock()
-        self.description = None
+        self.description = [self.create_column_description(name=name) for name in columns_names]
         self.rowcount = -1
         self._mogrified_value = b'Some query'
         self.mogrify = mock.Mock(return_value=self._mogrified_value)
@@ -171,6 +172,19 @@ class MockCursor:
             row = self._query_results[self._fetched_count]
             self._fetched_count += 1
             return row
+
+    def create_column_description(self, **kwArgs):
+        description = {
+            'name': None,
+            'type_code': None,
+            'display_size': None,
+            'internal_size': None,
+            'precision': None,
+            'scale': None,
+            'null_ok': None
+            }
+        merge = {**description, **dict(kwArgs)}
+        return tuple(merge.values())
 
     def __enter__(self):
         return self

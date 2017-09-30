@@ -4,14 +4,24 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-from pgsqltoolsservice.query_execution.contracts.common import SelectionData
+from pgsqltoolsservice.query.contracts import SelectionData
 from pgsqltoolsservice.serialization import Serializable
 
 
+class ExecutionPlanOptions(Serializable):
+    def __init__(self):
+        self.include_actual_execution_plan_xml: bool = False
+        self.include_estimated_execution_plan_xml: bool = False
+
+
 class ExecuteRequestParamsBase(Serializable):
+    @classmethod
+    def get_child_serializable_types(cls):
+        return {'execution_plan_options': ExecutionPlanOptions}
+
     def __init__(self):
         self.owner_uri: str = None
-        self.execution_plan_options = None      # TODO: Define/wire up ExecutionPlanOptions class
+        self.execution_plan_options: ExecutionPlanOptions = ExecutionPlanOptions()
 
 
 class ExecuteStringParams(ExecuteRequestParamsBase):
@@ -30,7 +40,7 @@ EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
 class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
     @classmethod
     def get_child_serializable_types(cls):
-        return {'query_selection': SelectionData}
+        return {'query_selection': SelectionData, 'execution_plan_options': ExecutionPlanOptions}
 
     def __init__(self):
         super().__init__()

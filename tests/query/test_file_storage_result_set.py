@@ -10,7 +10,7 @@ from typing import Callable, List
 import tests.utils as utils
 from pgsqltoolsservice.query.result_set import ResultSetEvents
 from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
-from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
+from pgsqltoolsservice.query.contracts import DbCellValue
 
 
 class TestFileStorageResultSet(unittest.TestCase):

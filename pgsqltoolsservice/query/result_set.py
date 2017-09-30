@@ -6,8 +6,7 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 from typing import List  # noqa
 
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue # noqa
-from pgsqltoolsservice.query.contracts import ResultSetSummary
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSummary # noqa
 
 
 class ResultSetEvents:
@@ -24,7 +23,16 @@ class ResultSet(metaclass=ABCMeta):
         self.batch_id = batch_id
         self.events = events
 
-        self.columns_info: List[DbColumn] = None
+        self._has_been_read = False
+        self._columns_info: List[DbColumn] = []
+
+    @property
+    def columns_info(self) -> List[DbColumn]:
+        return self._columns_info if self._columns_info is not None else []
+
+    @columns_info.setter
+    def columns_info(self, columns_info) -> None:
+        self._columns_info = columns_info
 
     @property
     def result_set_summary(self) -> ResultSetSummary:

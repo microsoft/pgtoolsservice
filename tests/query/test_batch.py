@@ -10,7 +10,7 @@ import tests.utils as utils
 from pgsqltoolsservice.query.batch import (
     Batch, BatchEvents, create_batch, create_result_set, ResultSetStorageType, SelectBatch
 )
-from pgsqltoolsservice.query_execution.contracts.common import SelectionData
+from pgsqltoolsservice.query.contracts import SelectionData
 from pgsqltoolsservice.query.in_memory_result_set import InMemoryResultSet
 from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
 
@@ -60,7 +60,7 @@ class TestBatch(unittest.TestCase):
         with mock.patch('uuid.uuid4', new=mock.Mock(return_value=cursor_name)):
             self.create_and_execute_batch(SelectBatch)
 
-        self._connection.cursor.assert_called_once_with(cursor_name)
+        self._connection.cursor.assert_called_once_with(name=cursor_name, withhold=True)
 
     def test_prop_batch_summary(self):
         batch_summary = mock.MagicMock()

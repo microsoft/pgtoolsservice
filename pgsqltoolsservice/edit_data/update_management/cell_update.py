@@ -6,7 +6,7 @@
 
 from typing import Callable # noqa
 
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
 from pgsqltoolsservice.parsers.datatype_parsers import get_parser
 from pgsqltoolsservice.edit_data.contracts import EditCell # noqa
 

@@ -12,9 +12,8 @@ import uuid
 import sqlparse
 
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
-from pgsqltoolsservice.query_execution.contracts.common import SelectionData
+from pgsqltoolsservice.query.contracts import BatchSummary, SelectionData
 from pgsqltoolsservice.query.result_set import ResultSet # noqa
-from pgsqltoolsservice.query.contracts import BatchSummary
 from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
 from pgsqltoolsservice.query.in_memory_result_set import InMemoryResultSet
 
@@ -41,7 +40,14 @@ class SelectBatchEvents(BatchEvents):
 
 class Batch:
 
-    def __init__(self, batch_text: str, ordinal: int, selection: SelectionData, batch_events: BatchEvents, storage_type: ResultSetStorageType) -> None:
+    def __init__(
+            self,
+            batch_text: str,
+            ordinal: int,
+            selection: SelectionData,
+            batch_events: BatchEvents= None,
+            storage_type: ResultSetStorageType= ResultSetStorageType.IN_MEMORY
+            ) -> None:
         self.id = ordinal
         self.selection = selection
         self.batch_text = batch_text
@@ -84,6 +90,10 @@ class Batch:
         return self._result_set
 
     @property
+    def row_count(self) -> int:
+        return self.result_set.row_count if self.result_set is not None else -1
+
+    @property
     def notices(self) -> List[str]:
         return self._notices
 
@@ -96,23 +106,38 @@ class Batch:
 
         :raises psycopg2.DatabaseError: if an error is encountered while running the batch's query
         """
+        self._execution_start_time = datetime.now()
+
+        if self._batch_events and self._batch_events._on_execution_started:
+            self._batch_events._on_execution_started(self)
+
         try:
             cursor = self.get_cursor(connection)
-            self._execution_start_time = datetime.now()
             cursor.execute(self.batch_text)
+
+            self.after_execute(cursor)
         except psycopg2.DatabaseError:
             self._has_error = True
             raise
         finally:
+            cursor.close()
             self._has_executed = True
             self._execution_end_time = datetime.now()
             self._notices = cursor.connection.notices
+
             cursor.connection.notices = []
 
+            if self._batch_events and self._batch_events._on_execution_completed:
+                self._batch_events._on_execution_completed(self)
+
+    def after_execute(self, cursor) -> None:
         if cursor.description is not None:
-            result_set = create_result_set(self._storage_type, 0, self.id)
-            result_set.read_result_to_end(cursor)
-            self._result_set = result_set
+            self.create_result_set(cursor)
+
+    def create_result_set(self, cursor):
+        result_set = create_result_set(self._storage_type, 0, self.id)
+        result_set.read_result_to_end(cursor)
+        self._result_set = result_set
 
 
 class SelectBatch(Batch):
@@ -122,7 +147,13 @@ class SelectBatch(Batch):
 
     def get_cursor(self, connection: 'psycopg2.extensions.connection'):
         cursor_name = str(uuid.uuid4())
-        return connection.cursor(cursor_name)
+        # Named cursors can be created only in the transaction. As our connection has autocommit set to true
+        # there is not transaction concept with it so we need to have withhold to true and as this cursor is local
+        # and we explicitly close it we are good
+        return connection.cursor(name=cursor_name, withhold=True)
+
+    def after_execute(self, cursor) -> None:
+        super().create_result_set(cursor)
 
 
 def create_result_set(storage_type: ResultSetStorageType, result_set_id: int, batch_id: int) -> ResultSet:
