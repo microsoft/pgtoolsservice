@@ -8,7 +8,6 @@ from unittest import mock
 
 from pgsqltoolsservice.connection import ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectionCompleteParams
-from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from pgsqltoolsservice.utils.constants import CONNECTION_SERVICE_NAME
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
 from pgsqltoolsservice.scripting.scripter import Scripter
