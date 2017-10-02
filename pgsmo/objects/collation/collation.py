@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import List
+
 from pgsmo.objects.node_object import NodeObject
 from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s    # noqa
@@ -11,6 +13,7 @@ import pgsmo.utils.templating as templating
 
 class Collation(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Collation':
@@ -26,6 +29,9 @@ class Collation(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate
         """
         collation = cls(server, parent, kwargs['name'])
         collation._oid = kwargs['oid']
+        collation._schema = kwargs['schema']
+        collation._scid = kwargs['schemaoid']
+        collation._is_system = kwargs['is_system']
 
         return collation
 
@@ -34,15 +40,22 @@ class Collation(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        self._schema: str = None
+        self._scid: int = None
+
+    # PROPERTIES ###########################################################
+    @property
+    def schema(self):
+        return self._schema
+
+    @property
+    def scid(self):
+        return self._scid
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
     def owner(self):
         return self._full_properties.get("owner", "")
-
-    @property
-    def schema(self):
-        return self._full_properties.get("schema")
 
     @property
     def description(self):
@@ -73,11 +86,15 @@ class Collation(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
+    @classmethod
+    def _macro_root(cls) -> List[str]:
+        return [cls.MACRO_ROOT]
+
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {"data": {
             "name": self.name,
-            "pronamespace": self.parent.name,
+            "pronamespace": self.schema,
             "owner": self.owner,
             "schema": self.schema,
             "description": self.description,
@@ -92,7 +109,7 @@ class Collation(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate
         return {
             "data": {
                 "name": self.name,
-                "schema": self.parent.name
+                "schema": self.schema
             }, "cascade": self.cascade
         }
 

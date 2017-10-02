@@ -50,6 +50,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         db._owner_oid = kwargs['owner']
         db._is_template = kwargs['datistemplate']
         db._can_connect = kwargs['canconnect']
+        db._is_system = kwargs['is_system']
 
         return db
 

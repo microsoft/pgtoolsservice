@@ -15,7 +15,8 @@ class TestView(NodeObjectTestBase, unittest.TestCase):
         'oid': 123,
         'schema': 'public',
         'schemaoid': 456,
-        'objectname': 'viewname'
+        'objectname': 'viewname',
+        'is_system': False
     }
 
     @property

@@ -5,8 +5,16 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT
-    db.oid as oid, db.datname as name, ta.spcname as spcname, db.datallowconn,
-    has_database_privilege(db.oid, 'CREATE') as cancreate, datdba as owner, db.datistemplate , has_database_privilege(db.datname, 'connect') as canconnect
+    db.oid as oid, 
+    db.datname as name, 
+    ta.spcname as spcname, 
+    db.datallowconn,
+    has_database_privilege(db.oid, 'CREATE') as cancreate, 
+    datdba as owner, 
+    db.datistemplate , 
+    has_database_privilege(db.datname, 'connect') as canconnect,
+    datistemplate as is_system
+
 FROM
     pg_database db
     LEFT OUTER JOIN pg_tablespace ta ON db.dattablespace = ta.oid

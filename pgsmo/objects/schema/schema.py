@@ -34,6 +34,7 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         schema._oid = kwargs['oid']
         schema._can_create = kwargs['can_create']
         schema._has_usage = kwargs['has_usage']
+        schema._is_system = kwargs['is_system']
 
         return schema
 

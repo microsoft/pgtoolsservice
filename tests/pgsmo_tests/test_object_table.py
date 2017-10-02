@@ -15,7 +15,8 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
         'oid': 123,
         'schema': 'public',
         'schemaoid': 456,
-        'objectname': 'tablename'
+        'objectname': 'tablename',
+        'is_system': False
     }
 
     @property

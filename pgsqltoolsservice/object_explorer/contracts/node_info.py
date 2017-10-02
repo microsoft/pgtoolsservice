@@ -18,3 +18,4 @@ class NodeInfo(object):
         self.is_leaf: bool = True
         self.metadata: ObjectMetadata = ObjectMetadata()
         self.error_message: str = None
+        self.is_system: bool = False

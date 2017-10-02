@@ -63,11 +63,16 @@ class NodeObject(metaclass=ABCMeta):
         # Declare node basic properties
         self._name: str = name
         self._oid: Optional[int] = None
+        self._is_system: Optional[bool] = False
 
     # PROPERTIES ###########################################################
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def is_system(self) -> str:
+        return self._is_system
 
     @property
     def oid(self) -> Optional[int]:

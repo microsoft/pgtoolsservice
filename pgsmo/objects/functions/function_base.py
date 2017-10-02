@@ -39,6 +39,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         func._description = kwargs['description']
         func._schema = kwargs['schema']
         func._scid = kwargs['schemaoid']
+        func._is_system = kwargs['is_system']
 
         return func
 

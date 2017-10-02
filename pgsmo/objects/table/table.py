@@ -41,6 +41,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         table._oid = kwargs['oid']
         table._schema = kwargs['schema']
         table._scid = kwargs['schemaoid']
+        table._is_system = kwargs['is_system']
 
         return table
 

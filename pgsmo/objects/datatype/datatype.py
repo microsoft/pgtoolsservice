@@ -35,6 +35,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         datatype._oid = kwargs['oid']
         datatype._schema = kwargs['schema']
         datatype._scid = kwargs['schemaoid']
+        datatype._is_system = kwargs['is_system']
 
         return datatype
 

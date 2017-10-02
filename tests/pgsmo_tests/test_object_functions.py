@@ -19,7 +19,8 @@ class FunctionsTestBase(NodeObjectTestBase, metaclass=ABCMeta):
         'funcowner': 'postgres',
         'schema': 'public',
         'schemaoid': 456,
-        'objectname': 'funcname(arg1 int)'
+        'objectname': 'funcname(arg1 int)',
+        'is_system': False
     }
 
     @property

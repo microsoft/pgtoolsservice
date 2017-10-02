@@ -31,6 +31,7 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         seq._oid = kwargs['oid']
         seq._schema = kwargs['schema']
         seq._scid = kwargs['schemaoid']
+        seq._is_system = kwargs['is_system']
 
         return seq
 

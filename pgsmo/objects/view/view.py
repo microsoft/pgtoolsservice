@@ -34,6 +34,7 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         view._oid = kwargs['oid']
         view._schema = kwargs['schema']
         view._scid = kwargs['schemaoid']
+        view._is_system = kwargs['is_system']
 
         return view
 
