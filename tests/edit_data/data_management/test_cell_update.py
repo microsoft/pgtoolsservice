@@ -7,7 +7,7 @@
 import unittest
 
 from pgsqltoolsservice.edit_data.update_management import CellUpdate
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
 from pgsqltoolsservice.edit_data.contracts import EditCell
 
 

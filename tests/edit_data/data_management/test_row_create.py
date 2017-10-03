@@ -7,10 +7,11 @@
 import unittest
 
 from pgsqltoolsservice.edit_data.update_management import RowCreate, CellUpdate
-from pgsqltoolsservice.query_execution.result_set import ResultSet
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
+from pgsqltoolsservice.query import create_result_set, ResultSetStorageType
+from pgsqltoolsservice.query.contracts import DbColumn
 from pgsqltoolsservice.edit_data.contracts import EditRowState
 from pgsqltoolsservice.edit_data import EditTableMetadata
+from tests.utils import MockCursor
 
 
 class TestRowCreate(unittest.TestCase):
@@ -18,14 +19,17 @@ class TestRowCreate(unittest.TestCase):
     def setUp(self):
         self._row_id = 1
         self._rows = [("False"), ("True")]
-        self._result_set = ResultSet(0, 0, None, len(self._rows), self._rows)
+        self._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
+        self._cursor = MockCursor(self._rows, ['IsTrue'])
+
+        self._result_set.read_result_to_end(self._cursor)
 
         db_column = DbColumn()
         db_column.data_type = 'bool'
         db_column.column_name = 'IsValid'
         db_column.is_updatable = True
 
-        self._result_set.columns = [db_column]
+        self._result_set.columns_info = [db_column]
         self._table_metadata = EditTableMetadata('public', 'TestTable', [])
 
         self._row_create = RowCreate(self._row_id, self._result_set, self._table_metadata)
@@ -71,15 +75,18 @@ class TestRowCreate(unittest.TestCase):
 
         script = self._row_create.get_script()
 
-        self.assertEqual(script.query_template, 'INSERT INTO "public"."TestTable"("IsValid") VALUES(%s)')
+        self.assertEqual(script.query_template, 'INSERT INTO "public"."TestTable"("IsValid") VALUES(%s) RETURNING *')
         self.assertEquals(script.query_paramters[0], False)
 
     def test_apply_changes(self):
         self.assertTrue(len(self._result_set.rows) is 2)
-        self._row_create.apply_changes()
+
+        cursor = MockCursor([('True',)], ['IsTrue'])
+
+        self._row_create.apply_changes(cursor)
 
         self.assertTrue(len(self._result_set.rows) is 3)
-        self.assertTrue(self._result_set.rows[2][0] is None)
+        self.assertTrue(self._result_set.rows[2][0] is 'True')
 
 
 if __name__ == '__main__':

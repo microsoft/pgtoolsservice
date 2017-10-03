@@ -37,3 +37,12 @@ class QueryDisposeParams(Serializable):
 
 
 DISPOSE_REQUEST = IncomingMessageConfiguration('query/dispose', QueryDisposeParams)
+
+
+class QueryCancelResult:
+    """Parameters to return as the result of a query dispose request"""
+
+    def __init__(self, messages: str = None):
+        # Optional error messages during query cancellation that can be sent back
+        # Set to none if no errors
+        self.messages = messages

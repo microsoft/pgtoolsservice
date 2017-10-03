@@ -6,9 +6,9 @@
 from typing import List  # noqa
 from abc import abstractmethod
 
-from pgsqltoolsservice.query_execution.result_set import ResultSet
+from pgsqltoolsservice.query import ResultSet
 from pgsqltoolsservice.edit_data import EditTableMetadata
-from pgsqltoolsservice.query_execution.contracts.common import DbCellValue, DbColumn  # noqa
+from pgsqltoolsservice.query.contracts import DbCellValue, DbColumn  # noqa
 from pgsqltoolsservice.edit_data.contracts import EditCellResponse, RevertCellResponse, EditRow
 
 
@@ -43,15 +43,15 @@ class RowEdit:
         pass
 
     @abstractmethod
-    def apply_changes(self):
+    def apply_changes(self, cursor):
         pass
 
     def validate_column_is_updatable(self, column_index: int):
 
-        if column_index > len(self.result_set.columns) or column_index < 0:
+        if column_index > len(self.result_set.columns_info) or column_index < 0:
             raise IndexError()
 
-        column: DbColumn = self.result_set.columns[column_index]
+        column: DbColumn = self.result_set.columns_info[column_index]
 
         if column.is_updatable is False:
             raise ValueError()

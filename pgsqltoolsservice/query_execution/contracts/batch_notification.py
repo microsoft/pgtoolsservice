@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.query_execution.contracts.common import BatchSummary
+from pgsqltoolsservice.query.contracts import BatchSummary
 
 
 class BatchNotificationParams:

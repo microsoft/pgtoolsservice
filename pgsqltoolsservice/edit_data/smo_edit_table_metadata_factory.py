@@ -12,7 +12,7 @@ from pgsmo.objects.table_objects.column import Column  # noqa
 from pgsqltoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
 from pgsqltoolsservice.utils import object_finder
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
+from pgsqltoolsservice.query.contracts import DbColumn
 
 
 class SmoEditTableMetadataFactory:
