@@ -9,6 +9,8 @@ from decimal import Decimal
 import uuid
 import struct
 import io
+import psycopg2
+from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
 from pgsqltoolsservice.query_execution.contracts.common import DbColumn
@@ -179,8 +181,91 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(36, res)  # UUID standard len is 36
+        self.assertEqual(36, res)  # UUID standard len is 36          
 
+    def test_write_bytea(self):
+        test_value = memoryview(b'TestString')
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type_name = datatypes.DATATYPE_BYTEA
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(len(test_value.tobytes()), res)
+
+    def test_write_json(self):         
+        test_value = {"Name": "TestName", "Schema": "TestSchema"}
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type_name = datatypes.DATATYPE_JSON
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(len(str(test_value)), res) 
+
+    def test_write_array(self):
+        test_value = ["TestVal1", "TestVal2"]
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type_name = datatypes.DATATYPE_ARRAY
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(len(str(test_value)), res) 
+
+    def test_write_int4range(self): 
+        test_value = NumericRange(10, 20)
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type_name = datatypes.DATATYPE_INT4RANGE
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(len(str(test_value)), res) 
+
+    def test_write_tsrange(self): 
+        test_value = DateTimeRange("2014-06-08 12:12:45", "2016-07-06 14:12:08")
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type_name = datatypes.DATATYPE_TSRANGE
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(len(str(test_value)), res) 
+
+    def test_write_tstzrange(self): 
+        test_value = DateTimeTZRange("2014-06-08 12:12:45+02", "2016-07-06 14:12:08+02")
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type_name = datatypes.DATATYPE_TSTZRANGE
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(len(str(test_value)), res) 
+
+    def test_write_daterange(self): 
+        test_value = DateRange("2015-06-06", "2016-08-08")
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type_name = datatypes.DATATYPE_DATERANGE
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(len(str(test_value)), res) 
 
 class MockType:
     def __enter__(cls):
