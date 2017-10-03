@@ -16,7 +16,7 @@ class TestExtension(NodeObjectTestBase, unittest.TestCase):
         'schema': 'public',
         'schemaoid': 456,
         'objectname': 'extension',
-        'is_system': False
+        'is_system': True
     }
 
     @property

@@ -260,7 +260,7 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
 
 
 def is_system_request(route_path: str):
-    return bool('/system/' in route_path)
+    return '/system/' in route_path
 
 
 def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -310,7 +310,7 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     """Function to generate a list of databases"""
     if is_refresh:
         session.server.refresh()
-    is_system = bool('systemdatabase' in current_path)
+    is_system = 'systemdatabase' in current_path
     return [_get_node_info(node, current_path, 'Database', is_leaf=False)
             for node in session.server.databases if node.can_connect and node.is_system == is_system]
 

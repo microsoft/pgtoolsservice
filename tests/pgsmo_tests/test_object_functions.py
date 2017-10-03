@@ -20,7 +20,7 @@ class FunctionsTestBase(NodeObjectTestBase, metaclass=ABCMeta):
         'schema': 'public',
         'schemaoid': 456,
         'objectname': 'funcname(arg1 int)',
-        'is_system': False
+        'is_system': True
     }
 
     @property

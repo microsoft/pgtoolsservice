@@ -15,7 +15,7 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
         'oid': 123,
         'can_create': True,
         'has_usage': True,
-        'is_system': False
+        'is_system': True
     }
 
     @property
