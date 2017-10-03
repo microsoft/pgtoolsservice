@@ -5,23 +5,23 @@
 
 import unittest
 
-from pgsmo import Sequence
+from pgsmo import Extension
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
-class TestSequence(NodeObjectTestBase, unittest.TestCase):
+class TestExtension(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'sequencename',
+        'name': 'ex',
         'oid': 123,
         'schema': 'public',
         'schemaoid': 456,
-        'objectname': 'sequencename',
+        'objectname': 'extension',
         'is_system': True
     }
 
     @property
     def class_for_test(self):
-        return Sequence
+        return Extension
 
     @property
     def basic_properties(self):
@@ -33,31 +33,20 @@ class TestSequence(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def node_query(self) -> dict:
-        return TestSequence.NODE_ROW
+        return TestExtension.NODE_ROW
 
     @property
     def full_properties(self):
         return {
-            "cycled": "cycled",
-            "increment": "increment",
-            "start": "start",
-            "current_value": "current_value",
-            "minimum": "minimum",
-            "maximum": "maximum",
-            "cache": "cache",
-            "cascade": "cascade"
+            "owner": "owner",
+            "relocatable": "relocatable",
+            "version": "version"
         }
 
     @property
     def property_query(self) -> dict:
         return {
-            "schema": "public",
-            "cycled": False,
-            "increment": 1,
-            "start": 1,
-            "current_value": None,
-            "minimum": 1,
-            "maximum": 100,
-            "cache": 1,
-            "cascade": None
+            "owner": "postgres",
+            "relocatable": False,
+            "version": "1.0"
         }

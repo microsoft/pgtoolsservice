@@ -23,7 +23,8 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         'cancreate': True,
         'owner': 10,
         'datistemplate': False,
-        'canconnect': True
+        'canconnect': True,
+        'is_system': False
     }
 
     @property
