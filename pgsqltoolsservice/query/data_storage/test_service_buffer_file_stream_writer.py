@@ -266,6 +266,18 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(len(str(test_value)), res)
 
+    def test_write_udt(self):
+        test_value = "TestUserDefinedTypes"
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type_name = 'UserDefinedTypes'
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(len(test_value), res)
+
 
 class MockType:
     def __enter__(cls):

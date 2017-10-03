@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import io
-from typing import Callable # noqa
+from typing import Callable, Any # noqa
 
 from pgsqltoolsservice.parsers import datatypes
 from pgsqltoolsservice.query.data_storage.converters.bytes_converter import get_bytes_converter
@@ -64,7 +64,7 @@ class ServiceBufferFileStreamWriter:
             if type_value == datatypes.DATATYPE_NULL:
                 row_bytes += self._write_null()
             else:
-                bytes_converter: Callable[[typing.Any], bytearray] = get_bytes_converter(type_value)
+                bytes_converter: Callable[[Any], bytearray] = get_bytes_converter(type_value)
 
                 if bytes_converter is None:
                     raise AttributeError(ServiceBufferFileStreamWriter.CONVERTER_DATA_TYPE_NOT_EXIST_ERROR)

@@ -4,8 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-import typing
-from typing import Callable
+from typing import Callable, Any
 import decimal
 import struct
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
@@ -139,5 +138,5 @@ DATATYPE_WRITER_MAP = {
 }
 
 
-def get_bytes_converter(type_value: object) -> Callable[[typing.Any], bytearray]:
-    return DATATYPE_WRITER_MAP[type_value]
+def get_bytes_converter(type_value: object) -> Callable[[Any], bytearray]:
+    return DATATYPE_WRITER_MAP.get(type_value, convert_str)
