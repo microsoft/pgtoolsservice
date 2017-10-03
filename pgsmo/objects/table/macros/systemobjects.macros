@@ -1,9 +1,0 @@
-{##########################################}
-{# Macros for idenitifying system objects #}
-{##########################################}
-{% macro IS_SYSTEMSCHEMA(tbl) -%}
-CASE
-    WHEN {{ tbl }}.nspname = ANY('{information_schema,pg_catalog,pgagent,pg_toast,pg_temp_1,pg_toast_temp_1}')
-        THEN true
-    ELSE false END
-{%- endmacro %}

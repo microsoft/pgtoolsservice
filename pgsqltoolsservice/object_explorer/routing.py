@@ -177,7 +177,7 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     Expected match_params:
       dbid int: Database OID
     """
-    is_system = issystemrequest(current_path)
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'ScalarValuedFunction', label=f'{node.schema}.{node.name}')
@@ -191,7 +191,7 @@ def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     Expected match_params:
       dbid int: Database OID
     """
-    is_system = issystemrequest(current_path)
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'collations', label=f'{node.schema}.{node.name}')
@@ -205,7 +205,7 @@ def _datatypes(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     Expected match_params:
       dbid int: Database OID
     """
-    is_system = issystemrequest(current_path)
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'Datatypes', label=f'{node.schema}.{node.name}')
@@ -219,7 +219,7 @@ def _sequences(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     Expected match_params:
       dbid int: Database OID
     """
-    is_system = issystemrequest(current_path)
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'Sequence', label=f'{node.schema}.{node.name}')
@@ -259,7 +259,7 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
         yield _get_node_info(index, current_path, node_type, label=f'{index.name} {attrib_str}')
 
 
-def issystemrequest(route_path: str):
+def is_system_request(route_path: str):
     return bool('/system/' in route_path)
 
 
@@ -269,7 +269,7 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
     Expected match_params:
       dbid int: Database OID
     """
-    is_system = issystemrequest(current_path)
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'Table', is_leaf=False, label=f'{node.schema}.{node.name}')
@@ -301,12 +301,12 @@ def _rules(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
 
 def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of NodeInfo for tables in a schema"""
-    is_system = issystemrequest(current_path)
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [_get_node_info(node, current_path, 'Schema', is_leaf=True) for node in parent_obj.schemas if node.is_system == is_system]
 
 
-def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict, is_system: Optional[bool]=False) -> List[NodeInfo]:
+def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of databases"""
     if is_refresh:
         session.server.refresh()
@@ -335,7 +335,7 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
     Expected match_params:
       scid int: schema OID
     """
-    is_system = issystemrequest(current_path)
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [_get_node_info(node, current_path, 'View', label=f'{node.schema}.{node.name}', is_leaf=False)
             for node in parent_obj.views if node.is_system == is_system]

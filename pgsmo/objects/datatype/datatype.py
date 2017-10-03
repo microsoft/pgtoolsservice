@@ -12,6 +12,7 @@ import pgsmo.utils.templating as templating
 
 TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
 
 class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
@@ -135,7 +136,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
 
     @classmethod
     def _macro_root(cls) -> List[str]:
-        return [MACRO_ROOT]
+        return [MACRO_ROOT, GLOBAL_MACRO_ROOT]
 
     def _create_query_data(self):
         """ Gives the data object for create query """

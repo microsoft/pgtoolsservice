@@ -24,6 +24,7 @@ import pgsmo.utils.templating as templating
 class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Table':
@@ -218,7 +219,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
+        return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:

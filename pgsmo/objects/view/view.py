@@ -17,6 +17,7 @@ import pgsmo.utils.templating as templating
 class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'View':
@@ -109,7 +110,7 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
     # IMPLEMENTATION DETAILS ################################################
     @classmethod
     def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
+        return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
