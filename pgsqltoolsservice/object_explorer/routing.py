@@ -341,6 +341,20 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
             for node in parent_obj.views if node.is_system == is_system]
 
 
+def _extensions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for extensions in a schema
+    Expected match_params:
+      dbid int: Database OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
+    return [
+        _get_node_info(node, current_path, 'extension', label=f'{node.schema}.{node.name}')
+        for node in parent_obj.extensions if node.is_system == is_system
+    ]
+
+
 # ROUTING TABLE ############################################################
 # This is the table that maps a regular expression to a routing target. When using route_request,
 # the regular expression will be matched with the provided path. The routing target will then be
@@ -367,7 +381,8 @@ ROUTING_TABLE = {
             Folder('Collations', 'collations'),
             Folder('Data Types', 'datatypes'),
             Folder('Sequences', 'sequences'),
-            Folder('Schemas', 'schemas')
+            Folder('Schemas', 'schemas'),
+            Folder('Extensions', 'extensions')
         ],
         None
     ),
@@ -471,6 +486,14 @@ ROUTING_TABLE = {
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations(/system)/$'): RoutingTarget(None, _collations),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes(/system)/$'): RoutingTarget(None, _datatypes),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences(/system)/$'): RoutingTarget(None, _sequences),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _extensions
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/system/$'): RoutingTarget(None, _extensions),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/system/$'): RoutingTarget(None, _extensions),
     re.compile('^/roles/$'): RoutingTarget(None, _roles),
     re.compile('^/tablespaces/$'): RoutingTarget(None, _tablespaces)
 }

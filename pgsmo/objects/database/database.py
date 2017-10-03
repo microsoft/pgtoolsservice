@@ -18,6 +18,7 @@ from pgsmo.objects.functions.trigger_function import TriggerFunction
 from pgsmo.objects.sequence.sequence import Sequence
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
+from pgsmo.objects.extension.extension import Extension
 
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
@@ -83,6 +84,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         self._functions: NodeCollection = self._register_child_collection(Function)
         self._sequences: NodeCollection = self._register_child_collection(Sequence)
         self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
+        self._extensions: NodeCollection = self._register_child_collection(Extension)
 
     # PROPERTIES ###########################################################
     # -BASIC PROPERTIES ####################################################
@@ -175,6 +177,10 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def views(self) -> NodeCollection:
         return self._views
+
+    @property
+    def extensions(self) -> NodeCollection:
+        return self._extensions
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod

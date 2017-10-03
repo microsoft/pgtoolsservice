@@ -31,6 +31,7 @@ from pgsmo.objects.table_objects.trigger import Trigger
 from pgsmo.objects.tablespace.tablespace import Tablespace
 from pgsmo.objects.functions.trigger_function import TriggerFunction
 from pgsmo.objects.view.view import View
+from pgsmo.objects.extension.extension import Extension
 
 __all__ = [
     'NodeCollection',
@@ -57,5 +58,6 @@ __all__ = [
     'Tablespace',
     'Trigger',
     'TriggerFunction',
-    'View'
+    'View',
+    'Extension'
 ]

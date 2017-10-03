@@ -88,6 +88,10 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return [view for view in self.parent.views if view.scid == self.oid]
 
     @property
+    def extensions(self) -> NodeCollection:
+        return [extension for extension in self.parent.extensions if extension.scid == extension.oid]
+
+    @property
     def namespaceowner(self):
         return self._full_properties.get("namespaceowner", "")
 
