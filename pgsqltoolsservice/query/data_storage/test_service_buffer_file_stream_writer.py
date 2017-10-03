@@ -9,7 +9,7 @@ from decimal import Decimal
 import uuid
 import struct
 import io
-from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange 
+from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
 from pgsqltoolsservice.query_execution.contracts.common import DbColumn
