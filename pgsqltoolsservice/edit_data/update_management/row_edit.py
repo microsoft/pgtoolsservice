@@ -3,12 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List # noqa
+from typing import List  # noqa
 from abc import abstractmethod
 
 from pgsqltoolsservice.query_execution.result_set import ResultSet
 from pgsqltoolsservice.edit_data import EditTableMetadata
-from pgsqltoolsservice.query_execution.contracts.common import DbCellValue, DbColumn # noqa
+from pgsqltoolsservice.query_execution.contracts.common import DbCellValue, DbColumn  # noqa
 from pgsqltoolsservice.edit_data.contracts import EditCellResponse, RevertCellResponse, EditRow
 
 
@@ -75,7 +75,7 @@ class RowEdit:
             column_name = column.name
             if cell.is_null is True:
                 cell_data_clause += 'IS NULL'
-            elif type(cell.raw_object) is bytearray or column.db_column.data_type.lower() is 'text':
+            elif isinstance(cell.raw_object, bytearray) or column.db_column.data_type.lower() is 'text':
                 cell_data_clause += 'IS NOT NULL'
             else:
                 cell_data_clause += '= %s'

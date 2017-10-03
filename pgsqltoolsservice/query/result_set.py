@@ -6,7 +6,7 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 from typing import List  # noqa
 
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue # noqa
+from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue  # noqa
 from pgsqltoolsservice.query.contracts import ResultSetSummary
 
 

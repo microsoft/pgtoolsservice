@@ -21,7 +21,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
         'isprimarykey': True,
         'is_updatable': False,
         'isunique': True,
-        'typoid': 1234,
+        'typoid': 18,
         'default': 'nextval('
     }
 
@@ -69,7 +69,8 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             "seclabels": "seclabels",
             "attstattarget": "attstattarget",
             "attstorage": "attstorage",
-            "is_sql": "is_sql"
+            "is_sql": "is_sql",
+            "elemoid": "elemoid"
         }
 
     @property
@@ -80,9 +81,9 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             "schema": "test_schema",
             "table": "test_table",
             "displaytypname": "test_displaytypname",
-            "attlen": "test",
-            "attprecision": "test",
-            "hasSqrBracket": "test",
+            "attlen": None,
+            "attprecision": False,
+            "hasSqrBracket": False,
             "collspcname": "test",
             "attnotnull": "test",
             "defval": "test",
@@ -92,7 +93,8 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             "seclabels": "test",
             "attstattarget": "test",
             "attstorage": "test",
-            "is_sql": "test"
+            "is_sql": True,
+            "elemoid": 18
         }
 
     @property

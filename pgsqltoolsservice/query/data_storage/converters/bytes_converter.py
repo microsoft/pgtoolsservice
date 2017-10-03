@@ -140,3 +140,4 @@ DATATYPE_WRITER_MAP = {
 
 def get_bytes_converter(type_value: object) -> Callable[[Any], bytearray]:
     return DATATYPE_WRITER_MAP.get(type_value, convert_str)
+}

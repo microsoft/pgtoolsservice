@@ -7,7 +7,7 @@ from typing import List
 
 from pgsqltoolsservice.query.result_set import ResultSet, ResultSetEvents
 from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue # noqa
+from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue  # noqa
 
 
 class InMemoryResultSet(ResultSet):

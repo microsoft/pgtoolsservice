@@ -33,6 +33,9 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
 
         # Define values from node query
         datatype._oid = kwargs['oid']
+        datatype._schema = kwargs['schema']
+        datatype._scid = kwargs['schemaoid']
+
         return datatype
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
@@ -45,10 +48,19 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         ScriptableCreate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
         ScriptableDelete.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
         ScriptableUpdate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
-
+        self._schema: str = None
+        self._scid: int = None
         self._additional_properties: NodeLazyPropertyCollection = self._register_property_collection(self._additional_property_generator)
 
     # PROPERTIES ###########################################################
+    @property
+    def schema(self):
+        return self._schema
+
+    @property
+    def scid(self):
+        return self._scid
+
     @property
     def is_collatable(self) -> Optional[bool]:
         """Whether or not the DataType is collatable"""
@@ -86,10 +98,6 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
     @property
     def typtype(self) -> str:
         return self._full_properties.get("typtype", "")
-
-    @property
-    def schema(self):
-        return self.parent.name
 
     @property
     def typname(self):
@@ -169,7 +177,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         data = {
             "data": {
                 "name": self.name,
-                "schema": self.parent.name
+                "schema": self.schema
             },
             # See issue https://github.com/Microsoft/carbon/issues/1715, Cascade should be configured
             # as part of the input to the delete method as it's not a property

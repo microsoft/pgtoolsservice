@@ -53,6 +53,7 @@ def _close_session_params() -> CloseSessionParameters:
 
 class TestObjectExplorer(unittest.TestCase):
     """Methods for testing the object explorer service"""
+
     def test_init(self):
         # If: I create a new OE service
         oe = ObjectExplorerService()

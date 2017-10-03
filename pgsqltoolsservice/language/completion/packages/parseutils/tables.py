@@ -12,8 +12,8 @@ from sqlparse.tokens import Keyword, DML, Punctuation
 TableReference = namedtuple('TableReference', ['schema', 'name', 'alias',
                                                'is_function'])
 TableReference.ref = property(lambda self: self.alias or (
-  self.name if self.name.islower() or self.name[0] == '"'
-  else '"' + self.name + '"'))
+    self.name if self.name.islower() or self.name[0] == '"'
+    else '"' + self.name + '"'))
 
 
 # This code is borrowed from sqlparse example script.

@@ -16,7 +16,10 @@ class FunctionsTestBase(NodeObjectTestBase, metaclass=ABCMeta):
         'oid': 123,
         'description': 'func description',
         'lanname': 'sql',
-        'funcowner': 'postgres'
+        'funcowner': 'postgres',
+        'schema': 'public',
+        'schemaoid': 456,
+        'objectname': 'funcname(arg1 int)'
     }
 
     @property

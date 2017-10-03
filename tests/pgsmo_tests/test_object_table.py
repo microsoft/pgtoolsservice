@@ -12,7 +12,10 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 class TestTable(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
         'name': 'tablename',
-        'oid': 123
+        'oid': 123,
+        'schema': 'public',
+        'schemaoid': 456,
+        'objectname': 'tablename'
     }
 
     @property

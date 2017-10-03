@@ -3,12 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, Dict, List, Optional, Tuple # noqa
+from typing import Callable, Dict, List, Optional, Tuple  # noqa
 from psycopg2 import sql
 import threading
 
-from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete # noqa
-from pgsqltoolsservice.query_execution.result_set import ResultSet # noqa
+from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete  # noqa
+from pgsqltoolsservice.query_execution.result_set import ResultSet  # noqa
 from pgsqltoolsservice.edit_data.contracts import (
     EditCellResponse, InitializeEditParams, EditInitializerFilter, RevertCellResponse,
     CreateRowResponse, EditRow, EditCell
@@ -49,7 +49,7 @@ class DataEditorSession():
             initailize_edit_params.object_type)
 
         query_executer(self._construct_initialize_query(connection,
-                       self.table_metadata, initailize_edit_params.filters),
+                                                        self.table_metadata, initailize_edit_params.filters),
                        self.table_metadata.db_columns,
                        lambda execution_state: self.on_query_execution_complete(execution_state, on_success, on_failure))
 
