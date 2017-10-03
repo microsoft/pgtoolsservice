@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import io
-from typing import Callable  # noqa
+from typing import Callable, Any # noqa
 
 from pgsqltoolsservice.parsers import datatypes
 from pgsqltoolsservice.query.data_storage.converters.bytes_converter import get_bytes_converter
@@ -13,12 +13,12 @@ from pgsqltoolsservice.query.data_storage.converters.bytes_converter import get_
 class ServiceBufferFileStreamWriter:
     """ Writer for service buffer formatted file streams """
 
-    WRITER_STREAM_NONE_ERROR = "stream argument is None"
-    WRITER_STREAM_NOT_SUPPORT_WRITING_ERROR = "stream argument doesn't support writing"
+    WRITER_STREAM_NONE_ERROR = "Stream argument is None"
+    WRITER_STREAM_NOT_SUPPORT_WRITING_ERROR = "Stream argument doesn't support writing"
     WRITER_DATA_WRITE_ERROR = "Data write error"
     CONVERTER_DATA_TYPE_NOT_EXIST_ERROR = "Convert to bytes not supported"
 
-    def __init__(self, stream) -> None:
+    def __init__(self, stream: io.BytesIO) -> None:
 
         if stream is None:
             raise ValueError(ServiceBufferFileStreamWriter.WRITER_STREAM_NONE_ERROR)
@@ -39,6 +39,8 @@ class ServiceBufferFileStreamWriter:
             written_byte_number = stream.write(byte_array)
         except Exception as exc:
             raise IOError(ServiceBufferFileStreamWriter.WRITER_DATA_WRITE_ERROR) from exc
+        finally:
+            stream.close()
         return written_byte_number
 
     def write_row(self, reader):
@@ -62,7 +64,7 @@ class ServiceBufferFileStreamWriter:
             if type_value == datatypes.DATATYPE_NULL:
                 row_bytes += self._write_null()
             else:
-                bytes_converter: Callable[[str], bytearray] = get_bytes_converter(type_value)
+                bytes_converter: Callable[[Any], bytearray] = get_bytes_converter(type_value)
 
                 if bytes_converter is None:
                     raise AttributeError(ServiceBufferFileStreamWriter.CONVERTER_DATA_TYPE_NOT_EXIST_ERROR)
