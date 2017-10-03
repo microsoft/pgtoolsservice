@@ -173,7 +173,7 @@ class MockCursor:
             self._fetched_count += 1
             return row
 
-    def create_column_description(self, **kwArgs):
+    def create_column_description(self, **kwargs):
         description = {
             'name': None,
             'type_code': None,
@@ -183,7 +183,7 @@ class MockCursor:
             'scale': None,
             'null_ok': None
             }
-        merge = {**description, **dict(kwArgs)}
+        merge = {**description, **dict(kwargs)}
         return tuple(merge.values())
 
     def __enter__(self):

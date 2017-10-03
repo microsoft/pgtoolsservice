@@ -296,9 +296,7 @@ class QueryExecutionService(object):
             self._resolve_query_exception(e, query, worker_args.request_context, worker_args.connection)
         finally:
             # Send a query complete notification
-            batch_summaries = []
-            for batch in query.batches:
-                batch_summaries.append(batch.batch_summary)
+            batch_summaries = [batch.batch_summary for batch in query.batches]
 
             query_complete_params = QueryCompleteNotificationParams(worker_args.owner_uri, batch_summaries)
             _check_and_fire(worker_args.on_query_complete, query_complete_params)

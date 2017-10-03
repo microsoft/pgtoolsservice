@@ -54,12 +54,12 @@ class Query:
         self._execution_state: ExecutionState = ExecutionState.NOT_STARTED
         self._owner_uri: str = owner_uri
         self._query_text = query_text
-
         self._disable_auto_commit = False
         self._current_batch_index = 0
-        self._is_canceled = False
         self._batches: List[Batch] = []
         self._execution_plan_options = query_execution_settings.execution_plan_options
+
+        self.is_canceled = False
 
         # Initialize the batches
         statements = sqlparse.split(query_text)
@@ -90,14 +90,6 @@ class Query:
     @property
     def owner_uri(self) -> str:
         return self._owner_uri
-
-    @property
-    def is_canceled(self) -> bool:
-        return self._is_canceled
-
-    @is_canceled.setter
-    def is_canceled(self, is_canceled) -> None:
-        self._is_canceled = is_canceled
 
     @property
     def execution_state(self) -> ExecutionState:
