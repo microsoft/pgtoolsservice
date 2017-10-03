@@ -30,7 +30,7 @@ class QueryExecutionSettings:
     def __init__(
             self, execution_plan_options,
             result_set_storage_type: ResultSetStorageType = ResultSetStorageType.IN_MEMORY
-            ) -> None:
+    ) -> None:
 
         self._execution_plan_options = execution_plan_options
         self._result_set_storage_type = result_set_storage_type

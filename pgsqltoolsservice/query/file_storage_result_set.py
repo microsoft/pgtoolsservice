@@ -7,7 +7,7 @@ from typing import List
 
 from pgsqltoolsservice.query.result_set import ResultSet, ResultSetEvents
 from pgsqltoolsservice.query.data_storage import service_buffer_file_stream as file_stream, StorageDataReader
-from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset # noqa
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset  # noqa
 import pgsqltoolsservice.utils as utils
 
 

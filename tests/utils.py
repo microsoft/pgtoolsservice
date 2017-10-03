@@ -182,7 +182,7 @@ class MockCursor:
             'precision': None,
             'scale': None,
             'null_ok': None
-            }
+        }
         merge = {**description, **dict(kwargs)}
         return tuple(merge.values())
 

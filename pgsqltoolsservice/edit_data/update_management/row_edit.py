@@ -8,7 +8,7 @@ from abc import abstractmethod
 
 from pgsqltoolsservice.query import ResultSet
 from pgsqltoolsservice.edit_data import EditTableMetadata
-from pgsqltoolsservice.query.contracts import DbCellValue, DbColumn # noqa
+from pgsqltoolsservice.query.contracts import DbCellValue, DbColumn  # noqa
 from pgsqltoolsservice.edit_data.contracts import EditCellResponse, RevertCellResponse, EditRow
 
 

@@ -60,7 +60,7 @@ class StorageDataReader:
 
         column_value = self._current_row[column_index]
 
-        if type(column_value) is str:
+        if isinstance(column_value, str):
             return column_value[0: max_chars_to_return]
         else:
             raise ValueError('Not a str column')

@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List # noqa
+from typing import List  # noqa
 import unittest
 from unittest import mock
 

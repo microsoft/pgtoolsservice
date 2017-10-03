@@ -13,4 +13,4 @@ from pgsqltoolsservice.query.result_set import ResultSet
 __all__ = [
     'Batch', 'BatchEvents', 'compute_selection_data_for_batches', 'create_batch', 'create_result_set',
     'ExecutionState', 'ResultSet', 'ResultSetStorageType', 'Query', 'QueryEvents', 'QueryExecutionSettings'
-    ]
+]

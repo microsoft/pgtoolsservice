@@ -6,7 +6,7 @@
 from typing import List
 
 from pgsqltoolsservice.query.result_set import ResultSet, ResultSetEvents
-from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset # noqa
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset  # noqa
 
 
 class InMemoryResultSet(ResultSet):

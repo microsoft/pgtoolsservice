@@ -13,7 +13,7 @@ import sqlparse
 
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query.contracts import BatchSummary, SelectionData
-from pgsqltoolsservice.query.result_set import ResultSet # noqa
+from pgsqltoolsservice.query.result_set import ResultSet  # noqa
 from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
 from pgsqltoolsservice.query.in_memory_result_set import InMemoryResultSet
 
@@ -47,7 +47,7 @@ class Batch:
             selection: SelectionData,
             batch_events: BatchEvents= None,
             storage_type: ResultSetStorageType= ResultSetStorageType.IN_MEMORY
-            ) -> None:
+    ) -> None:
         self.id = ordinal
         self.selection = selection
         self.batch_text = batch_text

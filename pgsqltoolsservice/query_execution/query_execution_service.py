@@ -17,7 +17,7 @@ from pgsqltoolsservice.query import (
     Batch, BatchEvents, ExecutionState, QueryExecutionSettings, Query, QueryEvents,
     compute_selection_data_for_batches as compute_batches
 )
-from pgsqltoolsservice.query.contracts import BatchSummary, ResultSetSubset, SelectionData, SubsetResult # noqa
+from pgsqltoolsservice.query.contracts import BatchSummary, ResultSetSubset, SelectionData, SubsetResult  # noqa
 from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, EXECUTE_DOCUMENT_STATEMENT_REQUEST,

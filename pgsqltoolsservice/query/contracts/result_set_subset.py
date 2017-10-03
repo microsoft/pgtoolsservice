@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, List # noqa
+from typing import Dict, List  # noqa
 
 from pgsqltoolsservice.query.contracts import DbCellValue
 import pgsqltoolsservice.utils as utils

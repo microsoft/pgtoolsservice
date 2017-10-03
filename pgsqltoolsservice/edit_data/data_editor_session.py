@@ -7,8 +7,8 @@ from typing import Callable, Dict, List, Optional, Tuple  # noqa
 from psycopg2 import sql
 import threading
 
-from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete # noqa
-from pgsqltoolsservice.query import ExecutionState, ResultSet, Query # noqa
+from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete  # noqa
+from pgsqltoolsservice.query import ExecutionState, ResultSet, Query  # noqa
 from pgsqltoolsservice.edit_data.contracts import (
     EditCellResponse, InitializeEditParams, EditInitializerFilter, RevertCellResponse,
     CreateRowResponse, EditRow, EditCell

@@ -6,7 +6,7 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 from typing import List  # noqa
 
-from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSummary # noqa
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSummary  # noqa
 
 
 class ResultSetEvents:
