@@ -4,11 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 
-import typing 
+import typing
 from typing import Callable
 import decimal
 import struct
-import psycopg2
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 from pgsqltoolsservice.parsers import datatypes
@@ -72,15 +71,15 @@ def convert_dict(value: dict):
     return bytearray(str(value).encode())
 
 
-def convert_list(value: list):    
+def convert_list(value: list):
     return bytearray(str(value).encode())
 
 
-def convert_numericrange(value: NumericRange):    
+def convert_numericrange(value: NumericRange):
     return bytearray(str(value).encode())
 
 
-def convert_datetimerange(value: DateTimeRange):    
+def convert_datetimerange(value: DateTimeRange):
     return bytearray(str(value).encode())
 
 

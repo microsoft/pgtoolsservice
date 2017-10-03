@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import io
-import typing
 from typing import Callable # noqa
 
 from pgsqltoolsservice.parsers import datatypes
@@ -37,7 +36,7 @@ class ServiceBufferFileStreamWriter:
 
     def _write_to_file(self, stream, byte_array):
         try:
-            written_byte_number = stream.write(byte_array)            
+            written_byte_number = stream.write(byte_array)
         except Exception as exc:
             raise IOError(ServiceBufferFileStreamWriter.WRITER_DATA_WRITE_ERROR) from exc
         finally:
