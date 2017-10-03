@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
+import typing 
 from typing import Callable
 import decimal
 import struct
@@ -31,7 +32,7 @@ def convert_decimal(value: decimal.Decimal):
 
 def convert_char(value: str):
     if len(value) > 1:
-        raise ValueError("value provided is not a character")
+        raise ValueError("Value provided is not a character")
     return bytearray(value.encode())
 
 
@@ -139,5 +140,5 @@ DATATYPE_WRITER_MAP = {
 }
 
 
-def get_bytes_converter(type_value: str) -> Callable[[str], bytearray]:
+def get_bytes_converter(type_value: object) -> Callable[[typing.Any], bytearray]:
     return DATATYPE_WRITER_MAP[type_value]
