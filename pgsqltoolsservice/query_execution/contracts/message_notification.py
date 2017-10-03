@@ -3,7 +3,14 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.query_execution.contracts.common import ResultMessage
+
+class ResultMessage:
+
+    def __init__(self, batch_id: int, is_error: bool, time, message: str):
+        self.batch_id: int = batch_id
+        self.is_error: bool = is_error
+        self.time = time
+        self.message: str = message
 
 
 class MessageNotificationParams:

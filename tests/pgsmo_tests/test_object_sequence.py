@@ -11,8 +11,11 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestSequence(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'rulename',
-        'oid': 123
+        'name': 'sequencename',
+        'oid': 123,
+        'schema': 'public',
+        'schemaoid': 456,
+        'objectname': 'sequencename'
     }
 
     @property
@@ -34,7 +37,6 @@ class TestSequence(NodeObjectTestBase, unittest.TestCase):
     @property
     def full_properties(self):
         return {
-            "schema": "schema",
             "cycled": "cycled",
             "increment": "increment",
             "start": "start",

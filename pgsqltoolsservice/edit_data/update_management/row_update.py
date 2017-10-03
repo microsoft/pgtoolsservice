@@ -4,13 +4,13 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Dict, List # noqa
+from typing import Dict, List  # noqa
 
 from pgsqltoolsservice.edit_data.update_management import RowEdit, CellUpdate, EditScript
-from pgsqltoolsservice.query_execution.result_set import ResultSet
+from pgsqltoolsservice.query import ResultSet
 from pgsqltoolsservice.edit_data import EditTableMetadata
 from pgsqltoolsservice.edit_data.contracts import EditCellResponse, EditCell, RevertCellResponse, EditRow, EditRowState
-from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
+from pgsqltoolsservice.query.contracts import DbCellValue
 
 
 class RowUpdate(RowEdit):
@@ -22,7 +22,7 @@ class RowUpdate(RowEdit):
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
         self.validate_column_is_updatable(column_index)
-        cell_update = CellUpdate(self.result_set.columns[column_index], new_value)
+        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value)
 
         if cell_update.value is self.row[column_index].raw_object:
             existing_cell_update = self._cell_updates.get(column_index)
@@ -51,7 +51,7 @@ class RowUpdate(RowEdit):
 
     def get_script(self) -> EditScript:
 
-        query = 'UPDATE {0} SET {1} {2}'
+        query = 'UPDATE {0} SET {1} {2} RETURNING *'
         set_template = '"{0}" = %s'
         set_query = []
         cell_values = []
@@ -67,14 +67,5 @@ class RowUpdate(RowEdit):
 
         return EditScript(query_template, cell_values)
 
-    def apply_changes(self):
-        cell_values = []
-
-        for index, db_cell in enumerate(self.row):
-            updated_cell = self._cell_updates.get(index)
-            if updated_cell is None:
-                cell_values.append(db_cell.raw_object)
-            else:
-                cell_values.append(updated_cell.value)
-
-        self.result_set.update_row(self.row_id, tuple(cell_values))
+    def apply_changes(self, cursor):
+        self.result_set.update_row(self.row_id, cursor)

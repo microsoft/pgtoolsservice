@@ -6,7 +6,7 @@
 
 from typing import List  # noqa
 
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
+from pgsqltoolsservice.query.contracts import DbColumn
 
 
 class ResultSetSummary:

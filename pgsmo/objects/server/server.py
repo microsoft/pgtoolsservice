@@ -43,9 +43,9 @@ class Server:
 
         # Declare the child objects
         self._child_objects: Mapping[str, NodeCollection] = {
-            Database.__name__:    NodeCollection(lambda: Database.get_nodes_for_parent(self, None)),
-            Role.__name__:        NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
-            Tablespace.__name__:  NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None)),
+            Database.__name__: NodeCollection(lambda: Database.get_nodes_for_parent(self, None)),
+            Role.__name__: NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
+            Tablespace.__name__: NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None)),
         }
         self._search_path = NodeCollection(lambda: self._fetch_search_path())
 

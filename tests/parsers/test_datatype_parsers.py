@@ -5,13 +5,13 @@
 
 
 import unittest
-from typing import Callable # noqa
+from typing import Callable  # noqa
 from decimal import Decimal
 import uuid
-import datetime # noqa
+import datetime  # noqa
 
 from pgsqltoolsservice.parsers.datatype_parsers import get_parser
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
+from pgsqltoolsservice.query.contracts import DbColumn
 
 
 class TestDataTypeParsers(unittest.TestCase):

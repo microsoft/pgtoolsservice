@@ -5,7 +5,7 @@
 
 from typing import List
 
-from pgsqltoolsservice.query_execution.contracts.common import BatchSummary
+from pgsqltoolsservice.query.contracts import BatchSummary
 
 
 class QueryCompleteNotificationParams:

@@ -80,7 +80,7 @@ class CheckConstraint(Constraint):
         """ Provides data input for create script """
         return {
             "data": {
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "name": self.name,
                 "consrc": self.src,
@@ -164,7 +164,7 @@ class ExclusionConstraint(Constraint):
         """ Provides data input for create script """
         return {
             "data": {
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "name": self.name,
                 "amname": self.amname,
@@ -182,7 +182,7 @@ class ExclusionConstraint(Constraint):
         """ Provides data input for delete script """
         return {
             "data": {
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "name": self.name
             },
@@ -194,7 +194,7 @@ class ExclusionConstraint(Constraint):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "spcname": self.spcname,
                 "fillfactor": self.fillfactor,
@@ -258,7 +258,7 @@ class ForeignKeyConstraint(Constraint):
         """ Provides data input for create script """
         return {
             "data": {
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "name": self.name,
                 "columns": self.columns,
@@ -278,7 +278,7 @@ class ForeignKeyConstraint(Constraint):
         """ Provides data input for delete script """
         return {
             "data": {
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "name": self.name
             },
@@ -290,7 +290,7 @@ class ForeignKeyConstraint(Constraint):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "convalidated": self.convalidated,
                 "comment": self.comment
@@ -341,7 +341,7 @@ class IndexConstraint(Constraint):
         """ Provides data input for create script """
         return {
             "data": {
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "name": self.name,
                 "index": self.index,
@@ -357,7 +357,7 @@ class IndexConstraint(Constraint):
         """ Provides data input for delete script """
         return {
             "data": {
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "name": self.name
             },
@@ -369,7 +369,7 @@ class IndexConstraint(Constraint):
         return {
             "data": {
                 "name": self.name,
-                "schema": self.parent.parent.name,
+                "schema": self.parent.schema,
                 "table": self.parent.name,
                 "spcname": self.spcname,
                 "fillfactor": self.fillfactor,

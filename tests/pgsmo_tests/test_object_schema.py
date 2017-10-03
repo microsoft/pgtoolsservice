@@ -32,14 +32,7 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def collections(self):
-        return [
-            '_collations', 'collations',
-            '_functions', 'functions',
-            '_sequences', 'sequences',
-            '_tables', 'tables',
-            '_trigger_functions', 'trigger_functions',
-            '_views', 'views'
-        ]
+        return []
 
     @property
     def node_query(self):

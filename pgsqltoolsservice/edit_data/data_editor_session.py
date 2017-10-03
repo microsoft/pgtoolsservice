@@ -3,19 +3,18 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, Dict, List, Optional, Tuple # noqa
+from typing import Callable, Dict, List, Optional, Tuple  # noqa
 from psycopg2 import sql
 import threading
 
-from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete # noqa
-from pgsqltoolsservice.query_execution.result_set import ResultSet # noqa
+from pgsqltoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete  # noqa
+from pgsqltoolsservice.query import ExecutionState, ResultSet, Query  # noqa
 from pgsqltoolsservice.edit_data.contracts import (
     EditCellResponse, InitializeEditParams, EditInitializerFilter, RevertCellResponse,
     CreateRowResponse, EditRow, EditCell
 )
 from pgsqltoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
-from pgsqltoolsservice.query_execution.query import ExecutionState, Query
-from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset, DbColumn
+from pgsqltoolsservice.query.contracts import DbColumn, ResultSetSubset
 import pgsqltoolsservice.utils as utils
 
 
@@ -49,7 +48,7 @@ class DataEditorSession():
             initailize_edit_params.object_type)
 
         query_executer(self._construct_initialize_query(connection,
-                       self.table_metadata, initailize_edit_params.filters),
+                                                        self.table_metadata, initailize_edit_params.filters),
                        self.table_metadata.db_columns,
                        lambda execution_state: self.on_query_execution_complete(execution_state, on_success, on_failure))
 
@@ -62,7 +61,7 @@ class DataEditorSession():
             self._validate_query_for_session(execution_state.query)
             self._result_set = execution_state.query.batches[0].result_set
 
-            self._result_set.columns = self.table_metadata.db_columns
+            self._result_set.columns_info = self.table_metadata.db_columns
 
             self._last_row_id = len(self._result_set.rows) - 1
             self._is_initialized = True
@@ -199,7 +198,7 @@ class DataEditorSession():
                 else:
                     script: EditScript = operation.get_script()
                     cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
-                    operation.apply_changes()
+                    operation.apply_changes(cursor)
 
             self._session_cache.clear()
             self._last_row_id = len(self._result_set.rows) - 1

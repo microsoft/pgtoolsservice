@@ -13,6 +13,7 @@ from pgsqltoolsservice.serialization import Serializable
 
 class ListDatabasesParams(Serializable):
     """Parameters for the connection/listdatabases request"""
+
     def __init__(self):
         self.owner_uri: str = None
 

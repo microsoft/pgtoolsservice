@@ -13,27 +13,25 @@ import psycopg2
 import psycopg2.errorcodes
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
+from pgsqltoolsservice.query import (
+    Batch, BatchEvents, ExecutionState, QueryExecutionSettings, Query, QueryEvents,
+    compute_selection_data_for_batches as compute_batches
+)
+from pgsqltoolsservice.query.contracts import BatchSummary, ResultSetSubset, SelectionData, SubsetResult  # noqa
 from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, EXECUTE_DOCUMENT_STATEMENT_REQUEST,
-    ExecuteDocumentStatementParams, ResultSetNotificationParams,
+    ExecuteDocumentStatementParams, ExecutionPlanOptions, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
-    QUERY_COMPLETE_NOTIFICATION, QUERY_EXECUTION_PLAN_REQUEST, QueryExecutionPlanRequest,
-    SUBSET_REQUEST, ExecuteDocumentSelectionParams,
-    BatchSummary, CANCEL_REQUEST, QueryCancelParams, SubsetParams,
+    QUERY_COMPLETE_NOTIFICATION, QUERY_EXECUTION_PLAN_REQUEST, QueryCancelResult, QueryExecutionPlanRequest,
+    SUBSET_REQUEST, ExecuteDocumentSelectionParams, CANCEL_REQUEST, QueryCancelParams, ResultMessage, SubsetParams,
     BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams,
     DISPOSE_REQUEST, SIMPLE_EXECUTE_REQUEST, SimpleExecuteRequest, ExecuteStringParams,
     SimpleExecuteResponse
 )
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams
-from pgsqltoolsservice.query_execution.contracts.common import (
-    ResultMessage, SubsetResult, ResultSetSubset, QueryCancelResult
-)
 from pgsqltoolsservice.connection.contracts import ConnectionType
-from pgsqltoolsservice.query_execution.batch import Batch
-from pgsqltoolsservice.query_execution.query import ExecutionState, Query
 import pgsqltoolsservice.utils as utils
-from pgsqltoolsservice.query_execution.query import compute_selection_data_for_batches as compute_batches
 
 
 CANCELATION_QUERY = 'SELECT pg_cancel_backend (%s)'
@@ -169,17 +167,44 @@ class QueryExecutionService(object):
 
     def _start_query_execution_thread(self, request_context: RequestContext, params: ExecuteRequestParamsBase, worker_args: ExecuteRequestWorkerArgs= None):
 
+        # Set up batch execution callback methods for sending notifications
+        def _batch_execution_started_callback(batch: Batch) -> None:
+            batch_event_params = BatchNotificationParams(batch.batch_summary, worker_args.owner_uri)
+            _check_and_fire(worker_args.on_batch_start, batch_event_params)
+
+        def _batch_execution_finished_callback(batch: Batch) -> None:
+            # Send back notices as a separate message to avoid error coloring / highlighting of text
+            notices = batch.notices
+            if notices:
+                notice_message_params = self.build_message_params(worker_args.owner_uri, batch.id, ''.join(notices), False)
+                _check_and_fire(worker_args.on_message_notification, notice_message_params)
+
+            batch_summary = batch.batch_summary
+
+            # send query/resultSetComplete response
+            result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)
+            _check_and_fire(worker_args.on_resultset_complete, result_set_params)
+
+            # If the batch was successful, send a message to the client
+            if not batch.has_error:
+                rows_message = _create_rows_affected_message(batch)
+                message_params = self.build_message_params(worker_args.owner_uri, batch.id, rows_message, False)
+                _check_and_fire(worker_args.on_message_notification, message_params)
+
+            # send query/batchComplete and query/complete response
+            batch_event_params = BatchNotificationParams(batch_summary, worker_args.owner_uri)
+            _check_and_fire(worker_args.on_batch_complete, batch_event_params)
+
         # Create a new query if one does not already exist or we already executed the previous one
         if params.owner_uri not in self.query_results or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED:
             query_text = self._get_query_text_from_execute_params(params)
-            show_query_plan = bool(params.execution_plan_options)
 
-            self.query_results[params.owner_uri] = Query(params.owner_uri, query_text, show_query_plan)
+            execution_settings = QueryExecutionSettings(params.execution_plan_options)
+            query_events = QueryEvents(None, None, BatchEvents(_batch_execution_started_callback, _batch_execution_finished_callback))
+            self.query_results[params.owner_uri] = Query(params.owner_uri, query_text, execution_settings, query_events)
         elif self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTING:
             request_context.send_error('Another query is currently executing.')  # TODO: Localize
             return
-
-        self.query_results[params.owner_uri].execution_state = ExecutionState.EXECUTING
 
         thread = threading.Thread(
             target=self._execute_query_request_worker,
@@ -262,45 +287,17 @@ class QueryExecutionService(object):
 
         _check_and_fire(worker_args.before_query_initialize, {})
 
-        # Set up batch execution callback methods for sending notifications
-        def _batch_execution_started_callback(query: Query, batch: Batch) -> None:
-            batch_event_params = BatchNotificationParams(batch.build_batch_summary(), worker_args.owner_uri)
-            _check_and_fire(worker_args.on_batch_start, batch_event_params)
-
-        def _batch_execution_finished_callback(query: Query, batch: Batch) -> None:
-            # Send back notices as a separate message to avoid error coloring / highlighting of text
-            notices = batch.notices
-            if notices:
-                notice_message_params = self.build_message_params(query.owner_uri, batch.id, ''.join(notices), False)
-                _check_and_fire(worker_args.on_message_notification, notice_message_params)
-                batch.notices = []
-
-            batch_summary = batch.build_batch_summary()
-
-            # send query/resultSetComplete response
-            result_set_params = self.build_result_set_complete_params(batch_summary, query.owner_uri)
-            _check_and_fire(worker_args.on_resultset_complete, result_set_params)
-
-            # If the batch was successful, send a message to the client
-            if not batch.has_error:
-                rows_message = _create_rows_affected_message(batch)
-                message_params = self.build_message_params(query.owner_uri, batch.id, rows_message, False)
-                _check_and_fire(worker_args.on_message_notification, message_params)
-
-            # send query/batchComplete and query/complete response
-            batch_event_params = BatchNotificationParams(batch_summary, worker_args.owner_uri)
-            _check_and_fire(worker_args.on_batch_complete, batch_event_params)
-
-        query = self.query_results[worker_args.owner_uri]
+        query: Query = self.query_results[worker_args.owner_uri]
 
         # Wrap execution in a try/except block so that we can send an error if it fails
         try:
-            query.execute(worker_args.connection, _batch_execution_started_callback, _batch_execution_finished_callback)
+            query.execute(worker_args.connection)
         except Exception as e:
             self._resolve_query_exception(e, query, worker_args.request_context, worker_args.connection)
         finally:
             # Send a query complete notification
-            batch_summaries = [batch.build_batch_summary() for batch in query.batches]
+            batch_summaries = [batch.batch_summary for batch in query.batches]
+
             query_complete_params = QueryCompleteNotificationParams(worker_args.owner_uri, batch_summaries)
             _check_and_fire(worker_args.on_query_complete, query_complete_params)
 
@@ -374,7 +371,7 @@ class QueryExecutionService(object):
         # If there was a failure in the middle of a transaction, roll it back.
         # Note that conn.rollback() won't work since the connection is in autocommit mode
         if not is_rollback_error and conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR:
-            rollback_query = Query(query.owner_uri, 'ROLLBACK')
+            rollback_query = Query(query.owner_uri, 'ROLLBACK', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
             try:
                 rollback_query.execute(conn)
             except Exception as rollback_exception:

@@ -29,6 +29,8 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         """
         seq = cls(server, parent, kwargs['name'])
         seq._oid = kwargs['oid']
+        seq._schema = kwargs['schema']
+        seq._scid = kwargs['schemaoid']
 
         return seq
 
@@ -37,12 +39,19 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        self._schema: str = None
+        self._scid: int = None
 
     # PROPERTIES ###########################################################
-    # -FULL OBJECT PROPERTIES ##############################################
     @property
     def schema(self):
-        return self._full_properties.get("schema", "")
+        return self._schema
+
+    @property
+    def scid(self):
+        return self._scid
+
+    # -FULL OBJECT PROPERTIES ##############################################
 
     @property
     def cycled(self):
