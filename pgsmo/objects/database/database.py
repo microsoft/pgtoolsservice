@@ -11,6 +11,14 @@ from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
 from pgsmo.utils.querying import ServerConnection    # noqa
 import pgsmo.utils.templating as templating
+from pgsmo.objects.collation.collation import Collation
+from pgsmo.objects.datatype.datatype import DataType
+from pgsmo.objects.functions.function import Function
+from pgsmo.objects.functions.trigger_function import TriggerFunction
+from pgsmo.objects.sequence.sequence import Sequence
+from pgsmo.objects.table.table import Table
+from pgsmo.objects.view.view import View
+from pgsmo.objects.extension.extension import Extension
 
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
@@ -43,6 +51,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         db._owner_oid = kwargs['owner']
         db._is_template = kwargs['datistemplate']
         db._can_connect = kwargs['canconnect']
+        db._is_system = kwargs['is_system']
 
         return db
 
@@ -68,6 +77,14 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
         # Declare the child items
         self._schemas = self._register_child_collection(Schema)
+        self._tables: NodeCollection = self._register_child_collection(Table)
+        self._views: NodeCollection = self._register_child_collection(View)
+        self._collations: NodeCollection = self._register_child_collection(Collation)
+        self._datatypes: NodeCollection = self._register_child_collection(DataType)
+        self._functions: NodeCollection = self._register_child_collection(Function)
+        self._sequences: NodeCollection = self._register_child_collection(Sequence)
+        self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
+        self._extensions: NodeCollection = self._register_child_collection(Extension)
 
     # PROPERTIES ###########################################################
     # -BASIC PROPERTIES ####################################################
@@ -132,6 +149,38 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def schemas(self) -> NodeCollection[Schema]:
         return self._schemas
+
+    @property
+    def collations(self) -> NodeCollection:
+        return self._collations
+
+    @property
+    def datatypes(self) -> NodeCollection:
+        return self._datatypes
+
+    @property
+    def functions(self) -> NodeCollection:
+        return self._functions
+
+    @property
+    def sequences(self) -> NodeCollection:
+        return self._sequences
+
+    @property
+    def tables(self) -> NodeCollection:
+        return self._tables
+
+    @property
+    def trigger_functions(self) -> NodeCollection:
+        return self._trigger_functions
+
+    @property
+    def views(self) -> NodeCollection:
+        return self._views
+
+    @property
+    def extensions(self) -> NodeCollection:
+        return self._extensions
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod

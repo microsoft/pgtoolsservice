@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Callable, Dict, List # noqa
+from typing import Callable, Dict, List  # noqa
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.edit_data.contracts import (
@@ -17,8 +17,9 @@ from pgsqltoolsservice.edit_data.contracts import (
 from pgsqltoolsservice.edit_data import DataEditorSession, SmoEditTableMetadataFactory, DataEditSessionExecutionState  # noqa
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.connection.contracts import ConnectionType
+from pgsqltoolsservice.query.contracts import DbColumn
 from pgsqltoolsservice.query_execution.contracts import (
-    DbColumn, ExecuteStringParams, QUERY_COMPLETE_NOTIFICATION, QueryCompleteNotificationParams, ResultSetNotificationParams,
+    ExecuteStringParams, QUERY_COMPLETE_NOTIFICATION, QueryCompleteNotificationParams, ResultSetNotificationParams,
     RESULT_SET_COMPLETE_NOTIFICATION
 )
 from pgsqltoolsservice.query_execution.query_execution_service import ExecuteRequestWorkerArgs

@@ -6,10 +6,10 @@
 from typing import List
 
 from pgsqltoolsservice.edit_data.update_management import RowEdit, EditScript
-from pgsqltoolsservice.query_execution.result_set import ResultSet
+from pgsqltoolsservice.query import ResultSet
 from pgsqltoolsservice.edit_data import EditTableMetadata
 from pgsqltoolsservice.edit_data.contracts import EditCellResponse, EditRow, EditCell, EditRowState, RevertCellResponse
-from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
+from pgsqltoolsservice.query.contracts import DbCellValue
 
 
 class RowDelete(RowEdit):
@@ -26,7 +26,7 @@ class RowDelete(RowEdit):
     def get_edit_row(self, cached_row: List[DbCellValue]) -> EditRow:
         return EditRow(self.row_id, [EditCell(cell, True, self.row_id) for cell in cached_row], EditRowState.DIRTY_DELETE)
 
-    def apply_changes(self):
+    def apply_changes(self, cursor):
         self.result_set.remove_row(self.row_id)
 
     def get_script(self) -> EditScript:

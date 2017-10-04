@@ -4,10 +4,16 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-SELECT rel.oid, rel.relname AS name,
-    (SELECT count(*) FROM pg_trigger WHERE tgrelid=rel.oid) AS triggercount,
-    (SELECT count(*) FROM pg_trigger WHERE tgrelid=rel.oid AND tgenabled = 'O') AS has_enable_triggers
+{% import 'systemobjects.macros' as SYSOBJECTS %}
+SELECT  rel.oid,
+        (SELECT count(*) FROM pg_trigger WHERE tgrelid=rel.oid) AS triggercount,
+        (SELECT count(*) FROM pg_trigger WHERE tgrelid=rel.oid AND tgenabled = 'O') AS has_enable_triggers,
+        nsp.nspname AS schema,
+        nsp.oid AS schemaoid,
+        rel.relname AS name,
+        {{ SYSOBJECTS.IS_SYSTEMSCHEMA('nsp') }} as is_system
 FROM pg_class rel
-    WHERE rel.relkind IN ('r','s','t') AND rel.relnamespace = {{ parent_id }}::oid
-    {% if tid %} AND rel.oid = {{tid}}::OID {% endif %}
-    ORDER BY rel.relname;
+INNER JOIN pg_namespace nsp ON rel.relnamespace= nsp.oid
+    WHERE rel.relkind IN ('r','t','f') 
+     {% if tid %} AND rel.oid = {{tid}}::OID {% endif %}
+    ORDER BY nsp.nspname, rel.relname;

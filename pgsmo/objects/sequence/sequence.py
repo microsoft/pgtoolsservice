@@ -14,6 +14,7 @@ import pgsmo.utils.templating as templating
 class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Sequence':
@@ -29,6 +30,9 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         """
         seq = cls(server, parent, kwargs['name'])
         seq._oid = kwargs['oid']
+        seq._schema = kwargs['schema']
+        seq._scid = kwargs['schemaoid']
+        seq._is_system = kwargs['is_system']
 
         return seq
 
@@ -37,12 +41,19 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        self._schema: str = None
+        self._scid: int = None
 
     # PROPERTIES ###########################################################
-    # -FULL OBJECT PROPERTIES ##############################################
     @property
     def schema(self):
-        return self._full_properties.get("schema", "")
+        return self._schema
+
+    @property
+    def scid(self):
+        return self._scid
+
+    # -FULL OBJECT PROPERTIES ##############################################
 
     @property
     def cycled(self):
@@ -87,7 +98,7 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
+        return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:

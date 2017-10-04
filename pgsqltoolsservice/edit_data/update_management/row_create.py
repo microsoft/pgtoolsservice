@@ -7,24 +7,24 @@
 from typing import List
 
 from pgsqltoolsservice.edit_data.update_management import RowEdit, EditScript
-from pgsqltoolsservice.query_execution.result_set import ResultSet
+from pgsqltoolsservice.query import ResultSet
 from pgsqltoolsservice.edit_data import EditTableMetadata
 from pgsqltoolsservice.edit_data.update_management import CellUpdate
 from pgsqltoolsservice.edit_data.contracts import EditCellResponse, RevertCellResponse, EditRow, EditRowState, EditCell
-from pgsqltoolsservice.query_execution.contracts import DbCellValue
+from pgsqltoolsservice.query.contracts import DbCellValue
 
 
 class RowCreate(RowEdit):
 
     def __init__(self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata):
         super(RowCreate, self).__init__(row_id, result_set, table_metadata)
-        self.new_cells: List[CellUpdate] = [None] * len(result_set.columns)
+        self.new_cells: List[CellUpdate] = [None] * len(result_set.columns_info)
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
 
         self.validate_column_is_updatable(column_index)
 
-        cell_update = CellUpdate(self.result_set.columns[column_index], new_value)
+        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value)
         self.new_cells[column_index] = cell_update
 
         return EditCellResponse(cell_update.as_edit_cell, True)
@@ -45,22 +45,19 @@ class RowCreate(RowEdit):
     def get_script(self) -> EditScript:
         return self._generate_insert_script()
 
-    def apply_changes(self):
-        edit_row = self.get_edit_row([])
-        cell_values = [cell.display_value for cell in edit_row.cells]
-
-        self.result_set.add_row(tuple(cell_values))
+    def apply_changes(self, cursor):
+        self.result_set.add_row(cursor)
 
     def _generate_insert_script(self):
 
-        insert_template = 'INSERT INTO {0}({1}) VALUES({2})'
+        insert_template = 'INSERT INTO {0}({1}) VALUES({2}) RETURNING *'
         colum_name_template = '"{0}"'
 
         column_names: List[str] = []
         query_parameters: List[object] = []
         insert_values: List[str] = []
 
-        for index, column in enumerate(self.result_set.columns):
+        for index, column in enumerate(self.result_set.columns_info):
             if column.is_updatable is True:
                 column_names.append(str.format(colum_name_template, column.column_name))
 

@@ -135,8 +135,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # Setup: Create an instance of the object
         mock_server = Server(utils.MockConnection(None))
 
-        mock_grand_grand_parent = utils.MockNodeObject(mock_server, None, 'grandgrandparent') if not self.parent_expected_to_be_none else None
-        mock_grand_parent = utils.MockNodeObject(mock_server, mock_grand_grand_parent, 'grandparent') if not self.parent_expected_to_be_none else None
+        mock_grand_parent = utils.MockNodeObject(mock_server, None, 'grandparent') if not self.parent_expected_to_be_none else None
         mock_parent = utils.MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
 
         name = 'test'

@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import List # noqa
+from typing import List  # noqa
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.edit_data.contracts import SessionOperationRequest

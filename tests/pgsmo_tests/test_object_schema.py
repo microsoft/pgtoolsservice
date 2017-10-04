@@ -14,7 +14,8 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
         'name': 'schema',
         'oid': 123,
         'can_create': True,
-        'has_usage': True
+        'has_usage': True,
+        'is_system': True
     }
 
     @property
@@ -32,14 +33,7 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def collections(self):
-        return [
-            '_collations', 'collations',
-            '_functions', 'functions',
-            '_sequences', 'sequences',
-            '_tables', 'tables',
-            '_trigger_functions', 'trigger_functions',
-            '_views', 'views'
-        ]
+        return []
 
     @property
     def node_query(self):

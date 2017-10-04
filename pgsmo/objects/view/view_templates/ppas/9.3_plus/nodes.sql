@@ -4,16 +4,18 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
+{% import 'systemobjects.macros' as SYSOBJECTS %} 
 SELECT
-    c.oid,
-    c.relname AS name
-FROM pg_class c
+    rel.oid,
+    rel.relname AS name,
+    nsp.nspname AS schema,
+    nsp.oid AS schemaoid,
+    {{ SYSOBJECTS.IS_SYSTEMSCHEMA('nsp') }} as is_system
+FROM pg_class rel
+INNER JOIN pg_namespace nsp ON rel.relnamespace= nsp.oid
 WHERE
-  c.relkind = 'v'
-{% if (vid and datlastsysoid) %}
-    AND c.oid = {{vid}}::oid
-{% elif parent_id %}
-    AND c.relnamespace = {{parent_id}}::oid
-ORDER BY
-    c.relname
-{% endif %}
+    rel.relkind = 'v'
+    {% if (vid and datlastsysoid) %}
+        AND c.oid = {{vid}}::oid
+    {% endif %}
+ORDER BY nsp.nspname, rel.relname

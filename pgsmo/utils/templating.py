@@ -177,7 +177,7 @@ def qt_ident(conn, *args):
     value = None
 
     for val in args:
-        if type(val) == list:
+        if isinstance(val, list):
             return map(lambda w: qt_ident(conn, w), val)
 
         if len(val) == 0:
@@ -198,10 +198,10 @@ def has_any(data, keys):
     """
     Checks any one of the keys present in the data given
     """
-    if data is None and type(data) != dict:
+    if data is None and not isinstance(data, dict):
         return False
 
-    if keys is None and type(keys) != list:
+    if keys is None and not isinstance(keys, list):
         return False
 
     for key in keys:

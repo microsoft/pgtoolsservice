@@ -16,6 +16,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     """Base class for Functions. Provides basic properties for all Function types"""
 
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'FunctionBase':
@@ -37,6 +38,9 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         func._language_name = kwargs['lanname']
         func._owner = kwargs['funcowner']
         func._description = kwargs['description']
+        func._schema = kwargs['schema']
+        func._scid = kwargs['schemaoid']
+        func._is_system = kwargs['is_system']
 
         return func
 
@@ -50,13 +54,15 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         self._description: Optional[str] = None
         self._language_name: Optional[str] = None
         self._owner: Optional[str] = None
+        self._schema: str = None
+        self._scid: int = None
 
     # PROPERTIES ###########################################################
     @property
     def extended_vars(self):
         template_vars = {
-            'scid': self.parent.oid,
-            'did': self.parent.parent.oid,
+            'scid': self.scid,
+            'did': self.parent.oid,
             'datlastsysoid': 0  # temporary until implemented
         }
         return template_vars
@@ -64,7 +70,11 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     # -BASIC PROPERTIES ####################################################
     @property
     def schema(self):
-        return self.parent.name
+        return self._schema
+
+    @property
+    def scid(self):
+        return self._scid
 
     @property
     def description(self) -> Optional[str]:
@@ -178,13 +188,13 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
+        return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
         return {"data": {
             "name": self.name,
-            "pronamespace": self.parent.name,
+            "pronamespace": self.schema,
             "arguments": self.arguments,
             "proretset": self.proretset,
             "prorettypename": self.prorettypename,
@@ -221,7 +231,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         return {
             "data": {
                 "name": self.name,
-                "pronamespace": self.parent.name,
+                "pronamespace": self.schema,
                 "arguments": self.arguments,
                 "lanname": self.language_name,
                 "procost": self.procost,

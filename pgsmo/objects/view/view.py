@@ -17,6 +17,7 @@ import pgsmo.utils.templating as templating
 class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'View':
@@ -32,6 +33,9 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         """
         view = cls(server, parent, kwargs['name'])
         view._oid = kwargs['oid']
+        view._schema = kwargs['schema']
+        view._scid = kwargs['schemaoid']
+        view._is_system = kwargs['is_system']
 
         return view
 
@@ -41,7 +45,8 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
-
+        self._schema: str = None
+        self._scid: int = None
         # Declare child items
         self._columns: NodeCollection[Column] = self._register_child_collection(Column)
         self._rules: NodeCollection[Rule] = self._register_child_collection(Rule)
@@ -51,7 +56,8 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
     @property
     def extended_vars(self):
         template_vars = {
-            'scid': self.parent.oid
+            'scid': self.scid,
+            'did': self.parent.oid
         }
         return template_vars
 
@@ -71,11 +77,15 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
     # -FULL OBJECT PROPERTIES ##############################################
     @property
     def schema(self):
-        return self._full_properties.get("schema", "")
+        return self._schema
 
     @property
     def definition(self):
         return self._full_properties.get("definition", "")
+
+    @property
+    def scid(self):
+        return self._scid
 
     @property
     def owner(self):
@@ -100,7 +110,7 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
     # IMPLEMENTATION DETAILS ################################################
     @classmethod
     def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
+        return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
@@ -110,7 +120,7 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         """ Provides data input for create script """
         return {"data": {
             "name": self.name,
-            "schema": self.parent.name,
+            "schema": self.schema,
             "definition": self.definition,
             "check_option": self.check_option,
             "security_barrier": self.security_barrier
@@ -121,7 +131,7 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         return {
             "vid": self._oid,
             "name": self.name,
-            "nspname": self.nspname
+            "nspname": self.schema
         }
 
     def _update_query_data(self) -> dict:
@@ -132,6 +142,6 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         """Provides data input for select script"""
         return {"data": {
             "name": self.name,
-            "schema": self.parent.name,
+            "schema": self.schema,
             "columns": self.columns
         }}
