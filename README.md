@@ -48,7 +48,12 @@ Each integration test will run with its own database, which will be created befo
 
 You can find an integration test example in code in `tests/query_execution/test_query_execution_service.py`'s `test_query_execution_and_retrieval` method.
 
-You can also create end-to-end JSON RPC integration tests, which test the entire service using JSON RPC inputs and outputs. Examples of these tests are located in `tests/json_rpc_tests/json_rpc_tests.py`.
+### Creating End-to-End JSON RPC Integration Tests
+You can also create end-to-end JSON RPC integration tests, which test the entire service using JSON RPC inputs and outputs. An example of these tests is located in `tests/json_rpc_tests/object_explorer_json_rpc_tests.py`.
+
+When creating one of these tests, mark the test with an integration test decorator as usual. Then, create `tests.json_rpc_tests.RPCTestMessage` objects for each message to send as part of the test, including any connection messages that are needed. Finally, initialize a `tests.json_rpc_tests.JSONRPCTestCase` object with the ordered list of messages to send, and call its `.run()` method to run the test.
+
+When creating each `tests.json_rpc_tests.RPCTestMessage`, you should include a response verification callback that will be called with the response as a parameter, deserialized as a dictionary, when the server responds to the request. You should also include a list of notification verifiers. Each verifier is a tuple consisting of two functions. The first function is a filter function that will be called to determine which single notification the verifier applies to. If the verifier function returns true for multiple notifications, the first one will be used. The second function is a callback that will be called with the notification as a parameter, deserialized as a dictionary.
 
 ## Manual Testing
 1. Update your PYTHONPATH environment variable to contain the source directory. From within the project's main directory, run the following commands:
