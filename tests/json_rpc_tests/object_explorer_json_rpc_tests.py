@@ -72,8 +72,9 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
                     functools.partial(expand_completed_verifier, node_path, expected_nodes, exact_node_match))]
             )
 
-        expand_server_request = create_expand_test_message(expected_session_id, {'Databases', 'Roles', 'Tablespaces'}, True)
+        expand_server_request = create_expand_test_message(expected_session_id, {'Databases', 'Roles', 'Tablespaces', 'System Databases'}, True)
         expand_databases_request = create_expand_test_message('/databases/', {connection_details['dbname']}, False)
+        expand_system_databases_request = create_expand_test_message('/systemdatabases/', {'template0'}, False)
         expand_roles_request = create_expand_test_message('/roles/', {connection_details['user']}, False)
         expand_tablespaces_request = create_expand_test_message('/tablespaces/', {}, False)
 
@@ -90,5 +91,5 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
 
         # Run the test with the connect, createsession, expand, and refresh requests
         test_messages += [create_session_request, expand_server_request, expand_databases_request, refresh_databases_request, expand_roles_request,
-                          expand_tablespaces_request]
+                          expand_tablespaces_request, expand_system_databases_request]
         JSONRPCTestCase(test_messages).run()
