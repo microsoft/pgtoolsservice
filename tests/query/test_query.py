@@ -38,15 +38,14 @@ class TestQuery(unittest.TestCase):
         """Test that executing a query also executes all of the query's batches in order"""
 
         # If I call query.execute
-        self.query.execute(self.connection)
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            self.query.execute(self.connection)
 
         # Then each of the batches executed in order
         expected_calls = [mock.call(statement) for statement in self.statement_list]
 
-        self.assertEqual(self.cursor.execute.mock_calls[0], expected_calls[0])
-        self.assertEqual(self.cursor.execute.mock_calls[2], expected_calls[1])
-
-        self.assertEqual(len(self.cursor.execute.mock_calls), 4)
+        self.cursor.execute.assert_has_calls(expected_calls)
+        self.assertEqual(len(self.cursor.execute.mock_calls), 2)
 
         # And each of the batches holds the expected results
         for batch in self.query.batches:
@@ -147,3 +146,7 @@ select * from t1;'''
 def _tuple_from_selection_data(data: SelectionData):
     """Convert a SelectionData object to a tuple so that its values can easily be verified"""
     return (data.start_line, data.start_column, data.end_line, data.end_column)
+
+
+if __name__ == '__main__':
+    unittest.main()

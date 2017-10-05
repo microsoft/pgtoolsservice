@@ -39,3 +39,7 @@ class TestServiceBufferFileStream(unittest.TestCase):
 
             self.assertIsInstance(writer, ServiceBufferFileStreamWriter)
             io_mock.open.assert_called_once_with(self._file_name, 'wb')
+
+
+if __name__ == '__main__':
+    unittest.main()

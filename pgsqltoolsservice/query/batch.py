@@ -115,7 +115,7 @@ class Batch:
             cursor = self.get_cursor(connection)
             cursor.execute(self.batch_text)
 
-            self.after_execute(cursor, connection)
+            self.after_execute(cursor)
         except psycopg2.DatabaseError:
             self._has_error = True
             raise
@@ -130,13 +130,13 @@ class Batch:
             if self._batch_events and self._batch_events._on_execution_completed:
                 self._batch_events._on_execution_completed(self)
 
-    def after_execute(self, cursor, connection) -> None:
+    def after_execute(self, cursor) -> None:
         if cursor.description is not None:
-            self.create_result_set(cursor, connection)
+            self.create_result_set(cursor)
 
-    def create_result_set(self, cursor, connection):
+    def create_result_set(self, cursor):
         result_set = create_result_set(self._storage_type, 0, self.id)
-        result_set.read_result_to_end(cursor, connection)
+        result_set.read_result_to_end(cursor)
         self._result_set = result_set
 
 
@@ -152,8 +152,8 @@ class SelectBatch(Batch):
         # and we explicitly close it we are good
         return connection.cursor(name=cursor_name, withhold=True)
 
-    def after_execute(self, cursor, connection) -> None:
-        super().create_result_set(cursor, connection)
+    def after_execute(self, cursor) -> None:
+        super().create_result_set(cursor)
 
 
 def create_result_set(storage_type: ResultSetStorageType, result_set_id: int, batch_id: int) -> ResultSet:

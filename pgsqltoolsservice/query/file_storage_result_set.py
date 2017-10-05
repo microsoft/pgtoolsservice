@@ -76,11 +76,11 @@ class FileStorageResultSet(ResultSet):
         with file_stream.get_reader(self._output_file_name) as reader:
             return reader.read_row(self._file_offsets[row_id], row_id, self.columns_info)
 
-    def read_result_to_end(self, cursor, connection=None):
+    def read_result_to_end(self, cursor):
         utils.validate.is_not_none('cursor', cursor)
 
         self._has_been_read = True
-        storage_data_reader = StorageDataReader(cursor, connection)
+        storage_data_reader = StorageDataReader(cursor)
 
         with file_stream.get_writer(self._output_file_name) as writer:
             self.columns_info = storage_data_reader.columns_info

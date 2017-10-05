@@ -295,3 +295,7 @@ class MockStorageDataReader(MockType):
 
     def get_value(self, i):
         pass
+
+
+if __name__ == '__main__':
+    unittest.main()

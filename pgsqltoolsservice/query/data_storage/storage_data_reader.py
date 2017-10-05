@@ -11,10 +11,10 @@ from pgsqltoolsservice.query.column_info import get_columns_info
 
 class StorageDataReader:
 
-    def __init__(self, cursor, connection=None) -> None:
+    def __init__(self, cursor) -> None:
         self._cursor = cursor
         self._current_row: tuple = None
-        self._columns_info = get_columns_info(cursor.description, connection)
+        self._columns_info = get_columns_info(cursor.description, cursor.connection)
 
     @property
     def columns_info(self) -> List[DbColumn]:

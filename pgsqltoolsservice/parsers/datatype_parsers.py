@@ -98,4 +98,7 @@ DATATYPE_PARSER_MAP = {
 
 
 def get_parser(column_data_type: str) -> Callable[[str], object]:
-    return DATATYPE_PARSER_MAP[column_data_type]
+    '''
+    Returns a parser for the column_data_type provided. If not found returns None
+    '''
+    return DATATYPE_PARSER_MAP.get(column_data_type)

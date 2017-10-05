@@ -17,7 +17,7 @@ class CellUpdate():
         parser: Callable[[str], object] = get_parser(column.data_type)
 
         if parser is None:
-            raise AttributeError('Edits not supported')
+            raise AttributeError('Updates to column with type "{}" is not supported'.format(column.data_type))
 
         self.value: object = parser(new_value)
         self.column = column

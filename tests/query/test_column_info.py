@@ -31,3 +31,7 @@ class TestGetColumnsInfo(unittest.TestCase):
         self.assertEqual(len(columns_info), 2)
         self.assertEqual(columns_info[0].data_type, self._rows[0][1])
         self.assertEqual(columns_info[1].data_type, self._rows[1][1])
+
+
+if __name__ == '__main__':
+    unittest.main()

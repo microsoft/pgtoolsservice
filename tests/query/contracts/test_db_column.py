@@ -67,3 +67,7 @@ class TestDbColumn(unittest.TestCase):
         column.data_type = data_type
 
         assertion(getattr(column, assertion_property))
+
+
+if __name__ == '__main__':
+    unittest.main()

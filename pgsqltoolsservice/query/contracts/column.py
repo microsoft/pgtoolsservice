@@ -34,7 +34,7 @@ class DbColumn:
         self.is_key: bool = None
         self.is_read_only: bool = False
         self.is_unique: bool = None
-        self.data_type = None
+        self.data_type: str = None
         self.is_updatable: bool = False
 
     @property

@@ -217,7 +217,9 @@ class TestQueryService(unittest.TestCase):
         query_results[owner_uri]._batches.append(Batch('', batch_ordinal, SelectionData()))
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, result_ordinal, batch_ordinal)
-        result_set.read_result_to_end(cursor)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            result_set.read_result_to_end(cursor)
 
         query_results[owner_uri]._batches[batch_ordinal]._result_set = result_set
 
@@ -275,7 +277,11 @@ class TestQueryService(unittest.TestCase):
         cursor.description = description
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, ordinal, batch_ordinal)
-        result_set.read_result_to_end(cursor)
+
+        get_column_info_mock = mock.Mock(return_value=test_columns)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
+            result_set.read_result_to_end(cursor)
 
         self.assertEqual(len(test_columns), len(result_set.columns_info))
 
@@ -539,7 +545,9 @@ class TestQueryService(unittest.TestCase):
         cursor = utils.MockCursor(batch_rows)
         batch._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
 
-        batch._result_set.read_result_to_end(cursor)
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            batch._result_set.read_result_to_end(cursor)
+
         test_query = Query(params.owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
         test_query._batches = [Batch('', 0, SelectionData()), Batch('', 1, SelectionData()), batch]
         other_query = Query('some_other_uri', '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
@@ -821,7 +829,9 @@ class TestQueryService(unittest.TestCase):
         cursor = utils.MockCursor(mock_rows)
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
-        result_set.read_result_to_end(cursor)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            result_set.read_result_to_end(cursor)
 
         batch._result_set = result_set
         batch._has_executed = True

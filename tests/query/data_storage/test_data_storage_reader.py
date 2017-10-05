@@ -15,11 +15,10 @@ class TestDataStorageReader(unittest.TestCase):
     def setUp(self):
         self._rows = [(1, 'Some text 1', 'Some valid xml', b'Hello bytes1'), (2, 'Some Text 2', 'Some Valid xml', b'Hello bytes2')]
         self._cursor = utils.MockCursor(self._rows)
-        self._connection = utils.MockConnection(cursor=self._cursor)
         self._columns_info = []
 
         with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=self._columns_info)):
-            self._reader = StorageDataReader(self._cursor, self._connection)
+            self._reader = StorageDataReader(self._cursor)
 
     def test_column_info_property(self):
         self.assertEqual(self._columns_info, self._reader.columns_info)
@@ -91,3 +90,7 @@ class TestDataStorageReader(unittest.TestCase):
         with self.assertRaises(ValueError) as context_manager:
             method_to_call(0, 0)
             self.assertEqual(not_valid_type_error_message, context_manager.exception.args[0])
+
+
+if __name__ == '__main__':
+    unittest.main()
