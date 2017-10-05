@@ -6,24 +6,25 @@
 from typing import List
 
 from pgsqltoolsservice.query.contracts import DbColumn
+from pgsqltoolsservice.query.column_info import get_columns_info
 
 
 class StorageDataReader:
 
-    def __init__(self, cursor) -> None:
+    def __init__(self, cursor, connection=None) -> None:
         self._cursor = cursor
         self._current_row: tuple = None
+        self._columns_info = get_columns_info(cursor.description, connection)
 
     @property
     def columns_info(self) -> List[DbColumn]:
-        pass
+        return self._columns_info
 
     def read_row(self) -> bool:
         '''
         read_row uses the cursor to iterate over. It iterates over the cursor one at a time
         and returns True if it finds the row and False if it doesn’t
         '''
-
         row_found = False
 
         for row in self._cursor:

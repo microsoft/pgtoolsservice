@@ -315,8 +315,12 @@ class TestQueryService(unittest.TestCase):
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
         # If we handle an execute query request
-        self.query_execution_service._handle_execute_query_request(self.request_context, params)
-        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            self.query_execution_service._handle_execute_query_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
         # Then we executed the query, closed the cursor, and called fetchall once each.
         # And the connection's notices is set properly
         self.cursor.execute.assert_called_once()
@@ -391,10 +395,13 @@ class TestQueryService(unittest.TestCase):
         # Set up to run cancel query handler during execute() attempt
         self.cursor.execute = mock.Mock(side_effect=cancel_during_execute_side_effects)
 
-        # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
-        self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
-        # Wait for query execution worker thread to finish
-        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
+            self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
+            # Wait for query execution worker thread to finish
+            self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+
         query = self.query_execution_service.query_results['test_uri']
 
         # Then we must have ran execute for a batch, and executed 'SELECTED pg_cancel_backend(pid)
@@ -469,9 +476,12 @@ class TestQueryService(unittest.TestCase):
 
         # If we start the execute query request handler with the cancel query
         # request handled after the execute_query() and cursor.execute() calls
-        self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
-        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
-        self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
+            self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+            self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
+
         query = self.query_execution_service.query_results['test_uri']
 
         # Then execute() in the execute query handler should have been called and
@@ -490,9 +500,11 @@ class TestQueryService(unittest.TestCase):
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
 
-        # If we handle an execute query request
-        self.query_execution_service._handle_execute_query_request(self.request_context, params)
-        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            # If we handle an execute query request
+            self.query_execution_service._handle_execute_query_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then we executed the query, closed the cursor, and called fetchall once each.
         self.cursor.execute.assert_called_once()

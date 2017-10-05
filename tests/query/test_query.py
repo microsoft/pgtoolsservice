@@ -24,8 +24,8 @@ class TestQuery(unittest.TestCase):
         self.query_uri = 'test_uri'
         self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
 
-        self.mock_query_results = [('True'), ('False')]
-        self.cursor = utils.MockCursor(self.mock_query_results)
+        self.mock_query_results = [(1, 'True'), (2, 'False')]
+        self.cursor = utils.MockCursor(self.mock_query_results, ['id', 'isvalid'])
         self.connection = utils.MockConnection(cursor=self.cursor)
 
     def test_query_creates_batches(self):
@@ -42,8 +42,11 @@ class TestQuery(unittest.TestCase):
 
         # Then each of the batches executed in order
         expected_calls = [mock.call(statement) for statement in self.statement_list]
-        self.cursor.execute.assert_has_calls(expected_calls)
-        self.assertEqual(len(self.cursor.execute.mock_calls), 2)
+
+        self.assertEqual(self.cursor.execute.mock_calls[0], expected_calls[0])
+        self.assertEqual(self.cursor.execute.mock_calls[2], expected_calls[1])
+
+        self.assertEqual(len(self.cursor.execute.mock_calls), 4)
 
         # And each of the batches holds the expected results
         for batch in self.query.batches:

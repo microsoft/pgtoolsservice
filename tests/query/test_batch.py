@@ -48,7 +48,7 @@ class TestBatch(unittest.TestCase):
         batch = self.create_and_execute_batch(Batch)
 
         self.assertEqual(batch._result_set, self._result_set)
-        self._result_set.read_result_to_end.assert_called_once_with(self._cursor)
+        self._result_set.read_result_to_end.assert_called_once_with(self._cursor, self._connection)
 
     def test_execute_sets_has_executed(self):
         batch = self.create_and_execute_batch(Batch)
