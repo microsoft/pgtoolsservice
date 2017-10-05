@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import io
-from typing import List
+from typing import List, Callable, Any  # noqa
 import struct
 
 from pgsqltoolsservice.parsers import datatypes
@@ -31,10 +31,6 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
 
         ServiceBufferFileStream.__init__(self, stream)
 
-        # self._file_stream = stream
-
-        # self._close_stream_flag = False
-
     def _read_bytes_from_file(self, stream, file_offset, length_to_read) -> bytes:
         try:
             # locate the offset position before read
@@ -43,7 +39,6 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
             read_bytes_result = stream.read(length_to_read)
         except Exception as exc:
             raise IOError(ServiceBufferFileStreamReader.READER_DATA_READ_ERROR) from exc
-            stream.close()
         return read_bytes_result
 
     def read_row(self, file_offset, row_id, columns_info: List[DbColumn]) -> List[DbCellValue]:
@@ -62,11 +57,7 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
             # Read the object from the temp file
             if type_value == datatypes.DATATYPE_NULL:
                 # wrap the NULL value as a DbCellValue
-                display_value = "NULL"
-                is_null = True
-                raw_object = "NULL"
-                row_id = row_id
-                value = DbCellValue(display_value, is_null, raw_object, row_id)
+                value = DbCellValue(display_value=None, is_null=True, raw_object=None, row_id=row_id)
             else:
                 # read the length of data, then update the offset by plus 4, since the int hold 4 bytes
                 raw_bytes_length_to_read = self._read_bytes_from_file(self._file_stream, current_file_offset, 4)
@@ -83,15 +74,8 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
                 result_object = object_converter(read_bytes_result)
 
                 # wrap the result_object as a DbCellValue
-                display_value = str(result_object)
-                is_null = False
-                raw_object = result_object
-                row_id = row_id
-                value = DbCellValue(display_value, is_null, raw_object, row_id)
+                value = DbCellValue(display_value=str(result_object), is_null=False, raw_object=result_object, row_id=row_id)
 
             results.append(value)
-
-            if self._close_stream_flag:
-                self._file_stream.close()
 
         return results

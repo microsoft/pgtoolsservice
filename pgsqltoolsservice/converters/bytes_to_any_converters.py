@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Callable
+from typing import Callable, Any  # noqa
 import decimal
 import struct
 
@@ -12,6 +12,7 @@ from pgsqltoolsservice.parsers import datatypes
 
 
 DECODING_METHOD = 'utf-8'
+
 
 def convert_bytes_to_bool(value) -> bool:
     return bool(value)
@@ -31,7 +32,7 @@ def convert_bytes_to_decimal(value) -> decimal.Decimal:
 
 
 def convert_bytes_to_char(value) -> str:
-    return value.decode(DECODING_METHOD)
+    return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_str(value) -> str:
@@ -39,27 +40,27 @@ def convert_bytes_to_str(value) -> str:
 
 
 def convert_bytes_to_date(value) -> str:
-    return value.decode(DECODING_METHOD)
+    return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_time(value) -> str:
-    return value.decode(DECODING_METHOD)
+    return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_time_with_timezone(value) -> str:
-    return value.decode(DECODING_METHOD)
+    return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_datetime(value) -> str:
-    return value.decode(DECODING_METHOD)
+    return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_timedelta(value) -> str:
-    return value.decode(DECODING_METHOD)
+    return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_uuid(value) -> str:
-    return value.decode(DECODING_METHOD)
+    return convert_bytes_to_str(value)
 
 
 DATATYPE_READER_MAP = {
@@ -83,5 +84,5 @@ DATATYPE_READER_MAP = {
 }
 
 
-def get_bytes_to_any_converter(type_value: str) -> Callable[[bytes], any]:
+def get_bytes_to_any_converter(type_value: str) -> Callable[[bytes], Any]:
     return DATATYPE_READER_MAP[type_value]

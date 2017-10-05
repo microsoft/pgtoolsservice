@@ -8,7 +8,7 @@ import struct
 import io
 
 from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_reader import ServiceBufferFileStreamReader
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
+from pgsqltoolsservice.query.contracts.column import DbColumn
 from pgsqltoolsservice.parsers import datatypes
 
 
@@ -74,7 +74,10 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._multiple_cols_reader = ServiceBufferFileStreamReader(self._multiple_cols_file_stream)
 
     def tearDown(self):
-        pass
+        self._bool_file_stream.close()
+        self._float_file_stream1.close()
+        self._float_file_stream2.close()
+        self._multiple_cols_file_stream.close()
 
     def test_read_bool(self):
         test_file_offset = 0
@@ -117,22 +120,26 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_row_id = 1
         test_columns_info = []
 
-        col0 = DbColumn()
-        col0.data_type_name = datatypes.DATATYPE_REAL
-        col1 = DbColumn()
-        col1.data_type_name = datatypes.DATATYPE_INTEGER
-        col2 = DbColumn()
-        col2.data_type_name = datatypes.DATATYPE_TEXT
-        col3 = DbColumn()
-        col3.data_type_name = datatypes.DATATYPE_REAL
+        real_column1 = DbColumn()
+        real_column1.data_type_name = datatypes.DATATYPE_REAL
+        integer_column = DbColumn()
+        integer_column.data_type_name = datatypes.DATATYPE_INTEGER
+        text_column = DbColumn()
+        text_column.data_type_name = datatypes.DATATYPE_TEXT
+        real_column2 = DbColumn()
+        real_column2.data_type_name = datatypes.DATATYPE_REAL
 
-        test_columns_info.append(col0)
-        test_columns_info.append(col1)
-        test_columns_info.append(col2)
-        test_columns_info.append(col3)
+        test_columns_info.append(real_column1)
+        test_columns_info.append(integer_column)
+        test_columns_info.append(text_column)
+        test_columns_info.append(real_column2)
 
         res = self._multiple_cols_reader.read_row(test_file_offset, test_row_id, test_columns_info)
         self.assertEqual(self._float_test_value1, res[0].raw_object)
         self.assertEqual(self._int_test_value, res[1].raw_object)
         self.assertEqual(self._str_test_value, res[2].raw_object)
         self.assertEqual(self._float_test_value2, res[3].raw_object)
+
+
+if __name__ == '__main__':
+    unittest.main()
