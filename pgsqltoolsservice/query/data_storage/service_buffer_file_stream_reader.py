@@ -8,9 +8,8 @@ from typing import List
 import struct
 
 from pgsqltoolsservice.parsers import datatypes
-from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
-from pgsqltoolsservice.query.data_storage.converters.objects_converter import get_objects_converter
+from pgsqltoolsservice.query.contracts.column import DbColumn, DbCellValue
+from pgsqltoolsservice.converters.bytes_to_any_converters import get_bytes_to_any_converter
 
 from pgsqltoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
 
@@ -32,9 +31,9 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
 
         ServiceBufferFileStream.__init__(self, stream)
 
-        self._file_stream = stream
+        # self._file_stream = stream
 
-        self._close_stream_flag = False
+        # self._close_stream_flag = False
 
     def _read_bytes_from_file(self, stream, file_offset, length_to_read) -> bytes:
         try:
@@ -80,7 +79,7 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
                 current_file_offset += read_bytes_length
 
                 # convert data_bytes to data_obj
-                object_converter: Callable[[bytes], Any] = get_objects_converter(type_value)
+                object_converter: Callable[[bytes], Any] = get_bytes_to_any_converter(type_value)
                 result_object = object_converter(read_bytes_result)
 
                 # wrap the result_object as a DbCellValue
