@@ -133,12 +133,12 @@ class MockConnection(object):
 class MockCursor:
     """Class used to mock psycopg2 cursor objects for testing"""
 
-    def __init__(self, query_results, columns_names=[]):
+    def __init__(self, query_results, columns_names=[], connection=mock.Mock()):
         self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
         self.fetchall = mock.Mock(return_value=query_results)
         self.fetchone = mock.Mock(side_effect=self.execute_fetch_one_side_effects)
         self.close = mock.Mock()
-        self.connection = mock.Mock()
+        self.connection = connection
         self.description = [self.create_column_description(name=name) for name in columns_names]
         self.rowcount = -1
         self._mogrified_value = b'Some query'

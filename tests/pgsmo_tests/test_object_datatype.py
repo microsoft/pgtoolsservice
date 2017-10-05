@@ -15,7 +15,8 @@ class TestDatatype(NodeObjectTestBase, unittest.TestCase):
         'oid': 123,
         'schema': 'public',
         'schemaoid': 456,
-        'objectname': 'datatype'
+        'objectname': 'datatype',
+        'is_system': True
     }
 
     @property

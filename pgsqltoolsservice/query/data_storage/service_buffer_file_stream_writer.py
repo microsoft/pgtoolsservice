@@ -7,10 +7,11 @@ import io
 from typing import Callable, Any  # noqa
 
 from pgsqltoolsservice.parsers import datatypes
-from pgsqltoolsservice.query.data_storage.converters.bytes_converter import get_bytes_converter
+from pgsqltoolsservice.converters.bytes_converter import get_bytes_converter
+from pgsqltoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
 
 
-class ServiceBufferFileStreamWriter:
+class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
     """ Writer for service buffer formatted file streams """
 
     WRITER_STREAM_NONE_ERROR = "Stream argument is None"
@@ -18,7 +19,7 @@ class ServiceBufferFileStreamWriter:
     WRITER_DATA_WRITE_ERROR = "Data write error"
     CONVERTER_DATA_TYPE_NOT_EXIST_ERROR = "Convert to bytes not supported"
 
-    def __init__(self, stream: io.BytesIO) -> None:
+    def __init__(self, stream: io.BufferedWriter) -> None:
 
         if stream is None:
             raise ValueError(ServiceBufferFileStreamWriter.WRITER_STREAM_NONE_ERROR)
@@ -26,9 +27,7 @@ class ServiceBufferFileStreamWriter:
         if not stream.writable():
             raise ValueError(ServiceBufferFileStreamWriter.WRITER_STREAM_NOT_SUPPORT_WRITING_ERROR)
 
-        self._file_stream = stream
-
-        self._close_stream_flag = False
+        ServiceBufferFileStream.__init__(self, stream)
 
     def _write_null(self):
         val_byte_array = bytearray([])
@@ -57,7 +56,7 @@ class ServiceBufferFileStreamWriter:
             column = reader.columns_info[index]
 
             values.append(reader.get_value(index))
-            type_value = column.data_type_name
+            type_value = column.data_type
 
             # Write the object into the temp file
             if type_value == datatypes.DATATYPE_NULL:

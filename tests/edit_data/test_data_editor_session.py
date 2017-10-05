@@ -54,7 +54,12 @@ class TestDataEditorSession(unittest.TestCase):
     def get_result_set(self, rows: List[tuple]) -> ResultSet:
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
         cursor = MockCursor(rows)
-        result_set.read_result_to_end(cursor)
+
+        columns_info = []
+        get_column_info_mock = mock.Mock(return_value=columns_info)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
+            result_set.read_result_to_end(cursor)
 
         return result_set
 

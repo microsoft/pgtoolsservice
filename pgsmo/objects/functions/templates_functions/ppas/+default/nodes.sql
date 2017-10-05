@@ -4,6 +4,7 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
+{% import 'systemobjects.macros' as SYSOBJECTS %}
 SELECT
     pr.oid, 
     pr.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(pr.oid), '') || ')' as name,
@@ -11,7 +12,8 @@ SELECT
     pg_get_userbyid(proowner) as funcowner, 
     description,
     nsp.nspname AS schema,
-    nsp.oid AS schemaoid
+    nsp.oid AS schemaoid,
+    {{ SYSOBJECTS.IS_SYSTEMSCHEMA('nsp') }} as is_system
 FROM
     pg_proc pr
 INNER JOIN 
