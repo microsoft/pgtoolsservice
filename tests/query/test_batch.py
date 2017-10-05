@@ -118,3 +118,7 @@ class TestBatch(unittest.TestCase):
 
         self.assertFalse(isinstance(batch, SelectBatch))
         self.assertTrue(isinstance(batch, Batch))
+
+
+if __name__ == '__main__':
+    unittest.main()

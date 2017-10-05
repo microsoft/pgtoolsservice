@@ -5,6 +5,7 @@
 
 
 import unittest
+from unittest import mock
 
 from pgsqltoolsservice.edit_data.update_management import RowDelete
 from pgsqltoolsservice.query import create_result_set, ResultSetStorageType
@@ -23,7 +24,8 @@ class TestRowDelete(unittest.TestCase):
         self._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
         cursor = MockCursor(self._rows, ['IsTrue'])
 
-        self._result_set.read_result_to_end(cursor)
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            self._result_set.read_result_to_end(cursor)
 
         db_column = DbColumn()
         db_column.data_type = 'bool'
