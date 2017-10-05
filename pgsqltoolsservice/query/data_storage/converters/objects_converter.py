@@ -17,7 +17,7 @@ def convert_bytes_to_bool(value) -> bool:
 
 def convert_bytes_to_float(value) -> float:
     """ The result is a tuple even if it contains exactly one item """
-    return struct.unpack('f', value)[0]
+    return struct.unpack('d', value)[0]
 
 
 def convert_bytes_to_int(value) -> int:
