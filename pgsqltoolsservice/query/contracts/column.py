@@ -3,13 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsqltoolsservice.parsers.datatypes as DT
+import pgsqltoolsservice.parsers.datatypes as datatypes
 
 DESC = {'name': 0, 'type_code': 1, 'display_size': 2, 'internal_size': 3, 'precision': 4, 'scale': 5, 'null_ok': 6}
 
-CHARS_DATA_TYPES = [DT.DATATYPE_TEXT, DT.DATATYPE_VARCHAR, DT.DATATYPE_JSON]
+CHARS_DATA_TYPES = [datatypes.DATATYPE_TEXT, datatypes.DATATYPE_VARCHAR, datatypes.DATATYPE_JSON]
 
-SYSTEM_DATA_TYPES = [value for key, value in DT.__dict__.items() if key.startswith('DATATYPE')]
+SYSTEM_DATA_TYPES = [value for key, value in datatypes.__dict__.items() if key.startswith('DATATYPE')]
 
 
 class DbColumn:
@@ -43,11 +43,11 @@ class DbColumn:
 
     @property
     def is_xml(self) -> bool:
-        return self.data_type == DT.DATATYPE_XML
+        return self.data_type == datatypes.DATATYPE_XML
 
     @property
     def is_bytes(self) -> bool:
-        return self.data_type == DT.DATATYPE_BYTEA
+        return self.data_type == datatypes.DATATYPE_BYTEA
 
     @property
     def is_long(self) -> bool:
@@ -59,7 +59,7 @@ class DbColumn:
 
     @property
     def is_json(self) -> bool:
-        return self.data_type == DT.DATATYPE_JSON
+        return self.data_type == datatypes.DATATYPE_JSON
 
     # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) containing a 7-item sequence.
