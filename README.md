@@ -37,7 +37,7 @@ You can also use `scripts/test-all.sh` or `scripts\test-all.ps1` to run all test
 The PostgreSQL Tools Service supports tests that connect to a real Postgres database, which we call integration tests. These can be run by calling `./scripts/test-integration.sh` or `scripts\test-integration.ps1` from the project's root directory.
 
 ### Configuring Integration Tests
-Integration tests require a local config file that contains the options for connecting to your test database. The template config file is located in `tests/integration_tests/config.json.txt`. Copy this file to `tests/integration_tests/config.json` and modify values as appropriate. The template lists the most common options, but any options that can be used when establishing a psycopg2 connection can also be set in the config file.
+Integration tests require a local config file that contains the options for connecting to your test database. The template config file is located in `tests/integration_tests/config.json.txt`. Copy this file to `tests/integration_tests/config.json` and modify values as appropriate. The template lists the most common options, but any options that can be used when establishing a psycopg2 connection can also be set in the config file. You can put multiple server configurations in the file in order to run each integration test multiple times, once per server.
 
 ### Creating Integration Tests
 Integration tests can be inserted in line with our unit tests. The `tests.integration` module exports a `integration_test` decorator and a `get_connection` function that can be used in integration tests.
