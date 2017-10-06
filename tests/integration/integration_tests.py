@@ -63,6 +63,7 @@ class _ConnectionManager:
                 if needs_setup:
                     args[0].setUp()
                 test(*args)
+                args[0].tearDown()
                 needs_setup = True
             except Exception as e:
                 host = details['host']
