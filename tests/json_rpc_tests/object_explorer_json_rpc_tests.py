@@ -8,7 +8,7 @@ import json
 import unittest
 
 from pgsqltoolsservice.hosting.json_message import JSONRPCMessageType
-from tests.integration import get_connection_details, integration_test
+from tests.integration import create_extra_test_database, get_connection_details, integration_test
 from tests.json_rpc_tests import DefaultRPCTestMessages, JSONRPCTestCase, RPCTestMessage
 
 
@@ -72,8 +72,10 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
                     functools.partial(expand_completed_verifier, node_path, expected_nodes, exact_node_match))]
             )
 
+        extra_db_name = create_extra_test_database()
+
         expand_server_request = create_expand_test_message(expected_session_id, {'Databases', 'Roles', 'Tablespaces', 'System Databases'}, True)
-        expand_databases_request = create_expand_test_message('/databases/', {connection_details['dbname']}, False)
+        expand_databases_request = create_expand_test_message('/databases/', {connection_details['dbname'], extra_db_name}, False)
         expand_system_databases_request = create_expand_test_message('/systemdatabases/', {'template0'}, False)
         expand_roles_request = create_expand_test_message('/roles/', {connection_details['user']}, False)
         expand_tablespaces_request = create_expand_test_message('/tablespaces/', {}, False)

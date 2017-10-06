@@ -3,6 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from tests.integration.integration_tests import get_connection_details, integration_test
+from tests.integration.integration_tests import create_extra_test_database, get_connection_details, integration_test
 
-__all__ = ['get_connection_details', 'integration_test']
+__all__ = ['create_extra_test_database', 'get_connection_details', 'integration_test']
