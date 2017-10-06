@@ -217,7 +217,9 @@ class TestQueryService(unittest.TestCase):
         query_results[owner_uri]._batches.append(Batch('', batch_ordinal, SelectionData()))
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, result_ordinal, batch_ordinal)
-        result_set.read_result_to_end(cursor)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            result_set.read_result_to_end(cursor)
 
         query_results[owner_uri]._batches[batch_ordinal]._result_set = result_set
 
@@ -275,7 +277,11 @@ class TestQueryService(unittest.TestCase):
         cursor.description = description
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, ordinal, batch_ordinal)
-        result_set.read_result_to_end(cursor)
+
+        get_column_info_mock = mock.Mock(return_value=test_columns)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
+            result_set.read_result_to_end(cursor)
 
         self.assertEqual(len(test_columns), len(result_set.columns_info))
 
@@ -315,8 +321,12 @@ class TestQueryService(unittest.TestCase):
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
         # If we handle an execute query request
-        self.query_execution_service._handle_execute_query_request(self.request_context, params)
-        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            self.query_execution_service._handle_execute_query_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
         # Then we executed the query, closed the cursor, and called fetchall once each.
         # And the connection's notices is set properly
         self.cursor.execute.assert_called_once()
@@ -391,10 +401,13 @@ class TestQueryService(unittest.TestCase):
         # Set up to run cancel query handler during execute() attempt
         self.cursor.execute = mock.Mock(side_effect=cancel_during_execute_side_effects)
 
-        # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
-        self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
-        # Wait for query execution worker thread to finish
-        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
+            self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
+            # Wait for query execution worker thread to finish
+            self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+
         query = self.query_execution_service.query_results['test_uri']
 
         # Then we must have ran execute for a batch, and executed 'SELECTED pg_cancel_backend(pid)
@@ -469,9 +482,12 @@ class TestQueryService(unittest.TestCase):
 
         # If we start the execute query request handler with the cancel query
         # request handled after the execute_query() and cursor.execute() calls
-        self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
-        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
-        self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
+            self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+            self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
+
         query = self.query_execution_service.query_results['test_uri']
 
         # Then execute() in the execute query handler should have been called and
@@ -490,9 +506,11 @@ class TestQueryService(unittest.TestCase):
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
 
-        # If we handle an execute query request
-        self.query_execution_service._handle_execute_query_request(self.request_context, params)
-        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            # If we handle an execute query request
+            self.query_execution_service._handle_execute_query_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then we executed the query, closed the cursor, and called fetchall once each.
         self.cursor.execute.assert_called_once()
@@ -527,7 +545,9 @@ class TestQueryService(unittest.TestCase):
         cursor = utils.MockCursor(batch_rows)
         batch._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
 
-        batch._result_set.read_result_to_end(cursor)
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            batch._result_set.read_result_to_end(cursor)
+
         test_query = Query(params.owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
         test_query._batches = [Batch('', 0, SelectionData()), Batch('', 1, SelectionData()), batch]
         other_query = Query('some_other_uri', '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
@@ -809,7 +829,9 @@ class TestQueryService(unittest.TestCase):
         cursor = utils.MockCursor(mock_rows)
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
-        result_set.read_result_to_end(cursor)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            result_set.read_result_to_end(cursor)
 
         batch._result_set = result_set
         batch._has_executed = True

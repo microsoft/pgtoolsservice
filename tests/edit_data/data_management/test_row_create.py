@@ -5,6 +5,7 @@
 
 
 import unittest
+from unittest import mock
 
 from pgsqltoolsservice.edit_data.update_management import RowCreate, CellUpdate
 from pgsqltoolsservice.query import create_result_set, ResultSetStorageType
@@ -22,7 +23,8 @@ class TestRowCreate(unittest.TestCase):
         self._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
         self._cursor = MockCursor(self._rows, ['IsTrue'])
 
-        self._result_set.read_result_to_end(self._cursor)
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            self._result_set.read_result_to_end(self._cursor)
 
         db_column = DbColumn()
         db_column.data_type = 'bool'

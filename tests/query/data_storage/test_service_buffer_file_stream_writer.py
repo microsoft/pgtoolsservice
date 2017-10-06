@@ -42,7 +42,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = True
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_BOOL
+        col.data_type = datatypes.DATATYPE_BOOL
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -54,7 +54,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 123.456
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_REAL
+        col.data_type = datatypes.DATATYPE_REAL
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -66,7 +66,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 123456
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_INTEGER
+        col.data_type = datatypes.DATATYPE_INTEGER
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -78,7 +78,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_val = Decimal(123)
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_NUMERIC
+        col.data_type = datatypes.DATATYPE_NUMERIC
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_val)
@@ -90,7 +90,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 'a'
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_CHAR
+        col.data_type = datatypes.DATATYPE_CHAR
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -102,7 +102,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 'TestString'
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_TEXT
+        col.data_type = datatypes.DATATYPE_TEXT
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -114,7 +114,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = '2004/10/19'
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_DATE
+        col.data_type = datatypes.DATATYPE_DATE
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -126,7 +126,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = '10:23:54'
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_TIME
+        col.data_type = datatypes.DATATYPE_TIME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -138,7 +138,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = '10:23:54+02'
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_TIME_WITH_TIMEZONE
+        col.data_type = datatypes.DATATYPE_TIME_WITH_TIMEZONE
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -150,7 +150,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = '2004/10/19 10:23:54'
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_TIMESTAMP
+        col.data_type = datatypes.DATATYPE_TIMESTAMP
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -162,7 +162,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = '3 days 04:05:06'
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_INTERVAL
+        col.data_type = datatypes.DATATYPE_INTERVAL
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -174,7 +174,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = uuid.uuid4()
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_UUID
+        col.data_type = datatypes.DATATYPE_UUID
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -186,7 +186,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = memoryview(b'TestString')
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_BYTEA
+        col.data_type = datatypes.DATATYPE_BYTEA
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -198,7 +198,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = {"Name": "TestName", "Schema": "TestSchema"}
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_JSON
+        col.data_type = datatypes.DATATYPE_JSON
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -210,7 +210,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = ["TestVal1", "TestVal2"]
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_ARRAY
+        col.data_type = datatypes.DATATYPE_ARRAY
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -222,7 +222,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = NumericRange(10, 20)
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_INT4RANGE
+        col.data_type = datatypes.DATATYPE_INT4RANGE
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -234,7 +234,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = DateTimeRange("2014-06-08 12:12:45", "2016-07-06 14:12:08")
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_TSRANGE
+        col.data_type = datatypes.DATATYPE_TSRANGE
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -246,7 +246,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = DateTimeTZRange("2014-06-08 12:12:45+02", "2016-07-06 14:12:08+02")
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_TSTZRANGE
+        col.data_type = datatypes.DATATYPE_TSTZRANGE
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -258,7 +258,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = DateRange("2015-06-06", "2016-08-08")
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_DATERANGE
+        col.data_type = datatypes.DATATYPE_DATERANGE
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -270,7 +270,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = "TestUserDefinedTypes"
         test_columns_info = []
         col = DbColumn()
-        col.data_type_name = 'UserDefinedTypes'
+        col.data_type = 'UserDefinedTypes'
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -295,3 +295,7 @@ class MockStorageDataReader(MockType):
 
     def get_value(self, i):
         pass
+
+
+if __name__ == '__main__':
+    unittest.main()

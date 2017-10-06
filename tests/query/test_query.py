@@ -24,8 +24,8 @@ class TestQuery(unittest.TestCase):
         self.query_uri = 'test_uri'
         self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
 
-        self.mock_query_results = [('True'), ('False')]
-        self.cursor = utils.MockCursor(self.mock_query_results)
+        self.mock_query_results = [(1, 'True'), (2, 'False')]
+        self.cursor = utils.MockCursor(self.mock_query_results, ['id', 'isvalid'])
         self.connection = utils.MockConnection(cursor=self.cursor)
 
     def test_query_creates_batches(self):
@@ -38,10 +38,12 @@ class TestQuery(unittest.TestCase):
         """Test that executing a query also executes all of the query's batches in order"""
 
         # If I call query.execute
-        self.query.execute(self.connection)
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            self.query.execute(self.connection)
 
         # Then each of the batches executed in order
         expected_calls = [mock.call(statement) for statement in self.statement_list]
+
         self.cursor.execute.assert_has_calls(expected_calls)
         self.assertEqual(len(self.cursor.execute.mock_calls), 2)
 
@@ -144,3 +146,7 @@ select * from t1;'''
 def _tuple_from_selection_data(data: SelectionData):
     """Convert a SelectionData object to a tuple so that its values can easily be verified"""
     return (data.start_line, data.start_column, data.end_line, data.end_column)
+
+
+if __name__ == '__main__':
+    unittest.main()
