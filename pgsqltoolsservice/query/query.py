@@ -140,6 +140,12 @@ class Query:
             connection.autocommit = current_auto_commit_status
             self._execution_state = ExecutionState.EXECUTED
 
+    def get_subset(self, batch_index: int, start_index: int, end_index: int):
+        if batch_index < 0 or batch_index >= len(self._batches):
+            raise IndexError('Batch index cannot be less than 0 or greater than the number of batches')
+
+        return self._batches[batch_index].get_subset(start_index, end_index)
+
 
 def compute_selection_data_for_batches(batches: List[str], full_text: str) -> List[SelectionData]:
     # Map the starting index of each line to the line number

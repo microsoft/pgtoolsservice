@@ -50,9 +50,8 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
         results = []  # list of DbCellValue as return
 
         for index in range(0, len_columns_info):
-            self._close_stream_flag = (index == len_columns_info - 1)
 
-            type_value = columns_info[index].data_type_name
+            type_value = columns_info[index].data_type
 
             # Read the object from the temp file
             if type_value == datatypes.DATATYPE_NULL:

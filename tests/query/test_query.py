@@ -142,6 +142,35 @@ select * from t1;'''
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
 
+    def execute_get_subset_raises_error_when_index_not_in_range(self, batch_index: int):
+        full_query = 'Select * from t1;'
+        query = Query('test_uri', full_query, QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+
+        with self.assertRaises(IndexError) as context_manager:
+            query.get_subset(batch_index, 0, 10)
+            self.assertEquals('Batch index cannot be less than 0 or greater than the number of batches', context_manager.exception.args[0])
+
+    def test_get_subset_raises_error_when_index_is_negetive(self):
+        self.execute_get_subset_raises_error_when_index_not_in_range(-1)
+
+    def test_get_subset_raises_error_when_index_is_greater_than_batch_size(self):
+        self.execute_get_subset_raises_error_when_index_not_in_range(20)
+
+    def test_get_subset(self):
+        full_query = 'Select * from t1;'
+        query = Query('test_uri', full_query, QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        expected_subset = []
+
+        mock_batch = mock.MagicMock()
+        mock_batch.get_subset = mock.Mock(return_value=expected_subset)
+
+        query._batches = [mock_batch]
+
+        subset = query.get_subset(0, 0, 10)
+
+        self.assertEqual(expected_subset, subset)
+        mock_batch.get_subset.assert_called_once_with(0, 10)
+
 
 def _tuple_from_selection_data(data: SelectionData):
     """Convert a SelectionData object to a tuple so that its values can easily be verified"""

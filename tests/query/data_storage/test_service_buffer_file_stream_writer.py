@@ -19,14 +19,16 @@ import tests.utils as utils
 
 class TestServiceBufferFileStreamWriter(unittest.TestCase):
 
+    SIZE_BUFFER_LENGTH = 4
+
     def setUp(self):
 
         self._file_stream = io.BytesIO()
         self._writer = ServiceBufferFileStreamWriter(self._file_stream)
         self._cursor = utils.MockCursor([tuple([11, 22, 33]), tuple([55, 66, 77])])
 
-    def tearDown(self):
-        pass
+    def get_expected_length_with_additional_buffer_for_size(self, test_value_length: int):
+        return TestServiceBufferFileStreamWriter.SIZE_BUFFER_LENGTH + test_value_length
 
     def test_write_to_file(self):
         val = 5
@@ -48,7 +50,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(1, res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(1), res)
 
     def test_write_float(self):
         test_value = 123.456
@@ -60,7 +62,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(4, res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(4), res)
 
     def test_write_int(self):
         test_value = 123456
@@ -72,7 +74,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(4, res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(4), res)
 
     def test_write_decimal(self):
         test_val = Decimal(123)
@@ -84,7 +86,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_val)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(4, res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(4), res)
 
     def test_write_char(self):
         test_value = 'a'
@@ -96,7 +98,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(1, res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(1), res)
 
     def test_write_str(self):
         test_value = 'TestString'
@@ -108,7 +110,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(test_value), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
 
     def test_write_date(self):
         test_value = '2004/10/19'
@@ -120,7 +122,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(test_value), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
 
     def test_write_time(self):
         test_value = '10:23:54'
@@ -132,7 +134,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(test_value), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
 
     def test_write_time_with_timezone(self):
         test_value = '10:23:54+02'
@@ -144,7 +146,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(test_value), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
 
     def test_write_datetime(self):
         test_value = '2004/10/19 10:23:54'
@@ -156,7 +158,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(test_value), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
 
     def test_write_timedelta(self):
         test_value = '3 days 04:05:06'
@@ -168,7 +170,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(test_value), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
 
     def test_write_uuid(self):
         test_value = uuid.uuid4()
@@ -180,7 +182,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(36, res)  # UUID standard len is 36
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(36), res)  # UUID standard len is 36
 
     def test_write_bytea(self):
         test_value = memoryview(b'TestString')
@@ -192,7 +194,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(test_value.tobytes()), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value.tobytes())), res)
 
     def test_write_json(self):
         test_value = {"Name": "TestName", "Schema": "TestSchema"}
@@ -204,7 +206,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(str(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
 
     def test_write_array(self):
         test_value = ["TestVal1", "TestVal2"]
@@ -216,7 +218,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(str(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
 
     def test_write_int4range(self):
         test_value = NumericRange(10, 20)
@@ -228,7 +230,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(str(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
 
     def test_write_tsrange(self):
         test_value = DateTimeRange("2014-06-08 12:12:45", "2016-07-06 14:12:08")
@@ -240,7 +242,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(str(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
 
     def test_write_tstzrange(self):
         test_value = DateTimeTZRange("2014-06-08 12:12:45+02", "2016-07-06 14:12:08+02")
@@ -252,7 +254,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(str(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
 
     def test_write_daterange(self):
         test_value = DateRange("2015-06-06", "2016-08-08")
@@ -264,7 +266,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(str(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
 
     def test_write_udt(self):
         test_value = "TestUserDefinedTypes"
@@ -276,7 +278,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(len(test_value), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
 
 
 class MockType:
@@ -292,6 +294,7 @@ class MockStorageDataReader(MockType):
     def __init__(self, cursor, columns_info):
         self._cursor = cursor
         self.columns_info = columns_info
+        self.is_none = mock.Mock(return_value=False)
 
     def get_value(self, i):
         pass
