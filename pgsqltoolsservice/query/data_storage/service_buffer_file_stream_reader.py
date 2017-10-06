@@ -21,7 +21,7 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
     READER_STREAM_NOT_SUPPORT_READING_ERROR = "Stream argument doesn't support reading"
     READER_DATA_READ_ERROR = "Data read error"
 
-    def __init__(self, stream: io.BufferedWriter) -> None:
+    def __init__(self, stream: io.BufferedReader) -> None:
 
         if stream is None:
             raise ValueError(ServiceBufferFileStreamReader.READER_STREAM_NONE_ERROR)
