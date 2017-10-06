@@ -14,11 +14,7 @@ SELECT
     {{ SYSOBJECTS.IS_SYSTEMSCHEMA('nsp') }} as is_system
 FROM
     pg_namespace nsp
-WHERE
     {% if scid %}
-    nsp.oid={{scid}}::oid AND
+    WHERE nsp.oid={{scid}}::oid 
     {% endif %}
-    NOT (
-{{ CATALOGS.LIST('nsp') }}
-    )
 ORDER BY nspname;

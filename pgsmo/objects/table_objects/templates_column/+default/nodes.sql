@@ -30,6 +30,5 @@ WHERE
     {% endif %}
     AND atttypid <> 0 AND
     relkind IN ('r', 'v', 'm') AND
-    NOT attisdropped AND
-    nspname NOT IN ('pg_catalog', 'information_schema') 
+    NOT attisdropped 
 ORDER BY attnum

@@ -137,7 +137,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "spcname": self.spcname,
                 "indconstraint": self.indconstraint
             },
-            "mode": self.mode
+            "mode": "create"
         }
 
     def _delete_query_data(self) -> dict:

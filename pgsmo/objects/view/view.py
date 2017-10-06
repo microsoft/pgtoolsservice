@@ -101,11 +101,17 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
 
     @property
     def check_option(self):
-        return self._full_properties.get("check_option", "")
+        result = self._full_properties.get("check_option", " ")
+        if result is not None:
+            return result
+        return "no"
 
     @property
     def security_barrier(self):
-        return self._full_properties.get("security_barrier", "")
+        result = self._full_properties.get("security_barrier", " ")
+        if result is not None:
+            return result
+        return False
 
     # IMPLEMENTATION DETAILS ################################################
     @classmethod
@@ -123,13 +129,13 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
             "schema": self.schema,
             "definition": self.definition,
             "check_option": self.check_option,
-            "security_barrier": self.security_barrier
+            "security_barrier": self.security_barrier,
+            "display_comments": True
         }}
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
         return {
-            "vid": self._oid,
             "name": self.name,
             "nspname": self.schema
         }

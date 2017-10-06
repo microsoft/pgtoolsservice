@@ -143,7 +143,10 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
     @property
     def prorows(self):
-        return self._full_properties.get("prorows")
+        if(self.proretset):
+            return False
+        else:
+            return True
 
     @property
     def variables(self):
@@ -221,9 +224,9 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
         return {
-            "scid": self.parent.oid,
-            "fnid": self.oid,
-            "cascade": self.cascade,
+            "name": self.name,
+            "nspname": self.schema,
+            "cascade": self.cascade
         }
 
     def _update_query_data(self) -> dict:
