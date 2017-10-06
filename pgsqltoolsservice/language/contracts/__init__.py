@@ -9,9 +9,15 @@ from pgsqltoolsservice.language.contracts.text_edit import (
 from pgsqltoolsservice.language.contracts.language_flavor_change import (
     LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams
 )
+from pgsqltoolsservice.language.contracts.status_changed_notification import (
+    STATUS_CHANGE_NOTIFICATION, StatusChangeParams
+)
 from pgsqltoolsservice.language.contracts.completion import (
     COMPLETION_REQUEST, CompletionItem, CompletionItemKind,
     COMPLETION_RESOLVE_REQUEST
+)
+from pgsqltoolsservice.language.contracts.definition import (
+    DEFINITION_REQUEST
 )
 from pgsqltoolsservice.language.contracts.document_formatting import (
     DOCUMENT_FORMATTING_REQUEST, DOCUMENT_RANGE_FORMATTING_REQUEST,
@@ -24,9 +30,10 @@ from pgsqltoolsservice.language.contracts.intellisense_ready import (
 __all__ = [
     'TextEdit',
     'COMPLETION_REQUEST', 'CompletionItem', 'CompletionItemKind',
-    'COMPLETION_RESOLVE_REQUEST',
+    'COMPLETION_RESOLVE_REQUEST', 'DEFINITION_REQUEST', 
     'LANGUAGE_FLAVOR_CHANGE_NOTIFICATION', 'LanguageFlavorChangeParams',
     'INTELLISENSE_READY_NOTIFICATION', 'IntelliSenseReadyParams',
     'DOCUMENT_FORMATTING_REQUEST', 'DocumentFormattingParams',
-    'DOCUMENT_RANGE_FORMATTING_REQUEST', 'DocumentRangeFormattingParams', 'FormattingOptions'
+    'DOCUMENT_RANGE_FORMATTING_REQUEST', 'DocumentRangeFormattingParams', 'FormattingOptions',
+    'STATUS_CHANGE_NOTIFICATION', 'StatusChangeParams'
 ]

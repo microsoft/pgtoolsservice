@@ -99,6 +99,6 @@ def get_object(server: Server, object_type: str, metadata):
         "Role": find_role,
         "Function": find_function,
         "Sequence": find_sequence,
-        "DataType": find_datatype
+        "Datatype": find_datatype
     }
-    return object_map[object_type](server, metadata)
+    return object_map[object_type.capitalize()](server, metadata)

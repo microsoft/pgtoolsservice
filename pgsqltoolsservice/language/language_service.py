@@ -16,24 +16,33 @@ import sqlparse
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
 from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
+from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.workspace.contracts import Position, TextDocumentPosition, Range
 from pgsqltoolsservice.workspace import WorkspaceService    # noqa
 from pgsqltoolsservice.workspace.script_file import ScriptFile  # noqa
 from pgsqltoolsservice.language.contracts import (
     COMPLETION_REQUEST, CompletionItem, CompletionItemKind,
-    COMPLETION_RESOLVE_REQUEST,
+    COMPLETION_RESOLVE_REQUEST, DEFINITION_REQUEST,
     LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams,
     INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
     DOCUMENT_FORMATTING_REQUEST, DocumentFormattingParams,
     DOCUMENT_RANGE_FORMATTING_REQUEST, DocumentRangeFormattingParams,
-    TextEdit, FormattingOptions
+    TextEdit, FormattingOptions, StatusChangeParams, STATUS_CHANGE_NOTIFICATION
 )
 from pgsqltoolsservice.language.completion import PGCompleter   # noqa
 from pgsqltoolsservice.language.operations_queue import ConnectionContext, OperationsQueue, QueuedOperation
 from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
 from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo
+from pgsqltoolsservice.language.script_document_info import ScriptDocumentInfo
 from pgsqltoolsservice.language.text import TextUtilities
+from pgsqltoolsservice.language.peek_definition_result import DefinitionResult
+from pgsqltoolsservice.scripting.scripter import Scripter
+from pgsqltoolsservice.scripting.contracts import ScriptOperation
 import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata, MetadataType
+from pgsqltoolsservice.workspace.contracts.common import Location, Position
+import pgsqltoolsservice.scripting.scripter as scripter
+import tempfile
 
 # Map of meta or display_meta values to completion items. Based on SqlToolsService definitions
 DISPLAY_META_MAP: Dict[str, CompletionItemKind] = {
@@ -81,6 +90,7 @@ class LanguageService:
 
         # Register request handlers
         self._server.set_request_handler(COMPLETION_REQUEST, self.handle_completion_request)
+        self._server.set_request_handler(DEFINITION_REQUEST, self.handle_definition_request)
         self._server.set_request_handler(COMPLETION_RESOLVE_REQUEST, self.handle_completion_resolve_request)
         self._server.set_request_handler(DOCUMENT_FORMATTING_REQUEST, self.handle_doc_format_request)
         self._server.set_request_handler(DOCUMENT_RANGE_FORMATTING_REQUEST, self.handle_doc_range_format_request)
@@ -91,6 +101,73 @@ class LanguageService:
         self._service_provider.server.add_shutdown_handler(self._handle_shutdown)
 
     # REQUEST HANDLERS #####################################################
+    def handle_definition_request(self, request_context: RequestContext, text_document_position: TextDocumentPosition) -> None:
+        response = []
+        request_context.send_notification(STATUS_CHANGE_NOTIFICATION, StatusChangeParams.from_data(owner_uri=text_document_position.text_document.uri,
+                                          status="DefinitionRequested"))
+
+        def do_send_response():
+            request_context.send_response(response)
+        
+        if self.should_skip_intellisense(text_document_position.text_document.uri):
+            do_send_response()
+            return
+
+        # l = Location("file:///C:/Users/prbarl.REDMOND/AppData/Local/Temp/pgsql_definition_201709262243025886/dbo.BuildVersion.sql",
+        #              Range(Position(0, 1), Position(1, 1)))
+        # response = DefinitionResult(False, None, [l, ])        
+        # request_context.send_response(response.locations)
+
+        # request_context.send_error(message='error')     
+        
+        script_file: ScriptFile = self._workspace_service.workspace.get_file(text_document_position.text_document.uri)
+        if script_file is None:
+            do_send_response()
+            return
+
+        scriptparseinfo: ScriptParseInfo = self.get_scriptparseinfo(text_document_position.text_document.uri, create_if_not_exists=False)
+        if not scriptparseinfo or not scriptparseinfo.can_queue():
+            do_send_response()
+            return
+
+        cursor_pos: int = len(script_file.get_text_in_range(Range.from_data(0, 0, text_document_position.position.line, text_document_position.position.character)))
+        text: str = script_file.get_all_text()
+        scriptparseinfo.document = Document(text, cursor_pos)
+
+        operation = QueuedOperation(scriptparseinfo.connection_key,
+                                    functools.partial(self.send_definition_using_connected_completions, request_context, scriptparseinfo, text_document_position),
+                                    functools.partial(do_send_response))
+        self.operations_queue.add_operation(operation)
+
+        #get token logic
+        # current_line = script_file.file_lines[text_document_position.position.line]
+        # sql_script: tuple(sqlparse.sql.Statement) = sqlparse.parse(current_line)
+
+        # token = sql_script[0].get_token_at_offset(text_document_position.position.character)
+        #call get_word for entire string eg., a.b.c
+        # current_word = TextUtilities.get_word(current_line, text_document_position.position.character)
+
+        
+        # connection = self._connection_service.get_connection(text_document_position.text_document.uri, ConnectionType.QUERY)
+        # scripter: Scripter = Scripter(connection)
+        # definition = scripter.script(ScriptOperation.CREATE, ObjectMetadata(schema='dbo', name=token.value, metadata_type=MetadataType.TABLE))
+
+        #place holder for sending nothing got to delete
+        # do_send_response()
+        # # request_context.send_response(definition)
+        # self.get_definition(text_document_position, script_file, self._connection_service.get_connection_info)
+        request_context.send_notification(STATUS_CHANGE_NOTIFICATION, StatusChangeParams.from_data(owner_uri=text_document_position.text_document.uri,
+                                          status="DefinitionRequestCompleted"))
+        
+    def get_definition(self, text_document_position: TextDocumentPosition, script_file: ScriptFile, conn_info: ConnectionInfo):
+        script_parse_info: ScriptParseInfo = self.get_scriptparseinfo(text_document_position.text_document.uri)
+        if script_parse_info is None:
+            return None
+        # TextUtilities.get_token_range()
+        selected_token = ScriptDocumentInfo.get_peek_definition_tokens(script_parse_info, text_document_position.position.line + 1,
+                                                                       text_document_position.position.character + 1)
+        pass
+
     def handle_completion_request(self, request_context: RequestContext, params: TextDocumentPosition) -> None:
         """
         Lookup available completions when valid completion suggestions are requested.
@@ -121,6 +198,12 @@ class LanguageService:
                                         functools.partial(self._send_default_completions, request_context, script_file, params))
             self.operations_queue.add_operation(operation)
 
+    def get_token(self, text: str, cursor_position: int):
+        document = Document(text, cursor_position)
+        word = document.get_word_before_cursor()
+        (i,j) = document.find_boundaries_of_current_word()
+        print(word)
+        
     def handle_completion_resolve_request(self, request_context: RequestContext, params: CompletionItem) -> None:
         """Fill in additional details for a CompletionItem. Returns the same CompletionItem over the wire"""
         request_context.send_response(params)
@@ -303,6 +386,46 @@ class LanguageService:
             return True
         # Else return false so the timeout task can be sent instead
         return False
+
+    def send_definition_using_connected_completions(self, request_context: RequestContext, scriptparseinfo: ScriptParseInfo,
+                                                    params: TextDocumentPosition, context: ConnectionContext) -> bool:
+        if not context or not context.is_connected:
+            return False
+        # Else use the completer to query for completions
+        completer: PGCompleter = context.pgcompleter
+        completions: List[Completion] = completer.get_completions(scriptparseinfo.document, None)
+        if completions:
+            word_under_cursor = scriptparseinfo.document.get_word_under_cursor()
+            matching_completion = next(c for c in completions if c.display == word_under_cursor)
+            if matching_completion:
+                # To do: How to find the owner uri..as context.is_connected = true
+                #  owner_uri = 'connection://providerName:PGSQL|applicationName:carbon|dbname:postgres|host:localhost|user:postgres|group:C777F06B-202E-4480-B475-FA416154D458'
+                connection = self._connection_service.get_connection(params.text_document.uri, ConnectionType.QUERY)
+                scripter_instance = scripter.Scripter(connection)   
+                #  To do have logic to either pick one schema or go through all chemas for create script
+                #  schema_name = next(s for s in completer.get_schema_matches(matching_completion, scriptparseinfo.document.get_word_before_cursor()))
+                mock_metadata = ObjectMetadata(None, None, matching_completion.display_meta, matching_completion.display, matching_completion.schema)
+                create_script = scripter_instance.script(ScriptOperation.CREATE, mock_metadata)
+                # tempfile.TemporaryFile(mode='w+b',buffering=-)
+                # file_path = "script.sql"
+                # file = open(file_path, 'wt', encoding='utf-8')
+                # file.write(create_script)
+                # file.close()
+
+                file = tempfile.NamedTemporaryFile(mode='wt', delete=False, encoding='utf-8', newline=None)
+                file.write(create_script)
+                
+                l = Location("file:///" + file.name, Range(Position(0, 1), Position(1, 1)))
+                response = DefinitionResult(False, None, [l, ])       
+                request_context.send_response(response.locations)                       
+                file.close()
+
+            # completion_words = {complete}
+            # response = []  # [LanguageService.to_definition_item(completion, params) for completion in completions]
+            # request_context.send_response(response)
+            
+        # Else return false so the timeout task can be sent instead
+        
 
     @classmethod
     def to_completion_item(cls, completion: Completion, params: TextDocumentPosition) -> CompletionItem:

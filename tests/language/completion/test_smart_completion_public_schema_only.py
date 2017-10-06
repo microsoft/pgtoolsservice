@@ -10,7 +10,7 @@ from tests.language.completion.metadata import (MetaData, alias, name_join, fk_j
                                                 schema, table, view, function, column, wildcard_expansion,
                                                 get_result, result_set, qual, no_qual)
 from prompt_toolkit.completion import Completion
-
+from pgsqltoolsservice.language.completion.extendcompletion import ExtendCompletion
 
 METADATA = {
     'tables': {
@@ -159,6 +159,16 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
             function('custom_func2()', -2)]))
 
+    def test_1user_function_name_completion_matches_anywhere(self):
+        completer = completers(casing=False, aliasing=False)[0]
+        result = result_set(completer, 'SELECT om')
+        self.assertSetEqual(result, set([
+            function('custom_fun()', -2),
+            function('_custom_fun()', -2),
+            function('custom_func1()', -2),
+
+            function('custom_func2()', -2)]))
+
     # Note: not handling Special CLI params at present
     # @parameterized.expand(to_params(completers(casing=True)))
     # def test_list_functions_for_special(self, completer):
@@ -256,6 +266,13 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         )
         self.assertSetEqual(result, set(testdata.columns('users')))
 
+    def test_1suggested_multiple_column_names_with_alias(self):
+        completer = completers(casing=False)[0]
+        result = result_set(
+            completer, 'SELECT u.id, u. from users u', len('SELECT u.id, u.')
+        )
+        self.assertSetEqual(result, set(testdata.columns('users')))
+        
     @parameterized.expand(to_params(completers(casing=True)))
     def test_suggested_cased_column_names_with_alias(self, completer):
         result = result_set(
@@ -674,6 +691,12 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
         self.assertListEqual(expected, completions)
 
+    def test_2_drop_alter_function(self):
+        completer = completers()[0]
+        action = 'ALTER'
+        self.assertListEqual(get_result(completer, action + ' FUNCTION set_ret'),
+                             [function('set_returning_func(x integer, y integer)', -len('set_ret'))])
+
     @parameterized.expand(to_params(completers(casing=False, qualify=qual)))
     def test_wildcard_column_expansion_with_two_tables(self, completer):
         text = 'SELECT * FROM "select" JOIN users u ON true'
@@ -801,8 +824,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         '''
         result = result_set(completer, text)
         expected = set([
-            Completion('cte1', 0, display_meta='table'),
-            Completion('cte2', 0, display_meta='table'),
+            ExtendCompletion('cte1', 0, display_meta='table'),
+            ExtendCompletion('cte2', 0, display_meta='table'),
         ])
         self.assertTrue(expected <= result)
 
@@ -815,8 +838,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         )
         expected = (
             [
-                Completion('foo', 0, display_meta='column'),
-                Completion('bar', 0, display_meta='column'),
+                ExtendCompletion('foo', 0, display_meta='column'),
+                ExtendCompletion('bar', 0, display_meta='column'),
             ] + testdata.functions_and_keywords()
         )
 
@@ -828,7 +851,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     ]))
     def test_cte_qualified_columns(self, completer, text):
         result = result_set(completer, text)
-        expected = [Completion('foo', 0, display_meta='column')]
+        expected = [ExtendCompletion('foo', 0, display_meta='column')]
         self.assertSetEqual(result, set(expected))
 
     @parameterized.expand([
@@ -847,8 +870,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     @parameterized.expand(to_params(completers()))
     def test_keyword_after_alter(self, completer):
         text = 'ALTER TABLE users ALTER '
-        expected = Completion('COLUMN', start_position=0,
-                              display_meta='keyword')
+        expected = ExtendCompletion('COLUMN', start_position=0, display_meta='keyword')
         completions = result_set(completer, text)
         self.assertTrue(expected in set(completions))
 

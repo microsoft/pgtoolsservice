@@ -93,3 +93,9 @@ class TextDocumentPosition(Serializable):
     def __init__(self):
         self.text_document: TextDocumentIdentifier = None
         self.position: Position = None
+
+
+class Location(Serializable):
+    def __init__(self, uri=None, range=None):
+        self.uri: str = uri
+        self.range: Range = range

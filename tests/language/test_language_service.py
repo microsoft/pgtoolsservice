@@ -396,6 +396,24 @@ class TestLanguageService(unittest.TestCase):
         self.assertEqual(completion_item.detail, display)
         self.assertEqual(completion_item.label, text)
 
+    def test_get_document(self):
+        language_service = self._init_service()
+        language_service.get_token('select * from dbo.addresses', 20)
+
+    def test_handle_definition_request(self):
+        text_doc_identifier: TextDocumentIdentifier = TextDocumentIdentifier()
+        text_doc_identifier.uri = 'uri'
+        text_position: Position = Position(1, 1)
+
+        text_doc_position: TextDocumentPosition = TextDocumentPosition()
+        text_doc_position.text_document = text_doc_identifier
+        text_doc_position.position = text_position
+
+        request_context: RequestContext = mock.MagicMock()
+        language_service = self._init_service()
+        language_service.handle_definition_request(request_context, text_doc_position)
+        pass        
+
     def test_completion_keyword_completion_sort_text(self):
         """
         Tests that a Keyword Completion is converted with sort text that puts it after other objects

@@ -51,3 +51,7 @@ class Scripter(object):
             raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation {operation}')
 
         return handler[1](obj)
+        
+    # def get_definition_using_decleration_type(self, database_qualified_name: str, token_text: str, schema_name: str)
+    #     if self.server.connection is not None:
+    
