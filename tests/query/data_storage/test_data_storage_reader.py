@@ -16,9 +16,13 @@ class TestDataStorageReader(unittest.TestCase):
         self._rows = [(1, 'Some text 1', 'Some valid xml', b'Hello bytes1'), (2, 'Some Text 2', 'Some Valid xml', b'Hello bytes2')]
         self._cursor = utils.MockCursor(self._rows)
         self._columns_info = []
+        self._get_columns_info_mock = mock.Mock(return_value=self._columns_info)
 
-        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=self._columns_info)):
-            self._reader = StorageDataReader(self._cursor)
+        self._reader = StorageDataReader(self._cursor)
+
+    def execute_read_row_with_patch(self):
+        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=self._get_columns_info_mock):
+            return self._reader.read_row()
 
     def test_column_info_property(self):
         self.assertEqual(self._columns_info, self._reader.columns_info)
@@ -27,18 +31,18 @@ class TestDataStorageReader(unittest.TestCase):
         total_rows = len(self._rows)
         read_row_count = 0
 
-        while self._reader.read_row():
-
+        while self.execute_read_row_with_patch():
             self.assertEqual(self._reader.get_value(0), self._rows[read_row_count][0])
             self.assertEqual(self._reader.get_values(), self._rows[read_row_count])
 
+            self._get_columns_info_mock.assert_called_once_with(self._cursor.description, self._cursor.connection)
             read_row_count += 1
 
         self.assertEqual(read_row_count, total_rows)
 
     def test_is_none(self):
 
-        self._reader.read_row()
+        self.execute_read_row_with_patch()
 
         is_none = self._reader.is_none(1)
 
@@ -51,18 +55,18 @@ class TestDataStorageReader(unittest.TestCase):
         self.assert_raises_error(self._reader.get_bytes_with_max_capacity, count_error, not_valid_type_error)
 
     def test_get_bytes_with_max_capacity(self):
-        self._reader.read_row()
+        self.execute_read_row_with_patch()
 
         result = self._reader.get_bytes_with_max_capacity(3, 2)
 
-        self.assertTrue(bytearray(b'He') == result)
+        self.assertEquals(bytearray(b'He'), result)
 
     def test_get_chars_with_max_capacity(self):
-        self._reader.read_row()
+        self.execute_read_row_with_patch()
 
         result = self._reader.get_chars_with_max_capacity(1, 2)
 
-        self.assertTrue('So' == result)
+        self.assertEqual('So', result)
 
     def test_get_chars_with_max_capacity_error_conditions(self):
         count_error = 'Maximum number of chars to return must be greater than zero'
@@ -76,11 +80,11 @@ class TestDataStorageReader(unittest.TestCase):
             self.assertEqual('Maximum number of XML bytes to return must be greater than zero', context_manager.exception.args[0])
 
     def test_get_xml_with_max_capacity(self):
-        self._reader.read_row()
+        self.execute_read_row_with_patch()
 
         result = self._reader.get_chars_with_max_capacity(2, 2)
 
-        self.assertTrue('So' == result)
+        self.assertEqual('So', result)
 
     def assert_raises_error(self, method_to_call, error_message_for_count: str, not_valid_type_error_message: str):
         with self.assertRaises(ValueError) as context_manager:

@@ -10,7 +10,6 @@ class ServiceBufferFileStream:
 
     def __init__(self, stream: io.BufferedIOBase) -> None:
         self._file_stream = stream
-        self._close_stream_flag = False
 
     def __enter__(self):
         return self
