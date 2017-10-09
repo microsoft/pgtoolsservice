@@ -102,10 +102,8 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams, task:
         return TaskResult(TaskStatus.FAILED, str(e))
     pg_dump_args = [pg_dump_location,
                     f'--file={params.backup_info.path}',
-                    f'--format={_BACKUP_FORMAT_MAP[params.backup_info.type]}',
-                    f'--dbname={connection_info.details.options["dbname"]}',
-                    f'--host={connection_info.details.options["host"]}',
-                    f'--username={connection_info.details.options["user"]}']
+                    f'--format={_BACKUP_FORMAT_MAP[params.backup_info.type]}']
+    pg_dump_args += _get_backup_restore_connection_params(connection_info.details.options)
     # Remove the options that were already used, and pass the rest so that they can be automatically serialized
     options = params.backup_info.__dict__.copy()
     del options['path']
@@ -116,18 +114,26 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams, task:
 def _perform_restore(connection_info: ConnectionInfo, params: RestoreParams, task: Task) -> TaskResult:
     """Call out to pg_restore to restore from a backup"""
     try:
-        pg_dump_location = _get_pg_exe_path('pg_restore')
+        pg_restore_location = _get_pg_exe_path('pg_restore')
     except ValueError as e:
         return TaskResult(TaskStatus.FAILED, str(e))
-    pg_restore_args = [pg_dump_location,
-                       f'--dbname={connection_info.details.options["dbname"]}',
-                       f'--host={connection_info.details.options["host"]}',
-                       f'--username={connection_info.details.options["user"]}',
-                       f'{params.options.path}']
+    pg_restore_args = [pg_restore_location]
+    pg_restore_args += _get_backup_restore_connection_params(connection_info.details.options)
+    pg_restore_args.append(params.options.path)
     # Remove the options that were already used, and pass the rest so that they can be automatically serialized
     options = params.options.__dict__.copy()
     del options['path']
     return _perform_backup_restore(connection_info, pg_restore_args, options, task)
+
+
+def _get_backup_restore_connection_params(connection_options: dict) -> List[str]:
+    params = [f'--dbname={connection_options["dbname"]}',
+              f'--host={connection_options["host"]}',
+              f'--username={connection_options["user"]}']
+    port = connection_options.get('port')
+    if port is not None:
+        params.append(f'--port={port}')
+    return params
 
 
 def _get_pg_exe_path(exe_name: str) -> str:
