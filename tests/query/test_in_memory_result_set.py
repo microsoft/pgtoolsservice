@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
+from unittest import mock
 
 import tests.utils as utils
 from pgsqltoolsservice.query.result_set import ResultSetEvents
@@ -65,8 +66,16 @@ class TestInMemoryResultSet(unittest.TestCase):
 
     def test_read_result_to_end(self):
 
-        self._result_set.read_result_to_end(self._cursor)
+        get_column_info_mock = mock.Mock()
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
+            self._result_set.read_result_to_end(self._cursor)
 
         self.assertEqual(len(self._result_set.rows), 2)
         self.assertEqual(self._result_set.rows[0], self._first_row)
         self.assertEqual(self._result_set.rows[1], self._second_row)
+
+        get_column_info_mock.assert_called_once_with(self._cursor.description, self._cursor.connection)
+
+
+if __name__ == '__main__':
+    unittest.main()

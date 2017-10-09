@@ -73,7 +73,7 @@ def generate_alias(tbl):
     param tbl - unescaped name of the table to alias
     """
     return ''.join([l for l in tbl if l.isupper()] or
-                   [l for l, prev in zip(tbl,  '_' + tbl) if prev == '_' and l != '_'])
+                   [l for l, prev in zip(tbl, '_' + tbl) if prev == '_' and l != '_'])
 
 
 class PGCompleter(Completer):
@@ -484,8 +484,12 @@ class PGCompleter(Completer):
 
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
+<<<<<<< HEAD
         do_qualify = suggestion.qualifiable and {
             'always': True, 'never': False, 'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
+=======
+        do_qualify = suggestion.qualifiable and {'always': True, 'never': False, 'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
+>>>>>>> 8e71a4e8fc8bf3bfe8dd077c98d95d21acfe65e4
 
         def qualify(col, tbl): return ((tbl + '.' + self.case(col)) if do_qualify else self.case(col))     # noqa
         self._log(False, "Completion column scope: %r", tables)
@@ -729,7 +733,7 @@ class PGCompleter(Completer):
 
         """
         template = {
-            'call':  self.call_arg_style,
+            'call': self.call_arg_style,
             'call_display': self.call_arg_display_style,
             'signature': self.signature_arg_style
         }[usage]

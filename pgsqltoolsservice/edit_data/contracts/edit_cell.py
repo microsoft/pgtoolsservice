@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
+from pgsqltoolsservice.query.contracts import DbCellValue
 
 
 class EditCell(DbCellValue):

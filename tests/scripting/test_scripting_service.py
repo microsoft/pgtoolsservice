@@ -110,12 +110,10 @@ class TestScriptingService(unittest.TestCase):
             mock_scripter.script = mock.MagicMock(return_value=TestScriptingService.MOCK_SCRIPT)
             scripter_patch.return_value = mock_scripter
 
-            params_metadata = {
-                'metadataType': 0,
-                'metadataTypeName': 'Table',
+            scripting_object = {
+                'type': 'Table',
                 'name': 'test_table',
-                'schema': 'test_schema',
-                'urn': '//urn/'
+                'schema': 'test_schema'
             }
 
             # For each operation supported
@@ -127,7 +125,7 @@ class TestScriptingService(unittest.TestCase):
                 params = ScriptAsParameters.from_dict({
                     'ownerUri': TestScriptingService.MOCK_URI,
                     'operation': operation,
-                    'metadata': params_metadata
+                    'scripting_objects': [scripting_object]
                 })
 
                 ss._handle_scriptas_request(rc.request_context, params)

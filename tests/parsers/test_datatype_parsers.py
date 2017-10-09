@@ -5,13 +5,12 @@
 
 
 import unittest
-from typing import Callable # noqa
+from typing import Callable  # noqa
 from decimal import Decimal
 import uuid
-import datetime # noqa
+import datetime  # noqa
 
 from pgsqltoolsservice.parsers.datatype_parsers import get_parser
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
 
 
 class TestDataTypeParsers(unittest.TestCase):
@@ -89,10 +88,7 @@ class TestDataTypeParsers(unittest.TestCase):
         self.assertEqual(parsed_value, expected_parsed_value)
 
     def _get_parsed_value(self, datatype_to_test: str, value_to_parse: str):
-        column = DbColumn()
-        column.data_type = datatype_to_test
-
-        parser = get_parser(column)
+        parser = get_parser(datatype_to_test)
 
         return parser(value_to_parse)
 

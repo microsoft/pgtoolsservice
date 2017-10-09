@@ -7,8 +7,7 @@ from typing import List
 
 from pgsqltoolsservice.query.result_set import ResultSet, ResultSetEvents
 from pgsqltoolsservice.query.data_storage import service_buffer_file_stream as file_stream, StorageDataReader
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue # noqa
-from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset  # noqa
 import pgsqltoolsservice.utils as utils
 
 
@@ -24,7 +23,6 @@ class FileStorageResultSet(ResultSet):
         self._total_bytes_written = 0
         self._output_file_name = file_stream.create_file()
         self._file_offsets: List[int] = []
-        self._has_been_read = False
 
     @property
     def row_count(self) -> int:
@@ -85,11 +83,12 @@ class FileStorageResultSet(ResultSet):
         storage_data_reader = StorageDataReader(cursor)
 
         with file_stream.get_writer(self._output_file_name) as writer:
-            self.columns_info = storage_data_reader.columns_info
 
             while storage_data_reader.read_row():
                 self._file_offsets.append(self._total_bytes_written)
                 self._total_bytes_written += writer.write_row(storage_data_reader)
+
+            self.columns_info = storage_data_reader.columns_info
 
     def _append_row_to_buffer(self, cursor):
 

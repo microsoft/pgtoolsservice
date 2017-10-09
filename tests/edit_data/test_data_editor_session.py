@@ -3,17 +3,18 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-
+from typing import List  # noqa
 import unittest
 from unittest import mock
 
 from pgsqltoolsservice.edit_data import DataEditorSession
-from pgsqltoolsservice.edit_data.contracts import InitializeEditParams, EditInitializerFilter, CreateRowResponse # noqa
+from pgsqltoolsservice.edit_data.contracts import InitializeEditParams, EditInitializerFilter, CreateRowResponse  # noqa
 from tests.utils import MockConnection, MockCursor
 from pgsqltoolsservice.edit_data import EditTableMetadata, EditColumnMetadata, DataEditSessionExecutionState
-from pgsqltoolsservice.query_execution.query import Query, Batch, ExecutionState
-from pgsqltoolsservice.query_execution.result_set import ResultSet
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn
+from pgsqltoolsservice.query import (
+    Batch, create_result_set, ExecutionState, Query, QueryExecutionSettings, QueryEvents, ResultSet, ResultSetStorageType
+)
+from pgsqltoolsservice.query.contracts import DbColumn
 from pgsqltoolsservice.edit_data.update_management.row_edit import EditScript
 from pgsqltoolsservice.edit_data.update_management import RowDelete
 
@@ -50,6 +51,18 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session._construct_initialize_query = mock.Mock(return_value=self._query)
 
+    def get_result_set(self, rows: List[tuple]) -> ResultSet:
+        result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
+        cursor = MockCursor(rows)
+
+        columns_info = []
+        get_column_info_mock = mock.Mock(return_value=columns_info)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
+            result_set.read_result_to_end(cursor)
+
+        return result_set
+
     def test_initialize_gets_metadata(self):
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
 
@@ -83,7 +96,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._query_executer.assert_called_once()
 
     def test_initialize_calls_failure_when_query_status_is_not_executed(self):
-        query = Query('owner', '')
+        query = Query('owner', '', QueryExecutionSettings(None), QueryEvents())
         self._query_executer = mock.MagicMock(return_value=DataEditSessionExecutionState(query))
 
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
@@ -91,16 +104,16 @@ class TestDataEditorSession(unittest.TestCase):
         self._query_executer.assert_called_once()
 
     def test_initialize_calls_success(self):
-        query = Query('owner', '')
-        query.execution_state = ExecutionState.EXECUTED
+        query = Query('owner', '', QueryExecutionSettings(None), QueryEvents())
+        query._execution_state = ExecutionState.EXECUTED
 
         rows = [("Result1", 53), ("Result2", None,)]
-        result_set = ResultSet(0, 0, None, len(rows), rows)
+        result_set = self.get_result_set(rows)
 
         batch = Batch('', 1, None)
-        batch.result_set = result_set
+        batch._result_set = result_set
 
-        query.batches = [batch]
+        query._batches = [batch]
         self._query_executer = mock.MagicMock(return_value=DataEditSessionExecutionState(query))
 
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
@@ -143,9 +156,9 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session.table_metadata = EditTableMetadata(self._schema_name, self._table_name, columns_metadata)
 
-        result_set = ResultSet(rows=[(1, False)])
+        result_set = self.get_result_set([(1, False)])
 
-        result_set.columns = [calculated_column, default_value_column]
+        result_set.columns_info = [calculated_column, default_value_column]
 
         self._data_editor_session._result_set = result_set
 
@@ -260,7 +273,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._data_editor_session._session_cache[row_id] = mock_edit
 
-        self._data_editor_session._result_set = ResultSet(rows=[(1, False)])
+        self._data_editor_session._result_set = self.get_result_set([(1, False)])
 
         self._data_editor_session._is_initialized = True
         self._data_editor_session.commit_edit(self._connection, success_callback, mock.MagicMock())
@@ -331,7 +344,7 @@ class TestDataEditorSession(unittest.TestCase):
 
     def test_get_rows_when_start_index_is_equal_to_row_count(self):
         rows = []
-        result_set = ResultSet(0, 0, None, len(rows), rows)
+        result_set = self.get_result_set(rows)
 
         self._data_editor_session._result_set = result_set
 
@@ -349,7 +362,7 @@ class TestDataEditorSession(unittest.TestCase):
 
     def test_commit_when_its_a_new_row_thats_being_deleted(self):
         rows = []
-        result_set = ResultSet(0, 0, None, len(rows), rows)
+        result_set = self.get_result_set(rows)
 
         row_delete = RowDelete(0, result_set, self._edit_table_metadata)
 
@@ -367,7 +380,7 @@ class TestDataEditorSession(unittest.TestCase):
 
     def test_commit_when_its_a_existing_row_thats_being_deleted(self):
         rows = [("Result1", 53), ("Result2", None,)]
-        result_set = ResultSet(0, 0, None, len(rows), rows)
+        result_set = self.get_result_set(rows)
 
         script_template = 'script'
         query_params = []

@@ -4,5 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.query.data_storage.storage_data_reader import StorageDataReader
+from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
+from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_reader import ServiceBufferFileStreamReader
 
-__all__ = ['StorageDataReader']
+__all__ = ['ServiceBufferFileStreamWriter', 'ServiceBufferFileStreamReader', 'StorageDataReader']

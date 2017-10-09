@@ -21,6 +21,7 @@ INTELLISENSE_URI = 'intellisense://'
 
 class ConnectionContext:
     """Context information needed to look up connections"""
+
     def __init__(self, key: str):
         self.key = key
         self.intellisense_complete: threading.Event = threading.Event()

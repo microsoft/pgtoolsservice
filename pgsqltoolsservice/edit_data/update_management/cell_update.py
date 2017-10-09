@@ -4,20 +4,20 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Callable # noqa
+from typing import Callable  # noqa
 
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
 from pgsqltoolsservice.parsers.datatype_parsers import get_parser
-from pgsqltoolsservice.edit_data.contracts import EditCell # noqa
+from pgsqltoolsservice.edit_data.contracts import EditCell  # noqa
 
 
 class CellUpdate():
 
     def __init__(self, column: DbColumn, new_value: str) -> None:
-        parser: Callable[[str], object] = get_parser(column)
+        parser: Callable[[str], object] = get_parser(column.data_type)
 
         if parser is None:
-            raise AttributeError('Edits not supported')
+            raise AttributeError('Updates to column with type "{}" is not supported'.format(column.data_type))
 
         self.value: object = parser(new_value)
         self.column = column

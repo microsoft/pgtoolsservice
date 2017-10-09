@@ -16,6 +16,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     """Base class for Functions. Provides basic properties for all Function types"""
 
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'FunctionBase':
@@ -39,6 +40,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         func._description = kwargs['description']
         func._schema = kwargs['schema']
         func._scid = kwargs['schemaoid']
+        func._is_system = kwargs['is_system']
 
         return func
 
@@ -186,7 +188,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _macro_root(cls) -> List[str]:
-        return [cls.MACRO_ROOT]
+        return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """

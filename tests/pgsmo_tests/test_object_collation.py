@@ -12,12 +12,14 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 class TestCollation(NodeObjectTestBase, unittest.TestCase):
     NODE_QUERY = {
         'name': 'collation',
-        'oid': 123
+        'oid': 123,
+        'schema': 'test_schema',
+        'schemaoid': 345,
+        'is_system': False
     }
 
     PROPERTY_QUERY = {
         'owner': 'postgres',
-        'schema': 'test_schema',
         'description': 'test',
         'lc_collate': 'test',
         'lc_type': 'test',
@@ -34,7 +36,6 @@ class TestCollation(NodeObjectTestBase, unittest.TestCase):
     def full_properties(self):
         return {
             'owner': 'owner',
-            'schema': 'schema',
             'description': 'description',
             'lc_collate': 'lc_collate',
             'lc_type': 'lc_type',

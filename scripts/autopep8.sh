@@ -6,4 +6,4 @@ then
   exit 1
 fi
 
-autopep8 --in-place --aggressive --aggressive --max-line-length 120 -r .
+autopep8 --in-place --aggressive --aggressive --max-line-length 160 -r .

@@ -177,10 +177,11 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     Expected match_params:
       dbid int: Database OID
     """
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'ScalarValuedFunction', label=f'{node.schema}.{node.name}')
-        for node in parent_obj.functions
+        for node in parent_obj.functions if node.is_system == is_system
     ]
 
 
@@ -190,10 +191,11 @@ def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     Expected match_params:
       dbid int: Database OID
     """
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'collations', label=f'{node.schema}.{node.name}')
-        for node in parent_obj.collations
+        for node in parent_obj.collations if node.is_system == is_system
     ]
 
 
@@ -203,10 +205,11 @@ def _datatypes(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     Expected match_params:
       dbid int: Database OID
     """
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'Datatypes', label=f'{node.schema}.{node.name}')
-        for node in parent_obj.datatypes
+        for node in parent_obj.datatypes if node.is_system == is_system
     ]
 
 
@@ -216,10 +219,11 @@ def _sequences(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     Expected match_params:
       dbid int: Database OID
     """
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'Sequence', label=f'{node.schema}.{node.name}')
-        for node in parent_obj.sequences
+        for node in parent_obj.sequences if node.is_system == is_system
     ]
 
 
@@ -255,16 +259,21 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
         yield _get_node_info(index, current_path, node_type, label=f'{index.name} {attrib_str}')
 
 
+def is_system_request(route_path: str):
+    return '/system/' in route_path
+
+
 def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for tables in a schema
     Expected match_params:
       dbid int: Database OID
     """
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [
         _get_node_info(node, current_path, 'Table', is_leaf=False, label=f'{node.schema}.{node.name}')
-        for node in parent_obj.tables
+        for node in parent_obj.tables if node.is_system == is_system
     ]
 
 
@@ -292,15 +301,18 @@ def _rules(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
 
 def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of NodeInfo for tables in a schema"""
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
-    return [_get_node_info(node, current_path, 'Schema', is_leaf=True) for node in parent_obj.schemas]
+    return [_get_node_info(node, current_path, 'Schema', is_leaf=True) for node in parent_obj.schemas if node.is_system == is_system]
 
 
 def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of databases"""
     if is_refresh:
         session.server.refresh()
-    return [_get_node_info(node, current_path, 'Database', is_leaf=False) for node in session.server.databases if node.can_connect]
+    is_system = 'systemdatabase' in current_path
+    return [_get_node_info(node, current_path, 'Database', is_leaf=False)
+            for node in session.server.databases if node.can_connect and node.is_system == is_system]
 
 
 def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -323,8 +335,24 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
     Expected match_params:
       scid int: schema OID
     """
+    is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
-    return [_get_node_info(node, current_path, 'View', label=f'{node.schema}.{node.name}', is_leaf=False) for node in parent_obj.views]
+    return [_get_node_info(node, current_path, 'View', label=f'{node.schema}.{node.name}', is_leaf=False)
+            for node in parent_obj.views if node.is_system == is_system]
+
+
+def _extensions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for extensions in a schema
+    Expected match_params:
+      dbid int: Database OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
+    return [
+        _get_node_info(node, current_path, 'extension', label=f'{node.schema}.{node.name}')
+        for node in parent_obj.extensions if node.is_system == is_system
+    ]
 
 
 # ROUTING TABLE ############################################################
@@ -339,13 +367,13 @@ ROUTING_TABLE = {
     re.compile('^/$'): RoutingTarget(
         [
             Folder('Databases', 'databases'),
+            Folder('System Databases', 'systemdatabases'),
             Folder('Roles', 'roles'),
             Folder('Tablespaces', 'tablespaces')
         ],
         None
     ),
-    re.compile('^/databases/$'): RoutingTarget(None, _databases),
-    re.compile('^/databases/(?P<dbid>\d+)/$'): RoutingTarget(
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget(
         [
             Folder('Tables', 'tables'),
             Folder('Views', 'views'),
@@ -353,18 +381,62 @@ ROUTING_TABLE = {
             Folder('Collations', 'collations'),
             Folder('Data Types', 'datatypes'),
             Folder('Sequences', 'sequences'),
-            Folder('Schemas', 'schemas')
+            Folder('Schemas', 'schemas'),
+            Folder('Extensions', 'extensions')
         ],
         None
     ),
-    re.compile('^/databases/(?P<dbid>\d+)/tables/$'): RoutingTarget(None, _tables),
-    re.compile('^/databases/(?P<dbid>\d+)/views/$'): RoutingTarget(None, _views),
-    re.compile('^/databases/(?P<dbid>\d+)/functions/$'): RoutingTarget(None, _functions),
-    re.compile('^/databases/(?P<dbid>\d+)/collations/$'): RoutingTarget(None, _collations),
-    re.compile('^/databases/(?P<dbid>\d+)/datatypes/$'): RoutingTarget(None, _datatypes),
-    re.compile('^/databases/(?P<dbid>\d+)/sequences/$'): RoutingTarget(None, _sequences),
-    re.compile('^/databases/(?P<dbid>\d+)/schemas/$'): RoutingTarget(None, _schemas),
-    re.compile('^/databases/(?P<dbid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
+    re.compile('^/(?P<db>databases|systemdatabases)/$'): RoutingTarget(None, _databases),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _tables
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/$'): RoutingTarget(None, _tables),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _views
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/system/$'): RoutingTarget(None, _views),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _functions
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/system/$'): RoutingTarget(None, _functions),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _collations
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations/system/$'): RoutingTarget(None, _collations),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _datatypes
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes/system/$'): RoutingTarget(None, _datatypes),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _sequences
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences/system/$'): RoutingTarget(None, _sequences),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _schemas
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/$'): RoutingTarget(None, _schemas),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Constraints', 'constraints'),
@@ -374,12 +446,27 @@ ROUTING_TABLE = {
         ],
         None
     ),
-    re.compile('^/databases/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/columns/$'): RoutingTarget(None, _columns),
-    re.compile('^/databases/(?P<dbid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
-    re.compile('^/databases/(?P<dbid>\d+)/tables/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
-    re.compile('^/databases/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
-    re.compile('^/databases/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
-    re.compile('^/databases/(?P<dbid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget(
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/$'): RoutingTarget(
+        [
+            Folder('Columns', 'columns'),
+            Folder('Constraints', 'constraints'),
+            Folder('Indexes', 'indexes'),
+            Folder('Rules', 'rules'),
+            Folder('Triggers', 'triggers')
+        ],
+        None
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/columns/$'): RoutingTarget(None, _columns),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/columns/$'): RoutingTarget(None, _columns),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Rules', 'rules'),
@@ -387,10 +474,26 @@ ROUTING_TABLE = {
         ],
         None
     ),
-    re.compile('^/databases/(?P<dbid>\d+)/functions/$'): RoutingTarget(None, _functions),
-    re.compile('^/databases/(?P<dbid>\d+)/collations/$'): RoutingTarget(None, _collations),
-    re.compile('^/databases/(?P<dbid>\d+)/datatypes/$'): RoutingTarget(None, _datatypes),
-    re.compile('^/databases/(?P<dbid>\d+)/sequences/$'): RoutingTarget(None, _sequences),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/system/(?P<vid>\d+/$)'): RoutingTarget(
+        [
+            Folder('Columns', 'columns'),
+            Folder('Rules', 'rules'),
+            Folder('Triggers', 'triggers')
+        ],
+        None
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions(/system)/$'): RoutingTarget(None, _functions),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations(/system)/$'): RoutingTarget(None, _collations),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes(/system)/$'): RoutingTarget(None, _datatypes),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences(/system)/$'): RoutingTarget(None, _sequences),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _extensions
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/system/$'): RoutingTarget(None, _extensions),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/system/$'): RoutingTarget(None, _extensions),
     re.compile('^/roles/$'): RoutingTarget(None, _roles),
     re.compile('^/tablespaces/$'): RoutingTarget(None, _tablespaces)
 }

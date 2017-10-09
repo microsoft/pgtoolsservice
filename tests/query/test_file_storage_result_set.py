@@ -10,7 +10,7 @@ from typing import Callable, List
 import tests.utils as utils
 from pgsqltoolsservice.query.result_set import ResultSetEvents
 from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
-from pgsqltoolsservice.query_execution.contracts.common import DbCellValue
+from pgsqltoolsservice.query.contracts import DbCellValue
 
 
 class TestFileStorageResultSet(unittest.TestCase):
@@ -34,8 +34,9 @@ class TestFileStorageResultSet(unittest.TestCase):
         with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.create_file', new=mock.Mock(return_value=self._file)):
             with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.get_writer', new=mock.Mock(return_value=self._writer)):
                 with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.get_reader', new=mock.Mock(return_value=self._reader)):
-                    self._result_set = FileStorageResultSet(self._id, self._batch_id, self._events)
-                    test()
+                    with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock()):
+                        self._result_set = FileStorageResultSet(self._id, self._batch_id, self._events)
+                        test()
 
     def test_construction(self):
         def validate():
@@ -226,3 +227,7 @@ class MockWriter(MockType):
     def __init__(self, bytes_written: int) -> None:
         self.write_row = mock.Mock(return_value=bytes_written)
         self.seek = mock.MagicMock()
+
+
+if __name__ == '__main__':
+    unittest.main()
