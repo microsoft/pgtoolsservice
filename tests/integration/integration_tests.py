@@ -7,6 +7,7 @@
 
 import json
 import os
+from typing import List
 import uuid
 
 import psycopg2
@@ -18,10 +19,10 @@ def integration_test(test):
     def new_test(*args):
         _ConnectionManager.current_test_is_integration_test = True
         try:
-            test(*args)
+            _ConnectionManager.run_test(test, *args)
         finally:
             _ConnectionManager.current_test_is_integration_test = False
-            _ConnectionManager.drop_test_database()
+            _ConnectionManager.drop_test_databases()
     new_test.is_integration_test = True
     new_test.__name__ = test.__name__
     return new_test
@@ -39,28 +40,68 @@ def get_connection_details() -> dict:
     return _ConnectionManager.get_test_connection_details()
 
 
+def create_extra_test_database() -> str:
+    """
+    Create an extra database for the current test and return its name. The database will
+    automatically be dropped at the end of the test.
+    """
+    return _ConnectionManager.create_extra_database()
+
+
 class _ConnectionManager:
     current_test_is_integration_test: bool = False
-    _maintenance_connection: psycopg2.extensions.connection = None
-    _current_test_connection_details: dict = None
+    _maintenance_connections: List[psycopg2.extensions.connection] = []
+    _current_test_connection_detail_list: List[dict] = None
+    _in_progress_test_index: int = None
+    _extra_databases: List[str] = []
 
     @classmethod
     def get_test_connection_details(cls):
-        if not cls.current_test_is_integration_test:
+        if not cls.current_test_is_integration_test or cls._in_progress_test_index is None:
             raise RuntimeError('get_connection_details can only be called from tests with an integration_test decorator')
-        if not cls._current_test_connection_details:
-            cls._create_test_database()
         # Return a copy of the test connection details dictionary
-        return dict(cls._current_test_connection_details)
+        return dict(cls._current_test_connection_detail_list[cls._in_progress_test_index])
 
     @classmethod
-    def _open_maintenance_connection(cls):
-        details = cls._get_connection_details()
-        cls._maintenance_connection = psycopg2.connect(**details)
-        cls._maintenance_connection.autocommit = True
+    def create_extra_database(cls) -> str:
+        maintenance_connection = cls._maintenance_connections[cls._in_progress_test_index]
+        db_name = 'test' + uuid.uuid4().hex
+        with maintenance_connection.cursor() as cursor:
+            cursor.execute('CREATE DATABASE ' + db_name)
+        cls._extra_databases.append(db_name)
+        return db_name
+
+    @classmethod
+    def run_test(cls, test, *args):
+        cls._create_test_databases()
+        needs_setup = False
+        for index, details in enumerate(cls._current_test_connection_detail_list):
+            cls._in_progress_test_index = index
+            try:
+                if needs_setup:
+                    args[0].setUp()
+                test(*args)
+                args[0].tearDown()
+                needs_setup = True
+            except Exception as e:
+                host = details['host']
+                server_version = cls._maintenance_connections[index].server_version
+                raise RuntimeError(f'Test failed while executing on server {index + 1} (host: {host}, version: {server_version})') from e
+
+    @classmethod
+    def _open_maintenance_connections(cls):
+        config_list = cls._get_connection_configurations()
+        cls._maintenance_connections = []
+        cls._current_test_connection_detail_list = []
+        for config_dict in config_list:
+            connection = psycopg2.connect(**config_dict)
+            cls._maintenance_connections.append(connection)
+            connection.autocommit = True
+            config_dict['dbname'] = None
+            cls._current_test_connection_detail_list.append(config_dict)
 
     @staticmethod
-    def _get_connection_details(db_name=None) -> dict:
+    def _get_connection_configurations() -> dict:
         config_file_name = 'config.json'
         current_folder = os.path.dirname(os.path.realpath(__file__))
         config_path = os.path.join(current_folder, config_file_name)
@@ -68,26 +109,42 @@ class _ConnectionManager:
             config_path += '.txt'
         if not os.path.exists(config_path):
             raise RuntimeError(f'No test config file found at {config_path}')
-        config_dict = json.load(open(config_path))
-        if db_name is not None:
-            config_dict['dbname'] = db_name
-        return config_dict
+        config_list = json.load(open(config_path))
+        if not isinstance(config_list, list):
+            config_list = [config_list]
+        return config_list
 
     @classmethod
-    def _create_test_database(cls) -> None:
+    def _create_test_databases(cls) -> None:
         db_name = 'test' + uuid.uuid4().hex
-        if cls._maintenance_connection is None:
-            cls._open_maintenance_connection()
-        with cls._maintenance_connection.cursor() as cursor:
-            cursor.execute('CREATE DATABASE ' + db_name)
-        cls._current_test_connection_details = cls._get_connection_details(db_name)
+        if not cls._maintenance_connections:
+            cls._open_maintenance_connections()
+        for index, connection in enumerate(cls._maintenance_connections):
+            with connection.cursor() as cursor:
+                cursor.execute('CREATE DATABASE ' + db_name)
+            cls._current_test_connection_detail_list[index]['dbname'] = db_name
 
     @classmethod
-    def drop_test_database(cls) -> None:
-        if not cls._current_test_connection_details:
+    def drop_test_databases(cls) -> None:
+        if not cls._current_test_connection_detail_list:
             return
-        db_name = cls._current_test_connection_details['dbname']
-        cls._current_test_connection_details = None
-        with cls._maintenance_connection.cursor() as cursor:
+        for index, details in enumerate(cls._current_test_connection_detail_list):
+            try:
+                db_name = details['dbname']
+                with cls._maintenance_connections[index].cursor() as cursor:
+                    cls._drop_database(db_name, cursor)
+                    for extra_db_name in cls._extra_databases:
+                        cls._drop_database(extra_db_name, cursor)
+                    cls._extra_databases = []
+            except Exception:
+                pass
+        for details in cls._current_test_connection_detail_list:
+            details['dbname'] = None
+
+    @staticmethod
+    def _drop_database(db_name, cursor):
+        try:
             cursor.execute('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = (%s)', (db_name,))
             cursor.execute('DROP DATABASE ' + db_name)
+        except Exception:
+            pass
