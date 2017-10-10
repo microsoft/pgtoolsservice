@@ -5,12 +5,14 @@
 
 
 import unittest
+from unittest import mock
 
 from pgsqltoolsservice.edit_data.update_management import RowDelete
-from pgsqltoolsservice.query_execution.result_set import ResultSet
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
+from pgsqltoolsservice.query import create_result_set, ResultSetStorageType
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
 from pgsqltoolsservice.edit_data.contracts import EditRowState
 from pgsqltoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
+from tests.utils import MockCursor
 
 
 class TestRowDelete(unittest.TestCase):
@@ -18,7 +20,12 @@ class TestRowDelete(unittest.TestCase):
     def setUp(self):
         self._row_id = 1
         self._rows = [("False",), ("True",)]
-        self._result_set = ResultSet(0, 0, None, len(self._rows), self._rows)
+
+        self._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
+        cursor = MockCursor(self._rows, ['IsTrue'])
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            self._result_set.read_result_to_end(cursor)
 
         db_column = DbColumn()
         db_column.data_type = 'bool'
@@ -26,11 +33,11 @@ class TestRowDelete(unittest.TestCase):
         db_column.is_key = True
         db_column.column_ordinal = 0
 
-        self._result_set.columns = [db_column]
+        self._result_set.columns_info = [db_column]
 
         self._columns_metadata = [EditColumnMetadata(db_column, 'Default Value')]
 
-        self._table_metadata = EditTableMetadata('public', 'TestTable',  self._columns_metadata)
+        self._table_metadata = EditTableMetadata('public', 'TestTable', self._columns_metadata)
 
         self._row_delete = RowDelete(self._row_id, self._result_set, self._table_metadata)
 
@@ -69,7 +76,7 @@ class TestRowDelete(unittest.TestCase):
 
     def test_apply_changes(self):
         self.assertTrue(len(self._result_set.rows) is 2)
-        self._row_delete.apply_changes()
+        self._row_delete.apply_changes(None)
 
         self.assertTrue(len(self._result_set.rows) is 1)
         self.assertTrue(self._result_set.rows[0][0], "False")

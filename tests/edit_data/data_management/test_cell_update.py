@@ -7,7 +7,7 @@
 import unittest
 
 from pgsqltoolsservice.edit_data.update_management import CellUpdate
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
 from pgsqltoolsservice.edit_data.contracts import EditCell
 
 
@@ -19,10 +19,17 @@ class TestCellUpdate(unittest.TestCase):
         self._new_cell_value = 'New Value'
         self._cell_update = CellUpdate(self._db_column, self._new_cell_value)
 
+    def test_create_raises_error_when_parser_not_found(self):
+        self._db_column.data_type = 'char[]'
+
+        with self.assertRaises(AttributeError) as context_manager:
+            CellUpdate(self._db_column, self._new_cell_value)
+            self.assertEquals('Updates to column with type "char[]" is not supported', context_manager.exception.args[0])
+
     def test_value_set_to_right_text_with_str_datatype(self):
         self.assertEqual(self._new_cell_value, self._cell_update.value)
 
-        self.assertTrue(type(self._cell_update.value) is str)
+        self.assertTrue(isinstance(self._cell_update.value, str))
 
     def test_value_as_string(self):
 
@@ -36,7 +43,7 @@ class TestCellUpdate(unittest.TestCase):
 
         self.assertTrue(edit_cell.display_value is self._new_cell_value)
         self.assertTrue(edit_cell.is_dirty)
-        self.assertTrue(type(edit_cell) is EditCell)
+        self.assertTrue(isinstance(edit_cell, EditCell))
 
     def test_as_db_cell_value(self):
 
@@ -45,7 +52,7 @@ class TestCellUpdate(unittest.TestCase):
         self.assertTrue(db_cell_value.display_value is self._cell_update.value_as_string)
         self.assertTrue(db_cell_value.is_null is False)
         self.assertTrue(db_cell_value.raw_object is self._cell_update.value)
-        self.assertTrue(type(db_cell_value) is DbCellValue)
+        self.assertTrue(isinstance(db_cell_value, DbCellValue))
 
 
 if __name__ == '__main__':

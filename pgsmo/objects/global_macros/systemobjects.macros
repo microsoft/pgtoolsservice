@@ -1,0 +1,9 @@
+{##########################################}
+{# Macros for idenitifying system objects #}
+{##########################################}
+{% macro IS_SYSTEMSCHEMA(tbl) -%}
+CASE
+    WHEN {{ tbl }}.nspname like 'pg_%' or {{ tbl }}.nspname = 'information_schema'
+        THEN true
+    ELSE false END
+{%- endmacro %}

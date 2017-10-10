@@ -15,7 +15,8 @@ class TestSequence(NodeObjectTestBase, unittest.TestCase):
         'oid': 123,
         'schema': 'public',
         'schemaoid': 456,
-        'objectname': 'sequencename'
+        'objectname': 'sequencename',
+        'is_system': True
     }
 
     @property

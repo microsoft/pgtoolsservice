@@ -218,8 +218,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         position = len('SELECT ')
         cols = [column('users.' + c) for c in cased_users_col_names]
         result = result_set(completer, text, position)
-        self.assertSetEqual(result,  set(cased_funcs + cols
-                                         + testdata.builtin_functions() + testdata.keywords()))
+        self.assertSetEqual(result, set(cased_funcs + cols
+                                        + testdata.builtin_functions() + testdata.keywords()))
 
     @parameterized.expand(to_params(completers(casing=False, qualify=no_qual)))
     def test_suggested_column_names_in_function(self, completer):
@@ -822,7 +822,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
         self.assertSetEqual(result, set(expected))
 
-    @parameterized.expand(itertools.product(completers(casing=False,  qualify=no_qual), [
+    @parameterized.expand(itertools.product(completers(casing=False, qualify=no_qual), [
         'WITH cte AS (SELECT foo FROM bar) SELECT * FROM cte WHERE cte.',
         'WITH cte AS (SELECT foo FROM bar) SELECT * FROM cte c WHERE c.',
     ]))

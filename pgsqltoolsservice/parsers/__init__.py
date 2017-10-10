@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import pgsqltoolsservice.parsers.datatypes
-import pgsqltoolsservice.parsers.datatype_parsers # noqa
+import pgsqltoolsservice.parsers.datatype_parsers  # noqa
 
 __all__ = [
     'datatypes',

@@ -17,19 +17,20 @@ from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
 from pgsqltoolsservice.query_execution.query_execution_service import (
     QueryExecutionService, CANCELATION_QUERY, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
 from pgsqltoolsservice.query_execution.contracts import (
-    ExecuteDocumentSelectionParams, ExecuteStringParams, SelectionData, ExecuteRequestParamsBase)
+    ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase)
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 from pgsqltoolsservice.query_execution.contracts import (
-    DbColumn, MESSAGE_NOTIFICATION, ResultSetSubset, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
+    ExecutionPlanOptions, MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
     QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams
 )
-from pgsqltoolsservice.query_execution.batch import Batch
-from pgsqltoolsservice.query_execution.query import Query, ExecutionState
-from pgsqltoolsservice.query_execution.result_set import ResultSet
+from pgsqltoolsservice.query.contracts import DbColumn, ResultSetSubset, SelectionData, SubsetResult
+from pgsqltoolsservice.query import (
+    Batch, create_result_set, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
+    ResultSetStorageType
+)
 from pgsqltoolsservice.connection.contracts import ConnectionType, ConnectionDetails
-from pgsqltoolsservice.query_execution.contracts.common import SubsetResult
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
 
@@ -208,18 +209,25 @@ class TestQueryService(unittest.TestCase):
         """
         query_results: Dict[str, Query] = {}
         owner_uri = "untitled"
-        query_results[owner_uri] = Query(owner_uri, '')
+        query_results[owner_uri] = Query(owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
         batch_ordinal = 0
         result_ordinal = 0
         rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
-        query_results[owner_uri].batches.append(Batch('', batch_ordinal, SelectionData()))
-        query_results[owner_uri].batches[batch_ordinal].result_set = ResultSet(result_ordinal, batch_ordinal, None, len(rows), rows)
+        cursor = utils.MockCursor(rows)
+        query_results[owner_uri]._batches.append(Batch('', batch_ordinal, SelectionData()))
 
-        result_rows = query_results[owner_uri].batches[batch_ordinal].result_set.rows
+        result_set = create_result_set(ResultSetStorageType.IN_MEMORY, result_ordinal, batch_ordinal)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            result_set.read_result_to_end(cursor)
+
+        query_results[owner_uri]._batches[batch_ordinal]._result_set = result_set
+
+        result_rows = query_results[owner_uri]._batches[batch_ordinal]._result_set.rows
         results_size = len(result_rows)
         result_set_subset = ResultSetSubset.from_query_results(
             query_results, owner_uri, batch_ordinal, result_ordinal, 0, results_size
-            )
+        )
 
         row_size = 3
         self.assertEquals(results_size, result_set_subset.row_count)
@@ -263,24 +271,25 @@ class TestQueryService(unittest.TestCase):
         test_columns = [DbColumn.from_cursor_description(0, description[0]), DbColumn.from_cursor_description(1, description[1])]
         ordinal = 0
         batch_ordinal = 0
-        row_count = len(description)
+        row_count = 0
 
-        result_set = ResultSet(ordinal, batch_ordinal, description, row_count, [])
-        self.assertEqual(len(test_columns), len(result_set.columns))
+        cursor = utils.MockCursor([])
+        cursor.description = description
+
+        result_set = create_result_set(ResultSetStorageType.IN_MEMORY, ordinal, batch_ordinal)
+
+        get_column_info_mock = mock.Mock(return_value=test_columns)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
+            result_set.read_result_to_end(cursor)
+
+        self.assertEqual(len(test_columns), len(result_set.columns_info))
 
         for index in range(0, len(test_columns)):
-            self.assertEqual(test_columns[index].__dict__, result_set.columns[index].__dict__)
+            self.assertEqual(test_columns[index].__dict__, result_set.columns_info[index].__dict__)
         self.assertEqual(ordinal, result_set.id)
         self.assertEqual(batch_ordinal, result_set.batch_id)
-        self.assertEqual(0, result_set.total_bytes_written)
-        self.assertEqual(None, result_set.output_file_name)
-        self.assertEqual([], result_set.file_offsets)
-        self.assertEqual(0, result_set.special_action.flags)
-        self.assertEqual(False, result_set.has_been_read)
-        self.assertEqual([], result_set.save_tasks)
-        self.assertEqual(None, result_set.is_single_column_xml_json_result_set)
-        self.assertEqual(None, result_set.output_file_name)
-        self.assertEqual(None, result_set.row_count_override)
+        self.assertEqual(True, result_set._has_been_read)
         self.assertEqual(row_count, result_set.row_count)
         self.assertEqual([], result_set.rows)
 
@@ -288,17 +297,16 @@ class TestQueryService(unittest.TestCase):
         """Test that result set column is empty if description is None.
         Description is None if there were no results for a query
         """
-        description = None
-        result_set = ResultSet(0, 0, description, 0, [])
-        self.assertEqual([], result_set.columns)
+        result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
+        self.assertEqual([], result_set.columns_info)
 
     def test_result_set_complete_params(self):
         """Test building parameters for the result set complete notification"""
         # Set up the test with a batch summary and owner uri
         batch = Batch('', 10, SelectionData())
-        batch.has_executed = True
-        batch.result_set = ResultSet(1, 10, None, 0, [])
-        summary = batch.build_batch_summary()
+        batch._has_executed = True
+        batch._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 1, 10)
+        summary = batch.batch_summary
         owner_uri = 'test_uri'
 
         # If I build a result set complete response from the summary
@@ -313,8 +321,12 @@ class TestQueryService(unittest.TestCase):
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
         # If we handle an execute query request
-        self.query_execution_service._handle_execute_query_request(self.request_context, params)
-        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            self.query_execution_service._handle_execute_query_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
         # Then we executed the query, closed the cursor, and called fetchall once each.
         # And the connection's notices is set properly
         self.cursor.execute.assert_called_once()
@@ -389,10 +401,13 @@ class TestQueryService(unittest.TestCase):
         # Set up to run cancel query handler during execute() attempt
         self.cursor.execute = mock.Mock(side_effect=cancel_during_execute_side_effects)
 
-        # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
-        self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
-        # Wait for query execution worker thread to finish
-        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
+            self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
+            # Wait for query execution worker thread to finish
+            self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+
         query = self.query_execution_service.query_results['test_uri']
 
         # Then we must have ran execute for a batch, and executed 'SELECTED pg_cancel_backend(pid)
@@ -426,6 +441,8 @@ class TestQueryService(unittest.TestCase):
         def cancel_before_execute_side_effect(*args):
             real_send_response(*args)
             self.request_context.send_response.side_effect = real_send_response
+            query = self.query_execution_service.get_query(execute_params.owner_uri)
+            query._execution_state = ExecutionState.EXECUTING
             self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
 
         # Set the send_response method to have a side effect of cancelling the query, so that when we send the empty
@@ -465,9 +482,12 @@ class TestQueryService(unittest.TestCase):
 
         # If we start the execute query request handler with the cancel query
         # request handled after the execute_query() and cursor.execute() calls
-        self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
-        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
-        self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
+            self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
+            self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
+
         query = self.query_execution_service.query_results['test_uri']
 
         # Then execute() in the execute query handler should have been called and
@@ -486,9 +506,11 @@ class TestQueryService(unittest.TestCase):
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
 
-        # If we handle an execute query request
-        self.query_execution_service._handle_execute_query_request(self.request_context, params)
-        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            # If we handle an execute query request
+            self.query_execution_service._handle_execute_query_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then we executed the query, closed the cursor, and called fetchall once each.
         self.cursor.execute.assert_called_once()
@@ -519,11 +541,17 @@ class TestQueryService(unittest.TestCase):
         })
         batch = Batch(2, SelectionData(), False)
         batch_rows = [(1, 2), (3, 4), (5, 6)]
-        batch.result_set = ResultSet(0, 0, {}, 3, batch_rows)
-        test_query = Query(params.owner_uri, '')
-        test_query.batches = [Batch('', 0, SelectionData()), Batch('', 1, SelectionData()), batch]
-        other_query = Query('some_other_uri', '')
-        other_query.batches = [Batch('', 3, SelectionData())]
+
+        cursor = utils.MockCursor(batch_rows)
+        batch._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            batch._result_set.read_result_to_end(cursor)
+
+        test_query = Query(params.owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        test_query._batches = [Batch('', 0, SelectionData()), Batch('', 1, SelectionData()), batch]
+        other_query = Query('some_other_uri', '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        other_query._batches = [Batch('', 3, SelectionData())]
         self.query_execution_service.query_results = {
             test_query.owner_uri: test_query,
             other_query.owner_uri: other_query
@@ -591,8 +619,8 @@ class TestQueryService(unittest.TestCase):
         """
         # Initialize results
         uri = 'test_uri'
-        self.query_execution_service.query_results[uri] = Query(uri, '')
-        self.query_execution_service.query_results[uri].execution_state = ExecutionState.EXECUTED
+        self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        self.query_execution_service.query_results[uri]._execution_state = ExecutionState.EXECUTED
         params = QueryDisposeParams()
         params.owner_uri = uri
 
@@ -623,8 +651,8 @@ class TestQueryService(unittest.TestCase):
     def test_query_disposal_with_query_executing(self):
         """Test query disposal while a query is executing"""
         uri = 'test_uri'
-        self.query_execution_service.query_results[uri] = Query(uri, '')
-        self.query_execution_service.query_results[uri].execution_state = ExecutionState.EXECUTING
+        self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        self.query_execution_service.query_results[uri]._execution_state = ExecutionState.EXECUTING
         params = QueryDisposeParams()
         params.owner_uri = uri
 
@@ -641,7 +669,7 @@ class TestQueryService(unittest.TestCase):
     def test_query_disposal_with_query_not_started(self):
         """Test query disposal while a query has not started executing"""
         uri = 'test_uri'
-        self.query_execution_service.query_results[uri] = Query(uri, '')
+        self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
         params = QueryDisposeParams()
         params.owner_uri = uri
 
@@ -745,7 +773,8 @@ class TestQueryService(unittest.TestCase):
     def test_start_query_execution_thread_sends_true_when_show_plan_is_enabled(self):
 
         request = ExecuteStringParams()
-        request.execution_plan_options = {'show_plan': True}
+        request.execution_plan_options = ExecutionPlanOptions()
+        request.execution_plan_options.include_estimated_execution_plan_xml = True
         request.owner_uri = 'Test Owner Uri'
         request.query = 'Test Query'
 
@@ -755,7 +784,7 @@ class TestQueryService(unittest.TestCase):
 
         query = self.query_execution_service.get_query(request.owner_uri)
 
-        self.assertEqual('EXPLAIN Test Query', query.batches[0].batch_text)
+        self.assertEqual('EXPLAIN Test Query', query._batches[0].batch_text)
 
     def test_execution_error_rolls_back_transaction(self):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
@@ -763,7 +792,8 @@ class TestQueryService(unittest.TestCase):
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
         self.connection.get_transaction_status.return_value = psycopg2.extensions.TRANSACTION_STATUS_INERROR
         query_params = get_execute_string_params()
-        self.query_execution_service.query_results[query_params.owner_uri] = Query(query_params.owner_uri, query_params.query)
+        query = Query(query_params.owner_uri, query_params.query, QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        self.query_execution_service.query_results[query_params.owner_uri] = query
 
         # If I execute a query that opens a transaction and then throws an error when executed
 
@@ -794,13 +824,18 @@ class TestQueryService(unittest.TestCase):
 
         mock_rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
         new_owner_uri = str(uuid.uuid4())
-        query = Query(new_owner_uri, '')
-        rows = mock_rows
+        query = Query(new_owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
         batch = Batch('', 0, SelectionData())
-        result_set = ResultSet(0, 0, None, len(rows), rows)
-        batch.result_set = result_set
-        batch.has_executed = True
-        query.batches = [batch]
+        cursor = utils.MockCursor(mock_rows)
+
+        result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
+
+        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            result_set.read_result_to_end(cursor)
+
+        batch._result_set = result_set
+        batch._has_executed = True
+        query._batches = [batch]
         self.query_execution_service.query_results = {
             new_owner_uri: query
         }
@@ -891,154 +926,6 @@ class SubsetMock:
         self.row_count = None
 
 
-class TestQueryAndBatchObjects(unittest.TestCase):
-    """Unit tests for Query and Batch objects"""
-
-    def setUp(self):
-        """Set up the test by creating a query with multiple batches"""
-        self.statement_list = statement_list = ['select version;', 'select * from t1;']
-        self.statement_str = ''.join(statement_list)
-        self.query_uri = 'test_uri'
-        self.query = Query(self.query_uri, self.statement_str)
-
-        self.mock_query_results = object()
-        self.cursor = utils.MockCursor(self.mock_query_results)
-        self.connection = utils.MockConnection(cursor=self.cursor)
-
-    def test_query_creates_batches(self):
-        """Test that creating a query also creates batches for each statement in the query"""
-        # Verify that the query created in setUp has a batch corresponding to each statement
-        for index, statement in enumerate(self.statement_list):
-            self.assertEqual(self.query.batches[index].batch_text, statement)
-
-    def test_executing_query_executes_batches(self):
-        """Test that executing a query also executes all of the query's batches in order"""
-        # Set up the query execution callbacks
-        callback_before_batch = mock.Mock()
-        callback_after_batch = mock.Mock()
-
-        # If I call query.execute
-        self.query.execute(self.connection, callback_before_batch, callback_after_batch)
-
-        # Then each of the batches executed in order
-        expected_calls = [mock.call(statement) for statement in self.statement_list]
-        self.cursor.execute.assert_has_calls(expected_calls)
-        self.assertEqual(len(self.cursor.execute.mock_calls), 2)
-
-        # And each of the batches holds the expected results
-        for batch in self.query.batches:
-            self.assertIs(batch.result_set.rows, self.mock_query_results)
-
-        # And the callbacks were executed
-        expected_calls = [mock.call(self.query, batch) for batch in self.query.batches]
-        callback_before_batch.assert_has_calls(expected_calls)
-        self.assertEqual(len(callback_before_batch.mock_calls), 2)
-        callback_after_batch.assert_has_calls(expected_calls)
-        self.assertEqual(len(callback_after_batch.mock_calls), 2)
-
-        # And the query is marked as executed
-        self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
-
-    def test_batch_failure(self):
-        """Test that query execution handles a batch execution failure by stopping further execution"""
-        # Set up the query execution callbacks
-        callback_before_batch = mock.Mock()
-        callback_after_batch = mock.Mock()
-
-        # Set up the cursor to fail when executed
-        self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
-
-        # If I call query.execute then it raises the database error
-        with self.assertRaises(psycopg2.DatabaseError):
-            self.query.execute(self.connection, callback_before_batch, callback_after_batch)
-
-        # And only the first batch was executed
-        expected_calls = [mock.call(self.statement_list[0])]
-        self.cursor.execute.assert_has_calls(expected_calls)
-        self.assertEqual(len(self.cursor.execute.mock_calls), 1)
-
-        # And the callbacks were only executed once
-        expected_calls = [mock.call(self.query, self.query.batches[0])]
-        callback_before_batch.assert_has_calls(expected_calls)
-        self.assertEqual(len(callback_before_batch.mock_calls), 1)
-        callback_after_batch.assert_has_calls(expected_calls)
-        self.assertEqual(len(callback_after_batch.mock_calls), 1)
-
-        # And the query is marked as executed
-        self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
-
-    def test_batch_selections(self):
-        """Test that the query sets up batch objects with correct selection information"""
-        full_query = '''select * from
-t1;
-select * from t2;;;
-;  ;
-select version(); select * from
-t3 ;
-select * from t2
-'''
-
-        # If I build a query that contains several statements
-        query = Query('test_uri', full_query)
-
-        # Then there is a batch for each non-empty statement
-        self.assertEqual(len(query.batches), 5)
-
-        # And each batch should have the correct location information
-        expected_selections = [
-            SelectionData(start_line=0, start_column=0, end_line=1, end_column=3),
-            SelectionData(start_line=2, start_column=0, end_line=2, end_column=17),
-            SelectionData(start_line=4, start_column=0, end_line=4, end_column=17),
-            SelectionData(start_line=4, start_column=18, end_line=5, end_column=4),
-            SelectionData(start_line=6, start_column=0, end_line=6, end_column=16)]
-        for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
-
-    def test_batch_selections_do_block(self):
-        """Test that the query sets up batch objects with correct selection information for blocks containing statements"""
-        full_query = '''DO $$
-BEGIN
-RAISE NOTICE 'Hello world 1';
-RAISE NOTICE 'Hello world 2';
-END $$;
-select * from t1;'''
-
-        # If I build a query that contains a block that contains several statements
-        query = Query('test_uri', full_query)
-
-        # Then there is a batch for each top-level statement
-        self.assertEqual(len(query.batches), 2)
-
-        # And each batch should have the correct location information
-        expected_selections = [
-            SelectionData(start_line=0, start_column=0, end_line=4, end_column=7),
-            SelectionData(start_line=5, start_column=0, end_line=5, end_column=17)]
-        for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
-
-    def test_batches_strip_comments(self):
-        """Test that we do not attempt to execute a batch consisting only of comments"""
-        full_query = '''select * from t1;
--- test
--- test
-;select * from t1;
--- test
--- test;'''
-
-        # If I build a query that contains a batch consisting of only comments, in addition to other valid batches
-        query = Query('test_uri', full_query)
-
-        # Then there is only a batch for each non-comment statement
-        self.assertEqual(len(query.batches), 2)
-
-        # And each batch should have the correct location information
-        expected_selections = [
-            SelectionData(start_line=0, start_column=0, end_line=0, end_column=17),
-            SelectionData(start_line=3, start_column=1, end_line=3, end_column=18)]
-        for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
-
-
 def get_execute_string_params() -> ExecuteStringParams:
     """Get a simple ExecutestringParams"""
     params = ExecuteStringParams()
@@ -1052,11 +939,6 @@ def get_execute_request_params():
     params = ExecuteRequestParamsBase()
     params.owner_uri = 'test_uri'
     return params
-
-
-def _tuple_from_selection_data(data: SelectionData):
-    """Convert a SelectionData object to a tuple so that its values can easily be verified"""
-    return (data.start_line, data.start_column, data.end_line, data.end_column)
 
 
 if __name__ == '__main__':

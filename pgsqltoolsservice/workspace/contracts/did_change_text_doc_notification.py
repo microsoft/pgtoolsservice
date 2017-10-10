@@ -37,6 +37,7 @@ class VersionedTextDocumentIdentifier(Serializable):
         version:    Version of the changed text document
         uri:        The URI that uniquely identifies the path of the text document
     """
+
     def __init__(self):
         self.version: int = None
         self.uri: str = None

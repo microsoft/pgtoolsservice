@@ -6,8 +6,8 @@
 from typing import List
 
 from pgsqltoolsservice.query.result_set import ResultSet, ResultSetEvents
-from pgsqltoolsservice.query_execution.contracts.common import ResultSetSubset
-from pgsqltoolsservice.query_execution.contracts.common import DbColumn, DbCellValue # noqa
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset  # noqa
+from pgsqltoolsservice.query.column_info import get_columns_info
 
 
 class InMemoryResultSet(ResultSet):
@@ -38,4 +38,8 @@ class InMemoryResultSet(ResultSet):
 
     def read_result_to_end(self, cursor):
         rows = cursor.fetchall()
-        self.rows.extend(rows)
+        self.rows.extend(rows or [])
+
+        self.columns_info = get_columns_info(cursor.description, cursor.connection)
+
+        self._has_been_read = True

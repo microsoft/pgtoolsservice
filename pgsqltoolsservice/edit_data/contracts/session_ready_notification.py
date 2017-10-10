@@ -13,6 +13,7 @@ class SessionReadyNotificationParams(Serializable):
         owner_uri:          URI for the editor that owns the query
         batch_summaries:    Summaries of the result sets that were returned with the query
     """
+
     def __init__(self, owner_uri: str, success: bool, message: str):
         self.owner_uri: str = owner_uri
         self.success: bool = success

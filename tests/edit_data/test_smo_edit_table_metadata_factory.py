@@ -30,7 +30,7 @@ class TestSmoEditTableMetadataFactory(unittest.TestCase):
         table._columns = self._columns
 
         with mock.patch('pgsqltoolsservice.utils.object_finder.find_table', new=mock.Mock(return_value=table)):
-            metadata = self._smo_metadata_factory.get(self._connection, self._schema_name,  self._table_name, self._table_object_type)
+            metadata = self._smo_metadata_factory.get(self._connection, self._schema_name, self._table_name, self._table_object_type)
             self.assertEqual(len(metadata.columns_metadata), len(table.columns))
 
     def test_get_with_view_type(self):
@@ -38,13 +38,13 @@ class TestSmoEditTableMetadataFactory(unittest.TestCase):
         view._columns = self._columns
 
         with mock.patch('pgsqltoolsservice.utils.object_finder.find_view', new=mock.Mock(return_value=view)):
-            metadata = self._smo_metadata_factory.get(self._connection, self._schema_name,  self._view_name, self._view_object_type)
+            metadata = self._smo_metadata_factory.get(self._connection, self._schema_name, self._view_name, self._view_object_type)
             self.assertEqual(len(metadata.columns_metadata), len(view.columns))
 
     def test_get_with_other_type_raises_exception(self):
 
         with self.assertRaises(Exception):
-            self._smo_metadata_factory.get(self._connection, self._schema_name,  self._view_name, 'Other')
+            self._smo_metadata_factory.get(self._connection, self._schema_name, self._view_name, 'Other')
 
 
 if __name__ == '__main__':
