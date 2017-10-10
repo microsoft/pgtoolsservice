@@ -219,9 +219,11 @@ class QueryExecutionService(object):
         request_context.send_response(self._get_result_subset(request_context, params))
 
     def _get_result_subset(self, request_context: RequestContext, params: SubsetParams) -> SubsetResult:
-        result_set_subset = ResultSetSubset.from_query_results(
-            self.query_results, params.owner_uri,
-            params.batch_index, params.result_set_index, params.rows_start_index,
+        query: Query = self.get_query(params.owner_uri)
+
+        result_set_subset = query.get_subset(
+            params.batch_index,
+            params.rows_start_index,
             params.rows_start_index + params.rows_count)
 
         return SubsetResult(result_set_subset)
