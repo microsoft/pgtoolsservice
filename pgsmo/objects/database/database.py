@@ -18,6 +18,7 @@ from pgsmo.objects.functions.trigger_function import TriggerFunction
 from pgsmo.objects.sequence.sequence import Sequence
 from pgsmo.objects.table.table import Table
 from pgsmo.objects.view.view import View
+from pgsmo.objects.view.materialized_view import MaterializedView
 from pgsmo.objects.extension.extension import Extension
 
 
@@ -85,6 +86,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         self._sequences: NodeCollection = self._register_child_collection(Sequence)
         self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
         self._extensions: NodeCollection = self._register_child_collection(Extension)
+        self._materialized_views: NodeCollection = self._register_child_collection(MaterializedView)
 
     # PROPERTIES ###########################################################
     # -BASIC PROPERTIES ####################################################
@@ -177,6 +179,10 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def views(self) -> NodeCollection:
         return self._views
+
+    @property
+    def materialized_views(self) -> NodeCollection:
+        return self._materialized_views
 
     @property
     def extensions(self) -> NodeCollection:
