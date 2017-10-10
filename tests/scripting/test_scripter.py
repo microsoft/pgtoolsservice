@@ -14,9 +14,6 @@ from pgsmo.objects.node_object import NodeCollection
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
-from pgsqltoolsservice.scripting.contracts import ScriptOperation
-from pgsqltoolsservice.connection.connection_service import ConnectionService
-from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 
 
 import tests.utils as utils
@@ -115,22 +112,6 @@ class TestScripter(unittest.TestCase):
 
             # ... The URN should have been used to get the object
             script.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
-
-    def test_script_(self):
-        # ScriptOperation.CREATE
-        # conn = utils.MockConnection({"port": "8080", "host": "test", "dbname": "test"})
-        connection_details = ConnectionDetails.from_data(opts={'host': 'localhost', 'dbname': 'postgres', 'user': 'postgres', 'password': 'tiger'})
-        uri = 'connection://providerName:PGSQL|dbname:postgres|host:localhost'
-        connection_request = ConnectRequestParams(connection=connection_details, owner_uri=uri, connection_type=ConnectionType.DEFAULT)
-        conn_service = ConnectionService()
-        conn_service.connect(connection_request)
-
-        scripter_instance = scripter.Scripter(conn_service.get_connection(uri, ConnectionType.DEFAULT))
-        # mock_metadata = ObjectMetadata('//postgres@localhost:5432/Database.12401/Table.1236/', None, 'Table', 'sql_features', 'information_schema')
-        # mock_metadata = ObjectMetadata(None, None, 'Table', 'sql_features', 'information_schema')
-        mock_metadata = ObjectMetadata(None, None, 'Table', 'addresses', None)
-        create_script = scripter_instance.script(ScriptOperation.CREATE, mock_metadata)
-        print(create_script)
                 
 class TestScripterOld(unittest.TestCase):
     # TODO: Remove in favor of script tests in the PGSMO objects (see: https://github.com/Microsoft/carbon/issues/1734)

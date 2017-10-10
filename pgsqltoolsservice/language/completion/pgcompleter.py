@@ -38,11 +38,11 @@ from .packages.prioritization import PrevalenceCounter
 
 Match = namedtuple('Match', ['completion', 'priority'])
 
-_SchemaObject = namedtuple('SchemaObject', 'name schema meta parent_schema')
+_SchemaObject = namedtuple('SchemaObject', 'name schema meta obj_schema')
 
 
-def SchemaObject(name, schema=None, meta=None, parent_schema=None):
-    return _SchemaObject(name, schema, meta, parent_schema)
+def SchemaObject(name, schema=None, meta=None, obj_schema=None):
+    return _SchemaObject(name, schema, meta, obj_schema)
 
 
 _Candidate = namedtuple(
@@ -432,16 +432,11 @@ class PGCompleter(Completer):
                     sort_key, type_priority, prio, priority_func(item),
                     prio2, lexical_priority
                 )
-                # if schema is None:
-                #     completion_inst = Completion(text=item, start_position=-text_len, display_meta=display_meta, display=display)
-                # else:
-                completion_inst = ExtendCompletion(text=item, start_position=-text_len, display_meta=display_meta, display=display, schema=schema)
-                    
+                
+                extend_completion = ExtendCompletion(text=item, start_position=-text_len, display_meta=display_meta, display=display, schema=schema)    
                 matches.append(
                     Match(
-                        completion=completion_inst,                
-                        # completion = ExtendCompletion(text=item, start_position=-text_len, display_meta=display_meta, display=display, schema=schema),
-                        # completion=completion_instance,
+                        completion=extend_completion,
                         priority=priority
                     )
                 )
@@ -532,12 +527,7 @@ class PGCompleter(Completer):
                                    for c in flat_cols())
             else:
                 collist = ', '.join(qualify(c.name, t.ref)
-                                    for t, cs in scoped_cols.items() for c in cs)
-            
-            # if schema is None:
-            #     completion_inst = Completion(collist, -1, display_meta='columns', display='*', schema=None)
-            # else:
-            #     completion_inst = ExtendCompletion(collist, -1, display_meta='columns', display='*', schema=None)
+                                    for t, cs in scoped_cols.items() for c in cs)   
 
             return [Match(
                 completion=ExtendCompletion(
@@ -602,8 +592,8 @@ class PGCompleter(Completer):
             # Schema-qualify if (1) new table in same schema as old, and old
             # is schema-qualified, or (2) new in other schema, except public
             if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)]
-                                          and left.schema == right.schema
-                                          or left.schema not in(right.schema, 'public')):
+               and left.schema == right.schema
+               or left.schema not in(right.schema, 'public')):
                 join = left.schema + '.' + join
             prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
                 0 if (left.schema, left.tbl) in other_tbls else 1)
@@ -792,7 +782,7 @@ class PGCompleter(Completer):
         item = maybe_schema + cased_tbl + suffix + maybe_alias
         display = maybe_schema + cased_tbl + display_suffix + maybe_alias
         prio2 = 0 if tbl.schema else 1
-        return Candidate(item, synonyms=synonyms, prio2=prio2, display=display, schema=tbl.parent_schema)
+        return Candidate(item, synonyms=synonyms, prio2=prio2, display=display, schema=tbl.obj_schema)
 
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')
@@ -973,8 +963,7 @@ class PGCompleter(Completer):
             SchemaObject(
                 name=obj,
                 schema=(self._maybe_schema(schema=sch, parent=schema)),
-                parent_schema=sch
-                # schema=sch
+                obj_schema=sch
             )
             for sch in self._get_schemas(obj_type, schema)
             for obj in self.dbmetadata[obj_type][sch].keys()

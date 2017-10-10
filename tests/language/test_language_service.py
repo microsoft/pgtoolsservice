@@ -396,23 +396,29 @@ class TestLanguageService(unittest.TestCase):
         self.assertEqual(completion_item.detail, display)
         self.assertEqual(completion_item.label, text)
 
-    def test_get_document(self):
+    def test_handle_definition_request_should_return_empty_if_query_file_do_not_exist(self):
+        # If: The script file doesn't exist (there is an empty workspace)
+        context: RequestContext = utils.MockRequestContext()
+        self.mock_workspace_service._workspace = Workspace()
+        service: LanguageService = self._init_service()
+
+        service.handle_definition_request(context, self.default_text_position)
+
+        context.send_response.assert_called_once()
+        self.assertEqual(context.last_response_params, [])
+
+    def test_handle_definition_request_intellisense_off(self):
+        request_context: RequestContext = utils.MockRequestContext()
+        
+        config = Configuration()
+        config.sql.intellisense.enable_intellisense = False
+        self.mock_workspace_service._configuration = config
+
         language_service = self._init_service()
-        language_service.get_token('select * from dbo.addresses', 20)
+        language_service.handle_definition_request(request_context, self.default_text_position)
 
-    def test_handle_definition_request(self):
-        text_doc_identifier: TextDocumentIdentifier = TextDocumentIdentifier()
-        text_doc_identifier.uri = 'uri'
-        text_position: Position = Position(1, 1)
-
-        text_doc_position: TextDocumentPosition = TextDocumentPosition()
-        text_doc_position.text_document = text_doc_identifier
-        text_doc_position.position = text_position
-
-        request_context: RequestContext = mock.MagicMock()
-        language_service = self._init_service()
-        language_service.handle_definition_request(request_context, text_doc_position)
-        pass        
+        request_context.send_response.assert_called_once()
+        self.assertEqual(request_context.last_response_params, [])
 
     def test_completion_keyword_completion_sort_text(self):
         """

@@ -159,16 +159,6 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
             function('custom_func2()', -2)]))
 
-    def test_1user_function_name_completion_matches_anywhere(self):
-        completer = completers(casing=False, aliasing=False)[0]
-        result = result_set(completer, 'SELECT om')
-        self.assertSetEqual(result, set([
-            function('custom_fun()', -2),
-            function('_custom_fun()', -2),
-            function('custom_func1()', -2),
-
-            function('custom_func2()', -2)]))
-
     # Note: not handling Special CLI params at present
     # @parameterized.expand(to_params(completers(casing=True)))
     # def test_list_functions_for_special(self, completer):
@@ -261,13 +251,6 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggested_multiple_column_names_with_alias(self, completer):
-        result = result_set(
-            completer, 'SELECT u.id, u. from users u', len('SELECT u.id, u.')
-        )
-        self.assertSetEqual(result, set(testdata.columns('users')))
-
-    def test_1suggested_multiple_column_names_with_alias(self):
-        completer = completers(casing=False)[0]
         result = result_set(
             completer, 'SELECT u.id, u. from users u', len('SELECT u.id, u.')
         )
@@ -690,12 +673,6 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         expected = [wildcard_expansion(expected)]
 
         self.assertListEqual(expected, completions)
-
-    def test_2_drop_alter_function(self):
-        completer = completers()[0]
-        action = 'ALTER'
-        self.assertListEqual(get_result(completer, action + ' FUNCTION set_ret'),
-                             [function('set_returning_func(x integer, y integer)', -len('set_ret'))])
 
     @parameterized.expand(to_params(completers(casing=False, qualify=qual)))
     def test_wildcard_column_expansion_with_two_tables(self, completer):

@@ -106,12 +106,3 @@ class TextUtilities:
             return (text, text_range)
         else:
             return ('', None)
-
-    @classmethod
-    def get_word(self, text, position):
-        words = text.split()
-        characters = -1
-        for word in words:
-            characters += len(word)
-            if characters >= position:
-                return word
