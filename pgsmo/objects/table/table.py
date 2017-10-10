@@ -232,8 +232,6 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
             "coll_inherits": self.coll_inherits,
             "columns": self.columns,
             "typname": self.typname,
-            "like_relation": self.like_relation,
-            "like_indexes": True,
             "primary_key": self.primary_key,
             "unique_constraint": self.unique_constraint,
             "foreign_key": self.foreign_key,
