@@ -30,6 +30,7 @@ from pgsmo.objects.table_objects.rule import Rule
 from pgsmo.objects.table_objects.trigger import Trigger
 from pgsmo.objects.tablespace.tablespace import Tablespace
 from pgsmo.objects.functions.trigger_function import TriggerFunction
+from pgsmo.objects.view.materialized_view import MaterializedView
 from pgsmo.objects.view.view import View
 from pgsmo.objects.extension.extension import Extension
 
@@ -59,5 +60,6 @@ __all__ = [
     'Trigger',
     'TriggerFunction',
     'View',
-    'Extension'
+    'Extension',
+    'MaterializedView'
 ]
