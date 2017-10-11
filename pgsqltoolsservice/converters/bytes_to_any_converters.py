@@ -70,14 +70,14 @@ def convert_bytes_to_memoryview(value) -> memoryview:
 
 
 def convert_bytes_to_dict(value) -> dict:
-    """ Decode bytes to str, and convert single quotes to double quotes to make it a valid JSON format """
-    value_str = value.decode(DECODING_METHOD).replace("\'", '"')
+    """ Decode bytes to str, and convert it to a valid JSON format """
+    value_str = value.decode(DECODING_METHOD)
     return json.loads(value_str)
 
 
 def convert_bytes_to_list(value) -> list:
     value_str = value.decode(DECODING_METHOD)
-    return value_str[2: len(value_str) - 2].split("\', \'")
+    return json.loads(value_str)
 
 
 def convert_bytes_to_numericrange(value) -> NumericRange:
@@ -153,4 +153,7 @@ DATATYPE_READER_MAP = {
 
 
 def get_bytes_to_any_converter(type_value: str) -> Callable[[bytes], Any]:
-    return DATATYPE_READER_MAP[type_value]
+    """ This method gets the converter based on data type.
+    For User-Defined Type(UDT), it gets convert_bytes_to_str
+    due to UDT are de-serialized from str """
+    return DATATYPE_READER_MAP.get(type_value, convert_bytes_to_str)

@@ -72,7 +72,7 @@ def convert_dict(value: dict):
 
 
 def convert_list(value: list):
-    return bytearray(str(value).encode())
+    return bytearray(json.dumps(value).encode())
 
 
 def convert_numericrange(value: NumericRange):

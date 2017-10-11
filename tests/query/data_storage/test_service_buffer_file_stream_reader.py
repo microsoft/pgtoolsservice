@@ -6,6 +6,7 @@
 import unittest
 import struct
 import io
+import json
 
 from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_reader import ServiceBufferFileStreamReader
 from pgsqltoolsservice.query.contracts.column import DbColumn
@@ -24,8 +25,8 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._int_test_value = 123456
         self._str_test_value = "TestString"
         self._bytea_test_value = memoryview(b'TestString')
-        self._dict_test_value = {"Server": " TestServer ", "Schema": "TestSchema"}
-        self._list_test_value = ["TestServer", "TestSchema", "TestTable"]
+        self._dict_test_value = {"Ser,ver": " Tes'tS,,erver ", "Sche'ma": "TestSchema"}
+        self._list_test_value = ["Test,Server", "Tes'tSchema", "Tes,'tTable"]
         self._numericrange_test_value = NumericRange(10, 20)
         self._datetimerange_test_value = DateTimeRange("2014-06-08 12:12:45", "2016-07-06 14:12:08")
         self._datetimetzrange_test_value = DateTimeTZRange("2014-06-08 12:12:45+02", "2016-07-06 14:12:08+02")
@@ -61,14 +62,14 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._bytea_file_stream.write(bytea_val)
 
         self._dict_file_stream = io.BytesIO()
-        dict_val = bytearray(str(self._dict_test_value).encode())
+        dict_val = bytearray(json.dumps(self._dict_test_value).encode())
         dict_len = len(dict_val)
         dict_len_to_write = bytearray(struct.pack("i", dict_len))
         self._dict_file_stream.write(dict_len_to_write)
         self._dict_file_stream.write(dict_val)
 
         self._list_file_stream = io.BytesIO()
-        list_val = bytearray(str(self._list_test_value).encode())
+        list_val = bytearray(json.dumps(self._list_test_value).encode())
         list_len = len(list_val)
         list_len_to_write = bytearray(struct.pack("i", list_len))
         self._list_file_stream.write(list_len_to_write)
@@ -201,8 +202,8 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._dict_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._dict_test_value["Server"], res[0].raw_object["Server"])
-        self.assertEqual(self._dict_test_value["Schema"], res[0].raw_object["Schema"])
+        self.assertEqual(self._dict_test_value["Ser,ver"], res[0].raw_object["Ser,ver"])
+        self.assertEqual(self._dict_test_value["Sche'ma"], res[0].raw_object["Sche'ma"])
 
     def test_read_list(self):
         test_file_offset = 0
