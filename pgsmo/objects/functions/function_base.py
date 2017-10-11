@@ -221,9 +221,9 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
         return {
-            "scid": self.parent.oid,
-            "fnid": self.oid,
-            "cascade": self.cascade,
+            "name": self.name,
+            "nspname": self.schema,
+            "cascade": self.cascade
         }
 
     def _update_query_data(self) -> dict:

@@ -88,6 +88,10 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return [view for view in self.parent.views if view.scid == self.oid]
 
     @property
+    def materialized_views(self) -> NodeCollection:
+        return [view for view in self.parent.materialized_views if view.scid == self.oid]
+
+    @property
     def extensions(self) -> NodeCollection:
         return [extension for extension in self.parent.extensions if extension.scid == extension.oid]
 
@@ -145,15 +149,15 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         """ Function that returns data for update script """
         return {
             "data": {
-                "name": self.name,
-                "namespaceowner": self.namespaceowner,
-                "description": self.description,
+                "name": '<New Name>',
+                "namespaceowner": '<New Owner>',
+                "description": '<New Description>',
                 "nspacl": self.nspacl,
                 "defacl": self.defacl,
                 "seclabels": self.seclabels
             }, "o_data": {
-                "name": "",
-                "namespaceowner": "",
-                "description": ""
+                "name": self.name,
+                "namespaceowner": self.namespaceowner,
+                "description": self.description
             }
         }

@@ -78,7 +78,7 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
         return {
             "coll_inherits": 0,
             "typname": "test",
-            "like_relation": None,
+            "like_relation": "None.test",
             "primary_key": 42,
             "unique_constraint": None,
             "foreign_key": 123,

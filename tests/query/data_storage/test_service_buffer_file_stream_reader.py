@@ -150,7 +150,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_BOOL
+        col.data_type = datatypes.DATATYPE_BOOL
         test_columns_info.append(col)
 
         res = self._bool_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -162,7 +162,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_REAL
+        col.data_type = datatypes.DATATYPE_REAL
         test_columns_info.append(col)
 
         res = self._float_reader1.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -174,7 +174,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_REAL
+        col.data_type = datatypes.DATATYPE_REAL
         test_columns_info.append(col)
 
         res = self._float_reader2.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -279,13 +279,13 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         real_column1 = DbColumn()
-        real_column1.data_type_name = datatypes.DATATYPE_REAL
+        real_column1.data_type = datatypes.DATATYPE_REAL
         integer_column = DbColumn()
-        integer_column.data_type_name = datatypes.DATATYPE_INTEGER
+        integer_column.data_type = datatypes.DATATYPE_INTEGER
         text_column = DbColumn()
-        text_column.data_type_name = datatypes.DATATYPE_TEXT
+        text_column.data_type = datatypes.DATATYPE_TEXT
         real_column2 = DbColumn()
-        real_column2.data_type_name = datatypes.DATATYPE_REAL
+        real_column2.data_type = datatypes.DATATYPE_REAL
 
         test_columns_info.append(real_column1)
         test_columns_info.append(integer_column)

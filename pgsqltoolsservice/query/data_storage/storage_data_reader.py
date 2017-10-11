@@ -14,7 +14,7 @@ class StorageDataReader:
     def __init__(self, cursor) -> None:
         self._cursor = cursor
         self._current_row: tuple = None
-        self._columns_info = get_columns_info(cursor.description, cursor.connection)
+        self._columns_info = []
 
     @property
     def columns_info(self) -> List[DbColumn]:
@@ -28,6 +28,8 @@ class StorageDataReader:
         row_found = False
 
         for row in self._cursor:
+            if self._current_row is None:
+                self._columns_info = get_columns_info(self._cursor.description, self._cursor.connection)
             self._current_row = row
             row_found = True
             break

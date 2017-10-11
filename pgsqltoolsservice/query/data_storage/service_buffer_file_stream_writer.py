@@ -5,10 +5,11 @@
 
 import io
 from typing import Callable, Any  # noqa
+import struct
 
-from pgsqltoolsservice.parsers import datatypes
 from pgsqltoolsservice.converters.bytes_converter import get_bytes_converter
 from pgsqltoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
+from pgsqltoolsservice.query.data_storage import StorageDataReader
 
 
 class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
@@ -37,11 +38,11 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
         try:
             written_byte_number = stream.write(byte_array)
         except Exception as exc:
-            stream.close()
             raise IOError(ServiceBufferFileStreamWriter.WRITER_DATA_WRITE_ERROR) from exc
+
         return written_byte_number
 
-    def write_row(self, reader):
+    def write_row(self, reader: StorageDataReader):
         """   Write a row to a file   """
         # Define a object list to store multiple columns in a row
         len_columns_info = len(reader.columns_info)
@@ -50,8 +51,6 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
         # Loop over all the columns and write the values to the temp file
         row_bytes = 0
         for index in range(0, len_columns_info):
-            # If it's the last column data, then set the flag to true and close the file stream
-            self._close_stream_flag = (index == len_columns_info - 1)
 
             column = reader.columns_info[index]
 
@@ -59,18 +58,16 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
             type_value = column.data_type
 
             # Write the object into the temp file
-            if type_value == datatypes.DATATYPE_NULL:
+            if reader.is_none(index):
                 row_bytes += self._write_null()
             else:
-                bytes_converter: Callable[[Any], bytearray] = get_bytes_converter(type_value)
+                bytes_converter: Callable[[str], bytearray] = get_bytes_converter(type_value)
+                value_to_write = bytes_converter(values[index])
 
-                if bytes_converter is None:
-                    raise AttributeError(ServiceBufferFileStreamWriter.CONVERTER_DATA_TYPE_NOT_EXIST_ERROR)
+                bytes_length_to_write = len(value_to_write)
 
-                row_bytes += self._write_to_file(self._file_stream, bytes_converter(values[index]))
-
-            if self._close_stream_flag:
-                self._file_stream.close()
+                row_bytes += self._write_to_file(self._file_stream, bytearray(struct.pack("i", bytes_length_to_write)))
+                row_bytes += self._write_to_file(self._file_stream, value_to_write)
 
         return row_bytes
 
