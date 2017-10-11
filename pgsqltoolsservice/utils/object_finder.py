@@ -48,6 +48,11 @@ def find_view(server: Server, metadata):
     return find_schema_child_object(server, 'views', metadata)
 
 
+def find_materialized_view(server: Server, metadata):
+    """ Find a view in the server """
+    return find_schema_child_object(server, 'materialized_views', metadata)
+
+
 def find_role(server: Server, metadata):
     """ Find a role in the server """
     try:
@@ -99,6 +104,7 @@ def get_object(server: Server, object_type: str, metadata):
         "Role": find_role,
         "Function": find_function,
         "Sequence": find_sequence,
-        "DataType": find_datatype
+        "DataType": find_datatype,
+        "MaterializedView": find_materialized_view
     }
     return object_map[object_type](server, metadata)

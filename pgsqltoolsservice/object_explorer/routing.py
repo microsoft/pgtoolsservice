@@ -137,6 +137,8 @@ def _get_table_or_view(is_refresh: bool, session: ObjectExplorerSession, dbid: a
         return _get_obj_with_refresh(session.server.databases[int(dbid)].tables[tid], is_refresh)
     elif parent_type == 'views':
         return _get_obj_with_refresh(session.server.databases[int(dbid)].views[tid], is_refresh)
+    elif parent_type == 'materializedviews':
+        return _get_obj_with_refresh(session.server.databases[int(dbid)].materialized_views[tid], is_refresh)
     else:
         raise ValueError('Object type to retrieve nodes is invalid')  # TODO: Localize
 
@@ -244,7 +246,18 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
       dbid int: Database OID
       tid int: table OID
     """
-    indexes = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])].tables[int(match_params['tid'])].indexes, is_refresh)
+    parent_type = match_params['obj']
+    attribute_name = ''
+    if parent_type == 'tables':
+        attribute_name = 'tables'
+    elif parent_type == 'materializedviews':
+        attribute_name = 'materialized_views'
+    else:
+        raise ValueError('Object type to retrieve nodes is invalid')
+
+    entities = getattr(session.server.databases[int(match_params['dbid'])], attribute_name)
+    indexes = _get_obj_with_refresh(entities[int(match_params['tid'])].indexes, is_refresh)
+
     for index in indexes:
         attribs = ['Clustered' if index.is_clustered else 'Non-Clustered']
         if index.is_primary:
@@ -341,6 +354,18 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
             for node in parent_obj.views if node.is_system == is_system]
 
 
+def _materialized_views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for materialized views in a schema
+    Expected match_params:
+      scid int: schema OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
+    return [_get_node_info(node, current_path, 'View', label=f'{node.schema}.{node.name}', is_leaf=False)
+            for node in parent_obj.materialized_views if node.is_system == is_system]
+
+
 def _extensions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for extensions in a schema
@@ -377,6 +402,7 @@ ROUTING_TABLE = {
         [
             Folder('Tables', 'tables'),
             Folder('Views', 'views'),
+            Folder('Materialized Views', 'materializedviews'),
             Folder('Functions', 'functions'),
             Folder('Collations', 'collations'),
             Folder('Data Types', 'datatypes'),
@@ -401,6 +427,13 @@ ROUTING_TABLE = {
         _views
     ),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/system/$'): RoutingTarget(None, _views),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/$'): RoutingTarget(
+        [
+            Folder('System', 'system')
+        ],
+        _materialized_views
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/system/$'): RoutingTarget(None, _materialized_views),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/$'): RoutingTarget(
         [
             Folder('System', 'system')
@@ -456,12 +489,18 @@ ROUTING_TABLE = {
         ],
         None
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/columns/$'): RoutingTarget(None, _columns),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/columns/$'): RoutingTarget(None, _columns),
+    re.compile(
+        '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views|materializedviews)/(?P<tid>\d+)/columns/$'
+    ): RoutingTarget(None, _columns),
+    re.compile(
+        '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views|materializedviews)/system/(?P<tid>\d+)/columns/$'
+    ): RoutingTarget(None, _columns),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|materializedviews)/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
+    re.compile(
+        '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|materializedviews)/system/(?P<tid>\d+)/indexes/$'
+    ): RoutingTarget(None, _indexes),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
@@ -479,6 +518,20 @@ ROUTING_TABLE = {
             Folder('Columns', 'columns'),
             Folder('Rules', 'rules'),
             Folder('Triggers', 'triggers')
+        ],
+        None
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/(?P<vid>\d+/$)'): RoutingTarget(
+        [
+            Folder('Columns', 'columns'),
+            Folder('Indexes', 'indexes')
+        ],
+        None
+    ),
+    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/system/(?P<vid>\d+/$)'): RoutingTarget(
+        [
+            Folder('Columns', 'columns'),
+            Folder('Indexes', 'indexes')
         ],
         None
     ),
