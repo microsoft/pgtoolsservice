@@ -44,10 +44,6 @@ def integration_test(min_version=None, max_version=None):
     return integration_test_internal if test_function is None else integration_test_internal(test_function)
 
 
-# Indicate that nose should not treat the decorator as its own test
-integration_test.__test__ = False
-
-
 def get_connection_details() -> dict:
     """
     Get connection details that can be used in integration tests. These details are formatted as a
@@ -62,6 +58,11 @@ def create_extra_test_database() -> str:
     automatically be dropped at the end of the test.
     """
     return _ConnectionManager.create_extra_database()
+
+
+# Indicate that nose should not treat these functions as their own tests
+integration_test.__test__ = False
+create_extra_test_database.__test__ = False
 
 
 class _ConnectionManager:
