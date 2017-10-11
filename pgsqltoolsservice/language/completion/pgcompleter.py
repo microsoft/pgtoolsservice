@@ -432,8 +432,8 @@ class PGCompleter(Completer):
                     sort_key, type_priority, prio, priority_func(item),
                     prio2, lexical_priority
                 )
-                
-                extend_completion = ExtendCompletion(text=item, start_position=-text_len, display_meta=display_meta, display=display, schema=schema)    
+
+                extend_completion = ExtendCompletion(text=item, start_position=-text_len, display_meta=display_meta, display=display, schema=schema)
                 matches.append(
                     Match(
                         completion=extend_completion,
@@ -479,12 +479,7 @@ class PGCompleter(Completer):
 
     def get_column_matches(self, suggestion, word_before_cursor):
         tables = suggestion.table_refs
-<<<<<<< HEAD
-        do_qualify = suggestion.qualifiable and {
-            'always': True, 'never': False, 'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
-=======
         do_qualify = suggestion.qualifiable and {'always': True, 'never': False, 'if_more_than_one_table': len(tables) > 1}[self.qualify_columns]
->>>>>>> 8e71a4e8fc8bf3bfe8dd077c98d95d21acfe65e4
 
         def qualify(col, tbl): return ((tbl + '.' + self.case(col)) if do_qualify else self.case(col))     # noqa
         self._log(False, "Completion column scope: %r", tables)
@@ -531,7 +526,7 @@ class PGCompleter(Completer):
                                    for c in flat_cols())
             else:
                 collist = ', '.join(qualify(c.name, t.ref)
-                                    for t, cs in scoped_cols.items() for c in cs)   
+                                    for t, cs in scoped_cols.items() for c in cs)
 
             return [Match(
                 completion=ExtendCompletion(

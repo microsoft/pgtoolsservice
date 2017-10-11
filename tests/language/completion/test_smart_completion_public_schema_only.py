@@ -9,7 +9,6 @@ import itertools
 from tests.language.completion.metadata import (MetaData, alias, name_join, fk_join, join, keyword,
                                                 schema, table, view, function, column, wildcard_expansion,
                                                 get_result, result_set, qual, no_qual)
-from prompt_toolkit.completion import Completion
 from pgsqltoolsservice.language.completion.extendcompletion import ExtendCompletion
 
 METADATA = {
@@ -255,7 +254,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
             completer, 'SELECT u.id, u. from users u', len('SELECT u.id, u.')
         )
         self.assertSetEqual(result, set(testdata.columns('users')))
-        
+
     @parameterized.expand(to_params(completers(casing=True)))
     def test_suggested_cased_column_names_with_alias(self, completer):
         result = result_set(

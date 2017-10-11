@@ -17,7 +17,7 @@ import sqlparse
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
 from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
 from pgsqltoolsservice.connection.contracts import ConnectionType
-from pgsqltoolsservice.workspace.contracts import Position, TextDocumentPosition, Range
+from pgsqltoolsservice.workspace.contracts import Position, TextDocumentPosition, Range, Location
 from pgsqltoolsservice.workspace import WorkspaceService    # noqa
 from pgsqltoolsservice.workspace.script_file import ScriptFile  # noqa
 from pgsqltoolsservice.language.contracts import (
@@ -35,11 +35,9 @@ from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
 from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo
 from pgsqltoolsservice.language.text import TextUtilities
 from pgsqltoolsservice.language.peek_definition_result import DefinitionResult
-from pgsqltoolsservice.scripting.scripter import Scripter
 from pgsqltoolsservice.scripting.contracts import ScriptOperation
 import pgsqltoolsservice.utils as utils
-from pgsqltoolsservice.metadata.contracts import ObjectMetadata, MetadataType
-from pgsqltoolsservice.workspace.contracts.common import Location, Position
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
 import tempfile
 
@@ -107,11 +105,11 @@ class LanguageService:
 
         def do_send_response():
             request_context.send_response(response)
-        
+
         if self.should_skip_intellisense(text_document_position.text_document.uri):
             do_send_response()
-            return     
-        
+            return
+
         script_file: ScriptFile = self._workspace_service.workspace.get_file(text_document_position.text_document.uri)
         if script_file is None:
             do_send_response()
@@ -122,12 +120,14 @@ class LanguageService:
             do_send_response()
             return
 
-        cursor_pos: int = len(script_file.get_text_in_range(Range.from_data(0, 0, text_document_position.position.line, text_document_position.position.character)))
+        cursor_pos: int = len(script_file.get_text_in_range(Range.from_data(0, 0, text_document_position.position.line,
+                              text_document_position.position.character)))
         text: str = script_file.get_all_text()
         scriptparseinfo.document = Document(text, cursor_pos)
 
         operation = QueuedOperation(scriptparseinfo.connection_key,
-                                    functools.partial(self.send_definition_using_connected_completions, request_context, scriptparseinfo, text_document_position),
+                                    functools.partial(self.send_definition_using_connected_completions, request_context, scriptparseinfo,
+                                                      text_document_position),
                                     functools.partial(do_send_response))
         self.operations_queue.add_operation(operation)
         request_context.send_notification(STATUS_CHANGE_NOTIFICATION, StatusChangeParams.from_data(owner_uri=text_document_position.text_document.uri,
@@ -162,7 +162,7 @@ class LanguageService:
                                         functools.partial(self.send_connected_completions, request_context, scriptparseinfo, params),
                                         functools.partial(self._send_default_completions, request_context, script_file, params))
             self.operations_queue.add_operation(operation)
-        
+
     def handle_completion_resolve_request(self, request_context: RequestContext, params: CompletionItem) -> None:
         """Fill in additional details for a CompletionItem. Returns the same CompletionItem over the wire"""
         request_context.send_response(params)
@@ -350,11 +350,11 @@ class LanguageService:
                                                     params: TextDocumentPosition, context: ConnectionContext) -> bool:
         if not context or not context.is_connected:
             return False
-        
+
         definition_result: DefinitionResult = None
         completer: PGCompleter = context.pgcompleter
         completions: List[Completion] = completer.get_completions(scriptparseinfo.document, None)
-        
+
         if completions:
             word_under_cursor = scriptparseinfo.document.get_word_under_cursor()
             matching_completion = next(c for c in completions if c.display == word_under_cursor)
@@ -371,7 +371,7 @@ class LanguageService:
                     with tempfile.NamedTemporaryFile(mode='wt', delete=False, encoding='utf-8', suffix='.sql', newline=None) as namedfile:
                         namedfile.write(create_script)
                         location_in_script = Location("file://" + namedfile.name, Range(Position(0, 1), Position(1, 1)))
-                
+
                     definition_result = DefinitionResult(False, None, [location_in_script, ])
                     request_context.send_response(definition_result.locations)
                     return True

@@ -113,7 +113,8 @@ class TestScripter(unittest.TestCase):
 
             # ... The URN should have been used to get the object
             script.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
-                
+
+
 class TestScripterOld(unittest.TestCase):
     # TODO: Remove in favor of script tests in the PGSMO objects (see: https://github.com/Microsoft/carbon/issues/1734)
 

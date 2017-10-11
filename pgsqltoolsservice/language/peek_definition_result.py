@@ -1,6 +1,4 @@
-import array
-
-from pgsqltoolsservice.workspace.contracts.common import Location
+from pgsqltoolsservice.workspace.contracts.common import Location # noqa
 
 
 class DefinitionResult:

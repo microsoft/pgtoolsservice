@@ -11,4 +11,3 @@ class ExtendCompletion(Completion):
         self.schema = schema
         super(ExtendCompletion, self).__init__(text, start_position, display, display_meta,
                                                get_display_meta)
-     

@@ -6,7 +6,6 @@
 from functools import partial
 from itertools import product
 from unittest.mock import Mock
-from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
 from pgsqltoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata, ForeignKey

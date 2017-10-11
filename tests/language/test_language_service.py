@@ -409,7 +409,6 @@ class TestLanguageService(unittest.TestCase):
 
     def test_handle_definition_request_intellisense_off(self):
         request_context: RequestContext = utils.MockRequestContext()
-        
         config = Configuration()
         config.sql.intellisense.enable_intellisense = False
         self.mock_workspace_service._configuration = config

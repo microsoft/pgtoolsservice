@@ -51,5 +51,3 @@ class Scripter(object):
             raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation {operation}')
 
         return handler[1](obj)
-        
-    

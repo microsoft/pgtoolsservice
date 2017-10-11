@@ -30,7 +30,7 @@ from pgsqltoolsservice.language.contracts.intellisense_ready import (
 __all__ = [
     'TextEdit',
     'COMPLETION_REQUEST', 'CompletionItem', 'CompletionItemKind',
-    'COMPLETION_RESOLVE_REQUEST', 'DEFINITION_REQUEST', 
+    'COMPLETION_RESOLVE_REQUEST', 'DEFINITION_REQUEST',
     'LANGUAGE_FLAVOR_CHANGE_NOTIFICATION', 'LanguageFlavorChangeParams',
     'INTELLISENSE_READY_NOTIFICATION', 'IntelliSenseReadyParams',
     'DOCUMENT_FORMATTING_REQUEST', 'DocumentFormattingParams',
