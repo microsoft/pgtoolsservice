@@ -79,7 +79,7 @@ class TestBatch(unittest.TestCase):
 
         self.assertTrue(isinstance(result_set, InMemoryResultSet))
 
-    def test_create__result_set_with_type_file_storage(self):
+    def test_create_result_set_with_type_file_storage(self):
         result_set = create_result_set(ResultSetStorageType.FILE_STORAGE, 1, 1)
 
         self.assertTrue(isinstance(result_set, FileStorageResultSet))
@@ -131,14 +131,7 @@ class TestBatch(unittest.TestCase):
         self.assertEqual(expected_subset, subset)
         self._result_set.get_subset.assert_called_once_with(0, 10)
 
-    def test_batch_doesnot_call_close_on_cursor_when_not_executed(self):
-        self.create_and_execute_batch(Batch)
-
-        self._cursor.close.assert_not_called()
-
     def test_batch_calls_close_on_cursor_when_executed(self):
-        self._cursor.rowcount = 1
-
         self.create_and_execute_batch(Batch)
 
         self._cursor.close.assert_called_once()
