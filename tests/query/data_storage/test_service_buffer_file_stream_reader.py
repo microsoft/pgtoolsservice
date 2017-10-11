@@ -190,7 +190,9 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._bytea_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._bytea_test_value.tobytes(), res[0].raw_object.tobytes())
+        expected = self._bytea_test_value.tobytes()
+        actual = res[0].raw_object.tobytes()
+        self.assertEqual(expected, actual)
 
     def test_read_dict(self):
         test_file_offset = 0
@@ -202,8 +204,14 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._dict_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._dict_test_value["Ser,ver"], res[0].raw_object["Ser,ver"])
-        self.assertEqual(self._dict_test_value["Sche'ma"], res[0].raw_object["Sche'ma"])
+        actual_raw_object = res[0].raw_object
+        expected1 = self._dict_test_value["Ser,ver"]
+        actual1 = actual_raw_object["Ser,ver"]
+        expected2 = self._dict_test_value["Sche'ma"]
+        actual2 = actual_raw_object["Sche'ma"]
+
+        self.assertEqual(expected1, actual1)
+        self.assertEqual(expected2, actual2)
 
     def test_read_list(self):
         test_file_offset = 0
@@ -215,7 +223,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._list_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._list_test_value, res[0].raw_object)
+        self.assertEqual(str(self._list_test_value), str(res[0].raw_object))
 
     def test_read_numericrange(self):
         test_file_offset = 0
@@ -227,7 +235,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._numericrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._numericrange_test_value, res[0].raw_object)
+        self.assertEqual(str(self._numericrange_test_value), str(res[0].raw_object))
 
     def test_read_datetimerange(self):
         test_file_offset = 0
@@ -239,8 +247,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._datetimerange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._datetimerange_test_value.lower, res[0].raw_object.lower)
-        self.assertEqual(self._datetimerange_test_value.upper, res[0].raw_object.upper)
+        self.assertEqual(str(self._datetimerange_test_value), str(res[0].raw_object))
 
     def test_read_datetimetzrange(self):
         test_file_offset = 0
@@ -252,8 +259,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._datetimetzrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._datetimetzrange_test_value.lower, res[0].raw_object.lower)
-        self.assertEqual(self._datetimetzrange_test_value.upper, res[0].raw_object.upper)
+        self.assertEqual(str(self._datetimetzrange_test_value), str(res[0].raw_object))
 
     def test_read_daterange(self):
         test_file_offset = 0
@@ -265,8 +271,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._daterange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._daterange_test_value.lower, res[0].raw_object.lower)
-        self.assertEqual(self._daterange_test_value.upper, res[0].raw_object.upper)
+        self.assertEqual(str(self._daterange_test_value), str(res[0].raw_object))
 
     def test_read_multiple_cols(self):
         test_file_offset = 0
