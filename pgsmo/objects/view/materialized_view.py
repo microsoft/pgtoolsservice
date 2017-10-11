@@ -7,28 +7,22 @@ import os.path
 
 from pgsmo.objects.node_object import NodeCollection, NodeObject
 from pgsmo.objects.view.view_base import ViewBase
-from pgsmo.objects.table_objects.rule import Rule
-from pgsmo.objects.table_objects.trigger import Trigger
+from pgsmo.objects.table_objects.index import Index
 from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils.templating as templating
 
 
-class View(ViewBase):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
+class MaterializedView(ViewBase):
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'materialized_view_templates')
 
     @classmethod
     def _template_root(cls, server: 's.Server'):
         return os.path.join(cls.TEMPLATE_ROOT, server.server_type)
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str) -> None:
         ViewBase.__init__(self, server, parent, name)
-        self._rules: NodeCollection[Rule] = self._register_child_collection(Rule)
-        self._triggers: NodeCollection[Trigger] = self._register_child_collection(Trigger)
+        self._indexes: NodeCollection[Index] = self._register_child_collection(Index)
 
     @property
-    def rules(self) -> NodeCollection[Rule]:
-        return self._rules
-
-    @property
-    def triggers(self) -> NodeCollection[Trigger]:
-        return self._triggers
+    def indexes(self) -> NodeCollection[Index]:
+        return self._indexes

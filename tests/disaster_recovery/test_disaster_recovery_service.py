@@ -40,7 +40,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
         self.connection_details.options = {
             'host': self.host,
             'dbname': self.dbname,
-            'user': self.username
+            'user': self.username,
+            'port': 5432
         }
         self.test_uri = 'test_uri'
         self.connection_info = ConnectionInfo(self.test_uri, self.connection_details)
@@ -159,7 +160,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
             f'--host={self.host}',
             f'--username={self.username}',
             '--no-owner',
-            f'--schema={self.schema}'
+            f'--schema={self.schema}',
+            f'--port=5432'
         ]
         self._test_perform_backup_restore_internal(exe_name, test_method, test_params, expected_args)
 
@@ -174,7 +176,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
             f'--host={self.host}',
             f'--username={self.username}',
             '--no-owner',
-            f'--schema={self.schema}'
+            f'--schema={self.schema}',
+            f'--port=5432'
         ]
         self._test_perform_backup_restore_internal(exe_name, test_method, test_params, expected_args)
 
