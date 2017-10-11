@@ -186,7 +186,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_BYTEA
+        col.data_type = datatypes.DATATYPE_BYTEA
         test_columns_info.append(col)
 
         res = self._bytea_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -200,7 +200,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_JSON
+        col.data_type = datatypes.DATATYPE_JSON
         test_columns_info.append(col)
 
         res = self._dict_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -219,7 +219,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_ARRAY
+        col.data_type = datatypes.DATATYPE_ARRAY
         test_columns_info.append(col)
 
         res = self._list_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -231,7 +231,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_INT4RANGE
+        col.data_type = datatypes.DATATYPE_INT4RANGE
         test_columns_info.append(col)
 
         res = self._numericrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -243,7 +243,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_TSRANGE
+        col.data_type = datatypes.DATATYPE_TSRANGE
         test_columns_info.append(col)
 
         res = self._datetimerange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -255,7 +255,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_TSTZRANGE
+        col.data_type = datatypes.DATATYPE_TSTZRANGE
         test_columns_info.append(col)
 
         res = self._datetimetzrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -267,7 +267,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type_name = datatypes.DATATYPE_DATERANGE
+        col.data_type = datatypes.DATATYPE_DATERANGE
         test_columns_info.append(col)
 
         res = self._daterange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
