@@ -42,7 +42,7 @@ Integration tests require a local config file that contains the options for conn
 ### Creating Integration Tests
 Integration tests can be inserted in line with our unit tests. The `tests.integration` module exports a `integration_test` decorator and a `get_connection` function that can be used in integration tests.
 
-To declare that a test is an integration test, mark it with the imported `@integration_test` decorator. This will automatically patch `psycopg2.connect` in your test to return the test database connection from your config file, and will let you use the `get_connection` function to retrieve that connection if you need it elsewhere. You can also use the `create_extra_test_database` function if your test needs additional databases.
+To declare that a test is an integration test, mark it with the imported `@integration_test` decorator. This will automatically patch `psycopg2.connect` in your test to return the test database connection from your config file, and will let you use the `get_connection` function to retrieve that connection if you need it elsewhere. You can optionally pass `min_version` and `max_version` integer arguments to the `@integration_test` decorator to make the test only run when connected to the specified versions of Postgres. You can also use the `create_extra_test_database` function if your test needs additional databases.
 
 Each integration test will run with its own database, which will be created before the test starts and dropped when the test ends.
 
