@@ -534,7 +534,7 @@ class PGCompleter(Completer):
                     -1,
                     display_meta='columns',
                     display='*'
-                    ),
+                ),
                 priority=(1, 1, 1)
             )]
 
@@ -591,8 +591,8 @@ class PGCompleter(Completer):
             # Schema-qualify if (1) new table in same schema as old, and old
             # is schema-qualified, or (2) new in other schema, except public
             if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)]
-               and left.schema == right.schema
-               or left.schema not in(right.schema, 'public')):
+                                          and left.schema == right.schema
+                                          or left.schema not in(right.schema, 'public')):
                 join = left.schema + '.' + join
             prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
                 0 if (left.schema, left.tbl) in other_tbls else 1)

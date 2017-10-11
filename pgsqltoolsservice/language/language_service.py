@@ -101,7 +101,7 @@ class LanguageService:
     def handle_definition_request(self, request_context: RequestContext, text_document_position: TextDocumentPosition) -> None:
         response = []
         request_context.send_notification(STATUS_CHANGE_NOTIFICATION, StatusChangeParams.from_data(owner_uri=text_document_position.text_document.uri,
-                                          status="DefinitionRequested"))
+                                                                                                   status="DefinitionRequested"))
 
         def do_send_response():
             request_context.send_response(response)
@@ -121,7 +121,7 @@ class LanguageService:
             return
 
         cursor_pos: int = len(script_file.get_text_in_range(Range.from_data(0, 0, text_document_position.position.line,
-                              text_document_position.position.character)))
+                                                                            text_document_position.position.character)))
         text: str = script_file.get_all_text()
         scriptparseinfo.document = Document(text, cursor_pos)
 
@@ -131,7 +131,7 @@ class LanguageService:
                                     functools.partial(do_send_response))
         self.operations_queue.add_operation(operation)
         request_context.send_notification(STATUS_CHANGE_NOTIFICATION, StatusChangeParams.from_data(owner_uri=text_document_position.text_document.uri,
-                                          status="DefinitionRequestCompleted"))
+                                                                                                   status="DefinitionRequestCompleted"))
 
     def handle_completion_request(self, request_context: RequestContext, params: TextDocumentPosition) -> None:
         """

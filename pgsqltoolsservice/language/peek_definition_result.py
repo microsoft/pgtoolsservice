@@ -1,4 +1,4 @@
-from pgsqltoolsservice.workspace.contracts.common import Location # noqa
+from pgsqltoolsservice.workspace.contracts.common import Location  # noqa
 
 
 class DefinitionResult:
