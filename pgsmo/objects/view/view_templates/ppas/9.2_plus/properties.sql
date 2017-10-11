@@ -65,7 +65,4 @@ SELECT
     nsp.nspname
 FROM
     pg_namespace nsp
-WHERE
-    (nsp.nspname NOT LIKE E'pg\\_%'
-        AND nsp.nspname != 'information_schema')
 {% endif %}
