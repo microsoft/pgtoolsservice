@@ -32,4 +32,3 @@ class View(ViewBase):
     @property
     def triggers(self) -> NodeCollection[Trigger]:
         return self._triggers
-    

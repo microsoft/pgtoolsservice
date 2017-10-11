@@ -14,7 +14,6 @@ from pgsqltoolsservice.scripting.contracts import (
 from pgsqltoolsservice.connection.contracts import ConnectionType
 import pgsqltoolsservice.utils as utils
 import sqlparse
-import re
 
 
 class ScriptingService(object):

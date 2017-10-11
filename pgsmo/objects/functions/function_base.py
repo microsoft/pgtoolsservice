@@ -143,10 +143,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
     @property
     def prorows(self):
-        if(self.proretset):
-            return False
-        else:
-            return True
+        return self._full_properties.get("prorows")
 
     @property
     def variables(self):

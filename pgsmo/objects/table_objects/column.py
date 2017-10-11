@@ -355,22 +355,22 @@ def get_full_type(self, nsp, typname, isDup, numdims, typmod):
         if typmod != -1:
             length = '('
             if name == 'numeric':
-                _len = (typmod - 4) >> 16;
-                _prec = (typmod - 4) & 0xffff;
+                _len = (typmod - 4) >> 16
+                _prec = (typmod - 4) & 0xffff
                 length += str(_len)
                 if (_prec):
                     length += ',' + str(_prec)
             elif name == 'time' or \
-                            name == 'timetz' or \
-                            name == 'time without time zone' or \
-                            name == 'time with time zone' or \
-                            name == 'timestamp' or \
-                            name == 'timestamptz' or \
-                            name == 'timestamp without time zone' or \
-                            name == 'timestamp with time zone' or \
-                            name == 'bit' or \
-                            name == 'bit varying' or \
-                            name == 'varbit':
+                name == 'timetz' or \
+                name == 'time without time zone' or \
+                name == 'time with time zone' or \
+                name == 'timestamp' or \
+                name == 'timestamptz' or \
+                name == 'timestamp without time zone' or \
+                name == 'timestamp with time zone' or \
+                name == 'bit' or \
+                name == 'bit varying' or \
+                    name == 'varbit':
                 _prec = 0
                 _len = typmod
                 length += str(_len)
