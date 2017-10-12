@@ -10,7 +10,7 @@ import pgsmo.utils.templating as templating
 
 
 class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_rule')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'rule')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Rule':
