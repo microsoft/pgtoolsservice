@@ -16,24 +16,30 @@ import sqlparse
 
 from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
 from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
-from pgsqltoolsservice.workspace.contracts import Position, TextDocumentPosition, Range
+from pgsqltoolsservice.connection.contracts import ConnectionType
+from pgsqltoolsservice.workspace.contracts import Position, TextDocumentPosition, Range, Location
 from pgsqltoolsservice.workspace import WorkspaceService    # noqa
 from pgsqltoolsservice.workspace.script_file import ScriptFile  # noqa
 from pgsqltoolsservice.language.contracts import (
     COMPLETION_REQUEST, CompletionItem, CompletionItemKind,
-    COMPLETION_RESOLVE_REQUEST,
+    COMPLETION_RESOLVE_REQUEST, DEFINITION_REQUEST,
     LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams,
     INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
     DOCUMENT_FORMATTING_REQUEST, DocumentFormattingParams,
     DOCUMENT_RANGE_FORMATTING_REQUEST, DocumentRangeFormattingParams,
-    TextEdit, FormattingOptions
+    TextEdit, FormattingOptions, StatusChangeParams, STATUS_CHANGE_NOTIFICATION
 )
 from pgsqltoolsservice.language.completion import PGCompleter   # noqa
 from pgsqltoolsservice.language.operations_queue import ConnectionContext, OperationsQueue, QueuedOperation
 from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
 from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo
 from pgsqltoolsservice.language.text import TextUtilities
+from pgsqltoolsservice.language.peek_definition_result import DefinitionResult
+from pgsqltoolsservice.scripting.contracts import ScriptOperation
 import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.metadata.contracts import ObjectMetadata
+import pgsqltoolsservice.scripting.scripter as scripter
+import tempfile
 
 # Map of meta or display_meta values to completion items. Based on SqlToolsService definitions
 DISPLAY_META_MAP: Dict[str, CompletionItemKind] = {
@@ -81,6 +87,7 @@ class LanguageService:
 
         # Register request handlers
         self._server.set_request_handler(COMPLETION_REQUEST, self.handle_completion_request)
+        self._server.set_request_handler(DEFINITION_REQUEST, self.handle_definition_request)
         self._server.set_request_handler(COMPLETION_RESOLVE_REQUEST, self.handle_completion_resolve_request)
         self._server.set_request_handler(DOCUMENT_FORMATTING_REQUEST, self.handle_doc_format_request)
         self._server.set_request_handler(DOCUMENT_RANGE_FORMATTING_REQUEST, self.handle_doc_range_format_request)
@@ -91,6 +98,40 @@ class LanguageService:
         self._service_provider.server.add_shutdown_handler(self._handle_shutdown)
 
     # REQUEST HANDLERS #####################################################
+    def handle_definition_request(self, request_context: RequestContext, text_document_position: TextDocumentPosition) -> None:
+        request_context.send_notification(STATUS_CHANGE_NOTIFICATION, StatusChangeParams(owner_uri=text_document_position.text_document.uri,
+                                                                                         status="DefinitionRequested"))
+
+        def do_send_default_empty_response():
+            request_context.send_response([])
+
+        if self.should_skip_intellisense(text_document_position.text_document.uri):
+            do_send_default_empty_response()
+            return
+
+        script_file: ScriptFile = self._workspace_service.workspace.get_file(text_document_position.text_document.uri)
+        if script_file is None:
+            do_send_default_empty_response()
+            return
+
+        script_parse_info: ScriptParseInfo = self.get_script_parse_info(text_document_position.text_document.uri, create_if_not_exists=False)
+        if not script_parse_info or not script_parse_info.can_queue():
+            do_send_default_empty_response()
+            return
+
+        cursor_position: int = len(script_file.get_text_in_range(Range.from_data(0, 0, text_document_position.position.line,
+                                                                                 text_document_position.position.character)))
+        text: str = script_file.get_all_text()
+        script_parse_info.document = Document(text, cursor_position)
+
+        operation = QueuedOperation(script_parse_info.connection_key,
+                                    functools.partial(self.send_definition_using_connected_completions, request_context, script_parse_info,
+                                                      text_document_position),
+                                    functools.partial(do_send_default_empty_response))
+        self.operations_queue.add_operation(operation)
+        request_context.send_notification(STATUS_CHANGE_NOTIFICATION, StatusChangeParams(owner_uri=text_document_position.text_document.uri,
+                                                                                         status="DefinitionRequestCompleted"))
+
     def handle_completion_request(self, request_context: RequestContext, params: TextDocumentPosition) -> None:
         """
         Lookup available completions when valid completion suggestions are requested.
@@ -98,26 +139,26 @@ class LanguageService:
         """
         response = []
 
-        def do_send_response():
+        def do_send_default_empty_response():
             request_context.send_response(response)
 
         if self.should_skip_intellisense(params.text_document.uri):
-            do_send_response()
+            do_send_default_empty_response()
             return
         script_file: ScriptFile = self._workspace_service.workspace.get_file(params.text_document.uri)
         if script_file is None:
-            do_send_response()
+            do_send_default_empty_response()
             return
 
-        scriptparseinfo: ScriptParseInfo = self.get_scriptparseinfo(params.text_document.uri, create_if_not_exists=False)
-        if not scriptparseinfo or not scriptparseinfo.can_queue():
+        script_parse_info: ScriptParseInfo = self.get_script_parse_info(params.text_document.uri, create_if_not_exists=False)
+        if not script_parse_info or not script_parse_info.can_queue():
             self._send_default_completions(request_context, script_file, params)
         else:
-            cursor_pos: int = len(script_file.get_text_in_range(Range.from_data(0, 0, params.position.line, params.position.character)))
+            cursor_position: int = len(script_file.get_text_in_range(Range.from_data(0, 0, params.position.line, params.position.character)))
             text: str = script_file.get_all_text()
-            scriptparseinfo.document = Document(text, cursor_pos)
-            operation = QueuedOperation(scriptparseinfo.connection_key,
-                                        functools.partial(self.send_connected_completions, request_context, scriptparseinfo, params),
+            script_parse_info.document = Document(text, cursor_position)
+            operation = QueuedOperation(script_parse_info.connection_key,
+                                        functools.partial(self.send_connected_completions, request_context, script_parse_info, params),
                                         functools.partial(self._send_default_completions, request_context, script_file, params))
             self.operations_queue.add_operation(operation)
 
@@ -145,24 +186,24 @@ class LanguageService:
         """
         response: List[TextEdit] = []
 
-        def do_send_response():
+        def do_send_default_empty_response():
             request_context.send_response(response)
 
         if self.should_skip_formatting(params.text_document.uri):
-            do_send_response()
+            do_send_default_empty_response()
             return
 
         file: ScriptFile = self._workspace_service.workspace.get_file(params.text_document.uri)
         if file is None:
-            do_send_response()
+            do_send_default_empty_response()
             return
         sql: str = file.get_all_text()
         if sql is None or sql.strip() == '':
-            do_send_response()
+            do_send_default_empty_response()
             return
         edit: TextEdit = self._prepare_edit(file)
         self._format_and_add_response(response, edit, sql, params)
-        do_send_response()
+        do_send_default_empty_response()
 
     def handle_doc_range_format_request(self, request_context: RequestContext, params: DocumentRangeFormattingParams) -> None:
         """
@@ -172,27 +213,27 @@ class LanguageService:
         # Validate inputs and set up response
         response: List[TextEdit] = []
 
-        def do_send_response():
+        def do_send_default_empty_response():
             request_context.send_response(response)
 
         if self.should_skip_formatting(params.text_document.uri):
-            do_send_response()
+            do_send_default_empty_response()
             return
 
         file: ScriptFile = self._workspace_service.workspace.get_file(params.text_document.uri)
         if file is None:
-            do_send_response()
+            do_send_default_empty_response()
             return
 
         # Process the text range and respond with the edit
         text_range = params.range
         sql: str = file.get_text_in_range(text_range)
         if sql is None or sql.strip() == '':
-            do_send_response()
+            do_send_default_empty_response()
             return
         edit: TextEdit = TextEdit.from_data(text_range, None)
         self._format_and_add_response(response, edit, sql, params)
-        do_send_response()
+        do_send_default_empty_response()
 
     # SERVICE NOTIFICATION HANDLERS #####################################################
     def on_connect(self, conn_info: ConnectionInfo) -> threading.Thread:
@@ -233,7 +274,7 @@ class LanguageService:
 
     def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
         # TODO build the cache. For now, sending intellisense ready as a test
-        scriptparseinfo: ScriptParseInfo = self.get_scriptparseinfo(conn_info.owner_uri, create_if_not_exists=True)
+        scriptparseinfo: ScriptParseInfo = self.get_script_parse_info(conn_info.owner_uri, create_if_not_exists=True)
         if scriptparseinfo is not None:
             # This is a connection for an actual script in the workspace. Build the intellisense cache for it
             connection_context: ConnectionContext = self.operations_queue.add_connection_context(conn_info, False)
@@ -270,14 +311,14 @@ class LanguageService:
         edit.new_text = sqlparse.format(text, **options)
         response.append(edit)
 
-    def get_scriptparseinfo(self, owner_uri, create_if_not_exists=False) -> ScriptParseInfo:
+    def get_script_parse_info(self, owner_uri, create_if_not_exists=False) -> ScriptParseInfo:
         with self._script_map_lock:
             if owner_uri in self._script_map:
                 return self._script_map[owner_uri]
             if create_if_not_exists:
-                scriptparseinfo = ScriptParseInfo()
-                self._script_map[owner_uri] = scriptparseinfo
-                return scriptparseinfo
+                script_parse_info = ScriptParseInfo()
+                self._script_map[owner_uri] = script_parse_info
+                return script_parse_info
             return None
 
     def _send_default_completions(self, request_context: RequestContext, script_file: ScriptFile, params: TextDocumentPosition) -> bool:
@@ -303,6 +344,42 @@ class LanguageService:
             return True
         # Else return false so the timeout task can be sent instead
         return False
+
+    def send_definition_using_connected_completions(self, request_context: RequestContext, scriptparseinfo: ScriptParseInfo,
+                                                    params: TextDocumentPosition, context: ConnectionContext) -> bool:
+        if not context or not context.is_connected:
+            return False
+
+        definition_result: DefinitionResult = None
+        completer: PGCompleter = context.pgcompleter
+        completions: List[Completion] = completer.get_completions(scriptparseinfo.document, None)
+
+        if completions:
+            word_under_cursor = scriptparseinfo.document.get_word_under_cursor()
+            matching_completion = next(completion for completion in completions if completion.display == word_under_cursor)
+            if matching_completion:
+                connection = self._connection_service.get_connection(params.text_document.uri,
+                                                                     ConnectionType.QUERY)
+                scripter_instance = scripter.Scripter(connection)
+                object_metadata = ObjectMetadata(None, None, matching_completion.display_meta,
+                                                 matching_completion.display,
+                                                 matching_completion.schema)
+                create_script = scripter_instance.script(ScriptOperation.CREATE, object_metadata)
+
+                if create_script:
+                    with tempfile.NamedTemporaryFile(mode='wt', delete=False, encoding='utf-8', suffix='.sql', newline=None) as namedfile:
+                        namedfile.write(create_script)
+                        if namedfile.name:
+                            file_uri = "file:///" + namedfile.name.strip('/')
+                            location_in_script = Location(file_uri, Range(Position(0, 1), Position(1, 1)))
+                            definition_result = DefinitionResult(False, None, [location_in_script, ])
+
+                            request_context.send_response(definition_result.locations)
+                            return True
+
+        if definition_result is None:
+            request_context.send_response(DefinitionResult(True, '', []))
+            return False
 
     @classmethod
     def to_completion_item(cls, completion: Completion, params: TextDocumentPosition) -> CompletionItem:

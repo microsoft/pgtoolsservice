@@ -204,7 +204,7 @@ class CapabilitiesService:
         """
         capabilities = ServerCapabilities(
             text_document_sync=TextDocumentSyncKind.INCREMENTAL,
-            definition_provider=False,
+            definition_provider=True,
             references_provider=False,
             document_formatting_provider=True,
             document_range_formatting_provider=True,
