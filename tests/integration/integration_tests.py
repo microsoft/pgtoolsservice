@@ -5,6 +5,7 @@
 
 """Module containing the logic to set up integration tests with a database connection"""
 
+import functools
 import json
 import os
 from typing import List
@@ -13,23 +14,34 @@ import uuid
 import psycopg2
 
 
-def integration_test(test):
-    """Decorator used to indicate that a test is an integration test, giving it a connection"""
+def integration_test(min_version=None, max_version=None):
+    """
+    Decorator used to indicate that a test is an integration test, giving it a connection
 
-    def new_test(*args):
-        _ConnectionManager.current_test_is_integration_test = True
-        try:
-            _ConnectionManager.run_test(test, *args)
-        finally:
-            _ConnectionManager.current_test_is_integration_test = False
-            _ConnectionManager.drop_test_databases()
-    new_test.is_integration_test = True
-    new_test.__name__ = test.__name__
-    return new_test
+    :param min_version: The minimum server version, as an integer, for running the test (e.g. 90600 for 9.6.0)
+    :param max_version: The maximum server version, as an integer, for running the test (e.g. 90600 for 9.6.0)
+    """
 
+    # If the decorator is called without parentheses, the first argument will actually be the test function
+    test_function = None
+    if callable(min_version):
+        test_function = min_version
+        min_version = None
 
-# Indicate that nose should not treat the decorator as its own test
-integration_test.__test__ = False
+    def integration_test_internal(test):
+        @functools.wraps(test)
+        def new_test(*args):
+            _ConnectionManager.current_test_is_integration_test = True
+            try:
+                _ConnectionManager.run_test(test, min_version, max_version, *args)
+            finally:
+                _ConnectionManager.current_test_is_integration_test = False
+                _ConnectionManager.drop_test_databases()
+        new_test.is_integration_test = True
+        new_test.__name__ = test.__name__
+        return new_test
+
+    return integration_test_internal if test_function is None else integration_test_internal(test_function)
 
 
 def get_connection_details() -> dict:
@@ -46,6 +58,11 @@ def create_extra_test_database() -> str:
     automatically be dropped at the end of the test.
     """
     return _ConnectionManager.create_extra_database()
+
+
+# Indicate that nose should not treat these functions as their own tests
+integration_test.__test__ = False
+create_extra_test_database.__test__ = False
 
 
 class _ConnectionManager:
@@ -72,11 +89,14 @@ class _ConnectionManager:
         return db_name
 
     @classmethod
-    def run_test(cls, test, *args):
+    def run_test(cls, test, min_version, max_version, *args):
         cls._create_test_databases()
         needs_setup = False
         for index, details in enumerate(cls._current_test_connection_detail_list):
             cls._in_progress_test_index = index
+            server_version = cls._maintenance_connections[index].server_version
+            if min_version is not None and server_version < min_version or max_version is not None and server_version > max_version:
+                continue
             try:
                 if needs_setup:
                     args[0].setUp()

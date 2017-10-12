@@ -15,11 +15,9 @@ SELECT
 FROM
     pg_namespace nsp
 WHERE
-    nsp.nspparent = 0 AND
+    nsp.nspparent = 0 
     {% if scid %}
-    nsp.oid={{scid}}::oid AND
+    AND nsp.oid={{scid}}::oid 
     {% endif %}
-    NOT (
-{{ CATALOGS.LIST('nsp') }}
-    )
+    
 ORDER BY nspname;

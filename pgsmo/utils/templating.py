@@ -63,7 +63,7 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
                 return os.path.join(folder, template_name)
         elif modifier == 'plus':
             # Version can be equal to or greater than
-            if server_version[0] >= major and server_version[1] >= minor:
+            if server_version[0] > major or (server_version[0] == major and server_version[1] >= minor):
                 return os.path.join(folder, template_name)
         # TODO: Modifier is minus
 

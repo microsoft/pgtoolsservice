@@ -175,8 +175,8 @@ class TestQueryService(unittest.TestCase):
         self.query_execution_service._handle_execute_query_request(self.request_context, params)
         self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
-        # Then the transaction gets rolled back, the cursor gets closed, and an error notification gets sent
-        self.cursor.close.assert_called_once()
+        # Then the transaction gets rolled back, the cursor does not get manually closed, and an error notification gets sent
+        self.cursor.close.assert_not_called()
         self.request_context.send_notification.assert_called()
 
         notification_calls = self.request_context.send_notification.mock_calls
@@ -362,10 +362,10 @@ class TestQueryService(unittest.TestCase):
         self.query_execution_service._handle_execute_query_request(self.request_context, params)
         self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
-        # Then we executed the query, closed the cursor,
+        # Then we executed the query, did not manually call close,
         # did not call fetchall(), and cleared the notices
         self.cursor.execute.assert_called_once()
-        self.cursor.close.assert_called_once()
+        self.cursor.close.assert_not_called()
         self.cursor.fetchall.assert_not_called()
         self.assertEqual(self.connection.notices, [])
 

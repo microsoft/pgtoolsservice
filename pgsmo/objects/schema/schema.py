@@ -149,15 +149,15 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         """ Function that returns data for update script """
         return {
             "data": {
-                "name": self.name,
-                "namespaceowner": self.namespaceowner,
-                "description": self.description,
+                "name": '<New Name>',
+                "namespaceowner": '<New Owner>',
+                "description": '<New Description>',
                 "nspacl": self.nspacl,
                 "defacl": self.defacl,
                 "seclabels": self.seclabels
             }, "o_data": {
-                "name": "",
-                "namespaceowner": "",
-                "description": ""
+                "name": self.name,
+                "namespaceowner": self.namespaceowner,
+                "description": self.description
             }
         }

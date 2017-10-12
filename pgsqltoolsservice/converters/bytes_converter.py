@@ -4,9 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Callable, Any
+from typing import Callable, Any  # noqa
 import decimal
 import struct
+import json
 
 from pgsqltoolsservice.parsers import datatypes
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
@@ -67,11 +68,11 @@ def convert_memoryview(value: memoryview):
 
 
 def convert_dict(value: dict):
-    return bytearray(str(value).encode())
+    return bytearray(json.dumps(value).encode())
 
 
 def convert_list(value: list):
-    return bytearray(str(value).encode())
+    return bytearray(json.dumps(value).encode())
 
 
 def convert_numericrange(value: NumericRange):
