@@ -1,4 +1,3 @@
-
 # --------------------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
@@ -17,7 +16,7 @@ from prompt_toolkit.completion import Completer, Completion
 # {{ PGToolsService EDIT }}
 # from prompt_toolkit.document import Document
 # {{ PGToolsService EDIT }}
-from pgsqltoolsservice.language.completion.extendcompletion import ExtendCompletion
+from pgsqltoolsservice.language.completion.pg_completion import PGCompletion
 from .packages.sqlcompletion import (   # noqa
     FromClauseItem, suggest_type, Database, Schema, Table, Function, Column, View,
     Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join
@@ -38,11 +37,15 @@ from .packages.prioritization import PrevalenceCounter
 
 Match = namedtuple('Match', ['completion', 'priority'])
 
-_SchemaObject = namedtuple('SchemaObject', 'name schema meta obj_schema')
+_SchemaObject = namedtuple('SchemaObject', 'name schema meta schema_name')
 
 
-def SchemaObject(name, schema=None, meta=None, obj_schema=None):
-    return _SchemaObject(name, schema, meta, obj_schema)
+def SchemaObject(name, schema=None, meta=None, schema_name=None):
+    """
+    schema and schema_name mean to same. However, schema holds a value only if completion/intellisense
+    need it based on _maybe_schema logic. schema_name always holds a value.
+    """
+    return _SchemaObject(name, schema, meta, schema_name)
 
 
 _Candidate = namedtuple(
@@ -433,7 +436,13 @@ class PGCompleter(Completer):
                     prio2, lexical_priority
                 )
 
-                extend_completion = ExtendCompletion(text=item, start_position=-text_len, display_meta=display_meta, display=display, schema=schema)
+                extend_completion = PGCompletion(
+                    text=item,
+                    start_position=-text_len,
+                    display_meta=display_meta,
+                    display=display,
+                    schema=schema)
+
                 matches.append(
                     Match(
                         completion=extend_completion,
@@ -529,7 +538,7 @@ class PGCompleter(Completer):
                                     for t, cs in scoped_cols.items() for c in cs)
 
             return [Match(
-                completion=ExtendCompletion(
+                completion=PGCompletion(
                     collist,
                     -1,
                     display_meta='columns',
@@ -781,7 +790,7 @@ class PGCompleter(Completer):
         item = maybe_schema + cased_tbl + suffix + maybe_alias
         display = maybe_schema + cased_tbl + display_suffix + maybe_alias
         prio2 = 0 if tbl.schema else 1
-        return Candidate(item, synonyms=synonyms, prio2=prio2, display=display, schema=tbl.obj_schema)
+        return Candidate(item, synonyms=synonyms, prio2=prio2, display=display, schema=tbl.schema_name)
 
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')
@@ -962,7 +971,7 @@ class PGCompleter(Completer):
             SchemaObject(
                 name=obj,
                 schema=(self._maybe_schema(schema=sch, parent=schema)),
-                obj_schema=sch
+                schema_name=sch
             )
             for sch in self._get_schemas(obj_type, schema)
             for obj in self.dbmetadata[obj_type][sch].keys()

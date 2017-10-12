@@ -9,19 +9,9 @@ from pgsqltoolsservice.serialization import Serializable
 
 
 class StatusChangeParams(Serializable):
-    """
-    Parameters for the Status Change notification
-    """
-    @classmethod
-    def from_data(cls, owner_uri: str, status: str):
-        obj = cls()
-        obj.owner_uri = owner_uri
-        obj.status = status
-        return obj
-
-    def __init__(self):
-        self.owner_uri: str = None
-        self.status: str = None
+    def __init__(self, owner_uri=None, status=None):
+        self.owner_uri: str = owner_uri
+        self.status: str = status
 
 
 STATUS_CHANGE_NOTIFICATION = 'textDocument/statusChanged'

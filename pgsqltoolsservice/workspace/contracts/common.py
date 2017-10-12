@@ -96,6 +96,13 @@ class TextDocumentPosition(Serializable):
 
 
 class Location(Serializable):
-    def __init__(self, uri=None, range=None):
-        self.uri: str = uri
-        self.range: Range = range
+    """
+    Defines a range within a file
+    Attributes:
+        uri: uri pointing to a file
+        range: start and stop position determining range within the file
+    """
+
+    def __init__(self, uri: str, rng: Range):
+        self.uri = uri
+        self.range = rng

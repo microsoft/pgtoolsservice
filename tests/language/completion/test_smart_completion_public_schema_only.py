@@ -9,7 +9,7 @@ import itertools
 from tests.language.completion.metadata import (MetaData, alias, name_join, fk_join, join, keyword,
                                                 schema, table, view, function, column, wildcard_expansion,
                                                 get_result, result_set, qual, no_qual)
-from pgsqltoolsservice.language.completion.extendcompletion import ExtendCompletion
+from pgsqltoolsservice.language.completion.pg_completion import PGCompletion
 
 METADATA = {
     'tables': {
@@ -800,8 +800,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         '''
         result = result_set(completer, text)
         expected = set([
-            ExtendCompletion('cte1', 0, display_meta='table'),
-            ExtendCompletion('cte2', 0, display_meta='table'),
+            PGCompletion('cte1', 0, display_meta='table'),
+            PGCompletion('cte2', 0, display_meta='table'),
         ])
         self.assertTrue(expected <= result)
 
@@ -814,8 +814,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         )
         expected = (
             [
-                ExtendCompletion('foo', 0, display_meta='column'),
-                ExtendCompletion('bar', 0, display_meta='column'),
+                PGCompletion('foo', 0, display_meta='column'),
+                PGCompletion('bar', 0, display_meta='column'),
             ] + testdata.functions_and_keywords()
         )
 
@@ -827,7 +827,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     ]))
     def test_cte_qualified_columns(self, completer, text):
         result = result_set(completer, text)
-        expected = [ExtendCompletion('foo', 0, display_meta='column')]
+        expected = [PGCompletion('foo', 0, display_meta='column')]
         self.assertSetEqual(result, set(expected))
 
     @parameterized.expand([
@@ -846,7 +846,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     @parameterized.expand(to_params(completers()))
     def test_keyword_after_alter(self, completer):
         text = 'ALTER TABLE users ALTER '
-        expected = ExtendCompletion('COLUMN', start_position=0, display_meta='keyword')
+        expected = PGCompletion('COLUMN', start_position=0, display_meta='keyword')
         completions = result_set(completer, text)
         self.assertTrue(expected in set(completions))
 
