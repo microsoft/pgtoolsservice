@@ -116,11 +116,16 @@ class Batch:
             cursor.execute(self.batch_text)
 
             self.after_execute(cursor)
-        except psycopg2.DatabaseError:
+        except psycopg2.DatabaseError as error:
             self._has_error = True
-            raise
+            # We just raise the error with primary message and not the cursor stacktrace
+            raise psycopg2.DatabaseError(error.diag.message_primary) from error
         finally:
-            cursor.close()
+            # We are doing this because when the execute fails for named cursors
+            # cursor is not activated on the server which results in failure on close
+            # Hence we are checking if the cursor was really executed for us to close it
+            if cursor.rowcount != -1 and cursor.rowcount is not None:
+                cursor.close()
             self._has_executed = True
             self._execution_end_time = datetime.now()
             self._notices = cursor.connection.notices
@@ -138,6 +143,9 @@ class Batch:
         result_set = create_result_set(self._storage_type, 0, self.id)
         result_set.read_result_to_end(cursor)
         self._result_set = result_set
+
+    def get_subset(self, start_index: int, end_index: int):
+        return self._result_set.get_subset(start_index, end_index)
 
 
 class SelectBatch(Batch):

@@ -83,11 +83,12 @@ class FileStorageResultSet(ResultSet):
         storage_data_reader = StorageDataReader(cursor)
 
         with file_stream.get_writer(self._output_file_name) as writer:
-            self.columns_info = storage_data_reader.columns_info
 
             while storage_data_reader.read_row():
                 self._file_offsets.append(self._total_bytes_written)
                 self._total_bytes_written += writer.write_row(storage_data_reader)
+
+            self.columns_info = storage_data_reader.columns_info
 
     def _append_row_to_buffer(self, cursor):
 

@@ -13,6 +13,7 @@ from pgsqltoolsservice.scripting.contracts import (
 )
 from pgsqltoolsservice.connection.contracts import ConnectionType
 import pgsqltoolsservice.utils as utils
+import sqlparse
 
 
 class ScriptingService(object):
@@ -51,7 +52,8 @@ class ScriptingService(object):
             scripter = Scripter(connection)
 
             script = scripter.script(scripting_operation, object_metadata)
-            request_context.send_response(ScriptAsResponse(params.owner_uri, script))
+            formatted_script = sqlparse.format(script, reindent=True, strip_comments=True)
+            request_context.send_response(ScriptAsResponse(params.owner_uri, formatted_script))
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Scripting operation failed')

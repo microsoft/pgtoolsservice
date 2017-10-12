@@ -79,7 +79,7 @@ class TestBatch(unittest.TestCase):
 
         self.assertTrue(isinstance(result_set, InMemoryResultSet))
 
-    def test_create__result_set_with_type_file_storage(self):
+    def test_create_result_set_with_type_file_storage(self):
         result_set = create_result_set(ResultSetStorageType.FILE_STORAGE, 1, 1)
 
         self.assertTrue(isinstance(result_set, FileStorageResultSet))
@@ -118,6 +118,23 @@ class TestBatch(unittest.TestCase):
 
         self.assertFalse(isinstance(batch, SelectBatch))
         self.assertTrue(isinstance(batch, Batch))
+
+    def test_get_subset(self):
+        expected_subset = []
+        batch = create_batch('select 1', 0, self._selection_data, self._batch_events, ResultSetStorageType.IN_MEMORY)
+        self._result_set.get_subset = mock.Mock(return_value=expected_subset)
+
+        batch._result_set = self._result_set
+
+        subset = batch.get_subset(0, 10)
+
+        self.assertEqual(expected_subset, subset)
+        self._result_set.get_subset.assert_called_once_with(0, 10)
+
+    def test_batch_calls_close_on_cursor_when_executed(self):
+        self.create_and_execute_batch(Batch)
+
+        self._cursor.close.assert_called_once()
 
 
 if __name__ == '__main__':

@@ -130,7 +130,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
 
     @property
     def like_relation(self):
-        return self._full_properties.get("like_relation", "")
+        return f'{self.schema}.{self.name}'
 
     @property
     def primary_key(self):
@@ -232,7 +232,6 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
             "coll_inherits": self.coll_inherits,
             "columns": self.columns,
             "typname": self.typname,
-            "like_relation": self.like_relation,
             "primary_key": self.primary_key,
             "unique_constraint": self.unique_constraint,
             "foreign_key": self.foreign_key,
