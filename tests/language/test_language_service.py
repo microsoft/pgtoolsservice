@@ -251,7 +251,7 @@ class TestLanguageService(unittest.TestCase):
         # an intellisense ready notification should be sent for that URI
         self.flow_validator.validate()
         # ... and the scriptparseinfo should be created
-        info: ScriptParseInfo = service.get_scriptparseinfo(conn_info.owner_uri)
+        info: ScriptParseInfo = service.get_script_parse_info(conn_info.owner_uri)
         self.assertIsNotNone(info)
         # ... and the info should have the connection key set
         self.assertEqual(info.connection_key, OperationsQueue.create_key(conn_info))
