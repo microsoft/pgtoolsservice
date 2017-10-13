@@ -13,7 +13,7 @@ import pgsmo.utils.templating as templating
 
 
 class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_column')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'column')
     MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
 
     @classmethod

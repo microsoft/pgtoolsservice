@@ -15,6 +15,7 @@ from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.scripting.scripter as scripter
 from pgsqltoolsservice.scripting.scripting_service import ScriptingService
 
+
 import tests.utils as utils
 
 

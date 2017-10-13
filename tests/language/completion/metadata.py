@@ -6,11 +6,11 @@
 from functools import partial
 from itertools import product
 from unittest.mock import Mock
-from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
 from pgsqltoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata, ForeignKey
 from pgsqltoolsservice.language.completion import PGCompleter
+from pgsqltoolsservice.language.completion.pg_completion import PGCompletion
 
 qual = ['if_more_than_one_table', 'always']
 no_qual = ['if_more_than_one_table', 'never']
@@ -23,11 +23,11 @@ def escape(name):
 
 
 def completion(display_meta, text, pos=0):
-    return Completion(text, start_position=pos, display_meta=display_meta)
+    return PGCompletion(text, start_position=pos, display_meta=display_meta)
 
 
 def function(text, pos=0, display=None):
-    return Completion(
+    return PGCompletion(
         text,
         display=display or text,
         start_position=pos,
@@ -63,7 +63,7 @@ join = partial(completion, 'join')
 
 
 def wildcard_expansion(cols, pos=-1):
-    return Completion(
+    return PGCompletion(
         cols, start_position=pos, display_meta='columns', display='*')
 
 

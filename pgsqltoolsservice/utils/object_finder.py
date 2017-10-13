@@ -104,7 +104,7 @@ def get_object(server: Server, object_type: str, metadata):
         "Role": find_role,
         "Function": find_function,
         "Sequence": find_sequence,
-        "DataType": find_datatype,
-        "MaterializedView": find_materialized_view
+        "Datatype": find_datatype,
+        "Materializedview": find_materialized_view
     }
-    return object_map[object_type](server, metadata)
+    return object_map[object_type.capitalize()](server, metadata)

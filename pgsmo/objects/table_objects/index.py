@@ -12,7 +12,7 @@ import pgsmo.utils.templating as templating
 
 
 class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_index')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'index')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Index':

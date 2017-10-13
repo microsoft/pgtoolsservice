@@ -60,7 +60,7 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
 
 
 class CheckConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_check')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_check')
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -120,7 +120,7 @@ class CheckConstraint(Constraint):
 
 
 class ExclusionConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_exclusion')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_exclusion')
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -210,7 +210,7 @@ class ExclusionConstraint(Constraint):
 
 
 class ForeignKeyConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_fk')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_fk')
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -304,7 +304,7 @@ class ForeignKeyConstraint(Constraint):
 
 
 class IndexConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_constraint_index')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_index')
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
