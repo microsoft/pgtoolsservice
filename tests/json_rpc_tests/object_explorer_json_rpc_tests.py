@@ -14,7 +14,7 @@ from tests.json_rpc_tests import JSONRPCTestCase, DefaultRPCTestMessages, RPCTes
 from tests.json_rpc_tests.object_explorer_test_metadata import META_DATA, CREATE_SCRIPTS, GET_OID_SCRIPTS
 
 
-class ObjectExplorerTests(unittest.TestCase):
+class ObjectExplorerJSONRPCTests(unittest.TestCase):
 
     @integration_test
     def test_object_explorer(self):
@@ -22,7 +22,7 @@ class ObjectExplorerTests(unittest.TestCase):
         connection = psycopg2.connect(**connection_details)
         connection.autocommit = True
 
-        self.args = self.setup_test_environment(META_DATA, connection)
+        self.args = self.create_database_objects(META_DATA, connection)
 
         owner_uri = 'test_uri'
         connection_details['dbname'] = self.args["Databases_Name"]
@@ -84,7 +84,7 @@ class ObjectExplorerTests(unittest.TestCase):
 
         JSONRPCTestCase(test_messages).run()
 
-    def setup_test_environment(self, meta_data: dict, connection: 'psycopg2.connection', **kwargs):
+    def create_database_objects(self, meta_data: dict, connection: 'psycopg2.connection', **kwargs):
 
         for key, metadata_value in meta_data.items():
             create_script: str = CREATE_SCRIPTS.get(key)
@@ -111,7 +111,7 @@ class ObjectExplorerTests(unittest.TestCase):
             children = metadata_value.get('Children')
 
             if children is not None:
-                return self.setup_test_environment(children, connection, **kwargs)
+                return self.create_database_objects(children, connection, **kwargs)
 
         return kwargs
 
