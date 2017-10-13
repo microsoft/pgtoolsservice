@@ -3,26 +3,33 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import functools
-import json
 import unittest
+import json
+import functools
+import psycopg2
 
 from pgsqltoolsservice.hosting.json_message import JSONRPCMessageType
-from tests.integration import create_extra_test_database, get_connection_details, integration_test
-from tests.json_rpc_tests import DefaultRPCTestMessages, JSONRPCTestCase, RPCTestMessage
+from tests.integration import get_connection_details, create_extra_test_database, integration_test
+from tests.json_rpc_tests import JSONRPCTestCase, DefaultRPCTestMessages, RPCTestMessage
+from tests.json_rpc_tests.object_explorer_test_metadata import META_DATA, CREATE_SCRIPTS, GET_OID_SCRIPTS
 
 
 class ObjectExplorerJSONRPCTests(unittest.TestCase):
+
     @integration_test
     def test_object_explorer(self):
-        # Set up a database connection for the test
-        owner_uri = 'test_uri'
         connection_details = get_connection_details()
+        connection = psycopg2.connect(**connection_details)
+        connection.autocommit = True
+
+        self.args = self.create_database_objects(META_DATA, connection)
+
+        owner_uri = 'test_uri'
+        connection_details['dbname'] = self.args["Databases_Name"]
         connection_messages = DefaultRPCTestMessages.connection_request(owner_uri, connection_details)
         test_messages = [connection_messages[0], connection_messages[1]]
 
-        # If I send a createsession request, a session will be created and provide a database at the root node
-        expected_session_id = f'objectexplorer://{connection_details["user"]}@{connection_details["host"]}:{connection_details["dbname"]}/'
+        expected_session_id = f'objectexplorer://{connection_details["user"]}@{connection_details["host"]}:{self.args["Databases_Name"]}/'
 
         def session_created_verifier(notification):
             params = notification['params']
@@ -44,7 +51,6 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
             response_verifier=lambda response: self.assertEqual(response['result']['sessionId'], expected_session_id),
             notification_verifiers=[(lambda notification: notification['method'] == 'objectexplorer/sessioncreated', session_created_verifier)])
 
-        # If I expand nodes in Object Explorer, then the expected child nodes will be included in the response
         def expand_completed_verifier(node_path, expected_nodes, exact_node_match, notification):
             params = notification['params']
             self.assertIsNone(params['errorMessage'])
@@ -72,26 +78,67 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
                     functools.partial(expand_completed_verifier, node_path, expected_nodes, exact_node_match))]
             )
 
-        extra_db_name = create_extra_test_database()
+        test_messages += [create_session_request]
 
-        expand_server_request = create_expand_test_message(expected_session_id, {'Databases', 'Roles', 'Tablespaces', 'System Databases'}, True)
-        expand_databases_request = create_expand_test_message('/databases/', {connection_details['dbname'], extra_db_name}, False)
-        expand_system_databases_request = create_expand_test_message('/systemdatabases/', {'template0'}, False)
-        expand_roles_request = create_expand_test_message('/roles/', {connection_details['user']}, False)
-        expand_tablespaces_request = create_expand_test_message('/tablespaces/', {}, False)
+        self.create_expand_messages(META_DATA, '/{0}/', create_expand_test_message, test_messages, **self.args)
 
-        # If I send a refresh request, then the expected child nodes are included in the response
-        refresh_databases_request = RPCTestMessage(
-            'objectexplorer/refresh',
-            '{{"sessionId":"{session_id}","nodePath":"/databases/"}}'.format(session_id=expected_session_id),
-            JSONRPCMessageType.Request,
-            response_verifier=lambda response: self.assertTrue(response['result']),
-            notification_verifiers=[(
-                lambda notification: notification['method'] == 'objectexplorer/expandCompleted' and notification['params']['nodePath'] == '/databases/',
-                functools.partial(expand_completed_verifier, '/databases/', {connection_details['dbname']}, False))]
-        )
-
-        # Run the test with the connect, createsession, expand, and refresh requests
-        test_messages += [create_session_request, expand_server_request, expand_databases_request, refresh_databases_request, expand_roles_request,
-                          expand_tablespaces_request, expand_system_databases_request]
         JSONRPCTestCase(test_messages).run()
+
+    def create_database_objects(self, meta_data: dict, connection: 'psycopg2.connection', **kwargs):
+
+        for key, metadata_value in meta_data.items():
+            create_script: str = CREATE_SCRIPTS.get(key)
+            if create_script is not None:
+                kwargs[key + '_Name'] = metadata_value['Name']
+
+                if key == 'Databases':
+                    dbname = create_extra_test_database()
+                    metadata_value['Name'] = dbname
+                    kwargs[key + '_Name'] = dbname
+                    connection_details = get_connection_details()
+                    connection_details['dbname'] = dbname
+                    connection = psycopg2.connect(**connection_details)
+                    connection.autocommit = True
+                else:
+                    self.execute_script(create_script.format(**kwargs), connection)
+
+                get_oid_script = GET_OID_SCRIPTS.get(key)
+
+                if get_oid_script is not None:
+                    cursor = self.execute_script(get_oid_script.format(**kwargs), connection)
+                    kwargs[key + '_OID'] = cursor.fetchone()[0]
+
+            children = metadata_value.get('Children')
+
+            if children is not None:
+                return self.create_database_objects(children, connection, **kwargs)
+
+        return kwargs
+
+    def create_expand_messages(self, metadata, node_template, create_expand_test_message, messages, **kwargs):
+        for key, metadata_value in metadata.items():
+            node = node_template.format(key.lower())
+            object_name = self.get_object_name(key, metadata_value.get('DisplayName'), **kwargs)
+            if object_name is not None:
+                messages.append(create_expand_test_message(node, {object_name}, False))
+
+                children = metadata_value.get('Children')
+
+                if children is not None:
+                    oid = kwargs[key + '_OID']
+                    next_node = node + '{0}/'.format(oid)
+                    messages.append(create_expand_test_message(next_node, set(children.keys()), False))
+                    self.create_expand_messages(children, next_node + '{0}/', create_expand_test_message, messages, **kwargs)
+
+    def execute_script(self, script: str, connection: 'psycopg2.connection'):
+        cursor = connection.cursor()
+        cursor.execute(script)
+        return cursor
+
+    def get_object_name(self, key: str, display_template: str, **kwargs):
+        name = kwargs.get(key + '_Name')
+
+        if name is not None and display_template is not None:
+            return display_template.format(name)
+
+        return name
