@@ -1,4 +1,3 @@
-
 # --------------------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
@@ -17,6 +16,7 @@ from prompt_toolkit.completion import Completer, Completion
 # {{ PGToolsService EDIT }}
 # from prompt_toolkit.document import Document
 # {{ PGToolsService EDIT }}
+from pgsqltoolsservice.language.completion.pg_completion import PGCompletion
 from .packages.sqlcompletion import (   # noqa
     FromClauseItem, suggest_type, Database, Schema, Table, Function, Column, View,
     Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join
@@ -37,25 +37,27 @@ from .packages.prioritization import PrevalenceCounter
 
 Match = namedtuple('Match', ['completion', 'priority'])
 
-_SchemaObject = namedtuple('SchemaObject', 'name schema meta')
+_SchemaObject = namedtuple('SchemaObject', 'name schema meta schema_name')
 
 
-def SchemaObject(name, schema=None, meta=None):
-    return _SchemaObject(name, schema, meta)
+def SchemaObject(name, schema=None, meta=None, schema_name=None):
+    """
+    schema and schema_name mean to same. However, schema holds a value only if completion/intellisense
+    need it based on _maybe_schema logic. schema_name always holds a value.
+    """
+    return _SchemaObject(name, schema, meta, schema_name)
 
 
 _Candidate = namedtuple(
-    'Candidate', 'completion prio meta synonyms prio2 display'
+    'Candidate', 'completion prio meta synonyms prio2 display schema'
 )
 
 
 def Candidate(
-        completion, prio=None, meta=None, synonyms=None, prio2=None,
-        display=None
+        completion, prio=None, meta=None, synonyms=None, prio2=None, display=None, schema=None
 ):
     return _Candidate(
-        completion, prio, meta, synonyms or [completion], prio2,
-        display or completion
+        completion, prio, meta, synonyms or [completion], prio2, display or completion, schema
     )
 
 
@@ -398,7 +400,7 @@ class PGCompleter(Completer):
         matches = []
         for cand in collection:
             if isinstance(cand, _Candidate):
-                item, prio, display_meta, synonyms, prio2, display = cand
+                item, prio, display_meta, synonyms, prio2, display, schema = cand
                 if display_meta is None:
                     display_meta = meta
                 syn_matches = (_match(x) for x in synonyms)
@@ -406,7 +408,7 @@ class PGCompleter(Completer):
                 syn_matches = [m for m in syn_matches if m]
                 sort_key = max(syn_matches) if syn_matches else None
             else:
-                item, display_meta, prio, prio2, display = cand, meta, 0, 0, cand
+                item, display_meta, prio, prio2, display, schema = cand, meta, 0, 0, cand, cand
                 sort_key = _match(cand)
 
             if sort_key:
@@ -433,14 +435,17 @@ class PGCompleter(Completer):
                     sort_key, type_priority, prio, priority_func(item),
                     prio2, lexical_priority
                 )
+
+                extend_completion = PGCompletion(
+                    text=item,
+                    start_position=-text_len,
+                    display_meta=display_meta,
+                    display=display,
+                    schema=schema)
+
                 matches.append(
                     Match(
-                        completion=Completion(
-                            text=item,
-                            start_position=-text_len,
-                            display_meta=display_meta,
-                            display=display
-                        ),
+                        completion=extend_completion,
                         priority=priority
                     )
                 )
@@ -491,7 +496,7 @@ class PGCompleter(Completer):
 
         def make_cand(name, ref):
             synonyms = (name, generate_alias(self.case(name)))
-            return Candidate(qualify(name, ref), 0, 'column', synonyms)
+            return Candidate(qualify(name, ref), 0, 'column', synonyms, schema=None)
 
         def flat_cols():
             return [make_cand(c.name, t.ref) for t, cols in scoped_cols.items() for c in cols]
@@ -533,7 +538,7 @@ class PGCompleter(Completer):
                                     for t, cs in scoped_cols.items() for c in cs)
 
             return [Match(
-                completion=Completion(
+                completion=PGCompletion(
                     collist,
                     -1,
                     display_meta='columns',
@@ -785,7 +790,7 @@ class PGCompleter(Completer):
         item = maybe_schema + cased_tbl + suffix + maybe_alias
         display = maybe_schema + cased_tbl + display_suffix + maybe_alias
         prio2 = 0 if tbl.schema else 1
-        return Candidate(item, synonyms=synonyms, prio2=prio2, display=display)
+        return Candidate(item, synonyms=synonyms, prio2=prio2, display=display, schema=tbl.schema_name)
 
     def get_table_matches(self, suggestion, word_before_cursor, alias=False):
         tables = self.populate_schema_objects(suggestion.schema, 'tables')
@@ -965,7 +970,8 @@ class PGCompleter(Completer):
         return [
             SchemaObject(
                 name=obj,
-                schema=(self._maybe_schema(schema=sch, parent=schema))
+                schema=(self._maybe_schema(schema=sch, parent=schema)),
+                schema_name=sch
             )
             for sch in self._get_schemas(obj_type, schema)
             for obj in self.dbmetadata[obj_type][sch].keys()
