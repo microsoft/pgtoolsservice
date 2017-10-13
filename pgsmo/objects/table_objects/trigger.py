@@ -12,7 +12,7 @@ import pgsmo.utils.templating as templating
 
 
 class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_trigger')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'trigger')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Trigger':
