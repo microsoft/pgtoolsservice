@@ -74,7 +74,8 @@ class RoutingTarget:
         # Execute the node generator to generate the non-static nodes and add them after the folders
         if self.node_generator is not None:
             nodes = self.node_generator(is_refresh, current_path, session, match_params)
-            folder_nodes.extend(nodes)
+            if nodes:
+                folder_nodes.extend(nodes)
 
         return folder_nodes
 
@@ -292,8 +293,7 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
 
 def _roles(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of roles for a server"""
-    if is_refresh:
-        session.server.refresh()
+    _refresh_current_node(is_refresh, current_path, session, match_params)
     for role in session.server.roles:
         node_type = "ServerLevelLogin" if role.can_login else "ServerLevelLogin_Disabled"
         yield _get_node_info(role, current_path, node_type)
@@ -321,8 +321,7 @@ def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession
 
 def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of databases"""
-    if is_refresh:
-        session.server.refresh()
+    _refresh_current_node(is_refresh, current_path, session, match_params)
     is_system = 'systemdatabase' in current_path
     return [_get_node_info(node, current_path, 'Database', is_leaf=False)
             for node in session.server.databases if node.can_connect and node.is_system == is_system]
@@ -330,8 +329,7 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
 
 def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of tablespaces for a server"""
-    if is_refresh:
-        session.server.refresh()
+    _refresh_current_node(is_refresh, current_path, session, match_params)
     tablespaces = session.server.tablespaces
     return [_get_node_info(node, current_path, 'Queue') for node in tablespaces]
 
@@ -380,6 +378,15 @@ def _extensions(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     ]
 
 
+def _refresh_current_node(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> None:
+    """
+    Function to refresh a node ie., clear child items cached for this object
+    Used as node_generator instead of None for objects with static child items
+    """
+    if is_refresh and session.server:
+        session.server.refresh()
+
+
 # ROUTING TABLE ############################################################
 # This is the table that maps a regular expression to a routing target. When using route_request,
 # the regular expression will be matched with the provided path. The routing target will then be
@@ -396,7 +403,7 @@ ROUTING_TABLE = {
             Folder('Roles', 'roles'),
             Folder('Tablespaces', 'tablespaces')
         ],
-        None
+        _refresh_current_node
     ),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget(
         [
@@ -410,7 +417,7 @@ ROUTING_TABLE = {
             Folder('Schemas', 'schemas'),
             Folder('Extensions', 'extensions')
         ],
-        None
+        _refresh_current_node
     ),
     re.compile('^/(?P<db>databases|systemdatabases)/$'): RoutingTarget(None, _databases),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/$'): RoutingTarget(
@@ -477,7 +484,7 @@ ROUTING_TABLE = {
             Folder('Rules', 'rules'),
             Folder('Triggers', 'triggers')
         ],
-        None
+        _refresh_current_node
     ),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/$'): RoutingTarget(
         [
@@ -487,7 +494,7 @@ ROUTING_TABLE = {
             Folder('Rules', 'rules'),
             Folder('Triggers', 'triggers')
         ],
-        None
+        _refresh_current_node
     ),
     re.compile(
         '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views|materializedviews)/(?P<tid>\d+)/columns/$'
@@ -511,7 +518,7 @@ ROUTING_TABLE = {
             Folder('Rules', 'rules'),
             Folder('Triggers', 'triggers')
         ],
-        None
+        _refresh_current_node
     ),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/system/(?P<vid>\d+/$)'): RoutingTarget(
         [
@@ -519,21 +526,21 @@ ROUTING_TABLE = {
             Folder('Rules', 'rules'),
             Folder('Triggers', 'triggers')
         ],
-        None
+        _refresh_current_node
     ),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/(?P<vid>\d+/$)'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Indexes', 'indexes')
         ],
-        None
+        _refresh_current_node
     ),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/system/(?P<vid>\d+/$)'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Indexes', 'indexes')
         ],
-        None
+        _refresh_current_node
     ),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions(/system)/$'): RoutingTarget(None, _functions),
     re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations(/system)/$'): RoutingTarget(None, _collations),
