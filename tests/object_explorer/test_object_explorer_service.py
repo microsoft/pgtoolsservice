@@ -584,6 +584,7 @@ class TestObjectExplorer(unittest.TestCase):
         oe._service_provider = utils.get_mock_service_provider({})
         conn_details, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, conn_details)
+        session.server = mock.Mock()
         session.is_ready = True
         oe._session_map[session_uri] = session
 

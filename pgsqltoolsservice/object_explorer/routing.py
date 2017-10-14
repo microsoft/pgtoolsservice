@@ -382,7 +382,7 @@ def _default_node_generator(is_refresh: bool, current_path: str, session: Object
     """
     Clears cached Object Explorer Node information so that the refreshed node and its children fetches the data again when expanded
     """
-    if is_refresh and session.server:
+    if is_refresh:
         session.server.refresh()
 
 
