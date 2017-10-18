@@ -8,6 +8,7 @@ from typing import Callable, Any  # noqa
 import decimal
 import struct
 import json
+import datetime
 
 from pgsqltoolsservice.parsers import datatypes
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
@@ -39,24 +40,24 @@ def convert_str(value: str):
     return bytearray(value.encode())
 
 
-def convert_date(value: str):
-    return bytearray(value.encode())
+def convert_date(value: datetime.date):
+    return bytearray(value.isoformat().encode())
 
 
-def convert_time(value: str):
-    return bytearray(value.encode())
+def convert_time(value: datetime.time):
+    return bytearray(value.isoformat().encode())
 
 
-def convert_time_with_timezone(value: str):
-    return bytearray(value.encode())
+def convert_time_with_timezone(value: datetime.time):
+    return bytearray(value.isoformat().encode())
 
 
-def convert_datetime(value: str):
-    return bytearray(value.encode())
+def convert_datetime(value: datetime.datetime):
+    return bytearray(value.isoformat().encode())
 
 
-def convert_timedelta(value: str):
-    return bytearray(value.encode())
+def convert_timedelta(value: datetime.timedelta):
+    return bytearray(str(value).encode())
 
 
 def convert_uuid(value: str):
