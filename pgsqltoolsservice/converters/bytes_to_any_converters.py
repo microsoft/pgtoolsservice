@@ -25,12 +25,24 @@ def convert_bytes_to_float(value) -> float:
     return struct.unpack('d', value)[0]
 
 
-def convert_bytes_to_int(value) -> int:
-    return struct.unpack('i', value)[0]
+def convert_bytes_to_double(value) -> float:
+    return struct.unpack('d', value)[0]
+
+
+def convert_bytes_to_short(value) -> int:
+    return struct.unpack('h', value)[0]
+
+
+def convert_bytes_to_long(value) -> int:
+    return struct.unpack('l', value)[0]
+
+
+def convert_bytes_to_long_long(value) -> int:
+    return struct.unpack('q', value)[0]
 
 
 def convert_bytes_to_decimal(value) -> decimal.Decimal:
-    return struct.unpack("i", int(value))[0]
+    return struct.unpack("i", value)[0]
 
 
 def convert_bytes_to_char(value) -> str:
@@ -107,10 +119,10 @@ def convert_bytes_to_daterange(value) -> DateRange:
 DATATYPE_READER_MAP = {
     datatypes.DATATYPE_BOOL: convert_bytes_to_bool,
     datatypes.DATATYPE_REAL: convert_bytes_to_float,
-    datatypes.DATATYPE_DOUBLE: convert_bytes_to_float,
-    datatypes.DATATYPE_SMALLINT: convert_bytes_to_int,
-    datatypes.DATATYPE_INTEGER: convert_bytes_to_int,
-    datatypes.DATATYPE_BIGINT: convert_bytes_to_int,
+    datatypes.DATATYPE_DOUBLE: convert_bytes_to_double,
+    datatypes.DATATYPE_SMALLINT: convert_bytes_to_short,
+    datatypes.DATATYPE_INTEGER: convert_bytes_to_long,
+    datatypes.DATATYPE_BIGINT: convert_bytes_to_long_long,
     datatypes.DATATYPE_NUMERIC: convert_bytes_to_decimal,
     datatypes.DATATYPE_CHAR: convert_bytes_to_char,
     datatypes.DATATYPE_VARCHAR: convert_bytes_to_str,
@@ -122,9 +134,9 @@ DATATYPE_READER_MAP = {
     datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_bytes_to_datetime,
     datatypes.DATATYPE_INTERVAL: convert_bytes_to_timedelta,
     datatypes.DATATYPE_UUID: convert_bytes_to_uuid,
-    datatypes.DATATYPE_SMALLSERIAL: convert_bytes_to_int,
-    datatypes.DATATYPE_SERIAL: convert_bytes_to_int,
-    datatypes.DATATYPE_BIGSERIAL: convert_bytes_to_int,
+    datatypes.DATATYPE_SMALLSERIAL: convert_bytes_to_short,
+    datatypes.DATATYPE_SERIAL: convert_bytes_to_long,
+    datatypes.DATATYPE_BIGSERIAL: convert_bytes_to_long_long,
     datatypes.DATATYPE_MONEY: convert_bytes_to_str,
     datatypes.DATATYPE_BYTEA: convert_bytes_to_memoryview,
     datatypes.DATATYPE_ENUM: convert_bytes_to_str,

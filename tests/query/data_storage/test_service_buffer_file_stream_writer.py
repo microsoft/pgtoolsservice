@@ -62,10 +62,34 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(4), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(8), res)
 
-    def test_write_int(self):
-        test_value = 123456
+    def test_write_double(self):
+        test_value = 12345678.90123456
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type = datatypes.DATATYPE_DOUBLE
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(8), res)
+
+    def test_write_short(self):
+        test_value = 12345
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type = datatypes.DATATYPE_SMALLINT
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(2), res)
+
+    def test_write_long(self):
+        test_value = 1234567890
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_INTEGER
@@ -75,6 +99,18 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
 
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(4), res)
+
+    def test_write_long_long(self):
+        test_value = 123456789012
+        test_columns_info = []
+        col = DbColumn()
+        col.data_type = datatypes.DATATYPE_BIGINT
+        test_columns_info.append(col)
+        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
+        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
+
+        res = self._writer.write_row(mock_storage_data_reader)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(8), res)
 
     def test_write_decimal(self):
         test_val = Decimal(123)

@@ -18,11 +18,26 @@ def convert_bool(value: bool):
 
 
 def convert_float(value: float):
-    return bytearray(struct.pack("f", value))
+    return bytearray(struct.pack("d", value))
 
 
-def convert_int(value: int):
-    return bytearray(struct.pack("i", value))
+def convert_double(value: float):
+    return bytearray(struct.pack("d", value))
+
+
+def convert_short(value: int):
+    """ range of smallint in pg is the same with short in c, although python type is int, but need to pack in short format """
+    return bytearray(struct.pack("h", value))
+
+
+def convert_long(value: int):
+    """ range of integer in pg is the same with long in c, although python type is int, but need to pack in long format """
+    return bytearray(struct.pack("l", value))
+
+
+def convert_long_long(value: int):
+    """ range of bigint in pg is the same with long long in c, although python type is int, but need to pack in long long format """
+    return bytearray(struct.pack("q", value))
 
 
 def convert_decimal(value: decimal.Decimal):
@@ -94,10 +109,10 @@ def convert_daterange(value: DateRange):
 DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BOOL: convert_bool,
     datatypes.DATATYPE_REAL: convert_float,
-    datatypes.DATATYPE_DOUBLE: convert_float,
-    datatypes.DATATYPE_SMALLINT: convert_int,
-    datatypes.DATATYPE_INTEGER: convert_int,
-    datatypes.DATATYPE_BIGINT: convert_int,
+    datatypes.DATATYPE_DOUBLE: convert_double,
+    datatypes.DATATYPE_SMALLINT: convert_short,
+    datatypes.DATATYPE_INTEGER: convert_long,
+    datatypes.DATATYPE_BIGINT: convert_long_long,
     datatypes.DATATYPE_NUMERIC: convert_decimal,
     datatypes.DATATYPE_CHAR: convert_char,
     datatypes.DATATYPE_VARCHAR: convert_str,
@@ -109,9 +124,9 @@ DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_datetime,
     datatypes.DATATYPE_INTERVAL: convert_timedelta,
     datatypes.DATATYPE_UUID: convert_uuid,
-    datatypes.DATATYPE_SMALLSERIAL: convert_int,
-    datatypes.DATATYPE_SERIAL: convert_int,
-    datatypes.DATATYPE_BIGSERIAL: convert_int,
+    datatypes.DATATYPE_SMALLSERIAL: convert_short,
+    datatypes.DATATYPE_SERIAL: convert_long,
+    datatypes.DATATYPE_BIGSERIAL: convert_long_long,
     datatypes.DATATYPE_MONEY: convert_str,
     datatypes.DATATYPE_BYTEA: convert_memoryview,
     datatypes.DATATYPE_ENUM: convert_str,
