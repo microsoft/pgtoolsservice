@@ -90,7 +90,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(2), res)
 
-    def test_write_long(self):
+    def test_write_int(self):
         test_value = 1234567890
         test_columns_info = []
         col = DbColumn()
