@@ -10,6 +10,7 @@ import uuid
 import struct
 import io
 import datetime
+import psycopg2
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
@@ -267,10 +268,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[10,20)")), res)
 
     def test_write_tsrange(self):
-        test_value = DateTimeRange("2014-06-08 12:12:45", "2016-07-06 14:12:08")
+        test_value = DateTimeRange(datetime.datetime(2014, 6, 8, 12, 12, 45), datetime.datetime(2016, 7, 6, 14, 12, 8))
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TSRANGE
@@ -279,10 +280,11 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[2014-06-08T12:12:45,2016-07-06T14:12:08)")), res)
 
     def test_write_tstzrange(self):
-        test_value = DateTimeTZRange("2014-06-08 12:12:45+02", "2016-07-06 14:12:08+02")
+        test_value = DateTimeTZRange(datetime.datetime(2014, 6, 8, 12, 12, 45, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=720, name=None)),
+                                     datetime.datetime(2016, 7, 6, 14, 12, 8, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=720, name=None)))
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TSTZRANGE
@@ -291,10 +293,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[2014-06-08T12:12:45+12:00,2016-07-06T14:12:08+12:00)")), res)
 
     def test_write_daterange(self):
-        test_value = DateRange("2015-06-06", "2016-08-08")
+        test_value = DateRange(datetime.date(2015, 6, 6), datetime.date(2016, 8, 8))
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_DATERANGE
@@ -303,7 +305,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[2015-06-06,2016-08-08)")), res)
 
     def test_write_udt(self):
         test_value = "TestUserDefinedTypes"

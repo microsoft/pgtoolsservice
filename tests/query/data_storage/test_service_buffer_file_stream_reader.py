@@ -11,7 +11,6 @@ import json
 from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_reader import ServiceBufferFileStreamReader
 from pgsqltoolsservice.query.contracts.column import DbColumn
 from pgsqltoolsservice.parsers import datatypes
-from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 
 class TestServiceBufferFileStreamReader(unittest.TestCase):
@@ -29,10 +28,10 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._bytea_test_value = memoryview(b'TestString')
         self._dict_test_value = {"Ser,ver": " Tes'tS,,erver ", "Sche'ma": "TestSchema"}
         self._list_test_value = ["Test,Server", "Tes'tSchema", "Tes,'tTable"]
-        self._numericrange_test_value = NumericRange(10, 20)
-        self._datetimerange_test_value = DateTimeRange("2014-06-08 12:12:45", "2016-07-06 14:12:08")
-        self._datetimetzrange_test_value = DateTimeTZRange("2014-06-08 12:12:45+02", "2016-07-06 14:12:08+02")
-        self._daterange_test_value = DateRange("2015-06-06", "2016-08-08")
+        self._numericrange_test_value = "[10,20)"
+        self._datetimerange_test_value = "[2014-06-08T12:12:45,2016-07-06T14:12:08)"
+        self._datetimetzrange_test_value = "[2014-06-08T12:12:45-07:00,2016-07-06T14:12:08-07:00)"
+        self._daterange_test_value = "[2015-06-06,2016-08-08)"
 
         # file_streams
         self._bool_file_stream = io.BytesIO()
