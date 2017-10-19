@@ -92,19 +92,35 @@ def convert_list(value: list):
 
 
 def convert_numericrange(value: NumericRange):
-    return bytearray(str(value).encode())
+    """ Serialize NumericRange object in "[lower,upper)" format before convert to bytearray """
+    lower_bound = "[" if value.lower_inc else "("
+    upper_bound = "]" if value.upper_inc else ")"
+    formatted_value_str = lower_bound + str(int(value.lower)) + "," + str(int(value.upper)) + upper_bound
+    return bytearray(formatted_value_str.encode())
 
 
 def convert_datetimerange(value: DateTimeRange):
-    return bytearray(str(value).encode())
+    """ Serialize DateTimeRange object in "[lower,upper)" format before convert to bytearray """
+    lower_bound = "[" if value.lower_inc else "("
+    upper_bound = "]" if value.upper_inc else ")"
+    formatted_value_str = lower_bound + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + upper_bound
+    return bytearray(formatted_value_str.encode())
 
 
 def convert_datetimetzrange(value: DateTimeTZRange):
-    return bytearray(str(value).encode())
+    """ Serialize DateTimeTZRange object in "[lower,upper)" format before convert to bytearray """
+    lower_bound = "[" if value.lower_inc else "("
+    upper_bound = "]" if value.upper_inc else ")"
+    formatted_value_str = lower_bound + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + upper_bound
+    return bytearray(formatted_value_str.encode())
 
 
 def convert_daterange(value: DateRange):
-    return bytearray(str(value).encode())
+    """ Serialize DateRange object in "[lower,upper)" format before convert to bytearray """
+    lower_bound = "[" if value.lower_inc else "("
+    upper_bound = "]" if value.upper_inc else ")"
+    formatted_value_str = lower_bound + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + upper_bound
+    return bytearray(formatted_value_str.encode())
 
 
 DATATYPE_WRITER_MAP = {

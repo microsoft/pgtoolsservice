@@ -10,7 +10,6 @@ import struct
 import json
 
 from pgsqltoolsservice.parsers import datatypes
-from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 
 DECODING_METHOD = 'utf-8'
@@ -92,28 +91,24 @@ def convert_bytes_to_list(value) -> list:
     return json.loads(value_str)
 
 
-def convert_bytes_to_numericrange(value) -> NumericRange:
-    value_str = value.decode(DECODING_METHOD)
-    value_str_list = value_str.replace("NumericRange(", "").split(",")
-    return NumericRange(int(value_str_list[0]), int(value_str_list[1]))
+def convert_bytes_to_numericrange_format_str(value) -> str:
+    """ Since we are not using the NumericRange object, so just convert bytes to str for UI consuming """
+    return convert_bytes_to_str(value)
 
 
-def convert_bytes_to_datetimerange(value) -> DateTimeRange:
-    value_str = value.decode(DECODING_METHOD)
-    value_str_list = value_str.replace("DateTimeRange(", "").replace("'", "").split(", ")
-    return DateTimeRange(value_str_list[0], value_str_list[1])
+def convert_bytes_to_datetimerange_format_str(value) -> str:
+    """ Since we are not using the DateTimeRange object, so just convert bytes to str for UI consuming """
+    return convert_bytes_to_str(value)
 
 
-def convert_bytes_to_datetimetzrange(value) -> DateTimeTZRange:
-    value_str = value.decode(DECODING_METHOD)
-    value_str_list = value_str.replace("DateTimeTZRange(", "").replace("'", "").split(", ")
-    return DateTimeTZRange(value_str_list[0], value_str_list[1])
+def convert_bytes_to_datetimetzrange_format_str(value) -> str:
+    """ Since we are not using the DateTimeTZRange object, so just convert bytes to str for UI consuming """
+    return convert_bytes_to_str(value)
 
 
-def convert_bytes_to_daterange(value) -> DateRange:
-    value_str = value.decode(DECODING_METHOD)
-    value_str_list = value_str.replace("DateRange(", "").replace("'", "").split(", ")
-    return DateRange(value_str_list[0], value_str_list[1])
+def convert_bytes_to_daterange_format_str(value) -> str:
+    """ Since we are not using the DateRange object, so just convert bytes to str for UI consuming """
+    return convert_bytes_to_str(value)
 
 
 DATATYPE_READER_MAP = {
@@ -155,12 +150,12 @@ DATATYPE_READER_MAP = {
     datatypes.DATATYPE_XML: convert_bytes_to_str,
     datatypes.DATATYPE_JSON: convert_bytes_to_dict,
     datatypes.DATATYPE_ARRAY: convert_bytes_to_list,
-    datatypes.DATATYPE_INT4RANGE: convert_bytes_to_numericrange,
-    datatypes.DATATYPE_INT8RANGE: convert_bytes_to_numericrange,
-    datatypes.DATATYPE_NUMRANGE: convert_bytes_to_numericrange,
-    datatypes.DATATYPE_TSRANGE: convert_bytes_to_datetimerange,
-    datatypes.DATATYPE_TSTZRANGE: convert_bytes_to_datetimetzrange,
-    datatypes.DATATYPE_DATERANGE: convert_bytes_to_daterange
+    datatypes.DATATYPE_INT4RANGE: convert_bytes_to_numericrange_format_str,
+    datatypes.DATATYPE_INT8RANGE: convert_bytes_to_numericrange_format_str,
+    datatypes.DATATYPE_NUMRANGE: convert_bytes_to_numericrange_format_str,
+    datatypes.DATATYPE_TSRANGE: convert_bytes_to_datetimerange_format_str,
+    datatypes.DATATYPE_TSTZRANGE: convert_bytes_to_datetimetzrange_format_str,
+    datatypes.DATATYPE_DATERANGE: convert_bytes_to_daterange_format_str
 }
 
 
