@@ -22,7 +22,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._float_test_value1 = 123.456
         self._float_test_value2 = 123.45600128173828
         self._short_test_value = 12345
-        self._long_test_value = 1234567890
+        self._int_test_value = 1234567890
         self._long_long_test_value = 123456789012
         self._str_test_value = "TestString"
         self._bytea_test_value = memoryview(b'TestString')
@@ -62,12 +62,12 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._short_file_stream.write(short_len_to_write)
         self._short_file_stream.write(short_val)
 
-        self._long_file_stream = io.BytesIO()
-        long_val = bytearray(struct.pack("l", self._long_test_value))
-        long_len = len(long_val)
-        long_len_to_write = bytearray(struct.pack("i", long_len))
-        self._long_file_stream.write(long_len_to_write)
-        self._long_file_stream.write(long_val)
+        self._int_file_stream = io.BytesIO()
+        int_val = bytearray(struct.pack("i", self._int_test_value))
+        int_len = len(int_val)
+        int_len_to_write = bytearray(struct.pack("i", int_len))
+        self._int_file_stream.write(int_len_to_write)
+        self._int_file_stream.write(int_val)
 
         self._long_long_file_stream = io.BytesIO()
         long_long_val = bytearray(struct.pack("q", self._long_long_test_value))
@@ -129,7 +129,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         val0 = bytearray(struct.pack("d", self._float_test_value1))
         len0 = len(val0)
         len0_to_write = bytearray(struct.pack("i", len0))
-        val1 = bytearray(struct.pack("l", self._long_test_value))
+        val1 = bytearray(struct.pack("i", self._int_test_value))
         len1 = len(val1)
         len1_to_write = bytearray(struct.pack("i", len1))
         val2 = bytearray(self._str_test_value.encode())
@@ -316,7 +316,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         res = self._multiple_cols_reader.read_row(test_file_offset, test_row_id, test_columns_info)
         self.assertEqual(self._float_test_value1, res[0].raw_object)
-        self.assertEqual(self._long_test_value, res[1].raw_object)
+        self.assertEqual(self._int_test_value, res[1].raw_object)
         self.assertEqual(self._str_test_value, res[2].raw_object)
         self.assertEqual(self._float_test_value2, res[3].raw_object)
 
