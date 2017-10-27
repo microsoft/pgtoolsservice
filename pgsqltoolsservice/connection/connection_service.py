@@ -242,15 +242,7 @@ class ConnectionService:
         connection_details: ConnectionDetails = ConnectionDetails.from_data(connection_info_params)
 
         connection_request_params: ConnectRequestParams = ConnectRequestParams(connection_details, params.owner_uri, ConnectionType.DEFAULT)
-        thread = threading.Thread(
-            target=self._connect_and_respond,
-            args=(request_context, connection_request_params)
-        )
-        thread.daemon = True
-        thread.start()
-        self.owner_to_thread_map[params.owner_uri] = thread
-
-        request_context.send_response(True)
+        self.handle_connect_request(request_context, connection_request_params)
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:

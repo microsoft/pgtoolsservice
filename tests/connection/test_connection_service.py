@@ -392,7 +392,7 @@ class TestConnectionService(unittest.TestCase):
         # ... An error should not have been called
         rc.send_error.assert_not_called()
 
-    def test_handle_database_change_request_with_empty_connection_info_for_False(self):
+    def test_handle_database_change_request_with_empty_connection_info_for_false(self):
         """Test that the handle_connect_request method kicks off a new thread to do the connection"""
         # Setup: Create a mock request context to handle output
         rc = utils.MockRequestContext()
