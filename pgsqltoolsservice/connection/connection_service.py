@@ -17,6 +17,7 @@ from pgsqltoolsservice.connection.contracts import (
     CANCEL_CONNECT_REQUEST, CancelConnectParams,
     CONNECT_REQUEST, ConnectRequestParams,
     DISCONNECT_REQUEST, DisconnectRequestParams,
+    CHANGE_DATABASE_REQUEST, ChangeDatabaseRequestParams,
     CONNECTION_COMPLETE_METHOD, ConnectionCompleteParams,
     ConnectionDetails, ConnectionSummary, ConnectionType, ServerInfo,
     LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
@@ -82,6 +83,7 @@ class ConnectionService:
         self._service_provider.server.set_request_handler(DISCONNECT_REQUEST, self.handle_disconnect_request)
         self._service_provider.server.set_request_handler(LIST_DATABASES_REQUEST, self.handle_list_databases)
         self._service_provider.server.set_request_handler(CANCEL_CONNECT_REQUEST, self.handle_cancellation_request)
+        self._service_provider.server.set_request_handler(CHANGE_DATABASE_REQUEST, self.handle_change_database_request)
 
     # PUBLIC METHODS #######################################################
     def connect(self, params: ConnectRequestParams) -> Optional[ConnectionCompleteParams]:
@@ -225,6 +227,22 @@ class ConnectionService:
             if connection_found:
                 self._cancellation_map[cancellation_key].cancel()
         request_context.send_response(connection_found)
+
+    def handle_change_database_request(self, request_context: RequestContext,
+                                       params: ChangeDatabaseRequestParams) -> bool:
+        """change database of an existing connection or create a new connection
+        with default database from input"""
+        connection_info: ConnectionInfo = self.get_connection_info(params.owner_uri)
+
+        if connection_info is None:
+            return False
+
+        connection_info_params: Dict[str, str] = connection_info.details.options.copy()
+        connection_info_params["dbname"] = params.new_database
+        connection_details: ConnectionDetails = ConnectionDetails.from_data(connection_info_params)
+
+        connection_request_params: ConnectRequestParams = ConnectRequestParams(connection_details, params.owner_uri, ConnectionType.DEFAULT)
+        self.handle_connect_request(request_context, connection_request_params)
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:

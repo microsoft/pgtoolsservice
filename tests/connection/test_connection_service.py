@@ -13,7 +13,8 @@ import psycopg2
 
 from pgsqltoolsservice.connection.contracts import (
     CONNECTION_COMPLETE_METHOD, ConnectionType, ConnectRequestParams, ConnectionDetails,
-    DisconnectRequestParams, ListDatabasesParams, ConnectionCompleteParams, CancelConnectParams
+    DisconnectRequestParams, ListDatabasesParams, ConnectionCompleteParams, CancelConnectParams,
+    ChangeDatabaseRequestParams
 )
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 import pgsqltoolsservice.connection.connection_service
@@ -381,6 +382,51 @@ class TestConnectionService(unittest.TestCase):
         # Then:
         # ... Connect should have been called once
         self.connection_service.connect.assert_called_once_with(params)
+
+        # ... A True should have been sent as the response to the request
+        rc.send_response.assert_called_once_with(True)
+
+        # ... A connection complete notification should have been sent back as well
+        rc.send_notification.assert_called_once_with(CONNECTION_COMPLETE_METHOD, connect_response)
+
+        # ... An error should not have been called
+        rc.send_error.assert_not_called()
+
+    def test_handle_database_change_request_with_empty_connection_info_for_false(self):
+        """Test that the handle_connect_request method kicks off a new thread to do the connection"""
+        # Setup: Create a mock request context to handle output
+        rc = utils.MockRequestContext()
+        connect_response = ConnectionCompleteParams()
+        self.connection_service.connect = Mock(return_value=connect_response)
+
+        params: ChangeDatabaseRequestParams = ChangeDatabaseRequestParams.from_dict({
+            'owner_uri': 'someUri',
+            'new_database': 'newDb'
+        })
+
+        result: bool = self.connection_service.handle_change_database_request(rc, params)
+        self.assertEqual(result, False)
+
+    def test_handle_database_change_request(self):
+        """Test that the handle_connect_request method kicks off a new thread to do the connection"""
+        # Setup: Create a mock request context to handle output
+        rc = utils.MockRequestContext()
+        connect_response = ConnectionCompleteParams()
+        self.connection_service.connect = Mock(return_value=connect_response)
+        self.connection_service.get_connection_info = mock.MagicMock()
+
+        params: ChangeDatabaseRequestParams = ChangeDatabaseRequestParams.from_dict({
+            'owner_uri': 'someUri',
+            'new_database': 'newDb'
+        })
+
+        self.connection_service.handle_change_database_request(rc, params)
+
+        connection_thread = self.connection_service.owner_to_thread_map[params.owner_uri]
+        self.assertIsNotNone(connection_thread)
+        connection_thread.join()
+
+        self.connection_service.connect.assert_called_once()
 
         # ... A True should have been sent as the response to the request
         rc.send_response.assert_called_once_with(True)
