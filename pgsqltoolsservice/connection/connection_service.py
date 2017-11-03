@@ -117,7 +117,8 @@ class ConnectionService:
             self._cancellation_map[cancellation_key] = cancellation_token
 
         # Map the connection options to their psycopg2-specific options
-        connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()}
+        connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()
+                              if option in PYSCOPG2_CONNECTION_PARAMETERS}
 
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
@@ -353,3 +354,11 @@ CONNECTION_OPTION_KEY_MAP = {
     'clientEncoding': 'client_encoding',
     'applicationName': 'application_name'
 }
+
+PYSCOPG2_CONNECTION_PARAMETERS = [
+    'host', 'hostaddr', 'port', 'dbname', 'user', 'password', 'passfile', 'connect_timeout',
+    'client_encoding', 'options', 'application_name', 'fallback_application_name', 'keepalives',
+    'keepalives_idle', 'keepalives_interval', 'keepalives_count', 'tty', 'sslmode', 'requiressl',
+    'sslcompression', 'sslcert', 'sslkey', 'sslrootcert', 'sslcrl', 'requirepeer', 'krbsrvname',
+    'gsslib', 'service', 'target_session_attrs'
+]
