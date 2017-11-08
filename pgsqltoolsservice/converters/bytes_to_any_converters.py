@@ -5,7 +5,6 @@
 
 
 from typing import Callable, Any  # noqa
-import decimal
 import struct
 import json
 
@@ -32,16 +31,18 @@ def convert_bytes_to_short(value) -> int:
     return struct.unpack('h', value)[0]
 
 
-def convert_bytes_to_long(value) -> int:
-    return struct.unpack('l', value)[0]
+def convert_bytes_to_int(value) -> int:
+    """ Range of integer in pg is the same with int or long in c,
+    we unpack the value in int format """
+    return struct.unpack('i', value)[0]
 
 
 def convert_bytes_to_long_long(value) -> int:
     return struct.unpack('q', value)[0]
 
 
-def convert_bytes_to_decimal(value) -> decimal.Decimal:
-    return struct.unpack("i", value)[0]
+def convert_bytes_to_decimal(value) -> str:
+    return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_char(value) -> str:
@@ -76,17 +77,12 @@ def convert_bytes_to_uuid(value) -> str:
     return convert_bytes_to_str(value)
 
 
-def convert_bytes_to_memoryview(value) -> memoryview:
-    return memoryview(value)
+def convert_bytes_to_memoryview(value) -> str:
+    return str(value)
 
 
 def convert_bytes_to_dict(value) -> dict:
     """ Decode bytes to str, and convert it to a valid JSON format """
-    value_str = value.decode(DECODING_METHOD)
-    return json.loads(value_str)
-
-
-def convert_bytes_to_list(value) -> list:
     value_str = value.decode(DECODING_METHOD)
     return json.loads(value_str)
 
@@ -116,12 +112,10 @@ DATATYPE_READER_MAP = {
     datatypes.DATATYPE_REAL: convert_bytes_to_float,
     datatypes.DATATYPE_DOUBLE: convert_bytes_to_double,
     datatypes.DATATYPE_SMALLINT: convert_bytes_to_short,
-    datatypes.DATATYPE_INTEGER: convert_bytes_to_long,
+    datatypes.DATATYPE_INTEGER: convert_bytes_to_int,
     datatypes.DATATYPE_BIGINT: convert_bytes_to_long_long,
     datatypes.DATATYPE_NUMERIC: convert_bytes_to_decimal,
-    datatypes.DATATYPE_CHAR: convert_bytes_to_char,
-    datatypes.DATATYPE_VARCHAR: convert_bytes_to_str,
-    datatypes.DATATYPE_TEXT: convert_bytes_to_str,
+    datatypes.DATATYPE_BPCHAR: convert_bytes_to_char,
     datatypes.DATATYPE_DATE: convert_bytes_to_date,
     datatypes.DATATYPE_TIME: convert_bytes_to_time,
     datatypes.DATATYPE_TIME_WITH_TIMEZONE: convert_bytes_to_time_with_timezone,
@@ -129,33 +123,14 @@ DATATYPE_READER_MAP = {
     datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_bytes_to_datetime,
     datatypes.DATATYPE_INTERVAL: convert_bytes_to_timedelta,
     datatypes.DATATYPE_UUID: convert_bytes_to_uuid,
-    datatypes.DATATYPE_SMALLSERIAL: convert_bytes_to_short,
-    datatypes.DATATYPE_SERIAL: convert_bytes_to_long,
-    datatypes.DATATYPE_BIGSERIAL: convert_bytes_to_long_long,
-    datatypes.DATATYPE_MONEY: convert_bytes_to_str,
-    datatypes.DATATYPE_BYTEA: convert_bytes_to_memoryview,
-    datatypes.DATATYPE_ENUM: convert_bytes_to_str,
-    datatypes.DATATYPE_POINT: convert_bytes_to_str,
-    datatypes.DATATYPE_LINE: convert_bytes_to_str,
-    datatypes.DATATYPE_LSEG: convert_bytes_to_str,
-    datatypes.DATATYPE_BOX: convert_bytes_to_str,
-    datatypes.DATATYPE_PATH: convert_bytes_to_str,
-    datatypes.DATATYPE_POLYGON: convert_bytes_to_str,
-    datatypes.DATATYPE_CIRCLE: convert_bytes_to_str,
-    datatypes.DATATYPE_CIDR: convert_bytes_to_str,
-    datatypes.DATATYPE_INET: convert_bytes_to_str,
-    datatypes.DATATYPE_MACADDR: convert_bytes_to_str,
-    datatypes.DATATYPE_BIT: convert_bytes_to_str,
-    datatypes.DATATYPE_BIT_VARYING: convert_bytes_to_str,
-    datatypes.DATATYPE_XML: convert_bytes_to_str,
     datatypes.DATATYPE_JSON: convert_bytes_to_dict,
-    datatypes.DATATYPE_ARRAY: convert_bytes_to_list,
     datatypes.DATATYPE_INT4RANGE: convert_bytes_to_numericrange_format_str,
     datatypes.DATATYPE_INT8RANGE: convert_bytes_to_numericrange_format_str,
     datatypes.DATATYPE_NUMRANGE: convert_bytes_to_numericrange_format_str,
     datatypes.DATATYPE_TSRANGE: convert_bytes_to_datetimerange_format_str,
     datatypes.DATATYPE_TSTZRANGE: convert_bytes_to_datetimetzrange_format_str,
-    datatypes.DATATYPE_DATERANGE: convert_bytes_to_daterange_format_str
+    datatypes.DATATYPE_DATERANGE: convert_bytes_to_daterange_format_str,
+    datatypes.DATATYPE_OID: convert_bytes_to_int
 }
 
 
