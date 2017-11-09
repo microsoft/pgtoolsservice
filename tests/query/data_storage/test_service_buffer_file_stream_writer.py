@@ -124,13 +124,13 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_val)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(4), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_val))), res)
 
     def test_write_char(self):
         test_value = 'a'
         test_columns_info = []
         col = DbColumn()
-        col.data_type = datatypes.DATATYPE_CHAR
+        col.data_type = datatypes.DATATYPE_BPCHAR
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -239,18 +239,6 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_JSON
-        test_columns_info.append(col)
-        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
-
-        res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
-
-    def test_write_array(self):
-        test_value = ["TestVal1", "TestVal2"]
-        test_columns_info = []
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_ARRAY
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
