@@ -12,6 +12,8 @@ from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_reader impo
 from pgsqltoolsservice.query.contracts.column import DbColumn
 from pgsqltoolsservice.parsers import datatypes
 
+DECODING_METHOD = 'utf-8'
+
 
 class TestServiceBufferFileStreamReader(unittest.TestCase):
 
@@ -212,8 +214,8 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._bytea_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        expected = self._bytea_test_value.tobytes()
-        actual = res[0].raw_object.tobytes()
+        expected = self._bytea_test_value.tobytes().decode(DECODING_METHOD)
+        actual = str(res[0].raw_object)
         self.assertEqual(expected, actual)
 
     def test_read_dict(self):
@@ -234,18 +236,6 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         self.assertEqual(expected1, actual1)
         self.assertEqual(expected2, actual2)
-
-    def test_read_list(self):
-        test_file_offset = 0
-        test_row_id = 1
-        test_columns_info = []
-
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_ARRAY
-        test_columns_info.append(col)
-
-        res = self._list_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(str(self._list_test_value), str(res[0].raw_object))
 
     def test_read_numericrange(self):
         test_file_offset = 0
