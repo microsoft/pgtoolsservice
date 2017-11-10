@@ -6,6 +6,7 @@
 # Repeat this until you reach a leaf node
 
 
+import os
 import uuid
 
 
@@ -23,6 +24,13 @@ def _display_name_template_for_columns():
 
 def _display_name_template_for_constraints():
     return '{0} (Unique, Non-Clustered)'  # Todo parameterize index type
+
+
+def _get_german_locale_id() -> str:
+    if os.name.lower() == 'nt':
+        return "German"
+    else:
+        return "de_DE"
 
 
 TABLE_METADATA: dict = {
@@ -63,12 +71,12 @@ CREATE_SCRIPTS: dict = {
     'Functions': 'CREATE OR REPLACE FUNCTION "{Functions_Name}"(IN x int, IN y int, OUT sum int) AS \'SELECT $1 + $2\' LANGUAGE SQL;',
     'Schemas': 'CREATE SCHEMA "{Schemas_Name}";',
     'Materialized Views': 'CREATE MATERIALIZED VIEW "{Materialized Views_Name}" AS SELECT * FROM "{Tables_Name}";',
-    'Collations': 'CREATE COLLATION "{Collations_Name}" FROM "de_DE"',
+    'Collations': 'CREATE COLLATION "{Collations_Name}" (LOCALE = \'' + _get_german_locale_id() + '\');',
     'Data Types': 'CREATE TYPE "full_address_{Data Types_Name}" AS (city VARCHAR(90), street VARCHAR(90));',
     'Sequences': 'CREATE SEQUENCE IF NOT EXISTS "{Sequences_Name}" INCREMENT BY  1 MINVALUE 0 MAXVALUE 1000 START WITH  1',
-    'Roles': 'CREATE ROLE {Roles_Name}'
+    'Roles': 'CREATE ROLE "{Roles_Name}"'
 }
-    
+
 GET_OID_SCRIPTS: dict = {
     'Databases': "SELECT oid from pg_database where datname = '{Databases_Name}';",
     'Tables': "SELECT * FROM pg_attribute WHERE attrelid = '{Tables_Name}'::regclass;",
