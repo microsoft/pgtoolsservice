@@ -35,20 +35,20 @@ TABLE_METADATA: dict = {
 
 DATABASE_METADATA: dict = {
     'Tables': {'Children': TABLE_METADATA, 'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
-    'Views': {},
-    'Functions': {},
-    'Collations': {},
-    'Data Types': {},
-    'Sequences': {},
-    'Schemas': {},
+    'Views': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
+    'Functions': {'Name': uuid.uuid4().hex},
+    'Collations': {'Name': uuid.uuid4().hex},
+    'Data Types': {'Name': uuid.uuid4().hex},
+    'Sequences': {'Name': uuid.uuid4().hex},
+    'Schemas': {'Name': uuid.uuid4().hex},
     'Extensions': {},
-    'Materialized Views': {}
+    'Materialized Views': {'Name': uuid.uuid4().hex}
 }
 
 META_DATA: dict = {
     'Databases': {'Children': DATABASE_METADATA, 'Name': uuid.uuid4().hex},
     'System Databases': {},
-    'Roles': {},
+    'Roles': {'Name': uuid.uuid4().hex},
     'Tablespaces': {}
 }
 
@@ -58,10 +58,20 @@ CREATE_SCRIPTS: dict = {
     'Columns': 'ALTER TABLE PUBLIC."{Tables_Name}" ADD COLUMN "{Columns_Name}" INTEGER;',
     'Constraints': 'ALTER TABLE PUBLIC."{Tables_Name}" ADD CONSTRAINT "{Constraints_Name}" CHECK("{Columns_Name}" < 5);',
     'Indexes': 'CREATE UNIQUE INDEX "{Indexes_Name}" ON PUBLIC."{Tables_Name}" ("{Columns_Name}");',
-    'Rules': 'CREATE RULE "{Rules_Name}" AS ON UPDATE TO PUBLIC."{Tables_Name}" DO ALSO NOTIFY "{Tables_Name}";'
+    'Rules': 'CREATE RULE "{Rules_Name}" AS ON UPDATE TO PUBLIC."{Tables_Name}" DO ALSO NOTIFY "{Tables_Name}";',
+    'Views': 'CREATE VIEW "{Views_Name}" AS SELECT * from "{Tables_Name}";',
+    'Functions': 'CREATE OR REPLACE FUNCTION "{Functions_Name}"(IN x int, IN y int, OUT sum int) AS \'SELECT $1 + $2\' LANGUAGE SQL;',
+    'Schemas': 'CREATE SCHEMA "{Schemas_Name}";',
+    'Materialized Views': 'CREATE MATERIALIZED VIEW "{Materialized Views_Name}" AS SELECT * FROM "{Tables_Name}";',
+    'Collations': 'CREATE COLLATION "{Collations_Name}" FROM "de_DE"',
+    'Data Types': 'CREATE TYPE "full_address_{Data Types_Name}" AS (city VARCHAR(90), street VARCHAR(90));',
+    'Sequences': 'CREATE SEQUENCE IF NOT EXISTS "{Sequences_Name}" INCREMENT BY  1 MINVALUE 0 MAXVALUE 1000 START WITH  1',
+    'Roles': 'CREATE ROLE {Roles_Name}'
 }
-
+    
 GET_OID_SCRIPTS: dict = {
     'Databases': "SELECT oid from pg_database where datname = '{Databases_Name}';",
-    'Tables': "SELECT * FROM pg_attribute WHERE attrelid = '{Tables_Name}'::regclass;"
+    'Tables': "SELECT * FROM pg_attribute WHERE attrelid = '{Tables_Name}'::regclass;",
+    'Views': "SELECT * FROM pg_attribute WHERE attrelid = '{Views_Name}'::regclass;",
+    'Materialized Views': "SELECT * FROM pg_attribute WHERE attrelid = '{Materialized Views_Name}'::regclass;"
 }
