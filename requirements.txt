@@ -10,7 +10,7 @@ prompt_toolkit
 jinja2
 
 # Build/Test Requirements
-cx_freeze
+cx_freeze==5.0.2
 nose
 parameterized
 coverage
