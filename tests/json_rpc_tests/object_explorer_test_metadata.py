@@ -6,7 +6,6 @@
 # Repeat this until you reach a leaf node
 
 
-import os
 import uuid
 
 
@@ -26,13 +25,6 @@ def _display_name_template_for_constraints():
     return '{0} (Unique, Non-Clustered)'  # Todo parameterize index type
 
 
-def _get_german_locale_id() -> str:
-    if os.name.lower() == 'nt':
-        return "German"
-    else:
-        return "de_DE"
-
-
 TABLE_METADATA: dict = {
     'Columns': {'Name': _name(), 'DisplayName': _display_name_template_for_columns()},
     'Constraints': {'Name': _name()},
@@ -44,13 +36,13 @@ TABLE_METADATA: dict = {
 DATABASE_METADATA: dict = {
     'Tables': {'Children': TABLE_METADATA, 'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
     'Views': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
-    'Functions': {'Name': uuid.uuid4().hex},
-    'Collations': {'Name': uuid.uuid4().hex},
-    'Data Types': {'Name': uuid.uuid4().hex},
-    'Sequences': {'Name': uuid.uuid4().hex},
-    'Schemas': {'Name': uuid.uuid4().hex},
+    'Functions': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
+    'Collations': {},
+    'Data Types': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
+    'Sequences': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
+    'Schemas': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
     'Extensions': {},
-    'Materialized Views': {'Name': uuid.uuid4().hex}
+    'Materialized Views': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()}
 }
 
 META_DATA: dict = {
@@ -71,7 +63,6 @@ CREATE_SCRIPTS: dict = {
     'Functions': 'CREATE OR REPLACE FUNCTION "{Functions_Name}"(IN x int, IN y int, OUT sum int) AS \'SELECT $1 + $2\' LANGUAGE SQL;',
     'Schemas': 'CREATE SCHEMA "{Schemas_Name}";',
     'Materialized Views': 'CREATE MATERIALIZED VIEW "{Materialized Views_Name}" AS SELECT * FROM "{Tables_Name}";',
-    'Collations': 'CREATE COLLATION "{Collations_Name}" (LOCALE = \'' + _get_german_locale_id() + '\');',
     'Data Types': 'CREATE TYPE "full_address_{Data Types_Name}" AS (city VARCHAR(90), street VARCHAR(90));',
     'Sequences': 'CREATE SEQUENCE IF NOT EXISTS "{Sequences_Name}" INCREMENT BY  1 MINVALUE 0 MAXVALUE 1000 START WITH  1',
     'Roles': 'CREATE ROLE "{Roles_Name}"'
