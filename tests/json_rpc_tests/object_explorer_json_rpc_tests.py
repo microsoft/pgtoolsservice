@@ -111,7 +111,7 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
             children = metadata_value.get('Children')
 
             if children is not None:
-                return self.create_database_objects(children, connection, **kwargs)
+                self.create_database_objects(children, connection, **kwargs)
 
         return kwargs
 
