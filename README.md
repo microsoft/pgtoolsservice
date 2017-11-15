@@ -31,7 +31,9 @@ If you only want to run **unit tests**, replace `nosetests` in the above directi
 
 If you only want to run **integration tests**, replace `nosetests` in the above directions with `./scripts/test-integration.sh` or `scripts\test-integration.ps1` as needed for your platform. See the section below for more specific details on integration tests.
 
-You can also use `scripts/test-all.sh` or `scripts\test-all.ps1` to run all tests instead of using the `nosetests` command. All of these scripts will accept any arguments that you give and pass them directly to `nosetests`. 
+You can also use `scripts/test-all.sh` or `scripts\test-all.ps1` to run all tests instead of using the `nosetests` command. All of these scripts will accept any arguments that you give and pass them directly to `nosetests`.
+
+To run tests in VS Code editor, add the following in VS Code settings: `"python.unitTest.nosetestsEnabled": true`  
 
 ## Integration Tests
 The PostgreSQL Tools Service supports tests that connect to a real Postgres database, which we call integration tests. These can be run by calling `./scripts/test-integration.sh` or `scripts\test-integration.ps1` from the project's root directory.
