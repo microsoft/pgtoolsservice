@@ -110,7 +110,7 @@ DATATYPE_READER_MAP = {
     datatypes.DATATYPE_SMALLINT: convert_bytes_to_short,
     datatypes.DATATYPE_INTEGER: convert_bytes_to_int,
     datatypes.DATATYPE_BIGINT: convert_bytes_to_long_long,
-    datatypes.DATATYPE_NUMERIC: convert_bytes_to_decimal,    
+    datatypes.DATATYPE_NUMERIC: convert_bytes_to_decimal,
     datatypes.DATATYPE_DATE: convert_bytes_to_date,
     datatypes.DATATYPE_TIME: convert_bytes_to_time,
     datatypes.DATATYPE_TIME_WITH_TIMEZONE: convert_bytes_to_time_with_timezone,

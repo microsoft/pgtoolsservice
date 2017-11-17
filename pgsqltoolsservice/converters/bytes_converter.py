@@ -178,31 +178,34 @@ def convert_timedelta_list(values: list):
 
 def convert_numericrange_list(values: list):
     numericrange_list = []
-    for value in values:        
+    for value in values:
         bound = _get_range_data_type_bound(value)
         formatted_value_str = bound[0] + str(int(value.lower)) + "," + str(int(value.upper)) + bound[1]
         numericrange_list.append(str(formatted_value_str))
     return bytearray(json.dumps(numericrange_list).encode())
 
+
 def convert_datetimerange_list(values: list):
     datetimerange_list = []
-    for value in values:        
+    for value in values:
         bound = _get_range_data_type_bound(value)
         formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
         datetimerange_list.append(str(formatted_value_str))
     return bytearray(json.dumps(datetimerange_list).encode())
 
+
 def convert_datetimetzrange_list(values: list):
     datetimetzrange_list = []
-    for value in values:        
+    for value in values:
         bound = _get_range_data_type_bound(value)
         formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
         datetimetzrange_list.append(str(formatted_value_str))
     return bytearray(json.dumps(datetimetzrange_list).encode())
 
+
 def convert_daterange_list(values: list):
     daterange_list = []
-    for value in values:        
+    for value in values:
         bound = _get_range_data_type_bound(value)
         formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
         daterange_list.append(str(formatted_value_str))
