@@ -5,6 +5,7 @@ psycopg2==2.7.1
 inflection
 sqlparse>=0.2.2,<0.3.0
 prompt_toolkit
+xlsxwriter
 
 # PGSMO Requirements
 jinja2

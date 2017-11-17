@@ -23,7 +23,9 @@ from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMe
 from pgsqltoolsservice.query_execution.contracts import (
     ExecutionPlanOptions, MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
-    QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams
+    QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams,
+    SaveResultsAsJsonRequestParams, SaveResultRequestResult,
+    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
 )
 from pgsqltoolsservice.query.contracts import DbColumn, ResultSetSubset, SelectionData, SubsetResult
 from pgsqltoolsservice.query import (
@@ -33,6 +35,9 @@ from pgsqltoolsservice.query import (
 from pgsqltoolsservice.connection.contracts import ConnectionType, ConnectionDetails
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
+from pgsqltoolsservice.query.data_storage import (
+    SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
+)
 
 
 class TestQueryService(unittest.TestCase):
@@ -868,6 +873,73 @@ class TestQueryService(unittest.TestCase):
 
         with mock.patch('uuid.uuid4', new=mock.Mock(return_value=new_owner_uri)):
             self.query_execution_service._handle_simple_execute_request(self.request_context, simple_execution_request)
+
+    def test_handle_save_as_csv_request(self):
+
+        request_params = SaveResultsAsCsvRequestParams()
+        request_params.owner_uri = 'testOwner_uri'
+        request_params.file_path = 'C:\SomeFolder\File.csv'
+
+        mock_query = mock.MagicMock()
+
+        self.query_execution_service.query_results[request_params.owner_uri] = mock_query
+
+        self.query_execution_service._handle_save_as_csv_request(self.request_context, request_params)
+
+        save_as_args = mock_query.save_as.call_args_list[0][0]
+
+        self.assertEqual(request_params.owner_uri, save_as_args[0].owner_uri)
+        self.assertIsInstance(save_as_args[0], SaveResultsAsCsvRequestParams)
+
+        self.assertIsInstance(save_as_args[1], SaveAsCsvFileStreamFactory)
+
+        save_as_args[2]()
+
+        self.assertIsInstance(self.request_context.last_response_params, SaveResultRequestResult)
+
+        error_reason = 'Something went wrong'
+
+        save_as_args[3](error_reason)
+
+        self.assertEqual('Failed to save File.csv: Something went wrong', self.request_context.last_error_message)
+
+    def test_handle_save_as_json_request(self):
+
+        request_params = SaveResultsAsJsonRequestParams()
+        request_params.owner_uri = 'testOwner_uri'
+        request_params.file_path = 'C:\SomeFolder\File.csv'
+
+        mock_query = mock.MagicMock()
+
+        self.query_execution_service.query_results[request_params.owner_uri] = mock_query
+
+        self.query_execution_service._handle_save_as_json_request(self.request_context, request_params)
+
+        save_as_args = mock_query.save_as.call_args_list[0][0]
+
+        self.assertEqual(request_params.owner_uri, save_as_args[0].owner_uri)
+        self.assertIsInstance(save_as_args[0], SaveResultsAsJsonRequestParams)
+
+        self.assertIsInstance(save_as_args[1], SaveAsJsonFileStreamFactory)
+
+    def test_handle_save_as_excel_request(self):
+
+        request_params = SaveResultsAsExcelRequestParams()
+        request_params.owner_uri = 'testOwner_uri'
+        request_params.file_path = 'C:\SomeFolder\File.csv'
+
+        mock_query = mock.MagicMock()
+
+        self.query_execution_service.query_results[request_params.owner_uri] = mock_query
+
+        self.query_execution_service._handle_save_as_excel_request(self.request_context, request_params)
+
+        save_as_args = mock_query.save_as.call_args_list[0][0]
+
+        self.assertEqual(request_params.owner_uri, save_as_args[0].owner_uri)
+        self.assertIsInstance(save_as_args[0], SaveResultsAsExcelRequestParams)
+
+        self.assertIsInstance(save_as_args[1], SaveAsExcelFileStreamFactory)
 
     @integration_test
     def test_query_execution_and_retrieval(self):

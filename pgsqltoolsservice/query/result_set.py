@@ -4,9 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-from typing import List  # noqa
+from typing import List, Dict  # noqa
+import threading
 
-from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSummary  # noqa
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSummary, SaveResultsRequestParams  # noqa
+from pgsqltoolsservice.query.data_storage import FileStreamFactory
 
 
 class ResultSetEvents:
@@ -25,6 +27,7 @@ class ResultSet(metaclass=ABCMeta):
 
         self._has_been_read = False
         self._columns_info: List[DbColumn] = []
+        self._save_as_threads: Dict[str, threading.Thread] = {}
 
     @property
     def columns_info(self) -> List[DbColumn]:
@@ -67,3 +70,34 @@ class ResultSet(metaclass=ABCMeta):
     @abstractmethod
     def read_result_to_end(self, cursor):
         pass
+
+    @abstractmethod
+    def do_save_as(self, file_path: str, row_start_index: int, row_end_index: int, file_factory: FileStreamFactory, on_success, on_failure) -> None:
+        pass
+
+    def save_as(self, params: SaveResultsRequestParams, file_factory: FileStreamFactory, on_success, on_failure) -> None:
+
+        if self._has_been_read is False:
+            raise RuntimeError('Result cannot be saved until query execution has completed')
+
+        save_as_thread = self._save_as_threads.get(params.file_path)
+
+        if save_as_thread is not None:
+            if save_as_thread.isAlive():
+                raise RuntimeError('A save request to the same path is in progress')
+            else:
+                del self._save_as_threads[params.file_path]
+
+        row_end_index = self.row_count
+        row_start_index = 0
+
+        if params.is_save_selection:
+            row_end_index = params.row_end_index + 1
+            row_start_index = params.row_start_index
+
+        new_save_as_thread = threading.Thread(
+            target=self.do_save_as,
+            args=(params.file_path, row_start_index, row_end_index, file_factory, on_success, on_failure),
+            daemon=True)
+        self._save_as_threads[params.file_path] = new_save_as_thread
+        new_save_as_thread.start()

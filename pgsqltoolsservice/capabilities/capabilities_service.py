@@ -12,6 +12,7 @@ from pgsqltoolsservice.capabilities.contracts import (
 from pgsqltoolsservice.disaster_recovery.contracts import BACKUP_OPTIONS, RESTORE_OPTIONS
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
+from pgsqltoolsservice.query_execution.contracts import SERIALIZATION_OPTIONS
 
 
 class CapabilitiesService:
@@ -189,7 +190,7 @@ class CapabilitiesService:
                 group_name='Client'
             )
         ])
-        capabilities = DMPServerCapabilities('1.0', 'PGSQL', 'PostgreSQL', conn_provider_opts, [BACKUP_OPTIONS, RESTORE_OPTIONS])
+        capabilities = DMPServerCapabilities('1.0', 'PGSQL', 'PostgreSQL', conn_provider_opts, [BACKUP_OPTIONS, RESTORE_OPTIONS, SERIALIZATION_OPTIONS])
         result = CapabilitiesResult(capabilities)
 
         # Send the response

@@ -9,7 +9,8 @@ from typing import Callable, Dict, List, Optional  # noqa
 import sqlparse
 
 from pgsqltoolsservice.query import Batch, BatchEvents, create_batch, ResultSetStorageType
-from pgsqltoolsservice.query.contracts import SelectionData
+from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
+from pgsqltoolsservice.query.data_storage import FileStreamFactory
 
 
 class QueryEvents:
@@ -145,6 +146,12 @@ class Query:
             raise IndexError('Batch index cannot be less than 0 or greater than the number of batches')
 
         return self._batches[batch_index].get_subset(start_index, end_index)
+
+    def save_as(self, params: SaveResultsRequestParams, file_factory: FileStreamFactory, on_success, on_failure):
+        if params.batch_index < 0 or params.batch_index >= len(self.batches):
+            raise IndexError('Batch index cannot be less than 0 or greater than the number of batches')
+
+        self.batches[params.batch_index].save_as(params, file_factory, on_success, on_failure)
 
 
 def compute_selection_data_for_batches(batches: List[str], full_text: str) -> List[SelectionData]:

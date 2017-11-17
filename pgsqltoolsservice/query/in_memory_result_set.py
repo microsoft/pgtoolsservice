@@ -6,8 +6,9 @@
 from typing import List
 
 from pgsqltoolsservice.query.result_set import ResultSet, ResultSetEvents
-from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset  # noqa
+from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset, SaveResultsRequestParams  # noqa
 from pgsqltoolsservice.query.column_info import get_columns_info
+from pgsqltoolsservice.query.data_storage import FileStreamFactory
 
 
 class InMemoryResultSet(ResultSet):
@@ -43,3 +44,15 @@ class InMemoryResultSet(ResultSet):
         self.columns_info = get_columns_info(cursor.description, cursor.connection)
 
         self._has_been_read = True
+
+    def do_save_as(self, file_path: str, row_start_index: int, row_end_index: int, file_factory: FileStreamFactory, on_success, on_failure) -> None:
+
+        with file_factory.get_writer(file_path) as writer:
+            for index in range(row_start_index, row_end_index):
+                row = self.get_row(index)
+                writer.write_row(row, self.columns_info)
+
+            writer.complete_write()
+
+            if on_success is not None:
+                on_success()

@@ -12,10 +12,11 @@ import uuid
 import sqlparse
 
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
-from pgsqltoolsservice.query.contracts import BatchSummary, SelectionData
+from pgsqltoolsservice.query.contracts import BatchSummary, SaveResultsRequestParams, SelectionData
 from pgsqltoolsservice.query.result_set import ResultSet  # noqa
 from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
 from pgsqltoolsservice.query.in_memory_result_set import InMemoryResultSet
+from pgsqltoolsservice.query.data_storage import FileStreamFactory
 
 
 class ResultSetStorageType(Enum):
@@ -146,6 +147,13 @@ class Batch:
 
     def get_subset(self, start_index: int, end_index: int):
         return self._result_set.get_subset(start_index, end_index)
+
+    def save_as(self, params: SaveResultsRequestParams, file_factory: FileStreamFactory, on_success, on_failure) -> None:
+
+        if params.result_set_index < 0 or params.result_set_index > 0:
+            raise IndexError('Result set index should be always 0')
+
+        self._result_set.save_as(params, file_factory, on_success, on_failure)
 
 
 class SelectBatch(Batch):
