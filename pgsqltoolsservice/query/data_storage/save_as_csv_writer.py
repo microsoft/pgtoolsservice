@@ -29,6 +29,6 @@ class SaveAsCsvWriter(SaveAsWriter):
             self._header_written = True
 
         selected_cells = [cell.display_value for cell in row[
-                self.get_start_index(): self.get_end_index(columns)]]
+            self.get_start_index(): self.get_end_index(columns)]]
 
         writer.writerow(selected_cells)

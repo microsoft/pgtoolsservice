@@ -50,7 +50,7 @@ class TestSaveAsCsvWriter(unittest.TestCase):
         with mock.patch('csv.writer', new=csv_writer_mock):
             self.writer.write_row(self.row, self.columns)
 
-            csv_writer_mock.assert_called_once_with(self.mock_io,  delimiter=',', quotechar='"', quoting=0)
+            csv_writer_mock.assert_called_once_with(self.mock_io, delimiter=',', quotechar='"', quoting=0)
 
             self.assertEqual(writer_mock.writerow.call_count, 2)
             write_row_args = writer_mock.writerow.call_args_list
@@ -68,7 +68,7 @@ class TestSaveAsCsvWriter(unittest.TestCase):
         with mock.patch('csv.writer', new=csv_writer_mock):
             self.writer.write_row(self.row, self.columns)
 
-            csv_writer_mock.assert_called_once_with(self.mock_io,  delimiter=',', quotechar='"', quoting=0)
+            csv_writer_mock.assert_called_once_with(self.mock_io, delimiter=',', quotechar='"', quoting=0)
 
             self.assertEqual(writer_mock.writerow.call_count, 2)
             write_row_args = writer_mock.writerow.call_args_list

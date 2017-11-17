@@ -18,4 +18,4 @@ __all__ = [
     'FileStreamFactory', 'SaveAsCsvWriter', 'SaveAsJsonWriter', 'SaveAsExcelWriter', 'SaveAsExcelFileStreamFactory',
     'SaveAsJsonFileStreamFactory', 'SaveAsCsvFileStreamFactory', 'ServiceBufferFileStreamWriter',
     'ServiceBufferFileStreamReader', 'StorageDataReader'
-    ]
+]
