@@ -150,7 +150,7 @@ class Batch:
 
     def save_as(self, params: SaveResultsRequestParams, file_factory: FileStreamFactory, on_success, on_failure) -> None:
 
-        if params.result_set_index < 0 or params.result_set_index > 0:
+        if params.result_set_index != 0:
             raise IndexError('Result set index should be always 0')
 
         self._result_set.save_as(params, file_factory, on_success, on_failure)

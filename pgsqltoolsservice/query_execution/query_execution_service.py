@@ -8,7 +8,7 @@ import threading
 import uuid
 from typing import Callable, Dict, List, Optional  # noqa
 import sqlparse
-import os
+import ntpath
 
 import psycopg2
 import psycopg2.errorcodes
@@ -406,7 +406,7 @@ class QueryExecutionService(object):
             request_context.send_response(SaveResultRequestResult())
 
         def on_error(reason: str):
-            message = 'Failed to save {0}: {1}'.format(os.path.basename(params.file_path), reason)
+            message = 'Failed to save {0}: {1}'.format(ntpath.basename(params.file_path), reason)
             request_context.send_error(message)
 
         try:
