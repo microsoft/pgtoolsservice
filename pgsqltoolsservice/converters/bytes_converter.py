@@ -59,12 +59,6 @@ def convert_decimal(value: decimal.Decimal):
     return bytearray(str(decimal.Decimal(value)).encode())
 
 
-def convert_char(value: str):
-    if len(value) > 1:
-        raise ValueError("Value provided is not a character")
-    return bytearray(value.encode())
-
-
 def convert_str(value: str):
     return bytearray(value.encode())
 
@@ -182,6 +176,39 @@ def convert_timedelta_list(values: list):
     return bytearray(json.dumps(timedelta_list).encode())
 
 
+def convert_numericrange_list(values: list):
+    numericrange_list = []
+    for value in values:        
+        bound = _get_range_data_type_bound(value)
+        formatted_value_str = bound[0] + str(int(value.lower)) + "," + str(int(value.upper)) + bound[1]
+        numericrange_list.append(str(formatted_value_str))
+    return bytearray(json.dumps(numericrange_list).encode())
+
+def convert_datetimerange_list(values: list):
+    datetimerange_list = []
+    for value in values:        
+        bound = _get_range_data_type_bound(value)
+        formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+        datetimerange_list.append(str(formatted_value_str))
+    return bytearray(json.dumps(datetimerange_list).encode())
+
+def convert_datetimetzrange_list(values: list):
+    datetimetzrange_list = []
+    for value in values:        
+        bound = _get_range_data_type_bound(value)
+        formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+        datetimetzrange_list.append(str(formatted_value_str))
+    return bytearray(json.dumps(datetimetzrange_list).encode())
+
+def convert_daterange_list(values: list):
+    daterange_list = []
+    for value in values:        
+        bound = _get_range_data_type_bound(value)
+        formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+        daterange_list.append(str(formatted_value_str))
+    return bytearray(json.dumps(daterange_list).encode())
+
+
 DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BOOL: convert_bool,
     datatypes.DATATYPE_REAL: convert_float,
@@ -190,7 +217,7 @@ DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_INTEGER: convert_int,
     datatypes.DATATYPE_BIGINT: convert_long_long,
     datatypes.DATATYPE_NUMERIC: convert_decimal,
-    datatypes.DATATYPE_BPCHAR: convert_char,
+    datatypes.DATATYPE_BPCHAR: convert_str,
     datatypes.DATATYPE_DATE: convert_date,
     datatypes.DATATYPE_TIME: convert_time,
     datatypes.DATATYPE_TIME_WITH_TIMEZONE: convert_time_with_timezone,
@@ -207,7 +234,6 @@ DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_TSTZRANGE: convert_datetimetzrange,
     datatypes.DATATYPE_DATERANGE: convert_daterange,
     datatypes.DATATYPE_OID: convert_int,
-    datatypes.DATATYPE_INTEGER_ARRAY: convert_list,
     datatypes.DATATYPE_SMALLINT_ARRAY: convert_list,
     datatypes.DATATYPE_INTEGER_ARRAY: convert_list,
     datatypes.DATATYPE_BIGINT_ARRAY: convert_list,
@@ -225,6 +251,17 @@ DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_TIME_ARRAY: convert_time_list,
     datatypes.DATATYPE_TIME_WITH_TIMEZONE_ARRAY: convert_time_with_timezone_list,
     datatypes.DATATYPE_INTERVAL_ARRAY: convert_timedelta_list,
+    datatypes.DATATYPE_BOOL_ARRAY: convert_list,
+    datatypes.DATATYPE_POINT_ARRAY: convert_list,
+    datatypes.DATATYPE_LINE_ARRAY: convert_list,
+    datatypes.DATATYPE_LSEG_ARRAY: convert_list,
+    datatypes.DATATYPE_BOX_ARRAY: convert_list,
+    datatypes.DATATYPE_PATH_ARRAY: convert_list,
+    datatypes.DATATYPE_POLYGON_ARRAY: convert_list,
+    datatypes.DATATYPE_CIRCLE_ARRAY: convert_list,
+    datatypes.DATATYPE_CIDR_ARRAY: convert_list,
+    datatypes.DATATYPE_INET_ARRAY: convert_list,
+    datatypes.DATATYPE_MACADDR_ARRAY: convert_list,
     datatypes.DATATYPE_BIT_ARRAY: convert_list,
     datatypes.DATATYPE_BIT_VARYING_ARRAY: convert_list,
     datatypes.DATATYPE_TSVECTOR_ARRAY: convert_list,
@@ -232,6 +269,24 @@ DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_UUID_ARRAY: convert_list,
     datatypes.DATATYPE_XML_ARRAY: convert_list,
     datatypes.DATATYPE_JSON_ARRAY: convert_list,
+    datatypes.DATATYPE_INT4RANGE_ARRAY: convert_numericrange_list,
+    datatypes.DATATYPE_INT8RANGE_ARRAY: convert_numericrange_list,
+    datatypes.DATATYPE_NUMRANGE_ARRAY: convert_numericrange_list,
+    datatypes.DATATYPE_TSRANGE_ARRAY: convert_datetimerange_list,
+    datatypes.DATATYPE_TSTZRANGE_ARRAY: convert_datetimetzrange_list,
+    datatypes.DATATYPE_DATERANGE_ARRAY: convert_daterange_list,
+    datatypes.DATATYPE_OID_ARRAY: convert_list,
+    datatypes.DATATYPE_REGPROC_ARRAY: convert_list,
+    datatypes.DATATYPE_REGPROCEDURE_ARRAY: convert_list,
+    datatypes.DATATYPE_REGOPER_ARRAY: convert_list,
+    datatypes.DATATYPE_REGOPERATOR_ARRAY: convert_list,
+    datatypes.DATATYPE_REGCLASS_ARRAY: convert_list,
+    datatypes.DATATYPE_REGTYPE_ARRAY: convert_list,
+    datatypes.DATATYPE_REGROLE_ARRAY: convert_list,
+    datatypes.DATATYPE_REGNAMESPACE_ARRAY: convert_list,
+    datatypes.DATATYPE_REGCONFIG_ARRAY: convert_list,
+    datatypes.DATATYPE_REGDICTIONARY_ARRAY: convert_list,
+    datatypes.DATATYPE_PG_LSN_ARRAY: convert_list
 }
 
 
