@@ -10,7 +10,7 @@ import tests.utils as utils
 from pgsqltoolsservice.query.batch import (
     Batch, BatchEvents, create_batch, create_result_set, ResultSetStorageType, SelectBatch
 )
-from pgsqltoolsservice.query.contracts import SelectionData
+from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
 from pgsqltoolsservice.query.in_memory_result_set import InMemoryResultSet
 from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
 
@@ -135,6 +135,32 @@ class TestBatch(unittest.TestCase):
         self.create_and_execute_batch(Batch)
 
         self._cursor.close.assert_called_once()
+
+    def test_save_as(self):
+        batch = self.create_and_execute_batch(Batch)
+
+        params = SaveResultsRequestParams()
+        params.result_set_index = 0
+
+        file_factory = mock.MagicMock()
+        on_success = mock.MagicMock()
+        on_error = mock.MagicMock()
+
+        result_set_save_as_mock = mock.MagicMock()
+        batch._result_set.save_as = result_set_save_as_mock
+
+        batch.save_as(params, file_factory, on_success, on_error)
+
+        result_set_save_as_mock.assert_called_once_with(params, file_factory, on_success, on_error)
+
+    def test_save_as_with_invalid_batch_index(self):
+        batch = self.create_and_execute_batch(Batch)
+        params = SaveResultsRequestParams()
+        params.result_set_index = 1
+
+        with self.assertRaises(IndexError) as context_manager:
+            batch.save_as(params, None, None, None)
+            self.assertEquals('Result set index should be always 0', context_manager.exception.args[0])
 
 
 if __name__ == '__main__':

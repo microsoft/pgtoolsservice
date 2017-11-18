@@ -10,7 +10,7 @@ from typing import Callable, List
 import tests.utils as utils
 from pgsqltoolsservice.query.result_set import ResultSetEvents
 from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
-from pgsqltoolsservice.query.contracts import DbCellValue
+from pgsqltoolsservice.query.contracts import DbCellValue, SaveResultsRequestParams
 
 
 class TestFileStorageResultSet(unittest.TestCase):
@@ -209,6 +209,37 @@ class TestFileStorageResultSet(unittest.TestCase):
 
         self.execute_with_patch(test)
 
+    def test_save_as(self):
+        def test():
+            params = SaveResultsRequestParams()
+            params.file_path = 'somepath'
+            params.row_start_index = 0
+            params.row_end_index = 1
+
+            mock_writer = MockWriter(10)
+            mock_reader = MockReader(self._row)
+
+            mock_file_factory = mock.MagicMock()
+            mock_file_factory.get_writer = mock.Mock(return_value=mock_writer)
+            mock_file_factory.get_reader = mock.Mock(return_value=mock_reader)
+
+            on_success = mock.MagicMock()
+
+            self._result_set._has_been_read = True
+            self._result_set._file_offsets = [1]
+
+            self._result_set.save_as(params, mock_file_factory, on_success, None)
+
+            mock_file_factory.get_writer.assert_called_once_with(params.file_path)
+
+            mock_reader.read_row.assert_called_once_with(self._result_set._file_offsets[0], 0, self._result_set.columns_info)
+            mock_writer.write_row.assert_called_once_with(self._row, self._result_set.columns_info)
+
+            mock_writer.complete_write.assert_called_once()
+            on_success.assert_called_once()
+
+        self.execute_with_patch(test)
+
 
 class MockType:
     def __enter__(cls):
@@ -227,6 +258,7 @@ class MockWriter(MockType):
     def __init__(self, bytes_written: int) -> None:
         self.write_row = mock.Mock(return_value=bytes_written)
         self.seek = mock.MagicMock()
+        self.complete_write = mock.MagicMock()
 
 
 if __name__ == '__main__':

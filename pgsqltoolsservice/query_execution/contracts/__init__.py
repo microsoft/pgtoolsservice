@@ -35,6 +35,11 @@ from pgsqltoolsservice.query_execution.contracts.simple_execute_request import (
 from pgsqltoolsservice.query_execution.contracts.query_execution_plan_request import (
     QUERY_EXECUTION_PLAN_REQUEST, QueryExecutionPlanRequest
 )
+from pgsqltoolsservice.query_execution.contracts.save_result_as_request import (
+    SAVE_AS_CSV_REQUEST, SAVE_AS_JSON_REQUEST, SAVE_AS_EXCEL_REQUEST, SERIALIZATION_OPTIONS,
+    SaveResultsAsJsonRequestParams, SaveResultRequestResult,
+    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
+)
 
 __all__ = [
     'BatchNotificationParams',
@@ -47,6 +52,7 @@ __all__ = [
     'SUBSET_REQUEST', 'CANCEL_REQUEST', 'QueryCancelResult', 'QueryCancelParams',
     'QueryDisposeParams', 'QUERY_EXECUTION_PLAN_REQUEST', 'QueryExecutionPlanRequest', 'DISPOSE_REQUEST',
     'SIMPLE_EXECUTE_REQUEST', 'SimpleExecuteRequest', 'SimpleExecuteResponse', 'EXECUTE_DOCUMENT_STATEMENT_REQUEST',
-    'ExecuteDocumentStatementParams'
-
+    'ExecuteDocumentStatementParams', 'SAVE_AS_CSV_REQUEST', 'SAVE_AS_JSON_REQUEST', 'SERIALIZATION_OPTIONS', 'SAVE_AS_EXCEL_REQUEST',
+    'SaveResultRequestResult', 'SaveResultsAsCsvRequestParams', 'SaveResultsAsExcelRequestParams',
+    'SaveResultsAsJsonRequestParams'
 ]

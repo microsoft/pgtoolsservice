@@ -9,7 +9,7 @@ from unittest import mock
 import psycopg2
 
 from pgsqltoolsservice.query import ExecutionState, Query, QueryExecutionSettings, QueryEvents
-from pgsqltoolsservice.query.contracts import SelectionData
+from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
 from pgsqltoolsservice.query_execution.contracts import ExecutionPlanOptions
 import tests.utils as utils
 
@@ -170,6 +170,35 @@ select * from t1;'''
 
         self.assertEqual(expected_subset, subset)
         mock_batch.get_subset.assert_called_once_with(0, 10)
+
+    def test_save_as_with_invalid_batch_index(self):
+
+        def execute_with_batch_index(index: int):
+            params = SaveResultsRequestParams()
+            params.batch_index = index
+
+            with self.assertRaises(IndexError) as context_manager:
+                self.query.save_as(params, None, None, None)
+                self.assertEquals('Batch index cannot be less than 0 or greater than the number of batches', context_manager.exception.args[0])
+
+        execute_with_batch_index(-1)
+
+        execute_with_batch_index(2)
+
+    def test_save_as(self):
+        params = SaveResultsRequestParams()
+        params.batch_index = 0
+
+        file_factory = mock.MagicMock()
+        on_success = mock.MagicMock()
+        on_error = mock.MagicMock()
+
+        batch_save_as_mock = mock.MagicMock()
+        self.query.batches[0].save_as = batch_save_as_mock
+
+        self.query.save_as(params, file_factory, on_success, on_error)
+
+        batch_save_as_mock.assert_called_once_with(params, file_factory, on_success, on_error)
 
 
 def _tuple_from_selection_data(data: SelectionData):
