@@ -8,6 +8,7 @@ import threading
 import uuid
 from typing import Callable, Dict, List, Optional  # noqa
 import sqlparse
+import ntpath
 
 import psycopg2
 import psycopg2.errorcodes
@@ -17,7 +18,7 @@ from pgsqltoolsservice.query import (
     Batch, BatchEvents, ExecutionState, QueryExecutionSettings, Query, QueryEvents,
     compute_selection_data_for_batches as compute_batches
 )
-from pgsqltoolsservice.query.contracts import BatchSummary, ResultSetSubset, SelectionData, SubsetResult  # noqa
+from pgsqltoolsservice.query.contracts import BatchSummary, ResultSetSubset, SelectionData, SaveResultsRequestParams, SubsetResult  # noqa
 from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, EXECUTE_DOCUMENT_STATEMENT_REQUEST,
@@ -27,11 +28,16 @@ from pgsqltoolsservice.query_execution.contracts import (
     SUBSET_REQUEST, ExecuteDocumentSelectionParams, CANCEL_REQUEST, QueryCancelParams, ResultMessage, SubsetParams,
     BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams,
     DISPOSE_REQUEST, SIMPLE_EXECUTE_REQUEST, SimpleExecuteRequest, ExecuteStringParams,
-    SimpleExecuteResponse
+    SimpleExecuteResponse, SAVE_AS_CSV_REQUEST, SAVE_AS_JSON_REQUEST, SAVE_AS_EXCEL_REQUEST,
+    SaveResultsAsJsonRequestParams, SaveResultRequestResult,
+    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
 )
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams
 from pgsqltoolsservice.connection.contracts import ConnectionType
 import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.query.data_storage import (
+    FileStreamFactory, SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
+)
 
 
 CANCELATION_QUERY = 'SELECT pg_cancel_backend (%s)'
@@ -72,7 +78,10 @@ class QueryExecutionService(object):
             CANCEL_REQUEST: self._handle_cancel_query_request,
             SIMPLE_EXECUTE_REQUEST: self._handle_simple_execute_request,
             DISPOSE_REQUEST: self._handle_dispose_request,
-            QUERY_EXECUTION_PLAN_REQUEST: self._handle_query_execution_plan_request
+            QUERY_EXECUTION_PLAN_REQUEST: self._handle_query_execution_plan_request,
+            SAVE_AS_CSV_REQUEST: self._handle_save_as_csv_request,
+            SAVE_AS_JSON_REQUEST: self._handle_save_as_json_request,
+            SAVE_AS_EXCEL_REQUEST: self._handle_save_as_excel_request
         }
 
     def register(self, service_provider: ServiceProvider):
@@ -89,6 +98,16 @@ class QueryExecutionService(object):
         return self.query_results[owner_uri]
 
     # REQUEST HANDLERS #####################################################
+
+    def _handle_save_as_csv_request(self, request_context: RequestContext, params: SaveResultsAsCsvRequestParams) -> None:
+        self._save_result(params, request_context, SaveAsCsvFileStreamFactory(params))
+
+    def _handle_save_as_json_request(self, request_context: RequestContext, params: SaveResultsAsJsonRequestParams) -> None:
+        self._save_result(params, request_context, SaveAsJsonFileStreamFactory(params))
+
+    def _handle_save_as_excel_request(self, request_context: RequestContext, params: SaveResultsAsExcelRequestParams) -> None:
+        self._save_result(params, request_context, SaveAsExcelFileStreamFactory(params))
+
     def _handle_query_execution_plan_request(self, request_context: RequestContext, params: QueryExecutionPlanRequest):
         raise NotImplementedError()
 
@@ -379,6 +398,22 @@ class QueryExecutionService(object):
             except Exception as rollback_exception:
                 # If the rollback failed, handle the error as usual but don't try to roll back again
                 self._resolve_query_exception(rollback_exception, rollback_query, request_context, conn, True)
+
+    def _save_result(self, params: SaveResultsRequestParams, request_context: RequestContext, file_factory: FileStreamFactory):
+        query: Query = self.query_results[params.owner_uri]
+
+        def on_success():
+            request_context.send_response(SaveResultRequestResult())
+
+        def on_error(reason: str):
+            message = 'Failed to save {0}: {1}'.format(ntpath.basename(params.file_path), reason)
+            request_context.send_error(message)
+
+        try:
+            query.save_as(params, file_factory, on_success, on_error)
+
+        except Exception as error:
+            on_error(str(error))
 
 
 def _create_rows_affected_message(batch: Batch) -> str:
