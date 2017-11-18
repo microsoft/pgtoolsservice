@@ -194,24 +194,6 @@ def convert_datetimerange_list(values: list):
     return bytearray(json.dumps(datetimerange_list).encode())
 
 
-def convert_datetimetzrange_list(values: list):
-    datetimetzrange_list = []
-    for value in values:
-        bound = _get_range_data_type_bound(value)
-        formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
-        datetimetzrange_list.append(str(formatted_value_str))
-    return bytearray(json.dumps(datetimetzrange_list).encode())
-
-
-def convert_daterange_list(values: list):
-    daterange_list = []
-    for value in values:
-        bound = _get_range_data_type_bound(value)
-        formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
-        daterange_list.append(str(formatted_value_str))
-    return bytearray(json.dumps(daterange_list).encode())
-
-
 DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BOOL: convert_bool,
     datatypes.DATATYPE_REAL: convert_float,
@@ -276,8 +258,8 @@ DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_INT8RANGE_ARRAY: convert_numericrange_list,
     datatypes.DATATYPE_NUMRANGE_ARRAY: convert_numericrange_list,
     datatypes.DATATYPE_TSRANGE_ARRAY: convert_datetimerange_list,
-    datatypes.DATATYPE_TSTZRANGE_ARRAY: convert_datetimetzrange_list,
-    datatypes.DATATYPE_DATERANGE_ARRAY: convert_daterange_list,
+    datatypes.DATATYPE_TSTZRANGE_ARRAY: convert_datetimerange_list,
+    datatypes.DATATYPE_DATERANGE_ARRAY: convert_datetimerange_list,
     datatypes.DATATYPE_OID_ARRAY: convert_list,
     datatypes.DATATYPE_REGPROC_ARRAY: convert_list,
     datatypes.DATATYPE_REGPROCEDURE_ARRAY: convert_list,
