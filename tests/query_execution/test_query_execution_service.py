@@ -349,7 +349,7 @@ class TestQueryService(unittest.TestCase):
 
         # Then we executed the query, closed the cursor, and called fetchall once each.
         # And the connection's notices is set properly
-        self.cursor.execute.assert_called()
+        self.cursor.execute.assert_called_once()
         self.cursor.close.assert_called_once()
         self.assertEqual(self.connection.notices, [])
 
@@ -431,8 +431,8 @@ class TestQueryService(unittest.TestCase):
 
         # Then we must have ran execute for a batch, and executed 'SELECTED pg_cancel_backend(pid)
         # to cancel the query
-        self.cursor.execute.assert_called()
-        self.cursor_cancel.execute.assert_called()
+        self.cursor.execute.assert_called_once()
+        self.cursor_cancel.execute.assert_called_once()
         self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
         self.assertEqual(self.request_context.last_response_params.messages, None)
 
@@ -511,7 +511,7 @@ class TestQueryService(unittest.TestCase):
 
         # Then execute() in the execute query handler should have been called and
         # the cancel cursor's execute() should not have been called
-        self.cursor.execute.assert_called()
+        self.cursor.execute.assert_called_once()
         self.cursor_cancel.execute.assert_not_called()
         self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
         self.assertIsNotNone(self.request_context.last_response_params.messages)
@@ -532,7 +532,7 @@ class TestQueryService(unittest.TestCase):
             self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then we executed the query, closed the cursor, and called fetchall once each.
-        self.cursor.execute.assert_called()
+        self.cursor.execute.assert_called_once()
         self.cursor.close.assert_called_once()
 
         # And we sent a response to the initial query, along with notifications for
