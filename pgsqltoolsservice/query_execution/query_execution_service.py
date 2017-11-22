@@ -218,7 +218,7 @@ class QueryExecutionService(object):
         if params.owner_uri not in self.query_results or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED:
             query_text = self._get_query_text_from_execute_params(params)
 
-            execution_settings = QueryExecutionSettings(params.execution_plan_options)
+            execution_settings = QueryExecutionSettings(params.execution_plan_options, request_context)
             query_events = QueryEvents(None, None, BatchEvents(_batch_execution_started_callback, _batch_execution_finished_callback))
             self.query_results[params.owner_uri] = Query(params.owner_uri, query_text, execution_settings, query_events)
         elif self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTING:
@@ -392,7 +392,7 @@ class QueryExecutionService(object):
         # If there was a failure in the middle of a transaction, roll it back.
         # Note that conn.rollback() won't work since the connection is in autocommit mode
         if not is_rollback_error and conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR:
-            rollback_query = Query(query.owner_uri, 'ROLLBACK', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+            rollback_query = Query(query.owner_uri, 'ROLLBACK', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
             try:
                 rollback_query.execute(conn)
             except Exception as rollback_exception:

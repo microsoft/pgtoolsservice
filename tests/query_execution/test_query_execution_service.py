@@ -229,7 +229,7 @@ class TestQueryService(unittest.TestCase):
         """
         query_results: Dict[str, Query] = {}
         owner_uri = "untitled"
-        query_results[owner_uri] = Query(owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        query_results[owner_uri] = Query(owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         batch_ordinal = 0
         result_ordinal = 0
         rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
@@ -566,9 +566,9 @@ class TestQueryService(unittest.TestCase):
         with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
             batch._result_set.read_result_to_end(cursor)
 
-        test_query = Query(params.owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        test_query = Query(params.owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         test_query._batches = [Batch('', 0, SelectionData()), Batch('', 1, SelectionData()), batch]
-        other_query = Query('some_other_uri', '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        other_query = Query('some_other_uri', '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         other_query._batches = [Batch('', 3, SelectionData())]
         self.query_execution_service.query_results = {
             test_query.owner_uri: test_query,
@@ -637,7 +637,7 @@ class TestQueryService(unittest.TestCase):
         """
         # Initialize results
         uri = 'test_uri'
-        self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         self.query_execution_service.query_results[uri]._execution_state = ExecutionState.EXECUTED
         params = QueryDisposeParams()
         params.owner_uri = uri
@@ -669,7 +669,7 @@ class TestQueryService(unittest.TestCase):
     def test_query_disposal_with_query_executing(self):
         """Test query disposal while a query is executing"""
         uri = 'test_uri'
-        self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         self.query_execution_service.query_results[uri]._execution_state = ExecutionState.EXECUTING
         params = QueryDisposeParams()
         params.owner_uri = uri
@@ -687,7 +687,7 @@ class TestQueryService(unittest.TestCase):
     def test_query_disposal_with_query_not_started(self):
         """Test query disposal while a query has not started executing"""
         uri = 'test_uri'
-        self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         params = QueryDisposeParams()
         params.owner_uri = uri
 
@@ -810,7 +810,7 @@ class TestQueryService(unittest.TestCase):
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
         self.connection.get_transaction_status.return_value = psycopg2.extensions.TRANSACTION_STATUS_INERROR
         query_params = get_execute_string_params()
-        query = Query(query_params.owner_uri, query_params.query, QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        query = Query(query_params.owner_uri, query_params.query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         self.query_execution_service.query_results[query_params.owner_uri] = query
 
         # If I execute a query that opens a transaction and then throws an error when executed
@@ -842,7 +842,7 @@ class TestQueryService(unittest.TestCase):
 
         mock_rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
         new_owner_uri = str(uuid.uuid4())
-        query = Query(new_owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
+        query = Query(new_owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         batch = Batch('', 0, SelectionData())
         cursor = utils.MockCursor(mock_rows)
 

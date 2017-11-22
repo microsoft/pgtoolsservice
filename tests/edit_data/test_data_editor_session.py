@@ -96,7 +96,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._query_executer.assert_called_once()
 
     def test_initialize_calls_failure_when_query_status_is_not_executed(self):
-        query = Query('owner', '', QueryExecutionSettings(None), QueryEvents())
+        query = Query('owner', '', QueryExecutionSettings(None, None), QueryEvents())
         self._query_executer = mock.MagicMock(return_value=DataEditSessionExecutionState(query))
 
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
@@ -104,7 +104,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._query_executer.assert_called_once()
 
     def test_initialize_calls_success(self):
-        query = Query('owner', '', QueryExecutionSettings(None), QueryEvents())
+        query = Query('owner', '', QueryExecutionSettings(None, None), QueryEvents())
         query._execution_state = ExecutionState.EXECUTED
 
         rows = [("Result1", 53), ("Result2", None,)]
