@@ -9,7 +9,7 @@ from unittest import mock
 import psycopg2
 
 from pgsqltoolsservice.query import ExecutionState, Query, QueryExecutionSettings, QueryEvents
-from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
+from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData, DbColumn
 from pgsqltoolsservice.query_execution.contracts import ExecutionPlanOptions
 import tests.utils as utils
 
@@ -24,9 +24,19 @@ class TestQuery(unittest.TestCase):
         self.query_uri = 'test_uri'
         self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions()), QueryEvents())
 
-        self.mock_query_results = [(1, 'True'), (2, 'False')]
-        self.cursor = utils.MockCursor(self.mock_query_results, ['id', 'isvalid'])
+        self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
+        self.cursor = utils.MockCursor(self.mock_query_results)
         self.connection = utils.MockConnection(cursor=self.cursor)
+
+        self.columns_info = []
+        db_column_id = DbColumn()
+        db_column_id.data_type = 'text'
+        db_column_id.column_name = 'Id'
+        db_column_value = DbColumn()
+        db_column_value.data_type = 'text'
+        db_column_value.column_name = 'Value'
+        self.columns_info = [db_column_id, db_column_value]
+        self.get_columns_info_mock = mock.Mock(return_value=self.columns_info)
 
     def test_query_creates_batches(self):
         """Test that creating a query also creates batches for each statement in the query"""
@@ -38,7 +48,7 @@ class TestQuery(unittest.TestCase):
         """Test that executing a query also executes all of the query's batches in order"""
 
         # If I call query.execute
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=self.get_columns_info_mock):
             self.query.execute(self.connection)
 
         # Then each of the batches executed in order
@@ -49,7 +59,12 @@ class TestQuery(unittest.TestCase):
 
         # And each of the batches holds the expected results
         for batch in self.query.batches:
-            self.assertEqual(batch.result_set.rows, self.mock_query_results)
+            for index in range(0, batch.result_set.row_count):
+                current_row = batch.result_set.get_row(index)
+                row_tuple = ()
+                for cell in current_row:
+                    row_tuple += (cell.display_value,)
+                self.assertEqual(row_tuple, self.mock_query_results[index])
 
         # And the query is marked as executed
         self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)

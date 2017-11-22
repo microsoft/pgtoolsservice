@@ -12,6 +12,9 @@ from typing import List, Dict  # noqa
 import psycopg2
 from dateutil import parser
 import uuid
+import os
+from os import listdir
+from os.path import isfile, join
 
 from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
 from pgsqltoolsservice.query_execution.query_execution_service import (
@@ -47,7 +50,9 @@ class TestQueryService(unittest.TestCase):
         """Set up mock objects for testing the query execution service.
         Ran before each unit test.
         """
-        self.cursor = utils.MockCursor(None)
+
+        self.rows = [(1, 'Text 1'), (2, 'Text 2')]
+        self.cursor = utils.MockCursor(self.rows)
         self.connection = utils.MockConnection(cursor=self.cursor)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
@@ -69,6 +74,16 @@ class TestQueryService(unittest.TestCase):
                 return self.connection
 
         self.connection_service.get_connection = mock.Mock(side_effect=connection_side_effect)
+
+    def tearDown(self):
+        generated_files_path = '.'
+        # Get the existing file names in current path.
+        file_names_list = [file for file in listdir(generated_files_path) if isfile(join(generated_files_path, file))]
+        # Select the files to remove. The file name is a 32-character hexadecimal UUID string.
+        files_to_remove = [file for file in file_names_list if len(file) == len(uuid.uuid4().hex)]
+        # Remove the files generated during test.
+        for file_to_remove in files_to_remove:
+            os.remove(file_to_remove)
 
     def test_initialization(self):
         # Setup: Create a capabilities service with a mocked out service
@@ -328,15 +343,14 @@ class TestQueryService(unittest.TestCase):
         # If we handle an execute query request
 
         columns_info = []
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
             self.query_execution_service._handle_execute_query_request(self.request_context, params)
             self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then we executed the query, closed the cursor, and called fetchall once each.
         # And the connection's notices is set properly
-        self.cursor.execute.assert_called_once()
+        self.cursor.execute.assert_called()
         self.cursor.close.assert_called_once()
-        self.cursor.fetchall.assert_called_once()
         self.assertEqual(self.connection.notices, [])
 
         # Get the message params for all message notifications that were sent
@@ -407,7 +421,7 @@ class TestQueryService(unittest.TestCase):
         self.cursor.execute = mock.Mock(side_effect=cancel_during_execute_side_effects)
 
         columns_info = []
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
             # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
             self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
             # Wait for query execution worker thread to finish
@@ -417,8 +431,8 @@ class TestQueryService(unittest.TestCase):
 
         # Then we must have ran execute for a batch, and executed 'SELECTED pg_cancel_backend(pid)
         # to cancel the query
-        self.cursor.execute.assert_called_once()
-        self.cursor_cancel.execute.assert_called_once()
+        self.cursor.execute.assert_called()
+        self.cursor_cancel.execute.assert_called()
         self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
         self.assertEqual(self.request_context.last_response_params.messages, None)
 
@@ -488,7 +502,7 @@ class TestQueryService(unittest.TestCase):
         # If we start the execute query request handler with the cancel query
         # request handled after the execute_query() and cursor.execute() calls
         columns_info = []
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
             self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
             self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
             self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
@@ -497,7 +511,7 @@ class TestQueryService(unittest.TestCase):
 
         # Then execute() in the execute query handler should have been called and
         # the cancel cursor's execute() should not have been called
-        self.cursor.execute.assert_called_once()
+        self.cursor.execute.assert_called()
         self.cursor_cancel.execute.assert_not_called()
         self.assertTrue(isinstance(self.request_context.last_response_params, QueryCancelResult))
         self.assertIsNotNone(self.request_context.last_response_params.messages)
@@ -512,15 +526,14 @@ class TestQueryService(unittest.TestCase):
         params = get_execute_string_params()
 
         columns_info = []
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock(return_value=columns_info)):
+        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
             # If we handle an execute query request
             self.query_execution_service._handle_execute_query_request(self.request_context, params)
             self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
         # Then we executed the query, closed the cursor, and called fetchall once each.
-        self.cursor.execute.assert_called_once()
+        self.cursor.execute.assert_called()
         self.cursor.close.assert_called_once()
-        self.cursor.fetchall.assert_called_once()
 
         # And we sent a response to the initial query, along with notifications for
         # query/batchStart, query/resultSetComplete, query/message, query/batchComplete,

@@ -47,7 +47,7 @@ class Batch:
             ordinal: int,
             selection: SelectionData,
             batch_events: BatchEvents= None,
-            storage_type: ResultSetStorageType= ResultSetStorageType.IN_MEMORY
+            storage_type: ResultSetStorageType= ResultSetStorageType.FILE_STORAGE
     ) -> None:
         self.id = ordinal
         self.selection = selection
@@ -143,7 +143,7 @@ class Batch:
     def create_result_set(self, cursor):
         result_set = create_result_set(self._storage_type, 0, self.id)
         result_set.read_result_to_end(cursor)
-        self._result_set = result_set
+        self._result_set = result_set   # ===========================
 
     def get_subset(self, start_index: int, end_index: int):
         return self._result_set.get_subset(start_index, end_index)
