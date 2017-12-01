@@ -19,6 +19,7 @@ from pgsqltoolsservice.query import (
     compute_selection_data_for_batches as compute_batches
 )
 from pgsqltoolsservice.query.contracts import BatchSummary, ResultSetSubset, SelectionData, SaveResultsRequestParams, SubsetResult  # noqa
+from pgsqltoolsservice.query import ResultSetStorageType
 from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, EXECUTE_DOCUMENT_STATEMENT_REQUEST,
@@ -46,13 +47,14 @@ NO_QUERY_MESSAGE = 'QueryServiceRequestsNoQuery'
 
 class ExecuteRequestWorkerArgs():
 
-    def __init__(self, owner_uri: str, connection: 'psycopg2.extensions.connection', request_context: RequestContext,
+    def __init__(self, owner_uri: str, connection: 'psycopg2.extensions.connection', request_context: RequestContext, result_set_storage_type,
                  before_query_initialize: Callable=None, on_batch_start: Callable=None, on_message_notification: Callable=None,
                  on_resultset_complete: Callable=None, on_batch_complete: Callable=None, on_query_complete: Callable=None):
 
         self.owner_uri = owner_uri
         self.connection = connection
         self.request_context = request_context
+        self.result_set_storage_type = result_set_storage_type
         self.before_query_initialize = before_query_initialize
         self.on_batch_start = on_batch_start
         self.on_message_notification = on_message_notification
@@ -140,7 +142,8 @@ class QueryExecutionService(object):
             simple_execute_response = SimpleExecuteResponse(subset.result_subset.rows, subset.result_subset.row_count, resultset_summary.column_info)
             request_context.send_response(simple_execute_response)
 
-        worker_args = ExecuteRequestWorkerArgs(new_owner_uri, new_connection, request_context, on_query_complete=on_query_complete)
+        worker_args = ExecuteRequestWorkerArgs(new_owner_uri, new_connection, request_context, ResultSetStorageType.FILE_STORAGE,
+                                               on_query_complete=on_query_complete)
 
         self._start_query_execution_thread(request_context, execute_params, worker_args)
 
@@ -178,7 +181,7 @@ class QueryExecutionService(object):
             request_context.send_unhandled_error_response(e)
             return
 
-        worker_args = ExecuteRequestWorkerArgs(params.owner_uri, conn, request_context, before_query_initialize,
+        worker_args = ExecuteRequestWorkerArgs(params.owner_uri, conn, request_context, ResultSetStorageType.FILE_STORAGE, before_query_initialize,
                                                on_batch_start, on_message_notification, on_resultset_complete,
                                                on_batch_complete, on_query_complete)
 
@@ -218,7 +221,7 @@ class QueryExecutionService(object):
         if params.owner_uri not in self.query_results or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED:
             query_text = self._get_query_text_from_execute_params(params)
 
-            execution_settings = QueryExecutionSettings(params.execution_plan_options, request_context)
+            execution_settings = QueryExecutionSettings(params.execution_plan_options, worker_args.result_set_storage_type)
             query_events = QueryEvents(None, None, BatchEvents(_batch_execution_started_callback, _batch_execution_finished_callback))
             self.query_results[params.owner_uri] = Query(params.owner_uri, query_text, execution_settings, query_events)
         elif self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTING:

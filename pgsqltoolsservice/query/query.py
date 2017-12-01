@@ -30,18 +30,11 @@ class QueryExecutionSettings:
 
     def __init__(
             self, execution_plan_options,
-            request_context,
             result_set_storage_type: ResultSetStorageType = ResultSetStorageType.FILE_STORAGE
     ) -> None:
 
         self._execution_plan_options = execution_plan_options
-        self._request_context = request_context
         self._result_set_storage_type = result_set_storage_type
-        # The default _result_set_storage_type is FILE_STORAGE. Switch to IN_MEMORY when the context is editing data.
-        if (self._request_context is not None and
-           self._request_context._message is not None and
-           self._request_context._message.message_method == 'edit/initialize'):
-            self._result_set_storage_type = ResultSetStorageType.IN_MEMORY
 
     @property
     def execution_plan_options(self):

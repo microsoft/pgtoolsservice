@@ -8,7 +8,7 @@ from unittest import mock
 
 import psycopg2
 
-from pgsqltoolsservice.query import ExecutionState, Query, QueryExecutionSettings, QueryEvents
+from pgsqltoolsservice.query import ExecutionState, Query, QueryExecutionSettings, QueryEvents, ResultSetStorageType
 from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData, DbColumn
 from pgsqltoolsservice.query_execution.contracts import ExecutionPlanOptions
 import tests.utils as utils
@@ -22,7 +22,7 @@ class TestQuery(unittest.TestCase):
         self.statement_list = statement_list = ['select version;', 'select * from t1;']
         self.statement_str = ''.join(statement_list)
         self.query_uri = 'test_uri'
-        self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
+        self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions(), ResultSetStorageType.FILE_STORAGE), QueryEvents())
 
         self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
         self.cursor = utils.MockCursor(self.mock_query_results)

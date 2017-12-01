@@ -796,7 +796,7 @@ class TestQueryService(unittest.TestCase):
         request.owner_uri = 'Test Owner Uri'
         request.query = 'Test Query'
 
-        worker_args = ExecuteRequestWorkerArgs(request.owner_uri, self.connection, self.request_context)
+        worker_args = ExecuteRequestWorkerArgs(request.owner_uri, self.connection, self.request_context, None)
 
         self.query_execution_service._start_query_execution_thread(self.request_context, request, worker_args)
 
@@ -815,7 +815,7 @@ class TestQueryService(unittest.TestCase):
 
         # If I execute a query that opens a transaction and then throws an error when executed
 
-        worker_args = ExecuteRequestWorkerArgs(query_params.owner_uri, self.connection, self.request_context)
+        worker_args = ExecuteRequestWorkerArgs(query_params.owner_uri, self.connection, self.request_context, None)
 
         self.query_execution_service._execute_query_request_worker(worker_args)
 
