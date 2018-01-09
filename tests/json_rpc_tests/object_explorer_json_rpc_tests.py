@@ -84,6 +84,10 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
 
         JSONRPCTestCase(test_messages).run()
 
+        # Delete the created test role
+        role_name = self.args['Roles_Name']
+        self.delete_role(connection, role_name)
+
     def create_database_objects(self, meta_data: dict, connection: 'psycopg2.connection', **kwargs):
 
         for key, metadata_value in meta_data.items():
@@ -142,3 +146,9 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
             return display_template.format(name)
 
         return name
+
+    def delete_role(self, connection: 'psycopg2.connection', role_name):
+        cursor = connection.cursor()
+        drop_role_script = 'DROP ROLE "' + role_name + '"'
+        cursor.execute(drop_role_script)
+        return cursor
