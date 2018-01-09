@@ -25,16 +25,16 @@ class ScriptingJSONRPCTests(unittest.TestCase):
         connection = psycopg2.connect(**connection_details)
         connection.autocommit = True
 
-        self.args = self.create_database_objects(META_DATA, connection)
+        args = self.create_database_objects(META_DATA, connection)
 
-        self.created_object_names = {}
+        created_object_names = {}
 
-        for key, value in self.args.items():
+        for key, value in args.items():
             if key[-5:] == "_Name":
-                self.created_object_names[key] = value
+                created_object_names[key] = value
 
         owner_uri = 'test_uri'
-        connection_details['dbname'] = self.args["Databases_Name"]
+        connection_details['dbname'] = args["Databases_Name"]
         connection_messages = DefaultRPCTestMessages.connection_request(owner_uri, connection_details)
         test_messages = [connection_messages[0], connection_messages[1]]
 
@@ -44,14 +44,13 @@ class ScriptingJSONRPCTests(unittest.TestCase):
             for key, metadata_value in metadata.items():
                 for operation in metadata_value:
                     scripting_object = {}
-                    scripting_object['name'] = self.created_object_names[key + 's_Name']
+                    scripting_object['name'] = created_object_names[key + 's_Name']
                     if key == 'Function':
-                        scripting_object['name'] = self.created_object_names[key + 's_Name'] + ScriptingJSONRPCTests.CREATED_FUNCTION_PARAMETER_LIST
+                        scripting_object['name'] = created_object_names[key + 's_Name'] + ScriptingJSONRPCTests.CREATED_FUNCTION_PARAMETER_LIST
                     scripting_object['schema'] = 'public' if key in ['Table', 'View', 'Function'] else None
                     scripting_object['type'] = key
 
-                    scripting_objects = []
-                    scripting_objects.append(scripting_object)
+                    scripting_objects = [scripting_object]
 
                     params = {}
                     params['connectionString'] = None
@@ -87,9 +86,9 @@ class ScriptingJSONRPCTests(unittest.TestCase):
 
         JSONRPCTestCase(test_messages).run()
 
-    def create_database_objects(self, meta_data: dict, connection: 'psycopg2.connection', **kwargs):
+    def create_database_objects(self, metadata: dict, connection: 'psycopg2.connection', **kwargs):
 
-        for key, metadata_value in meta_data.items():
+        for key, metadata_value in metadata.items():
             create_script: str = CREATE_SCRIPTS.get(key)
             if create_script is not None:
                 kwargs[key + '_Name'] = metadata_value['Name']
