@@ -34,7 +34,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         :param parent: Parent object of the database. Should always be None
         :param kwargs: Optional parameters for the database. Values that can be provided:
         Kwargs:
-            did int: Object ID of the database
+            oid int: Object ID of the database
             name str: Name of the database
             spcname str: Name of the tablespace for the database
             datallowconn bool: Whether or not the database can be connected to
@@ -124,6 +124,14 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
+    def spcoid(self) -> str:
+        return self._full_properties.get("spcoid", "")
+
+    @property
+    def datowner(self) -> str:
+        return self._full_properties.get("datowner", "")
+
+    @property
     def encoding(self) -> str:
         return self._full_properties.get("encoding", "")
 
@@ -146,6 +154,38 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def datconnlimit(self):
         return self._full_properties.get("datconnlimit", "")
+
+    @property
+    def default_tablespace(self):
+        return self._full_properties.get("default_tablespace", "")
+
+    @property
+    def comments(self):
+        return self._full_properties.get("comments", "")
+
+    @property
+    def tblacl(self):
+        return self._full_properties.get("tblacl", "")
+
+    @property
+    def seqacl(self):
+        return self._full_properties.get("seqacl", "")
+
+    @property
+    def funcacl(self):
+        return self._full_properties.get("funcacl", "")
+
+    @property
+    def typeacl(self):
+        return self._full_properties.get("typeacl", "")
+
+    @property
+    def seclabels(self):
+        return self._full_properties.get("seclabels", "")
+
+    @property
+    def acl(self):
+        return self._full_properties.get("acl", "")
 
     # -CHILD OBJECTS #######################################################
     @property
@@ -197,6 +237,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         """ Return the data input for create query """
         return {"data": {
             "name": self.name,
+            "datowner": self.datowner,
             "encoding": self.encoding,
             "template": self.template,
             "datcollate": self.datcollate,

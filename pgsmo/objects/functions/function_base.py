@@ -90,100 +90,176 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
+    def xmin(self):
+        return self._full_properties.get("xmin", "")
+
+    @property
+    def proname(self):
+        return self._full_properties.get("proname", "")
+
+    @property
+    def pronamespace(self):
+        return self._full_properties.get("pronamespace", "")
+
+    @property
+    def proowner(self):
+        return self._full_properties.get("proowner", "")
+
+    @property
+    def prolang(self):
+        return self._full_properties.get("prolang", "")
+
+    @property
+    def provariadic(self):
+        return self._full_properties.get("provariadic", "")
+
+    @property
+    def protransform(self):
+        return self._full_properties.get("protransform", "")
+
+    @property
+    def proisagg(self):
+        return self._full_properties.get("proisagg", "")
+
+    @property
+    def pronargs(self):
+        return self._full_properties.get("pronargs", "")
+
+    @property
+    def pronargdefaults(self):
+        return self._full_properties.get("pronargdefaults", "")
+
+    @property
+    def prorettype(self):
+        return self._full_properties.get("prorettype", "")
+
+    @property
+    def proargtypes(self):
+        return self._full_properties.get("proargtypes", "")
+
+    @property
+    def proallargtypes(self):
+        return self._full_properties.get("proallargtypes", "")
+
+    @property
+    def proargmodes(self):
+        return self._full_properties.get("proargmodes", "")
+
+    @property
+    def proargdefaults(self):
+        return self._full_properties.get("proargdefaults", "")
+
+    @property
+    def protrftypes(self):
+        return self._full_properties.get("protrftypes", "")
+
+    @property
+    def proconfig(self):
+        return self._full_properties.get("proconfig", "")
+
+    @property
+    def proacl(self):
+        return self._full_properties.get("proacl", "")
+
+    @property
+    def typnsp(self):
+        return self._full_properties.get("typnsp", "")
+
+    @property
     def arguments(self) -> Optional[str]:
-        return self._full_properties.get("arguments")
+        return self._full_properties.get("arguments", "")
 
     @property
     def proargdefaultvals(self) -> Optional[str]:
-        return self._full_properties.get("proargdefaultvals")
+        return self._full_properties.get("proargdefaultvals", "")
 
     @property
     def proargnames(self) -> Optional[str]:
-        return self._full_properties.get("proargnames")
+        return self._full_properties.get("proargnames", "")
 
     @property
     def proargtypenames(self) -> Optional[str]:
-        return self._full_properties.get("proargtypenames")
+        return self._full_properties.get("proargtypenames", "")
 
     @property
     def proretset(self):
-        return self._full_properties.get("proretset")
+        return self._full_properties.get("proretset", "")
 
     @property
     def prorettypename(self):
-        return self._full_properties.get("prorettypename")
+        return self._full_properties.get("prorettypename", "")
 
     @property
     def procost(self):
-        return self._full_properties.get("procost")
+        return self._full_properties.get("procost", "")
 
     @property
     def provolatile(self):
-        return self._full_properties.get("provolatile")
+        return self._full_properties.get("provolatile", "")
 
     @property
     def proleakproof(self):
-        return self._full_properties.get("proleakproof")
+        return self._full_properties.get("proleakproof", "")
 
     @property
     def proisstrict(self):
-        return self._full_properties.get("proisstrict")
+        return self._full_properties.get("proisstrict", "")
 
     @property
     def prosecdef(self):
-        return self._full_properties.get("prosecdef")
+        return self._full_properties.get("prosecdef", "")
 
     @property
     def proiswindow(self):
-        return self._full_properties.get("proiswindow")
+        return self._full_properties.get("proiswindow", "")
 
     @property
     def proparallel(self):
-        return self._full_properties.get("proparallel")
+        return self._full_properties.get("proparallel", "")
 
     @property
     def prorows(self):
-        return self._full_properties.get("prorows")
+        return self._full_properties.get("prorows", "")
 
     @property
     def variables(self):
-        return self._full_properties.get("variables")
+        return self._full_properties.get("variables", "")
 
     @property
     def probin(self):
-        return self._full_properties.get("probin")
+        return self._full_properties.get("probin", "")
 
     @property
     def prosrc_c(self):
-        return self._full_properties.get("prosrc_c")
+        return self._full_properties.get("prosrc_c", "")
 
     @property
     def prosrc(self):
-        return self._full_properties.get("prosrc")
+        return self._full_properties.get("prosrc", "")
 
     @property
     def func_args_without(self):
-        return self._full_properties.get("func_args_without")
+        return self._full_properties.get("func_args_without", "")
 
     @property
     def acl(self):
-        return self._full_properties.get("acl")
+        return self._full_properties.get("acl", "")
 
     @property
     def seclabels(self):
-        return self._full_properties.get("seclabels")
+        return self._full_properties.get("seclabels", "")
 
     @property
     def change_func(self):
-        return self._full_properties.get("change_func")
+        return self._full_properties.get("change_func", "")
 
     @property
     def merged_variables(self):
-        return self._full_properties.get("merged_variables")
+        return self._full_properties.get("merged_variables", "")
 
     @property
     def cascade(self):
-        return self._full_properties.get("cascade")
+        return self._full_properties.get("cascade", "")
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod

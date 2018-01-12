@@ -121,12 +121,152 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
+    def spcoid(self):
+        return self._full_properties.get("spcoid", "")
+
+    @property
+    def relacl_str(self):
+        return self._full_properties.get("relacl_str", "")
+
+    @property
+    def relhasoids(self):
+        return self._full_properties.get("relhasoids", "")
+
+    @property
+    def relhassubclass(self):
+        return self._full_properties.get("relhassubclass", "")
+
+    @property
+    def reltuples(self):
+        return self._full_properties.get("reltuples", "")
+
+    @property
+    def conname(self):
+        return self._full_properties.get("conname", "")
+
+    @property
+    def conkey(self):
+        return self._full_properties.get("conkey", "")
+
+    @property
+    def isrepl(self):
+        return self._full_properties.get("isrepl", "")
+
+    @property
+    def triggercount(self):
+        return self._full_properties.get("triggercount", "")
+
+    @property
     def coll_inherits(self):
         return self._full_properties.get("coll_inherits", "")
 
     @property
+    def inherited_tables_cnt(self):
+        return self._full_properties.get("inherited_tables_cnt", "")
+
+    @property
+    def relpersistence(self):
+        return self._full_properties.get("relpersistence", "")
+
+    @property
+    def autovacuum_vacuum_threshold(self):
+        return self._full_properties.get("autovacuum_vacuum_threshold", "")
+
+    @property
+    def autovacuum_vacuum_scale_factor(self):
+        return self._full_properties.get("autovacuum_vacuum_scale_factor", "")
+
+    @property
+    def autovacuum_analyze_threshold(self):
+        return self._full_properties.get("autovacuum_analyze_threshold", "")
+
+    @property
+    def autovacuum_analyze_scale_factor(self):
+        return self._full_properties.get("autovacuum_analyze_scale_factor", "")
+
+    @property
+    def autovacuum_vacuum_cost_delay(self):
+        return self._full_properties.get("autovacuum_vacuum_cost_delay", "")
+
+    @property
+    def autovacuum_vacuum_cost_limit(self):
+        return self._full_properties.get("autovacuum_vacuum_cost_limit", "")
+
+    @property
+    def autovacuum_freeze_min_age(self):
+        return self._full_properties.get("autovacuum_freeze_min_age", "")
+
+    @property
+    def autovacuum_freeze_max_age(self):
+        return self._full_properties.get("autovacuum_freeze_max_age", "")
+
+    @property
+    def autovacuum_freeze_table_age(self):
+        return self._full_properties.get("autovacuum_freeze_table_age", "")
+
+    @property
+    def toast_autovacuum_vacuum_threshold(self):
+        return self._full_properties.get("toast_autovacuum_vacuum_threshold", "")
+
+    @property
+    def toast_autovacuum_vacuum_scale_factor(self):
+        return self._full_properties.get("toast_autovacuum_vacuum_scale_factor", "")
+
+    @property
+    def toast_autovacuum_analyze_threshold(self):
+        return self._full_properties.get("toast_autovacuum_analyze_threshold", "")
+
+    @property
+    def toast_autovacuum_analyze_scale_factor(self):
+        return self._full_properties.get("toast_autovacuum_analyze_scale_factor", "")
+
+    @property
+    def toast_autovacuum_vacuum_cost_delay(self):
+        return self._full_properties.get("toast_autovacuum_vacuum_cost_delay", "")
+
+    @property
+    def toast_autovacuum_vacuum_cost_limit(self):
+        return self._full_properties.get("toast_autovacuum_vacuum_cost_limit", "")
+
+    @property
+    def toast_autovacuum_freeze_min_age(self):
+        return self._full_properties.get("toast_autovacuum_freeze_min_age", "")
+
+    @property
+    def toast_autovacuum_freeze_max_age(self):
+        return self._full_properties.get("toast_autovacuum_freeze_max_age", "")
+
+    @property
+    def toast_autovacuum_freeze_table_age(self):
+        return self._full_properties.get("toast_autovacuum_freeze_table_age", "")
+
+    @property
+    def table_vacuum_settings_str(self):
+        return self._full_properties.get("table_vacuum_settings_str", "")
+
+    @property
+    def toast_table_vacuum_settings_str(self):
+        return self._full_properties.get("toast_table_vacuum_settings_str", "")
+
+    @property
+    def reloptions(self):
+        return self._full_properties.get("reloptions", "")
+
+    @property
+    def toast_reloptions(self):
+        return self._full_properties.get("toast_reloptions", "")
+
+    @property
+    def reloftype(self):
+        return self._full_properties.get("reloftype", "")
+
+    @property
     def typname(self):
         return self._full_properties.get("typname", "")
+
+    @property
+    def hastoasttable(self):
+        return self._full_properties.get("hastoasttable", "")
 
     @property
     def like_relation(self):
@@ -161,8 +301,8 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         return self._full_properties.get("spcname", "")
 
     @property
-    def owner(self):
-        return self._full_properties.get("owner", "")
+    def relowner(self):
+        return self._full_properties.get("relowner", "")
 
     @property
     def cascade(self):
@@ -216,6 +356,10 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
     def hasoids(self):
         return self._full_properties.get("hasoids", "")
 
+    @property
+    def is_sys_table(self):
+        return self._full_properties.get("is_sys_table", "")
+
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _macro_root(cls) -> List[str]:
@@ -237,9 +381,24 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
             "foreign_key": self.foreign_key,
             "check_constraint": self.check_constraint,
             "exclude_constraint": self.exclude_constraint,
+            "relpersistence": self.relpersistence,
+            "relhasoids": self.relhasoids,
             "fillfactor": self.fillfactor,
+            "autovacuum_custom": self.autovacuum_custom,
+            "autovacuum_enabled": self.autovacuum_enabled,
+            "toast_autovacuum": self.toast_autovacuum,
+            "toast_autovacuum_enabled": self.toast_autovacuum_enabled,
+            "autovacuum_analyze_scale_factor": self.autovacuum_analyze_scale_factor,
+            "autovacuum_analyze_threshold": self.autovacuum_analyze_threshold,
+            "autovacuum_freeze_max_age": self.autovacuum_freeze_max_age,
+            "autovacuum_vacuum_cost_delay": self.autovacuum_vacuum_cost_delay,
+            "autovacuum_vacuum_cost_limit": self.autovacuum_vacuum_cost_limit,
+            "autovacuum_vacuum_scale_factor": self.autovacuum_vacuum_scale_factor,
+            "autovacuum_vacuum_threshold": self.autovacuum_vacuum_threshold,
+            "autovacuum_freeze_min_age": self.autovacuum_freeze_min_age,
+            "autovacuum_freeze_table_age": self.autovacuum_freeze_table_age,
             "spcname": self.spcname,
-            "relowner": self.owner,
+            "relowner": self.relowner,
             "schema": self.schema
         }}
 
@@ -258,7 +417,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         return {"data": {
             "name": self.name,
             "schema": self.schema,
-            "relowner": self.owner,
+            "relowner": self.relowner,
             "coll_inherits_added": self.coll_inherits_added,
             "coll_inherits_removed": self.coll_inherits_removed,
             "relhasoids": self.hasoids,
