@@ -51,6 +51,34 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     # PROPERTIES ###########################################################
     @property
+    def nsptyp(self):
+        return self._full_properties.get("nsptyp", "")
+
+    @property
+    def acl(self):
+        return self._full_properties.get("acl", "")
+
+    @property
+    def is_sys_object(self):
+        return self._full_properties.get("is_sys_object", "")
+
+    @property
+    def tblacl(self):
+        return self._full_properties.get("tblacl", "")
+
+    @property
+    def seqacl(self):
+        return self._full_properties.get("seqacl", "")
+
+    @property
+    def funcacl(self):
+        return self._full_properties.get("funcacl", "")
+
+    @property
+    def typeacl(self):
+        return self._full_properties.get("typeacl", "")
+
+    @property
     def can_create(self) -> Optional[bool]:
         return self._can_create
 

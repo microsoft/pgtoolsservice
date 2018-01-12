@@ -37,9 +37,12 @@ CREATE{% if query_type is defined %}{{' OR REPLACE'}}{% endif %} FUNCTION {{ con
 AS {% if data.lanname == 'c' %}
 {{ data.probin|qtLiteral }}, {{ data.prosrc_c|qtLiteral }}
 {% else %}
+{% if data.prosrc.startswith('range_constructor') %} 
+{{"\'"}}{{ data.prosrc }}{{"\'"}}
+{% else %}
 $BODY$
 {{ data.prosrc }}
-$BODY${% endif -%};
+$BODY${% endif %}{% endif %};
 {% if data.funcowner %}
 
 ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})

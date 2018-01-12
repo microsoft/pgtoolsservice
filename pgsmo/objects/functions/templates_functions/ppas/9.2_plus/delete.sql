@@ -23,6 +23,6 @@ WHERE
 {% endif %}
 
 {% if name %}
-DROP FUNCTION {{ conn|qtIdent(nspname, name) }}{{func_args}}{% if cascade%} CASCADE{%
+DROP FUNCTION {{ conn|qtIdent(nspname, name)|replace('"', '') }}{{func_args}}{% if cascade%} CASCADE{%
 endif %};
 {% endif %}

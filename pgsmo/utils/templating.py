@@ -94,7 +94,7 @@ def render_template(template_path: str, macro_roots: Optional[List[str]]=None, *
         loader: FileSystemLoader = FileSystemLoader(paths)
 
         # Create the environment and add the basic filters
-        new_env: Environment = Environment(loader=loader)
+        new_env: Environment = Environment(loader=loader, trim_blocks=True)
         new_env.filters['qtLiteral'] = qt_literal
         new_env.filters['qtIdent'] = qt_ident
         new_env.filters['qtTypeIdent'] = qt_type_ident

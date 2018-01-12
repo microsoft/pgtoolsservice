@@ -192,7 +192,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = self.service.script_as_create()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" \n\n"TestDatatype"' in result)
+        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" "TestDatatype";' in result)
 
     def test_check_constraint_scripting(self):
         """ Helper function to test create script for check_constraint """
@@ -238,7 +238,7 @@ class TestScripterOld(unittest.TestCase):
         result = mock_foreign_key_constraint.create_script()
         # The result should be the correct template value
         self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" FOREIGN KEY '
-                        '(None\n, None\n, None\n, None\n, None\n, None\n, None\n, None\n, None\n, None\n, None)\n    '
+                        '(None, None, None, None, None, None, None, None, None, None, None)\n    '
                         'REFERENCES "TestRemoteSchema"."TestRemoteTable"' in result)
 
     def test_index_constraint_scripting(self):
@@ -270,8 +270,8 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_rule.create_script()
         # The result should be the correct template value
-        self.assertTrue('CREATE OR REPLACE RULE "TestName" AS\n    ON TESTEVENT TO "TestSchema"."TestView"\n\n    '
-                        'WHERE TestCondition\n\n    DO\n\n\n\nTestStatements;' in result)
+        self.assertTrue('CREATE OR REPLACE RULE "TestName" AS\n    ON TESTEVENT TO "TestSchema"."TestView"\n    '
+                        'WHERE TestCondition\n    DO\nTestStatements;\n' in result)
 
     def test_trigger_scripting(self):
         """ Helper function to test create script for trigger """
@@ -285,8 +285,8 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_trigger.create_script()
         # The result should be the correct template value
-        self.assertTrue('CREATE TRIGGER "TestName"\n\n     INSERT\n\n\n    ON "TestTable"\n\n    '
-                        'FOR EACH STATEMENT\n\n\n    EXECUTE PROCEDURE TestFunction();' in result)
+        self.assertTrue('CREATE TRIGGER "TestName"\n     INSERT\n    ON "TestTable"\n    '
+                        'FOR EACH STATEMENT\n    EXECUTE PROCEDURE TestFunction();\n\n' in result)
 
     def test_index_scripting(self):
         """ Helper function to test create script for index """
