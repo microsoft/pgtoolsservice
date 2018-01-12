@@ -16,11 +16,11 @@ class TestServiceBufferFileStream(unittest.TestCase):
         self._file_name = 'testFile'
 
     def test_get_file_name(self):
-        uuid_mock = mock.MagicMock()
-        uuid_mock.uuid4.hex = self._file_name
-        with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.uuid', new=uuid_mock):
+        tempfile_mock = mock.MagicMock()
+        tempfile_mock.mkstemp = mock.Mock(return_value=(1, self._file_name))
+        with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.tempfile', new=tempfile_mock):
             stream.create_file()
-            uuid_mock.uuid4.assert_called_once()
+            tempfile_mock.mkstemp.assert_called_once()
 
     def test_get_reader(self):
         io_mock = mock.MagicMock()
