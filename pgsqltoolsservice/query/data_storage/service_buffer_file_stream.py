@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import uuid
+import tempfile
 import io
 import os
 
@@ -12,7 +12,7 @@ from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_reader impo
 
 
 def create_file() -> str:
-    return uuid.uuid4().hex
+    return tempfile.mkstemp()[1]
 
 
 def get_reader(file_name: str):
