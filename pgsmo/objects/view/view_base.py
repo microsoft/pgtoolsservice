@@ -141,14 +141,15 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
-        return {"data": {
-            "name": self.name,
-            "schema": self.schema,
-            "definition": self.definition,
-            "check_option": self.check_option,
-            "security_barrier": self.security_barrier,
-            "owner": self.owner,
-            "comment": self.comment,
+        return {
+            "data": {
+                "name": self.name,
+                "schema": self.schema,
+                "definition": self.definition,
+                "check_option": self.check_option,
+                "security_barrier": self.security_barrier,
+                "owner": self.owner,
+                "comment": self.comment,
             },
             "display_comments": True
         }
