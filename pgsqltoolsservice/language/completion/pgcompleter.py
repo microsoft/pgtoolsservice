@@ -75,8 +75,8 @@ def generate_alias(tbl):
     all letters preceded by _
     param tbl - unescaped name of the table to alias
     """
-    return ''.join([l for l in tbl if l.isupper()] or
-                   [l for l, prev in zip(tbl, '_' + tbl) if prev == '_' and l != '_'])
+    return ''.join([letter for letter in tbl if letter.isupper()] or
+                   [letter for letter, prev in zip(tbl, '_' + tbl) if prev == '_' and letter != '_'])
 
 
 class PGCompleter(Completer):
