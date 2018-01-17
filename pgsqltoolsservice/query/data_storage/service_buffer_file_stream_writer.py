@@ -59,6 +59,8 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
 
             # Write the object into the temp file
             if reader.is_none(index):
+                # if it's a NULL value, the bytes length to write is 0
+                row_bytes += self._write_to_file(self._file_stream, bytearray(struct.pack("i", 0)))
                 row_bytes += self._write_null()
             else:
                 bytes_converter: Callable[[str], bytearray] = get_bytes_converter(type_value)
