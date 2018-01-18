@@ -58,22 +58,27 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
                 # wrap the NULL value as a DbCellValue
                 value = DbCellValue(display_value=None, is_null=True, raw_object=None, row_id=row_id)
             else:
-                # read the length of data, then update the offset by plus 4, since the int hold 4 bytes
+                # read the length of data, then update the offset by plus 4, since the int holds 4 bytes
                 raw_bytes_length_to_read = self._read_bytes_from_file(self._file_stream, current_file_offset, 4)
-                bytes_length_to_read = struct.unpack('i', raw_bytes_length_to_read)[0]
-                current_file_offset += 4
+                if raw_bytes_length_to_read == b'\x00\x00\x00\x00':
+                    # if byte length to read is 0, then it's a NULL value.
+                    current_file_offset += 4
+                    value = DbCellValue(display_value=str("NULL"), is_null=True, raw_object=None, row_id=row_id)
+                else:
+                    bytes_length_to_read = struct.unpack('i', raw_bytes_length_to_read)[0]
+                    current_file_offset += 4
 
-                # read the data content based on the length of data
-                read_bytes_result = self._read_bytes_from_file(self._file_stream, current_file_offset, bytes_length_to_read)
-                read_bytes_length = len(read_bytes_result)
-                current_file_offset += read_bytes_length
+                    # read the data content based on the length of data
+                    read_bytes_result = self._read_bytes_from_file(self._file_stream, current_file_offset, bytes_length_to_read)
+                    read_bytes_length = len(read_bytes_result)
+                    current_file_offset += read_bytes_length
 
-                # convert data_bytes to data_obj
-                object_converter: Callable[[bytes], Any] = get_bytes_to_any_converter(type_value)
-                result_object = object_converter(read_bytes_result)
+                    # convert data_bytes to data_obj
+                    object_converter: Callable[[bytes], Any] = get_bytes_to_any_converter(type_value)
+                    result_object = object_converter(read_bytes_result)
 
-                # wrap the result_object as a DbCellValue
-                value = DbCellValue(display_value=str(result_object), is_null=False, raw_object=result_object, row_id=row_id)
+                    # wrap the result_object as a DbCellValue
+                    value = DbCellValue(display_value=str(result_object), is_null=False, raw_object=result_object, row_id=row_id)
 
             results.append(value)
 
