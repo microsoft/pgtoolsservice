@@ -15,7 +15,7 @@ DECODING_METHOD = 'utf-8'
 
 
 def convert_bytes_to_bool(value) -> bool:
-    return bool(value)
+    return bool(value[0])
 
 
 def convert_bytes_to_float(value) -> float:
