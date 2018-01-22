@@ -11,6 +11,15 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils as utils
 import pgsmo.utils.templating as templating
 
+from enum import Enum # ---------slx 
+
+class CatalogName(Enum):
+    """Case options for keyword and identifier formatting"""# ---------slx 
+    DATABASE = 'datname',
+    TABLE = 'tablename',
+    VIEW = 'viewname',
+    SCHEMA = '',
+    FUNCTION = 'proname'
 
 class NodeObject(metaclass=ABCMeta):
     @classmethod
@@ -202,11 +211,25 @@ class NodeObject(metaclass=ABCMeta):
             templating.get_template_path(template_root, 'properties.sql', self._server.version),
             self._macro_root(),
             **template_vars
-        )
+        )  
         cols, rows = self._server.connection.execute_dict(sql)
 
-        if len(rows) > 0:
-            return rows[0]
+        if len(rows) > 0:  # ---------slx 
+            
+            for row in rows:
+                if
+
+                elif CatalogName.FUNCTION in row:
+                    last_left_parenthese_idx = self._name.rfind("(")
+                    func_name = self._name[:last_left_parenthese_idx]                    
+                    if row['proname'] == func_name:
+                        return row
+                elif 
+
+                else:
+                     
+                
+            return rows[0] # ---------slx 
 
     def _additional_property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
         """Gets any additional properties if defined in a sql file"""
