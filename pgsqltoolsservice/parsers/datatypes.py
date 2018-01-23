@@ -26,6 +26,7 @@ DATATYPE_CHAR = 'char'
 DATATYPE_VARCHAR = 'varchar'
 DATATYPE_BPCHAR = 'bpchar'
 DATATYPE_TEXT = 'text'
+DATATYPE_NAME = 'name'
 
 ''' Binary Data Types '''
 DATATYPE_BYTEA = 'bytea'

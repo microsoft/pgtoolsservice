@@ -176,7 +176,7 @@ class DataEditorSession():
             row_id = start_index + index
             cache = self._session_cache.get(row_id)
             if cache is not None:
-                edit_rows.append(cache.get_edit_row(subset.rows[0]))
+                edit_rows.append(cache.get_edit_row(subset.rows[index]))
             else:
                 edit_row = EditRow(row_id, [EditCell(cell, False, row_id) for cell in row])
                 edit_rows.append(edit_row)
