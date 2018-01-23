@@ -3,23 +3,21 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import unittest
 import json
 import psycopg2
 
 from pgsqltoolsservice.hosting.json_message import JSONRPCMessageType
-from tests.integration import get_connection_details, create_extra_test_database, integration_test
+from tests.integration import get_connection_details, create_extra_test_database
 from tests.json_rpc_tests import JSONRPCTestCase, DefaultRPCTestMessages, RPCTestMessage
 from tests.json_rpc_tests.object_explorer_test_metadata import META_DATA, CREATE_SCRIPTS, GET_OID_SCRIPTS
 from tests.json_rpc_tests.scripting_service_test_metadata import SCRIPT_META_DATA
 
 
-class ScriptingJSONRPCTests(unittest.TestCase):
+class ScriptingJSONRPCTests:
 
     # The parameter list of generated test function. It's needed when fire a function scripting request.
     CREATED_FUNCTION_PARAMETER_LIST = '(x integer, y integer, OUT sum integer)'
 
-    @integration_test
     def test_scripting(self):
         connection_details = get_connection_details()
         connection = psycopg2.connect(**connection_details)

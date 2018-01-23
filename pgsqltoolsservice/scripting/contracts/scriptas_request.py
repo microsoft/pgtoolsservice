@@ -7,6 +7,7 @@ from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import enum
 from pgsqltoolsservice.serialization import Serializable
+from typing import List
 
 
 class ScriptOperation(enum.Enum):

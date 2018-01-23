@@ -64,6 +64,35 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
         return self._columns
 
     # -FULL OBJECT PROPERTIES ##############################################
+
+    @property
+    def xmin(self):
+        return self._full_properties.get("xmin", "")
+
+    @property
+    def relkind(self):
+        return self._full_properties.get("relkind", "")
+
+    @property
+    def spcname(self):
+        return self._full_properties.get("spcname", "")
+
+    @property
+    def spcoid(self):
+        return self._full_properties.get("spcoid", "")
+
+    @property
+    def ispopulated(self):
+        return self._full_properties.get("ispopulated", "")
+
+    @property
+    def acl(self):
+        return self._full_properties.get("acl", "")
+
+    @property
+    def seclabels(self):
+        return self._full_properties.get("seclabels", "")
+
     @property
     def schema(self):
         return self._schema
@@ -112,14 +141,18 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
-        return {"data": {
-            "name": self.name,
-            "schema": self.schema,
-            "definition": self.definition,
-            "check_option": self.check_option,
-            "security_barrier": self.security_barrier,
+        return {
+            "data": {
+                "name": self.name,
+                "schema": self.schema,
+                "definition": self.definition,
+                "check_option": self.check_option,
+                "security_barrier": self.security_barrier,
+                "owner": self.owner,
+                "comment": self.comment,
+            },
             "display_comments": True
-        }}
+        }
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
