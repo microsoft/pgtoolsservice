@@ -11,15 +11,14 @@ from pgsmo.objects.server import server as s    # noqa
 import pgsmo.utils as utils
 import pgsmo.utils.templating as templating
 
-from enum import Enum # ---------slx 
 
-class CatalogName(Enum):
-    """Case options for keyword and identifier formatting"""# ---------slx 
-    DATABASE = 'datname',
-    TABLE = 'tablename',
-    VIEW = 'viewname',
-    SCHEMA = '',
-    FUNCTION = 'proname'
+""" The catalog which represents the name of the object """
+NANME_CATALOG_DATABASE = 'name'
+NANME_CATALOG_TABLE = 'name'
+NANME_CATALOG_VIEW = 'name'
+NANME_CATALOG_SCHEMA = 'name'
+NANME_CATALOG_FUNCTION = 'proname'
+
 
 class NodeObject(metaclass=ABCMeta):
     @classmethod
@@ -211,25 +210,34 @@ class NodeObject(metaclass=ABCMeta):
             templating.get_template_path(template_root, 'properties.sql', self._server.version),
             self._macro_root(),
             **template_vars
-        )  
+        )
         cols, rows = self._server.connection.execute_dict(sql)
 
-        if len(rows) > 0:  # ---------slx 
-            
+        if len(rows) > 0:
+            class_name = self.__class__.__name__
+
             for row in rows:
-                if
-
-                elif CatalogName.FUNCTION in row:
-                    last_left_parenthese_idx = self._name.rfind("(")
-                    func_name = self._name[:last_left_parenthese_idx]                    
-                    if row['proname'] == func_name:
+                if class_name == 'Database' and NANME_CATALOG_DATABASE in row:
+                    if row[NANME_CATALOG_DATABASE] == self._name:
                         return row
-                elif 
-
+                elif class_name == 'Table' and NANME_CATALOG_TABLE in row:
+                    if row[NANME_CATALOG_TABLE] == self._name:
+                        return row
+                elif class_name == 'View' and NANME_CATALOG_VIEW in row:
+                    if row[NANME_CATALOG_VIEW] == self._name:
+                        return row
+                elif class_name == 'Schema' and NANME_CATALOG_SCHEMA in row:
+                    if row[NANME_CATALOG_SCHEMA] == self._name:
+                        return row
+                elif class_name == 'Function' and NANME_CATALOG_FUNCTION in row:
+                    last_left_parenthese_idx = self._name.rfind("(")
+                    func_name = self._name[:last_left_parenthese_idx]
+                    if row[NANME_CATALOG_FUNCTION] == func_name:
+                        return row
                 else:
-                     
-                
-            return rows[0] # ---------slx 
+                    continue
+
+            return rows[0]
 
     def _additional_property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
         """Gets any additional properties if defined in a sql file"""
