@@ -164,8 +164,8 @@ class EditDataService(object):
     def _handle_create_row_default_values(self, rows: List[EditRow], session: DataEditorSession):
         for row in rows:
             if row.state == EditRowState.DIRTY_INSERT:
-                for index, column in enumerate(session.table_metadata.columns_metadata):
-                    if column.is_calculated and row.cells[index].is_null:
+                for index, column_metadata in enumerate(session.table_metadata.columns_metadata):
+                    if column_metadata.is_calculated and row.cells[index].is_null:
                         row.cells[index].display_value = '<TBD>'
                         row.cells[index].is_null = False
 
