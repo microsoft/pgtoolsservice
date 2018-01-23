@@ -9,7 +9,7 @@ from typing import Callable, Dict, List  # noqa
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.edit_data.contracts import (
     CREATE_ROW_REQUEST, CreateRowRequest, DELETE_ROW_REQUEST, DeleteRowRequest, DISPOSE_REQUEST, DisposeRequest,
-    DisposeResponse, EDIT_COMMIT_REQUEST, EDIT_SUBSET_REQUEST, EditCommitRequest, EditCommitResponse, EditSubsetParams,
+    DisposeResponse, EDIT_COMMIT_REQUEST, EDIT_SUBSET_REQUEST, EditRow, EditRowState, EditCommitRequest, EditCommitResponse, EditSubsetParams,
     EditSubsetResponse, INITIALIZE_EDIT_REQUEST, InitializeEditParams, REVERT_CELL_REQUEST, REVERT_ROW_REQUEST, RevertCellRequest,
     RevertRowRequest, SessionOperationRequest, UPDATE_CELL_REQUEST, UpdateCellRequest, SessionReadyNotificationParams,
     SESSION_READY_NOTIFICATION
@@ -87,6 +87,8 @@ class EditDataService(object):
 
         rows = session.get_rows(params.owner_uri, params.row_start_index, params.row_start_index + params.row_count)
 
+        self._handle_create_row_default_values(rows, session)
+
         edit_subset_result = EditSubsetResponse(len(rows), rows)
 
         request_context.send_response(edit_subset_result)
@@ -158,6 +160,14 @@ class EditDataService(object):
             raise KeyError('Edit session not found')
 
         return edit_session
+
+    def _handle_create_row_default_values(self, rows: List[EditRow], session: DataEditorSession):
+        for row in rows:
+            if row.state == EditRowState.DIRTY_INSERT:
+                for index, column in enumerate(session.table_metadata.columns_metadata):
+                    if column.is_calculated and row.cells[index].is_null:
+                        row.cells[index].display_value = '<TBD>'
+                        row.cells[index].is_null = False
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider

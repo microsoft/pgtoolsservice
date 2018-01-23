@@ -49,6 +49,6 @@ class SmoEditTableMetadataFactory:
         db_column.is_read_only = column.is_readonly
         db_column.is_unique = column.is_unique
         db_column.is_auto_increment = column.is_auto_increment
-        db_column.is_updatable = column.is_readonly is False
+        db_column.is_updatable = column.is_readonly is False and column.is_auto_increment is False
 
         return db_column
