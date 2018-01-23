@@ -58,6 +58,9 @@ class ObjectExplorerService(object):
             # Make sure we have the appropriate session params
             utils.validate.is_not_none('params', params)
 
+            if params.database_name is None or params.database_name == '':
+                params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
+
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params)
             session: ObjectExplorerSession = ObjectExplorerSession(session_id, params)

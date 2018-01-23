@@ -65,6 +65,8 @@ def parse_time_with_timezone(value: str) -> datetime.time:
 
 
 def parse_datetime(value: str) -> datetime.datetime:
+    if value == 'now()':
+        return datetime.datetime.now()
     return date_parser.parse(value)
 
 
@@ -93,7 +95,8 @@ DATATYPE_PARSER_MAP = {
     datatypes.DATATYPE_TIMESTAMP: parse_datetime,
     datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: parse_datetime,
     datatypes.DATATYPE_INTERVAL: parse_timedelta,
-    datatypes.DATATYPE_UUID: parse_uuid
+    datatypes.DATATYPE_UUID: parse_uuid,
+    datatypes.DATATYPE_NAME: parse_str
 }
 
 
@@ -101,4 +104,4 @@ def get_parser(column_data_type: str) -> Callable[[str], object]:
     '''
     Returns a parser for the column_data_type provided. If not found returns None
     '''
-    return DATATYPE_PARSER_MAP.get(column_data_type)
+    return DATATYPE_PARSER_MAP.get(column_data_type.lower())
