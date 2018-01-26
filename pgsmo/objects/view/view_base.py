@@ -55,7 +55,7 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
     def extended_vars(self):
         template_vars = {
             'scid': self.scid,
-            'datlastsysoid': self._database.datlastsysoid
+            'datlastsysoid': self._database.datlastsysoid if self._database is not None else None
         }
         return template_vars
 

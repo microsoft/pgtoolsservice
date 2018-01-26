@@ -54,6 +54,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         db._can_connect = kwargs['canconnect']
         db._is_system = kwargs['is_system']
         db._datlastsysoid = kwargs['datlastsysoid']
+
         return db
 
     def __init__(self, server: 's.Server', name: str):

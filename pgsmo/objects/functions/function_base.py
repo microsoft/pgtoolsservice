@@ -61,8 +61,8 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     @property
     def extended_vars(self):
         template_vars = {
-            'scid': self.scid,            
-            'fnid': self.oid            
+            'scid': self.scid,
+            'fnid': self.oid
         }
         return template_vars
 

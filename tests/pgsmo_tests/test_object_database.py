@@ -24,7 +24,8 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
         'owner': 10,
         'datistemplate': False,
         'canconnect': True,
-        'is_system': False
+        'is_system': False,
+        'datlastsysoid': 12368
     }
 
     @property
