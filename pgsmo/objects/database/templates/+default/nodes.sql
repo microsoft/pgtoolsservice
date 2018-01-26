@@ -9,6 +9,7 @@ SELECT
     db.datname as name, 
     ta.spcname as spcname, 
     db.datallowconn,
+    db.datlastsysoid,
     has_database_privilege(db.oid, 'CREATE') as cancreate, 
     datdba as owner, 
     db.datistemplate , 

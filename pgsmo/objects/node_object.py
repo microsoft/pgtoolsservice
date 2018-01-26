@@ -12,14 +12,6 @@ import pgsmo.utils as utils
 import pgsmo.utils.templating as templating
 
 
-""" The catalog which represents the name of the object """
-NANME_CATALOG_DATABASE = 'name'
-NANME_CATALOG_TABLE = 'name'
-NANME_CATALOG_VIEW = 'name'
-NANME_CATALOG_SCHEMA = 'name'
-NANME_CATALOG_FUNCTION = 'proname'
-
-
 class NodeObject(metaclass=ABCMeta):
     @classmethod
     def get_nodes_for_parent(
@@ -214,29 +206,6 @@ class NodeObject(metaclass=ABCMeta):
         cols, rows = self._server.connection.execute_dict(sql)
 
         if len(rows) > 0:
-            class_name = self.__class__.__name__
-
-            for row in rows:
-                if class_name == 'Database' and NANME_CATALOG_DATABASE in row:
-                    if row[NANME_CATALOG_DATABASE] == self._name:
-                        return row
-                elif class_name == 'Table' and NANME_CATALOG_TABLE in row:
-                    if row[NANME_CATALOG_TABLE] == self._name:
-                        return row
-                elif class_name == 'View' and NANME_CATALOG_VIEW in row:
-                    if row[NANME_CATALOG_VIEW] == self._name:
-                        return row
-                elif class_name == 'Schema' and NANME_CATALOG_SCHEMA in row:
-                    if row[NANME_CATALOG_SCHEMA] == self._name:
-                        return row
-                elif class_name == 'Function' and NANME_CATALOG_FUNCTION in row:
-                    last_left_parenthese_idx = self._name.rfind("(")
-                    func_name = self._name[:last_left_parenthese_idx]
-                    if row[NANME_CATALOG_FUNCTION] == func_name:
-                        return row
-                else:
-                    continue
-
             return rows[0]
 
     def _additional_property_generator(self) -> Dict[str, Optional[Union[str, int, bool]]]:
