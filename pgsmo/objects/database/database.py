@@ -53,7 +53,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         db._is_template = kwargs['datistemplate']
         db._can_connect = kwargs['canconnect']
         db._is_system = kwargs['is_system']
-
+        db._datlastsysoid = kwargs['datlastsysoid']
         return db
 
     def __init__(self, server: 's.Server', name: str):
@@ -227,6 +227,10 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def extensions(self) -> NodeCollection:
         return self._extensions
+
+    @property
+    def datlastsysoid(self) -> int:
+        return self._datlastsysoid
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
