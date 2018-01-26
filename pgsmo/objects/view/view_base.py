@@ -46,6 +46,7 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
         ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
         self._schema: str = None
         self._scid: int = None
+        self._database = self.get_database_node()
         # Declare child items
         self._columns: NodeCollection[Column] = self._register_child_collection(Column)
 
@@ -54,7 +55,7 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
     def extended_vars(self):
         template_vars = {
             'scid': self.scid,
-            'did': self.parent.oid
+            'datlastsysoid': self._database.datlastsysoid
         }
         return template_vars
 

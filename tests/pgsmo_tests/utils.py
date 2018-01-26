@@ -31,6 +31,9 @@ class MockNodeObject(NodeObject):
     def template_vars(self) -> str:
         pass
 
+    def get_database_node(self):
+        return mock.MagicMock(datlastsysoid=None)
+
 # MOCK CONNECTION ##########################################################
 
 
