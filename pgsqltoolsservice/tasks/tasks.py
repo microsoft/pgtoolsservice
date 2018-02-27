@@ -71,13 +71,12 @@ class Task:
         """Cancel the task if it is running and return true, or return false if the task is not running"""
         if self.status is not TaskStatus.IN_PROGRESS:
             return False
-        with self.cancellation_lock:
-            if self.on_cancel:
-                try:
-                    self.on_cancel()
-                except Exception:
-                    return False
-            self.canceled = True
+        if self.on_cancel:
+            try:
+                self.on_cancel()
+            except Exception:
+                return False
+        self.canceled = True
         return True
 
     def _run(self) -> None:
