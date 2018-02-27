@@ -85,10 +85,14 @@ def _perform_backup_restore(connection_info: ConnectionInfo, process_args: List[
     with task.cancellation_lock:
         if task.canceled:
             return TaskResult(TaskStatus.CANCELED)
-        dump_restore_process = subprocess.Popen(process_args, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        task.on_cancel = dump_restore_process.terminate
-    # pg_dump and pg_restore will prompt for the password, so send it via stdin. This call will block until the process exits.
-    _, stderr = dump_restore_process.communicate(str.encode(connection_info.details.options.get('password') or ''))
+        try:
+            os.putenv('PGPASSWORD', connection_info.details.options.get('password') or '')
+            dump_restore_process = subprocess.Popen(process_args, stderr=subprocess.PIPE)
+            task.on_cancel = dump_restore_process.terminate
+            _, stderr = dump_restore_process.communicate()
+        except subprocess.SubprocessError as err:
+            dump_restore_process.kill()
+            return TaskResult(TaskStatus.FAILED, str(err))
     if dump_restore_process.returncode != 0:
         return TaskResult(TaskStatus.FAILED, str(stderr, 'utf-8'))
     return TaskResult(TaskStatus.SUCCEEDED)
