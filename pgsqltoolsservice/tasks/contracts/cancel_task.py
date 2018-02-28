@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
-import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.serialization.serializable import convert_from_dict
 
 
 class CancelTaskParameters:
@@ -12,7 +12,7 @@ class CancelTaskParameters:
 
     @classmethod
     def from_dict(cls, dictionary: dict):
-        return utils.serialization.convert_from_dict(cls, dictionary)
+        return convert_from_dict(cls, dictionary)
 
     def __init__(self):
         self.task_id: str = None
