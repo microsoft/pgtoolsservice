@@ -195,7 +195,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             # And ran the executable as a subprocess
             mock_popen.assert_called_once()
             # And then called communicate on the process
-            mock_process.communicate.assert_called_once_with(b'')
+            mock_process.communicate.assert_called_once_with()
             # And the arguments for the subprocess.Popen call were the expected values
             actual_args = mock_popen.call_args[0][0]
             self.assertEqual(actual_args[0], mock_pg_path)
