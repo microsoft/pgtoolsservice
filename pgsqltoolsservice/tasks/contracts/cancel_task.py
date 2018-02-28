@@ -13,7 +13,7 @@ class CancelTaskParameters:
     @classmethod
     def from_dict(cls, dictionary: dict):
         return convert_from_dict(cls, dictionary)
-        
+
     def __init__(self):
         self.task_id: str = None
 
