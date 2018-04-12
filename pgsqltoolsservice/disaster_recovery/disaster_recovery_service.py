@@ -36,7 +36,7 @@ class DisasterRecoveryService:
 
     def handle_backup_request(self, request_context: RequestContext, params: BackupParams) -> None:
         """
-        Respond to disasterrecovery/backup requests by performing a backup
+        Respond to backup/backup requests by performing a backup
 
         :param request_context: The request context
         :param params: The BackupParams object for this request
@@ -54,7 +54,7 @@ class DisasterRecoveryService:
 
     def handle_restore_request(self, request_context: RequestContext, params: RestoreParams) -> None:
         """
-        Respond to disasterrecovery/restore requests by performing a restore
+        Respond to restore/restore requests by performing a restore
         """
         connection_info: ConnectionInfo = self._service_provider[constants.CONNECTION_SERVICE_NAME].get_connection_info(params.owner_uri)
         if connection_info is None:
