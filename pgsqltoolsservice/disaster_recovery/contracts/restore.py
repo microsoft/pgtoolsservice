@@ -57,7 +57,7 @@ class RestoreOptions(Serializable):
         self.role: str = None
 
 
-RESTORE_REQUEST = IncomingMessageConfiguration('disasterrecovery/restore', RestoreParams)
+RESTORE_REQUEST = IncomingMessageConfiguration('restore/restore', RestoreParams)
 
 # These options are handled in the disaster recovery service's _perform_restore method. The path has special case handling, but most are handled automatically
 # by using the option's name as the flag name, and the setting as the value. The RestoreOptions contract above has a field corresponding to each option.
