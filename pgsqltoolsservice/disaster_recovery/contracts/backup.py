@@ -81,7 +81,7 @@ class BackupType(enum.Enum):
     PLAIN_TEXT = 'sql'
 
 
-BACKUP_REQUEST = IncomingMessageConfiguration('disasterrecovery/backup', BackupParams)
+BACKUP_REQUEST = IncomingMessageConfiguration('backup/backup', BackupParams)
 
 
 # These options are handled in the disaster recovery service's _perform_backup method. A few have special case handling, but most are handled automatically by
