@@ -1,5 +1,5 @@
 # Shared Requirements
-psycopg2==2.7.1
+psycopg2==2.7.4
 
 # PGToolsService Requirements
 inflection
