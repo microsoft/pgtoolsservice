@@ -78,10 +78,10 @@ def _perform_backup_restore(connection_info: ConnectionInfo, process_args: List[
         key_name = inflection.dasherize(option)
         if value is True:
             # The option is a boolean flag, so just add the option
-            process_args.append(f'--{key_name}')
+            process_args.insert(-1, f'--{key_name}')
         else:
             # The option has a value, so add the flag with its value
-            process_args.append(f'--{key_name}={value}')
+            process_args.insert(-1, f'--{key_name}={value}')
     with task.cancellation_lock:
         if task.canceled:
             return TaskResult(TaskStatus.CANCELED)

@@ -242,7 +242,7 @@ BACKUP_OPTIONS = FeatureMetadataProvider(
             name='excludeTable',
             display_name='Exclude table',
             description='Do not dump the named table(s)',
-            value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
+            value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
             group_name='Advanced'
         ),
