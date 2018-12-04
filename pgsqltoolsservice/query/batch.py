@@ -75,6 +75,12 @@ class Batch:
         return self._has_executed
 
     @property
+    def start_date_str(self) -> str:
+        if self._execution_start_time is None:
+            return None
+        return self._execution_start_time.isoformat()
+
+    @property
     def start_time(self) -> str:
         return get_time_str(self._execution_start_time)
 
