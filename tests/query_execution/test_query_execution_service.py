@@ -891,7 +891,7 @@ class TestQueryService(unittest.TestCase):
 
         request_params = SaveResultsAsCsvRequestParams()
         request_params.owner_uri = 'testOwner_uri'
-        request_params.file_path = 'C:\SomeFolder\File.csv'
+        request_params.file_path = r'C:\SomeFolder\File.csv'
 
         mock_query = mock.MagicMock()
 
@@ -920,7 +920,7 @@ class TestQueryService(unittest.TestCase):
 
         request_params = SaveResultsAsJsonRequestParams()
         request_params.owner_uri = 'testOwner_uri'
-        request_params.file_path = 'C:\SomeFolder\File.csv'
+        request_params.file_path = r'C:\SomeFolder\File.csv'
 
         mock_query = mock.MagicMock()
 
@@ -939,7 +939,7 @@ class TestQueryService(unittest.TestCase):
 
         request_params = SaveResultsAsExcelRequestParams()
         request_params.owner_uri = 'testOwner_uri'
-        request_params.file_path = 'C:\SomeFolder\File.csv'
+        request_params.file_path = r'C:\SomeFolder\File.csv'
 
         mock_query = mock.MagicMock()
 

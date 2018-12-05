@@ -46,8 +46,8 @@ class Batch:
             batch_text: str,
             ordinal: int,
             selection: SelectionData,
-            batch_events: BatchEvents= None,
-            storage_type: ResultSetStorageType= ResultSetStorageType.FILE_STORAGE
+            batch_events: BatchEvents = None,
+            storage_type: ResultSetStorageType = ResultSetStorageType.FILE_STORAGE
     ) -> None:
         self.id = ordinal
         self.selection = selection

@@ -225,7 +225,7 @@ class TestWorkspaceService(unittest.TestCase):
     # IMPLEMENTATION DETAILS ###############################################
 
     @staticmethod
-    def _get_test_workspace(script_file: bool=True) -> Tuple[Workspace, Optional[ScriptFile]]:
+    def _get_test_workspace(script_file: bool = True) -> Tuple[Workspace, Optional[ScriptFile]]:
         w: Workspace = Workspace()
         sf: Optional[ScriptFile] = None
         if script_file:

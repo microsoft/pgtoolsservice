@@ -66,7 +66,7 @@ class RowEdit:
         parameters = []
         where_clauses = []
 
-        row = self.result_set.get_row(self.row_id)           
+        row = self.result_set.get_row(self.row_id)
 
         for column in self.table_metadata.key_columns:
             cell: DbCellValue = row[column.ordinal]

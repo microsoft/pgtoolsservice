@@ -23,7 +23,7 @@ class ExpectedMessage:
             message_type: JSONRPCMessageType,
             message_method: Optional[str],
             param_type: type,
-            validation: TValidation=None
+            validation: TValidation = None
     ):
         self.message_method: str = message_method
         self.message_type: JSONRPCMessageType = message_type
@@ -67,7 +67,7 @@ class RequestFlowValidator:
         self.request_context.send_error = mock.MagicMock(side_effect=self._received_error_callback)
 
     # METHODS ##############################################################
-    def add_expected_error(self, expected_type: type, validation: TValidation=None) -> 'RequestFlowValidator':
+    def add_expected_error(self, expected_type: type, validation: TValidation = None) -> 'RequestFlowValidator':
         expected_error = ExpectedMessage(JSONRPCMessageType.ResponseError, None, expected_type, validation)
         self._expected_messages.append(expected_error)
         return self
@@ -76,13 +76,13 @@ class RequestFlowValidator:
             self,
             expected_type: type,
             method: str,
-            validation: TValidation=None
+            validation: TValidation = None
     ) -> 'RequestFlowValidator':
         expected_notification = ExpectedMessage(JSONRPCMessageType.Notification, method, expected_type, validation)
         self._expected_messages.append(expected_notification)
         return self
 
-    def add_expected_response(self, expected_type: type, validation: TValidation=None) -> 'RequestFlowValidator':
+    def add_expected_response(self, expected_type: type, validation: TValidation = None) -> 'RequestFlowValidator':
         expected_response = ExpectedMessage(JSONRPCMessageType.ResponseSuccess, None, expected_type, validation)
         self._expected_messages.append(expected_response)
         return self
@@ -136,7 +136,7 @@ class RequestFlowValidator:
         test_case.assertNotEqual(param.message.strip(), '')
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _received_error_callback(self, message: str, data: any=None, code: int=0):
+    def _received_error_callback(self, message: str, data: any = None, code: int = 0):
         error = ReceivedError(code, message, data)
         rpc_message = JSONRPCMessage.create_error(0, code, message, data)
         received_message = ReceivedMessage(JSONRPCMessageType.ResponseError, None, error, type(data), rpc_message)

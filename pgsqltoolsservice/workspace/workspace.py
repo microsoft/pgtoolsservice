@@ -49,7 +49,7 @@ class Workspace:
 
         return file_uri in self._workspace_files
 
-    def open_file(self, file_uri: str, initial_buffer: Optional[str]=None) -> Optional[ScriptFile]:
+    def open_file(self, file_uri: str, initial_buffer: Optional[str] = None) -> Optional[ScriptFile]:
         """
         Opens a file in the workspace
         :param file_uri: URI to identify the script file, provided by the client

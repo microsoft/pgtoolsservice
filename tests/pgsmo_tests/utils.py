@@ -45,7 +45,7 @@ def get_named_mock_columns(col_names: List[str]) -> List[Column]:
     return [Column(x, None, 10, 10, None, None, True) for x in col_names]
 
 
-def get_mock_results(col_count: int=5, row_count: int=5) -> Tuple[List[Column], List[dict]]:
+def get_mock_results(col_count: int = 5, row_count: int = 5) -> Tuple[List[Column], List[dict]]:
     rows = []
     cols = get_mock_columns(col_count)
     for i in range(0, len(cols)):
@@ -110,11 +110,11 @@ class MockConnection(connection):
     def __init__(
             self,
             cur: Optional[MockCursor],
-            version: str='90602',
-            name: str='postgres',
-            host: str='localhost',
-            port: str='25565',
-            user: str='postgres'):
+            version: str = '90602',
+            name: str = 'postgres',
+            host: str = 'localhost',
+            port: str = '25565',
+            user: str = 'postgres'):
         # Setup the properties
         self._server_version = version
 

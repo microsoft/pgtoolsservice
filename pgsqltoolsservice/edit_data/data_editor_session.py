@@ -20,7 +20,7 @@ import pgsqltoolsservice.utils as utils
 
 class DataEditSessionExecutionState:
 
-    def __init__(self, query: Query, message: str=None):
+    def __init__(self, query: Query, message: str = None):
         self.query = query
         self.message = message
 
