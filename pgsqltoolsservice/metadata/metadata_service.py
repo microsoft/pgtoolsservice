@@ -44,7 +44,7 @@ class MetadataService:
         try:
             metadata = self._list_metadata(params.owner_uri)
             request_context.send_response(MetadataListResponse(metadata))
-        except Exception as e:
+        except Exception:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Unhandled exception while executing the metadata list worker thread')
             request_context.send_error('Unhandled exception while listing metadata')  # TODO: Localize

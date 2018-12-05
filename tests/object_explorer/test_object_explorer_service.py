@@ -108,7 +108,7 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertEqual(parse_result.scheme, 'objectexplorer')
         self.assertTrue(parse_result.netloc)
 
-        re_match = re.match('(?P<username>\w+)@(?P<host>\w+):(?P<db_name>\w+)', parse_result.netloc)
+        re_match = re.match(r'(?P<username>\w+)@(?P<host>\w+):(?P<db_name>\w+)', parse_result.netloc)
         self.assertIsNotNone(re_match)
         self.assertEqual(re_match.group('username'), TEST_USER)
         self.assertEqual(re_match.group('host'), TEST_HOST)

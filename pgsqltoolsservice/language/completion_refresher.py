@@ -24,7 +24,7 @@ class CompletionRefresher:
 
     refreshers = OrderedDict()
 
-    def __init__(self, connection: 'psycopg2.extensions.connection', logger: Logger=None):
+    def __init__(self, connection: 'psycopg2.extensions.connection', logger: Logger = None):
         self.connection = connection
         self.logger: Logger = logger
         self.server: Server = None

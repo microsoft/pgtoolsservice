@@ -14,7 +14,7 @@ from pgsqltoolsservice.query.data_storage import FileStreamFactory
 
 
 class QueryEvents:
-    def __init__(self, on_query_started=None, on_query_completed=None, batch_events: BatchEvents= None) -> None:
+    def __init__(self, on_query_started=None, on_query_completed=None, batch_events: BatchEvents = None) -> None:
         self.on_query_started = on_query_started
         self.on_query_completed = on_query_completed
         self.batch_events = batch_events

@@ -86,7 +86,7 @@ class TestServiceProvider(unittest.TestCase):
             self.service_provider = service_provider
 
     @staticmethod
-    def _get_service_provider(services: int=1) -> ServiceProvider:
+    def _get_service_provider(services: int = 1) -> ServiceProvider:
         # If: I create a new service provider
         server = JSONRPCServer(None, None)
         logger = utils.get_mock_logger()

@@ -10,7 +10,7 @@ from pgsqltoolsservice.hosting import JSONRPCServer
 
 
 class ServiceProvider:
-    def __init__(self, json_rpc_server: JSONRPCServer, services: dict, logger: Optional[Logger]=None):
+    def __init__(self, json_rpc_server: JSONRPCServer, services: dict, logger: Optional[Logger] = None):
         self._is_initialized = False
         self._logger = logger
         self._server = json_rpc_server

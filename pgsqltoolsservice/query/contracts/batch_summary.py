@@ -10,7 +10,7 @@ class BatchSummary:
 
     @classmethod
     def from_batch(cls, batch):
-        instance = cls(batch.id, batch.selection, batch.start_time, batch.has_error)
+        instance = cls(batch.id, batch.selection, batch.start_date_str, batch.has_error)
 
         if batch.has_executed:
             instance.execution_elapsed = batch.elapsed_time

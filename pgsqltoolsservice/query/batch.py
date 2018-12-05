@@ -46,8 +46,8 @@ class Batch:
             batch_text: str,
             ordinal: int,
             selection: SelectionData,
-            batch_events: BatchEvents= None,
-            storage_type: ResultSetStorageType= ResultSetStorageType.FILE_STORAGE
+            batch_events: BatchEvents = None,
+            storage_type: ResultSetStorageType = ResultSetStorageType.FILE_STORAGE
     ) -> None:
         self.id = ordinal
         self.selection = selection
@@ -73,6 +73,12 @@ class Batch:
     @property
     def has_executed(self) -> bool:
         return self._has_executed
+
+    @property
+    def start_date_str(self) -> str:
+        if self._execution_start_time is None:
+            return None
+        return self._execution_start_time.isoformat()
 
     @property
     def start_time(self) -> str:

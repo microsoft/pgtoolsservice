@@ -665,11 +665,13 @@ class PGCompleter(Completer):
     def get_function_matches(self, suggestion, word_before_cursor, alias=False):
         if suggestion.usage == 'from':
             # Only suggest functions allowed in FROM clause
-            def filt(f): return not f.is_aggregate and not f.is_window
+            def filt(f):
+                return not f.is_aggregate and not f.is_window
         else:
             alias = False
 
-            def filt(f): return True
+            def filt(f):
+                return True
         arg_mode = {
             'signature': 'signature',
             'special': None,

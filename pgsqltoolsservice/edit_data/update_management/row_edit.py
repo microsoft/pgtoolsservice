@@ -59,7 +59,7 @@ class RowEdit:
     def build_where_clause(self):
 
         if len(self.table_metadata.key_columns) is 0:
-            raise ValueError()
+            raise TypeError(f'Table {self.table_metadata.table_name} does not have a single column that can be trusted for uniqueness')
 
         where_start = 'WHERE {0}'
         column_name_template = '"{0}" {1}'

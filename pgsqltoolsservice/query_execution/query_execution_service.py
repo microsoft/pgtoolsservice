@@ -48,8 +48,8 @@ NO_QUERY_MESSAGE = 'QueryServiceRequestsNoQuery'
 class ExecuteRequestWorkerArgs():
 
     def __init__(self, owner_uri: str, connection: 'psycopg2.extensions.connection', request_context: RequestContext, result_set_storage_type,
-                 before_query_initialize: Callable=None, on_batch_start: Callable=None, on_message_notification: Callable=None,
-                 on_resultset_complete: Callable=None, on_batch_complete: Callable=None, on_query_complete: Callable=None):
+                 before_query_initialize: Callable = None, on_batch_start: Callable = None, on_message_notification: Callable = None,
+                 on_resultset_complete: Callable = None, on_batch_complete: Callable = None, on_query_complete: Callable = None):
 
         self.owner_uri = owner_uri
         self.connection = connection
@@ -187,7 +187,7 @@ class QueryExecutionService(object):
 
         self._start_query_execution_thread(request_context, params, worker_args)
 
-    def _start_query_execution_thread(self, request_context: RequestContext, params: ExecuteRequestParamsBase, worker_args: ExecuteRequestWorkerArgs= None):
+    def _start_query_execution_thread(self, request_context: RequestContext, params: ExecuteRequestParamsBase, worker_args: ExecuteRequestWorkerArgs = None):
 
         # Set up batch execution callback methods for sending notifications
         def _batch_execution_started_callback(batch: Batch) -> None:
@@ -346,7 +346,7 @@ class QueryExecutionService(object):
             result_set_summary = summaries[0]
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
-    def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool=False):
+    def build_message_params(self, owner_uri: str, batch_id: int, message: str, is_error: bool = False):
         result_message = ResultMessage(batch_id, is_error, utils.time.get_time_str(datetime.now()), message)
         return MessageNotificationParams(owner_uri, result_message)
 
