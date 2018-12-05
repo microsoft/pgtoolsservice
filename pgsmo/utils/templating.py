@@ -11,7 +11,7 @@ from jinja2 import Environment, FileSystemLoader, Template
 from psycopg2.extensions import adapt
 
 TEMPLATE_ENVIRONMENTS: Dict[int, Environment] = {}
-TEMPLATE_FOLDER_REGEX = re.compile('(\d+)\.(\d+)(?:_(\w+))?$')
+TEMPLATE_FOLDER_REGEX = re.compile(r'(\d+)\.(\d+)(?:_(\w+))?$')
 TEMPLATE_SKIPPED_FOLDERS: List[str] = ['macros']
 
 
@@ -72,7 +72,7 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     raise ValueError(f'Template folder {template_root} does not contain {template_name}')
 
 
-def render_template(template_path: str, macro_roots: Optional[List[str]]=None, **context) -> str:
+def render_template(template_path: str, macro_roots: Optional[List[str]] = None, **context) -> str:
     """
     Renders a template from the template folder with the given context.
     :param template_path: the path to the template to be rendered

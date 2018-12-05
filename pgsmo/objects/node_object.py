@@ -271,7 +271,7 @@ class NodeLazyPropertyCollection:
     def __len__(self) -> int:
         return len(self._items)
 
-    def get(self, item: str, default: Optional[Union[str, int, bool]]=None) -> Optional[Union[str, int, bool]]:
+    def get(self, item: str, default: Optional[Union[str, int, bool]] = None) -> Optional[Union[str, int, bool]]:
         return self._items.get(item, default)
 
     def items(self) -> ItemsView[str, Union[str, int, bool]]:

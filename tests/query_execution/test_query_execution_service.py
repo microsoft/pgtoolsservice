@@ -263,7 +263,7 @@ class TestQueryService(unittest.TestCase):
             for column_index in range(0, row_len):
                 result_cell = result_rows[row_index][column_index]
                 cell = row[column_index]
-                self.assertEqual(cell.display_value, None if result_cell is None else str(result_cell))
+                self.assertEqual(cell.display_value, '' if result_cell is None else str(result_cell))
                 self.assertEqual(cell.is_null, result_cell is None)
                 self.assertEqual(cell.row_id, row_index)
 
@@ -891,7 +891,7 @@ class TestQueryService(unittest.TestCase):
 
         request_params = SaveResultsAsCsvRequestParams()
         request_params.owner_uri = 'testOwner_uri'
-        request_params.file_path = 'C:\SomeFolder\File.csv'
+        request_params.file_path = r'C:\SomeFolder\File.csv'
 
         mock_query = mock.MagicMock()
 
@@ -920,7 +920,7 @@ class TestQueryService(unittest.TestCase):
 
         request_params = SaveResultsAsJsonRequestParams()
         request_params.owner_uri = 'testOwner_uri'
-        request_params.file_path = 'C:\SomeFolder\File.csv'
+        request_params.file_path = r'C:\SomeFolder\File.csv'
 
         mock_query = mock.MagicMock()
 
@@ -939,7 +939,7 @@ class TestQueryService(unittest.TestCase):
 
         request_params = SaveResultsAsExcelRequestParams()
         request_params.owner_uri = 'testOwner_uri'
-        request_params.file_path = 'C:\SomeFolder\File.csv'
+        request_params.file_path = r'C:\SomeFolder\File.csv'
 
         mock_query = mock.MagicMock()
 

@@ -85,8 +85,8 @@ def _get_node_info(
         node: NodeObject,
         current_path: str,
         node_type: str,
-        label: Optional[str]=None,
-        is_leaf: bool=True
+        label: Optional[str] = None,
+        is_leaf: bool = True
 ) -> NodeInfo:
     """
     Utility method for generating a NodeInfo from a NodeObject

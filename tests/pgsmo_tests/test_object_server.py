@@ -121,7 +121,7 @@ class TestServer(unittest.TestCase):
         urn_base = server.urn_base
 
         # Then: The urn base should match the expected outcome
-        urn_base_regex = re.compile('//(?P<user>.+)@(?P<host>.+):(?P<port>\d+)')
+        urn_base_regex = re.compile(r'//(?P<user>.+)@(?P<host>.+):(?P<port>\d+)')
         urn_base_match = urn_base_regex.match(urn_base)
         self.assertIsNotNone(urn_base_match)
         self.assertEqual(urn_base_match.groupdict()['user'], server.connection.dsn_parameters['user'])

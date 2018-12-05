@@ -13,7 +13,7 @@ class PGCompletion(Completion):
     """
 
     def __init__(self, text, start_position=0, display=None, display_meta=None,
-                 get_display_meta=None, schema=None):
+                 style='', schema=None):
         self.schema = schema
         super(PGCompletion, self).__init__(text, start_position, display, display_meta,
-                                           get_display_meta)
+                                           style)

@@ -20,7 +20,7 @@ import pgsqltoolsservice.utils as utils
 
 class DataEditSessionExecutionState:
 
-    def __init__(self, query: Query, message: str=None):
+    def __init__(self, query: Query, message: str = None):
         self.query = query
         self.message = message
 
@@ -188,20 +188,20 @@ class DataEditorSession():
         try:
             edit_operations = self._session_cache.values()
 
-            cursor = connection.cursor()
+            if any(edit_operations) is True:
+                with connection.cursor() as cursor:
+                    for operation in edit_operations:
+                        # If its a new row that’s being added and tried to delete without committing we just clear it
+                        # from cache
+                        if isinstance(operation, RowDelete) and operation.row_id >= len(self._result_set.rows):
+                            pass
+                        else:
+                            script: EditScript = operation.get_script()
+                            cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
+                            operation.apply_changes(cursor)
 
-            for operation in edit_operations:
-                # If its a new row that’s being added and tried to delete without committing we just clear it
-                # from cache
-                if isinstance(operation, RowDelete) and operation.row_id >= len(self._result_set.rows):
-                    pass
-                else:
-                    script: EditScript = operation.get_script()
-                    cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
-                    operation.apply_changes(cursor)
-
-            self._session_cache.clear()
-            self._last_row_id = len(self._result_set.rows) - 1
+                    self._session_cache.clear()
+                    self._last_row_id = len(self._result_set.rows) - 1
 
             success()
 

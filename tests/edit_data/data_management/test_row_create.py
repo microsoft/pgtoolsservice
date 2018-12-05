@@ -65,7 +65,7 @@ class TestRowCreate(unittest.TestCase):
         self.assertEqual(edit_row.id, self._row_id)
         self.assertEqual(edit_row.state, EditRowState.DIRTY_INSERT)
 
-        self.assertTrue(edit_row.cells[0].display_value is None)
+        self.assertTrue(edit_row.cells[0].display_value is '')
 
     def test_get_script(self):
         column_index = 0

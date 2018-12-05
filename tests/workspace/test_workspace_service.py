@@ -367,7 +367,7 @@ class TestWorkspaceService(unittest.TestCase):
         return sf
 
     @staticmethod
-    def _get_mock_workspace(all_none: bool=False, exception: bool=False) -> Tuple[Workspace, ScriptFile]:
+    def _get_mock_workspace(all_none: bool = False, exception: bool = False) -> Tuple[Workspace, ScriptFile]:
         if exception:
             return_value = NameError()
             kwargs = {'side_effect': return_value}

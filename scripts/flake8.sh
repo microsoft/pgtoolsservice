@@ -5,6 +5,6 @@ then
   exit 1
 fi
 
-flake8 --max-line-length=160 pgsqltoolsservice
-flake8 --max-line-length=160 tests
-flake8 --max-line-length=160 pgsmo
+flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,pgsqltoolsservice,View pgsqltoolsservice
+flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,pgsqltoolsservice,View tests
+flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,pgsqltoolsservice,View pgsmo

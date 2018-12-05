@@ -27,6 +27,7 @@ class InitializeEditParams(Serializable):
         self.schema_name: str = None
         self.object_type: str = None
         self.object_name: str = None
+        self.query_string: str = None
         self.filters: EditInitializerFilter = None
 
 

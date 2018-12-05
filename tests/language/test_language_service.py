@@ -451,7 +451,7 @@ class TestLanguageService(unittest.TestCase):
         self.mock_server.send_notification = self.flow_validator.request_context.send_notification
         return self._init_service()
 
-    def _get_test_workspace(self, script_file: bool=True, buffer: str='') -> Tuple[Workspace, Optional[ScriptFile]]:
+    def _get_test_workspace(self, script_file: bool = True, buffer: str = '') -> Tuple[Workspace, Optional[ScriptFile]]:
         workspace: Workspace = Workspace()
         file: Optional[ScriptFile] = None
         if script_file:

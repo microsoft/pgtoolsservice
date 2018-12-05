@@ -37,7 +37,7 @@ class LightweightMetadata:
         FROM pg_catalog.pg_database d
         ORDER BY 1'''
 
-    def __init__(self, conn: connection, logger: Logger=None):
+    def __init__(self, conn: connection, logger: Logger = None):
         self.conn = conn
         self._logger: Logger = logger
 

@@ -91,7 +91,7 @@ class DbColumn:
 class DbCellValue:
 
     def __init__(self, display_value: any, is_null: bool, raw_object: object, row_id: int):
-        self.display_value: str = None if (display_value is None) else str(display_value)
+        self.display_value: str = '' if (display_value is None) else str(display_value)
         self.is_null: bool = is_null
         self.row_id: int = row_id
         self.raw_object = raw_object
