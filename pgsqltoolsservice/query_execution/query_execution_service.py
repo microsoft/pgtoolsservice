@@ -24,7 +24,7 @@ from pgsqltoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, EXECUTE_DOCUMENT_STATEMENT_REQUEST,
     ExecuteDocumentStatementParams, ExecutionPlanOptions, ResultSetNotificationParams,
-    MESSAGE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
+    MESSAGE_NOTIFICATION, RESULT_SET_AVAILABLE_NOTIFICATION, RESULT_SET_UPDATED_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
     QUERY_COMPLETE_NOTIFICATION, QUERY_EXECUTION_PLAN_REQUEST, QueryCancelResult, QueryExecutionPlanRequest,
     SUBSET_REQUEST, ExecuteDocumentSelectionParams, CANCEL_REQUEST, QueryCancelParams, ResultMessage, SubsetParams,
     BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams,
@@ -49,7 +49,8 @@ class ExecuteRequestWorkerArgs():
 
     def __init__(self, owner_uri: str, connection: 'psycopg2.extensions.connection', request_context: RequestContext, result_set_storage_type,
                  before_query_initialize: Callable = None, on_batch_start: Callable = None, on_message_notification: Callable = None,
-                 on_resultset_complete: Callable = None, on_batch_complete: Callable = None, on_query_complete: Callable = None):
+                 on_resultset_complete: Callable = None, on_resultset_available: Callable = None, on_resultset_updated: Callable = None,
+                 on_batch_complete: Callable = None, on_query_complete: Callable = None):
 
         self.owner_uri = owner_uri
         self.connection = connection
@@ -58,6 +59,8 @@ class ExecuteRequestWorkerArgs():
         self.before_query_initialize = before_query_initialize
         self.on_batch_start = on_batch_start
         self.on_message_notification = on_message_notification
+        self.on_resultset_available = on_resultset_available
+        self.on_resultset_updated = on_resultset_updated
         self.on_resultset_complete = on_resultset_complete
         self.on_batch_complete = on_batch_complete
         self.on_query_complete = on_query_complete
@@ -162,6 +165,12 @@ class QueryExecutionService(object):
         def on_message_notification(notice_message_params):
             request_context.send_notification(MESSAGE_NOTIFICATION, notice_message_params)
 
+        def on_resultset_available(result_set_params):
+            request_context.send_notification(RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params)
+
+        def on_resultset_updated(result_set_params):
+            request_context.send_notification(RESULT_SET_UPDATED_NOTIFICATION, result_set_params)
+
         def on_resultset_complete(result_set_params):
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
@@ -182,7 +191,7 @@ class QueryExecutionService(object):
             return
 
         worker_args = ExecuteRequestWorkerArgs(params.owner_uri, conn, request_context, ResultSetStorageType.FILE_STORAGE, before_query_initialize,
-                                               on_batch_start, on_message_notification, on_resultset_complete,
+                                               on_batch_start, on_message_notification, on_resultset_available, on_resultset_updated, on_resultset_complete,
                                                on_batch_complete, on_query_complete)
 
         self._start_query_execution_thread(request_context, params, worker_args)
@@ -202,6 +211,14 @@ class QueryExecutionService(object):
                 _check_and_fire(worker_args.on_message_notification, notice_message_params)
 
             batch_summary = batch.batch_summary
+
+            # send query/resultSetAvailable response
+            result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)
+            _check_and_fire(worker_args.on_resultset_available, result_set_params)
+
+            # send query/resultSetUpdated response
+            result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)
+            _check_and_fire(worker_args.on_resultset_updated, result_set_params)
 
             # send query/resultSetComplete response
             result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)

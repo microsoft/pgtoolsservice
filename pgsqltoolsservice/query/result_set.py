@@ -13,8 +13,10 @@ from pgsqltoolsservice.query.data_storage import FileStreamFactory
 
 class ResultSetEvents:
 
-    def __init__(self, on_result_set_completed=None, on_result_set_partially_loaded=None) -> None:
+    def __init__(self, on_result_set_completed=None, on_result_set_available=None, on_result_set_updated=None, on_result_set_partially_loaded=None) -> None:
         self._on_result_set_completed = on_result_set_completed
+        self._on_result_set_available = on_result_set_available
+        self._on_result_set_updated = on_result_set_updated
         self._on_result_set_partially_loaded = on_result_set_partially_loaded
 
 
@@ -39,7 +41,7 @@ class ResultSet(metaclass=ABCMeta):
 
     @property
     def result_set_summary(self) -> ResultSetSummary:
-        return ResultSetSummary(self.id, self.batch_id, self.row_count, self.columns_info)
+        return ResultSetSummary(self.id, self.batch_id, self.row_count, self._has_been_read, self.columns_info)
 
     @abstractproperty
     def row_count(self) -> int:

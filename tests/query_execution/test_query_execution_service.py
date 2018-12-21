@@ -974,7 +974,8 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(self.request_context.last_response_params, {})
         notifications = {call[1][0]: call[1][1] for call in self.request_context.send_notification.mock_calls}
         notification_methods = list(notifications.keys())
-        expected_methods = ['query/batchStart', 'query/resultSetComplete', 'query/message', 'query/batchComplete', 'query/complete']
+        expected_methods = ['query/batchStart', 'query/resultSetUpdated', 'query/resultSetComplete',
+                            'query/resultSetAvailable', 'query/message', 'query/batchComplete', 'query/complete']
         self.assertEqual(notification_methods, expected_methods)
 
         # And the query results can be retrieved using a query/subset request
