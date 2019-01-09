@@ -76,13 +76,10 @@ class EditDataService(object):
 
             worker_args = ExecuteRequestWorkerArgs(params.owner_uri, connection, request_context, ResultSetStorageType.IN_MEMORY,
                                                    on_resultset_available=on_resultset_available, on_resultset_updated=on_resultset_updated,
-                                                   on_resultset_complete=on_resultset_complete,
                                                    on_query_complete=on_query_complete)
             execution_params = ExecuteStringParams()
             execution_params.query = query
             execution_params.owner_uri = params.owner_uri
-
-            # if 
             self._query_execution_service._start_query_execution_thread(request_context, execution_params, worker_args)
 
         def on_success():

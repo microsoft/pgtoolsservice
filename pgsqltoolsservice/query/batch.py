@@ -110,7 +110,7 @@ class Batch:
     def get_cursor(self, connection: 'psycopg2.extensions.connection'):
         return connection.cursor()
 
-    def execute(self, connection: 'psycopg2.extensions.connection') -> None: #============== slxslxslx=========
+    def execute(self, connection: 'psycopg2.extensions.connection') -> None:
         """
         Execute the batch using the psycopg2 cursor retrieved from the given connection
 
@@ -143,7 +143,7 @@ class Batch:
             cursor.connection.notices = []
 
             if self._batch_events and self._batch_events._on_execution_completed:
-                self._batch_events._on_execution_completed(self) # ===== slxslx ====
+                self._batch_events._on_execution_completed(self)
 
     def after_execute(self, cursor) -> None:
         if cursor.description is not None:

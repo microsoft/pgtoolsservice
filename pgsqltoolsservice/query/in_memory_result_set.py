@@ -44,7 +44,6 @@ class InMemoryResultSet(ResultSet):
         self.columns_info = get_columns_info(cursor.description, cursor.connection)
 
         self._has_been_read = True
-        self.result_set_summary.complete = True
 
     def do_save_as(self, file_path: str, row_start_index: int, row_end_index: int, file_factory: FileStreamFactory, on_success, on_failure) -> None:
 

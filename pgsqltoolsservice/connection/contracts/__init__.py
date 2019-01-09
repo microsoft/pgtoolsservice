@@ -18,9 +18,6 @@ from pgsqltoolsservice.connection.contracts.common import (
 from pgsqltoolsservice.connection.contracts.list_databases import (
     LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
 )
-from pgsqltoolsservice.connection.contracts.connect_build_info import (
-    BUILD_CONNECTION_INFO, BuildConnectionInfoParams
-)
 
 __all__ = [
     'CANCEL_CONNECT_REQUEST', 'CancelConnectParams',
@@ -29,6 +26,5 @@ __all__ = [
     'DISCONNECT_REQUEST', 'DisconnectRequestParams',
     'CONNECTION_COMPLETE_METHOD', 'ConnectionCompleteParams',
     'ConnectionDetails', 'ConnectionSummary', 'ConnectionType', 'ServerInfo',
-    'LIST_DATABASES_REQUEST', 'ListDatabasesParams', 'ListDatabasesResponse',
-    'BUILD_CONNECTION_INFO', 'BuildConnectionInfoParams'
+    'LIST_DATABASES_REQUEST', 'ListDatabasesParams', 'ListDatabasesResponse'
 ]
