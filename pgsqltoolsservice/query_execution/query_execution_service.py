@@ -213,12 +213,12 @@ class QueryExecutionService(object):
             batch_summary = batch.batch_summary
 
             # send query/resultSetAvailable response
-            result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)
-            _check_and_fire(worker_args.on_resultset_available, result_set_params)
+         #   result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)
+         #   _check_and_fire(worker_args.on_resultset_available, result_set_params)
 
             # send query/resultSetUpdated response
-            result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)
-            _check_and_fire(worker_args.on_resultset_updated, result_set_params)
+          #  result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)
+          #  _check_and_fire(worker_args.on_resultset_updated, result_set_params)
 
             # send query/resultSetComplete response
             result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)

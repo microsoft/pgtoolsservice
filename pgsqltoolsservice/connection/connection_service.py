@@ -20,7 +20,8 @@ from pgsqltoolsservice.connection.contracts import (
     CHANGE_DATABASE_REQUEST, ChangeDatabaseRequestParams,
     CONNECTION_COMPLETE_METHOD, ConnectionCompleteParams,
     ConnectionDetails, ConnectionSummary, ConnectionType, ServerInfo,
-    LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
+    LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse,
+    BUILD_CONNECTION_INFO, BuildConnectionInfoParams
 )
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
@@ -84,6 +85,7 @@ class ConnectionService:
         self._service_provider.server.set_request_handler(LIST_DATABASES_REQUEST, self.handle_list_databases)
         self._service_provider.server.set_request_handler(CANCEL_CONNECT_REQUEST, self.handle_cancellation_request)
         self._service_provider.server.set_request_handler(CHANGE_DATABASE_REQUEST, self.handle_change_database_request)
+        self._service_provider.server.set_request_handler(BUILD_CONNECTION_INFO, self.handle_build_connection_info)
 
     # PUBLIC METHODS #######################################################
     def connect(self, params: ConnectRequestParams) -> Optional[ConnectionCompleteParams]:
@@ -244,6 +246,15 @@ class ConnectionService:
 
         connection_request_params: ConnectRequestParams = ConnectRequestParams(connection_details, params.owner_uri, ConnectionType.DEFAULT)
         self.handle_connect_request(request_context, connection_request_params)
+
+    def handle_build_connection_info(self, request_context: RequestContext, params: CancelConnectParams) -> None:
+        """Cancel a connection attempt in response to a cancellation request"""
+        cancellation_key = (params.owner_uri, params.type)
+        with self._cancellation_lock:
+            connection_found = cancellation_key in self._cancellation_map
+            if connection_found:
+                self._cancellation_map[cancellation_key].cancel()
+        request_context.send_response(connection_found)
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
