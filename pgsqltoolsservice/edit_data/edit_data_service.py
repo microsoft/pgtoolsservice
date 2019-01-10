@@ -21,7 +21,7 @@ from pgsqltoolsservice.query.contracts import DbColumn
 from pgsqltoolsservice.query import ResultSetStorageType
 from pgsqltoolsservice.query_execution.contracts import (
     ExecuteStringParams, QUERY_COMPLETE_NOTIFICATION, QueryCompleteNotificationParams, ResultSetNotificationParams,
-    RESULT_SET_AVAILABLE_NOTIFICATION, RESULT_SET_UPDATED_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION
+    RESULT_SET_AVAILABLE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION
 )
 from pgsqltoolsservice.query_execution.query_execution_service import ExecuteRequestWorkerArgs
 from pgsqltoolsservice.connection import ConnectionService  # noqa
@@ -58,16 +58,9 @@ class EditDataService(object):
         self._active_sessions[params.owner_uri] = session
 
         def query_executer(query: str, columns: List[DbColumn], on_query_execution_complete: Callable):
-            def on_resultset_available(result_set_params: ResultSetNotificationParams):
-                result_set_params.result_set_summary.column_info = columns
-                request_context.send_notification(RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params)
-
-            def on_resultset_updated(result_set_params: ResultSetNotificationParams):
-                result_set_params.result_set_summary.column_info = columns
-                request_context.send_notification(RESULT_SET_UPDATED_NOTIFICATION, result_set_params)
-
             def on_resultset_complete(result_set_params: ResultSetNotificationParams):
                 result_set_params.result_set_summary.column_info = columns
+                request_context.send_notification(RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params)
                 request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             def on_query_complete(query_complete_params: QueryCompleteNotificationParams):
@@ -75,8 +68,7 @@ class EditDataService(object):
                 request_context.send_notification(QUERY_COMPLETE_NOTIFICATION, query_complete_params)
 
             worker_args = ExecuteRequestWorkerArgs(params.owner_uri, connection, request_context, ResultSetStorageType.IN_MEMORY,
-                                                   on_resultset_available=on_resultset_available, on_resultset_updated=on_resultset_updated,
-                                                   on_query_complete=on_query_complete)
+                                                   on_resultset_complete=on_resultset_complete, on_query_complete=on_query_complete)
             execution_params = ExecuteStringParams()
             execution_params.query = query
             execution_params.owner_uri = params.owner_uri

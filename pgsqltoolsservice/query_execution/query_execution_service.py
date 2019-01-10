@@ -164,13 +164,13 @@ class QueryExecutionService(object):
 
         def on_message_notification(notice_message_params):
             request_context.send_notification(MESSAGE_NOTIFICATION, notice_message_params)
-
+        
         def on_resultset_available(result_set_params):
             request_context.send_notification(RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params)
 
         def on_resultset_updated(result_set_params):
             request_context.send_notification(RESULT_SET_UPDATED_NOTIFICATION, result_set_params)
-
+        
         def on_resultset_complete(result_set_params):
             request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
@@ -212,13 +212,6 @@ class QueryExecutionService(object):
 
             batch_summary = batch.batch_summary
 
-            # send query/resultSetAvailable response
-            result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)
-            _check_and_fire(worker_args.on_resultset_available, result_set_params)
-
-            # send query/resultSetUpdated response
-            result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)
-            _check_and_fire(worker_args.on_resultset_updated, result_set_params)
 
             # send query/resultSetComplete response
             result_set_params = self.build_result_set_complete_params(batch_summary, worker_args.owner_uri)

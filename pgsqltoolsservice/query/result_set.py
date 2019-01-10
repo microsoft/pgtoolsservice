@@ -13,10 +13,8 @@ from pgsqltoolsservice.query.data_storage import FileStreamFactory
 
 class ResultSetEvents:
 
-    def __init__(self, on_result_set_completed=None, on_result_set_available=None, on_result_set_updated=None, on_result_set_partially_loaded=None) -> None:
-        self._on_result_set_completed = on_result_set_completed
-        self._on_result_set_available = on_result_set_available
-        self._on_result_set_updated = on_result_set_updated
+    def __init__(self, on_result_set_completed=None, on_result_set_partially_loaded=None) -> None:
+        self._on_result_set_completed = on_result_set_completed        
         self._on_result_set_partially_loaded = on_result_set_partially_loaded
 
 
