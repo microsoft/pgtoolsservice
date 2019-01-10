@@ -27,10 +27,9 @@ class ResultSetStorageType(Enum):
 class BatchEvents:
 
     def __init__(self, on_execution_started=None, on_execution_completed=None, on_result_set_completed=None):
-                 
         self._on_execution_started = on_execution_started
         self._on_execution_completed = on_execution_completed
-        self._on_result_set_completed = on_result_set_completed        
+        self._on_result_set_completed = on_result_set_completed
 
 
 class SelectBatchEvents(BatchEvents):
