@@ -27,6 +27,7 @@ from pgsqltoolsservice.query_execution.contracts.query_complete_notification imp
 )
 from pgsqltoolsservice.query_execution.contracts.result_set_notification import (
     ResultSetNotificationParams,
+    RESULT_SET_AVAILABLE_NOTIFICATION,
     RESULT_SET_COMPLETE_NOTIFICATION
 )
 from pgsqltoolsservice.query_execution.contracts.simple_execute_request import (
@@ -48,7 +49,7 @@ __all__ = [
     'ExecuteResult', 'ExecutionPlanOptions', 'EXECUTE_DOCUMENT_SELECTION_REQUEST', 'EXECUTE_STRING_REQUEST',
     'MessageNotificationParams', 'MESSAGE_NOTIFICATION', 'QueryCompleteNotificationParams',
     'QUERY_COMPLETE_NOTIFICATION', 'ResultMessage', 'ResultSetNotificationParams',
-    'RESULT_SET_COMPLETE_NOTIFICATION', 'SubsetParams',
+    'RESULT_SET_AVAILABLE_NOTIFICATION', 'RESULT_SET_COMPLETE_NOTIFICATION', 'SubsetParams',
     'SUBSET_REQUEST', 'CANCEL_REQUEST', 'QueryCancelResult', 'QueryCancelParams',
     'QueryDisposeParams', 'QUERY_EXECUTION_PLAN_REQUEST', 'QueryExecutionPlanRequest', 'DISPOSE_REQUEST',
     'SIMPLE_EXECUTE_REQUEST', 'SimpleExecuteRequest', 'SimpleExecuteResponse', 'EXECUTE_DOCUMENT_STATEMENT_REQUEST',

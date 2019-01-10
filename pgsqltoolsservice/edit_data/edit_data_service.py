@@ -21,7 +21,7 @@ from pgsqltoolsservice.query.contracts import DbColumn
 from pgsqltoolsservice.query import ResultSetStorageType
 from pgsqltoolsservice.query_execution.contracts import (
     ExecuteStringParams, QUERY_COMPLETE_NOTIFICATION, QueryCompleteNotificationParams, ResultSetNotificationParams,
-    RESULT_SET_COMPLETE_NOTIFICATION
+    RESULT_SET_AVAILABLE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION
 )
 from pgsqltoolsservice.query_execution.query_execution_service import ExecuteRequestWorkerArgs
 from pgsqltoolsservice.connection import ConnectionService  # noqa
@@ -60,6 +60,7 @@ class EditDataService(object):
         def query_executer(query: str, columns: List[DbColumn], on_query_execution_complete: Callable):
             def on_resultset_complete(result_set_params: ResultSetNotificationParams):
                 result_set_params.result_set_summary.column_info = columns
+                request_context.send_notification(RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params)
                 request_context.send_notification(RESULT_SET_COMPLETE_NOTIFICATION, result_set_params)
 
             def on_query_complete(query_complete_params: QueryCompleteNotificationParams):

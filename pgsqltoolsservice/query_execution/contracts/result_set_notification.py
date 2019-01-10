@@ -19,4 +19,5 @@ class ResultSetNotificationParams:
         self.result_set_summary: ResultSetSummary = rs_summary
 
 
+RESULT_SET_AVAILABLE_NOTIFICATION = 'query/resultSetAvailable'
 RESULT_SET_COMPLETE_NOTIFICATION = 'query/resultSetComplete'

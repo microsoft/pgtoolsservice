@@ -39,7 +39,7 @@ class ResultSet(metaclass=ABCMeta):
 
     @property
     def result_set_summary(self) -> ResultSetSummary:
-        return ResultSetSummary(self.id, self.batch_id, self.row_count, self.columns_info)
+        return ResultSetSummary(self.id, self.batch_id, self.row_count, self._has_been_read, self.columns_info)
 
     @abstractproperty
     def row_count(self) -> int:

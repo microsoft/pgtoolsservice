@@ -11,8 +11,9 @@ from pgsqltoolsservice.query.contracts import DbColumn
 
 class ResultSetSummary:
 
-    def __init__(self, result_set_id: int, batch_id: int, row_count: int, column_info: List[DbColumn]):
+    def __init__(self, result_set_id: int, batch_id: int, row_count: int, complete: bool, column_info: List[DbColumn]):
         self.id = result_set_id
         self.batch_id = batch_id
         self.row_count = row_count
+        self.complete = complete
         self.column_info = column_info
