@@ -228,6 +228,7 @@ DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_MONEY_ARRAY: convert_list,
     datatypes.DATATYPE_VARCHAR_ARRAY: convert_list,
     datatypes.DATATYPE_CHAR_ARRAY: convert_list,
+    datatypes.DATATYPE_BPCHAR_ARRAY: convert_list,
     datatypes.DATATYPE_TEXT_ARRAY: convert_list,
     datatypes.DATATYPE_BYTEA_ARRAY: convert_bytea_list,
     datatypes.DATATYPE_TIMESTAMP_ARRAY: convert_datetime_list,
