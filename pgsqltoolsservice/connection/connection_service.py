@@ -14,12 +14,14 @@ import psycopg2
 import psycopg2.extensions
 
 from pgsqltoolsservice.connection.contracts import (
+    BUILD_CONNECTION_INFO_REQUEST, BuildConnectionInfoParams,
     CANCEL_CONNECT_REQUEST, CancelConnectParams,
     CONNECT_REQUEST, ConnectRequestParams,
     DISCONNECT_REQUEST, DisconnectRequestParams,
     CHANGE_DATABASE_REQUEST, ChangeDatabaseRequestParams,
     CONNECTION_COMPLETE_METHOD, ConnectionCompleteParams,
     ConnectionDetails, ConnectionSummary, ConnectionType, ServerInfo,
+    GET_CONNECTION_STRING_REQUEST, GetConnectionStringParams,
     LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
 )
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
@@ -84,6 +86,8 @@ class ConnectionService:
         self._service_provider.server.set_request_handler(LIST_DATABASES_REQUEST, self.handle_list_databases)
         self._service_provider.server.set_request_handler(CANCEL_CONNECT_REQUEST, self.handle_cancellation_request)
         self._service_provider.server.set_request_handler(CHANGE_DATABASE_REQUEST, self.handle_change_database_request)
+        self._service_provider.server.set_request_handler(BUILD_CONNECTION_INFO_REQUEST, self.handle_build_connection_info_request)
+        self._service_provider.server.set_request_handler(GET_CONNECTION_STRING_REQUEST, self.handle_get_connection_string_request)
 
     # PUBLIC METHODS #######################################################
     def connect(self, params: ConnectRequestParams) -> Optional[ConnectionCompleteParams]:
@@ -244,6 +248,12 @@ class ConnectionService:
 
         connection_request_params: ConnectRequestParams = ConnectRequestParams(connection_details, params.owner_uri, ConnectionType.DEFAULT)
         self.handle_connect_request(request_context, connection_request_params)
+
+    def handle_build_connection_info_request(self, request_context: RequestContext, params: BuildConnectionInfoParams) -> None:
+        pass
+
+    def handle_get_connection_string_request(self, request_context: RequestContext, params: GetConnectionStringParams) -> None:
+        pass
 
     # IMPLEMENTATION DETAILS ###############################################
     def _connect_and_respond(self, request_context: RequestContext, params: ConnectRequestParams) -> None:
