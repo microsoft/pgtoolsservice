@@ -32,7 +32,7 @@ class EditTableMetadata():
     def key_columns(self) -> List[EditColumnMetadata]:
         return self._key_columns
 
-    def _get_key_columns(self)-> List[EditColumnMetadata]:
+    def _get_key_columns(self) -> List[EditColumnMetadata]:
 
         key_columns = [column for column in self.columns_metadata if column.is_key is True]
 
