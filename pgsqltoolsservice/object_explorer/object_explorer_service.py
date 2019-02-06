@@ -223,9 +223,9 @@ class ObjectExplorerService(object):
     def _create_connection(self, session: ObjectExplorerSession, database_name: str) -> Optional[psycopg2.extensions.connection]:
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
 
-        doptions = session.connection_details.options.copy()
-        doptions['dbname'] = database_name
-        conn_details = ConnectionDetails.from_data(doptions)
+        options = session.connection_details.options.copy()
+        options['dbname'] = database_name
+        conn_details = ConnectionDetails.from_data(options)
 
         key_uri = session.id + database_name
         connect_request = ConnectRequestParams(conn_details, key_uri, ConnectionType.OBJECT_EXLPORER)
