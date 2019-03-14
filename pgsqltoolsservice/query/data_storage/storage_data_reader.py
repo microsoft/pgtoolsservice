@@ -27,12 +27,13 @@ class StorageDataReader:
         '''
         row_found = False
 
-        for row in self._cursor:
-            if self._current_row is None:
-                self._columns_info = get_columns_info(self._cursor.description, self._cursor.connection)
+        for row in self._cursor:           
             self._current_row = row
             row_found = True
             break
+
+        if self._current_row is None or len(self._columns_info) == 0:
+            self._columns_info = get_columns_info(self._cursor.description, self._cursor.connection)
 
         return row_found
 
