@@ -27,7 +27,7 @@ class StorageDataReader:
         '''
         row_found = False
 
-        for row in self._cursor:           
+        for row in self._cursor:
             self._current_row = row
             row_found = True
             break
