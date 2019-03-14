@@ -34,7 +34,7 @@ class TestFileStorageResultSet(unittest.TestCase):
         with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.create_file', new=mock.Mock(return_value=self._file)):
             with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.get_writer', new=mock.Mock(return_value=self._writer)):
                 with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.get_reader', new=mock.Mock(return_value=self._reader)):
-                    with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock()):
+                    with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=[])):
                         self._result_set = FileStorageResultSet(self._id, self._batch_id, self._events)
                         test()
 
