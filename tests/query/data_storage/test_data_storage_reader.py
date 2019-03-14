@@ -30,6 +30,7 @@ class TestDataStorageReader(unittest.TestCase):
     def test_read_row(self):
         total_rows = len(self._rows)
         read_row_count = 0
+        self._get_columns_info_mock = mock.Mock(return_value=[''])
 
         while self.execute_read_row_with_patch():
             self.assertEqual(self._reader.get_value(0), self._rows[read_row_count][0])
