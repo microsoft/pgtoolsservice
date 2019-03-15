@@ -26,7 +26,7 @@ This extension is [licensed under the MIT License]. Please see the [third-party 
 [feature suggestion]:https://github.com/Microsoft/pgtoolsservice/issues/new?labels=feature-request
 [developer documentation]:https://github.com/Microsoft/pgtoolsservice/wiki/How-to-Contribute
 [Microsoft Enterprise and Developer Privacy Statement]:https://go.microsoft.com/fwlink/?LinkId=786907&lang=en7
-[licensed under the MIT License]: https://github.com/Microsoft/pgtoolsservice/blob/master/LICENSE.txt
+[licensed under the MIT License]:https://github.com/Microsoft/pgtoolsservice/blob/master/License.txt
 [third-party notices]: https://github.com/Microsoft/pgtoolsservice/blob/master/ThirdPartyNotices.txt
 [Microsoft Open Source Code of Conduct]:https://opensource.microsoft.com/codeofconduct/
 [Code of Conduct FAQ]:https://opensource.microsoft.com/codeofconduct/faq/
