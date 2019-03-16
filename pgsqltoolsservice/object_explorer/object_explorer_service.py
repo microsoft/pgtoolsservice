@@ -68,8 +68,11 @@ class ObjectExplorerService(object):
             # Add the session to session map in a lock to prevent race conditions between check and add
             with self._session_lock:
                 if session_id in self._session_map:
-                    # TODO: Localize
-                    raise NameError(f'Object explorer session for {session_id} already exists!')
+                    # Removed the exception for now. But we need to investigate why we would get this
+                    if self._service_provider.logger is not None:
+                        self._service_provider.logger.error(f'Object explorer session for {session_id} already exists!')
+                    request_context.send_response(False)
+                    return
 
                 self._session_map[session_id] = session
 
@@ -101,9 +104,10 @@ class ObjectExplorerService(object):
             # Try to remove the session
             session = self._session_map.pop(params.session_id, None)
             if session is not None:
+                self._close_database_connections(session)
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connect_result = conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
-                self._close_database_connections(session)
+
                 if not connect_result:
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.info(f'Could not close the OE session with Id {session.id}')

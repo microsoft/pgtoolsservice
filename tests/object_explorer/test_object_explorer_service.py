@@ -159,11 +159,11 @@ class TestObjectExplorer(unittest.TestCase):
         oe._session_map[session_uri] = session
 
         # If: I attempt to create an OE session that already exists
-        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
         oe._handle_create_session_request(rc.request_context, params)
 
         # Then:
-        # ... I should get an error response
+        # ... I should get a response as False
         rc.validate()
 
         # ... The old session should remain
