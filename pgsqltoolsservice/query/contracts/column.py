@@ -12,6 +12,13 @@ CHARS_DATA_TYPES = [datatypes.DATATYPE_TEXT, datatypes.DATATYPE_VARCHAR, datatyp
 SYSTEM_DATA_TYPES = [value for key, value in datatypes.__dict__.items() if key.startswith('DATATYPE')]
 
 
+def get_column_name(column_index: int, colum_name: str):
+    if colum_name == '?column?':
+        return f'Column{column_index + 1}'
+
+    return colum_name
+
+
 class DbColumn:
 
     def __init__(self):
@@ -72,8 +79,9 @@ class DbColumn:
         # Note that 'null_ok' is always 'None' by default because it's not easy to retrieve
         # Need to take a look if we should turn this on if it's important
         instance.allow_db_null: bool = cursor_description[DESC['null_ok']]
-        instance.base_column_name: str = cursor_description[DESC['name']]
-        instance.column_name: str = cursor_description[DESC['name']]
+        column_name = get_column_name(column_ordinal, cursor_description[DESC['name']])
+        instance.base_column_name: str = column_name
+        instance.column_name: str = column_name
 
         # From documentation, it seems like 'internal_size' is for the max size and
         # 'display_size' is for the actual size based off of the largest entry in the column so far.
