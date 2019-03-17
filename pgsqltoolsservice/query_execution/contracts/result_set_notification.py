@@ -20,4 +20,5 @@ class ResultSetNotificationParams:
 
 
 RESULT_SET_AVAILABLE_NOTIFICATION = 'query/resultSetAvailable'
+RESULT_SET_UPDATED_NOTIFICATION = 'query/resultSetUpdated'
 RESULT_SET_COMPLETE_NOTIFICATION = 'query/resultSetComplete'
