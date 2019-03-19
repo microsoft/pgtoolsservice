@@ -119,6 +119,7 @@ DATATYPE_READER_MAP = {
     datatypes.DATATYPE_INTERVAL: convert_bytes_to_timedelta,
     datatypes.DATATYPE_UUID: convert_bytes_to_uuid,
     datatypes.DATATYPE_JSON: convert_bytes_to_dict,
+    datatypes.DATATYPE_JSONB: convert_bytes_to_dict,
     datatypes.DATATYPE_INT4RANGE: convert_bytes_to_numericrange_format_str,
     datatypes.DATATYPE_INT8RANGE: convert_bytes_to_numericrange_format_str,
     datatypes.DATATYPE_NUMRANGE: convert_bytes_to_numericrange_format_str,
