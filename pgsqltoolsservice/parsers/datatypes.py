@@ -72,6 +72,7 @@ DATATYPE_XML = 'xml'
 
 ''' JSON Types '''
 DATATYPE_JSON = 'json'
+DATATYPE_JSONB = 'jsonb'
 
 
 ''' Range Types '''
@@ -136,6 +137,7 @@ DATATYPE_TSQUERY_ARRAY = '_tsquery'
 DATATYPE_UUID_ARRAY = '_uuid'
 DATATYPE_XML_ARRAY = '_xml'
 DATATYPE_JSON_ARRAY = '_json'
+DATATYPE_JSONB_ARRAY = '_jsonb'
 DATATYPE_INT4RANGE_ARRAY = '_int4range'
 DATATYPE_INT8RANGE_ARRAY = '_int8range'
 DATATYPE_NUMRANGE_ARRAY = '_numrange'
