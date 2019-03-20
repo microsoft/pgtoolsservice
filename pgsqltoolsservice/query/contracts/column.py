@@ -7,7 +7,7 @@ import pgsqltoolsservice.parsers.datatypes as datatypes
 
 DESC = {'name': 0, 'type_code': 1, 'display_size': 2, 'internal_size': 3, 'precision': 4, 'scale': 5, 'null_ok': 6}
 
-CHARS_DATA_TYPES = [datatypes.DATATYPE_TEXT, datatypes.DATATYPE_VARCHAR, datatypes.DATATYPE_JSON]
+CHARS_DATA_TYPES = [datatypes.DATATYPE_TEXT, datatypes.DATATYPE_VARCHAR, datatypes.DATATYPE_JSON, datatypes.DATATYPE_JSONB]
 
 SYSTEM_DATA_TYPES = [value for key, value in datatypes.__dict__.items() if key.startswith('DATATYPE')]
 
@@ -66,7 +66,7 @@ class DbColumn:
 
     @property
     def is_json(self) -> bool:
-        return self.data_type == datatypes.DATATYPE_JSON
+        return self.data_type == datatypes.DATATYPE_JSON or self.data_type == datatypes.DATATYPE_JSONB
 
     # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) containing a 7-item sequence.
