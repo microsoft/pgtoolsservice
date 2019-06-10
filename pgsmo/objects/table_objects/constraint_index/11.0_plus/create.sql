@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 ALTER TABLE {{ conn|qtIdent(data.schema, data.table) }}
     ADD{% if data.name %} CONSTRAINT {{ conn|qtIdent(data.name) }}{% endif%} {{constraint_name}} {% if data.index %}USING INDEX {{ conn|qtIdent(data.index) }}{% else %}
 ({% for columnobj in data.columns %}{% if loop.index != 1 %}

@@ -1,3 +1,9 @@
+{#
+ # pgAdmin 4 - PostgreSQL Tools
+ #
+ # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+ # This software is released under the PostgreSQL Licence
+ #}
 SELECT
     funcname AS {{ conn|qtIdent(_('Name')) }},
     calls AS {{ conn|qtIdent(_('Number of calls')) }},
