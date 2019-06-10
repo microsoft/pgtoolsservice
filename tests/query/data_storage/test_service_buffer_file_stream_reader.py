@@ -214,9 +214,9 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._bytea_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        expected = self._bytea_test_value.tobytes().decode(DECODING_METHOD)
+        expected = self._bytea_test_value.tobytes()
         actual = str(res[0].raw_object)
-        self.assertEqual(expected, actual)
+        self.assertEqual(str(expected), actual)
 
     def test_read_dict(self):
         test_file_offset = 0

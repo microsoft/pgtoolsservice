@@ -34,6 +34,16 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     # Step 1.2) Filter out the folders that don't contain the target template
     containing_folders: List[str] = [x for x in all_folders if template_name in next(os.walk(x))[2]]
 
+    def sortlist(item):
+        number = item[item.rfind('\\') + 1: len(item)].partition('_')[0]
+        try:
+            number = float(number)
+        except ValueError:
+            return 0
+        return number
+
+    containing_folders = sorted(containing_folders, key=sortlist)
+
     # Step 1.3) Reverse the order of the list, to allow processing from greatest version to lowest
     containing_folders = containing_folders[::-1]
 

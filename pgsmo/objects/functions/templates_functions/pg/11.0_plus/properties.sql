@@ -9,8 +9,9 @@ SELECT
     pr.proname AS name, pg_get_function_result(pr.oid) AS prorettypename,
     typns.nspname AS typnsp, lanname, proargnames, oidvectortypes(proargtypes) AS proargtypenames,
     pg_get_expr(proargdefaults, 'pg_catalog.pg_class'::regclass) AS proargdefaultvals,
-    pronargdefaults, proconfig, pg_get_userbyid(proowner) AS funcowner, description,
-    false AS proiswindow,
+    pronargdefaults, proconfig, pg_get_userbyid(proowner) AS funcowner, 
+    (CASE WHEN pr.prokind = 'w' THEN 'true' ELSE 'false' END) AS proiswindow,
+    description,
     (SELECT
         array_agg(provider || '=' || label)
     FROM
@@ -28,7 +29,7 @@ JOIN
 LEFT OUTER JOIN
     pg_description des ON (des.objoid=pr.oid AND des.classoid='pg_proc'::regclass)
 WHERE
-    proisagg = FALSE
+    pr.prokind IN ('f', 'w')
 {% if fnid %}
     AND pr.oid = {{fnid}}::oid
 {% else %}
