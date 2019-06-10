@@ -126,7 +126,8 @@ DATATYPE_READER_MAP = {
     datatypes.DATATYPE_TSRANGE: convert_bytes_to_datetimerange_format_str,
     datatypes.DATATYPE_TSTZRANGE: convert_bytes_to_datetimetzrange_format_str,
     datatypes.DATATYPE_DATERANGE: convert_bytes_to_daterange_format_str,
-    datatypes.DATATYPE_OID: convert_bytes_to_int
+    datatypes.DATATYPE_OID: convert_bytes_to_int,
+    datatypes.DATATYPE_BYTEA: convert_bytes_to_memoryview
 }
 
 
