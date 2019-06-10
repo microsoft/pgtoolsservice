@@ -66,7 +66,7 @@ if __name__ == '__main__':
                     port = int(arg_parts[1])
                 except IndexError:
                     pass
-                ptvsd.enable_attach('', address=('0.0.0.0', port))
+                ptvsd.enable_attach(address=('0.0.0.0', port))
                 if arg_parts[0] == '--enable-remote-debugging-wait':
                     wait_for_debugger = True
             elif arg_parts[0] == '--log-dir':

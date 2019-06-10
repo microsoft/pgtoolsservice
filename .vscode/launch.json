@@ -9,7 +9,9 @@
             "pythonPath": "${config:python.pythonPath}",
             "program": "${file}",
             "cwd": "${workspaceRoot}",
-            "env": {"PYTHONPATH": "${workspaceRoot}"},
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}"
+            },
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",
@@ -191,14 +193,17 @@
             ]
         },
         {
-            "name": "Attach (Remote Debug)",
+            "name": "Python: Remote Attach",
             "type": "python",
             "request": "attach",
-            "localRoot": "${workspaceRoot}",
-            "remoteRoot": "${workspaceRoot}",
             "port": 3000,
-            "secret": "",
-            "host": "localhost"
-        }
+            "host": "localhost",
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "${workspaceRoot}"
+                }
+            ]
+        },
     ]
 }
