@@ -10,9 +10,6 @@ import threading
 from typing import Callable, Dict, List, Optional, Tuple  # noqa
 import uuid
 
-import psycopg2
-import psycopg2.extensions
-
 from pgsqltoolsservice.connection.contracts import (
     BUILD_CONNECTION_INFO_REQUEST, BuildConnectionInfoParams,
     CANCEL_CONNECT_REQUEST, CancelConnectParams,
@@ -27,7 +24,7 @@ from pgsqltoolsservice.connection.contracts import (
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.utils.cancellation import CancellationToken
-
+from pgsmo.utils.querying import DriverManager, ServerConnection
 
 class ConnectionInfo(object):
     """Information pertaining to a unique connection instance"""
@@ -36,9 +33,9 @@ class ConnectionInfo(object):
         self.owner_uri: str = owner_uri
         self.details: ConnectionDetails = details
         self.connection_id: str = str(uuid.uuid4())
-        self._connection_map: Dict[ConnectionType, psycopg2.extensions.connection] = {}
+        self._connection_map: Dict[ConnectionType, ServerConnection] = {}
 
-    def get_connection(self, connection_type: ConnectionType) -> Optional[psycopg2.extensions.connection]:
+    def get_connection(self, connection_type: ConnectionType) -> Optional[ServerConnection]:
         """Get the connection associated with the given connection type, or return None"""
         return self._connection_map.get(connection_type)
 
@@ -46,7 +43,7 @@ class ConnectionInfo(object):
         """Get all connections held by this object"""
         return self._connection_map.values()
 
-    def add_connection(self, connection_type: ConnectionType, connection: psycopg2.extensions.connection):
+    def add_connection(self, connection_type: ConnectionType, connection: ServerConnection):
         """Add a connection to the connection map, associated with the given connection type"""
         self._connection_map[connection_type] = connection
 
@@ -131,7 +128,7 @@ class ConnectionService:
         # Connect using psycopg2
         try:
             # Pass connection parameters as keyword arguments to psycopg2.connect by unpacking the connection_options dict
-            connection = psycopg2.connect(**connection_options)
+            connection: ServerConnection = DriverManager("PGSQL").get_connection(**connection_options)
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
@@ -147,7 +144,7 @@ class ConnectionService:
             return None
 
         # Set autocommit mode so that users have control over transactions
-        connection.autocommit = True
+        connection.set_autocommit(True)
 
         # The connection was not canceled, so add the connection and respond
         connection_info.add_connection(params.type, connection)
@@ -167,9 +164,9 @@ class ConnectionService:
         connection_info = self.owner_to_connection_map.get(owner_uri)
         return self._close_connections(connection_info, connection_type) if connection_info is not None else False
 
-    def get_connection(self, owner_uri: str, connection_type: ConnectionType) -> Optional[psycopg2.extensions.connection]:
+    def get_connection(self, owner_uri: str, connection_type: ConnectionType) -> Optional[ServerConnection]:
         """
-        Get a psycopg2 connection for the given owner URI and connection type
+        Get a connection for the given owner URI and connection type
 
         :raises ValueError: If there is no connection associated with the provided URI
         """
@@ -213,16 +210,20 @@ class ConnectionService:
         except ValueError as err:
             request_context.send_error(str(err))
             return
+        
         query_results = None
         try:
-            query_results = _execute_query(connection, 'SELECT datname FROM pg_database WHERE datistemplate = false;')
-        except psycopg2.ProgrammingError as err:
+            query_results = connection.list_databases()
+
+        except Exception as err:
             if self._service_provider is not None and self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Error listing databases')
             request_context.send_error(str(err))
             return
+        
         database_names = [result[0] for result in query_results]
         request_context.send_response(ListDatabasesResponse(database_names))
+        
 
     def handle_cancellation_request(self, request_context: RequestContext, params: CancelConnectParams) -> None:
         """Cancel a connection attempt in response to a cancellation request"""
@@ -305,7 +306,7 @@ class ConnectionService:
 def _build_connection_response(connection_info: ConnectionInfo, connection_type: ConnectionType) -> ConnectionCompleteParams:
     """Build a connection complete response object"""
     connection = connection_info.get_connection(connection_type)
-    dsn_parameters = connection.get_dsn_parameters()
+    dsn_parameters = connection.dsn_parameters
 
     connection_summary = ConnectionSummary(
         server_name=dsn_parameters['host'],
@@ -336,25 +337,10 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
 
 def _get_server_info(connection):
     """Build the server info response for a connection"""
-    server_version = connection.get_parameter_status('server_version')
-    host = connection.get_dsn_parameters()['host']
+    server_version = connection.server_version
+    host = connection.dsn_parameters['host']
     is_cloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
     return ServerInfo(server_version, is_cloud)
-
-
-def _execute_query(connection, query):
-    """
-    Execute a simple query without arguments for the given connection
-
-    :raises psycopg2.ProgrammingError: if there was no result set when executing the query
-    """
-    cursor = connection.cursor()
-    cursor.execute(query)
-    try:
-        query_results = cursor.fetchall()
-    except psycopg2.ProgrammingError:
-        raise
-    return query_results
 
 
 # Dictionary mapping connection option names to their corresponding connection string keys.
