@@ -5,9 +5,9 @@
 
 from typing import Any, Dict, List, Tuple   # noqa
 from logging import Logger  # noqa
-from psycopg2.extensions import connection
 
 from pgsmo import Column, Database, Schema, Server, NodeCollection, Function, Table, View       # noqa
+from pgsmo.utils.querying import ServerConnection
 from pgsqltoolsservice.language.completion.packages.parseutils.meta import ColumnMetadata, ForeignKey, FunctionMetadata     # noqa
 
 
@@ -37,7 +37,7 @@ class LightweightMetadata:
         FROM pg_catalog.pg_database d
         ORDER BY 1'''
 
-    def __init__(self, conn: connection, logger: Logger = None):
+    def __init__(self, conn: ServerConnection, logger: Logger = None):
         self.conn = conn
         self._logger: Logger = logger
 

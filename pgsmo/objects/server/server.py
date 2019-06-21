@@ -10,7 +10,7 @@ from pgsmo.objects.node_object import NodeObject, NodeCollection, NodeLazyProper
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
-from pgsmo.utils.querying import DriverManager, ServerConnection
+from pgsmo.utils.querying import ServerConnection
 import pgsmo.utils as utils
 
 

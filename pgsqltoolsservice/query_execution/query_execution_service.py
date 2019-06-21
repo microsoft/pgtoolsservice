@@ -10,9 +10,7 @@ from typing import Callable, Dict, List, Optional  # noqa
 import sqlparse
 import ntpath
 
-import psycopg2
-import psycopg2.errorcodes
-
+from pgsmo.utils.querying import ServerConnection
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query import (
     Batch, BatchEvents, ExecutionState, QueryExecutionSettings, Query, QueryEvents,
@@ -41,13 +39,11 @@ from pgsqltoolsservice.query.data_storage import (
 )
 
 
-CANCELATION_QUERY = 'SELECT pg_cancel_backend (%s)'
 NO_QUERY_MESSAGE = 'QueryServiceRequestsNoQuery'
-
 
 class ExecuteRequestWorkerArgs():
 
-    def __init__(self, owner_uri: str, connection: 'psycopg2.extensions.connection', request_context: RequestContext, result_set_storage_type,
+    def __init__(self, owner_uri: str, connection: ServerConnection, request_context: RequestContext, result_set_storage_type,
                  before_query_initialize: Callable = None, on_batch_start: Callable = None, on_message_notification: Callable = None,
                  on_resultset_complete: Callable = None, on_batch_complete: Callable = None, on_query_complete: Callable = None):
 
@@ -298,10 +294,9 @@ class QueryExecutionService(object):
         cancel_conn = self._get_connection(owner_uri, ConnectionType.QUERY_CANCEL)
         if conn is None or cancel_conn is None:
             raise LookupError('Could not find associated connection')  # TODO: Localize
-        backend_pid = conn.get_backend_pid()
-        cur = cancel_conn.cursor()
+
         try:
-            cur.execute(CANCELATION_QUERY, (backend_pid,))
+            cancel_conn.execute_query(conn.cancellation_query)
         # This exception occurs when we run SELECT pg_cancel_backend on
         # a query that's currently executing
         except BaseException:
@@ -326,13 +321,13 @@ class QueryExecutionService(object):
             query_complete_params = QueryCompleteNotificationParams(worker_args.owner_uri, batch_summaries)
             _check_and_fire(worker_args.on_query_complete, query_complete_params)
 
-    def _get_connection(self, owner_uri: str, connection_type: ConnectionType) -> 'psycopg2.connection':
+    def _get_connection(self, owner_uri: str, connection_type: ConnectionType) -> ServerConnection:
         """
         Get a connection for the given owner URI and connection type from the connection service
 
         :param owner_uri: the URI to get the connection for
         :param connection_type: the type of connection to get
-        :returns: a psycopg2 connection
+        :returns: a ServerConnection object
         :raises LookupError: if there is no connection service
         :raises ValueError: if there is no connection corresponding to the given owner_uri
         """
@@ -376,9 +371,9 @@ class QueryExecutionService(object):
             # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
             return params.query
 
-    def _resolve_query_exception(self, e: Exception, query: Query, request_context: RequestContext, conn: 'psycopg2.connection', is_rollback_error=False):
+    def _resolve_query_exception(self, e: Exception, query: Query, request_context: RequestContext, conn: ServerConnection, is_rollback_error=False):
         utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query.query_text}\n {e}')
-        if isinstance(e, psycopg2.DatabaseError) or isinstance(e, RuntimeError) or isinstance(e, psycopg2.extensions.QueryCanceledError):
+        if isinstance(e, conn.database_error) or isinstance(e, RuntimeError):
             error_message = str(e)
         else:
             error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
@@ -395,7 +390,7 @@ class QueryExecutionService(object):
 
         # If there was a failure in the middle of a transaction, roll it back.
         # Note that conn.rollback() won't work since the connection is in autocommit mode
-        if not is_rollback_error and conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR:
+        if not is_rollback_error:
             rollback_query = Query(query.owner_uri, 'ROLLBACK', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
             try:
                 rollback_query.execute(conn)

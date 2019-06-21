@@ -7,10 +7,11 @@ from enum import Enum
 from typing import Callable, Dict, List, Optional  # noqa
 
 import sqlparse
-
+from pgsmo.utils.querying import ServerConnection
 from pgsqltoolsservice.query import Batch, BatchEvents, create_batch, ResultSetStorageType
 from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
 from pgsqltoolsservice.query.data_storage import FileStreamFactory
+
 
 
 class QueryEvents:
@@ -108,15 +109,14 @@ class Query:
     def current_batch_index(self) -> int:
         return self._current_batch_index
 
-    def execute(self, connection: 'psycopg2.extensions.connection'):
+    def execute(self, connection: ServerConnection):
         """
         Execute the query using the given connection
 
-        :param connection: The psycopg2 connection to use when executing the query
+        :param connection: The connection object to use when executing the query
         :param batch_start_callback: A function to run before executing each batch
         :param batch_end_callback: A function to run after executing each batch
         :raises RuntimeError: If the query was already executed
-        :raises QueryExecutionError: If there was an error while running the query
         """
         if self._execution_state is ExecutionState.EXECUTED:
             raise RuntimeError('Cannot execute a query multiple times')
@@ -125,10 +125,10 @@ class Query:
 
         # Run each batch sequentially
         try:
-            current_auto_commit_status = connection.autocommit
+            current_auto_commit_status = connection.autocommit_status
             # When Analyze Explain is used we have to disable auto commit
             if self._disable_auto_commit:
-                connection.autocommit = False
+                connection.set_autocommit(False)
 
             for batch_index, batch in enumerate(self._batches):
                 self._current_batch_index = batch_index
@@ -138,7 +138,7 @@ class Query:
 
                 batch.execute(connection)
         finally:
-            connection.autocommit = current_auto_commit_status
+            connection.set_autocommit(current_auto_commit_status)
             self._execution_state = ExecutionState.EXECUTED
 
     def get_subset(self, batch_index: int, start_index: int, end_index: int):

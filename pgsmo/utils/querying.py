@@ -7,10 +7,11 @@ from typing import List, Mapping, Tuple
 from abc import ABC, abstractmethod
 
 import psycopg2
-from psycopg2.extensions import Column, connection, cursor      # noqa
+from psycopg2.extensions import Column, connection, cursor, TRANSACTION_STATUS_INERROR      # noqa
 
 PG_SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
 PG_SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
+PG_CANCELLATION_QUERY = 'SELECT pg_cancel_backend ({})'
 
 class ServerConnection(ABC):
     """Abstract base class that outlines methods and properties that connections must implement"""
@@ -20,6 +21,12 @@ class ServerConnection(ABC):
     @abstractmethod
     def connection(self) -> connection:
         """The underlying connection object that this object wraps"""
+        pass
+    
+    @property
+    @abstractmethod
+    def autocommit_status(self) -> bool:
+        """Returns the current autocommit status for this connection"""
         pass
 
     @property
@@ -42,6 +49,16 @@ class ServerConnection(ABC):
     @property
     @abstractmethod
     def search_path_query_fallback(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def transaction_in_error(self) -> bool:
+        pass
+
+    @property
+    @abstractmethod
+    def cancellation_query(self) -> str:
         pass
     
     ############################# METHODS ##################################
@@ -98,6 +115,7 @@ class PsycopgConnection(ServerConnection):
         """
         self._conn = psycopg2.connect(connection_options)
         self._dsn_parameters = self._conn.get_dsn_parameters()
+        self.database_error = psycopg2.DatabaseError
 
         # Calculate the server version
         version_string = str(self._conn.server_version)
@@ -113,6 +131,11 @@ class PsycopgConnection(ServerConnection):
     def connection(self) -> connection:
         """The psycopg2 connection that this object wraps"""
         return self._conn
+
+    @property
+    def autocommit_status(self) -> bool:
+        """Returns the current autocommit status for this connection"""
+        return self._conn.autocommit
 
     @property
     def dsn_parameters(self) -> Mapping[str, str]:
@@ -131,6 +154,15 @@ class PsycopgConnection(ServerConnection):
     @property
     def search_path_query_fallback(self) -> str:
         return PG_SEARCH_PATH_QUERY_FALLBACK
+    
+    @property
+    def transaction_in_error(self) -> bool:
+        return self._conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR
+    
+    @property
+    def cancellation_query(self) -> str:
+        backend_pid = self._conn.get_backend_pid()
+        return PG_CANCELLATION_QUERY.format(backend_pid)
 
     ############################# METHODS ##################################
     def set_autocommit(self, mode: bool):
@@ -205,6 +237,11 @@ class PyMySQLConnection(ServerConnection):
     def connection(self) -> connection:
         """The underlying connection object that this object wraps"""
         pass
+    
+    @property
+    def autocommit_status(self) -> bool:
+        """Returns the current autocommit status for this connection"""
+        pass
 
     @property
     def dsn_parameters(self) -> Mapping[str, str]:
@@ -222,6 +259,14 @@ class PyMySQLConnection(ServerConnection):
 
     @property
     def search_path_query_fallback(self) -> str:
+        pass
+    
+    @property
+    def transaction_in_error(self) -> int:
+        pass
+
+    @property
+    def cancellation_query(self) -> str:
         pass
 
     ############################# METHODS ##################################
