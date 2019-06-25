@@ -8,11 +8,9 @@ from typing import Callable, Dict, List, Optional   # noqa
 import threading
 from queue import Queue
 
-from pgsmo.utils.querying import DriverManager, ServerConnection
-from pgsqltoolsservice.hosting import ServiceProvider
-
-from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
+from pgsqltoolsservice.connection import *
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionType
+from pgsqltoolsservice.hosting import ServiceProvider
 from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
 import pgsqltoolsservice.utils as utils

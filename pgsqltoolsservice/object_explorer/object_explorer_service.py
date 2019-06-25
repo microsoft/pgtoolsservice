@@ -10,7 +10,7 @@ from urllib.parse import quote
 
 
 from pgsmo import Server
-from pgsmo.utils.querying import ServerConnection
+from pgsqltoolsservice.connection import ServerConnection
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.object_explorer.contracts import (

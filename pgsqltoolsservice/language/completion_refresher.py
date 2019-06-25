@@ -11,7 +11,7 @@ import os
 from collections import OrderedDict
 
 from pgsmo import Server
-from pgsmo.utils.querying import ServerConnection
+from pgsqltoolsservice.connection import ServerConnection
 from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.metadata_executor import MetadataExecutor
 

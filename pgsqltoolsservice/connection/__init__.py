@@ -4,5 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.connection.connection_service import ConnectionInfo, ConnectionService
+from pgsqltoolsservice.connection.driver import DriverManager, ServerConnection
 
-__all__ = ['ConnectionInfo', 'ConnectionService']
+__all__ = ['ConnectionInfo', 'ConnectionService', 'DriverManager', 'ServerConnection']

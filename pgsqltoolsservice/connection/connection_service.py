@@ -21,10 +21,11 @@ from pgsqltoolsservice.connection.contracts import (
     GET_CONNECTION_STRING_REQUEST, GetConnectionStringParams,
     LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
 )
+
+from pgsqltoolsservice.connection import DriverManager, ServerConnection
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.utils.cancellation import CancellationToken
-from pgsmo.utils.querying import DriverManager, ServerConnection
 
 class ConnectionInfo(object):
     """Information pertaining to a unique connection instance"""

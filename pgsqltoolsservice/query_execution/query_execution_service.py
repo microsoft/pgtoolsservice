@@ -10,7 +10,7 @@ from typing import Callable, Dict, List, Optional  # noqa
 import sqlparse
 import ntpath
 
-from pgsmo.utils.querying import ServerConnection
+
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.query import (
     Batch, BatchEvents, ExecutionState, QueryExecutionSettings, Query, QueryEvents,
@@ -31,6 +31,8 @@ from pgsqltoolsservice.query_execution.contracts import (
     SaveResultsAsJsonRequestParams, SaveResultRequestResult,
     SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
 )
+
+from pgsqltoolsservice.connection import ServerConnection
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams
 from pgsqltoolsservice.connection.contracts import ConnectionType
 import pgsqltoolsservice.utils as utils
