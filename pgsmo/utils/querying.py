@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 import psycopg2
 from psycopg2.extensions import Column, connection, cursor, TRANSACTION_STATUS_INERROR      # noqa
 
+import pymysql
+
 PG_SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
 PG_SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
 PG_CANCELLATION_QUERY = 'SELECT pg_cancel_backend ({})'
@@ -113,7 +115,7 @@ class PsycopgConnection(ServerConnection):
         Creates a new connection wrapper. Parses version string
         :param connection_options: PsycoPG2 connection options dict
         """
-        self._conn = psycopg2.connect(connection_options)
+        self._conn = psycopg2.connect(**connection_options)
         self._dsn_parameters = self._conn.get_dsn_parameters()
         self.database_error = psycopg2.DatabaseError
 
@@ -124,7 +126,6 @@ class PsycopgConnection(ServerConnection):
             int(version_string[-4:-2]),
             int(version_string[-2:])
         )
-        return None
 
     ###################### PROPERTIES ##################################
     @property
@@ -229,8 +230,14 @@ class PsycopgConnection(ServerConnection):
 class PyMySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
     
-    def __init__(self, parameter_list):
-        pass
+    def __init__(self, connection_options):
+        """
+        Creates a new connection wrapper. Parses version string
+        :param connection_options: PsycoPG2 connection options dict
+        """
+        self._conn = pymysql.connect(**connection_options)
+        assert self._conn is type(pymysql.connections.Connection)
+        print("Connection to MySQL server established!")
 
     ###################### PROPERTIES ##################################
     @property
@@ -313,7 +320,7 @@ class DriverManager:
     def get_connection(self, **params) -> ServerConnection:
         if self._provider == "PGSQL":
             return PsycopgConnection(params)
-        elif self._provider == "MYSQL" or self._provider == "MARIADB":
+        elif self._provider == "MySQL" or self._provider == "MariaDB":
             return PyMySQLConnection(params)
         else:
             raise AssertionError(self._provider + " is not a supported database engine.")

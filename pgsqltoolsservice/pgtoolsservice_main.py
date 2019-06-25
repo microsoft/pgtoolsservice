@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     std_out_wrapped = io.open(sys.stdout.fileno(), 'wb', buffering=0, closefd=False)
 
-    logger.info('PostgreSQL Tools Service is starting up...')
+    logger.info('MySQL Tools Service is starting up...')
 
     # Create the server, but don't start it yet
     server = _create_server(stdin, std_out_wrapped, logger)

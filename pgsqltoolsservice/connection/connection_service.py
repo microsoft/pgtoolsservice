@@ -117,18 +117,24 @@ class ConnectionService:
                 self._cancellation_map[cancellation_key].cancel()
             self._cancellation_map[cancellation_key] = cancellation_token
 
-        # Map the connection options to their psycopg2-specific options
+
+        
+        # Map the connection options to their provider-specific options
         connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()
                               if option in PG_CONNECTION_PARAM_KEYWORDS}
 
+        # Get the type of provider (MySQL vs PostgreSQL)
+        provider_name = connection_info.owner_uri.split("providerName:")[1][0:5]
+
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['dbname'] = self._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
+            connection_options['database'] = self._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration.get_configuration(provider_name).default_database
 
-        # Connect using psycopg2
+        del connection_options["dbname"]
+        # Connect to engine
         try:
-            # Pass connection parameters as keyword arguments to psycopg2.connect by unpacking the connection_options dict
-            connection: ServerConnection = DriverManager("PGSQL").get_connection(**connection_options)
+            # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
+            connection: ServerConnection = DriverManager(provider_name).get_connection(**connection_options)
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
