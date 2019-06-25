@@ -10,6 +10,7 @@ import threading
 from typing import Callable, Dict, List, Optional, Tuple  # noqa
 import uuid
 
+
 from pgsqltoolsservice.connection.contracts import (
     BUILD_CONNECTION_INFO_REQUEST, BuildConnectionInfoParams,
     CANCEL_CONNECT_REQUEST, CancelConnectParams,
@@ -22,9 +23,8 @@ from pgsqltoolsservice.connection.contracts import (
     LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
 )
 
-from pgsqltoolsservice.connection import DriverManager, ServerConnection
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
-from pgsqltoolsservice.utils import constants
+from pgsqltoolsservice.utils import DriverManager, ServerConnection, constants
 from pgsqltoolsservice.utils.cancellation import CancellationToken
 
 class ConnectionInfo(object):

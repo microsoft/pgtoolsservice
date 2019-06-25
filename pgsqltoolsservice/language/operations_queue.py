@@ -8,15 +8,15 @@ from typing import Callable, Dict, List, Optional   # noqa
 import threading
 from queue import Queue
 
-from pgsqltoolsservice.connection import *
+from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionType
 from pgsqltoolsservice.hosting import ServiceProvider
 from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
+from pgsqltoolsservice.utils import ServerConnection
 import pgsqltoolsservice.utils as utils
 
 INTELLISENSE_URI = 'intellisense://'
-
 
 class ConnectionContext:
     """Context information needed to look up connections"""

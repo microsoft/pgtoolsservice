@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Callable, Dict, List, Optional  # noqa
 
 import sqlparse
-from pgsqltoolsservice.connection import ServerConnection
+from pgsqltoolsservice.utils.driver import ServerConnection
 from pgsqltoolsservice.query import Batch, BatchEvents, create_batch, ResultSetStorageType
 from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
 from pgsqltoolsservice.query.data_storage import FileStreamFactory

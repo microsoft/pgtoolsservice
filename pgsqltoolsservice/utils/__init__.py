@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Utility functions for the PostgreSQL Tools Service"""
+"""Utility functions for the Tools Service"""
 
 import pgsqltoolsservice.utils.cancellation
 import pgsqltoolsservice.utils.constants
@@ -13,6 +13,7 @@ import pgsqltoolsservice.utils.thread
 import pgsqltoolsservice.utils.time
 import pgsqltoolsservice.utils.object_finder
 import pgsqltoolsservice.utils.validate         # noqa
+from pgsqltoolsservice.utils.driver import *
 
 __all__ = [
     'cancellation',
@@ -22,6 +23,7 @@ __all__ = [
     'thread',
     'time',
     'validate',
-    'object_finder'
-
+    'object_finder',
+    'DriverManager',
+    'ServerConnection'
 ]
