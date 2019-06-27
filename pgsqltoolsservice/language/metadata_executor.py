@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Tuple   # noqa
 from logging import Logger  # noqa
 
 from pgsmo import Column, Database, Schema, Server, NodeCollection, Function, Table, View       # noqa
-from pgsqltoolsservice.utils.driver import ServerConnection
+from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.language.completion.packages.parseutils.meta import ColumnMetadata, ForeignKey, FunctionMetadata     # noqa
 
 

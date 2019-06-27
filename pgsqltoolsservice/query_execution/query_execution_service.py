@@ -32,7 +32,7 @@ from pgsqltoolsservice.query_execution.contracts import (
     SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
 )
 
-from pgsqltoolsservice.utils.driver import ServerConnection
+from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams
 from pgsqltoolsservice.connection.contracts import ConnectionType
 import pgsqltoolsservice.utils as utils

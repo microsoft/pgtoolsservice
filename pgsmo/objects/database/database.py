@@ -20,7 +20,7 @@ from pgsmo.objects.view.view import View
 from pgsmo.objects.view.materialized_view import MaterializedView
 from pgsmo.objects.extension.extension import Extension
 
-from pgsqltoolsservice.utils.driver import ServerConnection    # noqa
+from pgsqltoolsservice.driver import ServerConnection    # noqa
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 

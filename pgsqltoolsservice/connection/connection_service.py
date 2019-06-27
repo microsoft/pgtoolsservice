@@ -24,8 +24,9 @@ from pgsqltoolsservice.connection.contracts import (
 )
 
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
-from pgsqltoolsservice.utils import DriverManager, ServerConnection, constants
+from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.utils.cancellation import CancellationToken
+from pgsqltoolsservice.driver import *
 
 class ConnectionInfo(object):
     """Information pertaining to a unique connection instance"""
@@ -117,25 +118,10 @@ class ConnectionService:
             if cancellation_key in self._cancellation_map:
                 self._cancellation_map[cancellation_key].cancel()
             self._cancellation_map[cancellation_key] = cancellation_token
-
-
         
-        # Map the connection options to their provider-specific options
-        connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()
-                              if option in PG_CONNECTION_PARAM_KEYWORDS}
-
-        # Get the type of provider (MySQL vs PostgreSQL)
-        provider_name = connection_info.owner_uri.split("providerName:")[1][0:5]
-
-        # Use the default database if one was not provided
-        if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['database'] = self._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration.get_configuration(provider_name).default_database
-
-        del connection_options["dbname"]
-        # Connect to engine
         try:
-            # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
-            connection: ServerConnection = DriverManager(provider_name).get_connection(**connection_options)
+            # Get connection to DB server using the provided connection params
+            connection: ServerConnection = DriverManager(params).get_connection()
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
@@ -349,21 +335,3 @@ def _get_server_info(connection):
     is_cloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
     return ServerInfo(server_version, is_cloud)
 
-
-# Dictionary mapping connection option names to their corresponding connection string keys.
-# If a name is not present in this map, the name should be used as the key.
-CONNECTION_OPTION_KEY_MAP = {
-    'connectTimeout': 'connect_timeout',
-    'clientEncoding': 'client_encoding',
-    'applicationName': 'application_name'
-}
-
-# Recognized parameter keywords for postgres database connection
-# Source: https://www.postgresql.org/docs/9.6/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
-PG_CONNECTION_PARAM_KEYWORDS = [
-    'host', 'hostaddr', 'port', 'dbname', 'user', 'password', 'passfile', 'connect_timeout',
-    'client_encoding', 'options', 'application_name', 'fallback_application_name', 'keepalives',
-    'keepalives_idle', 'keepalives_interval', 'keepalives_count', 'tty', 'sslmode', 'requiressl',
-    'sslcompression', 'sslcert', 'sslkey', 'sslrootcert', 'sslcrl', 'requirepeer', 'krbsrvname',
-    'gsslib', 'service', 'target_session_attrs'
-]

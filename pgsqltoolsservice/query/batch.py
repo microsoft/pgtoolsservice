@@ -11,7 +11,7 @@ import psycopg2
 import uuid
 import sqlparse
 
-from pgsqltoolsservice.utils.driver import ServerConnection
+from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query.contracts import BatchSummary, SaveResultsRequestParams, SelectionData
 from pgsqltoolsservice.query.result_set import ResultSet  # noqa

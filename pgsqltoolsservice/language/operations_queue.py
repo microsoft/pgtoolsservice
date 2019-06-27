@@ -13,7 +13,7 @@ from pgsqltoolsservice.connection.contracts import ConnectRequestParams, Connect
 from pgsqltoolsservice.hosting import ServiceProvider
 from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
-from pgsqltoolsservice.utils import ServerConnection
+from pgsqltoolsservice.driver import ServerConnection
 import pgsqltoolsservice.utils as utils
 
 INTELLISENSE_URI = 'intellisense://'

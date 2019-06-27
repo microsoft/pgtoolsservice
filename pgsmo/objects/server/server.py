@@ -6,7 +6,7 @@
 from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
-from pgsqltoolsservice.utils.driver import ServerConnection
+from pgsqltoolsservice.driver import ServerConnection
 from pgsmo.objects.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role

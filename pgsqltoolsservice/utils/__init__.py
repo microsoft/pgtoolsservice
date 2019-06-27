@@ -13,7 +13,6 @@ import pgsqltoolsservice.utils.thread
 import pgsqltoolsservice.utils.time
 import pgsqltoolsservice.utils.object_finder
 import pgsqltoolsservice.utils.validate         # noqa
-from pgsqltoolsservice.utils.driver import *
 
 __all__ = [
     'cancellation',
@@ -23,7 +22,5 @@ __all__ = [
     'thread',
     'time',
     'validate',
-    'object_finder',
-    'DriverManager',
-    'ServerConnection'
+    'object_finder'
 ]
