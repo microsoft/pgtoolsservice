@@ -137,7 +137,7 @@ class ConnectionService:
             return None
 
         # Set autocommit mode so that users have control over transactions
-        connection.set_autocommit(True)
+        connection.autocommit = True
 
         # The connection was not canceled, so add the connection and respond
         connection_info.add_connection(params.type, connection)

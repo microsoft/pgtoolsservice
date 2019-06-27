@@ -7,33 +7,46 @@ from typing import List, Mapping, Tuple
 from pgsqltoolsservice.driver.types import ServerConnection
 import pymysql
 
+MYSQL_CONNECTION_PARAM_KEYWORDS = []
+MYSQL_CONNECTION_OPTION_KEY_MAP = {}
+
 class PyMySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
-    
-    def __init__(self, connection_options):
+
+    def __init__(self, conn_params):
         """
         Creates a new connection wrapper. Parses version string
         :param connection_options: PsycoPG2 connection options dict
         """
-        self._conn = pymysql.connect(**connection_options)
+        # Map the connection options to their pymysql-specific options
+        self._connection_options = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params 
+        if option in MYSQL_CONNECTION_PARAM_KEYWORDS}
+
+        # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
+        self._conn = pymysql.connect(**self._connection_options)
+        
+        # Check that we connected successfully
         assert self._conn is type(pymysql.connections.Connection)
         print("Connection to MySQL server established!")
+
+        # Get the DSN parameters for the connection as a dict
+        self._dsn_parameters = self._connection_options
 
     ###################### PROPERTIES ##################################
     @property
     def connection(self):
         """The underlying connection object that this object wraps"""
-        pass
-    
+        return self._conn
+
     @property
-    def autocommit_status(self) -> bool:
+    def autocommit(self) -> bool:
         """Returns the current autocommit status for this connection"""
-        pass
+        return self._conn.autocommit
 
     @property
     def dsn_parameters(self) -> Mapping[str, str]:
         """DSN properties of the underlying connection"""
-        pass
+        return self._dsn_parameters
 
     @property
     def server_version(self) -> Tuple[int, int, int]:
@@ -62,15 +75,25 @@ class PyMySQLConnection(ServerConnection):
         pass
 
     ############################# METHODS ##################################
-    def set_autocommit(self, mode: bool):
-        pass
+    @autocommit.setter
+    def autocommit(self, value: bool):
+        """Returns the current autocommit status for this connection"""
+        self._conn.autocommit = value
     
     def execute_query(self, query: str, all=True):
         """
         Execute a simple query without arguments for the given connection
         :raises an error: if there was no result set when executing the query
         """
-        pass
+        cursor = self._conn.cursor()
+        cursor.execute(query)
+        if all:
+            query_results = cursor.fetchall()
+        else:
+            query_results = cursor.fetchone()
+
+        cursor.close()
+        return query_results
     
     def execute_dict(self, query: str, params=None):
         """
@@ -93,4 +116,4 @@ class PyMySQLConnection(ServerConnection):
         """
         Closes this current connection.
         """
-        pass
+        self._conn.close()

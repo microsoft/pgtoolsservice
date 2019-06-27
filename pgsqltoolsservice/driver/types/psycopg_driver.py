@@ -12,45 +12,48 @@ PG_SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
 PG_SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
 PG_CANCELLATION_QUERY = 'SELECT pg_cancel_backend ({})'
 
-class PsycopgConnection(ServerConnection):
-    """Wrapper for a psycopg2 connection that makes various properties easier to access"""
-
-    # Dictionary mapping connection option names to their corresponding PostgreSQL connection string keys.
-    # If a name is not present in this map, the name should be used as the key.
-    CONNECTION_OPTION_KEY_MAP = {
+# Dictionary mapping connection option names to their corresponding PostgreSQL connection string keys.
+# If a name is not present in this map, the name should be used as the key.
+PG_CONNECTION_OPTION_KEY_MAP = {
     'connectTimeout': 'connect_timeout',
     'clientEncoding': 'client_encoding',
     'applicationName': 'application_name'
-    }
+}
 
-    # Recognized parameter keywords for postgres database connection
-    # Source: https://www.postgresql.org/docs/9.6/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
-    PG_CONNECTION_PARAM_KEYWORDS = [
+# Recognized parameter keywords for postgres database connection
+# Source: https://www.postgresql.org/docs/9.6/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
+PG_CONNECTION_PARAM_KEYWORDS = [
     'host', 'hostaddr', 'port', 'dbname', 'user', 'password', 'passfile', 'connect_timeout',
     'client_encoding', 'options', 'application_name', 'fallback_application_name', 'keepalives',
     'keepalives_idle', 'keepalives_interval', 'keepalives_count', 'tty', 'sslmode', 'requiressl',
     'sslcompression', 'sslcert', 'sslkey', 'sslrootcert', 'sslcrl', 'requirepeer', 'krbsrvname',
     'gsslib', 'service', 'target_session_attrs'
-    ]
+]
 
-    MYSQL_CONNECTION_PARAM_KEYWORDS = [
 
-    ]
+class PsycopgConnection(ServerConnection):
+    """Wrapper for a psycopg2 connection that makes various properties easier to access"""
 
-    def __init__(self, connection_options):
+    def __init__(self, conn_params):
         """
         Creates a new connection wrapper. Parses version string
-        :param connection_options: connection parameters
+        :param conn_params: connection parameters
         """
+        # Map the connection options to their psycopg2-specific options
+        connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params 
+        if option in PG_CONNECTION_PARAM_KEYWORDS}
+
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg2.connect(**connection_options)
-        self._dsn_parameters = self._conn.get_dsn_parameters()
-        self.database_error = psycopg2.DatabaseError
-        self._default_database = "postgres"
 
-        # Map the connection options to their provider-specific options
-        #connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()
-        #                      if option in PG_CONNECTION_PARAM_KEYWORDS}
+        # Check that we connected successfully
+        assert self._conn is type(connection)
+
+        # Get the DSN parameters for the connection as a dict
+        self._dsn_parameters = self._conn.get_dsn_parameters()
+
+        # Find the class of the database error this driver throws
+        self.database_error = psycopg2.DatabaseError
 
         # Calculate the server version
         version_string = str(self._conn.server_version)
@@ -67,7 +70,7 @@ class PsycopgConnection(ServerConnection):
         return self._conn
 
     @property
-    def autocommit_status(self) -> bool:
+    def autocommit(self) -> bool:
         """Returns the current autocommit status for this connection"""
         return self._conn.autocommit
 
@@ -104,13 +107,10 @@ class PsycopgConnection(ServerConnection):
         return PG_CANCELLATION_QUERY.format(backend_pid)
 
     ############################# METHODS ##################################
-    def set_autocommit(self, mode: bool):
-        """
-        Sets the connection's autocommit setting to the specified mode
-        :param mode: True or False
-        """
-        assert mode in [True, False]
-        self._conn.autocommit = mode
+    @autocommit.setter
+    def autocommit(self, value: bool):
+        """Returns the current autocommit status for this connection"""
+        self._conn.autocommit = value
     
     def execute_query(self, query, all=True):
         """
@@ -151,7 +151,7 @@ class PsycopgConnection(ServerConnection):
             return cols, rows
         finally:
             cur.close()
-    
+
     def list_databases(self):
         """
         List the databases accessible by the current PostgreSQL connection.

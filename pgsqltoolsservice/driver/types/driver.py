@@ -19,7 +19,7 @@ class ServerConnection(ABC):
     
     @property
     @abstractmethod
-    def autocommit_status(self) -> bool:
+    def autocommit(self) -> bool:
         """Returns the current autocommit status for this connection"""
         pass
 
@@ -56,8 +56,9 @@ class ServerConnection(ABC):
         pass
     
     ############################# METHODS ##################################
+    @autocommit.setter
     @abstractmethod
-    def set_autocommit(self, mode: bool):
+    def autocommit(self, mode: bool):
         """
         Sets the connection's autocommit setting to the specified mode
         :param mode: True or False
