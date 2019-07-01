@@ -69,6 +69,7 @@ class PyMySQLConnection(ServerConnection):
     def dsn_parameters(self) -> Mapping[str, str]:
         """DSN properties of the underlying connection"""
         return self._dsn_parameters
+        
     @property
     def database_name(self):
         """Return the name of the current connection's database"""

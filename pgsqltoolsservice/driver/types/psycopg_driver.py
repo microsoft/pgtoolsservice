@@ -40,14 +40,19 @@ class PsycopgConnection(ServerConnection):
         :param conn_params: connection parameters dict
         """
         # Map the connection options to their psycopg2-specific options
-        connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params 
+        connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
         if option in PG_CONNECTION_PARAM_KEYWORDS}
+        
+        # Use the default database if one was not provided
+        if 'dbname' not in connection_options or not connection_options['dbname']:
+            connection_options['dbname'] = "postgres"
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg2.connect(**connection_options)
 
         # Check that we connected successfully
-        assert self._conn is type(connection)
+        assert type(self._conn) is connection
+        print("Connection to PostgreSQL server established!")
 
         # Set autocommit mode so that users have control over transactions
         self._conn.autocommit = True
@@ -81,6 +86,11 @@ class PsycopgConnection(ServerConnection):
     def dsn_parameters(self) -> Mapping[str, str]:
         """DSN properties of the underlying connection"""
         return self._dsn_parameters
+    
+    @property
+    def database_name(self):
+        """Return the name of the current connection's database"""
+        return self._dsn_parameters['dbname']
 
     @property
     def server_version(self) -> Tuple[int, int, int]:
