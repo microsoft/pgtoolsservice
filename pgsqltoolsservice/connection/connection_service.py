@@ -27,6 +27,7 @@ from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.utils.cancellation import CancellationToken
 from pgsqltoolsservice.driver import *
+from pgsqltoolsservice.parsers.owner_uri_parser import get_attribute_value
 
 class ConnectionInfo(object):
     """Information pertaining to a unique connection instance"""
@@ -119,9 +120,11 @@ class ConnectionService:
                 self._cancellation_map[cancellation_key].cancel()
             self._cancellation_map[cancellation_key] = cancellation_token
         
+        # Get the type of server
+        provider_name = self._get_provider_name(params.owner_uri)
         try:
             # Get connection to DB server using the provided connection params
-            connection: ServerConnection = DriverManager(params).get_connection()
+            connection: ServerConnection = DriverManager(provider_name, params).get_connection()
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
@@ -135,9 +138,6 @@ class ConnectionService:
         if cancellation_token.canceled:
             connection.close()
             return None
-
-        # Set autocommit mode so that users have control over transactions
-        connection.autocommit = True
 
         # The connection was not canceled, so add the connection and respond
         connection_info.add_connection(params.type, connection)
@@ -294,6 +294,15 @@ class ConnectionService:
                 # Ignore errors when disconnecting
                 pass
         return True
+    
+    def _get_provider_name(self, owner_uri):
+        # Get info about this connection's provider
+        if not self._service_provider.provider_name:
+            provider_name = get_attribute_value(owner_uri, "providerName")
+            self._service_provider.provider_name = provider_name
+            return provider_name
+        else:
+            return self._service_provider.provider_name
 
 
 def _build_connection_response(connection_info: ConnectionInfo, connection_type: ConnectionType) -> ConnectionCompleteParams:
@@ -303,7 +312,7 @@ def _build_connection_response(connection_info: ConnectionInfo, connection_type:
 
     connection_summary = ConnectionSummary(
         server_name=dsn_parameters['host'],
-        database_name=dsn_parameters['dbname'],
+        database_name=connection.database_name,
         user_name=dsn_parameters['user'])
 
     response: ConnectionCompleteParams = ConnectionCompleteParams()

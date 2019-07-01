@@ -10,10 +10,10 @@ from pgsqltoolsservice.driver.types import *
 class DriverManager:
     """Wrapper class that handles different types of drivers and connections """
 
-    def __init__(self, params):
+    def __init__(self, provider, params):
 
         # Get info about this connection's provider
-        self._provider = get_attribute_value(params.owner_uri, "providerName")
+        self._provider = provider
 
         # Create a connection using the provider and connection options
         self._conn_object = self._create_connection(params.connection.options)

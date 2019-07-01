@@ -37,7 +37,7 @@ class PsycopgConnection(ServerConnection):
     def __init__(self, conn_params):
         """
         Creates a new connection wrapper. Parses version string
-        :param conn_params: connection parameters
+        :param conn_params: connection parameters dict
         """
         # Map the connection options to their psycopg2-specific options
         connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params 
@@ -48,6 +48,9 @@ class PsycopgConnection(ServerConnection):
 
         # Check that we connected successfully
         assert self._conn is type(connection)
+
+        # Set autocommit mode so that users have control over transactions
+        self._conn.autocommit = True
 
         # Get the DSN parameters for the connection as a dict
         self._dsn_parameters = self._conn.get_dsn_parameters()

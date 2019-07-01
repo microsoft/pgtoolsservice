@@ -7,8 +7,15 @@ from typing import List, Mapping, Tuple
 from pgsqltoolsservice.driver.types import ServerConnection
 import pymysql
 
-MYSQL_CONNECTION_PARAM_KEYWORDS = []
-MYSQL_CONNECTION_OPTION_KEY_MAP = {}
+
+# Recognized parameter keywords for MySQL connections
+# Source: https://dev.mysql.com/doc/refman/8.0/en/connection-options.html
+# Source:https://pymysql.readthedocs.io/en/latest/modules/connections.html?highlight=mode
+MYSQL_CONNECTION_PARAM_KEYWORDS = [
+    'host', 'database', 'user', 'password', 'bind_address', 'port', 'connect_timeout', 
+    'read_timeout', 'write_timeout', 'client_flag', 'sql_mode', 'sslmode', 'ssl'
+]
+
 
 class PyMySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
@@ -16,17 +23,32 @@ class PyMySQLConnection(ServerConnection):
     def __init__(self, conn_params):
         """
         Creates a new connection wrapper. Parses version string
-        :param connection_options: PsycoPG2 connection options dict
+        :param conn_params: connection parameters dict
         """
         # Map the connection options to their pymysql-specific options
-        self._connection_options = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params 
-        if option in MYSQL_CONNECTION_PARAM_KEYWORDS}
+        self._connection_options = {param: conn_params[param] for param in MYSQL_CONNECTION_PARAM_KEYWORDS 
+        if param in conn_params.keys()}
+
+        # If SSL is enabled or allowed
+        if "ssl" in conn_params.keys() and self._connection_options["ssl"] != "disable":
+            # Find all the ssl options (key, ca, cipher)
+            ssl_params = {param for param in conn_params if param.startswith("ssl.")}
+            
+            # Map the ssl option names to their values
+            ssl_dict = {param.strip("ssl."):conn_params[param] for param in ssl_params}
+            
+            # Assign the ssl options to the dict
+            self._connection_options["ssl"] = ssl_dict
+
+        # Setting autocommit to True initally
+        self._connection_options["autocommit"] = True
+        self._autocommit_status = True
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = pymysql.connect(**self._connection_options)
-        
+
         # Check that we connected successfully
-        assert self._conn is type(pymysql.connections.Connection)
+        assert type(self._conn) is pymysql.connections.Connection
         print("Connection to MySQL server established!")
 
         # Get the DSN parameters for the connection as a dict
@@ -41,16 +63,20 @@ class PyMySQLConnection(ServerConnection):
     @property
     def autocommit(self) -> bool:
         """Returns the current autocommit status for this connection"""
-        return self._conn.autocommit
+        return self._autocommit_status
 
     @property
     def dsn_parameters(self) -> Mapping[str, str]:
         """DSN properties of the underlying connection"""
         return self._dsn_parameters
+    @property
+    def database_name(self):
+        """Return the name of the current connection's database"""
+        return self._connection_options["database"]
 
     @property
     def server_version(self) -> Tuple[int, int, int]:
-        """Tuple that splits version string into sensible values"""
+        """Returns the server version as a Tuple"""
         pass
 
     @classmethod
@@ -110,7 +136,7 @@ class PyMySQLConnection(ServerConnection):
         """
         List the databases accessible by the current connection.
         """
-        pass
+        return self.execute_query('SHOW DATABASES')
     
     def close(self):
         """

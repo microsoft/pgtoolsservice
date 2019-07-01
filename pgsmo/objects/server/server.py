@@ -24,14 +24,14 @@ class Server:
         :param conn: a connection object
         """
         # Everything we know about the server will be based on the connection
-        self._conn: conn
+        self._conn = conn
         self._db_connection_callback = db_connection_callback
 
         # Declare the server properties
         props = self._conn.dsn_parameters
         self._host: str = props['host']
-        self._port: int = int(props['port'])
-        self._maintenance_db_name: str = props['dbname']
+        self._port: int = 5432
+        self._maintenance_db_name: str = "mysql"
 
         # These properties will be defined later
         self._recovery_props: NodeLazyPropertyCollection = NodeLazyPropertyCollection(self._fetch_recovery_state)
