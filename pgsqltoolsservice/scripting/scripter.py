@@ -6,7 +6,7 @@
 from typing import Callable, Dict, Tuple, TypeVar
 
 from pgsmo import NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect, Server
-from pgsqltoolsservice.driver import DriverManager, ServerConnection
+from pgsqltoolsservice.driver import ConnectionManager, ServerConnection
 from pgsqltoolsservice.scripting.contracts import ScriptOperation
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.utils as utils

@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.connection.contracts.common import ConnectionSummary, ConnectionType     # noqa
-
+from typing import Tuple
 
 class ConnectionCompleteParams:
     """Parameters to be sent back with a connection complete event"""
@@ -21,10 +21,10 @@ class ConnectionCompleteParams:
 
 
 class ServerInfo(object):
-    """Contract for information on the connected PostgreSQL server"""
+    """Contract for information on the connected server"""
 
     def __init__(self, server_version, is_cloud):
-        self.server_version: str = server_version
+        self.server_version: Tuple[int, int, int] = server_version
         self.is_cloud: bool = is_cloud
 
 

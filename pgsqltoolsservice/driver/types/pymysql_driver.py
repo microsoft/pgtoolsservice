@@ -49,41 +49,65 @@ class PyMySQLConnection(ServerConnection):
 
         # Check that we connected successfully
         assert type(self._conn) is pymysql.connections.Connection
-        print("Connection to MySQL server established!")
 
-        # Get the DSN parameters for the connection as a dict
-        self._dsn_parameters = self._connection_options
+        # Find the class of the database error this driver throws
+        self._database_error = pymysql.err.DatabaseError
+
+        # Calculate the server version
+        version_string = self.execute_query("SHOW VARIABLES LIKE 'version';")[0][1]
+
+        # Split the different components of the version string
+        import re
+        version_components: List = re.split(r"[.-]", version_string)
+        self._version: Tuple[int, int, int] = (
+            int(version_components[0]),
+            int(version_components[1]),
+            int(version_components[2])
+        )
 
     ###################### PROPERTIES ##################################
-    @property
-    def connection(self):
-        """The underlying connection object that this object wraps"""
-        return self._conn
-
     @property
     def autocommit(self) -> bool:
         """Returns the current autocommit status for this connection"""
         return self._autocommit_status
 
     @property
-    def dsn_parameters(self) -> Mapping[str, str]:
-        """DSN properties of the underlying connection"""
-        return self._dsn_parameters
-        
+    def host_name(self) -> str:
+        """Returns the hostname for the current connection"""
+        return self._connection_options["host"]
+
     @property
-    def database_name(self):
+    def port_num(self) -> int:
+        """Returns the port number used for the current connection"""
+        if "port" in self._connection_options.keys():
+            return self._connection_options["port"]
+        else:
+            return None
+
+    @property
+    def user_name(self) -> str:
+        """Returns the port number used for the current connection"""
+        return self._connection_options["user"]
+
+    @property
+    def database_name(self) -> str:
         """Return the name of the current connection's database"""
         return self._connection_options["database"]
 
     @property
     def server_version(self) -> Tuple[int, int, int]:
         """Returns the server version as a Tuple"""
-        pass
+        return self._version
 
     @classmethod
     def default_database(cls):
         """Returns the default database for MySQL if no other database is specified"""
         return None
+
+    @property
+    def database_error(self):
+        """ Returns the type of database error this connection throws"""
+        return self._database_error
 
     @property
     def search_path_query(self) -> str:
@@ -103,9 +127,24 @@ class PyMySQLConnection(ServerConnection):
 
     ############################# METHODS ##################################
     @autocommit.setter
-    def autocommit(self, value: bool):
-        """Returns the current autocommit status for this connection"""
-        self._conn.autocommit = value
+    def autocommit(self, mode: bool):
+        """
+        Sets the given autocommit status for this connection
+        :param mode: True or False
+        """
+
+        # Close our current connection
+        self._conn.close()
+
+        # Open a new connection with the given autocommit status
+        self._connection_options["autocommit"] = mode
+        self._autocommit_status = mode
+
+        # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
+        self._conn = pymysql.connect(**self._connection_options)
+
+        # Check that we connected successfully
+        assert type(self._conn) is pymysql.connections.Connection
     
     def execute_query(self, query: str, all=True):
         """
@@ -131,7 +170,7 @@ class PyMySQLConnection(ServerConnection):
         :param params: Optional parameters to inject into the query
         :return: A list of column objects and a list of rows, which are formatted as dicts.
         """
-        pass
+        raise NotImplementedError("execute_dict has not been implemented.")
 
     def list_databases(self):
         """

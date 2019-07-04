@@ -28,10 +28,9 @@ class Server:
         self._db_connection_callback = db_connection_callback
 
         # Declare the server properties
-        props = self._conn.dsn_parameters
-        self._host: str = props['host']
-        self._port: int = 5432
-        self._maintenance_db_name: str = "mysql"
+        self._host: str = self._conn.host_name
+        self._port: int = self._conn.port_num
+        self._maintenance_db_name: str = self._conn.database_name
 
         # These properties will be defined later
         self._recovery_props: NodeLazyPropertyCollection = NodeLazyPropertyCollection(self._fetch_recovery_state)
@@ -42,7 +41,7 @@ class Server:
             Role.__name__: NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
             Tablespace.__name__: NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None)),
         }
-        self._search_path = NodeCollection(lambda: self._conn._fetch_search_path())
+        self._search_path = NodeCollection(lambda: self._fetch_search_path())
 
     # PROPERTIES ###########################################################
     @property
@@ -166,14 +165,14 @@ class Server:
             utils.templating.get_template_path(self.TEMPLATE_ROOT, 'check_recovery.sql', self.version)
         )
 
-        cols, rows = self.connection.execute_dict(recovery_check_sql)
+        cols, rows = self._conn.execute_dict(recovery_check_sql)
         if len(rows) > 0:
             return rows[0]
     
     def _fetch_search_path(self) -> List[str]:
         try:
-            query_results = self.connection.execute_query(self.connection.search_path_query)
+            query_results = self._conn.execute_query(self._conn.search_path_query)
             return [x[0] for x in query_results]
         except:
-            query_result = self.connection.execute_query(self.connection.search_path_query_fallback, all=False)
+            query_result = self._conn.execute_query(self._conn.search_path_query_fallback, all=False)
             return query_result[0]

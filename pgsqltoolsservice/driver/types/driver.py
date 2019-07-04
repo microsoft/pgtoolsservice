@@ -5,18 +5,11 @@
 
 from typing import List, Mapping, Tuple
 from abc import ABC, abstractmethod
-from pgsqltoolsservice.parsers.owner_uri_parser import get_attribute_value
 
 class ServerConnection(ABC):
     """Abstract base class that outlines methods and properties that connections must implement"""
 
     ###################### PROPERTIES ##################################
-    @property
-    @abstractmethod
-    def connection(self):
-        """The underlying connection object that this object wraps"""
-        pass
-    
     @property
     @abstractmethod
     def autocommit(self) -> bool:
@@ -25,14 +18,37 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def dsn_parameters(self) -> Mapping[str, str]:
-        """DSN properties of the underlying connection"""
+    def host_name(self) -> str:
+        """Returns the hostname for the current connection"""
+        pass
+    
+    @property
+    @abstractmethod
+    def port_num(self) -> int:
+        """Returns the port number used for the current connection"""
+        pass
+    
+    @property
+    @abstractmethod
+    def user_name(self) -> str:
+        """Returns the port number used for the current connection"""
+        pass
+        
+    @property
+    @abstractmethod
+    def database_name(self) -> str:
+        """Return the name of the current connection's database"""
         pass
 
     @property
     @abstractmethod
     def server_version(self) -> Tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
+        pass
+
+    @property
+    def database_error(self):
+        """ Returns the type of database error this connection throws"""
         pass
 
     @property

@@ -40,7 +40,7 @@ class PsycopgConnection(ServerConnection):
         :param conn_params: connection parameters dict
         """
         # Map the connection options to their psycopg2-specific options
-        connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
+        self._connection_options = connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
         if option in PG_CONNECTION_PARAM_KEYWORDS}
         
         # Use the default database if one was not provided
@@ -52,7 +52,6 @@ class PsycopgConnection(ServerConnection):
 
         # Check that we connected successfully
         assert type(self._conn) is connection
-        print("Connection to PostgreSQL server established!")
 
         # Set autocommit mode so that users have control over transactions
         self._conn.autocommit = True
@@ -61,7 +60,7 @@ class PsycopgConnection(ServerConnection):
         self._dsn_parameters = self._conn.get_dsn_parameters()
 
         # Find the class of the database error this driver throws
-        self.database_error = psycopg2.DatabaseError
+        self._database_error = psycopg2.DatabaseError
 
         # Calculate the server version
         version_string = str(self._conn.server_version)
@@ -73,24 +72,32 @@ class PsycopgConnection(ServerConnection):
 
     ###################### PROPERTIES ##################################
     @property
-    def connection(self):
-        """The psycopg2 connection that this object wraps"""
-        return self._conn
-
-    @property
     def autocommit(self) -> bool:
         """Returns the current autocommit status for this connection"""
         return self._conn.autocommit
 
     @property
-    def dsn_parameters(self) -> Mapping[str, str]:
-        """DSN properties of the underlying connection"""
-        return self._dsn_parameters
-    
+    def host_name(self) -> str:
+        """Returns the hostname for the current connection"""
+        self._dsn_parameters['host']
+
     @property
-    def database_name(self):
+    def port_num(self) -> int:
+        """Returns the port number used for the current connection"""
+        if "port" in self._connection_options.keys():
+            return self._connection_options["port"]
+        else:
+            return None
+        
+    @property
+    def database_name(self) -> str:
         """Return the name of the current connection's database"""
         return self._dsn_parameters['dbname']
+
+    @property
+    def user_name(self) -> str:
+        """Returns the port number used for the current connection"""
+        return self._dsn_parameters["user"]
 
     @property
     def server_version(self) -> Tuple[int, int, int]:
@@ -101,6 +108,11 @@ class PsycopgConnection(ServerConnection):
     def default_database(cls):
         """Returns the default database for PostgreSQL if no other database is specified"""
         return "postgres"
+
+    @property
+    def database_error(self):
+        """ Returns the type of database error this connection throws"""
+        return self._database_error
 
     @property
     def search_path_query(self) -> str:
@@ -121,9 +133,12 @@ class PsycopgConnection(ServerConnection):
 
     ############################# METHODS ##################################
     @autocommit.setter
-    def autocommit(self, value: bool):
-        """Returns the current autocommit status for this connection"""
-        self._conn.autocommit = value
+    def autocommit(self, mode: bool):
+        """
+        Sets the current autocommit status for this connection
+        :param mode: True or False
+        """
+        self._conn.autocommit = mode
     
     def execute_query(self, query, all=True):
         """

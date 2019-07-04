@@ -4,10 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABC, abstractmethod
-from pgsqltoolsservice.parsers.owner_uri_parser import get_attribute_value
+from pgsqltoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
 from pgsqltoolsservice.driver.types import *
 
-class DriverManager:
+class ConnectionManager:
     """Wrapper class that handles different types of drivers and connections """
 
     def __init__(self, provider, params):
@@ -23,9 +23,9 @@ class DriverManager:
         Creates a ServerConnection according to the provider and connection options
         :param options: a dict containing connection parameters
         """
-        if self._provider == "PGSQL":
+        if self._provider == PG_PROVIDER_NAME:
             return PsycopgConnection(options)
-        elif self._provider == "MySQL" or self._provider == "MariaDB":
+        elif self._provider == MYSQL_PROVIDER_NAME:
             return PyMySQLConnection(options)
         else:
             raise AssertionError(str(self._provider) + " is not a supported database engine.")

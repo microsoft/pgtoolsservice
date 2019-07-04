@@ -121,10 +121,10 @@ class ConnectionService:
             self._cancellation_map[cancellation_key] = cancellation_token
         
         # Get the type of server
-        provider_name = self._get_provider_name(params.owner_uri)
+        provider_name = self._service_provider.provider
         try:
             # Get connection to DB server using the provided connection params
-            connection: ServerConnection = DriverManager(provider_name, params).get_connection()
+            connection: ServerConnection = ConnectionManager(provider_name, params).get_connection()
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
@@ -294,26 +294,16 @@ class ConnectionService:
                 # Ignore errors when disconnecting
                 pass
         return True
-    
-    def _get_provider_name(self, owner_uri):
-        # Get info about this connection's provider
-        if not self._service_provider.provider_name:
-            provider_name = get_attribute_value(owner_uri, "providerName")
-            self._service_provider.provider_name = provider_name
-            return provider_name
-        else:
-            return self._service_provider.provider_name
 
 
 def _build_connection_response(connection_info: ConnectionInfo, connection_type: ConnectionType) -> ConnectionCompleteParams:
     """Build a connection complete response object"""
     connection = connection_info.get_connection(connection_type)
-    dsn_parameters = connection.dsn_parameters
-
+   
     connection_summary = ConnectionSummary(
-        server_name=dsn_parameters['host'],
+        server_name=connection.host_name,
         database_name=connection.database_name,
-        user_name=dsn_parameters['user'])
+        user_name=connection.user_name)
 
     response: ConnectionCompleteParams = ConnectionCompleteParams()
     response.connection_id = connection_info.connection_id
@@ -340,7 +330,7 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
 def _get_server_info(connection):
     """Build the server info response for a connection"""
     server_version = connection.server_version
-    host = connection.dsn_parameters['host']
+    host = connection.host_name
     is_cloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
     return ServerInfo(server_version, is_cloud)
 

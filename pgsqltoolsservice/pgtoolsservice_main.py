@@ -26,7 +26,7 @@ from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.workspace import WorkspaceService
 
 
-def _create_server(input_stream, output_stream, server_logger):
+def _create_server(input_stream, output_stream, server_logger, provider):
     # Create the server, but don't start it yet
     rpc_server = JSONRPCServer(input_stream, output_stream, server_logger)
 
@@ -45,7 +45,7 @@ def _create_server(input_stream, output_stream, server_logger):
         constants.EDIT_DATA_SERVICE_NAME: EditDataService,
         constants.TASK_SERVICE_NAME: TaskService
     }
-    service_box = ServiceProvider(rpc_server, services, server_logger)
+    service_box = ServiceProvider(rpc_server, services, provider, server_logger)
     service_box.initialize()
     return rpc_server
 
@@ -55,6 +55,7 @@ if __name__ == '__main__':
     wait_for_debugger = False
     log_dir = None
     stdin = None
+    provider_name = None
     if len(sys.argv) > 1:
         for arg in sys.argv:
             arg_parts = arg.split('=')
@@ -71,7 +72,12 @@ if __name__ == '__main__':
                     wait_for_debugger = True
             elif arg_parts[0] == '--log-dir':
                 log_dir = arg_parts[1]
+            elif arg_parts[0] == 'provider':
+                provider_name = arg_parts[1]
+                assert provider_name == "PGSQL" or provider_name == "MySQL"
 
+    print(provider_name)
+    
     # Create the output logger
     logger = logging.getLogger('pgsqltoolsservice')
     try:
@@ -97,10 +103,10 @@ if __name__ == '__main__':
 
     std_out_wrapped = io.open(sys.stdout.fileno(), 'wb', buffering=0, closefd=False)
 
-    logger.info('MySQL Tools Service is starting up...')
+    logger.info('{0} Tools Service is starting up...'.format(provider_name))
 
     # Create the server, but don't start it yet
-    server = _create_server(stdin, std_out_wrapped, logger)
+    server = _create_server(stdin, std_out_wrapped, logger, provider_name)
 
     # Start the server
     server.start()

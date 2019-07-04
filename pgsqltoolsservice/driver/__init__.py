@@ -4,6 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.driver.types import ServerConnection
-from pgsqltoolsservice.driver.driver_manager import DriverManager
+from pgsqltoolsservice.driver.connection_manager import ConnectionManager
 
-__all__ = ['DriverManager', 'ServerConnection']
+__all__ = ['ConnectionManager', 'ServerConnection']
