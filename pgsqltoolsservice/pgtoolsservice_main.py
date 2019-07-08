@@ -74,10 +74,11 @@ if __name__ == '__main__':
                 log_dir = arg_parts[1]
             elif arg_parts[0] == 'provider':
                 provider_name = arg_parts[1]
-                assert provider_name == "PGSQL" or provider_name == "MySQL"
+                # Check if we support the given provider
+                supported = provider_name in constants.SUPPORTED_PROVIDERS
+                if not supported:
+                    raise AssertionError("{} is not a supported provider".format(str(provider_name)))
 
-    print(provider_name)
-    
     # Create the output logger
     logger = logging.getLogger('pgsqltoolsservice')
     try:
