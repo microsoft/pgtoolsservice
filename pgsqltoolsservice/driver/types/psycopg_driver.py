@@ -186,6 +186,14 @@ class PsycopgConnection(ServerConnection):
         """
         return self.execute_query('SELECT datname FROM pg_database WHERE datistemplate = false;')
 
+    def get_database_owner(self):
+        """
+        List the owner(s) of the current database
+        """
+        database_name = self.database_name
+        owner_query = "SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{}'".format(database_name)
+        return self.execute_query(owner_query, all=True)[0][0]
+
     def close(self):
         """
         Closes this current connection.

@@ -30,16 +30,12 @@ class AdminService(object):
     # REQUEST HANDLERS #####################################################
 
     def _handle_get_database_info_request(self, request_context: RequestContext, params: GetDatabaseInfoParameters) -> None:
-        # Retrieve the connection service
+        # Retrieve the connection from the connection service
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
 
-        # Get database info
-        database_name = connection.get_dsn_parameters()['dbname']
-        owner_query = 'SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = %s'
-        with connection.cursor() as cursor:
-            cursor.execute(owner_query, (database_name,))
-            owner_result = cursor.fetchall()[0][0]
+        # Get database owner
+        owner_result = connection.get_database_info()
 
         # Set up and send the response
         options = {

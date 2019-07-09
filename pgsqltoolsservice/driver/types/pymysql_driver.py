@@ -176,8 +176,15 @@ class PyMySQLConnection(ServerConnection):
         """
         List the databases accessible by the current connection.
         """
-        return self.execute_query('SHOW DATABASES')
+        return self.execute_query('SHOW DATABASES;')
     
+    def get_database_owner(self):
+        """
+        List the owner(s) of the current database
+        """
+        owner_query = 'SELECT CURRENT_USER();'
+        return self.execute_query(owner_query, all=True)[0][0]
+
     def close(self):
         """
         Closes this current connection.

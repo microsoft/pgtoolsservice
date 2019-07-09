@@ -109,6 +109,13 @@ class ServerConnection(ABC):
         pass
     
     @abstractmethod
+    def get_database_owner(self):
+        """
+        List the owner(s) of the current database
+        """
+    pass
+    
+    @abstractmethod
     def close(self):
         """
         Closes this current connection.
