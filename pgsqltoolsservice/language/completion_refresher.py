@@ -11,7 +11,7 @@ import os
 from collections import OrderedDict
 
 from pgsmo import Server
-
+from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.metadata_executor import MetadataExecutor
 
@@ -24,7 +24,7 @@ class CompletionRefresher:
 
     refreshers = OrderedDict()
 
-    def __init__(self, connection: 'psycopg2.extensions.connection', logger: Logger = None):
+    def __init__(self, connection: ServerConnection, logger: Logger = None):
         self.connection = connection
         self.logger: Logger = logger
         self.server: Server = None

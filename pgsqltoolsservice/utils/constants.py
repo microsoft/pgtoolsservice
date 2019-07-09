@@ -5,7 +5,10 @@
 
 """Module containing constants used throughout the service"""
 
-PROVIDER_NAME = 'PGSQL'
+PG_PROVIDER_NAME = 'PGSQL'
+MYSQL_PROVIDER_NAME = 'MySQL'
+
+SUPPORTED_PROVIDERS = [PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME]
 
 # Service names
 ADMIN_SERVICE_NAME = 'admin'

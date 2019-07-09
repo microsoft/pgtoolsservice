@@ -9,6 +9,7 @@ from typing import List  # noqa
 from pgsmo import Server
 from pgsmo.objects.table.table import Table  # noqa
 from pgsmo.objects.table_objects.column import Column  # noqa
+from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
 from pgsqltoolsservice.utils import object_finder
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
@@ -17,7 +18,7 @@ from pgsqltoolsservice.query.contracts import DbColumn
 
 class SmoEditTableMetadataFactory:
 
-    def get(self, connection: 'psycopg2.extensions.connection', schema_name: str, object_name: str, object_type: str) -> EditTableMetadata:
+    def get(self, connection: ServerConnection, schema_name: str, object_name: str, object_type: str) -> EditTableMetadata:
 
         server = Server(connection)
         result_object: Table = None

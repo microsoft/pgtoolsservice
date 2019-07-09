@@ -7,17 +7,16 @@
 from typing import Callable, Dict, List, Optional   # noqa
 import threading
 from queue import Queue
-import psycopg2
 
-from pgsqltoolsservice.hosting import ServiceProvider
 from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionType
+from pgsqltoolsservice.hosting import ServiceProvider
 from pgsqltoolsservice.language.completion import PGCompleter
 from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
+from pgsqltoolsservice.driver import ServerConnection
 import pgsqltoolsservice.utils as utils
 
 INTELLISENSE_URI = 'intellisense://'
-
 
 class ConnectionContext:
     """Context information needed to look up connections"""
@@ -28,7 +27,7 @@ class ConnectionContext:
         self.pgcompleter: PGCompleter = None
         self.is_connected: bool = False
 
-    def refresh_metadata(self, connection: 'psycopg2.extensions.connection'):
+    def refresh_metadata(self, connection: ServerConnection):
         # Start metadata refresh so operations can be completed
         completion_refresher = CompletionRefresher(connection)
         completion_refresher.refresh(self._on_completions_refreshed)
@@ -158,7 +157,7 @@ class OperationsQueue:
         """
         return '{0}|{1}|{2}'.format(conn_info.details.server_name, conn_info.details.database_name, conn_info.details.user_name)
 
-    def _create_connection(self, connection_key: str, conn_info: ConnectionInfo) -> Optional[psycopg2.extensions.connection]:
+    def _create_connection(self, connection_key: str, conn_info: ConnectionInfo) -> Optional[ServerConnection]:
         conn_service = self._connection_service
         key_uri = INTELLISENSE_URI + connection_key
         connect_request = ConnectRequestParams(conn_info.details, key_uri, ConnectionType.INTELLISENSE)

@@ -9,7 +9,6 @@ from pgsmo.objects.node_object import NodeCollection, NodeObject
 from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
-from pgsmo.utils.querying import ServerConnection    # noqa
 import pgsmo.utils.templating as templating
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.datatype.datatype import DataType
@@ -21,6 +20,7 @@ from pgsmo.objects.view.view import View
 from pgsmo.objects.view.materialized_view import MaterializedView
 from pgsmo.objects.extension.extension import Extension
 
+from pgsqltoolsservice.driver import ServerConnection    # noqa
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 

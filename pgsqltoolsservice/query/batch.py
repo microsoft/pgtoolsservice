@@ -11,6 +11,7 @@ import psycopg2
 import uuid
 import sqlparse
 
+from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.utils.time import get_time_str, get_elapsed_time_str
 from pgsqltoolsservice.query.contracts import BatchSummary, SaveResultsRequestParams, SelectionData
 from pgsqltoolsservice.query.result_set import ResultSet  # noqa
@@ -104,10 +105,10 @@ class Batch:
     def notices(self) -> List[str]:
         return self._notices
 
-    def get_cursor(self, connection: 'psycopg2.extensions.connection'):
+    def get_cursor(self, connection: ServerConnection):
         return connection.cursor()
 
-    def execute(self, connection: 'psycopg2.extensions.connection') -> None:
+    def execute(self, conn: ServerConnection) -> None:
         """
         Execute the batch using the psycopg2 cursor retrieved from the given connection
 
@@ -119,7 +120,7 @@ class Batch:
             self._batch_events._on_execution_started(self)
 
         try:
-            cursor = self.get_cursor(connection)
+            cursor = self.get_cursor(conn)
             cursor.execute(self.batch_text)
 
             self.after_execute(cursor)

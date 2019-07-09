@@ -8,10 +8,9 @@ import threading
 from typing import Dict, Optional     # noqa
 from urllib.parse import quote
 
-import psycopg2
-import psycopg2.extensions
 
 from pgsmo import Server
+from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.object_explorer.contracts import (
@@ -224,7 +223,7 @@ class ObjectExplorerService(object):
             request_context.send_error(message)
             return
 
-    def _create_connection(self, session: ObjectExplorerSession, database_name: str) -> Optional[psycopg2.extensions.connection]:
+    def _create_connection(self, session: ObjectExplorerSession, database_name: str) -> Optional[ServerConnection]:
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
 
         options = session.connection_details.options.copy()

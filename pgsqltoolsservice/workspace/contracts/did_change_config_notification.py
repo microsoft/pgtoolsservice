@@ -41,6 +41,21 @@ class PGSQLConfiguration(Serializable):
         self.default_database: str = 'postgres'
         self.format: FormatterConfiguration = FormatterConfiguration()
 
+class MySQLConfiguration(Serializable):
+    """
+    Configuration for MySQL tool service
+    """
+    @classmethod
+    def get_child_serializable_types(cls):
+        return {'format': FormatterConfiguration}
+
+    @classmethod
+    def ignore_extra_attributes(cls):
+        return True
+
+    def __init__(self):
+        self.default_database = None
+        self.format: FormatterConfiguration = FormatterConfiguration()
 
 class Case(Enum):
     """Case options for keyword and identifier formatting"""
@@ -86,12 +101,15 @@ class Configuration(Serializable):
     """
     @classmethod
     def get_child_serializable_types(cls):
-        return {'sql': SQLConfiguration, 'pgsql': PGSQLConfiguration}
+        return {'sql': SQLConfiguration, 'pgsql': PGSQLConfiguration, 'mysql': MySQLConfiguration}
 
     def __init__(self):
         self.sql = SQLConfiguration()
         self.pgsql = PGSQLConfiguration()
+        self.mysql = MySQLConfiguration()
 
+    def get_configuration(self, provider):
+        return {'MySQL': self.mysql, 'PGSQL':self.pgsql}[provider]
 
 class DidChangeConfigurationParams(Serializable):
     """

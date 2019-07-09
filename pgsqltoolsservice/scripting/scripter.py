@@ -6,6 +6,7 @@
 from typing import Callable, Dict, Tuple, TypeVar
 
 from pgsmo import NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect, Server
+from pgsqltoolsservice.driver import ConnectionManager, ServerConnection
 from pgsqltoolsservice.scripting.contracts import ScriptOperation
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import pgsqltoolsservice.utils as utils
@@ -21,8 +22,8 @@ class Scripter(object):
         ScriptOperation.SELECT: (ScriptableSelect, lambda obj: obj.select_script())
     }
 
-    def __init__(self, conn):
-        # get server from psycopg2 connection
+    def __init__(self, conn: ServerConnection):
+        # get server from ServerConnection object
         self.server: Server = Server(conn)
 
     # SCRIPTING METHODS ############################

@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Utility functions for the PostgreSQL Tools Service"""
+"""Utility functions for the Tools Service"""
 
 import pgsqltoolsservice.utils.cancellation
 import pgsqltoolsservice.utils.constants
@@ -23,5 +23,4 @@ __all__ = [
     'time',
     'validate',
     'object_finder'
-
 ]

@@ -6,37 +6,31 @@
 from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
-from psycopg2 import ProgrammingError
-from psycopg2.extensions import connection
-
+from pgsqltoolsservice.driver import ServerConnection
 from pgsmo.objects.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import pgsmo.utils as utils
 
-SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
-SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
-
 
 class Server:
     TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
     # CONSTRUCTOR ##########################################################
-    def __init__(self, conn: connection, db_connection_callback: Callable[[str], connection] = None):
+    def __init__(self, conn: ServerConnection, db_connection_callback: Callable[[str], ServerConnection] = None):
         """
         Initializes a server object using the provided connection
-        :param conn: psycopg2 connection
+        :param conn: a connection object
         """
         # Everything we know about the server will be based on the connection
-        self._conn: utils.querying.ServerConnection = utils.querying.ServerConnection(conn)
+        self._conn = conn
         self._db_connection_callback = db_connection_callback
 
         # Declare the server properties
-        props = self._conn.dsn_parameters
-        self._host: str = props['host']
-        self._port: int = int(props['port'])
-        self._maintenance_db_name: str = props['dbname']
+        self._host: str = self._conn.host_name
+        self._port: int = self._conn.port_num
+        self._maintenance_db_name: str = self._conn.database_name
 
         # These properties will be defined later
         self._recovery_props: NodeLazyPropertyCollection = NodeLazyPropertyCollection(self._fetch_recovery_state)
@@ -51,7 +45,7 @@ class Server:
 
     # PROPERTIES ###########################################################
     @property
-    def connection(self) -> utils.querying.ServerConnection:
+    def connection(self) -> ServerConnection:
         """Connection to the server/db that this object will use"""
         return self._conn
 
@@ -83,7 +77,7 @@ class Server:
     @property
     def version(self) -> Tuple[int, int, int]:
         """Tuple representing the server version: (major, minor, patch)"""
-        return self._conn.version
+        return self._conn.server_version
 
     @property
     def server_type(self) -> str:
@@ -168,19 +162,17 @@ class Server:
     # IMPLEMENTATION DETAILS ###############################################
     def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:
         recovery_check_sql = utils.templating.render_template(
-            utils.templating.get_template_path(self.TEMPLATE_ROOT, 'check_recovery.sql', self._conn.version)
+            utils.templating.get_template_path(self.TEMPLATE_ROOT, 'check_recovery.sql', self.version)
         )
 
         cols, rows = self._conn.execute_dict(recovery_check_sql)
         if len(rows) > 0:
             return rows[0]
-
+    
     def _fetch_search_path(self) -> List[str]:
         try:
-            with self._conn.connection.cursor() as cursor:
-                cursor.execute(SEARCH_PATH_QUERY)
-                return [x[0] for x in cursor.fetchall()]
-        except ProgrammingError:
-            with self._conn.connection.cursor() as cursor:
-                cursor.execute(SEARCH_PATH_QUERY_FALLBACK)
-                return cursor.fetchone()[0]
+            query_results = self._conn.execute_query(self._conn.search_path_query)
+            return [x[0] for x in query_results]
+        except:
+            query_result = self._conn.execute_query(self._conn.search_path_query_fallback, all=False)
+            return query_result[0]

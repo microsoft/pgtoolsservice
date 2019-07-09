@@ -3,10 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsmo.utils.templating               # noqa
-from pgsmo.utils.urn import process_urn
+from pgsqltoolsservice.driver.types.driver import ServerConnection
+from pgsqltoolsservice.driver.types.psycopg_driver import PsycopgConnection
+from pgsqltoolsservice.driver.types.pymysql_driver import PyMySQLConnection
 
-__all__ = [
-    'templating',
-    'process_urn'
-]
+__all__ = ['ServerConnection', 'PyMySQLConnection', 'PsycopgConnection']

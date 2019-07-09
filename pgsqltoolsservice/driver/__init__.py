@@ -3,10 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsmo.utils.templating               # noqa
-from pgsmo.utils.urn import process_urn
+from pgsqltoolsservice.driver.types import ServerConnection
+from pgsqltoolsservice.driver.connection_manager import ConnectionManager
 
-__all__ = [
-    'templating',
-    'process_urn'
-]
+__all__ = ['ConnectionManager', 'ServerConnection']
