@@ -5,29 +5,29 @@
 
 from typing import Optional               # noqa
 
-from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
-from pgsmo.objects.server import server as s    # noqa
-from pgsmo.objects.schema.schema import Schema
-import pgsmo.utils.templating as templating
-from pgsmo.objects.collation.collation import Collation
-from pgsmo.objects.datatype.datatype import DataType
-from pgsmo.objects.functions.function import Function
-from pgsmo.objects.functions.trigger_function import TriggerFunction
-from pgsmo.objects.sequence.sequence import Sequence
-from pgsmo.objects.table.table import Table
-from pgsmo.objects.view.view import View
-from pgsmo.objects.view.materialized_view import MaterializedView
-from pgsmo.objects.extension.extension import Extension
+from mysqlsmo.objects.node_object import NodeCollection, NodeObject
+from mysqlsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
+from mysqlsmo.objects.server import server as s    # noqa
+# from pgsmo.objects.schema.schema import Schema
+# import pgsmo.utils.templating as templating
+# from pgsmo.objects.collation.collation import Collation
+# from pgsmo.objects.datatype.datatype import DataType
+# from pgsmo.objects.functions.function import Function
+# from pgsmo.objects.functions.trigger_function import TriggerFunction
+# from pgsmo.objects.sequence.sequence import Sequence
+from mysqlsmo.objects.table.table import Table
+# from pgsmo.objects.view.view import View
+# from pgsmo.objects.view.materialized_view import MaterializedView
+# from pgsmo.objects.extension.extension import Extension
 
 from pgsqltoolsservice.driver import ServerConnection    # noqa
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    # TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Database':
+    def _from_node_query(cls, server: 's.Server',parent: None, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -44,16 +44,16 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs['name'])
-        db._oid = kwargs['oid']
-        db._tablespace = kwargs['spcname']
-        db._allow_conn = kwargs['datallowconn']
-        db._can_create = kwargs['cancreate']
-        db._owner_oid = kwargs['owner']
-        db._is_template = kwargs['datistemplate']
-        db._can_connect = kwargs['canconnect']
-        db._is_system = kwargs['is_system']
-        db._datlastsysoid = kwargs['datlastsysoid']
+        db = cls(server, kwargs["name"])
+        # db._oid = kwargs['oid']
+        # db._tablespace = kwargs['spcname']
+        # db._allow_conn = kwargs['datallowconn']
+        # db._can_create = kwargs['cancreate']
+        # db._owner_oid = kwargs['owner']
+        # db._is_template = kwargs['datistemplate']
+        # db._can_connect = kwargs['canconnect']
+        # db._is_system = kwargs['is_system']
+        # db._datlastsysoid = kwargs['datlastsysoid']
         return db
 
     def __init__(self, server: 's.Server', name: str):
@@ -77,16 +77,16 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
             self._connection = server.connection
 
         # Declare the child items
-        self._schemas = self._register_child_collection(Schema)
+        # self._schemas = self._register_child_collection(Schema)
         self._tables: NodeCollection = self._register_child_collection(Table)
-        self._views: NodeCollection = self._register_child_collection(View)
-        self._collations: NodeCollection = self._register_child_collection(Collation)
-        self._datatypes: NodeCollection = self._register_child_collection(DataType)
-        self._functions: NodeCollection = self._register_child_collection(Function)
-        self._sequences: NodeCollection = self._register_child_collection(Sequence)
-        self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
-        self._extensions: NodeCollection = self._register_child_collection(Extension)
-        self._materialized_views: NodeCollection = self._register_child_collection(MaterializedView)
+        # self._views: NodeCollection = self._register_child_collection(View)
+        # self._collations: NodeCollection = self._register_child_collection(Collation)
+        # self._datatypes: NodeCollection = self._register_child_collection(DataType)
+        # self._functions: NodeCollection = self._register_child_collection(Function)
+        # self._sequences: NodeCollection = self._register_child_collection(Sequence)
+        # self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
+        # self._extensions: NodeCollection = self._register_child_collection(Extension)
+        # self._materialized_views: NodeCollection = self._register_child_collection(MaterializedView)
 
     # PROPERTIES ###########################################################
     # -BASIC PROPERTIES ####################################################
@@ -188,9 +188,9 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         return self._full_properties.get("acl", "")
 
     # -CHILD OBJECTS #######################################################
-    @property
-    def schemas(self) -> NodeCollection[Schema]:
-        return self._schemas
+    # @property
+    # def schemas(self) -> NodeCollection[Schema]:
+    #     return self._schemas
 
     @property
     def collations(self) -> NodeCollection:
@@ -235,7 +235,8 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
-        return cls.TEMPLATE_ROOT
+        # return cls.TEMPLATE_ROOT
+        pass
 
     def _create_query_data(self) -> dict:
         """ Return the data input for create query """

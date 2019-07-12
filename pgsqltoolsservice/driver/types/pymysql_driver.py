@@ -160,7 +160,7 @@ class PyMySQLConnection(ServerConnection):
 
         cursor.close()
         return query_results
-    
+
     def execute_dict(self, query: str, params=None):
         """
         Executes a query and returns the results as an ordered list of dictionaries that map column

@@ -35,7 +35,7 @@ class AdminService(object):
         connection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
 
         # Get database owner
-        owner_result = connection.get_database_info()
+        owner_result = connection.get_database_owner()
 
         # Set up and send the response
         options = {

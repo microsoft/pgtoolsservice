@@ -9,7 +9,7 @@ from typing import Dict, Optional     # noqa
 from urllib.parse import quote
 
 
-from pgsmo import Server
+from mysqlsmo import Server
 from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
@@ -58,7 +58,7 @@ class ObjectExplorerService(object):
             utils.validate.is_not_none('params', params)
 
             if params.database_name is None or params.database_name == '':
-                params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
+                params.database_name = "mysql"
 
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params)
@@ -170,7 +170,7 @@ class ObjectExplorerService(object):
 
             if task is not None and task.isAlive():
                 return
-
+            is_refresh = False
             new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
             new_task.daemon = True
             new_task.start()
@@ -227,7 +227,8 @@ class ObjectExplorerService(object):
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
 
         options = session.connection_details.options.copy()
-        options['dbname'] = database_name
+        # options['dbname'] = database_name
+        database_name = "mysql"
         conn_details = ConnectionDetails.from_data(options)
 
         key_uri = session.id + database_name
@@ -263,7 +264,7 @@ class ObjectExplorerService(object):
             session.server = Server(connection, functools.partial(self._create_connection, session))
             metadata = ObjectMetadata(session.server.urn_base, None, 'Database', session.server.maintenance_db_name)
             node = NodeInfo()
-            node.label = session.connection_details.options['dbname']
+            node.label = session.connection_details.database_name
             node.is_leaf = False
             node.node_path = session.id
             node.node_type = 'Database'

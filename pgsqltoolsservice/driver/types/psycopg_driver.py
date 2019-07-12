@@ -79,7 +79,7 @@ class PsycopgConnection(ServerConnection):
     @property
     def host_name(self) -> str:
         """Returns the hostname for the current connection"""
-        self._dsn_parameters['host']
+        return self._dsn_parameters['host']
 
     @property
     def port_num(self) -> int:

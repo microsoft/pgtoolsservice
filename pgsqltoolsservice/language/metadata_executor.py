@@ -359,7 +359,7 @@ class MetadataExecutor:
     def __init__(self, server: Server):
         self.server = server
         self.lightweight_metadata = LightweightMetadata(
-            self.server.connection.connection)
+            self.server.connection)
         self.schemas: Dict[str, 'Schema'] = {}
         self.schemas_loaded = False
 
