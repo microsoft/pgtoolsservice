@@ -46,7 +46,7 @@ class Scripter(object):
         if metadata.urn:
             obj: NodeObject = self.server.get_object_by_urn(metadata.urn)
         else:
-            obj: NodeObject = utils.object_finder.get_object(self.server, metadata.metadata_type_name, metadata)
+            obj: NodeObject = self.server.get_object(metadata.metadata_type_name, metadata)
         if not isinstance(obj, handler[0]):
             # TODO: Localize
             raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation {operation}')
