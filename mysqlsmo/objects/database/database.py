@@ -5,26 +5,15 @@
 
 from typing import Optional               # noqa
 
-from mysqlsmo.objects.node_object import NodeCollection, NodeObject
-from mysqlsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
-from mysqlsmo.objects.server import server as s    # noqa
-# from pgsmo.objects.schema.schema import Schema
-# import pgsmo.utils.templating as templating
-# from pgsmo.objects.collation.collation import Collation
-# from pgsmo.objects.datatype.datatype import DataType
-# from pgsmo.objects.functions.function import Function
-# from pgsmo.objects.functions.trigger_function import TriggerFunction
-# from pgsmo.objects.sequence.sequence import Sequence
+from smo.common.node_object import NodeCollection, NodeObject
+from smo.utils import templating
+from mysqlsmo.objects.server.server import server as s    # noqa
 from mysqlsmo.objects.table.table import Table
-# from pgsmo.objects.view.view import View
-# from pgsmo.objects.view.materialized_view import MaterializedView
-# from pgsmo.objects.extension.extension import Extension
-
 from pgsqltoolsservice.driver import ServerConnection    # noqa
 
-class Database(NodeObject, ScriptableCreate, ScriptableDelete):
+class Database(NodeObject):
 
-    # TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
     def _from_node_query(cls, server: 's.Server',parent: None, **kwargs) -> 'Database':
