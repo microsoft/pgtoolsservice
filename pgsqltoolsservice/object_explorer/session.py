@@ -4,12 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 import threading                    # noqa
-
-from mysqlsmo import Server            # noqa
-from pgsqltoolsservice.connection.contracts import ConnectionDetails
-from pgsqltoolsservice.object_explorer.contracts import NodeInfo
 from typing import Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urljoin
+
+from pgsmo import Server            # noqa
+from pgsqltoolsservice.connection.contracts import ConnectionDetails
+from pgsqltoolsservice.object_explorer.contracts import NodeInfo
 
 class ObjectExplorerSession:
     def __init__(self, session_id: str, params: ConnectionDetails):

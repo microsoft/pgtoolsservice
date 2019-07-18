@@ -330,17 +330,23 @@ def _events():
 # (see https://docs.python.org/2/library/re.html#regular-expression-syntax)
 
 MYSQL_ROUTING_TABLE = {
-    # Clicked on the server, Databases folder pops up
-    re.compile('^/$'): RoutingTarget(
+    # Clicked on the server, Databases, Roles, Tablespaces folders pop up
+    re.compile(r'^/$'): RoutingTarget(
         [
-            Folder('Databases', 'databases')
+            Folder('Character Sets', 'charsets'),
+            Folder('Databases', 'databases'),
+            Folder('System Databases', 'systemdatabases'),
+            Folder('Roles', 'roles'),
+            Folder('Tablespaces', 'tablespaces')
         ],
         _default_node_generator
     ),
     # Clicked on Databases folder, should list databases underneath
-    re.compile('^/(?P<db>databases|systemdatabases)/$'): RoutingTarget(None, _databases),
-    # Clicked on one of the databases, should list the folders within the database
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases)/$'): RoutingTarget(None, _databases),
+    # Clicked on Sytem Databases folder, should list system databases underneath
+    re.compile(r'^/(?P<db>systemdatabases)/$'): RoutingTarget(None, _databases),
+    # Clicked on one of the Databases or System Databases nodes, should list the folders within the database
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget(
         [
             Folder('Tables', 'tables'),
             Folder('Views', 'views'),
@@ -350,119 +356,86 @@ MYSQL_ROUTING_TABLE = {
         ],
         _default_node_generator
     ),
-    # Clicked on the Tables folder
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/$'): RoutingTarget(
+    # Clicked on the Tables folder, should list table nodes
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/$'): RoutingTarget(
         None, 
         _tables
     ),
-    # Clicked on the Views folder
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/$'): RoutingTarget(
-        None,
+    # Clicked on the Views folder, should list System View Folder and view nodes
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/$'): RoutingTarget(
+       None,
         _views
     ),
-    # Clicked on the Stored Procedures folder
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/procedures/$'): RoutingTarget(
+    # Clicked on the Stored Procedures folder, should list procedure nodes
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/procedures/$'): RoutingTarget(
         None,
-        _functions
+        _procedures
     ),
-    # Clicked on the Functions folder
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/$'): RoutingTarget(
-        [
-            Folder('System', 'system')
-        ],
+    # Clicked on the Functions folder, should list function nodes
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/$'): RoutingTarget(
+        None,
         _functions
     ),
     # Clicked on the Events folder
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/events/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/events/$'): RoutingTarget(
         None,
         _events
     ),
     # Clicked on one of the tables, should list folders within the table
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Constraints', 'constraints'),
             Folder('Indexes', 'indexes'),
-            Folder('Rules', 'rules'),
             Folder('Triggers', 'triggers')
         ],
         _default_node_generator
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/system/$'): RoutingTarget(
-        None,
-        _functions
-    ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations/$'): RoutingTarget(
+    # Clicked on one particular view node, should list folders within the view
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget(
         [
-            Folder('System', 'system')
+            Folder('Columns', 'columns')
         ],
+        _default_node_generator
+    ),
+    # Clicked on the Constraints folder inside one table
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(
+        None, 
+        _constraints
+    ),
+    # Clicked on the Indexes folder inside one table
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/indexes/$'): RoutingTarget(
+        None, 
+        _indexes
+    ),
+    # Clicked on on the Triggers Folder inside of one particular table or view node
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/columns/$'): RoutingTarget(
+        None,
+        _columns
+    ),
+    # Clicked on on the Triggers Folder inside of one particular table or view node
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'): RoutingTarget(
+        None, 
+        _triggers
+    ),
+    # Clicked on the Character Sets folder
+    re.compile(r'^/(?P<db>charsets)/$'): RoutingTarget(
+       None,
+        _charsets
+    ),
+    # Clicked on one particular charset node
+    re.compile(r'^/(?P<db>charsets)/(?P<charid>\d+)/$'): RoutingTarget(
+        None, 
         _collations
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations/system/$'): RoutingTarget(None, _collations),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes/$'): RoutingTarget(
-        [
-            Folder('System', 'system')
-        ],
-        _datatypes
+    # Clicked on the Roles folder
+    re.compile(r'^/roles/$'): RoutingTarget(
+        None, 
+        _roles
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes/system/$'): RoutingTarget(None, _datatypes),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences/$'): RoutingTarget(
-        [
-            Folder('System', 'system')
-        ],
-        _sequences
-    ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences/system/$'): RoutingTarget(None, _sequences),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/$'): RoutingTarget(
-        [
-            Folder('System', 'system')
-        ],
-        _schemas
-    ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/$'): RoutingTarget(None, _schemas),
-    
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/$'): RoutingTarget(
-        [
-            Folder('Columns', 'columns'),
-            Folder('Constraints', 'constraints'),
-            Folder('Indexes', 'indexes'),
-            Folder('Rules', 'rules'),
-            Folder('Triggers', 'triggers')
-        ],
-        _default_node_generator
-    ),
-    re.compile(
-        '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views|materializedviews)/(?P<tid>\d+)/columns/$'
-    ): RoutingTarget(None, _columns),
-    re.compile(
-        '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views|materializedviews)/system/(?P<tid>\d+)/columns/$'
-    ): RoutingTarget(None, _columns),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|materializedviews)/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
-    re.compile(
-        '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|materializedviews)/system/(?P<tid>\d+)/indexes/$'
-    ): RoutingTarget(None, _indexes),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget(
-        [
-            Folder('Columns', 'columns'),
-            Folder('Rules', 'rules'),
-            Folder('Triggers', 'triggers')
-        ],
-        _default_node_generator
-    ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget(
-        [
-            Folder('Columns', 'columns'),
-            Folder('Rules', 'rules'),
-            Folder('Triggers', 'triggers')
-        ],
-        _default_node_generator
-    ),
-    re.compile('^/roles/$'): RoutingTarget(None, _roles),
-    re.compile('^/tablespaces/$'): RoutingTarget(None, _tablespaces)
+    # Clicked on the Tablespaces folder
+    re.compile(r'^/tablespaces/$'): RoutingTarget(
+        None, 
+        _tablespaces
+    )
 }
