@@ -10,6 +10,11 @@ from pgsqltoolsservice.driver.types import *
 class ConnectionManager:
     """Wrapper class that handles different types of drivers and connections """
 
+    CONNECTORS = {
+        PG_PROVIDER_NAME: PsycopgConnection,
+        MYSQL_PROVIDER_NAME: PyMySQLConnection
+    }
+
     def __init__(self, provider, params):
 
         # Get info about this connection's provider
@@ -23,12 +28,10 @@ class ConnectionManager:
         Creates a ServerConnection according to the provider and connection options
         :param options: a dict containing connection parameters
         """
-        if self._provider == PG_PROVIDER_NAME:
-            return PsycopgConnection(options)
-        elif self._provider == MYSQL_PROVIDER_NAME:
-            return PyMySQLConnection(options)
-        else:
+        if self._provider not in self.CONNECTORS.keys():
             raise AssertionError(str(self._provider) + " is not a supported database engine.")
+        
+        return self.CONNECTORS[self._provider](options)
 
     def get_connection(self):
         return self._conn_object

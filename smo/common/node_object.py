@@ -7,16 +7,15 @@ from abc import ABCMeta, abstractmethod
 from collections import Iterator
 from urllib.parse import urljoin
 from typing import Callable, Dict, Generic, List, Optional, Union, Type, TypeVar, KeysView, ItemsView
-from pgsmo.objects.server import server as s    # noqa
-import pgsmo.utils as utils
-import pgsmo.utils.templating as templating
+from smo.common.server import Server
+import smo.utils as utils
 
 
 class NodeObject(metaclass=ABCMeta):
     @classmethod
     def get_nodes_for_parent(
             cls,
-            root_server: 's.Server',
+            root_server: Server,
             parent_obj: Optional['NodeObject']
     ) -> List['NodeObject']:
         """
@@ -33,8 +32,8 @@ class NodeObject(metaclass=ABCMeta):
             template_vars['parent_id'] = parent_obj._oid
 
         # Render and execute the template
-        sql = templating.render_template(
-            templating.get_template_path(template_root, 'nodes.sql', root_server.version),
+        sql = utils.templating.render_template(
+            utils.templating.get_template_path(template_root, 'nodes.sql', root_server.version),
             macro_roots=cls._macro_root(),
             **template_vars
         )
@@ -48,12 +47,12 @@ class NodeObject(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def _from_node_query(cls, root_server: 's.Server', parent: 'NodeObject', **kwargs) -> 'NodeObject':
+    def _from_node_query(cls, root_server: Server, parent: 'NodeObject', **kwargs) -> 'NodeObject':
         pass
 
-    def __init__(self, root_server, parent: Optional['NodeObject'], name: str):
+    def __init__(self, root_server: Server, parent: Optional['NodeObject'], name: str):
         # Define the state of the object
-        self._server: 's.Server' = root_server
+        self._server: Server = root_server
         self._parent: Optional['NodeObject'] = parent
 
         self._child_collections: Dict[str, NodeCollection] = {}
@@ -98,7 +97,7 @@ class NodeObject(metaclass=ABCMeta):
             return urljoin(self.parent.urn, this_fragment)
 
     @property
-    def server(self) -> 's.Server':
+    def server(self) -> Server:
         return self._server
 
     @property
@@ -157,7 +156,7 @@ class NodeObject(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def _template_root(cls, root_server: 's.Server') -> str:
+    def _template_root(cls, root_server: Server) -> str:
         """
         Required to be implemented in child classes. Returns the path to the root of templates for the object
         :param root_server: The server that the object belongs to
@@ -198,8 +197,8 @@ class NodeObject(metaclass=ABCMeta):
         template_vars = self.template_vars
 
         # Render and execute the template
-        sql = templating.render_template(
-            templating.get_template_path(template_root, 'properties.sql', self._server.version),
+        sql = utils.templating.render_template(
+            utils.templating.get_template_path(template_root, 'properties.sql', self._server.version),
             self._macro_root(),
             **template_vars
         )
@@ -216,8 +215,8 @@ class NodeObject(metaclass=ABCMeta):
         template_vars = self.template_vars
 
         # Render and execute the template
-        sql = templating.render_template(
-            templating.get_template_path(template_root, 'additional_properties.sql', self._server.version),
+        sql = utils.templating.render_template(
+            utils.templating.get_template_path(template_root, 'additional_properties.sql', self._server.version),
             **template_vars
         )
         cols, rows = self._server.connection.execute_dict(sql)

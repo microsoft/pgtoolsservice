@@ -4,12 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import List, Mapping, Tuple
+import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.driver.types import ServerConnection
 import psycopg2
 from psycopg2.extensions import Column, connection, cursor, TRANSACTION_STATUS_INERROR
 
-PG_SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
-PG_SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
 PG_CANCELLATION_QUERY = 'SELECT pg_cancel_backend ({})'
 
 # Dictionary mapping connection option names to their corresponding PostgreSQL connection string keys.
@@ -45,7 +44,7 @@ class PsycopgConnection(ServerConnection):
         
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['dbname'] = "postgres"
+            connection_options['dbname'] = utils.constants.DEFAULT_DB[utils.constants.PG_PROVIDER_NAME]
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg2.connect(**connection_options)
@@ -79,7 +78,7 @@ class PsycopgConnection(ServerConnection):
     @property
     def host_name(self) -> str:
         """Returns the hostname for the current connection"""
-        self._dsn_parameters['host']
+        return self._dsn_parameters['host']
 
     @property
     def port_num(self) -> int:
@@ -113,14 +112,6 @@ class PsycopgConnection(ServerConnection):
     def database_error(self):
         """ Returns the type of database error this connection throws"""
         return self._database_error
-
-    @property
-    def search_path_query(self) -> str:
-        return PG_SEARCH_PATH_QUERY
-
-    @property
-    def search_path_query_fallback(self) -> str:
-        return PG_SEARCH_PATH_QUERY_FALLBACK
     
     @property
     def transaction_in_error(self) -> bool:

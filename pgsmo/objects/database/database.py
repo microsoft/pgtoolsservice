@@ -5,11 +5,11 @@
 
 from typing import Optional               # noqa
 
-from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
+from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
-import pgsmo.utils.templating as templating
+import smo.utils.templating as templating
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.datatype.datatype import DataType
 from pgsmo.objects.functions.function import Function
@@ -94,17 +94,17 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     def allow_conn(self) -> bool:
         return self._allow_conn
 
-    @property
-    def connection(self) -> ServerConnection:
-        if self._connection is not None:
-            return self._connection
-        else:
-            connection = ServerConnection(self._server.db_connection_callback(self.name))
-            if connection.dsn_parameters['dbname'] == self.name:
-                self._connection = connection
-                return self._connection
-            else:
-                raise ValueError('connection create for wrong database')
+    # @property
+    # def connection(self) -> ServerConnection:
+    #     if self._connection is not None:
+    #         return self._connection
+    #     else:
+    #         connection = ServerConnection(self._server.db_connection_callback(self.name))
+    #         if connection.dsn_parameters['dbname'] == self.name:
+    #             self._connection = connection
+    #             return self._connection
+    #         else:
+    #             raise ValueError('connection create for wrong database')
 
     @property
     def is_template(self) -> bool:

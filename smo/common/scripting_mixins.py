@@ -6,7 +6,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Tuple
 
-import pgsmo.utils.templating as templating
+import smo.utils.templating as templating
 
 
 class ScriptableBase(metaclass=ABCMeta):

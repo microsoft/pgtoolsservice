@@ -3,10 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import pgsmo.utils.templating               # noqa
-from pgsmo.utils.urn import process_urn
+from pgsqltoolsservice.object_explorer.routing.mysql_routing import MYSQL_ROUTING_TABLE
+from pgsqltoolsservice.object_explorer.routing.pg_routing import PG_ROUTING_TABLE
 
-__all__ = [
-    'templating',
-    'process_urn'
-]
+__all__ = ['MYSQL_ROUTING_TABLE', 'PG_ROUTING_TABLE']
