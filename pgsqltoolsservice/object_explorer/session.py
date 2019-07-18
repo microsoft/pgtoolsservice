@@ -6,7 +6,7 @@
 import threading                    # noqa
 from typing import List, Optional, Dict   # noqa
 
-from mysqlsmo import Server            # noqa
+# from mysqlsmo import Server            # noqa
 from pgsqltoolsservice.connection.contracts import ConnectionDetails
 
 

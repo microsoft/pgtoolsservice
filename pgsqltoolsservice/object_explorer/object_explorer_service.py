@@ -8,9 +8,8 @@ import threading
 from typing import Dict, Optional     # noqa
 from urllib.parse import quote
 
-
-from mysqlsmo import Server as MySQLServer
-from pgsmo import Server as PGServer
+from pgsmo import Server as Server
+# from mysqlsmo import Server as MySQLServer
 from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider

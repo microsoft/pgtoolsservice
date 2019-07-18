@@ -5,7 +5,9 @@
 
 from typing import Callable, Dict, Tuple, TypeVar
 
-from pgsmo import NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect, Server
+from pgsmo import Server
+from smo.common.node_object import NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from pgsqltoolsservice.driver import ConnectionManager, ServerConnection
 from pgsqltoolsservice.scripting.contracts import ScriptOperation
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata

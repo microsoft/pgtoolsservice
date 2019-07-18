@@ -5,8 +5,8 @@
 
 from typing import List
 
-from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
+from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.constraints import (
     CheckConstraint,
@@ -17,8 +17,7 @@ from pgsmo.objects.table_objects.constraints import (
 from pgsmo.objects.table_objects.index import Index
 from pgsmo.objects.table_objects.rule import Rule
 from pgsmo.objects.table_objects.trigger import Trigger
-from pgsmo.objects.server import server as s    # noqa
-import pgsmo.utils.templating as templating
+import smo.utils.templating as templating
 
 
 class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):

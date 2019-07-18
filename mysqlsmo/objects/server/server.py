@@ -7,12 +7,12 @@ from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
 from pgsqltoolsservice.driver import ServerConnection
-from mysqlsmo.objects.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
+from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 # from pgsmo.objects.database.database import Database
 from mysqlsmo.objects.database.database import Database
 # from pgsmo.objects.role.role import Role
 # from pgsmo.objects.tablespace.tablespace import Tablespace
-import mysqlsmo.utils as utils
+import smo.utils as utils
 
 
 class Server:

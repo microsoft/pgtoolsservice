@@ -3,13 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from mysqlsmo.objects.server.server import Server
-
-from mysqlsmo.objects.node_object import NodeCollection, NodeObject
-from mysqlsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
-from mysqlsmo.objects.database.database import Database
+from smo.common.server import Server
+from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 
 __all__ = [
-    'Server',
-    'Database'
+    'NodeCollection',
+    'NodeObject',
+    'ScriptableCreate', 'ScriptableDelete', 'ScriptableUpdate', 'ScriptableSelect'
 ]

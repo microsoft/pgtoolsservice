@@ -7,7 +7,8 @@ import re
 from typing import Callable, List, Optional, TypeVar, Union
 from urllib.parse import urljoin, urlparse
 
-from pgsmo import NodeObject, Schema, Table, View
+from pgsmo import Schema, Table, View
+from smo.common.node_object import  NodeObject
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession
 from pgsqltoolsservice.object_explorer.contracts import NodeInfo
