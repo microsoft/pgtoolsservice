@@ -5,11 +5,9 @@
 
 import functools
 import threading
-from typing import Dict, Optional     # noqa
-from urllib.parse import quote
+from typing import Dict, Optional, List     # noqa
+from urllib.parse import quote, urlparse
 
-from pgsmo import Server as Server
-# from mysqlsmo import Server as MySQLServer
 from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
@@ -21,11 +19,24 @@ from pgsqltoolsservice.object_explorer.contracts import (
     ExpandCompletedParameters, EXPAND_COMPLETED_METHOD,
     REFRESH_REQUEST
 )
-from pgsqltoolsservice.object_explorer.routing import route_request
 from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 import pgsqltoolsservice.utils as utils
 
+from pgsmo import Server as PGServer
+from mysqlsmo import Server as MySQLServer
+
+from pgsqltoolsservice.object_explorer.routing import PG_ROUTING_TABLE, MYSQL_ROUTING_TABLE
+
+ROUTING_TABLES = {
+    utils.constants.MYSQL_PROVIDER_NAME : MYSQL_ROUTING_TABLE,
+    utils.constants.PG_PROVIDER_NAME : PG_ROUTING_TABLE
+}
+
+SERVER_TYPES = {
+    utils.constants.MYSQL_PROVIDER_NAME : MySQLServer,
+    utils.constants.PG_PROVIDER_NAME : PGServer
+}
 
 class ObjectExplorerService(object):
     """Service for browsing database objects"""
@@ -45,6 +56,15 @@ class ObjectExplorerService(object):
         self._service_provider.server.set_request_handler(REFRESH_REQUEST, self._handle_refresh_request)
         self._service_provider.server.add_shutdown_handler(self._handle_shutdown)
 
+        # Find the provider type
+        self._provider: str = self._service_provider.provider
+
+        # Find the routing table to use
+        self._routing_table = ROUTING_TABLES[self._provider]
+
+        # Find the type of server to use
+        self._server = SERVER_TYPES[self._provider]
+
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Object Explorer service successfully initialized')
 
@@ -57,8 +77,9 @@ class ObjectExplorerService(object):
             # Make sure we have the appropriate session params
             utils.validate.is_not_none('params', params)
 
+            # Use the provider's default db if db name was not specified
             if params.database_name is None or params.database_name == '':
-                params.database_name = "mysql"
+                params.database_name = utils.constants.DEFAULT_DB[self._provider]
 
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params)
@@ -186,7 +207,7 @@ class ObjectExplorerService(object):
     def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession):
         try:
             response = ExpandCompletedParameters(session.id, params.node_path)
-            response.nodes = route_request(is_refresh, session, params.node_path)
+            response.nodes = self._route_request(is_refresh, session, params.node_path)
 
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
         except Exception as e:
@@ -227,8 +248,7 @@ class ObjectExplorerService(object):
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
 
         options = session.connection_details.options.copy()
-        # options['dbname'] = database_name
-        database_name = "mysql"
+        options['dbname'] = database_name
         conn_details = ConnectionDetails.from_data(options)
 
         key_uri = session.id + database_name
@@ -260,8 +280,8 @@ class ObjectExplorerService(object):
             # Step 2: Get the connection to use for object explorer
             connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
 
-            # Step 3: Create the PGSMO Server object for the session and create the root node for the server
-            session.server = Server(connection, functools.partial(self._create_connection, session))
+            # Step 3: Create the Server object for the session and create the root node for the server
+            session.server = self._server(connection, functools.partial(self._create_connection, session))
             metadata = ObjectMetadata(session.server.urn_base, None, 'Database', session.server.maintenance_db_name)
             node = NodeInfo()
             node.label = session.connection_details.database_name
@@ -318,3 +338,24 @@ class ObjectExplorerService(object):
         db = quote(params.options['dbname'])
 
         return f'objectexplorer://{user}@{host}:{db}/'
+
+    def _route_request(self, is_refresh: bool, session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
+        """
+        Performs a lookup for a given expand request
+        :param is_refresh: Whether or not the request is a request to refresh or just expand
+        :param session: Session that the expand is being performed on
+        :param path: Path of the object to expand
+        :return: List of nodes that result from the expansion
+        """
+        # Figure out what the path we're looking at is
+        path = urlparse(path).path
+
+        # Find a matching route for the path
+        for route, target in self._routing_table.items():
+            match = route.match(path)
+            if match is not None:
+                # We have a match!
+                return target.get_nodes(is_refresh, path, session, match.groupdict())
+
+        # If we make it to here, there isn't a route that matches the path
+        raise ValueError(f'Path {path} does not have a matching OE route')  # TODO: Localize

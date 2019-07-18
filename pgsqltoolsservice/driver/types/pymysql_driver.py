@@ -7,7 +7,6 @@ from typing import List, Mapping, Tuple
 from pgsqltoolsservice.driver.types import ServerConnection
 import pymysql
 
-
 # Recognized parameter keywords for MySQL connections
 # Source: https://dev.mysql.com/doc/refman/8.0/en/connection-options.html
 # Source:https://pymysql.readthedocs.io/en/latest/modules/connections.html?highlight=mode
@@ -109,14 +108,6 @@ class PyMySQLConnection(ServerConnection):
         """ Returns the type of database error this connection throws"""
         return self._database_error
 
-    @property
-    def search_path_query(self) -> str:
-        pass
-
-    @property
-    def search_path_query_fallback(self) -> str:
-        pass
-    
     @property
     def transaction_in_error(self) -> int:
         pass

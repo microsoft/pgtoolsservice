@@ -12,6 +12,15 @@ from pgsqltoolsservice.metadata.contracts import (
     MetadataListParameters, MetadataListResponse, METADATA_LIST_REQUEST, MetadataType, ObjectMetadata)
 from pgsqltoolsservice.utils import constants
 
+# This query collects all the tables, views, and functions in all the schemas in the database(s)?
+PG_METADATA_QUERY = """SELECT s.nspname AS schema_name,
+        p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), '') || ')' AS object_name, 'f' as type FROM pg_proc p
+    INNER JOIN pg_namespace s ON s.oid = p.pronamespace
+    WHERE s.nspname NOT ILIKE 'pg_%' AND s.nspname != 'information_schema'
+UNION SELECT schemaname AS schema_name, tablename AS object_name, 't' as type FROM pg_tables
+    WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
+UNION SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_views
+    WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'"""
 
 class MetadataService:
     """Service for database metadata support"""
@@ -50,17 +59,9 @@ class MetadataService:
             request_context.send_error('Unhandled exception while listing metadata')  # TODO: Localize
 
     def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
-        object_query = """SELECT s.nspname AS schema_name,
-        p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), '') || ')' AS object_name, 'f' as type FROM pg_proc p
-    INNER JOIN pg_namespace s ON s.oid = p.pronamespace
-    WHERE s.nspname NOT ILIKE 'pg_%' AND s.nspname != 'information_schema'
-UNION SELECT schemaname AS schema_name, tablename AS object_name, 't' as type FROM pg_tables
-    WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
-UNION SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_views
-    WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'"""
         connection = self._service_provider[constants.CONNECTION_SERVICE_NAME].get_connection(owner_uri, ConnectionType.DEFAULT)
         with connection.cursor() as cursor:
-            cursor.execute(object_query)
+            cursor.execute(PG_METADATA_QUERY)
             results = cursor.fetchall()
         metadata_list = []
         for row in results:

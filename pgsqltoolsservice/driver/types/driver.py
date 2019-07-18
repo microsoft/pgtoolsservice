@@ -53,16 +53,6 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def search_path_query(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def search_path_query_fallback(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
     def transaction_in_error(self) -> bool:
         pass
 

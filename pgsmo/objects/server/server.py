@@ -100,7 +100,7 @@ class Server:
     def wal_paused(self) -> Optional[bool]:
         """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
         return self._recovery_props.get('isreplaypaused')
-
+    
     # -CHILD OBJECTS #######################################################
     @property
     def databases(self) -> NodeCollection[Database]:
