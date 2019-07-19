@@ -5,6 +5,7 @@
 
 from typing import List, Mapping, Tuple
 from pgsqltoolsservice.driver.types import ServerConnection
+import re
 import pymysql
 
 # Recognized parameter keywords for MySQL connections
@@ -174,7 +175,10 @@ class PyMySQLConnection(ServerConnection):
         List the owner(s) of the current database
         """
         owner_query = 'SELECT CURRENT_USER();'
-        return self.execute_query(owner_query, all=True)[0][0]
+        result = self.execute_query(owner_query, all=True)[0][0]
+        
+        # Strip the hostname from the result
+        return re.sub(r'@(\w)+', '', result)
 
     def close(self):
         """

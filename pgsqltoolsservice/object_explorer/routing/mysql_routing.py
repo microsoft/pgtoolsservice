@@ -28,7 +28,7 @@ def _get_node_info(
                  node.oid will be appended to the end of the current URI to create the node's path
     :param current_path: URI provided in the request to expand/refresh
     :param node_type: Node type, determines icon used in UI
-    :param label: Overrides the node.name is provided, display name of the node displayed as-is
+    :param label: Overrides the node.name if provided, display name of the node displayed as-is
     :param is_leaf: Whether or not the node is a leaf. Default is true. If false, a trailing slash
                     will be added to the node path to indicate it behaves as a folder
     :return: NodeInfo based on the NodeObject provided
@@ -232,19 +232,6 @@ def _roles(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
         yield _get_node_info(role, current_path, node_type)
 
 
-def _rules(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """
-    Function to generate a list of rules for tables and views
-    Expected match_params:
-      scid int: schema OID
-      obj str: parent object to lookup (table or view)
-      tid int: table or view OID
-    """
-    obj = _get_table_or_view(is_refresh, session, match_params['dbid'], match_params['obj'], match_params['tid'])
-    # TODO: We need a better icon for rules
-    return [_get_node_info(rule, current_path, 'Constraint') for rule in obj.rules]
-
-
 def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of NodeInfo for tables in a schema"""
     is_system = is_system_request(current_path)
@@ -342,9 +329,15 @@ MYSQL_ROUTING_TABLE = {
         _default_node_generator
     ),
     # Clicked on Databases folder, should list databases underneath
-    re.compile(r'^/(?P<db>databases)/$'): RoutingTarget(None, _databases),
+    re.compile(r'^/(?P<db>databases)/$'): RoutingTarget(
+        None, 
+        _databases
+    ),
     # Clicked on Sytem Databases folder, should list system databases underneath
-    re.compile(r'^/(?P<db>systemdatabases)/$'): RoutingTarget(None, _databases),
+    re.compile(r'^/(?P<db>systemdatabases)/$'): RoutingTarget(
+        None, 
+        _databases
+    ),
     # Clicked on one of the Databases or System Databases nodes, should list the folders within the database
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget(
         [
