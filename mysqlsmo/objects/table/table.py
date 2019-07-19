@@ -24,22 +24,13 @@ class Table(NodeObject):
             name str: Name of the table
         :return: A table instance
         """
-        table = cls(server, parent, kwargs['name'])
-        table._oid = kwargs['oid']
-        table._schema = kwargs['schema']
-        table._scid = kwargs['schemaoid']
-        table._is_system = kwargs['is_system']
-
+        table = cls(server, None, kwargs[0])
         return table
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
-        NodeObject.__init__(self, server, parent, name)
+        NodeObject.__init__(self, server, None, name)
 
     # PROPERTIES ###########################################################
-    @property
-    def schema(self):
-        return self._schema
-
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT

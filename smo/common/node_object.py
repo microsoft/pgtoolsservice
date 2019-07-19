@@ -39,13 +39,15 @@ class NodeObject(metaclass=ABCMeta):
             macro_roots=cls._macro_root(),
             **template_vars
         )
+        if 'dbname' in context_args["context_args"].keys():
+            sql = "USE information_schema; SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = {dbname};".format(context_args["dbname"])
         if parent_obj is None:
-            cols, rows = root_server.connection.execute_dict(sql)
+            results = root_server.connection.execute_query(sql)
         else:
             database_node = parent_obj.get_database_node()
-            cols, rows = database_node.connection.execute_dict(sql)
+            results = database_node.connection.execute_dict(sql)
 
-        return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
+        return [cls._from_node_query(root_server, parent_obj, row) for row in results]
 
     @classmethod
     @abstractmethod

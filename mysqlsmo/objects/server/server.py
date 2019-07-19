@@ -46,30 +46,36 @@ class Server:
         """Connection to the server/db that this object will use"""
         return self._conn
 
-    # @property
-    # def db_connection_callback(self):
-    #     """Connection to the server/db that this object will use"""
-    #     return self._db_connection_callback
+    # PROPERTIES ###########################################################
+    @property
+    def connection(self) -> ServerConnection:
+        """Connection to the server/db that this object will use"""
+        return self._conn
 
-    # @property
-    # def host(self) -> str:
-    #     """Hostname of the server"""
-    #     return self._host
+    @property
+    def db_connection_callback(self):
+        """Connection to the server/db that this object will use"""
+        return self._db_connection_callback
+
+    @property
+    def host(self) -> str:
+        """Hostname of the server"""
+        return self._host
 
     # # @property
     # # def in_recovery(self) -> Optional[bool]:
     # #     """Whether or not the server is in recovery mode. If None, value was not loaded from server"""
     # #     return self._recovery_props.get('inrecovery')
 
-    # @property
-    # def maintenance_db_name(self) -> str:
-    #     """Name of the database this server's connection is connected to"""
-    #     return self._maintenance_db_name
+    @property
+    def maintenance_db_name(self) -> str:
+        """Name of the database this server's connection is connected to"""
+        return self._maintenance_db_name
 
-    # @property
-    # def port(self) -> int:
-    #     """Port number of the server"""
-    #     return self._port
+    @property
+    def port(self) -> int:
+        """Port number of the server"""
+        return self._port
 
     @property
     def version(self) -> Tuple[int, int, int]:
@@ -81,14 +87,14 @@ class Server:
     #     """Server type for distinguishing between standard PG and PG supersets"""
     #     return 'pg'  # TODO: Determine if a server is PPAS or PG
 
-    # @property
-    # def urn_base(self) -> str:
-    #     """Base of a URN for objects in the tree"""
-    #     user = quote_plus(self.connection.user_name)
-    #     host = quote_plus(self.host)
-    #     port = quote_plus(str(self.port))
-    #     return f'//{user}@{host}:{port}/'
-    #     # TODO: Ensure that this formatting works with non-username/password logins
+    @property
+    def urn_base(self) -> str:
+        """Base of a URN for objects in the tree"""
+        user = quote_plus(str(self.connection.user_name))
+        host = quote_plus(str(self.host))
+        port = quote_plus(str(self.port))
+        return f'//{user}@{host}:{port}/'
+        # TODO: Ensure that this formatting works with non-username/password logins
 
     # # @property
     # # def wal_paused(self) -> Optional[bool]:

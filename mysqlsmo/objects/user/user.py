@@ -3,19 +3,16 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional               # noqa
-
+from typing import Optional
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.utils import templating
-from mysqlsmo.objects.server.server import Server as s    # noqa
-from pgsqltoolsservice.driver import ServerConnection    # noqa
 
-class Database(NodeObject):
+class User(NodeObject):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, kwargs) -> 'Database':
+    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'User':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -32,7 +29,7 @@ class Database(NodeObject):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs[0])
+        db = cls(server, kwargs["name"])
         return db
 
     def __init__(self, server: 's.Server', name: str):
@@ -41,8 +38,6 @@ class Database(NodeObject):
         """
         NodeObject.__init__(self, server, None, name)
 
-
-    # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT

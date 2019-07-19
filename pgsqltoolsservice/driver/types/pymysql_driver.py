@@ -124,33 +124,32 @@ class PyMySQLConnection(ServerConnection):
         Sets the given autocommit status for this connection
         :param mode: True or False
         """
+        pass
+        # # Close our current connection
+        # self._conn.close()
 
-        # Close our current connection
-        self._conn.close()
+        # # Open a new connection with the given autocommit status
+        # self._connection_options["autocommit"] = mode
+        # self._autocommit_status = mode
 
-        # Open a new connection with the given autocommit status
-        self._connection_options["autocommit"] = mode
-        self._autocommit_status = mode
+        # # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
+        # self._conn = pymysql.connect(**self._connection_options)
 
-        # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
-        self._conn = pymysql.connect(**self._connection_options)
-
-        # Check that we connected successfully
-        assert type(self._conn) is pymysql.connections.Connection
+        # # Check that we connected successfully
+        # assert type(self._conn) is pymysql.connections.Connection
     
     def execute_query(self, query: str, all=True):
         """
         Execute a simple query without arguments for the given connection
         :raises an error: if there was no result set when executing the query
         """
-        cursor = self._conn.cursor()
-        cursor.execute(query)
-        if all:
-            query_results = cursor.fetchall()
-        else:
-            query_results = cursor.fetchone()
+        with self._conn.cursor() as cursor:
+            cursor.execute(query)
+            if all:
+                query_results = cursor.fetchall()
+            else:
+                query_results = cursor.fetchone()
 
-        cursor.close()
         return query_results
 
     def execute_dict(self, query: str, params=None):
@@ -168,7 +167,7 @@ class PyMySQLConnection(ServerConnection):
         """
         List the databases accessible by the current connection.
         """
-        return self.execute_query('SHOW DATABASES;')
+        return self.execute_query('SHOW DATABASES')
     
     def get_database_owner(self):
         """

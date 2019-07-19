@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse
 from typing import Callable, Dict, List, Optional, TypeVar, Union
 
 from smo.common.node_object import NodeObject
-from mysqlsmo import Server
+from mysqlsmo import *
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession, Folder, RoutingTarget
 from pgsqltoolsservice.object_explorer.contracts import NodeInfo
@@ -46,7 +46,7 @@ def _get_node_info(
 
     # Build the path to the node. Trailing slash is added to indicate URI is a folder
     trailing_slash = '' if is_leaf else '/'
-    node_info.node_path = urljoin(current_path, str(node.oid) + trailing_slash)
+    node_info.node_path = urljoin(current_path, str(node.name) + trailing_slash)
 
     return node_info
 
@@ -58,11 +58,6 @@ def _get_obj_with_refresh(parent_obj: TRefreshObject, is_refresh: bool) -> TRefr
     if is_refresh:
         parent_obj.refresh()
     return parent_obj
-
-
-def _get_schema(session: ObjectExplorerSession, dbid: any, scid: any) -> Schema:
-    """Utility method to get a schema from the selected database from the collection"""
-    return session.server.databases[int(dbid)].schemas[int(scid)]
 
 
 def _get_table_or_view(is_refresh: bool, session: ObjectExplorerSession, dbid: any, parent_type: str, tid: any) -> Union[Table, View]:
@@ -181,34 +176,46 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
     Expected match_params:
       dbid int: Database OID
     """
-    nodes = Table.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Table.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'tables', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'Table', label=f'{node.name}')
         for node in nodes
     ]
 
 
 def _users(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of users for a server"""
-    nodes = User.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = User.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'users', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'Role', label=f'{node.name}')
         for node in nodes
     ]
 
+def _sysdatabases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """Function to generate a list of databases"""
+    root_server=session.server
+    nodes = Database.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
+    return [
+        _get_node_info(node, current_path, 'Database', label=f'{node.name}', is_leaf=False)
+        for node in nodes if node.name in ["information_schema", "mysql", "performance_schema"]
+    ]
 
 def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of databases"""
-    nodes = Database.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Database.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'databases', label=f'{node.schema}.{node.name}')
-        for node in nodes
+        _get_node_info(node, current_path, 'Database', label=f'{node.name}', is_leaf=False)
+        for node in nodes if node.name not in ["information_schema", "mysql", "performance_schema"]
     ]
 
 
 def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of tablespaces for a server"""
-    nodes = Tablespace.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Tablespace.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'tablespaces', label=f'{node.schema}.{node.name}')
         for node in nodes
@@ -278,11 +285,11 @@ MYSQL_ROUTING_TABLE = {
     ),
     # Clicked on Sytem Databases folder, should list system databases underneath
     re.compile(r'^/(?P<db>systemdatabases)/$'): RoutingTarget(
-        None, 
-        _databases
+        None,
+        _sysdatabases
     ),
     # Clicked on one of the Databases or System Databases nodes, should list the folders within the database
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/$'): RoutingTarget(
         [
             Folder('Tables', 'tables'),
             Folder('Views', 'views'),
@@ -293,32 +300,32 @@ MYSQL_ROUTING_TABLE = {
         _default_node_generator
     ),
     # Clicked on the Tables folder, should list table nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/$'): RoutingTarget(
         None, 
         _tables
     ),
     # Clicked on the Views folder, should list System View Folder and view nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/views/$'): RoutingTarget(
        None,
         _views
     ),
     # Clicked on the Stored Procedures folder, should list procedure nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/procedures/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/procedures/$'): RoutingTarget(
         None,
         _procedures
     ),
     # Clicked on the Functions folder, should list function nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/functions/$'): RoutingTarget(
         None,
         _functions
     ),
     # Clicked on the Events folder
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/events/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/events/$'): RoutingTarget(
         None,
         _events
     ),
     # Clicked on one of the tables, should list folders within the table
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/$'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Constraints', 'constraints'),
@@ -328,34 +335,34 @@ MYSQL_ROUTING_TABLE = {
         _default_node_generator
     ),
     # Clicked on one particular view node, should list folders within the view
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/views/(?P<tbl_name>\w+/$)'): RoutingTarget(
         [
             Folder('Columns', 'columns')
         ],
         _default_node_generator
     ),
     # Clicked on the Constraints folder inside one table
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/constraints/$'): RoutingTarget(
         None, 
         _constraints
     ),
     # Clicked on the Indexes folder inside one table
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/indexes/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/indexes/$'): RoutingTarget(
         None, 
         _indexes
     ),
     # Clicked on on the Triggers Folder inside of one particular table or view node
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/columns/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/(?P<obj>tables|views)/(?P<tbl_name>\w+)/columns/$'): RoutingTarget(
         None,
         _columns
     ),
     # Clicked on on the Triggers Folder inside of one particular table or view node
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'): RoutingTarget(
-        None, 
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/(?P<obj>tables|views)/(?P<tbl_name>\w+)/triggers/$'): RoutingTarget(
+        None,
         _triggers
     ),
     # Clicked on the Character Sets folder
-    re.compile(r'^/charsets)/$'): RoutingTarget(
+    re.compile(r'^/charsets/$'): RoutingTarget(
        None,
         _charsets
     ),
