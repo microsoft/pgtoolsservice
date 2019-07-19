@@ -9,11 +9,6 @@ from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 from pgsqltoolsservice.driver import ServerConnection
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 import smo.utils as utils
-# from pgsmo.objects.database.database import Database
-#from mysqlsmo.objects.database.database import Database
-# from pgsmo.objects.role.role import Role
-# from pgsmo.objects.tablespace.tablespace import Tablespace
-
 
 
 class Server:
@@ -46,10 +41,10 @@ class Server:
         # self._search_path = NodeCollection(lambda: self._fetch_search_path())
 
     # PROPERTIES ###########################################################
-    # @property
-    # def connection(self) -> ServerConnection:
-    #     """Connection to the server/db that this object will use"""
-    #     return self._conn
+    @property
+    def connection(self) -> ServerConnection:
+        """Connection to the server/db that this object will use"""
+        return self._conn
 
     # @property
     # def db_connection_callback(self):
@@ -76,10 +71,10 @@ class Server:
     #     """Port number of the server"""
     #     return self._port
 
-    # @property
-    # def version(self) -> Tuple[int, int, int]:
-    #     """Tuple representing the server version: (major, minor, patch)"""
-    #     return self._conn.server_version
+    @property
+    def version(self) -> Tuple[int, int, int]:
+        """Tuple representing the server version: (major, minor, patch)"""
+        return self._conn.server_version
 
     # @property
     # def server_type(self) -> str:
@@ -153,13 +148,9 @@ class Server:
     #     obj = collection[oid]
     #     return obj.get_object_by_urn(remaining)
 
-    # def refresh(self) -> None:
-    #     # Reset child objects
-    #     for collection in self._child_objects.values():
-    #         collection.reset()
-
-    #     # Reset property collections
-    #     # self._recovery_props.reset()
+    def refresh(self) -> None:
+        # Reset child objects
+        pass
 
     # # IMPLEMENTATION DETAILS ###############################################
     # # def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:

@@ -37,3 +37,7 @@ class Tablespace(NodeObject):
         Initializes a new instance of a database
         """
         NodeObject.__init__(self, server, None, name)
+
+    @classmethod
+    def _template_root(cls, server: 's.Server') -> str:
+        return cls.TEMPLATE_ROOT

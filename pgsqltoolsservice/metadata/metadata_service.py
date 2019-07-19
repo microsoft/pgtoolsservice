@@ -27,7 +27,7 @@ SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_v
 """
 
 MYSQL_METADATA_QUERY = """
-SELECT OBJECT_NAME, OBJECT_TYPE, OBJECT_SCHEMA, 
+SELECT OBJECT_SCHEMA, OBJECT_NAME, OBJECT_TYPE
 FROM (
 	SELECT TABLE_NAME AS OBJECT_NAME, 't' AS OBJECT_TYPE, TABLE_SCHEMA AS OBJECT_SCHEMA
 	FROM information_schema.TABLES
@@ -93,9 +93,9 @@ class MetadataService:
 
         metadata_list = []
         for row in query_results:
-            object_name = row[0]
-            object_type = _METADATA_TYPE_MAP[row[1]]
-            schema_name = row[2]
+            schema_name = row[0]
+            object_name = row[1]
+            object_type = _METADATA_TYPE_MAP[row[2]]
             metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
         return metadata_list
 

@@ -7,7 +7,6 @@ from abc import ABCMeta, abstractmethod
 from collections import Iterator
 from urllib.parse import urljoin
 from typing import Callable, Dict, Generic, List, Optional, Union, Type, TypeVar, KeysView, ItemsView
-from smo.common.server import Server
 import smo.utils as utils
 
 
@@ -15,8 +14,9 @@ class NodeObject(metaclass=ABCMeta):
     @classmethod
     def get_nodes_for_parent(
             cls,
-            root_server: Server,
-            parent_obj: Optional['NodeObject']
+            root_server: 'Server',
+            parent_obj: Optional['NodeObject'],
+            **context_args
     ) -> List['NodeObject']:
         """
         Renders and executes nodes.sql for the class to generate a list of NodeObjects
@@ -30,6 +30,8 @@ class NodeObject(metaclass=ABCMeta):
         template_vars = {}      # TODO: Allow configuring show/hide system objects
         if parent_obj is not None:
             template_vars['parent_id'] = parent_obj._oid
+        elif context_args:
+            template_vars = context_args
 
         # Render and execute the template
         sql = utils.templating.render_template(
@@ -47,12 +49,12 @@ class NodeObject(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def _from_node_query(cls, root_server: Server, parent: 'NodeObject', **kwargs) -> 'NodeObject':
+    def _from_node_query(cls, root_server: 'Server', parent: 'NodeObject', **kwargs) -> 'NodeObject':
         pass
 
-    def __init__(self, root_server: Server, parent: Optional['NodeObject'], name: str):
+    def __init__(self, root_server: 'Server', parent: Optional['NodeObject'], name: str):
         # Define the state of the object
-        self._server: Server = root_server
+        self._server: 'Server' = root_server
         self._parent: Optional['NodeObject'] = parent
 
         self._child_collections: Dict[str, NodeCollection] = {}
@@ -97,7 +99,7 @@ class NodeObject(metaclass=ABCMeta):
             return urljoin(self.parent.urn, this_fragment)
 
     @property
-    def server(self) -> Server:
+    def server(self) -> 'Server':
         return self._server
 
     @property
@@ -156,7 +158,7 @@ class NodeObject(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def _template_root(cls, root_server: Server) -> str:
+    def _template_root(cls, root_server: 'Server') -> str:
         """
         Required to be implemented in child classes. Returns the path to the root of templates for the object
         :param root_server: The server that the object belongs to
