@@ -35,6 +35,7 @@ def _get_node_info(
     """
     # Generate the object metadata
     metadata = ObjectMetadata(node.urn, None, type(node).__name__, node.name, None)
+    
     # Add the schema name if it is the immediate parent
     if node.parent is not None and node.parent.parent is None and hasattr(node, 'schema'):
         metadata.schema = node.schema

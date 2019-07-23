@@ -16,7 +16,7 @@ class NodeObject(metaclass=ABCMeta):
             cls,
             root_server: 'Server',
             parent_obj: Optional['NodeObject'],
-            **context_args
+            context_args
     ) -> List['NodeObject']:
         """
         Renders and executes nodes.sql for the class to generate a list of NodeObjects
@@ -39,15 +39,13 @@ class NodeObject(metaclass=ABCMeta):
             macro_roots=cls._macro_root(),
             **template_vars
         )
-        if 'dbname' in context_args["context_args"].keys():
-            sql = "USE information_schema; SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = {dbname};".format(context_args["dbname"])
         if parent_obj is None:
-            results = root_server.connection.execute_query(sql)
+            cols, rows = root_server.connection.execute_dict(sql)
         else:
             database_node = parent_obj.get_database_node()
-            results = database_node.connection.execute_dict(sql)
+            cols, rows = database_node.connection.execute_dict(sql)
 
-        return [cls._from_node_query(root_server, parent_obj, row) for row in results]
+        return [cls._from_node_query(root_server, parent_obj, **row) for row in rows]
 
     @classmethod
     @abstractmethod

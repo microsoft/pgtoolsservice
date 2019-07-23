@@ -54,7 +54,8 @@ class PyMySQLConnection(ServerConnection):
         self._database_error = pymysql.err.DatabaseError
 
         # Calculate the server version
-        version_string = self.execute_query("SHOW VARIABLES LIKE 'version';")[0][1]
+        # Source: https://stackoverflow.com/questions/8987679/how-to-retrieve-the-current-version-of-a-mysql-database
+        version_string = self.execute_query("SELECT VERSION();")[0][0]
 
         # Split the different components of the version string
         import re
@@ -149,6 +150,7 @@ class PyMySQLConnection(ServerConnection):
                 query_results = cursor.fetchall()
             else:
                 query_results = cursor.fetchone()
+            cursor.close()
 
         return query_results
 
@@ -161,7 +163,21 @@ class PyMySQLConnection(ServerConnection):
         :param params: Optional parameters to inject into the query
         :return: A list of column objects and a list of rows, which are formatted as dicts.
         """
-        raise NotImplementedError("execute_dict has not been implemented.")
+        with self._conn.cursor() as cursor:
+            cursor.execute(query)
+
+            # Get a list of column names
+            col_names: List[str] = [col[0] for col in cursor.description]
+
+            rows: List[dict] = []
+            if cursor.rowcount > 0:
+                for row in cursor:
+                    # Map each column name to the corresponding value in each row
+                    row_dict = {col_names[index]: row for index, row in enumerate(row)}
+                    rows.append(row_dict)
+            cursor.close()
+        return col_names, rows
+
 
     def list_databases(self):
         """

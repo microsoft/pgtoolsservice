@@ -60,7 +60,7 @@ class ObjectExplorerService(object):
         self._provider: str = self._service_provider.provider
 
         # Find the routing table to use
-        self._routing_table = ROUTING_TABLES[self._provider]
+        self._routing_table = ROUTING_TABLES[self._service_provider.provider]
 
         # Find the type of server to use
         self._server = SERVER_TYPES[self._provider]

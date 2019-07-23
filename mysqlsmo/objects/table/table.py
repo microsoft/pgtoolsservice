@@ -24,7 +24,7 @@ class Table(NodeObject):
             name str: Name of the table
         :return: A table instance
         """
-        table = cls(server, None, kwargs[0])
+        table = cls(server, None, kwargs["name"])
         return table
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):

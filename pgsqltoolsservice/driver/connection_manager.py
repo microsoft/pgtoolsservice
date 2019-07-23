@@ -4,7 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABC, abstractmethod
-from pgsqltoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
+from pgsqltoolsservice.utils.constants import (
+    PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME, MARIADB_PROVIDER_NAME
+)
 from pgsqltoolsservice.driver.types import *
 
 class ConnectionManager:
@@ -12,7 +14,8 @@ class ConnectionManager:
 
     CONNECTORS = {
         PG_PROVIDER_NAME: PsycopgConnection,
-        MYSQL_PROVIDER_NAME: PyMySQLConnection
+        MYSQL_PROVIDER_NAME: PyMySQLConnection,
+        MARIADB_PROVIDER_NAME: PyMySQLConnection
     }
 
     def __init__(self, provider, params):

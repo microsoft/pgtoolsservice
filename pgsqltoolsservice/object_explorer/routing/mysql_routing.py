@@ -35,9 +35,7 @@ def _get_node_info(
     """
     # Generate the object metadata
     metadata = ObjectMetadata(node.urn, None, type(node).__name__, node.name, None)
-    # Add the schema name if it is the immediate parent
-    if node.parent is not None and node.parent.parent is None and hasattr(node, 'schema'):
-        metadata.schema = node.schema
+
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
     node_info.label = label if label is not None else node.name
@@ -80,9 +78,10 @@ def _columns(is_refresh: bool, current_path: str, session: ObjectExplorerSession
       obj str: Type of the object to get columns from
       tid int: table or view OID
     """
-    nodes = Column.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Column.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'events', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'Column', label=f'{node.schema}.{node.name}')
         for node in nodes
     ]
 
@@ -109,9 +108,10 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     Expected match_params:
       dbid int: Database OID
     """
-    nodes = Function.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Function.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'functions', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'AggregateFunction', label=f'{node.name}')
         for node in nodes
     ]
 
@@ -121,9 +121,10 @@ def _procedures(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     Expected match_params:
       dbid int: Database OID
     """
-    nodes = Procedure.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Procedure.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'procedures', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'StoredProcedure', label=f'{node.name}')
         for node in nodes
     ]
 
@@ -133,9 +134,10 @@ def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     Expected match_params:
       dbid int: Database OID
     """
-    nodes = Collation.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Collation.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'collations', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'Collation', label=f'{node.name}')
         for node in nodes
     ]
 
@@ -145,9 +147,10 @@ def _charsets(is_refresh: bool, current_path: str, session: ObjectExplorerSessio
     Expected match_params:
       dbid int: Database OID
     """
-    nodes = CharacterSet.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = CharacterSet.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'charsets', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'HistoryTable', label=f'{node.name}')
         for node in nodes
     ]
 
@@ -159,15 +162,12 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
       dbid int: Database OID
       tid int: table OID
     """
-    nodes = Index.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Index.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'indexes', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'Index', label=f'{node.name}')
         for node in nodes
     ]
-
-
-def is_system_request(route_path: str):
-    return '/system/' in route_path
 
 
 def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -189,7 +189,7 @@ def _users(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
     root_server=session.server
     nodes = User.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'Role', label=f'{node.name}')
+        _get_node_info(node, current_path, 'User', label=f'{node.name}')
         for node in nodes
     ]
 
@@ -217,16 +217,17 @@ def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSes
     root_server=session.server
     nodes = Tablespace.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'tablespaces', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'tablespaces', label=f'{node.name}')
         for node in nodes
     ]
 
 
 def _triggers(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of triggers for a table or view"""
-    nodes = Trigger.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Trigger.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'triggers', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'DatabaseTrigger', label=f'{node.name}')
         for node in nodes
     ]
 
@@ -237,16 +238,18 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
     Expected match_params:
       scid int: schema OID
     """
-    nodes = View.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server = session.server
+    nodes = View.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'views', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'View', label=f'{node.name}')
         for node in nodes
     ]
 
 def _events(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict):
-    nodes = Event.get_nodes_for_parent(root_server=None, parent_obj=None, context_args=match_params)
+    root_server=session.server
+    nodes = Event.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'events', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'Statistic', label=f'{node.name}')
         for node in nodes
     ]
 

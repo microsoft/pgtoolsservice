@@ -46,12 +46,6 @@ class Server:
         """Connection to the server/db that this object will use"""
         return self._conn
 
-    # PROPERTIES ###########################################################
-    @property
-    def connection(self) -> ServerConnection:
-        """Connection to the server/db that this object will use"""
-        return self._conn
-
     @property
     def db_connection_callback(self):
         """Connection to the server/db that this object will use"""

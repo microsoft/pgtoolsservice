@@ -112,11 +112,11 @@ class PsycopgConnection(ServerConnection):
     def database_error(self):
         """ Returns the type of database error this connection throws"""
         return self._database_error
-    
+
     @property
     def transaction_in_error(self) -> bool:
         return self._conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR
-    
+
     @property
     def cancellation_query(self) -> str:
         backend_pid = self._conn.get_backend_pid()
