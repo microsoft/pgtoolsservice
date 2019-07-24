@@ -6,4 +6,4 @@
 SELECT
     COLLATION_NAME as name
 FROM INFORMATION_SCHEMA.COLLATIONS
-WHERE CHARACTER_SET_NAME = {{charset_name | string_convert}};
+WHERE CHARACTER_SET_NAME = {{char_name | string_convert}};

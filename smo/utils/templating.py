@@ -109,11 +109,6 @@ def render_template(template_path: str, macro_roots: Optional[List[str]] = None,
         new_env.filters['qtIdent'] = qt_ident
         new_env.filters['qtTypeIdent'] = qt_type_ident
         new_env.filters['hasAny'] = has_any
-
-        # Make the context variables available globally
-        # context_vars = context["context_args"]
-        # for var in context_vars:
-        #     new_env.globals[var] = context_vars[var]
         new_env.filters['string_convert'] = string_convert
 
         TEMPLATE_ENVIRONMENTS[environment_key] = new_env
@@ -121,9 +116,6 @@ def render_template(template_path: str, macro_roots: Optional[List[str]] = None,
     env = TEMPLATE_ENVIRONMENTS[environment_key]
     to_render = env.get_template(filename)
     return to_render.render(**context)
-
-def string_convert(value):
-    return "'{}'".format(str(value))
 
 def render_template_string(source, **context):
     """
@@ -136,6 +128,17 @@ def render_template_string(source, **context):
     template = Template(source)
     return template.render(context)
 
+
+def string_convert(value):
+    """
+    Quotes variables embedded within templates
+    :param - value value to be quoted
+
+    E.g: 
+        6 -> '6'
+        "mysql" -> "'mysql'"
+    """
+    return "'{}'".format(str(value))
 
 def _hash_source_list(sources: list) -> int:
     return hash(frozenset(sources))

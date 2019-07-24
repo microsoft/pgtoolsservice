@@ -5,5 +5,5 @@
 
 SELECT
     COLUMN_NAME as name
-FROM INFORMATION_SCHEMA.STATISTICS
+FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_SCHEMA = {{dbname|string_convert}} AND TABLE_NAME = {{tbl_name|string_convert}};

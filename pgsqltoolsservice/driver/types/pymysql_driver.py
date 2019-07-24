@@ -145,14 +145,16 @@ class PyMySQLConnection(ServerConnection):
         :raises an error: if there was no result set when executing the query
         """
         with self._conn.cursor() as cursor:
-            cursor.execute(query)
-            if all:
-                query_results = cursor.fetchall()
-            else:
-                query_results = cursor.fetchone()
-            cursor.close()
+            try:
+                cursor.execute(query)
+                if all:
+                    query_results = cursor.fetchall()
+                else:
+                    query_results = cursor.fetchone()
 
-        return query_results
+                return query_results
+            finally:
+                cursor.close()
 
     def execute_dict(self, query: str, params=None):
         """
@@ -164,20 +166,23 @@ class PyMySQLConnection(ServerConnection):
         :return: A list of column objects and a list of rows, which are formatted as dicts.
         """
         with self._conn.cursor() as cursor:
-            cursor.execute(query)
+            try:
+                cursor.execute(query)
 
-            # Get a list of column names
-            col_names: List[str] = [col[0] for col in cursor.description]
+                # Get a list of column names
+                col_names: List[str] = [col[0] for col in cursor.description]
 
-            rows: List[dict] = []
-            if cursor.rowcount > 0:
-                for row in cursor:
-                    # Map each column name to the corresponding value in each row
-                    row_dict = {col_names[index]: row for index, row in enumerate(row)}
-                    rows.append(row_dict)
-            cursor.close()
-        return col_names, rows
-
+                rows: List[dict] = []
+                if cursor.rowcount > 0:
+                    for row in cursor:
+                        # Map each column name to the corresponding value in each row
+                        row_dict = {col_names[index]: row for index, row in enumerate(row)}
+                        rows.append(row_dict)
+                return col_names, rows
+            except Exception as e:
+                print(e)
+            finally:
+                cursor.close()
 
     def list_databases(self):
         """

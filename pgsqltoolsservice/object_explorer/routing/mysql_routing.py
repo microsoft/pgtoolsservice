@@ -5,13 +5,15 @@
 
 import re
 from urllib.parse import urljoin, urlparse
-from typing import Callable, Dict, List, Optional, TypeVar, Union
+from typing import Callable, Dict, List, Optional
 
 from smo.common.node_object import NodeObject
 from mysqlsmo import *
 from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession, Folder, RoutingTarget
 from pgsqltoolsservice.object_explorer.contracts import NodeInfo
+
+SYSTEM_DATABASES = {"information_schema", "mysql", "performance_schema"}
 
 # NODE GENERATOR HELPERS ###################################################
 def _get_node_info(
@@ -49,27 +51,6 @@ def _get_node_info(
     return node_info
 
 
-TRefreshObject = TypeVar('NodeObject')
-
-
-def _get_obj_with_refresh(parent_obj: TRefreshObject, is_refresh: bool) -> TRefreshObject:
-    if is_refresh:
-        parent_obj.refresh()
-    return parent_obj
-
-
-def _get_table_or_view(is_refresh: bool, session: ObjectExplorerSession, dbid: any, parent_type: str, tid: any) -> Union[Table, View]:
-    tid = int(tid)
-    if parent_type == 'tables':
-        return _get_obj_with_refresh(session.server.databases[int(dbid)].tables[tid], is_refresh)
-    elif parent_type == 'views':
-        return _get_obj_with_refresh(session.server.databases[int(dbid)].views[tid], is_refresh)
-    elif parent_type == 'materializedviews':
-        return _get_obj_with_refresh(session.server.databases[int(dbid)].materialized_views[tid], is_refresh)
-    else:
-        raise ValueError('Object type to retrieve nodes is invalid')  # TODO: Localize
-
-
 # NODE GENERATORS ##########################################################
 def _columns(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
@@ -81,7 +62,7 @@ def _columns(is_refresh: bool, current_path: str, session: ObjectExplorerSession
     root_server=session.server
     nodes = Column.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'Column', label=f'{node.schema}.{node.name}')
+        _get_node_info(node, current_path, 'Column', label=f'{node.name}')
         for node in nodes
     ]
 
@@ -92,15 +73,13 @@ def _constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSes
       dbid int: Database OID
       tid int: Table or View OID
     """
-    table = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])].tables[int(match_params['tid'])], is_refresh)
-    node_info = []
-    node_info.extend([_get_node_info(node, current_path, 'Constraint') for node in table.check_constraints])
-    node_info.extend([_get_node_info(node, current_path, 'Constraint') for node in table.exclusion_constraints])
-    node_info.extend([_get_node_info(node, current_path, 'Key_ForeignKey') for node in table.foreign_key_constraints])
-    node_info.extend([_get_node_info(node, current_path, 'Constraint') for node in table.index_constraints])
-
-    return sorted(node_info, key=lambda x: x.label)
-
+    pass
+    # root_server=session.server
+    # nodes = Constraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
+    # return [
+    #     _get_node_info(node, current_path, 'Column', label=f'{node.name}')
+    #     for node in nodes
+    # ]
 
 def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
@@ -137,7 +116,7 @@ def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     root_server=session.server
     nodes = Collation.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'Collation', label=f'{node.name}')
+        _get_node_info(node, current_path, 'SystemOtherDataType', label=f'{node.name}')
         for node in nodes
     ]
 
@@ -150,7 +129,7 @@ def _charsets(is_refresh: bool, current_path: str, session: ObjectExplorerSessio
     root_server=session.server
     nodes = CharacterSet.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'HistoryTable', label=f'{node.name}')
+        _get_node_info(node, current_path, 'HistoryTable', label=f'{node.name}', is_leaf=False)
         for node in nodes
     ]
 
@@ -179,7 +158,7 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
     root_server=session.server
     nodes = Table.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'Table', label=f'{node.name}')
+        _get_node_info(node, current_path, 'Table', label=f'{node.name}', is_leaf=False)
         for node in nodes
     ]
 
@@ -199,7 +178,7 @@ def _sysdatabases(is_refresh: bool, current_path: str, session: ObjectExplorerSe
     nodes = Database.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Database', label=f'{node.name}', is_leaf=False)
-        for node in nodes if node.name in ["information_schema", "mysql", "performance_schema"]
+        for node in nodes if node.name in SYSTEM_DATABASES
     ]
 
 def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -208,7 +187,7 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     nodes = Database.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Database', label=f'{node.name}', is_leaf=False)
-        for node in nodes if node.name not in ["information_schema", "mysql", "performance_schema"]
+        for node in nodes if node.name not in SYSTEM_DATABASES
     ]
 
 
@@ -217,7 +196,7 @@ def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSes
     root_server=session.server
     nodes = Tablespace.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'tablespaces', label=f'{node.name}')
+        _get_node_info(node, current_path, 'Queue', label=f'{node.name}')
         for node in nodes
     ]
 
@@ -241,7 +220,7 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
     root_server = session.server
     nodes = View.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'View', label=f'{node.name}')
+        _get_node_info(node, current_path, 'View', label=f'{node.name}', is_leaf=False)
         for node in nodes
     ]
 
@@ -369,14 +348,21 @@ MYSQL_ROUTING_TABLE = {
        None,
         _charsets
     ),
-    # Clicked on one particular charset node
-    re.compile(r'^/charsets/(?P<charid>\d+)/$'): RoutingTarget(
-        None, 
+    # Clicked on one particular charset node, should show the Collations folder
+    re.compile(r'^/charsets/(?P<char_name>\w+)/$'): RoutingTarget(
+         [
+            Folder('Collations', 'collations')
+        ],
+        _default_node_generator
+    ),
+    # Clicked on Collations folder for one particular charset node
+    re.compile(r'^/charsets/(?P<char_name>\w+)/collations/$'): RoutingTarget(
+        None,
         _collations
     ),
     # Clicked on the Roles folder
     re.compile(r'^/users/$'): RoutingTarget(
-        None, 
+        None,
         _users
     ),
     # Clicked on the Tablespaces folder
