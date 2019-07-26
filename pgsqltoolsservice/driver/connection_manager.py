@@ -18,13 +18,13 @@ class ConnectionManager:
         MARIADB_PROVIDER_NAME: PyMySQLConnection
     }
 
-    def __init__(self, provider, params):
+    def __init__(self, provider, conn_options):
 
         # Get info about this connection's provider
         self._provider = provider
 
         # Create a connection using the provider and connection options
-        self._conn_object = self._create_connection(params.connection.options)
+        self._conn_object = self._create_connection(conn_options)
 
     def _create_connection(self, options) -> ServerConnection:
         """

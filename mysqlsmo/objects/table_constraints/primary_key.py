@@ -7,12 +7,12 @@ from typing import Optional
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.utils import templating
 
-class ForeignKey(NodeObject):
+class PrimaryKeyConstraint(NodeObject):
 
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, 'primary_key')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'ForeignKey':
+    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'PrimaryKeyConstraint':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database

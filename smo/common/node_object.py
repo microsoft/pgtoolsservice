@@ -328,7 +328,6 @@ class NodeCollection(Generic[TNC]):
             raise TypeError('Index must be either a string or int')
 
         # Look up the desired item
-
         for item in self._items:
             if lookup(item):
                 return item

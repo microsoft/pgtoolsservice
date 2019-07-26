@@ -73,13 +73,47 @@ def _constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSes
       dbid int: Database OID
       tid int: Table or View OID
     """
-    pass
-    # root_server=session.server
-    # nodes = Constraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
-    # return [
-    #     _get_node_info(node, current_path, 'Column', label=f'{node.name}')
-    #     for node in nodes
-    # ]
+    # Get all the types of constraints
+    primary: List[NodeInfo] = _primary_keys(is_refresh, current_path, session, match_params)
+    foreign: List[NodeInfo] = _foreign_keys(is_refresh, current_path, session, match_params)
+    check: List[NodeInfo] = _check_constraints(is_refresh, current_path, session, match_params)
+    unique: List[NodeInfo] = _unique_constraints(is_refresh, current_path, session, match_params)
+
+    all_constraints: List[NodeInfo] = primary + foreign + check + unique
+    return all_constraints
+
+def _primary_keys(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    root_server=session.server
+    nodes = PrimaryKeyConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
+    return [
+        _get_node_info(node, current_path, 'ColumnMasterKey', label=f'{node.name}')
+        for node in nodes
+    ]
+
+def _foreign_keys(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    root_server=session.server
+    nodes = ForeignKeyConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
+    return [
+        _get_node_info(node, current_path, 'ColumnEncryptionKey', label=f'{node.name}')
+        for node in nodes
+    ]
+
+def _check_constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    root_server=session.server
+    nodes = CheckConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
+    return [
+        _get_node_info(node, current_path, 'Constraint', label=f'{node.name}')
+        for node in nodes
+    ]
+
+def _unique_constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    root_server=session.server
+    nodes = UniqueConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
+    return [
+        _get_node_info(node, current_path, 'AsymmetricKey', label=f'{node.name}')
+        for node in nodes
+    ]
+
 
 def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
@@ -301,7 +335,7 @@ MYSQL_ROUTING_TABLE = {
         None,
         _functions
     ),
-    # Clicked on the Events folder
+    # Clicked on the Events folder, should list event nodes
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/events/$'): RoutingTarget(
         None,
         _events
@@ -338,8 +372,8 @@ MYSQL_ROUTING_TABLE = {
         None,
         _columns
     ),
-    # Clicked on on the Triggers Folder inside of one particular table or view node
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/(?P<obj>tables|views)/(?P<tbl_name>\w+)/triggers/$'): RoutingTarget(
+    # Clicked on on the Triggers Folder inside of one particular table, should list table trigger nodes
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/triggers/$'): RoutingTarget(
         None,
         _triggers
     ),

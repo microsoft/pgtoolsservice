@@ -10,7 +10,18 @@ import pymysql
 
 # Recognized parameter keywords for MySQL connections
 # Source: https://dev.mysql.com/doc/refman/8.0/en/connection-options.html
-# Source:https://pymysql.readthedocs.io/en/latest/modules/connections.html?highlight=mode
+
+MYSQL_CONNECTION_OPTION_KEY_MAP = {
+    'dbname':'database',
+    'connectTimeout': 'connect_timeout',
+    'bindAddress': 'bind_address',
+    'readTimeout': 'read_timeout',
+    'writeTimeout': 'write_timeout',
+    'sqlMode': 'sql_mode',
+    'clientFlag': 'client_flag'
+}
+
+# Source:https://pymysql.readthedocs.io/en/latest/modules/connections.html
 MYSQL_CONNECTION_PARAM_KEYWORDS = [
     'host', 'database', 'user', 'password', 'bind_address', 'port', 'connect_timeout', 
     'read_timeout', 'write_timeout', 'client_flag', 'sql_mode', 'sslmode', 'ssl'
@@ -25,9 +36,11 @@ class PyMySQLConnection(ServerConnection):
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
         """
-        # Map the connection options to their pymysql-specific options
-        self._connection_options = {param: conn_params[param] for param in MYSQL_CONNECTION_PARAM_KEYWORDS 
-        if param in conn_params.keys()}
+        # Map the provided connection parameter names to pymysql param names
+        _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param) : value for param, value in conn_params.items()}
+
+        # Filter the parameters to only those accepted by PyMySQL
+        self._connection_options = {param: value for param, value in _params.items() if param in MYSQL_CONNECTION_PARAM_KEYWORDS}
 
         # If SSL is enabled or allowed
         if "ssl" in conn_params.keys() and self._connection_options["ssl"] != "disable":
@@ -65,6 +78,7 @@ class PyMySQLConnection(ServerConnection):
             int(version_components[1]),
             int(version_components[2])
         )
+        self._connection_closed = False
 
     ###################### PROPERTIES ##################################
     @property
@@ -100,10 +114,15 @@ class PyMySQLConnection(ServerConnection):
         """Returns the server version as a Tuple"""
         return self._version
 
+    @property
+    def connection_options(self):
+        """ Returns the options used to create the current connection to the server """
+        return self._connection_options
+
     @classmethod
     def default_database(cls):
         """Returns the default database for MySQL if no other database is specified"""
-        return None
+        return "mysql"
 
     @property
     def database_error(self):
@@ -117,6 +136,9 @@ class PyMySQLConnection(ServerConnection):
     @property
     def cancellation_query(self) -> str:
         pass
+
+    def connection_closed(self) -> str:
+        return self._connection_closed
 
     ############################# METHODS ##################################
     @autocommit.setter
@@ -205,3 +227,4 @@ class PyMySQLConnection(ServerConnection):
         Closes this current connection.
         """
         self._conn.close()
+        self._connection_closed = True

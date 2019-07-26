@@ -124,7 +124,7 @@ class ConnectionService:
         provider_name = self._service_provider.provider
         try:
             # Get connection to DB server using the provided connection params
-            connection: ServerConnection = ConnectionManager(provider_name, params).get_connection()
+            connection: ServerConnection = ConnectionManager(provider_name, params.connection.options).get_connection()
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:

@@ -8,7 +8,7 @@ from pgsqltoolsservice.admin.contracts import (
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
-
+from pgsqltoolsservice.driver import *
 
 class AdminService(object):
     """Service for general database administration support"""
@@ -32,10 +32,18 @@ class AdminService(object):
     def _handle_get_database_info_request(self, request_context: RequestContext, params: GetDatabaseInfoParameters) -> None:
         # Retrieve the connection from the connection service
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        connection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+        connection: ServerConnection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+
+        # Get the type of server
+        provider_name = self._service_provider.provider
+
+        # Get a temporary connection to DB server using the current connection options
+        # (ensures that 2 threads don't use the same connection)
+        temp_conn: ServerConnection = ConnectionManager(provider_name, connection.connection_options).get_connection()
 
         # Get database owner
-        owner_result = connection.get_database_owner()
+        owner_result = temp_conn.get_database_owner()
+        temp_conn.close()
 
         # Set up and send the response
         options = {

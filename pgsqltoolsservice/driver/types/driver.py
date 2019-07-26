@@ -47,6 +47,19 @@ class ServerConnection(ABC):
         pass
 
     @property
+    @abstractmethod
+    def connection_options(self):
+        """ Returns the options used to create the current connection to the server """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def default_database(cls):
+        """Returns the default database for PostgreSQL if no other database is specified"""
+        pass
+
+    @property
+    @abstractmethod
     def database_error(self):
         """ Returns the type of database error this connection throws"""
         pass

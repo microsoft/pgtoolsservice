@@ -6,4 +6,4 @@
 SELECT 
     EVENT_NAME as name
 FROM information_schema.EVENTS
-WHERE TABLE_SCHEMA = {{dbname|string_convert}};
+WHERE EVENT_SCHEMA = {{dbname|string_convert}};

@@ -102,6 +102,11 @@ class PsycopgConnection(ServerConnection):
     def server_version(self) -> Tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
         return self._version
+    
+    @property
+    def connection_options(self):
+        """ Returns the options used to create the current connection to the server """
+        return self._connection_options
 
     @classmethod
     def default_database(cls):
