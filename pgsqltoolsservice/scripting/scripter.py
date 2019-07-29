@@ -5,7 +5,8 @@
 
 from typing import Callable, Dict, Tuple, TypeVar
 
-from pgsmo import Server
+from mysqlsmo import Server
+from mysqlsmo import Table, View
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from pgsqltoolsservice.driver import ConnectionManager, ServerConnection
@@ -44,11 +45,19 @@ class Scripter(object):
 
         utils.validate.is_not_none('metadata', metadata)
 
-        # Get the object and make sure it supports the operation
-        if metadata.urn:
-            obj: NodeObject = self.server.get_object_by_urn(metadata.urn)
+        if metadata.metadata_type_name == "Table":
+            obj: NodeObject = Table(self.server, metadata.name, metadata.schema)
+        elif metadata.metadata_type_name == "View":
+            obj: NodeObject = View(self.server, metadata.name, metadata.schema)
         else:
-            obj: NodeObject = self.server.get_object(metadata.metadata_type_name, metadata)
+            obj: NodeObject =  None
+        # Get the object and make sure it supports the operation
+        # if metadata.urn:
+        #     obj: NodeObject = self.server.get_object_by_urn(metadata.urn)
+        # else:
+        #     obj: NodeObject = self.server.get_object(metadata.metadata_type_name, metadata)
+
+
         if not isinstance(obj, handler[0]):
             # TODO: Localize
             raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation {operation}')

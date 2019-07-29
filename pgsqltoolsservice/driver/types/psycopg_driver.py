@@ -135,6 +135,12 @@ class PsycopgConnection(ServerConnection):
         :param mode: True or False
         """
         self._conn.autocommit = mode
+
+    def get_cursor(self):
+        """
+        Returns a cursor for the current connection
+        """
+        return self._conn.cursor()
     
     def execute_query(self, query, all=True):
         """

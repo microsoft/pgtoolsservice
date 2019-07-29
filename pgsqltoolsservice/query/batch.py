@@ -106,7 +106,7 @@ class Batch:
         return self._notices
 
     def get_cursor(self, connection: ServerConnection):
-        return connection.cursor()
+        return connection.get_cursor()
 
     def execute(self, conn: ServerConnection) -> None:
         """
@@ -119,26 +119,32 @@ class Batch:
         if self._batch_events and self._batch_events._on_execution_started:
             self._batch_events._on_execution_started(self)
 
+        cursor = None
         try:
             cursor = self.get_cursor(conn)
             cursor.execute(self.batch_text)
 
             self.after_execute(cursor)
-        except psycopg2.DatabaseError as error:
+        except conn.database_error as error:
             self._has_error = True
             # We just raise the error with primary message and not the cursor stacktrace
-            raise psycopg2.DatabaseError(error.diag.message_primary) from error
+            raise conn.database_error(error.diag.message_primary) from error
+
+        except Exception as e:
+            pass
+            pass
+            print(e)
         finally:
             # We are doing this because when the execute fails for named cursors
             # cursor is not activated on the server which results in failure on close
             # Hence we are checking if the cursor was really executed for us to close it
-            if cursor.rowcount != -1 and cursor.rowcount is not None:
+            if cursor and cursor.rowcount != -1 and cursor.rowcount is not None:
                 cursor.close()
             self._has_executed = True
             self._execution_end_time = datetime.now()
-            self._notices = cursor.connection.notices
+            # self._notices = cursor.connection.notices
 
-            cursor.connection.notices = []
+            # cursor.connection.notices = []
 
             if self._batch_events and self._batch_events._on_execution_completed:
                 self._batch_events._on_execution_completed(self)
@@ -173,7 +179,8 @@ class SelectBatch(Batch):
         # Named cursors can be created only in the transaction. As our connection has autocommit set to true
         # there is not transaction concept with it so we need to have withhold to true and as this cursor is local
         # and we explicitly close it we are good
-        return connection.cursor(name=cursor_name, withhold=True)
+        # return connection.cursor(name=cursor_name, withhold=True)
+        return connection.get_cursor()
 
     def after_execute(self, cursor) -> None:
         super().create_result_set(cursor)

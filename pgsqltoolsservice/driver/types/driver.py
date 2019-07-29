@@ -85,6 +85,13 @@ class ServerConnection(ABC):
         pass
     
     @abstractmethod
+    def get_cursor(self):
+        """
+        Returns a cursor for the current connection
+        """
+        pass
+
+    @abstractmethod
     def execute_query(self, query: str, all=True):
         """
         Execute a simple query without arguments for the given connection

@@ -277,7 +277,6 @@ DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_PG_LSN_ARRAY: convert_list
 }
 
-
 def get_bytes_converter(type_value: object) -> Callable[[Any], bytearray]:
     """ This method gets the converter based on data type.
     For User-Defined Type(UDT), it gets convert_str due to UDT are serialized as str """

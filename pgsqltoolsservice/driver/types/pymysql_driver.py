@@ -160,6 +160,12 @@ class PyMySQLConnection(ServerConnection):
 
         # # Check that we connected successfully
         # assert type(self._conn) is pymysql.connections.Connection
+
+    def get_cursor(self):
+        """
+        Returns a cursor for the current connection
+        """
+        return self._conn.cursor()
     
     def execute_query(self, query: str, all=True):
         """
