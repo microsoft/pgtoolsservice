@@ -4,6 +4,7 @@
 #}
 
 SELECT 
-    ROUTINE_NAME as name
+    ROUTINE_NAME as name,
+    ROUTINE_SCHEMA as dbname
 FROM information_schema.ROUTINES
 WHERE ROUTINE_TYPE = 'FUNCTION' AND ROUTINE_SCHEMA = {{dbname|string_convert}};

@@ -6,11 +6,12 @@
 from typing import Optional               # noqa
 
 from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from smo.utils import templating
 from mysqlsmo.objects.server.server import Server as s    # noqa
 from pgsqltoolsservice.driver import ServerConnection    # noqa
 
-class Database(NodeObject):
+class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -40,9 +41,21 @@ class Database(NodeObject):
         Initializes a new instance of a database
         """
         NodeObject.__init__(self, server, None, name)
+        ScriptableCreate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
+        ScriptableDelete.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
 
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    def _create_query_data(self) -> dict:
+        """ Return the data input for create query """
+        pass
+
+    def _delete_query_data(self) -> dict:
+        """ Return the data input for delete query """
+        return {
+            "dbname": self._name
+        }

@@ -4,12 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import List
-
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from smo.common.node_object import NodeCollection, NodeObject
 import smo.utils.templating as templating
 
 
-class Table(NodeObject):
+class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
@@ -24,13 +24,40 @@ class Table(NodeObject):
             name str: Name of the table
         :return: A table instance
         """
-        table = cls(server, None, kwargs["name"])
+        table = cls(server, kwargs["name"], kwargs["dbname"])
         return table
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: 's.Server', name: str, dbname: str):
         NodeObject.__init__(self, server, None, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
+
+        self._dbname = dbname
+
 
     # PROPERTIES ###########################################################
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    def _create_query_data(self) -> dict:
+        """ Provides data input for create script """
+        return {
+            "dbname": self._dbname,
+            "tbl_name": self._name
+        }
+
+    def _delete_query_data(self) -> dict:
+        """ Provides data input for delete script """
+        return {
+            "dbname": self._dbname,
+            "tbl_name": self._name
+        }
+
+    def _select_query_data(self) -> dict:
+        """Provides data input for select script"""
+        return {
+            "dbname": self._dbname,
+            "tbl_name": self._name
+        }

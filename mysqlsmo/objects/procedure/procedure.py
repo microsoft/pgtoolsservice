@@ -5,9 +5,10 @@
 
 from typing import Optional
 from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from smo.utils import templating
 
-class Procedure(NodeObject):
+class Procedure(NodeObject, ScriptableCreate, ScriptableDelete):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -29,15 +30,33 @@ class Procedure(NodeObject):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs["name"])
-        return db
+        proc = cls(server, kwargs["name"], kwargs["dbname"])
+        return proc
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: 's.Server', name: str, dbname: str):
         """
         Initializes a new instance of a database
         """
         NodeObject.__init__(self, server, None, name)
+        ScriptableCreate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
+        ScriptableDelete.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
+
+        self._dbname = dbname
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    def _create_query_data(self) -> dict:
+        """ Return the data input for create query """
+        return {
+            "dbname": self._dbname,
+            "proc_name": self._name
+        }
+
+    def _delete_query_data(self) -> dict:
+        """ Return the data input for delete query """
+        return {
+            "dbname": self._dbname,
+            "proc_name": self._name
+        }

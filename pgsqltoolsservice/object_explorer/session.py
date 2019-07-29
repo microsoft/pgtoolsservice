@@ -21,6 +21,7 @@ class ObjectExplorerSession:
         self.init_task: Optional[threading.Thread] = None
         self.expand_tasks: Dict[str, threading.Thread] = {}
         self.refresh_tasks: Dict[str, threading.Thread] = {}
+        self.cache: Dict[str, List[NodeInfo]] = {}
 
 class Folder:
     """Defines a folder that should be added to the top of a list of nodes"""

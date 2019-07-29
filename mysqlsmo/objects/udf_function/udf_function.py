@@ -5,15 +5,15 @@
 
 from typing import Optional
 from smo.common.node_object import NodeCollection, NodeObject
-from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from smo.utils import templating
 
-class Event(NodeObject, ScriptableCreate, ScriptableDelete):
+class UserDefinedFunction(NodeObject, ScriptableCreate, ScriptableDelete):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Event':
+    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'UserDefinedFunction':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -30,19 +30,18 @@ class Event(NodeObject, ScriptableCreate, ScriptableDelete):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs["name"], kwargs["dbname"])
-        return db
+        udf = cls(server, kwargs["name"])
+        udf._soname = kwargs["soname"]
+        udf._return_type = kwargs["return_type"]
+        return udf
 
-    def __init__(self, server: 's.Server', name: str, dbname: str):
+    def __init__(self, server: 's.Server', name: str):
         """
         Initializes a new instance of a database
         """
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
         ScriptableDelete.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
-        ScriptableUpdate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
-
-        self._dbname = dbname
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
@@ -51,16 +50,13 @@ class Event(NodeObject, ScriptableCreate, ScriptableDelete):
     def _create_query_data(self) -> dict:
         """ Return the data input for create query """
         return {
-            "dbname": self._dbname,
-            "event_name": self._name
+            "fn_name": self._name,
+            "dl": self._soname,
+            "ret": self._return_type
         }
 
     def _delete_query_data(self) -> dict:
         """ Return the data input for delete query """
         return {
-            "dbname": self._dbname,
-            "event_name": self._name
+            "fn_name": self._name
         }
-    
-    def _update_query_data(self) -> dict:
-        pass

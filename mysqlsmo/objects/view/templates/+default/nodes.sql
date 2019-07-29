@@ -4,6 +4,7 @@
 #}
 
 SELECT 
-    TABLE_NAME as name
+    TABLE_NAME as name,
+    TABLE_SCHEMA as dbname
 FROM information_schema.TABLES
 WHERE TABLE_TYPE = 'VIEW' AND TABLE_SCHEMA = {{dbname | string_convert}};

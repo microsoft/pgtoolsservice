@@ -5,9 +5,10 @@
 
 from typing import Optional
 from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from smo.utils import templating
 
-class View(NodeObject):
+class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -29,15 +30,46 @@ class View(NodeObject):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs["name"])
-        return db
+        view = cls(server, kwargs["name"], kwargs["dbname"])
+        return view
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: 's.Server', name: str, dbname: str):
         """
         Initializes a new instance of a database
         """
         NodeObject.__init__(self, server, None, name)
+        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
+
+        self._dbname = dbname
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    def _create_query_data(self) -> dict:
+        """ Provides data input for create script """
+        return {
+            "dbname": self._dbname,
+            "view_name": self._name
+        }
+
+    def _delete_query_data(self) -> dict:
+        """ Provides data input for delete script """
+        return {
+            "dbname": self._dbname,
+            "view_name": self._name
+        }
+
+    def _update_query_data(self) -> dict:
+        """ Provides data input for update script """
+        return {"data": {}}
+
+    def _select_query_data(self) -> dict:
+        """Provides data input for select script"""
+        return {
+            "dbname": self._dbname,
+            "view_name": self._name
+        }

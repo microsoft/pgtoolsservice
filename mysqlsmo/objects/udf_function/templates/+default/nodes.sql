@@ -4,7 +4,7 @@
 #}
 
 SELECT 
-    ROUTINE_NAME as name,
-    ROUTINE_SCHEMA as dbname
-FROM information_schema.ROUTINES
-WHERE ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_SCHEMA = {{dbname|string_convert}};
+    name as name,
+    ret as return_type,
+    dl as soname
+FROM mysql.func;

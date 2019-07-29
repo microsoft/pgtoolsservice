@@ -13,7 +13,7 @@ from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession, Folder, RoutingTarget
 from pgsqltoolsservice.object_explorer.contracts import NodeInfo
 
-SYSTEM_DATABASES = {"information_schema", "mysql", "performance_schema"}
+SYSTEM_DATABASES = {"information_schema", "mysql", "performance_schema", "sys"}
 
 # NODE GENERATOR HELPERS ###################################################
 def _get_node_info(
@@ -76,17 +76,17 @@ def _constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSes
     # Get all the types of constraints
     primary: List[NodeInfo] = _primary_keys(is_refresh, current_path, session, match_params)
     foreign: List[NodeInfo] = _foreign_keys(is_refresh, current_path, session, match_params)
-    check: List[NodeInfo] = _check_constraints(is_refresh, current_path, session, match_params)
+    #check: List[NodeInfo] = _check_constraints(is_refresh, current_path, session, match_params)
     unique: List[NodeInfo] = _unique_constraints(is_refresh, current_path, session, match_params)
 
-    all_constraints: List[NodeInfo] = primary + foreign + check + unique
+    all_constraints: List[NodeInfo] = primary + foreign + unique #+ check
     return all_constraints
 
 def _primary_keys(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     root_server=session.server
     nodes = PrimaryKeyConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'ColumnMasterKey', label=f'{node.name}')
+        _get_node_info(node, current_path, 'ColumnMasterKey', label='(Primary Key) {}'.format(node.name))
         for node in nodes
     ]
 
@@ -94,7 +94,7 @@ def _foreign_keys(is_refresh: bool, current_path: str, session: ObjectExplorerSe
     root_server=session.server
     nodes = ForeignKeyConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'ColumnEncryptionKey', label=f'{node.name}')
+        _get_node_info(node, current_path, 'ColumnEncryptionKey', label='(Foreign Key) {}'.format(node.name))
         for node in nodes
     ]
 
@@ -110,7 +110,7 @@ def _unique_constraints(is_refresh: bool, current_path: str, session: ObjectExpl
     root_server=session.server
     nodes = UniqueConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'AsymmetricKey', label=f'{node.name}')
+        _get_node_info(node, current_path, 'AsymmetricKey', label='(Unique) {}'.format(node.name))
         for node in nodes
     ]
 
