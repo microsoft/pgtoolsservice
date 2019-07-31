@@ -10,44 +10,38 @@ from pymysql.converters import encoders
 ENCODING_TYPE = "utf-8"
 
 def convert_bytes_to_float(value) -> float:
-    """Note: The result is a tuple even if it contains exactly one item """
-    # Step 1: Convert the bytes to a Python datatype
-    python_float = struct.unpack('d', value)[0]
-    
-    # Step 2: Convert the Python object to mysql object
-    encoding_fn = encoders[type(python_float)]
-    return encoding_fn(python_float)
+    """ The result is a tuple even if it contains exactly one item """
+    return struct.unpack('d', value)[0]
 
 def convert_bytes_to_int(value) -> int:
-    """Note: The result is a tuple even if it contains exactly one item """
-    # Step 1: Convert the bytes to a Python datatype
-    python_int = struct.unpack('i', value)[0]
-    
-    # Step 2: Convert the Python object to mysql object
-    encoding_fn = encoders[type(python_int)]
-    return encoding_fn(python_int)
+    """ Range of integer in pg is the same with int or long in c,
+    we unpack the value in int format """
+    return struct.unpack('i', value)[0]
 
-def from_bytes(value):
-    # Step 1: Convert the bytes to a Python datatype
-    decoded_val = value.decode(ENCODING_TYPE)
-    python_object = eval(decoded_val)
+def convert_bytes_to_long_long(value) -> int:
+    return struct.unpack('q', value)[0]
 
-    # Step 2: Convert the Python object to mysql object
-    encoding_fn = encoders[type(python_object)]
-    return encoding_fn(python_object)
-    
-def convert_bytes_to_set(value):
-    # Step 1: Convert the bytes to a Python datatype
-    decoded_val = value.decode(ENCODING_TYPE)
-    python_set = eval(decoded_val)
+def convert_bytes_to_str(value) -> str:
+    return value.decode(ENCODING_TYPE)
 
-    # Step 2: Convert the Python set to mysql set
-    encoding_fn = encoders[type(python_set)]
-    return encoding_fn(python_set, None, None)
+def convert_bytes_to_decimal(value) -> str:
+    return convert_bytes_to_str(value)
+
+def convert_bytes_to_date(value) -> str:
+    return convert_bytes_to_str(value)
+
+def convert_bytes_to_time(value) -> str:
+    return convert_bytes_to_str(value)
+
+def convert_bytes_to_datetime(value) -> str:
+    return convert_bytes_to_str(value)
+
+def convert_bytes_to_timedelta(value) -> str:
+    return convert_bytes_to_str(value)
 
 
 MYSQL_DATATYPE_READER_MAP = {
-    FIELD_TYPE.BIT: from_bytes,
+    FIELD_TYPE.BIT: convert_bytes_to_int,
     FIELD_TYPE.TINY: convert_bytes_to_int,
     FIELD_TYPE.SHORT: convert_bytes_to_int,
     FIELD_TYPE.LONG: convert_bytes_to_int,
@@ -56,18 +50,18 @@ MYSQL_DATATYPE_READER_MAP = {
     FIELD_TYPE.LONGLONG: convert_bytes_to_int,
     FIELD_TYPE.INT24: convert_bytes_to_int,
     FIELD_TYPE.YEAR: convert_bytes_to_int,
-    FIELD_TYPE.TIMESTAMP: from_bytes,
-    FIELD_TYPE.DATETIME: from_bytes,
-    FIELD_TYPE.TIME: from_bytes,
-    FIELD_TYPE.DATE: from_bytes,
-    FIELD_TYPE.SET: convert_bytes_to_set,
-    FIELD_TYPE.BLOB: from_bytes,
-    FIELD_TYPE.TINY_BLOB: from_bytes,
-    FIELD_TYPE.MEDIUM_BLOB: from_bytes,
-    FIELD_TYPE.LONG_BLOB: from_bytes,
-    FIELD_TYPE.STRING: from_bytes,
-    FIELD_TYPE.VAR_STRING: from_bytes,
-    FIELD_TYPE.VARCHAR: from_bytes,
-    FIELD_TYPE.DECIMAL: from_bytes,
-    FIELD_TYPE.NEWDECIMAL: from_bytes
+    FIELD_TYPE.TIMESTAMP: convert_bytes_to_datetime,
+    FIELD_TYPE.DATETIME: convert_bytes_to_datetime,
+    FIELD_TYPE.TIME: convert_bytes_to_time,
+    FIELD_TYPE.DATE: convert_bytes_to_date,
+    FIELD_TYPE.SET: convert_bytes_to_str,
+    FIELD_TYPE.BLOB: convert_bytes_to_str,
+    FIELD_TYPE.TINY_BLOB: convert_bytes_to_str,
+    FIELD_TYPE.MEDIUM_BLOB: convert_bytes_to_str,
+    FIELD_TYPE.LONG_BLOB: convert_bytes_to_str,
+    FIELD_TYPE.STRING: convert_bytes_to_str,
+    FIELD_TYPE.VAR_STRING: convert_bytes_to_str,
+    FIELD_TYPE.VARCHAR: convert_bytes_to_str,
+    FIELD_TYPE.DECIMAL: convert_bytes_to_decimal,
+    FIELD_TYPE.NEWDECIMAL: convert_bytes_to_decimal
 }

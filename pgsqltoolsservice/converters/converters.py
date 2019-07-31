@@ -18,8 +18,10 @@ READERS = {
     utils.constants.PG_PROVIDER_NAME : PG_DATATYPE_READER_MAP
 }
 
-def get_any_to_bytes_converter(type_value: object) -> Callable[[Any], bytearray]:
-    pass
+def get_any_to_bytes_converter(type_value: object, provider: str) -> Callable[[Any], bytearray]:
+    writer_map: dict = WRITERS[provider]
+    return writer_map.get(type_value, None)
 
-def get_bytes_to_any_converter(type_value: str) -> Callable[[bytes], Any]:
-    pass
+def get_bytes_to_any_converter(type_value: str, provider: str) -> Callable[[bytes], Any]:
+    reader_map: dict = READERS[provider]
+    return reader_map.get(type_value, None)

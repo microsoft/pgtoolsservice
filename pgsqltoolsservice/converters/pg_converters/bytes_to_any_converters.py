@@ -129,10 +129,3 @@ PG_DATATYPE_READER_MAP = {
     datatypes.DATATYPE_OID: convert_bytes_to_int,
     datatypes.DATATYPE_BYTEA: convert_bytes_to_memoryview
 }
-
-
-# def get_bytes_to_any_converter(type_value: str) -> Callable[[bytes], Any]:
-#     """ This method gets the converter based on data type.
-#     For User-Defined Type(UDT), it gets convert_bytes_to_str
-#     due to UDT are de-serialized from str """
-#     return DATATYPE_READER_MAP.get(type_value, convert_bytes_to_str)

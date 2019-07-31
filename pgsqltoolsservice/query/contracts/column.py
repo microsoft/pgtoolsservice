@@ -41,8 +41,9 @@ class DbColumn:
         self.is_key: bool = None
         self.is_read_only: bool = False
         self.is_unique: bool = None
-        self.data_type: str = None
+        self.data_type = None
         self.is_updatable: bool = False
+        self._provider = "MySQL"
 
     @property
     def is_chars(self) -> bool:
@@ -68,6 +69,10 @@ class DbColumn:
     def is_json(self) -> bool:
         return self.data_type == datatypes.DATATYPE_JSON or self.data_type == datatypes.DATATYPE_JSONB
 
+    @property
+    def provider(self) -> str:
+        return self._provider
+
     # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) containing a 7-item sequence.
     # Each inner sequence item can be referenced by using DESC
@@ -82,7 +87,7 @@ class DbColumn:
         column_name = get_column_name(column_ordinal, cursor_description[DESC['name']])
         instance.base_column_name: str = column_name
         instance.column_name: str = column_name
-
+        instance.data_type = cursor_description[DESC['type_code']]
         # From documentation, it seems like 'internal_size' is for the max size and
         # 'display_size' is for the actual size based off of the largest entry in the column so far.
         # 'display_size' is always 'None' by default since it's expensive to calculate.
