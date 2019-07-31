@@ -32,7 +32,13 @@ def convert_long_long(value: int):
     return bytearray(struct.pack("q", value))
 
 def convert_str(value: str):
-    return bytearray(value.encode(ENCODING_TYPE))
+    return bytearray(str(value).encode(ENCODING_TYPE))
+
+def bytes_to_bytearray(value):
+    """
+    If value is type <bytes>, then we convert to a bytearray
+    """
+    return bytearray(list(value))
 
 def convert_decimal(value: decimal.Decimal):
     """ We convert the decimal to string representation,
@@ -74,6 +80,7 @@ MYSQL_DATATYPE_WRITER_MAP = {
     FIELD_TYPE.DATETIME: convert_datetime,
     FIELD_TYPE.TIME: convert_time,
     FIELD_TYPE.DATE: convert_date,
+    FIELD_TYPE.NEWDATE: convert_date,
     FIELD_TYPE.SET: lambda value: to_bytes(value, FIELD_TYPE.SET),
     FIELD_TYPE.BLOB: convert_str,
     FIELD_TYPE.TINY_BLOB: convert_str,
@@ -83,6 +90,8 @@ MYSQL_DATATYPE_WRITER_MAP = {
     FIELD_TYPE.VAR_STRING: convert_str,
     FIELD_TYPE.VARCHAR: convert_str,
     FIELD_TYPE.DECIMAL: convert_decimal,
-    FIELD_TYPE.NEWDECIMAL: convert_decimal
+    FIELD_TYPE.NEWDECIMAL: convert_decimal,
+    FIELD_TYPE.GEOMETRY: convert_str,
+    FIELD_TYPE.ENUM: convert_str
 }
 

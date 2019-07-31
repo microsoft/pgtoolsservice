@@ -373,6 +373,7 @@ class QueryExecutionService(object):
             # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
             return params.query
 
+    # TODO: Fix this function
     def _resolve_query_exception(self, e: Exception, query: Query, request_context: RequestContext, conn: ServerConnection, is_rollback_error=False):
         utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query.query_text}\n {e}')
         if isinstance(e, conn.database_error) or isinstance(e, RuntimeError):

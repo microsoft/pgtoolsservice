@@ -54,6 +54,7 @@ MYSQL_DATATYPE_READER_MAP = {
     FIELD_TYPE.DATETIME: convert_bytes_to_datetime,
     FIELD_TYPE.TIME: convert_bytes_to_time,
     FIELD_TYPE.DATE: convert_bytes_to_date,
+    FIELD_TYPE.NEWDATE: convert_bytes_to_date,
     FIELD_TYPE.SET: convert_bytes_to_str,
     FIELD_TYPE.BLOB: convert_bytes_to_str,
     FIELD_TYPE.TINY_BLOB: convert_bytes_to_str,
@@ -63,5 +64,7 @@ MYSQL_DATATYPE_READER_MAP = {
     FIELD_TYPE.VAR_STRING: convert_bytes_to_str,
     FIELD_TYPE.VARCHAR: convert_bytes_to_str,
     FIELD_TYPE.DECIMAL: convert_bytes_to_decimal,
-    FIELD_TYPE.NEWDECIMAL: convert_bytes_to_decimal
+    FIELD_TYPE.NEWDECIMAL: convert_bytes_to_decimal,
+    FIELD_TYPE.ENUM: convert_bytes_to_str,
+    FIELD_TYPE.GEOMETRY: convert_bytes_to_str
 }
