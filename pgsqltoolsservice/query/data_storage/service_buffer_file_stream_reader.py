@@ -9,7 +9,7 @@ import struct
 
 from pgsqltoolsservice.parsers import datatypes
 from pgsqltoolsservice.query.contracts.column import DbColumn, DbCellValue
-from pgsqltoolsservice.converters.bytes_to_any_converters import get_bytes_to_any_converter
+from pgsqltoolsservice.converters import get_bytes_to_any_converter
 
 from pgsqltoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
 

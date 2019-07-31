@@ -6,6 +6,7 @@
 from typing import List, Mapping, Tuple
 import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.driver.types import ServerConnection
+from pgsqltoolsservice.utils import constants
 import psycopg2
 from psycopg2.extensions import Column, connection, cursor, TRANSACTION_STATUS_INERROR
 
@@ -30,7 +31,7 @@ PG_CONNECTION_PARAM_KEYWORDS = [
 ]
 
 
-class PsycopgConnection(ServerConnection):
+class PostgreSQLConnection(ServerConnection):
     """Wrapper for a psycopg2 connection that makes various properties easier to access"""
 
     def __init__(self, conn_params):
@@ -69,6 +70,9 @@ class PsycopgConnection(ServerConnection):
             int(version_string[-2:])
         )
 
+        # Setting the provider for this connection
+        self._provider_name = constants.PG_PROVIDER_NAME
+
     ###################### PROPERTIES ##################################
     @property
     def autocommit(self) -> bool:
@@ -104,14 +108,19 @@ class PsycopgConnection(ServerConnection):
         return self._version
     
     @property
+    def server_type(self) -> str:
+        """Server type for distinguishing between standard PG and PG supersets"""
+        return 'pg'  # TODO: Determine if a server is PPAS or PG
+
+    @property
     def connection_options(self):
         """ Returns the options used to create the current connection to the server """
         return self._connection_options
 
-    @classmethod
-    def default_database(cls):
+    @property
+    def default_database(self):
         """Returns the default database for PostgreSQL if no other database is specified"""
-        return "postgres"
+        return constants.DEFAULT_DB[self._provider_name]
 
     @property
     def database_error(self):

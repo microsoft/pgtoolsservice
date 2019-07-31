@@ -3,8 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pgsqltoolsservice.driver.types.driver import ServerConnection
-from pgsqltoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
-from pgsqltoolsservice.driver.types.pymysql_driver import MySQLConnection
+from pgsqltoolsservice.converters.mysql_converters.any_to_bytes_converters import MYSQL_DATATYPE_WRITER_MAP
+from pgsqltoolsservice.converters.mysql_converters.bytes_to_any_converters import MYSQL_DATATYPE_READER_MAP
 
-__all__ = ['ServerConnection', 'MySQLConnection', 'PostgreSQLConnection']
+__all__ = ["MYSQL_DATATYPE_READER_MAP", "MYSQL_DATATYPE_WRITER_MAP"]

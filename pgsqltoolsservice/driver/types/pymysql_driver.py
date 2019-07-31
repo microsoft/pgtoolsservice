@@ -5,6 +5,7 @@
 
 from typing import List, Mapping, Tuple
 from pgsqltoolsservice.driver.types import ServerConnection
+from pgsqltoolsservice.utils import constants
 import re
 import pymysql
 
@@ -28,7 +29,7 @@ MYSQL_CONNECTION_PARAM_KEYWORDS = [
 ]
 
 
-class PyMySQLConnection(ServerConnection):
+class MySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
 
     def __init__(self, conn_params):
@@ -62,6 +63,7 @@ class PyMySQLConnection(ServerConnection):
 
         # Check that we connected successfully
         assert type(self._conn) is pymysql.connections.Connection
+        self._connection_closed = False
 
         # Find the class of the database error this driver throws
         self._database_error = pymysql.err.DatabaseError
@@ -78,7 +80,13 @@ class PyMySQLConnection(ServerConnection):
             int(version_components[1]),
             int(version_components[2])
         )
-        self._connection_closed = False
+
+        # Find what type of server we have connected to
+        if version_components[3] == "MariaDB":
+            self._provider_name = constants.MARIADB_PROVIDER_NAME
+        else:
+            self._provider_name = constants.MYSQL_PROVIDER_NAME
+        
 
     ###################### PROPERTIES ##################################
     @property
@@ -115,14 +123,19 @@ class PyMySQLConnection(ServerConnection):
         return self._version
 
     @property
-    def connection_options(self):
+    def server_type(self) -> str:
+        """Server type for distinguishing between MariaDB and MySQL"""
+        return self._provider_name
+
+    @property
+    def connection_options(self) -> dict:
         """ Returns the options used to create the current connection to the server """
         return self._connection_options
 
-    @classmethod
-    def default_database(cls):
+    @property
+    def default_database(self) -> str:
         """Returns the default database for MySQL if no other database is specified"""
-        return "mysql"
+        return constants.DEFAULT_DB[self._provider_name]
 
     @property
     def database_error(self):
@@ -232,5 +245,6 @@ class PyMySQLConnection(ServerConnection):
         """
         Closes this current connection.
         """
-        self._conn.close()
-        self._connection_closed = True
+        if not self._connection_closed:
+            self._conn.close()
+            self._connection_closed = True

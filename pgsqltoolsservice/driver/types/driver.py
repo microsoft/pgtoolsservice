@@ -45,22 +45,28 @@ class ServerConnection(ABC):
     def server_version(self) -> Tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
         pass
+    
+    @property
+    @abstractmethod
+    def server_type(self) -> str:
+        """Returns the server type/provider"""
+        pass
 
     @property
     @abstractmethod
-    def connection_options(self):
+    def connection_options(self) -> dict:
         """ Returns the options used to create the current connection to the server """
         pass
 
-    @classmethod
+    @property
     @abstractmethod
-    def default_database(cls):
-        """Returns the default database for PostgreSQL if no other database is specified"""
+    def default_database(self) -> str:
+        """Returns the default database if no other database is specified"""
         pass
 
     @property
     @abstractmethod
-    def database_error(self):
+    def database_error(self) -> str:
         """ Returns the type of database error this connection throws"""
         pass
 

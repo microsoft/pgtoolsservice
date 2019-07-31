@@ -8,7 +8,6 @@ from psycopg2 import sql
 
 from pgsqltoolsservice.query.contracts import DbColumn
 
-
 def get_columns_info(description, connection) -> List[DbColumn]:
 
     if description is None:
