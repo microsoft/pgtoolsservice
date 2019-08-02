@@ -9,6 +9,7 @@ from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 from pgsqltoolsservice.driver import ServerConnection
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 import smo.utils as utils
+from mysqlsmo.objects.database.database import Database
 
 
 class Server:
@@ -32,6 +33,9 @@ class Server:
         # These properties will be defined later
         # self._recovery_props: NodeLazyPropertyCollection = NodeLazyPropertyCollection(self._fetch_recovery_state)
 
+        self._child_objects: Mapping[str, NodeCollection] = {
+            Database.__name__: NodeCollection(lambda: Database.get_nodes_for_parent(self, None, None))
+        }
         # Declare the child objects
         # self._child_objects: Mapping[str, NodeCollection] = {
         #     Database.__name__: NodeCollection(lambda: Database.get_nodes_for_parent(self, None))
@@ -96,10 +100,10 @@ class Server:
     # #     return self._recovery_props.get('isreplaypaused')
 
     # # -CHILD OBJECTS #######################################################
-    # @property
-    # def databases(self) -> NodeCollection[Database]:
-    #     """Databases that belong to the server"""
-    #     return self._child_objects[Database.__name__]
+    @property
+    def databases(self) -> NodeCollection[Database]:
+        """Databases that belong to the server"""
+        return self._child_objects[Database.__name__]
 
     # @property
     # def maintenance_db(self) -> Database:

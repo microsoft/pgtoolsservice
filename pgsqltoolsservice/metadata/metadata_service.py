@@ -6,7 +6,7 @@
 import threading
 from typing import List
 
-from pgsqltoolsservice.driver import *
+from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.metadata.contracts import (
@@ -87,22 +87,13 @@ class MetadataService:
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection: ServerConnection = connection_service.get_connection(owner_uri, ConnectionType.DEFAULT)
 
-        # Get the type of server
-        provider_name = self._service_provider.provider
-
-        # Get a temporary connection to DB server using the current connection options
-        # (ensures that 2 threads don't use the same connection)
-        temp_conn: ServerConnection = ConnectionManager(provider_name, connection.connection_options).get_connection()
-
         # Get the current database
         database_name = connection.database_name
 
         # Get the metadata query specific to the current provider and fill in the database name
         metadata_query = QUERY_MAP[self._service_provider.provider].format(database_name)
 
-        # Execute the query with the temporary connection, then close
-        query_results = temp_conn.execute_query(metadata_query, all=True)
-        temp_conn.close()
+        query_results = connection.execute_query(metadata_query, all=True)
 
         metadata_list = []
         for row in query_results:
@@ -112,9 +103,9 @@ class MetadataService:
             metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
         return metadata_list
 
-
 _METADATA_TYPE_MAP = {
     'f': MetadataType.FUNCTION,
     't': MetadataType.TABLE,
-    'v': MetadataType.VIEW
+    'v': MetadataType.VIEW,
+    's': MetadataType.SPROC
 }

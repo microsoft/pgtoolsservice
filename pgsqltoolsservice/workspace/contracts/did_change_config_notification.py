@@ -101,15 +101,15 @@ class Configuration(Serializable):
     """
     @classmethod
     def get_child_serializable_types(cls):
-        return {'sql': SQLConfiguration, 'pgsql': PGSQLConfiguration, 'mysql': MySQLConfiguration}
+        return {'sql': SQLConfiguration, 'pgsql': PGSQLConfiguration, 'my_sql': MySQLConfiguration}
 
     def __init__(self):
         self.sql = SQLConfiguration()
         self.pgsql = PGSQLConfiguration()
-        self.mysql = MySQLConfiguration()
+        self.my_sql = MySQLConfiguration()
 
     def get_configuration(self, provider):
-        return {'MySQL': self.mysql, 'PGSQL':self.pgsql}[provider]
+        return {'MySQL': self.my_sql, 'PGSQL':self.pgsql}[provider]
 
 class DidChangeConfigurationParams(Serializable):
     """

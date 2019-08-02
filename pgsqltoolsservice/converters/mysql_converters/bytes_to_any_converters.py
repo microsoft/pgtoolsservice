@@ -47,7 +47,7 @@ MYSQL_DATATYPE_READER_MAP = {
     FIELD_TYPE.LONG: convert_bytes_to_int,
     FIELD_TYPE.FLOAT: convert_bytes_to_float,
     FIELD_TYPE.DOUBLE: convert_bytes_to_float,
-    FIELD_TYPE.LONGLONG: convert_bytes_to_int,
+    FIELD_TYPE.LONGLONG: convert_bytes_to_long_long,
     FIELD_TYPE.INT24: convert_bytes_to_int,
     FIELD_TYPE.YEAR: convert_bytes_to_int,
     FIELD_TYPE.TIMESTAMP: convert_bytes_to_datetime,

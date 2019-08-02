@@ -145,6 +145,12 @@ class PostgreSQLConnection(ServerConnection):
         """
         self._conn.autocommit = mode
 
+    def commit(self):
+        """
+        Commits the current transaction
+        """
+        self._conn.commit()
+    
     def get_cursor(self):
         """
         Returns a cursor for the current connection

@@ -123,17 +123,14 @@ class Batch:
         try:
             cursor = self.get_cursor(conn)
             cursor.execute(self.batch_text)
+            if conn.autocommit:
+                conn.commit()
 
             self.after_execute(cursor)
         except conn.database_error as error:
             self._has_error = True
             # We just raise the error with primary message and not the cursor stacktrace
-            raise conn.database_error(error.diag.message_primary) from error
-
-        except Exception as e:
-            pass
-            pass
-            print(e)
+            raise error
         finally:
             # We are doing this because when the execute fails for named cursors
             # cursor is not activated on the server which results in failure on close

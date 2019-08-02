@@ -161,7 +161,7 @@ def _charsets(is_refresh: bool, current_path: str, session: ObjectExplorerSessio
       dbid int: Database OID
     """
     root_server=session.server
-    nodes = CharacterSet.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
+    nodes = CharacterSet.get_nodes_for_parent(root_server, parent_obj=None, context_args=None)
     return [
         _get_node_info(node, current_path, 'HistoryTable', label=f'{node.name}', is_leaf=False)
         for node in nodes

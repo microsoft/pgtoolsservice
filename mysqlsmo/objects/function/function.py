@@ -42,6 +42,7 @@ class Function(NodeObject, ScriptableCreate, ScriptableDelete):
         ScriptableDelete.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
 
         self._dbname = dbname
+        self._server_version = server.version
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
@@ -60,3 +61,21 @@ class Function(NodeObject, ScriptableCreate, ScriptableDelete):
             "dbname": self._dbname,
             "fn_name": self._name
         }
+
+    def create_script(self):
+        """Generates a script that creates an object of the inheriting type"""
+        data = self._create_query_data()
+        template_root = self._template_root(self._server)
+        sql = templating.render_template(
+            templating.get_template_path(template_root, 'create.sql', self._server_version),
+            macro_roots=self._macro_root(),
+            **data
+        )
+
+        cols, rows = self._server.connection.execute_dict(sql)
+        try:
+            script = rows[0]["Create Function"]
+        except Exception:
+            script = rows[0]["Create Table"]
+        return script
+    

@@ -55,7 +55,6 @@ class MySQLConnection(ServerConnection):
             self._connection_options["ssl"] = ssl_dict
 
         # Setting autocommit to True initally
-        self._connection_options["autocommit"] = True
         self._autocommit_status = True
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
@@ -73,7 +72,6 @@ class MySQLConnection(ServerConnection):
         version_string = self.execute_query("SELECT VERSION();")[0][0]
 
         # Split the different components of the version string
-        import re
         version_components: List = re.split(r"[.-]", version_string)
         self._version: Tuple[int, int, int] = (
             int(version_components[0]),
@@ -82,7 +80,7 @@ class MySQLConnection(ServerConnection):
         )
 
         # Find what type of server we have connected to
-        if version_components[3] == "MariaDB":
+        if len(version_components) == 4 and version_components[3] == "MariaDB":
             self._provider_name = constants.MARIADB_PROVIDER_NAME
         else:
             self._provider_name = constants.MYSQL_PROVIDER_NAME
@@ -150,9 +148,6 @@ class MySQLConnection(ServerConnection):
     def cancellation_query(self) -> str:
         pass
 
-    def connection_closed(self) -> str:
-        return self._connection_closed
-
     ############################# METHODS ##################################
     @autocommit.setter
     def autocommit(self, mode: bool):
@@ -160,19 +155,13 @@ class MySQLConnection(ServerConnection):
         Sets the given autocommit status for this connection
         :param mode: True or False
         """
-        pass
-        # # Close our current connection
-        # self._conn.close()
-
-        # # Open a new connection with the given autocommit status
-        # self._connection_options["autocommit"] = mode
-        # self._autocommit_status = mode
-
-        # # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
-        # self._conn = pymysql.connect(**self._connection_options)
-
-        # # Check that we connected successfully
-        # assert type(self._conn) is pymysql.connections.Connection
+        self._autocommit_status = mode
+    
+    def commit(self):
+        """
+        Commits the current transaction
+        """
+        self._conn.commit()
 
     def get_cursor(self):
         """
@@ -188,6 +177,9 @@ class MySQLConnection(ServerConnection):
         with self._conn.cursor() as cursor:
             try:
                 cursor.execute(query)
+                if self.autocommit:
+                    self._conn.commit()
+
                 if all:
                     query_results = cursor.fetchall()
                 else:
@@ -209,6 +201,8 @@ class MySQLConnection(ServerConnection):
         with self._conn.cursor() as cursor:
             try:
                 cursor.execute(query)
+                if self.autocommit:
+                    self._conn.commit()
 
                 # Get a list of column names
                 col_names: List[str] = [col[0] for col in cursor.description]

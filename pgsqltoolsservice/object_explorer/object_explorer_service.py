@@ -91,8 +91,8 @@ class ObjectExplorerService(object):
                     # Removed the exception for now. But we need to investigate why we would get this
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.error(f'Object explorer session for {session_id} already exists!')
-                    request_context.send_response(False)
-                    return
+                    # request_context.send_response(False)
+                    # return
 
                 self._session_map[session_id] = session
 
@@ -191,7 +191,7 @@ class ObjectExplorerService(object):
 
             if task is not None and task.isAlive():
                 return
-            is_refresh = False
+
             new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
             new_task.daemon = True
             new_task.start()

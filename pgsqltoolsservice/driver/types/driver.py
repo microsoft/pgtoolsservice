@@ -78,7 +78,8 @@ class ServerConnection(ABC):
     @property
     @abstractmethod
     def cancellation_query(self) -> str:
-        pass
+        # TODO generate a query that kills the current query process
+        return "-- ;"
     
     ############################# METHODS ##################################
     @autocommit.setter
@@ -90,6 +91,13 @@ class ServerConnection(ABC):
         """
         pass
     
+    @abstractmethod
+    def commit(self):
+        """
+        Commits the current transaction
+        """
+        pass
+
     @abstractmethod
     def get_cursor(self):
         """

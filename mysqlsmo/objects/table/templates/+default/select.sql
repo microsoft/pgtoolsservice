@@ -3,5 +3,5 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 #}
 SELECT *
-FROM {{dbname}}.{{tbl_name}}
+FROM {{tbl_name}}
 LIMIT 1000;

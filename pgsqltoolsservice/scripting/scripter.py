@@ -6,7 +6,7 @@
 from typing import Callable, Dict, Tuple, TypeVar
 
 from mysqlsmo import Server
-from mysqlsmo import Table, View
+from mysqlsmo import Table, View, Function, Procedure
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from pgsqltoolsservice.driver import ConnectionManager, ServerConnection
@@ -49,6 +49,10 @@ class Scripter(object):
             obj: NodeObject = Table(self.server, metadata.name, metadata.schema)
         elif metadata.metadata_type_name == "View":
             obj: NodeObject = View(self.server, metadata.name, metadata.schema)
+        elif metadata.metadata_type_name == "Function":
+            obj: NodeObject = Function(self.server, metadata.name, metadata.schema)
+        elif metadata.metadata_type_name == "Procedure":
+            obj: NodeObject = Procedure(self.server, metadata.name, metadata.schema)
         else:
             obj: NodeObject =  None
         # Get the object and make sure it supports the operation
