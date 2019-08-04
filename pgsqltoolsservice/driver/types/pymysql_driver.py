@@ -43,6 +43,18 @@ class MySQLConnection(ServerConnection):
         # Filter the parameters to only those accepted by PyMySQL
         self._connection_options = {param: value for param, value in _params.items() if param in MYSQL_CONNECTION_PARAM_KEYWORDS}
 
+        # Convert the numeric params from strings to integers
+        numeric_params = ["port", "connect_timeout", "read_timeout", "write_timeout"]
+        for param in numeric_params:
+            if param in self._connection_options.keys():
+                val = self._connection_options[param]
+                if val:
+                    self._connection_options[param] = int(val) or None
+        
+        # Use the default port number if one was not provided
+        if 'port' not in self._connection_options or not self._connection_options['port']:
+            self._connection_options['port'] = constants.DEFAULT_PORT[constants.MYSQL_PROVIDER_NAME]
+
         # If SSL is enabled or allowed
         if "ssl" in conn_params.keys() and self._connection_options["ssl"] != "disable":
             # Find all the ssl options (key, ca, cipher)
@@ -78,12 +90,13 @@ class MySQLConnection(ServerConnection):
             int(version_components[1]),
             int(version_components[2])
         )
+        self._provider_name = constants.MYSQL_PROVIDER_NAME
 
-        # Find what type of server we have connected to
-        if len(version_components) == 4 and version_components[3] == "MariaDB":
-            self._provider_name = constants.MARIADB_PROVIDER_NAME
-        else:
-            self._provider_name = constants.MYSQL_PROVIDER_NAME
+        # # Find what type of server we have connected to
+        # if len(version_components) == 4 and version_components[3] == "MariaDB":
+        #     self._provider_name = constants.MARIADB_PROVIDER_NAME
+        # else:
+        #     self._provider_name = constants.MYSQL_PROVIDER_NAME
         
 
     ###################### PROPERTIES ##################################
@@ -98,7 +111,7 @@ class MySQLConnection(ServerConnection):
         return self._connection_options["host"]
 
     @property
-    def port_num(self) -> int:
+    def port(self) -> int:
         """Returns the port number used for the current connection"""
         if "port" in self._connection_options.keys():
             return self._connection_options["port"]
@@ -107,7 +120,7 @@ class MySQLConnection(ServerConnection):
 
     @property
     def user_name(self) -> str:
-        """Returns the port number used for the current connection"""
+        """Returns the user name used for the current connection"""
         return self._connection_options["user"]
 
     @property
@@ -146,7 +159,8 @@ class MySQLConnection(ServerConnection):
 
     @property
     def cancellation_query(self) -> str:
-        pass
+        # TODO generate a query that kills the current query process
+        return "-- ;"
 
     ############################# METHODS ##################################
     @autocommit.setter
@@ -163,11 +177,20 @@ class MySQLConnection(ServerConnection):
         """
         self._conn.commit()
 
-    def get_cursor(self):
+    def get_cursor(self, **kwargs):
         """
         Returns a cursor for the current connection
+        :param kwargs will ignored as PyMySQL does not yet support named cursors 
         """
-        return self._conn.cursor()
+        # Create a new cursor from the current connection
+        cursor_instance = self._conn.cursor()
+
+        # Store the provider name as an attribute in the cursor object
+        attr = "provider"
+        value = self._provider_name
+        setattr(cursor_instance, attr, value)
+
+        return cursor_instance
     
     def execute_query(self, query: str, all=True):
         """

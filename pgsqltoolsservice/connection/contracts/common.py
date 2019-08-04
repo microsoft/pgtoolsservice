@@ -61,6 +61,18 @@ class ConnectionDetails(Serializable):
     def user_name(self, value):
         self.options['user'] = value
 
+    @property
+    def port(self) -> int:
+        if not self.options:
+            return None
+        val = self.options.get('port')
+        if val:
+            return int(val) or None
+
+    @port.setter
+    def port(self, value):
+        self.options['port'] = value
+
 
 class ConnectionType(enum.Enum):
     """

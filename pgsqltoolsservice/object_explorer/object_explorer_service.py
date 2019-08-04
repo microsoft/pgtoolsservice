@@ -81,6 +81,10 @@ class ObjectExplorerService(object):
             if params.database_name is None or params.database_name == '':
                 params.database_name = utils.constants.DEFAULT_DB[self._provider]
 
+            # Use the provider's default port if port number was not specified
+            if not params.port:
+                params.port = utils.constants.DEFAULT_PORT[self._provider]
+
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params)
             session: ObjectExplorerSession = ObjectExplorerSession(session_id, params)
@@ -336,8 +340,11 @@ class ObjectExplorerService(object):
         host = quote(params.options['host'])
         user = quote(params.options['user'])
         db = quote(params.options['dbname'])
+        # Port number distinguishes between connections to different server 
+        # instances with the same username, dbname running on same host
+        port = quote(str(params.options['port']))
 
-        return f'objectexplorer://{user}@{host}:{db}/'
+        return f'objectexplorer://{user}@{host}:{port}:{db}/'
 
     def _route_request(self, is_refresh: bool, session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
         """

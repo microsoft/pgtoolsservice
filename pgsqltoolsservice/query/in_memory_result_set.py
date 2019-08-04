@@ -41,7 +41,7 @@ class InMemoryResultSet(ResultSet):
         rows = cursor.fetchall()
         self.rows.extend(rows or [])
 
-        self.columns_info = get_columns_info(cursor.description, None)  #, cursor.connection)
+        self.columns_info = get_columns_info(cursor)
 
         self._has_been_read = True
 

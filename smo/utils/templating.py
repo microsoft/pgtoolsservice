@@ -132,7 +132,7 @@ def render_template_string(source, **context):
 def string_convert(value):
     """
     Quotes variables embedded within templates
-    :param - value value to be quoted
+    :param - value to be quoted
 
     E.g: 
         6 -> '6'

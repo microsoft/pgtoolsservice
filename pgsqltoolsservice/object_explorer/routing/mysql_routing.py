@@ -13,7 +13,7 @@ from pgsqltoolsservice.metadata.contracts import ObjectMetadata
 from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession, Folder, RoutingTarget
 from pgsqltoolsservice.object_explorer.contracts import NodeInfo
 
-SYSTEM_DATABASES = {"information_schema", "mysql", "performance_schema", "sys"}
+MYSQL_SYSTEM_DATABASES = {"information_schema", "mysql", "performance_schema", "sys"}
 
 # NODE GENERATOR HELPERS ###################################################
 def _get_node_info(
@@ -212,7 +212,7 @@ def _sysdatabases(is_refresh: bool, current_path: str, session: ObjectExplorerSe
     nodes = Database.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Database', label=f'{node.name}', is_leaf=False)
-        for node in nodes if node.name in SYSTEM_DATABASES
+        for node in nodes if node.name in MYSQL_SYSTEM_DATABASES
     ]
 
 def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -221,7 +221,7 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     nodes = Database.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Database', label=f'{node.name}', is_leaf=False)
-        for node in nodes if node.name not in SYSTEM_DATABASES
+        for node in nodes if node.name not in MYSQL_SYSTEM_DATABASES
     ]
 
 

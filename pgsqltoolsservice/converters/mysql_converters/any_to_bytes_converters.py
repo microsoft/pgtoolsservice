@@ -11,15 +11,6 @@ from pymysql.converters import decoders
 
 ENCODING_TYPE = "utf-8"
 
-# Step 1: Convert the mysql object to a python datatype using PyMySQL's decoder
-# PyMySQL decoder is chosen according to the field type
-# Step 2: Convert the python datatype to bytes
-# Step 1: Convert the mysql object to a python datatype using PyMySQL's decoder
-
-# decoder_fn = decoders[field_type]
-# decoded_object = decoder_fn(value)
-# Step 2: Convert the python datatype to bytes
-
 def convert_float_to_bytes(value: object):
     return bytearray(struct.pack("d", value))
 

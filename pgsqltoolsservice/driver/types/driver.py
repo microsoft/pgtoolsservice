@@ -24,14 +24,14 @@ class ServerConnection(ABC):
     
     @property
     @abstractmethod
-    def port_num(self) -> int:
+    def port(self) -> int:
         """Returns the port number used for the current connection"""
         pass
-    
+
     @property
     @abstractmethod
     def user_name(self) -> str:
-        """Returns the port number used for the current connection"""
+        """Returns the user name used for the current connection"""
         pass
         
     @property
@@ -78,8 +78,10 @@ class ServerConnection(ABC):
     @property
     @abstractmethod
     def cancellation_query(self) -> str:
-        # TODO generate a query that kills the current query process
-        return "-- ;"
+        """
+        Returns a SQL command to end the current query execution process
+        """
+        pass
     
     ############################# METHODS ##################################
     @autocommit.setter
@@ -99,7 +101,7 @@ class ServerConnection(ABC):
         pass
 
     @abstractmethod
-    def get_cursor(self):
+    def get_cursor(self, **kwargs):
         """
         Returns a cursor for the current connection
         """

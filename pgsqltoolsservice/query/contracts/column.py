@@ -43,7 +43,7 @@ class DbColumn:
         self.is_unique: bool = None
         self.data_type = None
         self.is_updatable: bool = False
-        self._provider = "MySQL"
+        self._provider: str = None
 
     @property
     def is_chars(self) -> bool:
@@ -72,6 +72,10 @@ class DbColumn:
     @property
     def provider(self) -> str:
         return self._provider
+
+    @provider.setter
+    def provider(self, name: str) -> str:
+        self._provider = name
 
     # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) containing a 7-item sequence.

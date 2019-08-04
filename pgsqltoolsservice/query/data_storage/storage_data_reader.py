@@ -33,7 +33,7 @@ class StorageDataReader:
             break
 
         if self._current_row is None or len(self._columns_info) == 0:
-            self._columns_info = get_columns_info(self._cursor.description, None) #, self._cursor.connection)
+            self._columns_info = get_columns_info(self._cursor)
 
         return row_found
 

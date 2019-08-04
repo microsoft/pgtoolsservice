@@ -45,7 +45,11 @@ class PostgreSQLConnection(ServerConnection):
         
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['dbname'] = utils.constants.DEFAULT_DB[utils.constants.PG_PROVIDER_NAME]
+            connection_options['dbname'] = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
+
+        # Use the default port number if one was not provided
+        if 'port' not in connection_options or not connection_options['port']:
+            connection_options['port'] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg2.connect(**connection_options)
@@ -85,7 +89,7 @@ class PostgreSQLConnection(ServerConnection):
         return self._dsn_parameters['host']
 
     @property
-    def port_num(self) -> int:
+    def port(self) -> int:
         """Returns the port number used for the current connection"""
         if "port" in self._connection_options.keys():
             return self._connection_options["port"]
@@ -99,7 +103,7 @@ class PostgreSQLConnection(ServerConnection):
 
     @property
     def user_name(self) -> str:
-        """Returns the port number used for the current connection"""
+        """Returns the user name number used for the current connection"""
         return self._dsn_parameters["user"]
 
     @property
@@ -151,11 +155,23 @@ class PostgreSQLConnection(ServerConnection):
         """
         self._conn.commit()
     
-    def get_cursor(self):
+    def get_cursor(self, **kwargs):
         """
         Returns a cursor for the current connection
+        :param kwargs (optional) to create a named cursor
         """
-        return self._conn.cursor()
+        # If the args for a named cursor are provided, create a named cursor
+        if kwargs and "name" in kwargs:
+            cursor_instance = self._conn.cursor(name=kwargs["name"], withhold=kwargs["withhold"])
+        else:
+            cursor_instance = self._conn.cursor()
+
+        # Store the provider name as an attribute in the cursor object
+        attr = "provider"
+        value = self._provider_name
+        setattr(cursor_instance, attr, value)
+
+        return cursor_instance
     
     def execute_query(self, query, all=True):
         """

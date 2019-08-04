@@ -26,6 +26,7 @@ SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_v
     WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
 """
 
+# Source: https://gist.githubusercontent.com/rakeshsingh/456724716534610caf83/raw/4f9ffba2a1bc365395a70da4d392dae5fd014e3f/Mysql-Show-All-Schema-Objects.sql
 MYSQL_METADATA_QUERY = """
 SELECT OBJECT_SCHEMA, OBJECT_NAME, OBJECT_TYPE
 FROM (
@@ -37,6 +38,11 @@ FROM (
 	UNION
 	SELECT ROUTINE_NAME AS OBJECT_NAME, 'f' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
 	FROM information_schema.ROUTINES as r
+	WHERE r.ROUTINE_TYPE = 'FUNCTION'
+	UNION
+	SELECT ROUTINE_NAME AS OBJECT_NAME, 's' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
+	FROM information_schema.ROUTINES as s
+	WHERE s.ROUTINE_TYPE = 'PROCEDURE'
 	) as objects
 WHERE OBJECT_SCHEMA = '{}';
 """
@@ -77,10 +83,10 @@ class MetadataService:
         try:
             metadata = self._list_metadata(params.owner_uri)
             request_context.send_response(MetadataListResponse(metadata))
-        except Exception:
+        except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Unhandled exception while executing the metadata list worker thread')
-            request_context.send_error('Unhandled exception while listing metadata')  # TODO: Localize
+            request_context.send_error('Unhandled exception while listing metadata: ' + str(e))  # TODO: Localize
 
     def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
         # Get current connection

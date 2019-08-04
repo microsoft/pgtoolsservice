@@ -12,7 +12,6 @@ import datetime
 
 from pgsqltoolsservice.parsers import datatypes
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
-from pymysql import converters as mysql_converters
 
 DECODING_METHOD = 'utf-8'
 

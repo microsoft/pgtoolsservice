@@ -27,7 +27,7 @@ class Server:
 
         # Declare the server properties
         self._host: str = self._conn.host_name
-        self._port: int = self._conn.port_num
+        self._port: int = self._conn.port
         self._maintenance_db_name: str = self._conn.database_name
 
         # These properties will be defined later
