@@ -14,8 +14,9 @@ class ServiceProvider:
         self._is_initialized = False
         self._logger = logger
         self._server = json_rpc_server
-        self._services = {service_name: service_class() for (service_name, service_class) in services.items()}
         self._provider_name = provider
+        self._services = {service_name: service_class() for (service_name, service_class) in services.items()}
+        
 
     # PROPERTIES ###########################################################
     @property

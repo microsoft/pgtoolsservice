@@ -329,7 +329,7 @@ def _default_node_generator(is_refresh: bool, current_path: str, session: Object
 # (see https://docs.python.org/2/library/re.html#regular-expression-syntax)
 
 PG_ROUTING_TABLE = {
-    re.compile('^/$'): RoutingTarget(
+    re.compile(r'^/$'): RoutingTarget(
         [
             Folder('Databases', 'databases'),
             Folder('System Databases', 'systemdatabases'),
@@ -338,7 +338,7 @@ PG_ROUTING_TABLE = {
         ],
         _default_node_generator
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget(
         [
             Folder('Tables', 'tables'),
             Folder('Views', 'views'),
@@ -352,64 +352,64 @@ PG_ROUTING_TABLE = {
         ],
         _default_node_generator
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/$'): RoutingTarget(None, _databases),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/$'): RoutingTarget(None, _databases),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/$'): RoutingTarget(
         [
             Folder('System', 'system')
         ],
         _tables
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/$'): RoutingTarget(None, _tables),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/$'): RoutingTarget(None, _tables),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/$'): RoutingTarget(
         [
             Folder('System', 'system')
         ],
         _views
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/system/$'): RoutingTarget(None, _views),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/system/$'): RoutingTarget(None, _views),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/$'): RoutingTarget(
         [
             Folder('System', 'system')
         ],
         _materialized_views
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/system/$'): RoutingTarget(None, _materialized_views),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/system/$'): RoutingTarget(None, _materialized_views),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/$'): RoutingTarget(
         [
             Folder('System', 'system')
         ],
         _functions
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/system/$'): RoutingTarget(None, _functions),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions/system/$'): RoutingTarget(None, _functions),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations/$'): RoutingTarget(
         [
             Folder('System', 'system')
         ],
         _collations
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations/system/$'): RoutingTarget(None, _collations),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations/system/$'): RoutingTarget(None, _collations),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes/$'): RoutingTarget(
         [
             Folder('System', 'system')
         ],
         _datatypes
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes/system/$'): RoutingTarget(None, _datatypes),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes/system/$'): RoutingTarget(None, _datatypes),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences/$'): RoutingTarget(
         [
             Folder('System', 'system')
         ],
         _sequences
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences/system/$'): RoutingTarget(None, _sequences),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences/system/$'): RoutingTarget(None, _sequences),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/$'): RoutingTarget(
         [
             Folder('System', 'system')
         ],
         _schemas
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/$'): RoutingTarget(None, _schemas),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/$'): RoutingTarget(None, _schemas),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Constraints', 'constraints'),
@@ -419,7 +419,7 @@ PG_ROUTING_TABLE = {
         ],
         _default_node_generator
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/$'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Constraints', 'constraints'),
@@ -429,23 +429,21 @@ PG_ROUTING_TABLE = {
         ],
         _default_node_generator
     ),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views|materializedviews)/(?P<tid>\d+)/columns/$'): RoutingTarget(None, _columns),
     re.compile(
-        '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views|materializedviews)/(?P<tid>\d+)/columns/$'
+        r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views|materializedviews)/system/(?P<tid>\d+)/columns/$'
     ): RoutingTarget(None, _columns),
-    re.compile(
-        '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views|materializedviews)/system/(?P<tid>\d+)/columns/$'
-    ): RoutingTarget(None, _columns),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|materializedviews)/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/tables/system/(?P<tid>\d+)/constraints/$'): RoutingTarget(None, _constraints),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|materializedviews)/(?P<tid>\d+)/indexes/$'): RoutingTarget(None, _indexes),
     re.compile(
         '^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|materializedviews)/system/(?P<tid>\d+)/indexes/$'
     ): RoutingTarget(None, _indexes),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/rules/$'): RoutingTarget(None, _rules),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/(?P<obj>tables|views)/system/(?P<tid>\d+)/triggers/$'): RoutingTarget(None, _triggers),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Rules', 'rules'),
@@ -453,7 +451,7 @@ PG_ROUTING_TABLE = {
         ],
         _default_node_generator
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/system/(?P<vid>\d+/$)'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/views/system/(?P<vid>\d+/$)'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Rules', 'rules'),
@@ -461,32 +459,32 @@ PG_ROUTING_TABLE = {
         ],
         _default_node_generator
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/(?P<vid>\d+/$)'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/(?P<vid>\d+/$)'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Indexes', 'indexes')
         ],
         _default_node_generator
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/system/(?P<vid>\d+/$)'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/materializedviews/system/(?P<vid>\d+/$)'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Indexes', 'indexes')
         ],
         _default_node_generator
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions(/system)/$'): RoutingTarget(None, _functions),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations(/system)/$'): RoutingTarget(None, _collations),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes(/system)/$'): RoutingTarget(None, _datatypes),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences(/system)/$'): RoutingTarget(None, _sequences),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/functions(/system)/$'): RoutingTarget(None, _functions),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/collations(/system)/$'): RoutingTarget(None, _collations),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/datatypes(/system)/$'): RoutingTarget(None, _datatypes),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/sequences(/system)/$'): RoutingTarget(None, _sequences),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/$'): RoutingTarget(
         [
             Folder('System', 'system')
         ],
         _extensions
     ),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/system/$'): RoutingTarget(None, _extensions),
-    re.compile('^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/system/$'): RoutingTarget(None, _extensions),
-    re.compile('^/roles/$'): RoutingTarget(None, _roles),
-    re.compile('^/tablespaces/$'): RoutingTarget(None, _tablespaces)
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/system/$'): RoutingTarget(None, _extensions),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/extensions/system/$'): RoutingTarget(None, _extensions),
+    re.compile(r'^/roles/$'): RoutingTarget(None, _roles),
+    re.compile(r'^/tablespaces/$'): RoutingTarget(None, _tablespaces)
 }

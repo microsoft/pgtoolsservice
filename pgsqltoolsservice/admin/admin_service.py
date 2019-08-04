@@ -34,16 +34,8 @@ class AdminService(object):
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection: ServerConnection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
 
-        # Get the type of server
-        provider_name = self._service_provider.provider
-
-        # Get a temporary connection to DB server using the current connection options
-        # (ensures that 2 threads don't use the same connection)
-        temp_conn: ServerConnection = ConnectionManager(provider_name, connection.connection_options).get_connection()
-
         # Get database owner
-        owner_result = temp_conn.get_database_owner()
-        temp_conn.close()
+        owner_result = connection.get_database_owner()
 
         # Set up and send the response
         options = {

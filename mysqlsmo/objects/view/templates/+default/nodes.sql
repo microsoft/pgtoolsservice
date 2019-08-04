@@ -6,4 +6,4 @@ SELECT
     TABLE_NAME as name,
     TABLE_SCHEMA as dbname
 FROM information_schema.TABLES
-WHERE TABLE_TYPE = 'VIEW' AND TABLE_SCHEMA = {{dbname | string_convert}};
+WHERE (TABLE_TYPE = 'VIEW' OR TABLE_TYPE = 'SYSTEM VIEW') AND TABLE_SCHEMA = {{dbname | string_convert}};

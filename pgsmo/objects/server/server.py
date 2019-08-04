@@ -90,7 +90,7 @@ class Server:
     @property
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
-        user = quote_plus(self.connection.dsn_parameters['user'])
+        user = quote_plus(self.connection.user_name)
         host = quote_plus(self.host)
         port = quote_plus(str(self.port))
         return f'//{user}@{host}:{port}/'

@@ -151,4 +151,4 @@ mysql_conn_provider_opts = ConnectionProviderOptions([
     )
 ])
 
-capabilities = DMPServerCapabilities('1.0', 'MariaDB', 'MariaDB', mysql_conn_provider_opts, [SERIALIZATION_OPTIONS])
+capabilities = DMPServerCapabilities('1.0', 'MySQL', 'MySQL', mysql_conn_provider_opts, [SERIALIZATION_OPTIONS])

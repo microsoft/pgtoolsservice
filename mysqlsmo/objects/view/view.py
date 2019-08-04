@@ -8,7 +8,7 @@ from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from smo.utils import templating
 
-class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
+class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -40,7 +40,6 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         self._dbname = dbname
@@ -64,10 +63,6 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
             "dbname": self._dbname,
             "view_name": self._name
         }
-
-    def _update_query_data(self) -> dict:
-        """ Provides data input for update script """
-        return {"data": {}}
 
     def _select_query_data(self) -> dict:
         """Provides data input for select script"""

@@ -71,15 +71,15 @@ class MetadataService:
 
     # REQUEST HANDLERS #####################################################
 
-    def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
-        thread = threading.Thread(
-            target=self._metadata_list_worker,
-            args=(request_context, params)
-        )
-        thread.daemon = True
-        thread.start()
+    # def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
+    #     thread = threading.Thread(
+    #         target=self._metadata_list_worker,
+    #         args=(request_context, params)
+    #     )
+    #     thread.daemon = True
+    #     thread.start()
 
-    def _metadata_list_worker(self, request_context: RequestContext, params: MetadataListParameters) -> None:
+    def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
         try:
             metadata = self._list_metadata(params.owner_uri)
             request_context.send_response(MetadataListResponse(metadata))
@@ -102,11 +102,12 @@ class MetadataService:
         query_results = connection.execute_query(metadata_query, all=True)
 
         metadata_list = []
-        for row in query_results:
-            schema_name = row[0]
-            object_name = row[1]
-            object_type = _METADATA_TYPE_MAP[row[2]]
-            metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
+        if query_results:
+            for row in query_results:
+                schema_name = row[0]
+                object_name = row[1]
+                object_type = _METADATA_TYPE_MAP[row[2]]
+                metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
         return metadata_list
 
 _METADATA_TYPE_MAP = {

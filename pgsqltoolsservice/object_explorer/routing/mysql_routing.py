@@ -240,7 +240,7 @@ def _triggers(is_refresh: bool, current_path: str, session: ObjectExplorerSessio
     root_server=session.server
     nodes = Trigger.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
-        _get_node_info(node, current_path, 'DatabaseTrigger', label=f'{node.name}')
+        _get_node_info(node, current_path, 'Trigger', label=f'{node.name}')
         for node in nodes
     ]
 

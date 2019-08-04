@@ -55,7 +55,8 @@ if __name__ == '__main__':
     wait_for_debugger = False
     log_dir = None
     stdin = None
-    provider_name = None
+    # Setting a default provider name to test PG extension
+    provider_name = constants.PG_PROVIDER_NAME
     if len(sys.argv) > 1:
         for arg in sys.argv:
             arg_parts = arg.split('=')
@@ -67,7 +68,12 @@ if __name__ == '__main__':
                     port = int(arg_parts[1])
                 except IndexError:
                     pass
-                ptvsd.enable_attach(address=('0.0.0.0', port))
+                try:
+                    ptvsd.enable_attach(address=('0.0.0.0', port))
+                except:
+                    # If port 3000 is used, try another debug port
+                    port += 1
+                    ptvsd.enable_attach(address=('0.0.0.0', port))
                 if arg_parts[0] == '--enable-remote-debugging-wait':
                     wait_for_debugger = True
             elif arg_parts[0] == '--log-dir':
