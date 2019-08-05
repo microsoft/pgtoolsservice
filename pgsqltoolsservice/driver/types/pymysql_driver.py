@@ -113,10 +113,7 @@ class MySQLConnection(ServerConnection):
     @property
     def port(self) -> int:
         """Returns the port number used for the current connection"""
-        if "port" in self._connection_options.keys():
-            return self._connection_options["port"]
-        else:
-            return None
+        return self._connection_options["port"]
 
     @property
     def user_name(self) -> str:

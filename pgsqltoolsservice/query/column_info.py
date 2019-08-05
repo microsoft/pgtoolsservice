@@ -14,11 +14,11 @@ def get_columns_info(cursor) -> List[DbColumn]:
     if cursor.description is None:
         raise ValueError('Cursor description is not available')
 
-    if (cursor.connection is None) or (not hasattr(cursor, "provider")):
+    if cursor.connection is None:
         # if no connection is provided, just return basic column info constructed from the cursor description
         return [DbColumn.from_cursor_description(index, column) for index, column in enumerate(cursor.description)]
 
-    if cursor.provider == constants.MYSQL_PROVIDER_NAME:
+    if (hasattr(cursor, "provider")) and (cursor.provider == constants.MYSQL_PROVIDER_NAME):
         columns_info = []
         for index, column in enumerate(cursor.description):
             db_column = DbColumn.from_cursor_description(index, column)
@@ -46,7 +46,7 @@ def get_columns_info(cursor) -> List[DbColumn]:
             for index, column in enumerate(cursor.description):
                 db_column = DbColumn.from_cursor_description(index, column)
                 db_column.data_type = rows_dict.get(column[1])
-                db_column.provider = cursor.provider
+                db_column.provider = constants.PG_PROVIDER_NAME
                 columns_info.append(db_column)
 
         return columns_info

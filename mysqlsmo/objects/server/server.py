@@ -10,10 +10,14 @@ from pgsqltoolsservice.driver import ServerConnection
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 import smo.utils as utils
 from mysqlsmo.objects.database.database import Database
+from mysqlsmo.objects.table.table import Table
+from mysqlsmo.objects.view.view import View
+from mysqlsmo.objects.procedure.procedure import Procedure
+from mysqlsmo.objects.function.function import Function
 
 
 class Server:
-    # TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
+    TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
     # CONSTRUCTOR ##########################################################
     def __init__(self, conn: ServerConnection, db_connection_callback: Callable[[str], ServerConnection] = None):
@@ -29,9 +33,6 @@ class Server:
         self._host: str = self._conn.host_name
         self._port: int = self._conn.port
         self._maintenance_db_name: str = self._conn.database_name
-
-        # These properties will be defined later
-        # self._recovery_props: NodeLazyPropertyCollection = NodeLazyPropertyCollection(self._fetch_recovery_state)
 
         self._child_objects: Mapping[str, NodeCollection] = {
             Database.__name__: NodeCollection(lambda: Database.get_nodes_for_parent(self, None, None))
@@ -59,11 +60,6 @@ class Server:
     def host(self) -> str:
         """Hostname of the server"""
         return self._host
-
-    # # @property
-    # # def in_recovery(self) -> Optional[bool]:
-    # #     """Whether or not the server is in recovery mode. If None, value was not loaded from server"""
-    # #     return self._recovery_props.get('inrecovery')
 
     @property
     def maintenance_db_name(self) -> str:
@@ -93,11 +89,6 @@ class Server:
         port = quote_plus(str(self.port))
         return f'//{user}@{host}:{port}/'
         # TODO: Ensure that this formatting works with non-username/password logins
-
-    # # @property
-    # # def wal_paused(self) -> Optional[bool]:
-    # #     """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
-    # #     return self._recovery_props.get('isreplaypaused')
 
     # # -CHILD OBJECTS #######################################################
     @property
@@ -129,47 +120,40 @@ class Server:
     # #     return self._search_path
 
     # # METHODS ##############################################################
-    # def get_object_by_urn(self, urn: str) -> NodeObject:
-    #     # Validate that the urn is a full urn
-    #     if urn is None or urn.strip() == '':
-    #         raise ValueError('URN was not provided')    # TODO: Localize?
+    def get_object_by_urn(self, urn: str) -> NodeObject:
+        # Validate that the urn is a full urn
+        if urn is None or urn.strip() == '':
+            raise ValueError('URN was not provided')    # TODO: Localize?
 
-    #     parsed_urn: ParseResult = urlparse(urn)
-    #     reconstructed_urn_base = f'//{parsed_urn.netloc}/'
-    #     if reconstructed_urn_base != self.urn_base:
-    #         raise ValueError('Provided URN is not applicable to this server')   # TODO: Localize?
+        parsed_urn: ParseResult = urlparse(urn)
+        reconstructed_urn_base = f'//{parsed_urn.netloc}/'
+        if reconstructed_urn_base != self.urn_base:
+            raise ValueError('Provided URN is not applicable to this server')   # TODO: Localize?
 
-    #     # Process the first fragment
-    #     class_name, oid, remaining = utils.process_urn(parsed_urn.path)
+        # Process the first fragment
+        class_name, oid, remaining = utils.process_urn(parsed_urn.path)
 
-    #     # Find the matching collection
-    #     collection = self._child_objects.get(class_name)
-    #     if collection is None:
-    #         raise ValueError(f'URN is invalid: server does not contain {class_name} objects')   # TODO: Localize?
+        # Find the matching collection
+        collection = self._child_objects.get(class_name)
+        if collection is None:
+            raise ValueError(f'URN is invalid: server does not contain {class_name} objects')   # TODO: Localize?
 
-    #     # Find the matching object
-    #     # TODO: Create a .get method for NodeCollection (see https://github.com/Microsoft/carbon/issues/1713)
-    #     obj = collection[oid]
-    #     return obj.get_object_by_urn(remaining)
+        # Find the matching object
+        # TODO: Create a .get method for NodeCollection (see https://github.com/Microsoft/carbon/issues/1713)
+        obj = collection[oid]
+        return obj.get_object_by_urn(remaining)
 
     def refresh(self) -> None:
         # Reset child objects
         pass
 
-    # # IMPLEMENTATION DETAILS ###############################################
-    # # def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:
-    # #     recovery_check_sql = utils.templating.render_template(
-    # #         utils.templating.get_template_path(self.TEMPLATE_ROOT, 'check_recovery.sql', self.version)
-    # #     )
-
-    # #     cols, rows = self._conn.execute_dict(recovery_check_sql)
-    # #     if len(rows) > 0:
-    # #         return rows[0]
+    def get_object(self, object_type: str, metadata):
+        """ Retrieve a given object """
+        object_map = {
+            "Table": lambda met: Table(self, met.name, met.schema),
+            "View": lambda met: View(self, met.name, met.schema),
+            "Procedure": lambda met: Procedure(self, met.name, met.schema),
+            "Function": lambda met: Function(self, met.name, met.schema)
+        }
+        return object_map[object_type.capitalize()](metadata)
     
-    # # def _fetch_search_path(self) -> List[str]:
-    # #     try:
-    # #         query_results = self._conn.execute_query(self._conn.search_path_query)
-    # #         return [x[0] for x in query_results]
-    # #     except:
-    # #         query_result = self._conn.execute_query(self._conn.search_path_query_fallback, all=False)
-    # #         return query_result[0]

@@ -91,10 +91,7 @@ class PostgreSQLConnection(ServerConnection):
     @property
     def port(self) -> int:
         """Returns the port number used for the current connection"""
-        if "port" in self._connection_options.keys():
-            return self._connection_options["port"]
-        else:
-            return None
+        return self._connection_options["port"]
         
     @property
     def database_name(self) -> str:
@@ -166,10 +163,10 @@ class PostgreSQLConnection(ServerConnection):
         else:
             cursor_instance = self._conn.cursor()
 
-        # Store the provider name as an attribute in the cursor object
-        attr = "provider"
-        value = self._provider_name
-        setattr(cursor_instance, attr, value)
+        # TODO: Find a way to store the provider name as an attribute in the cursor object
+        # attr = "provider"
+        # value = self._provider_name
+        # setattr(cursor_instance, attr, value)
 
         return cursor_instance
     

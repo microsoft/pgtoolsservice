@@ -357,7 +357,7 @@ class ObjectExplorerService(object):
         # Figure out what the path we're looking at is
         path = urlparse(path).path
 
-        # We query again if its a refresh request or this is the first expand request for this path
+        # We query if its a refresh request or this is the first expand request for this path
         if is_refresh or (path not in session.cache.keys()):
             # Find a matching route for the path
             for route, target in self._routing_table.items():
@@ -368,8 +368,12 @@ class ObjectExplorerService(object):
                     session.cache[path] = target_nodes
                     return target_nodes
 
+            # If this node is a leaf
+            if not path.endswith("/"):
+                return []
             # If we make it to here, there isn't a route that matches the path
             raise ValueError(f'Path {path} does not have a matching OE route')  # TODO: Localize
         else:
+            # Return the results of a previous request for the same path
             return session.cache[path]
         

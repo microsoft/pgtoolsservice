@@ -14,6 +14,13 @@ from pgsqltoolsservice.scripting.contracts import (
 from pgsqltoolsservice.connection.contracts import ConnectionType
 import pgsqltoolsservice.utils as utils
 
+from pgsmo import Server as PGServer
+from mysqlsmo import Server as MySQLServer
+
+SERVER_TYPES = {
+    utils.constants.MYSQL_PROVIDER_NAME : MySQLServer,
+    utils.constants.PG_PROVIDER_NAME : PGServer
+}
 
 class ScriptingService(object):
     """Service for scripting database objects"""
@@ -26,6 +33,12 @@ class ScriptingService(object):
 
         # Register the request handlers with the server
         self._service_provider.server.set_request_handler(SCRIPTAS_REQUEST, self._handle_scriptas_request)
+
+        # Find the provider type
+        self._provider: str = self._service_provider.provider
+
+        # Find the type of server to use
+        self._server = SERVER_TYPES[self._provider]
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Scripting service successfully initialized')
@@ -48,7 +61,10 @@ class ScriptingService(object):
             connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
             connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
             object_metadata = self.create_metadata(params)
-            scripter = Scripter(connection)
+
+            # Initiate server object to find/generate objects for scripter
+            server = self._server(connection)
+            scripter = Scripter(server)
 
             script = scripter.script(scripting_operation, object_metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
