@@ -16,7 +16,7 @@ class NodeObject(metaclass=ABCMeta):
             cls,
             root_server: 'Server',
             parent_obj: Optional['NodeObject'],
-            context_args
+            context_args = None
     ) -> List['NodeObject']:
         """
         Renders and executes nodes.sql for the class to generate a list of NodeObjects

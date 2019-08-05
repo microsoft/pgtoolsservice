@@ -7,7 +7,7 @@ import io
 from typing import Callable, Any  # noqa
 import struct
 
-from pgsqltoolsservice.converters.bytes_converter import get_bytes_converter
+from pgsqltoolsservice.converters import get_any_to_bytes_converter
 from pgsqltoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
 from pgsqltoolsservice.query.data_storage import StorageDataReader
 
@@ -63,7 +63,7 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
                 row_bytes += self._write_to_file(self._file_stream, bytearray(struct.pack("i", 0)))
                 row_bytes += self._write_null()
             else:
-                bytes_converter: Callable[[str], bytearray] = get_bytes_converter(type_value)
+                bytes_converter: Callable[[str], bytearray] = get_any_to_bytes_converter(type_value, provider = column.provider)
                 value_to_write = bytes_converter(values[index])
 
                 bytes_length_to_write = len(value_to_write)

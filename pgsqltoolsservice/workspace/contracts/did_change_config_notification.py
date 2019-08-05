@@ -7,7 +7,7 @@ from enum import Enum
 
 from pgsqltoolsservice.hosting import IncomingMessageConfiguration
 from pgsqltoolsservice.serialization import Serializable
-
+from pgsqltoolsservice.utils import constants
 
 class SQLConfiguration(Serializable):
     """
@@ -38,7 +38,7 @@ class PGSQLConfiguration(Serializable):
         return True
 
     def __init__(self):
-        self.default_database: str = 'postgres'
+        self.default_database: str = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
         self.format: FormatterConfiguration = FormatterConfiguration()
 
 class MySQLConfiguration(Serializable):
@@ -54,7 +54,7 @@ class MySQLConfiguration(Serializable):
         return True
 
     def __init__(self):
-        self.default_database = None
+        self.default_database: str = constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME]
         self.format: FormatterConfiguration = FormatterConfiguration()
 
 class Case(Enum):
@@ -101,15 +101,15 @@ class Configuration(Serializable):
     """
     @classmethod
     def get_child_serializable_types(cls):
-        return {'sql': SQLConfiguration, 'pgsql': PGSQLConfiguration, 'mysql': MySQLConfiguration}
+        return {'sql': SQLConfiguration, 'pgsql': PGSQLConfiguration, 'my_sql': MySQLConfiguration}
 
     def __init__(self):
         self.sql = SQLConfiguration()
         self.pgsql = PGSQLConfiguration()
-        self.mysql = MySQLConfiguration()
+        self.my_sql = MySQLConfiguration()
 
     def get_configuration(self, provider):
-        return {'MySQL': self.mysql, 'PGSQL':self.pgsql}[provider]
+        return {'MySQL': self.my_sql, 'PGSQL':self.pgsql}[provider]
 
 class DidChangeConfigurationParams(Serializable):
     """

@@ -24,14 +24,14 @@ class ServerConnection(ABC):
     
     @property
     @abstractmethod
-    def port_num(self) -> int:
+    def port(self) -> int:
         """Returns the port number used for the current connection"""
         pass
-    
+
     @property
     @abstractmethod
     def user_name(self) -> str:
-        """Returns the port number used for the current connection"""
+        """Returns the user name used for the current connection"""
         pass
         
     @property
@@ -45,22 +45,28 @@ class ServerConnection(ABC):
     def server_version(self) -> Tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
         pass
+    
+    @property
+    @abstractmethod
+    def server_type(self) -> str:
+        """Returns the server type/provider"""
+        pass
 
     @property
     @abstractmethod
-    def connection_options(self):
+    def connection_options(self) -> dict:
         """ Returns the options used to create the current connection to the server """
         pass
 
-    @classmethod
+    @property
     @abstractmethod
-    def default_database(cls):
-        """Returns the default database for PostgreSQL if no other database is specified"""
+    def default_database(self) -> str:
+        """Returns the default database if no other database is specified"""
         pass
 
     @property
     @abstractmethod
-    def database_error(self):
+    def database_error(self) -> str:
         """ Returns the type of database error this connection throws"""
         pass
 
@@ -72,6 +78,9 @@ class ServerConnection(ABC):
     @property
     @abstractmethod
     def cancellation_query(self) -> str:
+        """
+        Returns a SQL command to end the current query execution process
+        """
         pass
     
     ############################# METHODS ##################################
@@ -84,6 +93,20 @@ class ServerConnection(ABC):
         """
         pass
     
+    @abstractmethod
+    def commit(self):
+        """
+        Commits the current transaction
+        """
+        pass
+
+    @abstractmethod
+    def get_cursor(self, **kwargs):
+        """
+        Returns a cursor for the current connection
+        """
+        pass
+
     @abstractmethod
     def execute_query(self, query: str, all=True):
         """

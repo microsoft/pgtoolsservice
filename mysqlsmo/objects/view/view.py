@@ -8,7 +8,7 @@ from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from smo.utils import templating
 
-class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
+class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
@@ -40,10 +40,11 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         self._dbname = dbname
+        self._server = server
+        self._server_version = server.version
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
@@ -63,13 +64,26 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Scr
             "view_name": self._name
         }
 
-    def _update_query_data(self) -> dict:
-        """ Provides data input for update script """
-        return {"data": {}}
-
     def _select_query_data(self) -> dict:
         """Provides data input for select script"""
         return {
             "dbname": self._dbname,
             "view_name": self._name
         }
+
+    def create_script(self):
+        """Generates a script that creates an object of the inheriting type"""
+        data = self._create_query_data()
+        template_root = self._template_root(self._server)
+        sql = templating.render_template(
+            templating.get_template_path(template_root, 'create.sql', self._server_version),
+            macro_roots=self._macro_root(),
+            **data
+        )
+
+        cols, rows = self._server.connection.execute_dict(sql)
+        try:
+            script = rows[0]["Create View"]
+        except Exception:
+            script = rows[0]["Create Table"]
+        return script

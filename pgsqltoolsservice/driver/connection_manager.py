@@ -13,9 +13,9 @@ class ConnectionManager:
     """Wrapper class that handles different types of drivers and connections """
 
     CONNECTORS = {
-        PG_PROVIDER_NAME: PsycopgConnection,
-        MYSQL_PROVIDER_NAME: PyMySQLConnection,
-        MARIADB_PROVIDER_NAME: PyMySQLConnection
+        PG_PROVIDER_NAME: PostgreSQLConnection,
+        MYSQL_PROVIDER_NAME: MySQLConnection,
+        MARIADB_PROVIDER_NAME: MySQLConnection
     }
 
     def __init__(self, provider, conn_options):

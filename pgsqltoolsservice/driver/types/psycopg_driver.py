@@ -6,6 +6,7 @@
 from typing import List, Mapping, Tuple
 import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.driver.types import ServerConnection
+from pgsqltoolsservice.utils import constants
 import psycopg2
 from psycopg2.extensions import Column, connection, cursor, TRANSACTION_STATUS_INERROR
 
@@ -30,7 +31,7 @@ PG_CONNECTION_PARAM_KEYWORDS = [
 ]
 
 
-class PsycopgConnection(ServerConnection):
+class PostgreSQLConnection(ServerConnection):
     """Wrapper for a psycopg2 connection that makes various properties easier to access"""
 
     def __init__(self, conn_params):
@@ -44,7 +45,11 @@ class PsycopgConnection(ServerConnection):
         
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['dbname'] = utils.constants.DEFAULT_DB[utils.constants.PG_PROVIDER_NAME]
+            connection_options['dbname'] = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
+
+        # Use the default port number if one was not provided
+        if 'port' not in connection_options or not connection_options['port']:
+            connection_options['port'] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg2.connect(**connection_options)
@@ -69,6 +74,9 @@ class PsycopgConnection(ServerConnection):
             int(version_string[-2:])
         )
 
+        # Setting the provider for this connection
+        self._provider_name = constants.PG_PROVIDER_NAME
+
     ###################### PROPERTIES ##################################
     @property
     def autocommit(self) -> bool:
@@ -81,12 +89,9 @@ class PsycopgConnection(ServerConnection):
         return self._dsn_parameters['host']
 
     @property
-    def port_num(self) -> int:
+    def port(self) -> int:
         """Returns the port number used for the current connection"""
-        if "port" in self._connection_options.keys():
-            return self._connection_options["port"]
-        else:
-            return None
+        return self._connection_options["port"]
         
     @property
     def database_name(self) -> str:
@@ -95,7 +100,7 @@ class PsycopgConnection(ServerConnection):
 
     @property
     def user_name(self) -> str:
-        """Returns the port number used for the current connection"""
+        """Returns the user name number used for the current connection"""
         return self._dsn_parameters["user"]
 
     @property
@@ -104,14 +109,19 @@ class PsycopgConnection(ServerConnection):
         return self._version
     
     @property
+    def server_type(self) -> str:
+        """Server type for distinguishing between standard PG and PG supersets"""
+        return 'pg'  # TODO: Determine if a server is PPAS or PG
+
+    @property
     def connection_options(self):
         """ Returns the options used to create the current connection to the server """
         return self._connection_options
 
-    @classmethod
-    def default_database(cls):
+    @property
+    def default_database(self):
         """Returns the default database for PostgreSQL if no other database is specified"""
-        return "postgres"
+        return constants.DEFAULT_DB[self._provider_name]
 
     @property
     def database_error(self):
@@ -135,6 +145,30 @@ class PsycopgConnection(ServerConnection):
         :param mode: True or False
         """
         self._conn.autocommit = mode
+
+    def commit(self):
+        """
+        Commits the current transaction
+        """
+        self._conn.commit()
+    
+    def get_cursor(self, **kwargs):
+        """
+        Returns a cursor for the current connection
+        :param kwargs (optional) to create a named cursor
+        """
+        # If the args for a named cursor are provided, create a named cursor
+        if kwargs and "name" in kwargs:
+            cursor_instance = self._conn.cursor(name=kwargs["name"], withhold=kwargs["withhold"])
+        else:
+            cursor_instance = self._conn.cursor()
+
+        # TODO: Find a way to store the provider name as an attribute in the cursor object
+        # attr = "provider"
+        # value = self._provider_name
+        # setattr(cursor_instance, attr, value)
+
+        return cursor_instance
     
     def execute_query(self, query, all=True):
         """

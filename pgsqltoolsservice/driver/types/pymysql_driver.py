@@ -5,6 +5,7 @@
 
 from typing import List, Mapping, Tuple
 from pgsqltoolsservice.driver.types import ServerConnection
+from pgsqltoolsservice.utils import constants
 import re
 import pymysql
 
@@ -28,7 +29,7 @@ MYSQL_CONNECTION_PARAM_KEYWORDS = [
 ]
 
 
-class PyMySQLConnection(ServerConnection):
+class MySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
 
     def __init__(self, conn_params):
@@ -42,6 +43,18 @@ class PyMySQLConnection(ServerConnection):
         # Filter the parameters to only those accepted by PyMySQL
         self._connection_options = {param: value for param, value in _params.items() if param in MYSQL_CONNECTION_PARAM_KEYWORDS}
 
+        # Convert the numeric params from strings to integers
+        numeric_params = ["port", "connect_timeout", "read_timeout", "write_timeout"]
+        for param in numeric_params:
+            if param in self._connection_options.keys():
+                val = self._connection_options[param]
+                if val:
+                    self._connection_options[param] = int(val) or None
+        
+        # Use the default port number if one was not provided
+        if 'port' not in self._connection_options or not self._connection_options['port']:
+            self._connection_options['port'] = constants.DEFAULT_PORT[constants.MYSQL_PROVIDER_NAME]
+
         # If SSL is enabled or allowed
         if "ssl" in conn_params.keys() and self._connection_options["ssl"] != "disable":
             # Find all the ssl options (key, ca, cipher)
@@ -54,7 +67,6 @@ class PyMySQLConnection(ServerConnection):
             self._connection_options["ssl"] = ssl_dict
 
         # Setting autocommit to True initally
-        self._connection_options["autocommit"] = True
         self._autocommit_status = True
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
@@ -62,6 +74,7 @@ class PyMySQLConnection(ServerConnection):
 
         # Check that we connected successfully
         assert type(self._conn) is pymysql.connections.Connection
+        self._connection_closed = False
 
         # Find the class of the database error this driver throws
         self._database_error = pymysql.err.DatabaseError
@@ -71,14 +84,20 @@ class PyMySQLConnection(ServerConnection):
         version_string = self.execute_query("SELECT VERSION();")[0][0]
 
         # Split the different components of the version string
-        import re
         version_components: List = re.split(r"[.-]", version_string)
         self._version: Tuple[int, int, int] = (
             int(version_components[0]),
             int(version_components[1]),
             int(version_components[2])
         )
-        self._connection_closed = False
+        self._provider_name = constants.MYSQL_PROVIDER_NAME
+
+        # # Find what type of server we have connected to
+        # if len(version_components) == 4 and version_components[3] == "MariaDB":
+        #     self._provider_name = constants.MARIADB_PROVIDER_NAME
+        # else:
+        #     self._provider_name = constants.MYSQL_PROVIDER_NAME
+        
 
     ###################### PROPERTIES ##################################
     @property
@@ -92,16 +111,13 @@ class PyMySQLConnection(ServerConnection):
         return self._connection_options["host"]
 
     @property
-    def port_num(self) -> int:
+    def port(self) -> int:
         """Returns the port number used for the current connection"""
-        if "port" in self._connection_options.keys():
-            return self._connection_options["port"]
-        else:
-            return None
+        return self._connection_options["port"]
 
     @property
     def user_name(self) -> str:
-        """Returns the port number used for the current connection"""
+        """Returns the user name used for the current connection"""
         return self._connection_options["user"]
 
     @property
@@ -115,14 +131,19 @@ class PyMySQLConnection(ServerConnection):
         return self._version
 
     @property
-    def connection_options(self):
+    def server_type(self) -> str:
+        """Server type for distinguishing between MariaDB and MySQL"""
+        return self._provider_name
+
+    @property
+    def connection_options(self) -> dict:
         """ Returns the options used to create the current connection to the server """
         return self._connection_options
 
-    @classmethod
-    def default_database(cls):
+    @property
+    def default_database(self) -> str:
         """Returns the default database for MySQL if no other database is specified"""
-        return "mysql"
+        return constants.DEFAULT_DB[self._provider_name]
 
     @property
     def database_error(self):
@@ -135,10 +156,8 @@ class PyMySQLConnection(ServerConnection):
 
     @property
     def cancellation_query(self) -> str:
-        pass
-
-    def connection_closed(self) -> str:
-        return self._connection_closed
+        # TODO generate a query that kills the current query process
+        return "-- ;"
 
     ############################# METHODS ##################################
     @autocommit.setter
@@ -147,19 +166,28 @@ class PyMySQLConnection(ServerConnection):
         Sets the given autocommit status for this connection
         :param mode: True or False
         """
-        pass
-        # # Close our current connection
-        # self._conn.close()
+        self._autocommit_status = mode
+    
+    def commit(self):
+        """
+        Commits the current transaction
+        """
+        self._conn.commit()
 
-        # # Open a new connection with the given autocommit status
-        # self._connection_options["autocommit"] = mode
-        # self._autocommit_status = mode
+    def get_cursor(self, **kwargs):
+        """
+        Returns a cursor for the current connection
+        :param kwargs will ignored as PyMySQL does not yet support named cursors 
+        """
+        # Create a new cursor from the current connection
+        cursor_instance = self._conn.cursor()
 
-        # # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
-        # self._conn = pymysql.connect(**self._connection_options)
+        # Store the provider name as an attribute in the cursor object
+        attr = "provider"
+        value = self._provider_name
+        setattr(cursor_instance, attr, value)
 
-        # # Check that we connected successfully
-        # assert type(self._conn) is pymysql.connections.Connection
+        return cursor_instance
     
     def execute_query(self, query: str, all=True):
         """
@@ -169,6 +197,9 @@ class PyMySQLConnection(ServerConnection):
         with self._conn.cursor() as cursor:
             try:
                 cursor.execute(query)
+                if self.autocommit:
+                    self._conn.commit()
+
                 if all:
                     query_results = cursor.fetchall()
                 else:
@@ -190,6 +221,8 @@ class PyMySQLConnection(ServerConnection):
         with self._conn.cursor() as cursor:
             try:
                 cursor.execute(query)
+                if self.autocommit:
+                    self._conn.commit()
 
                 # Get a list of column names
                 col_names: List[str] = [col[0] for col in cursor.description]
@@ -226,5 +259,6 @@ class PyMySQLConnection(ServerConnection):
         """
         Closes this current connection.
         """
-        self._conn.close()
-        self._connection_closed = True
+        if not self._connection_closed:
+            self._conn.close()
+            self._connection_closed = True

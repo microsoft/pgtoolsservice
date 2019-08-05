@@ -6,7 +6,7 @@
 import threading
 from typing import List
 
-from pgsqltoolsservice.driver import *
+from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.metadata.contracts import (
@@ -26,6 +26,7 @@ SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_v
     WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
 """
 
+# Source: https://gist.githubusercontent.com/rakeshsingh/456724716534610caf83/raw/4f9ffba2a1bc365395a70da4d392dae5fd014e3f/Mysql-Show-All-Schema-Objects.sql
 MYSQL_METADATA_QUERY = """
 SELECT OBJECT_SCHEMA, OBJECT_NAME, OBJECT_TYPE
 FROM (
@@ -37,6 +38,11 @@ FROM (
 	UNION
 	SELECT ROUTINE_NAME AS OBJECT_NAME, 'f' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
 	FROM information_schema.ROUTINES as r
+	WHERE r.ROUTINE_TYPE = 'FUNCTION'
+	UNION
+	SELECT ROUTINE_NAME AS OBJECT_NAME, 's' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
+	FROM information_schema.ROUTINES as s
+	WHERE s.ROUTINE_TYPE = 'PROCEDURE'
 	) as objects
 WHERE OBJECT_SCHEMA = '{}';
 """
@@ -65,34 +71,27 @@ class MetadataService:
 
     # REQUEST HANDLERS #####################################################
 
-    def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
-        thread = threading.Thread(
-            target=self._metadata_list_worker,
-            args=(request_context, params)
-        )
-        thread.daemon = True
-        thread.start()
+    # def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
+    #     thread = threading.Thread(
+    #         target=self._metadata_list_worker,
+    #         args=(request_context, params)
+    #     )
+    #     thread.daemon = True
+    #     thread.start()
 
-    def _metadata_list_worker(self, request_context: RequestContext, params: MetadataListParameters) -> None:
+    def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
         try:
             metadata = self._list_metadata(params.owner_uri)
             request_context.send_response(MetadataListResponse(metadata))
-        except Exception:
+        except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Unhandled exception while executing the metadata list worker thread')
-            request_context.send_error('Unhandled exception while listing metadata')  # TODO: Localize
+            request_context.send_error('Unhandled exception while listing metadata: ' + str(e))  # TODO: Localize
 
     def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
         # Get current connection
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection: ServerConnection = connection_service.get_connection(owner_uri, ConnectionType.DEFAULT)
-
-        # Get the type of server
-        provider_name = self._service_provider.provider
-
-        # Get a temporary connection to DB server using the current connection options
-        # (ensures that 2 threads don't use the same connection)
-        temp_conn: ServerConnection = ConnectionManager(provider_name, connection.connection_options).get_connection()
 
         # Get the current database
         database_name = connection.database_name
@@ -100,21 +99,20 @@ class MetadataService:
         # Get the metadata query specific to the current provider and fill in the database name
         metadata_query = QUERY_MAP[self._service_provider.provider].format(database_name)
 
-        # Execute the query with the temporary connection, then close
-        query_results = temp_conn.execute_query(metadata_query, all=True)
-        temp_conn.close()
+        query_results = connection.execute_query(metadata_query, all=True)
 
         metadata_list = []
-        for row in query_results:
-            schema_name = row[0]
-            object_name = row[1]
-            object_type = _METADATA_TYPE_MAP[row[2]]
-            metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
+        if query_results:
+            for row in query_results:
+                schema_name = row[0]
+                object_name = row[1]
+                object_type = _METADATA_TYPE_MAP[row[2]]
+                metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
         return metadata_list
-
 
 _METADATA_TYPE_MAP = {
     'f': MetadataType.FUNCTION,
     't': MetadataType.TABLE,
-    'v': MetadataType.VIEW
+    'v': MetadataType.VIEW,
+    's': MetadataType.SPROC
 }

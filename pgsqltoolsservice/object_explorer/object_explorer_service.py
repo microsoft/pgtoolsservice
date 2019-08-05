@@ -81,6 +81,10 @@ class ObjectExplorerService(object):
             if params.database_name is None or params.database_name == '':
                 params.database_name = utils.constants.DEFAULT_DB[self._provider]
 
+            # Use the provider's default port if port number was not specified
+            if not params.port:
+                params.port = utils.constants.DEFAULT_PORT[self._provider]
+
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params)
             session: ObjectExplorerSession = ObjectExplorerSession(session_id, params)
@@ -91,8 +95,8 @@ class ObjectExplorerService(object):
                     # Removed the exception for now. But we need to investigate why we would get this
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.error(f'Object explorer session for {session_id} already exists!')
-                    request_context.send_response(False)
-                    return
+                    # request_context.send_response(False)
+                    # return
 
                 self._session_map[session_id] = session
 
@@ -191,7 +195,7 @@ class ObjectExplorerService(object):
 
             if task is not None and task.isAlive():
                 return
-            is_refresh = False
+
             new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
             new_task.daemon = True
             new_task.start()
@@ -336,8 +340,11 @@ class ObjectExplorerService(object):
         host = quote(params.options['host'])
         user = quote(params.options['user'])
         db = quote(params.options['dbname'])
+        # Port number distinguishes between connections to different server 
+        # instances with the same username, dbname running on same host
+        port = quote(str(params.options['port']))
 
-        return f'objectexplorer://{user}@{host}:{db}/'
+        return f'objectexplorer://{user}@{host}:{port}:{db}/'
 
     def _route_request(self, is_refresh: bool, session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
         """
@@ -350,7 +357,7 @@ class ObjectExplorerService(object):
         # Figure out what the path we're looking at is
         path = urlparse(path).path
 
-        # We query again if its a refresh request or this is the first expand request for this path
+        # We query if its a refresh request or this is the first expand request for this path
         if is_refresh or (path not in session.cache.keys()):
             # Find a matching route for the path
             for route, target in self._routing_table.items():
@@ -361,8 +368,12 @@ class ObjectExplorerService(object):
                     session.cache[path] = target_nodes
                     return target_nodes
 
+            # If this node is a leaf
+            if not path.endswith("/"):
+                return []
             # If we make it to here, there isn't a route that matches the path
             raise ValueError(f'Path {path} does not have a matching OE route')  # TODO: Localize
         else:
+            # Return the results of a previous request for the same path
             return session.cache[path]
         

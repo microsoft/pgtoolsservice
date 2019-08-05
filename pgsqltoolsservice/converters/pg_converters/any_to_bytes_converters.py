@@ -13,9 +13,7 @@ import datetime
 from pgsqltoolsservice.parsers import datatypes
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
-
 DECODING_METHOD = 'utf-8'
-
 
 def _get_range_data_type_bound(value):
     lower_bound = "[" if value.lower_inc else "("
@@ -194,7 +192,7 @@ def convert_datetimerange_list(values: list):
     return bytearray(json.dumps(datetimerange_list).encode())
 
 
-DATATYPE_WRITER_MAP = {
+PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BOOL: convert_bool,
     datatypes.DATATYPE_REAL: convert_float,
     datatypes.DATATYPE_DOUBLE: convert_double,
@@ -276,9 +274,3 @@ DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_REGDICTIONARY_ARRAY: convert_list,
     datatypes.DATATYPE_PG_LSN_ARRAY: convert_list
 }
-
-
-def get_bytes_converter(type_value: object) -> Callable[[Any], bytearray]:
-    """ This method gets the converter based on data type.
-    For User-Defined Type(UDT), it gets convert_str due to UDT are serialized as str """
-    return DATATYPE_WRITER_MAP.get(type_value, convert_str)

@@ -2,5 +2,4 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 #}
-
-SHOW CREATE TABLE {{dbname}}.{{tbl_name}};
+SHOW CREATE TABLE {{tbl_name}};

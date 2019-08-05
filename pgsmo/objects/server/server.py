@@ -32,7 +32,7 @@ class Server:
 
         # Declare the server properties
         self._host: str = self._conn.host_name
-        self._port: int = self._conn.port_num
+        self._port: int = self._conn.port
         self._maintenance_db_name: str = self._conn.database_name
 
         # These properties will be defined later
@@ -90,7 +90,7 @@ class Server:
     @property
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
-        user = quote_plus(self.connection.dsn_parameters['user'])
+        user = quote_plus(self.connection.user_name)
         host = quote_plus(self.host)
         port = quote_plus(str(self.port))
         return f'//{user}@{host}:{port}/'

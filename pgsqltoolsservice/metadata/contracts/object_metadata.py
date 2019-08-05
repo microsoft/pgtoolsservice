@@ -13,6 +13,7 @@ class MetadataType(enum.Enum):
     """Contract enum for representing metadata types"""
     TABLE = 0
     VIEW = 1
+    SPROC = 2
     FUNCTION = 3
 
 

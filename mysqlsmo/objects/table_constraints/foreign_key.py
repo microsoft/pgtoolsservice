@@ -29,8 +29,8 @@ class ForeignKeyConstraint(NodeObject):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs["name"])
-        return db
+        foreign = cls(server, kwargs["name"])
+        return foreign
 
     def __init__(self, server: 's.Server', name: str):
         """

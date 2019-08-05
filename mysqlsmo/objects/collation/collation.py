@@ -29,8 +29,8 @@ class Collation(NodeObject):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs["name"])
-        return db
+        col = cls(server, kwargs["name"])
+        return col
 
     def __init__(self, server: 's.Server', name: str):
         """

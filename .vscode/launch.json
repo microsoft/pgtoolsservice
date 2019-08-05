@@ -204,6 +204,6 @@
                     "remoteRoot": "${workspaceRoot}"
                 }
             ]
-        },
+        }
     ]
 }

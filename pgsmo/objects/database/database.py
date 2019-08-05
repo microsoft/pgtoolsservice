@@ -94,17 +94,18 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     def allow_conn(self) -> bool:
         return self._allow_conn
 
-    # @property
-    # def connection(self) -> ServerConnection:
-    #     if self._connection is not None:
-    #         return self._connection
-    #     else:
-    #         connection = ServerConnection(self._server.db_connection_callback(self.name))
-    #         if connection.dsn_parameters['dbname'] == self.name:
-    #             self._connection = connection
-    #             return self._connection
-    #         else:
-    #             raise ValueError('connection create for wrong database')
+    @property
+    def connection(self) -> ServerConnection:
+        if self._connection is not None:
+            return self._connection
+        else:
+            # If we do not have a connection to the db, we create a new one
+            connection: ServerConnection = self._server.db_connection_callback(self.name)
+            if connection.database_name == self.name:
+                self._connection = connection
+                return self._connection
+            else:
+                raise ValueError('connection create for wrong database')
 
     @property
     def is_template(self) -> bool:
