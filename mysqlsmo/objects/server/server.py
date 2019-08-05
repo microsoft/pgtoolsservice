@@ -119,30 +119,6 @@ class Server:
     # #     """
     # #     return self._search_path
 
-    # # METHODS ##############################################################
-    def get_object_by_urn(self, urn: str) -> NodeObject:
-        # Validate that the urn is a full urn
-        if urn is None or urn.strip() == '':
-            raise ValueError('URN was not provided')    # TODO: Localize?
-
-        parsed_urn: ParseResult = urlparse(urn)
-        reconstructed_urn_base = f'//{parsed_urn.netloc}/'
-        if reconstructed_urn_base != self.urn_base:
-            raise ValueError('Provided URN is not applicable to this server')   # TODO: Localize?
-
-        # Process the first fragment
-        class_name, oid, remaining = utils.process_urn(parsed_urn.path)
-
-        # Find the matching collection
-        collection = self._child_objects.get(class_name)
-        if collection is None:
-            raise ValueError(f'URN is invalid: server does not contain {class_name} objects')   # TODO: Localize?
-
-        # Find the matching object
-        # TODO: Create a .get method for NodeCollection (see https://github.com/Microsoft/carbon/issues/1713)
-        obj = collection[oid]
-        return obj.get_object_by_urn(remaining)
-
     def refresh(self) -> None:
         # Reset child objects
         pass

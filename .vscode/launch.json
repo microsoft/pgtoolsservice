@@ -193,23 +193,10 @@
             ]
         },
         {
-            "name": "Python: 3000 Remote Attach",
+            "name": "Python: Remote Attach",
             "type": "python",
             "request": "attach",
             "port": 3000,
-            "host": "localhost",
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}",
-                    "remoteRoot": "${workspaceRoot}"
-                }
-            ]
-        },
-        {
-            "name": "Python: 3001 Remote Attach",
-            "type": "python",
-            "request": "attach",
-            "port": 3001,
             "host": "localhost",
             "pathMappings": [
                 {

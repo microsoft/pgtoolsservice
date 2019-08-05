@@ -73,9 +73,6 @@ class Function(NodeObject, ScriptableCreate, ScriptableDelete):
         )
 
         cols, rows = self._server.connection.execute_dict(sql)
-        try:
-            script = rows[0]["Create Function"]
-        except Exception:
-            script = rows[0]["Create Table"]
+        script = rows[0]["Create Function"]
         return script
     

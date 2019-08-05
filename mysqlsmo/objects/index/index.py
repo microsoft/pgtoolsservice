@@ -29,8 +29,8 @@ class Index(NodeObject):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs["index_name"])
-        return db
+        index = cls(server, kwargs["index_name"])
+        return index
 
     def __init__(self, server: 's.Server', name: str):
         """

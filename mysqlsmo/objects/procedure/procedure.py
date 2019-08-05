@@ -73,8 +73,5 @@ class Procedure(NodeObject, ScriptableCreate, ScriptableDelete):
         )
 
         cols, rows = self._server.connection.execute_dict(sql)
-        try:
-            script = rows[0]["Create Procedure"]
-        except Exception:
-            script = rows[0]["Create Table"]
+        script = rows[0]["Create Procedure"]
         return script

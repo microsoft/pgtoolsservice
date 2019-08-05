@@ -30,8 +30,8 @@ class Event(NodeObject, ScriptableCreate, ScriptableDelete):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs["name"], kwargs["dbname"])
-        return db
+        event = cls(server, kwargs["name"], kwargs["dbname"])
+        return event
 
     def __init__(self, server: 's.Server', name: str, dbname: str):
         """
@@ -40,7 +40,6 @@ class Event(NodeObject, ScriptableCreate, ScriptableDelete):
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
         ScriptableDelete.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
-        ScriptableUpdate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
 
         self._dbname = dbname
 
@@ -61,6 +60,3 @@ class Event(NodeObject, ScriptableCreate, ScriptableDelete):
             "dbname": self._dbname,
             "event_name": self._name
         }
-    
-    def _update_query_data(self) -> dict:
-        pass
