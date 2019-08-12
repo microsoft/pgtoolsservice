@@ -179,6 +179,7 @@ class MySQLConnection(ServerConnection):
         Returns a cursor for the current connection
         :param kwargs will ignored as PyMySQL does not yet support named cursors 
         """
+        self._conn.ping()
         # Create a new cursor from the current connection
         cursor_instance = self._conn.cursor()
 
@@ -194,6 +195,7 @@ class MySQLConnection(ServerConnection):
         Execute a simple query without arguments for the given connection
         :raises an error: if there was no result set when executing the query
         """
+        self._conn.ping()
         with self._conn.cursor() as cursor:
             try:
                 cursor.execute(query)
@@ -206,6 +208,8 @@ class MySQLConnection(ServerConnection):
                     query_results = cursor.fetchone()
 
                 return query_results
+            except Exception:
+                return False
             finally:
                 cursor.close()
 
@@ -218,6 +222,7 @@ class MySQLConnection(ServerConnection):
         :param params: Optional parameters to inject into the query
         :return: A list of column objects and a list of rows, which are formatted as dicts.
         """
+        self._conn.ping()
         with self._conn.cursor() as cursor:
             try:
                 cursor.execute(query)
@@ -235,7 +240,7 @@ class MySQLConnection(ServerConnection):
                         rows.append(row_dict)
                 return col_names, rows
             except Exception as e:
-                print(e)
+                return False
             finally:
                 cursor.close()
 
