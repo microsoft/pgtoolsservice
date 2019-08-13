@@ -3,7 +3,7 @@ from cx_Freeze import setup, Executable
 # Dependencies are automatically detected, but it might need
 # fine tuning.
 include_files = [('./pgsqltoolsservice/pg_exes', './pg_exes')]
-buildOptions = dict(packages=['asyncio'], excludes=[], include_files=include_files)
+buildOptions = dict(packages=['asyncio', 'jinja2'], excludes=[], include_files=include_files)
 
 base = 'Console'
 
