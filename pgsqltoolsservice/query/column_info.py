@@ -18,7 +18,8 @@ def get_columns_info(cursor) -> List[DbColumn]:
         # if no connection is provided, just return basic column info constructed from the cursor description
         return [DbColumn.from_cursor_description(index, column) for index, column in enumerate(cursor.description)]
 
-    if (hasattr(cursor, "provider")) and (cursor.provider == constants.MYSQL_PROVIDER_NAME):
+    if (hasattr(cursor, "provider")):
+        # MySQL or MariaDB connections
         columns_info = []
         for index, column in enumerate(cursor.description):
             db_column = DbColumn.from_cursor_description(index, column)

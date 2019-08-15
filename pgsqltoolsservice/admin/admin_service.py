@@ -36,9 +36,12 @@ class AdminService(object):
 
         # Get database owner
         owner_result = connection.get_database_owner()
+        size_result = connection.get_database_size(connection.database_name)
 
         # Set up and send the response
         options = {
-            DatabaseInfo.OWNER: owner_result
+            DatabaseInfo.DBNAME: connection.database_name,
+            DatabaseInfo.OWNER: owner_result,
+            DatabaseInfo.SIZE: size_result
         }
         request_context.send_response(GetDatabaseInfoResponse(DatabaseInfo(options)))

@@ -28,6 +28,18 @@ MYSQL_CONNECTION_PARAM_KEYWORDS = [
     'read_timeout', 'write_timeout', 'client_flag', 'sql_mode', 'sslmode', 'ssl'
 ]
 
+# Source: https://tableplus.io/blog/2018/08/mysql-how-to-get-the-size-of-mysql-database.html
+MYSQL_SIZE_QUERY = """
+SELECT
+    table_schema AS 'DB Name',
+    ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) AS 'DB Size in MB'
+FROM
+    information_schema.tables
+WHERE
+    table_schema = '{}'
+GROUP BY
+    table_schema;
+"""
 
 class MySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
@@ -92,11 +104,11 @@ class MySQLConnection(ServerConnection):
         )
         self._provider_name = constants.MYSQL_PROVIDER_NAME
 
-        # # Find what type of server we have connected to
-        # if len(version_components) == 4 and version_components[3] == "MariaDB":
-        #     self._provider_name = constants.MARIADB_PROVIDER_NAME
-        # else:
-        #     self._provider_name = constants.MYSQL_PROVIDER_NAME
+        # Find what type of server we have connected to
+        if len(version_components) == 4 and version_components[3] == "MariaDB":
+            self._server_type = "MariaDB"
+        else:
+            self._server_type = "MySQL"
         
 
     ###################### PROPERTIES ##################################
@@ -133,7 +145,7 @@ class MySQLConnection(ServerConnection):
     @property
     def server_type(self) -> str:
         """Server type for distinguishing between MariaDB and MySQL"""
-        return self._provider_name
+        return self._server_type
 
     @property
     def connection_options(self) -> dict:
@@ -259,6 +271,15 @@ class MySQLConnection(ServerConnection):
         
         # Strip the hostname from the result
         return re.sub(r'@(\w)+', '', result)
+
+    def get_database_size(self, dbname: str):
+        """
+        Gets the size of a particular database in MB
+        """
+        if dbname:
+            size_query = MYSQL_SIZE_QUERY.format(dbname)
+            result = self.execute_query(size_query, all=True)
+            return str(result[0][1])
 
     def close(self):
         """

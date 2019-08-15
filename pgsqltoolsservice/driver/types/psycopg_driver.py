@@ -76,6 +76,7 @@ class PostgreSQLConnection(ServerConnection):
 
         # Setting the provider for this connection
         self._provider_name = constants.PG_PROVIDER_NAME
+        self._server_type = "PostgreSQL"
 
     ###################### PROPERTIES ##################################
     @property
@@ -111,7 +112,7 @@ class PostgreSQLConnection(ServerConnection):
     @property
     def server_type(self) -> str:
         """Server type for distinguishing between standard PG and PG supersets"""
-        return 'pg'  # TODO: Determine if a server is PPAS or PG
+        return self._server_type
 
     @property
     def connection_options(self):
@@ -223,6 +224,12 @@ class PostgreSQLConnection(ServerConnection):
         database_name = self.database_name
         owner_query = "SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{}'".format(database_name)
         return self.execute_query(owner_query, all=True)[0][0]
+
+    def get_database_size(self, dbname: str):
+        """
+        Gets the size of a particular database in MB
+        """
+        pass
 
     def close(self):
         """

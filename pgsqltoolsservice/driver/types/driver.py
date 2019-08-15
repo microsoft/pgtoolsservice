@@ -139,7 +139,14 @@ class ServerConnection(ABC):
         """
         List the owner(s) of the current database
         """
-    pass
+        pass
+    
+    @abstractmethod
+    def get_database_size(self, dbname: str):
+        """
+        Gets the size of a particular database in MB
+        """
+        pass
     
     @abstractmethod
     def close(self):

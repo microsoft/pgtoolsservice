@@ -20,6 +20,8 @@ class GetDatabaseInfoParameters(Serializable):
 class DatabaseInfo:
     """Contract for database information"""
     OWNER = 'owner'
+    DBNAME = 'dbname'
+    SIZE = 'size'
 
     def __init__(self, options: Dict[str, Any]) -> None:
         self.options: Dict[str, Any] = options
