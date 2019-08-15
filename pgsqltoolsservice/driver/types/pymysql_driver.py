@@ -270,7 +270,7 @@ class MySQLConnection(ServerConnection):
         result = self.execute_query(owner_query, all=True)[0][0]
         
         # Strip the hostname from the result
-        return re.sub(r'@(\w)+', '', result)
+        return re.sub(r'@(.*)', '', result)
 
     def get_database_size(self, dbname: str):
         """
