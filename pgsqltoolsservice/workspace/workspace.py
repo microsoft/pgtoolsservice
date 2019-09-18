@@ -5,7 +5,7 @@
 
 import os
 from typing import List, Optional                        # noqa
-from urllib.parse import urlparse, unquote, ParseResult  # noqa
+from urllib.parse import urlparse, unquote, ParseResult, unquote  # noqa
 
 from pgsqltoolsservice.workspace.script_file import ScriptFile
 import pgsqltoolsservice.utils as utils
@@ -67,6 +67,7 @@ class Workspace:
 
         # If the file is already loaded in the workspace, just return it
         script_file: ScriptFile = self._workspace_files.get(file_uri)
+        file_uri = unquote(file_uri)
         if script_file is not None:
             return script_file
 
