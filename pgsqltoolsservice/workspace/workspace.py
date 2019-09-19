@@ -36,6 +36,7 @@ class Workspace:
         :return: The ScriptFile that was closed, or None if the file is not open
         """
         utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
+        file_uri = unquote(file_uri)
 
         return self._workspace_files.pop(file_uri, None)
 
@@ -46,6 +47,7 @@ class Workspace:
         :return: Flag indicating if the file is tracked in workspace
         """
         utils.validate.is_not_none_or_whitespace('file_uri', file_uri)
+        file_uri = unquote(file_uri)
 
         return file_uri in self._workspace_files
 
@@ -66,8 +68,10 @@ class Workspace:
         resolved_file_path: str = self._resolve_file_path(file_uri)
 
         # If the file is already loaded in the workspace, just return it
-        script_file: ScriptFile = self._workspace_files.get(file_uri)
+
         file_uri = unquote(file_uri)
+        script_file: ScriptFile = self.get_file(file_uri)
+
         if script_file is not None:
             return script_file
 
@@ -92,7 +96,7 @@ class Workspace:
         :return: ScriptFile representing the file that was loaded, None if the file isn't open
         """
         utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
-
+        file_uri = unquote(file_uri)
         return self._workspace_files.get(file_uri)
 
     # IMPLEMENTATION DETAILS ###############################################
