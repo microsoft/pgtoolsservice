@@ -122,7 +122,7 @@ class ConnectionService:
 
         # If options contains azureSecurityToken, then just copy it over to password, which is how it is
         # passed to PostgreSQL.
-        if params.connection.options['azureAccountToken']:
+        if 'azureAccountToken' in params.connection.options:
             params.connection.options['password'] = params.connection.options['azureAccountToken']
 
         # Map the connection options to their psycopg2-specific options
