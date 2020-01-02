@@ -23,6 +23,22 @@ def _get_range_data_type_bound(value):
     return [lower_bound, upper_bound]
 
 
+def _get_iso_formatted_value(value):
+    bound = _get_range_data_type_bound(value)
+    lower_iso_format = '' if value.lower is None else value.lower.isoformat()
+    upper_iso_format = '' if value.upper is None else value.upper.isoformat()
+    formatted_value_str = bound[0] + str(lower_iso_format) + "," + str(upper_iso_format) + bound[1]
+    return formatted_value_str
+
+
+def _get_int_formatted_value(value):
+    bound = _get_range_data_type_bound(value)
+    value_lower = '' if value.lower is None else int(value.lower)
+    value_upper = '' if value.upper is None else int(value.upper)
+    formatted_value_str = bound[0] + str(value_lower) + "," + str(value_upper) + bound[1]
+    return formatted_value_str
+
+
 def convert_bool(value: bool):
     return bytearray(struct.pack("?", value))
 
@@ -97,29 +113,25 @@ def convert_dict(value: dict):
 
 def convert_numericrange(value: NumericRange):
     """ Serialize NumericRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + str(int(value.lower)) + "," + str(int(value.upper)) + bound[1]
+    formatted_value_str = _get_int_formatted_value(value)
     return bytearray(formatted_value_str.encode())
 
 
 def convert_datetimerange(value: DateTimeRange):
     """ Serialize DateTimeRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+    formatted_value_str = _get_iso_formatted_value(value)
     return bytearray(formatted_value_str.encode())
 
 
 def convert_datetimetzrange(value: DateTimeTZRange):
     """ Serialize DateTimeTZRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+    formatted_value_str = _get_iso_formatted_value(value)
     return bytearray(formatted_value_str.encode())
 
 
 def convert_daterange(value: DateRange):
     """ Serialize DateRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+    formatted_value_str = _get_iso_formatted_value(value)
     return bytearray(formatted_value_str.encode())
 
 
@@ -144,28 +156,32 @@ def convert_bytea_list(values: list):
 def convert_datetime_list(values: list):
     datetime_list = []
     for value in values:
-        datetime_list.append(value.isoformat())
+        value_iso_format = None if value is None else value.isoformat()
+        datetime_list.append(value_iso_format)
     return bytearray(json.dumps(datetime_list).encode())
 
 
 def convert_date_list(values: list):
     date_list = []
     for value in values:
-        date_list.append(value.isoformat())
+        value_iso_format = None if value is None else value.isoformat()
+        date_list.append(value_iso_format)
     return bytearray(json.dumps(date_list).encode())
 
 
 def convert_time_list(values: list):
     time_list = []
     for value in values:
-        time_list.append(value.isoformat())
+        value_iso_format = None if value is None else value.isoformat()
+        time_list.append(value_iso_format)
     return bytearray(json.dumps(time_list).encode())
 
 
 def convert_time_with_timezone_list(values: list):
     time_with_timezone_list = []
     for value in values:
-        time_with_timezone_list.append(value.isoformat())
+        value_iso_format = None if value is None else value.isoformat()
+        time_with_timezone_list.append(value_iso_format)
     return bytearray(json.dumps(time_with_timezone_list).encode())
 
 
@@ -179,8 +195,7 @@ def convert_timedelta_list(values: list):
 def convert_numericrange_list(values: list):
     numericrange_list = []
     for value in values:
-        bound = _get_range_data_type_bound(value)
-        formatted_value_str = bound[0] + str(int(value.lower)) + "," + str(int(value.upper)) + bound[1]
+        formatted_value_str = _get_int_formatted_value(value)
         numericrange_list.append(str(formatted_value_str))
     return bytearray(json.dumps(numericrange_list).encode())
 
@@ -188,8 +203,7 @@ def convert_numericrange_list(values: list):
 def convert_datetimerange_list(values: list):
     datetimerange_list = []
     for value in values:
-        bound = _get_range_data_type_bound(value)
-        formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+        formatted_value_str = _get_iso_formatted_value(value)
         datetimerange_list.append(str(formatted_value_str))
     return bytearray(json.dumps(datetimerange_list).encode())
 
