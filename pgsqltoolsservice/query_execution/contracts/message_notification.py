@@ -27,3 +27,5 @@ class MessageNotificationParams:
 
 
 MESSAGE_NOTIFICATION = 'query/message'
+
+DEPLOY_MESSAGE_NOTIFICATION = 'query/deployMessage'
