@@ -21,7 +21,7 @@ from pgsqltoolsservice.query import (
 from pgsqltoolsservice.query.contracts import BatchSummary, ResultSetSubset, SelectionData, SaveResultsRequestParams, SubsetResult  # noqa
 from pgsqltoolsservice.query import ResultSetStorageType
 from pgsqltoolsservice.query_execution.contracts import (
-    EXECUTE_STRING_REQUEST, EXECUTE_DEPLOY_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
+    EXECUTE_STRING_REQUEST, EXECUTE_DEPLOY_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION,
     DEPLOY_BATCH_COMPLETE_NOTIFICATION, DEPLOY_BATCH_START_NOTIFICATION, EXECUTE_DOCUMENT_STATEMENT_REQUEST,
     ExecuteDocumentStatementParams, ExecutionPlanOptions, ResultSetNotificationParams,
@@ -75,7 +75,7 @@ class QueryExecutionService(object):
 
         self._service_action_mapping: dict = {
             EXECUTE_STRING_REQUEST: self._handle_execute_query_request,
-            EXECUTE_DEPLOY_STRING_REQUEST: self.handle_execute_deploy_string_request,
+            EXECUTE_DEPLOY_REQUEST: self.handle_execute_deploy_request,
             EXECUTE_DOCUMENT_SELECTION_REQUEST: self._handle_execute_query_request,
             EXECUTE_DOCUMENT_STATEMENT_REQUEST: self._handle_execute_query_request,
             SUBSET_REQUEST: self._handle_subset_request,
@@ -190,7 +190,7 @@ class QueryExecutionService(object):
 
         self._start_query_execution_thread(request_context, params, worker_args)
 
-    def handle_execute_deploy_string_request(
+    def handle_execute_deploy_request(
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
         """Kick off thread to execute query in response to an incoming execute query request"""

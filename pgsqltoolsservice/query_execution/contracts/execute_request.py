@@ -36,8 +36,8 @@ EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
     ExecuteStringParams
 )
 
-EXECUTE_DEPLOY_STRING_REQUEST = IncomingMessageConfiguration(
-    'query/executeDeployString',
+EXECUTE_DEPLOY_REQUEST = IncomingMessageConfiguration(
+    'query/executeDeploy',
     ExecuteStringParams
 )
 
