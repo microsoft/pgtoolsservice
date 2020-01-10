@@ -49,10 +49,10 @@ from pgsqltoolsservice.query_execution.contracts.save_result_as_request import (
 
 __all__ = [
     'BatchNotificationParams',
-    'BATCH_START_NOTIFICATION', 'BATCH_COMPLETE_NOTIFICATION', 'DEPLOY_BATCH_COMPLETE_NOTIFICATION', 'DEPLOY_BATCH_START_NOTIFICATION'
+    'BATCH_START_NOTIFICATION', 'BATCH_COMPLETE_NOTIFICATION', 'DEPLOY_BATCH_COMPLETE_NOTIFICATION', 'DEPLOY_BATCH_START_NOTIFICATION',
     'ExecuteDocumentSelectionParams', 'ExecuteStringParams', 'ExecuteRequestParamsBase',
-    'ExecuteResult', 'ExecutionPlanOptions', 'EXECUTE_DOCUMENT_SELECTION_REQUEST', 'EXECUTE_STRING_REQUEST', 'EXECUTE_DEPLOY_STRING_REQUEST'
-    'MessageNotificationParams', 'MESSAGE_NOTIFICATION', 'MESSAGE_DEPLOY_NOTIFICATION', 'QueryCompleteNotificationParams',
+    'ExecuteResult', 'ExecutionPlanOptions', 'EXECUTE_DOCUMENT_SELECTION_REQUEST', 'EXECUTE_STRING_REQUEST', 'EXECUTE_DEPLOY_STRING_REQUEST',
+    'MessageNotificationParams', 'MESSAGE_NOTIFICATION', 'DEPLOY_MESSAGE_NOTIFICATION', 'QueryCompleteNotificationParams',
     'QUERY_COMPLETE_NOTIFICATION', 'DEPLOY_COMPLETE_NOTIFICATION', 'ResultMessage', 'ResultSetNotificationParams',
     'RESULT_SET_AVAILABLE_NOTIFICATION', 'RESULT_SET_COMPLETE_NOTIFICATION', 'RESULT_SET_UPDATED_NOTIFICATION',
     'SubsetParams', 'SUBSET_REQUEST', 'CANCEL_REQUEST', 'QueryCancelResult', 'QueryCancelParams',
