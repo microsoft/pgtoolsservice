@@ -24,8 +24,9 @@ from pgsqltoolsservice.query_execution.contracts import (
 from pgsqltoolsservice.utils import constants
 from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 from pgsqltoolsservice.query_execution.contracts import (
-    ExecutionPlanOptions, MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
-    BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
+    ExecutionPlanOptions, MESSAGE_NOTIFICATION, DEPLOY_MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
+    BATCH_START_NOTIFICATION, DEPLOY_BATCH_START_NOTIFICATION, DEPLOY_BATCH_COMPLETE_NOTIFICATION,
+    QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, DEPLOY_COMPLETE_NOTIFICATION,
     QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams,
     SaveResultsAsJsonRequestParams, SaveResultRequestResult,
     SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
@@ -222,6 +223,21 @@ class TestQueryService(unittest.TestCase):
         self.request_context.send_error.assert_not_called()
         self.request_context.send_response.assert_called_once()
 
+    def test_deploy_request_response(self):
+        """Test that a response is sent when handling a deploy request"""
+        params = get_execute_string_params()
+
+        # If I handle a deploy request
+        try:
+            self.query_execution_service._handle_execute_deploy_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+        except BaseException:            # This test doesn't mock enough to actually execute the query
+            pass
+
+        # Then there should have been a response sent to my request
+        self.request_context.send_error.assert_not_called()
+        self.request_context.send_response.assert_called_once()
+
     def test_result_set_subset(self):
         """
         Test for proper generation of ResultSetSubset
@@ -369,6 +385,39 @@ class TestQueryService(unittest.TestCase):
         subset = ''.join(expected_notices)
         self.assertTrue(subset in call_params_list[0].message.message)
 
+    def test_deploy_message_notices_no_error(self):
+        """Test to make sure that notices are being sent as part of a message notification"""
+        # Set up params that are sent as part of a query execution request
+        params = get_execute_string_params()
+        # If we handle an execute deploy request
+
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            self.query_execution_service._handle_execute_deploy_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
+        # Then we executed the query, closed the cursor, and called fetchall once each.
+        # And the connection's notices is set properly
+        self.cursor.execute.assert_called_once()
+        self.cursor.close.assert_called_once()
+        self.assertEqual(self.connection.notices, [])
+
+        # Get the message params for all message notifications that were sent
+        # call[0] would refer to the name of the notification call. call[1] allows
+        # access to the arguments list of the notification call
+        notification_calls = self.request_context.send_notification.mock_calls
+        call_params_list = [call[1][1] for call in notification_calls if call[1][0] == DEPLOY_MESSAGE_NOTIFICATION]
+
+        # Assert that at least one message notification was sent and that there were no errors
+        self.assertGreaterEqual(len(call_params_list), 1)
+        for param in call_params_list:
+            self.assertFalse(param.message.is_error)
+
+        # The first message should have the notices
+        expected_notices = ["NOTICE: foo", "DEBUG: bar"]
+        subset = ''.join(expected_notices)
+        self.assertTrue(subset in call_params_list[0].message.message)
+
     def test_message_notices_error(self):
         """Test that the notices are being sent as part of messages correctly in the case of
         an error during execution of a query
@@ -393,6 +442,43 @@ class TestQueryService(unittest.TestCase):
         # access to the arguments list of the notification call
         notification_calls = self.request_context.send_notification.mock_calls
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION]
+
+        # Assert that only two message notifications were sent.
+        # The first is a message containing only the notifications, where is_error is false
+        # The second is the error message, where is_error is true
+        expected_notices = ["NOTICE: foo", "DEBUG: bar"]
+        self.assertEqual(len(call_params_list), 2)
+        self.assertFalse(call_params_list[0].message.is_error)
+        self.assertTrue(call_params_list[1].message.is_error)
+        notices_str = ''.join(expected_notices)
+
+        # Make sure that the whole first message consists of the notices, as expected
+        self.assertEqual(notices_str, call_params_list[0].message.message)
+
+    def test_deploy_message_notices_error(self):
+        """Test that the notices are being sent as part of messages correctly in the case of
+        an error during deploy
+        """
+        # Set up query execution side effect and params sent as part of a deploy request
+        self.cursor.execute = mock.Mock(side_effect=self.cursor.execute_failure_side_effects)
+        params = get_execute_string_params()
+
+        # If we handle an execute deploy request
+        self.query_execution_service._handle_execute_deploy_request(self.request_context, params)
+        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
+        # Then we executed the query, did not manually call close,
+        # did not call fetchall(), and cleared the notices
+        self.cursor.execute.assert_called_once()
+        self.cursor.close.assert_not_called()
+        self.cursor.fetchall.assert_not_called()
+        self.assertEqual(self.connection.notices, [])
+
+        # Get the message params for all message notifications that were sent
+        # call[0] would refer to the name of the notification call. call[1] allows
+        # access to the arguments list of the notification call
+        notification_calls = self.request_context.send_notification.mock_calls
+        call_params_list = [call[1][1] for call in notification_calls if call[1][0] == DEPLOY_MESSAGE_NOTIFICATION]
 
         # Assert that only two message notifications were sent.
         # The first is a message containing only the notifications, where is_error is false
@@ -547,6 +633,33 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(call_methods_list.count(BATCH_COMPLETE_NOTIFICATION), 1)
         self.assertEqual(call_methods_list.count(QUERY_COMPLETE_NOTIFICATION), 1)
 
+    def test_deploy_execution(self):
+        """Test that deploy sends the proper response/notices to the client"""
+        # Set up params that are sent as part of a query execution request
+        params = get_execute_string_params()
+
+        columns_info = []
+        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
+            # If we handle an execute query request
+            self.query_execution_service._handle_execute_deploy_request(self.request_context, params)
+            self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
+        # Then we executed the query, closed the cursor, and called fetchall once each.
+        self.cursor.execute.assert_called_once()
+        self.cursor.close.assert_called_once()
+
+        # And we sent a response to the initial query, along with notifications for
+        # query/batchStart, query/resultSetComplete, query/message, query/batchComplete,
+        # and query/complete
+        self.request_context.send_response.assert_called_once_with({})
+        notification_calls = self.request_context.send_notification.mock_calls
+        call_methods_list = [call[1][0] for call in notification_calls]
+        self.assertEqual(call_methods_list.count(DEPLOY_BATCH_START_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(RESULT_SET_COMPLETE_NOTIFICATION), 0)
+        self.assertGreaterEqual(call_methods_list.count(DEPLOY_MESSAGE_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(DEPLOY_BATCH_COMPLETE_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(DEPLOY_COMPLETE_NOTIFICATION), 1)
+
     def test_handle_subset_request(self):
         """Test that the query execution service handles subset requests correctly"""
         # Set up the test with the proper parameters and query results
@@ -618,6 +731,46 @@ class TestQueryService(unittest.TestCase):
                 # Set batch summary depending on complete notification type
                 batch_summary = None
                 if call[1][0] is BATCH_COMPLETE_NOTIFICATION:
+                    batch_summary = call[1][1].batch_summary
+                else:
+                    self.assertEqual(len(call[1][1].batch_summaries), 1)
+                    batch_summary = call[1][1].batch_summaries[0]
+                # Make sure that all time-related fields are set and make sense
+                self.assertEqual(start_time, batch_summary.execution_start)
+                self.assertIsNotNone(batch_summary.execution_start)
+                self.assertIsNotNone(batch_summary.execution_end)
+                self.assertIsNotNone(batch_summary.execution_elapsed)
+                self.assertLessEqual(parser.parse(batch_summary.execution_start), parser.parse(batch_summary.execution_end))
+                self.assertEqual(batch_summary.execution_elapsed, str(parser.parse(batch_summary.execution_end) - parser.parse(batch_summary.execution_start)))
+
+    def test_deploy_time(self):
+        """Test to see that the start, end, and execution times are properly set"""
+
+        # Set up and run handler for executing queries
+        params = get_execute_string_params()
+        self.query_execution_service._handle_execute_deploy_request(self.request_context, params)
+        self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
+
+        # Grab all notification calls and make sure that we call the notifications that we're interested in
+        # exactly once
+        notification_calls = self.request_context.send_notification.mock_calls
+        call_methods_list = [call[1][0] for call in notification_calls]
+        self.assertEqual(call_methods_list.count(DEPLOY_BATCH_START_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(DEPLOY_BATCH_COMPLETE_NOTIFICATION), 1)
+        self.assertEqual(call_methods_list.count(DEPLOY_COMPLETE_NOTIFICATION), 1)
+
+        start_time = None
+        for call in notification_calls:
+            # Check that only the execution start time is defined for batch start
+            if call[1][0] is DEPLOY_BATCH_START_NOTIFICATION:
+                start_time = call[1][1].batch_summary.execution_start
+                self.assertIsNotNone(start_time)
+                self.assertIsNone(call[1][1].batch_summary.execution_end)
+                self.assertIsNone(call[1][1].batch_summary.execution_elapsed)
+            elif call[1][0] is DEPLOY_BATCH_COMPLETE_NOTIFICATION or call[1][0] is DEPLOY_COMPLETE_NOTIFICATION:
+                # Set batch summary depending on complete notification type
+                batch_summary = None
+                if call[1][0] is DEPLOY_BATCH_COMPLETE_NOTIFICATION:
                     batch_summary = call[1][1].batch_summary
                 else:
                     self.assertEqual(len(call[1][1].batch_summaries), 1)
