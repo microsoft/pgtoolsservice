@@ -120,6 +120,11 @@ class ConnectionService:
                 self._cancellation_map[cancellation_key].cancel()
             self._cancellation_map[cancellation_key] = cancellation_token
 
+        # If options contains azureSecurityToken, then just copy it over to password, which is how it is
+        # passed to PostgreSQL.
+        if 'azureAccountToken' in params.connection.options:
+            params.connection.options['password'] = params.connection.options['azureAccountToken']
+
         # Map the connection options to their psycopg2-specific options
         connection_options = {CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in params.connection.options.items()
                               if option in PG_CONNECTION_PARAM_KEYWORDS}
