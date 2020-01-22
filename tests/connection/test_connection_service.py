@@ -23,7 +23,7 @@ from pgsqltoolsservice.utils.cancellation import CancellationToken
 from pgsqltoolsservice.workspace import WorkspaceService
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
-from tests.utils import MockPsycopg2, MockConnection, MockCursor, MockRequestContext
+from tests.utils import MockConnection, MockCursor, MockRequestContext
 
 
 class TestConnectionService(unittest.TestCase):
