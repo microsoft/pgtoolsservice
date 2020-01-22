@@ -23,7 +23,7 @@ from pgsqltoolsservice.utils.cancellation import CancellationToken
 from pgsqltoolsservice.workspace import WorkspaceService
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
-from tests.utils import MockConnection, MockCursor, MockRequestContext
+from tests.utils import MockPsycopg2, MockConnection, MockCursor, MockRequestContext
 
 
 class TestConnectionService(unittest.TestCase):
@@ -809,6 +809,40 @@ class TestConnectionCancellation(unittest.TestCase):
 
         # Then the handler should have responded false to indicate that no matching connection was in progress
         request_context.send_response.assert_called_once_with(False)
+
+    def test_connect_with_access_token(self):
+        """Test that the service connects to a PostgreSQL server using an access token as a password"""
+        # Set up the parameters for the connection
+        exampleToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6InBMRGUwU2JIT2xUN0JMUmt6ZzdERGpSUmRnbyIsImtpZCI6InBMRGUwU2JIT2xUN0JMUmt6ZzdERGpSUmRnbyJ9.eyJhdWQiOiJodHRwczovL29zc3JkYm1zLWFhZC5kYXRhYmFzZS5tc2Nkcy5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLXBwZS5uZXQvMzg2NzdlOTgtNTk1YS00M2ZhLTg2YTctMGRmOTJhMDIyOTUzLyIsImlhdCI6MTU3OTY0Mjk4MSwibmJmIjoxNTc5NjQyOTgxLCJleHAiOjE1Nzk2NDY4ODEsImFjciI6IjEiLCJhaW8iOiJFMlJnWUlnKzVMeTA3ZU5zZDZIOE8xK2ZUZFF0bnNGUks2WFpsOER1OEpEMTRhbk90QndBIiwiYW1yIjpbInB3ZCJdLCJhcHBpZCI6IjNlYjlhNTI3LTFiMTktNDNlNi04YTYxLWM5NDRhNWQxM2IzMiIsImFwcGlkYWNyIjoiMCIsImdyb3VwcyI6WyI1MjUzNTM4OS1jODFkLTQ0NjItOWE4ZC0wNTMwZjEyOGU1YTciLCIxMDE0MTQ4OC1hMmU4LTRlMzEtYTQ0ZS1iOGM1MmMyNWVjZDgiXSwiaXBhZGRyIjoiNjkuMTgxLjEyMi4xMCIsIm5hbWUiOiJDaGFybGllIEJyb3duIiwib2lkIjoiMGE4NDFmOGEtZDc5Yi00NmY1LThiZjItMTljMGRmMjE1NWI0IiwicHVpZCI6IjEwMDNERkZEMDAwMURFMjIiLCJzY3AiOiJ1c2VyX2ltcGVyc29uYXRpb24iLCJzdWIiOiJDOWRaV2cyUlplRzNZOFlfZlFsbEpsN0t1VXc2R3o2N2QtZEtxVUx0ZGlnIiwidGlkIjoiMzg2NzdlOTgtNTk1YS00M2ZhLTg2YTctMGRmOTJhMDIyOTUzIiwidW5pcXVlX25hbWUiOiJjYnJvd25Ab3JjYXNhYWR0ZXN0LmNjc2N0cC5uZXQiLCJ1cG4iOiJjYnJvd25Ab3JjYXNhYWR0ZXN0LmNjc2N0cC5uZXQiLCJ1dGkiOiJ6LXQtQTJMOTRVQ2t1bkVkVENFREFBIiwidmVyIjoiMS4wIn0.j4Qh6tIuwRoY58iXUFd5ndJQPPHCs8ANf93pl6LqHPdo-gbTuCatXf7CWT1ehuWDNIvgAlwdn7G-tjs1Y5RDJU38cwDUCOTVrqUJWS-a02E2yCtJUgq_ZGicQ7K0BPO2ebAzszUkKM_vIlC9o2xKWsGhJz5UuRn_J3-esZk-crxl9472sJb55WXerizk-X1OhlKIKaRv14zvxRECt0z-5ks3Ozwe8uOgWnWqGVdGXzzbEroDW3LKVL2reSt7BVhfTgnQtKa9hBr3BY5f_x5iVYUq8XK2fYddGdY-Zfpnc8UK2rpbqe4sVfjJQ8MdfCR4ftw99U-F36IM95rCtXFEvw'
+        params: ConnectRequestParams = ConnectRequestParams.from_dict({
+            'ownerUri': 'someUri',
+            'type': ConnectionType.DEFAULT,
+            'connection': {
+                'options': {
+                    'user': 'postgres',
+                    'azureAccountToken': exampleToken,
+                    'host': 'myserver',
+                    'dbname': 'postgres'
+                }
+            }
+        })
+
+        # Set up the mock connection for psycopg2's connect method to return
+        mock_connection = MockConnection(dsn_parameters={
+            'host': 'myserver',
+            'dbname': 'postgres',
+            'user': 'postgres'
+        })
+
+        # Set up psycopg2 instance for connection service to call
+        mock_connect_method = mock.Mock(return_value = mock_connection);
+
+        # Set up the connection service and call its connect method with the supported options
+        with mock.patch('psycopg2.connect', new=mock_connect_method):
+            response = self.connection_service.connect(params)
+
+        # Verify that psycopg2's connection method was called with password set to account token.
+        mock_connect_method.assert_called_once_with(user='postgres', password=exampleToken, host='myserver', dbname='postgres')
 
     def _mock_connect(self, **kwargs):
         """Implementation for the mock psycopg2.connect method that saves the current cancellation token"""
