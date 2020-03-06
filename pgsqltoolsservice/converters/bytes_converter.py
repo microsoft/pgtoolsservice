@@ -98,28 +98,28 @@ def convert_dict(value: dict):
 def convert_numericrange(value: NumericRange):
     """ Serialize NumericRange object in "[lower,upper)" format before convert to bytearray """
     bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + str(int(value.lower)) + "," + str(int(value.upper)) + bound[1]
+    formatted_value_str = bound[0] + convert_to_string(value.lower) + "," + convert_to_string(value.upper) + bound[1]
     return bytearray(formatted_value_str.encode())
 
 
 def convert_datetimerange(value: DateTimeRange):
     """ Serialize DateTimeRange object in "[lower,upper)" format before convert to bytearray """
     bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
     return bytearray(formatted_value_str.encode())
 
 
 def convert_datetimetzrange(value: DateTimeTZRange):
     """ Serialize DateTimeTZRange object in "[lower,upper)" format before convert to bytearray """
     bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
     return bytearray(formatted_value_str.encode())
 
 
 def convert_daterange(value: DateRange):
     """ Serialize DateRange object in "[lower,upper)" format before convert to bytearray """
     bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
     return bytearray(formatted_value_str.encode())
 
 
@@ -189,9 +189,21 @@ def convert_datetimerange_list(values: list):
     datetimerange_list = []
     for value in values:
         bound = _get_range_data_type_bound(value)
-        formatted_value_str = bound[0] + str(value.lower.isoformat()) + "," + str(value.upper.isoformat()) + bound[1]
+        formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
         datetimerange_list.append(str(formatted_value_str))
     return bytearray(json.dumps(datetimerange_list).encode())
+
+
+def convert_date_to_string(value):
+    if value is None:
+        return ''
+    return str(value.isoformat())
+
+
+def convert_to_string(value):
+    if value is None:
+        return ''
+    return str(value)
 
 
 DATATYPE_WRITER_MAP = {
