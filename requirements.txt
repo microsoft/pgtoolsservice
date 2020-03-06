@@ -17,5 +17,5 @@ parameterized
 coverage
 autopep8
 flake8==3.6.0
-ptvsd==4.3.2
+ptvsd==2.2.0
 python-dateutil
