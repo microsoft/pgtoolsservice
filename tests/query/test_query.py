@@ -158,16 +158,13 @@ select * from t1;'''
         for index, batch in enumerate(query.batches):
             self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
 
-
     def test_hash_character_processed_correctly(self):
-        """Test that xor operator is not taken for an inline comment delimiter"""        
-        
+        """Test that xor operator is not taken for an inline comment delimiter"""
         full_query = "select 42 # 24;"
         query = Query('test_uri', full_query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
 
         self.assertEqual(len(query.batches), 1)
         self.assertEqual(full_query, query.batches[0].batch_text)
-
 
     def execute_get_subset_raises_error_when_index_not_in_range(self, batch_index: int):
         full_query = 'Select * from t1;'
