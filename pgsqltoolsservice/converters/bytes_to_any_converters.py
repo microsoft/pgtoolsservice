@@ -6,7 +6,6 @@
 
 from typing import Callable, Any  # noqa
 import struct
-import json
 
 from pgsqltoolsservice.parsers import datatypes
 
@@ -77,12 +76,6 @@ def convert_bytes_to_memoryview(value) -> str:
     return str(value)
 
 
-def convert_bytes_to_dict(value) -> dict:
-    """ Decode bytes to str, and convert it to a valid JSON format """
-    value_str = value.decode(DECODING_METHOD)
-    return json.loads(value_str)
-
-
 def convert_bytes_to_numericrange_format_str(value) -> str:
     """ Since we are not using the NumericRange object, so just convert bytes to str for UI consuming """
     return convert_bytes_to_str(value)
@@ -118,8 +111,8 @@ DATATYPE_READER_MAP = {
     datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_bytes_to_datetime,
     datatypes.DATATYPE_INTERVAL: convert_bytes_to_timedelta,
     datatypes.DATATYPE_UUID: convert_bytes_to_uuid,
-    datatypes.DATATYPE_JSON: convert_bytes_to_dict,
-    datatypes.DATATYPE_JSONB: convert_bytes_to_dict,
+    datatypes.DATATYPE_JSON: convert_bytes_to_str,
+    datatypes.DATATYPE_JSONB: convert_bytes_to_str,
     datatypes.DATATYPE_INT4RANGE: convert_bytes_to_numericrange_format_str,
     datatypes.DATATYPE_INT8RANGE: convert_bytes_to_numericrange_format_str,
     datatypes.DATATYPE_NUMRANGE: convert_bytes_to_numericrange_format_str,
