@@ -1,5 +1,5 @@
 # Shared Requirements
-psycopg2==2.7.4
+psycopg2==2.8.5
 
 # PGToolsService Requirements
 inflection
@@ -11,11 +11,11 @@ xlsxwriter
 jinja2
 
 # Build/Test Requirements
-cx_freeze==5.0.2
+cx_freeze==6.1.0
 nose
 parameterized
 coverage
 autopep8
-flake8==3.6.0
+flake8==3.7.0
 ptvsd==2.2.0
 python-dateutil
