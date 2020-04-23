@@ -63,7 +63,7 @@ class TestRowDelete(unittest.TestCase):
         self.assertEqual(edit_row.id, self._row_id)
         self.assertEqual(edit_row.state, EditRowState.DIRTY_DELETE)
 
-        self.assertTrue(edit_row.cells[0].display_value is 'True')
+        self.assertTrue(edit_row.cells[0].display_value == 'True')
 
     def test_get_script(self):
 
@@ -75,10 +75,10 @@ class TestRowDelete(unittest.TestCase):
         self.assertEquals(script.query_paramters[0], 'True')
 
     def test_apply_changes(self):
-        self.assertTrue(len(self._result_set.rows) is 2)
+        self.assertTrue(len(self._result_set.rows) == 2)
         self._row_delete.apply_changes(None)
 
-        self.assertTrue(len(self._result_set.rows) is 1)
+        self.assertTrue(len(self._result_set.rows) == 1)
         self.assertTrue(self._result_set.rows[0][0], "False")
 
 
