@@ -11,16 +11,16 @@ from unittest.mock import Mock, MagicMock
 
 import psycopg2
 
-from pgsqltoolsservice.connection.contracts import (
+from ostoolsservice.connection.contracts import (
     CONNECTION_COMPLETE_METHOD, ConnectionType, ConnectRequestParams, ConnectionDetails,
     DisconnectRequestParams, ListDatabasesParams, ConnectionCompleteParams, CancelConnectParams,
     ChangeDatabaseRequestParams
 )
-from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
-import pgsqltoolsservice.connection.connection_service
-from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.utils.cancellation import CancellationToken
-from pgsqltoolsservice.workspace import WorkspaceService
+from ostoolsservice.connection import ConnectionInfo, ConnectionService
+import ostoolsservice.connection.connection_service
+from ostoolsservice.utils import constants
+from ostoolsservice.utils.cancellation import CancellationToken
+from ostoolsservice.workspace import WorkspaceService
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
 from tests.utils import MockConnection, MockCursor, MockRequestContext
@@ -582,7 +582,7 @@ class TestConnectionService(unittest.TestCase):
         connection_info._connection_map = {connection_type: mock_connection}
 
         # If I build a connection response for the connection
-        response = pgsqltoolsservice.connection.connection_service._build_connection_response(
+        response = ostoolsservice.connection.connection_service._build_connection_response(
             connection_info, connection_type)
 
         # Then the response should have accurate information about the connection
@@ -613,7 +613,7 @@ class TestConnectionService(unittest.TestCase):
         })
 
         # If I connect with an empty database name
-        with mock.patch('pgsqltoolsservice.connection.connection_service._build_connection_response'), \
+        with mock.patch('ostoolsservice.connection.connection_service._build_connection_response'), \
                 mock.patch('psycopg2.connect') as mock_psycopg2_connect:
             self.connection_service.connect(params)
 
@@ -642,7 +642,7 @@ class TestConnectionService(unittest.TestCase):
         })
 
         # If I connect with an empty database name
-        with mock.patch('pgsqltoolsservice.connection.connection_service._build_connection_response'), \
+        with mock.patch('ostoolsservice.connection.connection_service._build_connection_response'), \
                 mock.patch('psycopg2.connect') as mock_psycopg2_connect:
             self.connection_service.connect(params)
 

@@ -7,8 +7,8 @@
 
 import unittest
 
-from pgsqltoolsservice.language.text import TextUtilities
-from pgsqltoolsservice.workspace.contracts import (     # noqa
+from ostoolsservice.language.text import TextUtilities
+from ostoolsservice.workspace.contracts import (     # noqa
     Position,
     Range
 )

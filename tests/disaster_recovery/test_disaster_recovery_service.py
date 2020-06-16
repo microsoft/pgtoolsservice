@@ -11,12 +11,12 @@ from typing import Callable, List
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.connection import ConnectionInfo, ConnectionService
-from pgsqltoolsservice.connection.contracts import ConnectionDetails
-from pgsqltoolsservice.disaster_recovery import disaster_recovery_service, DisasterRecoveryService
-from pgsqltoolsservice.disaster_recovery.contracts import BackupParams, RestoreParams
-from pgsqltoolsservice.tasks import Task, TaskService, TaskStatus
-from pgsqltoolsservice.utils import constants
+from ostoolsservice.connection import ConnectionInfo, ConnectionService
+from ostoolsservice.connection.contracts import ConnectionDetails
+from ostoolsservice.disaster_recovery import disaster_recovery_service, DisasterRecoveryService
+from ostoolsservice.disaster_recovery.contracts import BackupParams, RestoreParams
+from ostoolsservice.tasks import Task, TaskService, TaskStatus
+from ostoolsservice.utils import constants
 from tests import utils
 
 
@@ -89,25 +89,25 @@ class TestDisasterRecoveryService(unittest.TestCase):
         try:
             with mock.patch('os.path.exists', new=mock.Mock(return_value=True)):
                 # Override sys.argv[0] to simulate running the code directly from source
-                sys.argv[0] = os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pgtoolsservice_main.py')
+                sys.argv[0] = os.path.normpath('/ostoolsservice/ostoolsservice/ostoolsservice_main.py')
 
                 # If I get the executable path on Mac
                 sys.platform = 'darwin'
                 path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the mac directory and does not have a trailing .exe
-                self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/mac/bin/pg_dump'))
+                self.assertEqual(path, os.path.normpath('/ostoolsservice/ostoolsservice/pg_exes/mac/bin/pg_dump'))
 
                 # If I get the executable path on Linux
                 sys.platform = 'linux'
                 path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the linux directory and does not have a trailing .exe
-                self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/linux/bin/pg_dump'))
+                self.assertEqual(path, os.path.normpath('/ostoolsservice/ostoolsservice/pg_exes/linux/bin/pg_dump'))
 
                 # If I get the executable path on Windows
                 sys.platform = 'win32'
                 path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the win directory and does have a trailing .exe
-                self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/pgsqltoolsservice/pg_exes/win/pg_dump.exe'))
+                self.assertEqual(path, os.path.normpath('/ostoolsservice/ostoolsservice/pg_exes/win/pg_dump.exe'))
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
@@ -120,25 +120,25 @@ class TestDisasterRecoveryService(unittest.TestCase):
         try:
             with mock.patch('os.path.exists', new=mock.Mock(return_value=True)):
                 # Override sys.argv[0] to simulate running the code from a cx_freeze build
-                sys.argv[0] = os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pgtoolsservice_main')
+                sys.argv[0] = os.path.normpath('/ostoolsservice/build/ostoolsservice/ostoolsservice_main')
 
                 # If I get the executable path on Mac
                 sys.platform = 'darwin'
                 path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the mac directory and does not have a trailing .exe
-                self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/mac/bin/pg_dump'))
+                self.assertEqual(path, os.path.normpath('/ostoolsservice/build/ostoolsservice/pg_exes/mac/bin/pg_dump'))
 
                 # If I get the executable path on Linux
                 sys.platform = 'linux'
                 path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the linux directory and does not have a trailing .exe
-                self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/linux/bin/pg_dump'))
+                self.assertEqual(path, os.path.normpath('/ostoolsservice/build/ostoolsservice/pg_exes/linux/bin/pg_dump'))
 
                 # If I get the executable path on Windows
                 sys.platform = 'win32'
                 path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe)
                 # Then the path uses the win directory and does have a trailing .exe
-                self.assertEqual(path, os.path.normpath('/pgsqltoolsservice/build/pgtoolsservice/pg_exes/win/pg_dump.exe'))
+                self.assertEqual(path, os.path.normpath('/ostoolsservice/build/ostoolsservice/pg_exes/win/pg_dump.exe'))
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
@@ -186,7 +186,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         mock_process = mock.Mock()
         mock_process.returncode = 0
         mock_process.communicate = mock.Mock(return_value=(b'', b''))
-        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path', new=mock.Mock(return_value=mock_pg_path)) \
+        with mock.patch('ostoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path', new=mock.Mock(return_value=mock_pg_path)) \
                 as mock_get_path, mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)) as mock_popen:
             # If I perform a backup/restore
             task_result = test_method(self.connection_info, test_params, self.mock_task)
@@ -220,7 +220,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         mock_process.returncode = 1
         test_error_message = b'test error message'
         mock_process.communicate = mock.Mock(return_value=(b'', test_error_message))
-        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path',
+        with mock.patch('ostoolsservice.disaster_recovery.disaster_recovery_service._get_pg_exe_path',
                         new=mock.Mock(return_value=mock_pg_path)), mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)):
             # If I perform a backup/restore that fails
             task_result = test_method(self.connection_info, test_params, self.mock_task)
@@ -259,7 +259,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         # Set up the connection service to return the test's connection information
         self.connection_service.owner_to_connection_map[self.test_uri] = self.connection_info
         # Set up a mock task so that the restore code does not actually run in a separate thread
-        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=self.mock_task)) \
+        with mock.patch('ostoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=self.mock_task)) \
                 as mock_task_constructor, mock.patch('functools.partial', new=mock.Mock(return_value=self.mock_action)) as mock_partial:
             # When I call the backup/restore request handler
             test_handler(self.request_context, test_params)
@@ -286,7 +286,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
 
     def _test_handle_backup_restore_request_no_connection(self, test_handler: Callable, test_params):
         # Set up a mock task so that the restore code does not actually run in a separate thread
-        with mock.patch('pgsqltoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=self.mock_task)) \
+        with mock.patch('ostoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=self.mock_task)) \
                 as mock_task_constructor, mock.patch('functools.partial', new=mock.Mock(return_value=self.mock_action)):
             # If I call the request handler and there is no connection corresponding to the given owner URI
             test_handler(self.request_context, test_params)

@@ -6,9 +6,9 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
-from pgsqltoolsservice.query.data_storage import SaveAsCsvWriter
-from pgsqltoolsservice.query_execution.contracts import SaveResultsAsCsvRequestParams
+from ostoolsservice.query.contracts import DbColumn, DbCellValue
+from ostoolsservice.query.data_storage import SaveAsCsvWriter
+from ostoolsservice.query_execution.contracts import SaveResultsAsCsvRequestParams
 
 
 class TestSaveAsCsvWriter(unittest.TestCase):

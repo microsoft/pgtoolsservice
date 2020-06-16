@@ -9,9 +9,9 @@ from typing import List
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.tasks import Task, TaskStatus, TaskService
-from pgsqltoolsservice.tasks.contracts import CANCEL_TASK_REQUEST, CancelTaskParameters, LIST_TASKS_REQUEST, ListTasksParameters, TaskInfo
-from pgsqltoolsservice.utils import constants
+from ostoolsservice.tasks import Task, TaskStatus, TaskService
+from ostoolsservice.tasks.contracts import CANCEL_TASK_REQUEST, CancelTaskParameters, LIST_TASKS_REQUEST, ListTasksParameters, TaskInfo
+from ostoolsservice.utils import constants
 from tests.mock_request_validation import RequestFlowValidator
 from tests.mocks.service_provider_mock import ServiceProviderMock
 

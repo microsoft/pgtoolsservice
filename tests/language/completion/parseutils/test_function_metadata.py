@@ -5,7 +5,7 @@
 
 import unittest
 
-from pgsqltoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata
+from ostoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata
 
 
 class TestFunctionMetadata(unittest.TestCase):

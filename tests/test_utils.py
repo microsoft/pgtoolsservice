@@ -9,8 +9,8 @@ import enum
 from typing import Optional
 import unittest
 
-import pgsqltoolsservice.utils as utils
-from pgsqltoolsservice.serialization import Serializable
+import ostoolsservice.utils as utils
+from ostoolsservice.serialization import Serializable
 
 
 class TestUtils(unittest.TestCase):

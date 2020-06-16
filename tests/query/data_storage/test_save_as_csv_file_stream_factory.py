@@ -6,9 +6,9 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.query.data_storage import SaveAsCsvFileStreamFactory
-from pgsqltoolsservice.query.contracts import SaveResultsRequestParams
-from pgsqltoolsservice.query.data_storage import SaveAsCsvWriter, ServiceBufferFileStreamReader
+from ostoolsservice.query.data_storage import SaveAsCsvFileStreamFactory
+from ostoolsservice.query.contracts import SaveResultsRequestParams
+from ostoolsservice.query.data_storage import SaveAsCsvWriter, ServiceBufferFileStreamReader
 
 
 class TestSaveAsCsvFileStreamFactory(unittest.TestCase):

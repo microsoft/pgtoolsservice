@@ -10,8 +10,8 @@ import re
 import unittest
 import unittest.mock as mock
 
-from pgsqltoolsservice.hosting.json_writer import JSONRPCWriter
-from pgsqltoolsservice.hosting.json_message import JSONRPCMessage
+from ostoolsservice.hosting.json_writer import JSONRPCWriter
+from ostoolsservice.hosting.json_message import JSONRPCMessage
 import tests.utils as utils
 
 

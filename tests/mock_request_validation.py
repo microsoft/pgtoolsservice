@@ -9,9 +9,9 @@ import unittest.mock as mock
 
 import json
 
-from pgsqltoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
-from pgsqltoolsservice.hosting.json_rpc_server import RequestContext
-import pgsqltoolsservice.utils as utils
+from ostoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
+from ostoolsservice.hosting.json_rpc_server import RequestContext
+import ostoolsservice.utils as utils
 
 
 TValidation = TypeVar(Optional[Callable[[any], None]])

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ ! -d 'pgsqltoolsservice' ] || [ ! -d 'tests' ]
+if [ ! -d 'ostoolsservice' ] || [ ! -d 'tests' ]
 then
   echo "Script must be executed from root of repo"
   exit 1

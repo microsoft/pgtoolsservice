@@ -8,11 +8,11 @@
 from typing import List
 import unittest
 
-from pgsqltoolsservice.language.contracts import (
+from ostoolsservice.language.contracts import (
     CompletionItem, CompletionItemKind
 )
-from pgsqltoolsservice.language.keywords import DefaultCompletionHelper
-from pgsqltoolsservice.workspace.contracts import (
+from ostoolsservice.language.keywords import DefaultCompletionHelper
+from ostoolsservice.workspace.contracts import (
     Range
 )
 

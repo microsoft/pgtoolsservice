@@ -6,9 +6,9 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
-from pgsqltoolsservice.query.data_storage import SaveAsJsonWriter
-from pgsqltoolsservice.query_execution.contracts import SaveResultsAsJsonRequestParams
+from ostoolsservice.query.contracts import DbColumn, DbCellValue
+from ostoolsservice.query.data_storage import SaveAsJsonWriter
+from ostoolsservice.query_execution.contracts import SaveResultsAsJsonRequestParams
 
 
 class TestSaveAsJsonWriter(unittest.TestCase):

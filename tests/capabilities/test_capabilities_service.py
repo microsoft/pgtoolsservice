@@ -7,11 +7,11 @@ import unittest
 
 import unittest.mock as mock
 
-from pgsqltoolsservice.capabilities.capabilities_service import CapabilitiesService
-from pgsqltoolsservice.capabilities.contracts import InitializeResult, CapabilitiesResult
-from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
-from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.workspace import WorkspaceService
+from ostoolsservice.capabilities.capabilities_service import CapabilitiesService
+from ostoolsservice.capabilities.contracts import InitializeResult, CapabilitiesResult
+from ostoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from ostoolsservice.utils import constants
+from ostoolsservice.workspace import WorkspaceService
 import tests.utils as utils
 
 

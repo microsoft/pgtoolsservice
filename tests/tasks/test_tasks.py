@@ -8,8 +8,8 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.tasks import Task, TaskResult, TaskStatus
-from pgsqltoolsservice.utils import constants
+from ostoolsservice.tasks import Task, TaskResult, TaskStatus
+from ostoolsservice.utils import constants
 from tests import utils
 
 

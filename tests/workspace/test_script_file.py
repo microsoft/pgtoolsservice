@@ -6,8 +6,8 @@
 import os
 import unittest
 
-from pgsqltoolsservice.workspace.contracts import Position, Range, TextDocumentChangeEvent
-from pgsqltoolsservice.workspace.workspace import ScriptFile
+from ostoolsservice.workspace.contracts import Position, Range, TextDocumentChangeEvent
+from ostoolsservice.workspace.workspace import ScriptFile
 
 
 class TestScriptFile(unittest.TestCase):

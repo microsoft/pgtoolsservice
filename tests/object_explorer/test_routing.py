@@ -8,10 +8,10 @@ import unittest
 import unittest.mock as mock
 from urllib.parse import urlparse
 
-from pgsqltoolsservice.connection.contracts import ConnectionDetails
-from pgsqltoolsservice.object_explorer.contracts import NodeInfo
-import pgsqltoolsservice.object_explorer.routing as routing
-from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession
+from ostoolsservice.connection.contracts import ConnectionDetails
+from ostoolsservice.object_explorer.contracts import NodeInfo
+import ostoolsservice.object_explorer.routing as routing
+from ostoolsservice.object_explorer.session import ObjectExplorerSession
 
 
 class TestObjectExplorerRouting(unittest.TestCase):

@@ -5,8 +5,8 @@
 
 from parameterized import parameterized
 import unittest
-from pgsqltoolsservice.language.completion.packages.parseutils.tables import extract_tables
-from pgsqltoolsservice.language.completion.packages.parseutils.utils import find_prev_keyword, is_open_quote
+from ostoolsservice.language.completion.packages.parseutils.tables import extract_tables
+from ostoolsservice.language.completion.packages.parseutils.utils import find_prev_keyword, is_open_quote
 
 
 class TestParseUtils(unittest.TestCase):

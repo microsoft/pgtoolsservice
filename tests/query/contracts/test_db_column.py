@@ -5,8 +5,8 @@
 
 import unittest
 
-import pgsqltoolsservice.parsers.datatypes as datatypes
-from pgsqltoolsservice.query.contracts import DbColumn
+import ostoolsservice.parsers.datatypes as datatypes
+from ostoolsservice.query.contracts import DbColumn
 
 
 class TestDbColumn(unittest.TestCase):

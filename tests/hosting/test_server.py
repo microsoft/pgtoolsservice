@@ -9,14 +9,14 @@ import time
 import unittest
 import unittest.mock as mock
 
-from pgsqltoolsservice.hosting.json_rpc_server import (
+from ostoolsservice.hosting.json_rpc_server import (
     JSONRPCServer,
     IncomingMessageConfiguration,
     NotificationContext, RequestContext
 )
-from pgsqltoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
-from pgsqltoolsservice.hosting.json_reader import JSONRPCReader
-from pgsqltoolsservice.hosting.json_writer import JSONRPCWriter
+from ostoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
+from ostoolsservice.hosting.json_reader import JSONRPCReader
+from ostoolsservice.hosting.json_writer import JSONRPCWriter
 import tests.utils as utils
 
 

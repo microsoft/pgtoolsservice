@@ -13,9 +13,9 @@ import datetime
 import psycopg2
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
-from pgsqltoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
-from pgsqltoolsservice.query.contracts import DbColumn
-from pgsqltoolsservice.parsers import datatypes
+from ostoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
+from ostoolsservice.query.contracts import DbColumn
+from ostoolsservice.parsers import datatypes
 import tests.utils as utils
 
 

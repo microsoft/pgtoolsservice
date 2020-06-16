@@ -6,9 +6,9 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
-from pgsqltoolsservice.query.data_storage import SaveAsExcelWriter
-from pgsqltoolsservice.query_execution.contracts import SaveResultsAsExcelRequestParams
+from ostoolsservice.query.contracts import DbColumn, DbCellValue
+from ostoolsservice.query.data_storage import SaveAsExcelWriter
+from ostoolsservice.query_execution.contracts import SaveResultsAsExcelRequestParams
 
 
 class TestSaveAsExcelWriter(unittest.TestCase):

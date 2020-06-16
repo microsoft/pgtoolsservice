@@ -6,10 +6,10 @@
 from parameterized import parameterized
 import unittest
 
-from pgsqltoolsservice.language.completion.packages.sqlcompletion import (
+from ostoolsservice.language.completion.packages.sqlcompletion import (
     suggest_type, Database, Schema, Table, Column, View, Keyword,
     FromClauseItem, Function, Datatype, Alias, JoinCondition, Join)
-from pgsqltoolsservice.language.completion.packages.parseutils.tables import TableReference
+from ostoolsservice.language.completion.packages.parseutils.tables import TableReference
 
 
 FUNCTIONS = [

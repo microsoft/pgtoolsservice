@@ -8,9 +8,9 @@ from unittest import mock
 from typing import Callable, List
 
 import tests.utils as utils
-from pgsqltoolsservice.query.result_set import ResultSetEvents
-from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
-from pgsqltoolsservice.query.contracts import DbCellValue, SaveResultsRequestParams
+from ostoolsservice.query.result_set import ResultSetEvents
+from ostoolsservice.query.file_storage_result_set import FileStorageResultSet
+from ostoolsservice.query.contracts import DbCellValue, SaveResultsRequestParams
 
 
 class TestFileStorageResultSet(unittest.TestCase):
@@ -31,10 +31,10 @@ class TestFileStorageResultSet(unittest.TestCase):
 
     def execute_with_patch(self, test: Callable):
 
-        with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.create_file', new=mock.Mock(return_value=self._file)):
-            with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.get_writer', new=mock.Mock(return_value=self._writer)):
-                with mock.patch('pgsqltoolsservice.query.data_storage.service_buffer_file_stream.get_reader', new=mock.Mock(return_value=self._reader)):
-                    with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=[])):
+        with mock.patch('ostoolsservice.query.data_storage.service_buffer_file_stream.create_file', new=mock.Mock(return_value=self._file)):
+            with mock.patch('ostoolsservice.query.data_storage.service_buffer_file_stream.get_writer', new=mock.Mock(return_value=self._writer)):
+                with mock.patch('ostoolsservice.query.data_storage.service_buffer_file_stream.get_reader', new=mock.Mock(return_value=self._reader)):
+                    with mock.patch('ostoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=[])):
                         self._result_set = FileStorageResultSet(self._id, self._batch_id, self._events)
                         test()
 

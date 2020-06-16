@@ -16,29 +16,29 @@ import os
 from os import listdir
 from os.path import isfile, join
 
-from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
-from pgsqltoolsservice.query_execution.query_execution_service import (
+from ostoolsservice.connection import ConnectionService, ConnectionInfo
+from ostoolsservice.query_execution.query_execution_service import (
     QueryExecutionService, CANCELATION_QUERY, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
-from pgsqltoolsservice.query_execution.contracts import (
+from ostoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase)
-from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
-from pgsqltoolsservice.query_execution.contracts import (
+from ostoolsservice.utils import constants
+from ostoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from ostoolsservice.query_execution.contracts import (
     ExecutionPlanOptions, MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
     QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams,
     SaveResultsAsJsonRequestParams, SaveResultRequestResult,
     SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
 )
-from pgsqltoolsservice.query.contracts import DbColumn, ResultSetSubset, SelectionData, SubsetResult
-from pgsqltoolsservice.query import (
+from ostoolsservice.query.contracts import DbColumn, ResultSetSubset, SelectionData, SubsetResult
+from ostoolsservice.query import (
     Batch, create_result_set, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
     ResultSetStorageType
 )
-from pgsqltoolsservice.connection.contracts import ConnectionType, ConnectionDetails
+from ostoolsservice.connection.contracts import ConnectionType, ConnectionDetails
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
-from pgsqltoolsservice.query.data_storage import (
+from ostoolsservice.query.data_storage import (
     SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
 )
 
@@ -238,7 +238,7 @@ class TestQueryService(unittest.TestCase):
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, result_ordinal, batch_ordinal)
 
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+        with mock.patch('ostoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
             result_set.read_result_to_end(cursor)
 
         query_results[owner_uri]._batches[batch_ordinal]._result_set = result_set
@@ -300,7 +300,7 @@ class TestQueryService(unittest.TestCase):
 
         get_column_info_mock = mock.Mock(return_value=test_columns)
 
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
+        with mock.patch('ostoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
             result_set.read_result_to_end(cursor)
 
         self.assertEqual(len(test_columns), len(result_set.columns_info))
@@ -343,7 +343,7 @@ class TestQueryService(unittest.TestCase):
         # If we handle an execute query request
 
         columns_info = []
-        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
+        with mock.patch('ostoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
             self.query_execution_service._handle_execute_query_request(self.request_context, params)
             self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
@@ -421,7 +421,7 @@ class TestQueryService(unittest.TestCase):
         self.cursor.execute = mock.Mock(side_effect=cancel_during_execute_side_effects)
 
         columns_info = []
-        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
+        with mock.patch('ostoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
             # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
             self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
             # Wait for query execution worker thread to finish
@@ -502,7 +502,7 @@ class TestQueryService(unittest.TestCase):
         # If we start the execute query request handler with the cancel query
         # request handled after the execute_query() and cursor.execute() calls
         columns_info = []
-        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
+        with mock.patch('ostoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
             self.query_execution_service._handle_execute_query_request(self.request_context, execute_params)
             self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
             self.query_execution_service._handle_cancel_query_request(self.request_context, cancel_params)
@@ -526,7 +526,7 @@ class TestQueryService(unittest.TestCase):
         params = get_execute_string_params()
 
         columns_info = []
-        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
+        with mock.patch('ostoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=mock.Mock(return_value=columns_info)):
             # If we handle an execute query request
             self.query_execution_service._handle_execute_query_request(self.request_context, params)
             self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
@@ -563,7 +563,7 @@ class TestQueryService(unittest.TestCase):
         cursor = utils.MockCursor(batch_rows)
         batch._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
 
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+        with mock.patch('ostoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
             batch._result_set.read_result_to_end(cursor)
 
         test_query = Query(params.owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
@@ -848,7 +848,7 @@ class TestQueryService(unittest.TestCase):
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
 
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+        with mock.patch('ostoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
             result_set.read_result_to_end(cursor)
 
         batch._result_set = result_set

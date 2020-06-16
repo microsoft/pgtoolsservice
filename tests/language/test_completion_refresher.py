@@ -8,7 +8,7 @@ import time
 import unittest
 from unittest.mock import Mock, patch
 
-from pgsqltoolsservice.language.completion_refresher import CompletionRefresher
+from ostoolsservice.language.completion_refresher import CompletionRefresher
 
 import tests.pgsmo_tests.utils as utils
 
@@ -68,7 +68,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         metadata_executor = Mock()
         metadata_executor.extra_args = {}
 
-        with patch('pgsqltoolsservice.language.metadata_executor.MetadataExecutor', metadata_executor_class):
+        with patch('ostoolsservice.language.metadata_executor.MetadataExecutor', metadata_executor_class):
             # Set refreshers to 0: we're not testing refresh logic here
             self.refresher.refreshers = {}
             self.refresher.refresh(callbacks)
