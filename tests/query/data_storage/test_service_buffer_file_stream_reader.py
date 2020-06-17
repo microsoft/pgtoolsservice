@@ -218,24 +218,21 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         actual = str(res[0].raw_object)
         self.assertEqual(str(expected), actual)
 
-    def test_read_dict(self):
+    def test_read_json(self):
+        """Test json/jsonb string is returned as is"""
         test_file_offset = 0
         test_row_id = 1
-        test_columns_info = []
 
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_JSON
-        test_columns_info.append(col)
+        for datatype in [datatypes.DATATYPE_JSON, datatypes.DATATYPE_JSONB]:
+            col = DbColumn()
+            col.data_type = datatype
+            test_columns_info = [col]
+            reader = ServiceBufferFileStreamReader(self._dict_file_stream)
 
-        res = self._dict_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        actual_raw_object = res[0].raw_object
-        expected1 = self._dict_test_value["Ser,ver"]
-        actual1 = actual_raw_object["Ser,ver"]
-        expected2 = self._dict_test_value["Sche'ma"]
-        actual2 = actual_raw_object["Sche'ma"]
+            res = reader.read_row(test_file_offset, test_row_id, test_columns_info)
 
-        self.assertEqual(expected1, actual1)
-        self.assertEqual(expected2, actual2)
+            self.assertEqual(1, len(res))
+            self.assertEqual(json.dumps(self._dict_test_value), res[0].raw_object)
 
     def test_read_numericrange(self):
         test_file_offset = 0

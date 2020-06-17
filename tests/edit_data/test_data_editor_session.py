@@ -279,7 +279,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._data_editor_session.commit_edit(self._connection, success_callback, mock.MagicMock())
         self._data_editor_session._commit_task.join()
 
-        self.assertTrue(len(self._data_editor_session._session_cache) is 0)
+        self.assertTrue(len(self._data_editor_session._session_cache) == 0)
 
         success_callback.assert_called_once()
 

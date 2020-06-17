@@ -97,13 +97,13 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     # Just to make sure that this doesn't crash
     @parameterized.expand(to_params(completers()))
     def test_function_column_name(self, completer):
-        for l in range(
+        for col in range(
             len('SELECT * FROM Functions WHERE function:'),
             len('SELECT * FROM Functions WHERE function:text') + 1
         ):
             self.assertListEqual([], get_result(
                 completer, 'SELECT * FROM Functions WHERE function:text'[
-                    :l]
+                    :col]
             ))
 
     @parameterized.expand(itertools.product(completers(), ['ALTER', 'DROP', 'CREATE', 'CREATE OR REPLACE']))
