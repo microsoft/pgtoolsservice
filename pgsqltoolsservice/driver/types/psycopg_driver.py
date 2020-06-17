@@ -39,6 +39,11 @@ class PostgreSQLConnection(ServerConnection):
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
         """
+        # If options contains azureSecurityToken, then just copy it over to password, which is how it is
+        # passed to PostgreSQL.
+        if 'azureAccountToken' in conn_params:
+            conn_params['password'] = conn_params['azureAccountToken']
+
         # Map the connection options to their psycopg2-specific options
         self._connection_options = connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
         if option in PG_CONNECTION_PARAM_KEYWORDS}
