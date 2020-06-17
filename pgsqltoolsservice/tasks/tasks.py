@@ -58,7 +58,7 @@ class Task:
     @property
     def task_info(self) -> TaskInfo:
         """Create a TaskInfo object corresponding to this task"""
-        return TaskInfo(self.id, self.status, self.server_name, self.database_name, self.name, self.description)
+        return TaskInfo(self.id, self.status, self.provider_name, self.server_name, self.database_name, self.name, self.description)
 
     def start(self) -> None:
         """Start the task by running it in a new thread"""

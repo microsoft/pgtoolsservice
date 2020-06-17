@@ -124,7 +124,7 @@ class ConnectionService:
         provider_name = self._service_provider.provider
         try:
             # Get connection to DB server using the provided connection params
-            connection: ServerConnection = ConnectionManager(provider_name, params).get_connection()
+            connection: ServerConnection = ConnectionManager(provider_name, params.connection.options).get_connection()
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
@@ -298,7 +298,7 @@ class ConnectionService:
 
 def _build_connection_response(connection_info: ConnectionInfo, connection_type: ConnectionType) -> ConnectionCompleteParams:
     """Build a connection complete response object"""
-    connection = connection_info.get_connection(connection_type)
+    connection: ServerConnection = connection_info.get_connection(connection_type)
    
     connection_summary = ConnectionSummary(
         server_name=connection.host_name,
@@ -327,10 +327,11 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
     return response
 
 
-def _get_server_info(connection):
+def _get_server_info(connection: ServerConnection):
     """Build the server info response for a connection"""
+    server = connection.server_type
     server_version = connection.server_version
     host = connection.host_name
     is_cloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
-    return ServerInfo(server_version, is_cloud)
+    return ServerInfo(server, server_version, is_cloud)
 

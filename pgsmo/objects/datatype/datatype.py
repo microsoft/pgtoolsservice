@@ -5,10 +5,10 @@
 
 from typing import Optional, List, Any
 
-from pgsmo.objects.node_object import NodeObject, NodeLazyPropertyCollection    # noqa
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from smo.common.node_object import NodeObject, NodeLazyPropertyCollection    # noqa
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s        # noqa
-import pgsmo.utils.templating as templating
+import smo.utils.templating as templating
 
 TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 MACRO_ROOT = templating.get_template_root(__file__, 'macros')

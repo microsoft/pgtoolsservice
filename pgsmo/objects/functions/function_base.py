@@ -6,10 +6,10 @@
 from abc import ABCMeta
 from typing import List, Optional
 
-from pgsmo.objects.node_object import NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from smo.common.node_object import NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s    # noqa
-import pgsmo.utils.templating as templating
+import smo.utils.templating as templating
 
 
 class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, metaclass=ABCMeta):

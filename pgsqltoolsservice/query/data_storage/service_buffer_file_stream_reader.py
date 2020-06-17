@@ -9,7 +9,7 @@ import struct
 
 from pgsqltoolsservice.parsers import datatypes
 from pgsqltoolsservice.query.contracts.column import DbColumn, DbCellValue
-from pgsqltoolsservice.converters.bytes_to_any_converters import get_bytes_to_any_converter
+from pgsqltoolsservice.converters import get_bytes_to_any_converter
 
 from pgsqltoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
 
@@ -50,8 +50,8 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
         results = []  # list of DbCellValue as return
 
         for index in range(0, len_columns_info):
-
-            type_value = columns_info[index].data_type
+            column = columns_info[index]
+            type_value = column.data_type
 
             # Read the object from the temp file
             if type_value == datatypes.DATATYPE_NULL:
@@ -74,7 +74,7 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
                     current_file_offset += read_bytes_length
 
                     # convert data_bytes to data_obj
-                    object_converter: Callable[[bytes], Any] = get_bytes_to_any_converter(type_value)
+                    object_converter: Callable[[bytes], Any] = get_bytes_to_any_converter(type_value, provider = column.provider)
                     result_object = object_converter(read_bytes_result)
 
                     # wrap the result_object as a DbCellValue

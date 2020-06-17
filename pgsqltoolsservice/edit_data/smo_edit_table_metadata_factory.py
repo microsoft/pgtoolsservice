@@ -11,7 +11,6 @@ from pgsmo.objects.table.table import Table  # noqa
 from pgsmo.objects.table_objects.column import Column  # noqa
 from pgsqltoolsservice.driver import ServerConnection
 from pgsqltoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
-from pgsqltoolsservice.utils import object_finder
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from pgsqltoolsservice.query.contracts import DbColumn
 
@@ -25,9 +24,9 @@ class SmoEditTableMetadataFactory:
         object_metadata = ObjectMetadata(server.urn_base, None, object_type, object_name, schema_name)
 
         if object_type.lower() == 'table':
-            result_object = object_finder.find_table(server, object_metadata)
+            result_object = server.find_table(object_metadata)
         elif object_type.lower() == 'view':
-            result_object = object_finder.find_view(server, object_metadata)
+            result_object = server.find_view(object_metadata)
         else:
             raise ValueError('Not supported object type')
 

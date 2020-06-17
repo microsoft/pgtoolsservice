@@ -5,7 +5,8 @@
 
 from typing import Callable, Dict, Tuple, TypeVar
 
-from pgsmo import NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect, Server
+from smo.common.node_object import NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from pgsqltoolsservice.driver import ConnectionManager, ServerConnection
 from pgsqltoolsservice.scripting.contracts import ScriptOperation
 from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
@@ -22,9 +23,8 @@ class Scripter(object):
         ScriptOperation.SELECT: (ScriptableSelect, lambda obj: obj.select_script())
     }
 
-    def __init__(self, conn: ServerConnection):
-        # get server from ServerConnection object
-        self.server: Server = Server(conn)
+    def __init__(self, server: "Server"):
+        self.server = server
 
     # SCRIPTING METHODS ############################
     def script(self, operation: ScriptOperation, metadata: ObjectMetadata) -> str:
@@ -46,7 +46,9 @@ class Scripter(object):
         if metadata.urn:
             obj: NodeObject = self.server.get_object_by_urn(metadata.urn)
         else:
-            obj: NodeObject = utils.object_finder.get_object(self.server, metadata.metadata_type_name, metadata)
+            obj: NodeObject = self.server.get_object(metadata.metadata_type_name, metadata)
+
+
         if not isinstance(obj, handler[0]):
             # TODO: Localize
             raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation {operation}')

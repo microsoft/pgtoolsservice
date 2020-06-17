@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pgsqltoolsservice.driver.types.driver import ServerConnection
-from pgsqltoolsservice.driver.types.psycopg_driver import PsycopgConnection
-from pgsqltoolsservice.driver.types.pymysql_driver import PyMySQLConnection
+from pgsqltoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from pgsqltoolsservice.driver.types.pymysql_driver import MySQLConnection
 
-__all__ = ['ServerConnection', 'PyMySQLConnection', 'PsycopgConnection']
+__all__ = ['ServerConnection', 'MySQLConnection', 'PostgreSQLConnection']

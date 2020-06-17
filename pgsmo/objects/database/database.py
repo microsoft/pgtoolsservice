@@ -5,11 +5,11 @@
 
 from typing import Optional               # noqa
 
-from pgsmo.objects.node_object import NodeCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete
+from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from pgsmo.objects.server import server as s    # noqa
 from pgsmo.objects.schema.schema import Schema
-import pgsmo.utils.templating as templating
+import smo.utils.templating as templating
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.datatype.datatype import DataType
 from pgsmo.objects.functions.function import Function
@@ -99,8 +99,9 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         if self._connection is not None:
             return self._connection
         else:
-            connection = ServerConnection(self._server.db_connection_callback(self.name))
-            if connection.dsn_parameters['dbname'] == self.name:
+            # If we do not have a connection to the db, we create a new one
+            connection: ServerConnection = self._server.db_connection_callback(self.name)
+            if connection.database_name == self.name:
                 self._connection = connection
                 return self._connection
             else:

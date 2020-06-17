@@ -4,12 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import List, Mapping, Tuple
+import pgsqltoolsservice.utils as utils
 from pgsqltoolsservice.driver.types import ServerConnection
+from pgsqltoolsservice.utils import constants
 import psycopg2
 from psycopg2.extensions import Column, connection, cursor, TRANSACTION_STATUS_INERROR
 
-PG_SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
-PG_SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
 PG_CANCELLATION_QUERY = 'SELECT pg_cancel_backend ({})'
 
 # Dictionary mapping connection option names to their corresponding PostgreSQL connection string keys.
@@ -31,7 +31,7 @@ PG_CONNECTION_PARAM_KEYWORDS = [
 ]
 
 
-class PsycopgConnection(ServerConnection):
+class PostgreSQLConnection(ServerConnection):
     """Wrapper for a psycopg2 connection that makes various properties easier to access"""
 
     def __init__(self, conn_params):
@@ -45,7 +45,11 @@ class PsycopgConnection(ServerConnection):
         
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['dbname'] = "postgres"
+            connection_options['dbname'] = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
+
+        # Use the default port number if one was not provided
+        if 'port' not in connection_options or not connection_options['port']:
+            connection_options['port'] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg2.connect(**connection_options)
@@ -70,6 +74,10 @@ class PsycopgConnection(ServerConnection):
             int(version_string[-2:])
         )
 
+        # Setting the provider for this connection
+        self._provider_name = constants.PG_PROVIDER_NAME
+        self._server_type = "PostgreSQL"
+
     ###################### PROPERTIES ##################################
     @property
     def autocommit(self) -> bool:
@@ -79,15 +87,12 @@ class PsycopgConnection(ServerConnection):
     @property
     def host_name(self) -> str:
         """Returns the hostname for the current connection"""
-        self._dsn_parameters['host']
+        return self._dsn_parameters['host']
 
     @property
-    def port_num(self) -> int:
+    def port(self) -> int:
         """Returns the port number used for the current connection"""
-        if "port" in self._connection_options.keys():
-            return self._connection_options["port"]
-        else:
-            return None
+        return self._connection_options["port"]
         
     @property
     def database_name(self) -> str:
@@ -96,18 +101,28 @@ class PsycopgConnection(ServerConnection):
 
     @property
     def user_name(self) -> str:
-        """Returns the port number used for the current connection"""
+        """Returns the user name number used for the current connection"""
         return self._dsn_parameters["user"]
 
     @property
     def server_version(self) -> Tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
         return self._version
+    
+    @property
+    def server_type(self) -> str:
+        """Server type for distinguishing between standard PG and PG supersets"""
+        return self._server_type
 
-    @classmethod
-    def default_database(cls):
+    @property
+    def connection_options(self):
+        """ Returns the options used to create the current connection to the server """
+        return self._connection_options
+
+    @property
+    def default_database(self):
         """Returns the default database for PostgreSQL if no other database is specified"""
-        return "postgres"
+        return constants.DEFAULT_DB[self._provider_name]
 
     @property
     def database_error(self):
@@ -115,17 +130,9 @@ class PsycopgConnection(ServerConnection):
         return self._database_error
 
     @property
-    def search_path_query(self) -> str:
-        return PG_SEARCH_PATH_QUERY
-
-    @property
-    def search_path_query_fallback(self) -> str:
-        return PG_SEARCH_PATH_QUERY_FALLBACK
-    
-    @property
     def transaction_in_error(self) -> bool:
         return self._conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR
-    
+
     @property
     def cancellation_query(self) -> str:
         backend_pid = self._conn.get_backend_pid()
@@ -139,6 +146,30 @@ class PsycopgConnection(ServerConnection):
         :param mode: True or False
         """
         self._conn.autocommit = mode
+
+    def commit(self):
+        """
+        Commits the current transaction
+        """
+        self._conn.commit()
+    
+    def get_cursor(self, **kwargs):
+        """
+        Returns a cursor for the current connection
+        :param kwargs (optional) to create a named cursor
+        """
+        # If the args for a named cursor are provided, create a named cursor
+        if kwargs and "name" in kwargs:
+            cursor_instance = self._conn.cursor(name=kwargs["name"], withhold=kwargs["withhold"])
+        else:
+            cursor_instance = self._conn.cursor()
+
+        # TODO: Find a way to store the provider name as an attribute in the cursor object
+        # attr = "provider"
+        # value = self._provider_name
+        # setattr(cursor_instance, attr, value)
+
+        return cursor_instance
     
     def execute_query(self, query, all=True):
         """
@@ -185,6 +216,20 @@ class PsycopgConnection(ServerConnection):
         List the databases accessible by the current PostgreSQL connection.
         """
         return self.execute_query('SELECT datname FROM pg_database WHERE datistemplate = false;')
+
+    def get_database_owner(self):
+        """
+        List the owner(s) of the current database
+        """
+        database_name = self.database_name
+        owner_query = "SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{}'".format(database_name)
+        return self.execute_query(owner_query, all=True)[0][0]
+
+    def get_database_size(self, dbname: str):
+        """
+        Gets the size of a particular database in MB
+        """
+        pass
 
     def close(self):
         """

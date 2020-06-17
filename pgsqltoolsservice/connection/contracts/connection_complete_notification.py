@@ -23,9 +23,9 @@ class ConnectionCompleteParams:
 class ServerInfo(object):
     """Contract for information on the connected server"""
 
-    def __init__(self, server_version, is_cloud):
-        self.server_version: Tuple[int, int, int] = server_version
+    def __init__(self, server: str, server_version, is_cloud):
+        self.server = server
+        self.server_version = str(server_version[0]) + "." + str(server_version[1]) + "." + str(server_version[2])
         self.is_cloud: bool = is_cloud
-
 
 CONNECTION_COMPLETE_METHOD = 'connection/complete'

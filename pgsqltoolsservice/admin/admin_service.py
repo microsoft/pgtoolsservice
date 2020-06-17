@@ -8,7 +8,7 @@ from pgsqltoolsservice.admin.contracts import (
 from pgsqltoolsservice.connection.contracts import ConnectionType
 from pgsqltoolsservice.hosting import RequestContext, ServiceProvider
 from pgsqltoolsservice.utils import constants
-
+from pgsqltoolsservice.driver import *
 
 class AdminService(object):
     """Service for general database administration support"""
@@ -30,19 +30,18 @@ class AdminService(object):
     # REQUEST HANDLERS #####################################################
 
     def _handle_get_database_info_request(self, request_context: RequestContext, params: GetDatabaseInfoParameters) -> None:
-        # Retrieve the connection service
+        # Retrieve the connection from the connection service
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        connection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+        connection: ServerConnection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
 
-        # Get database info
-        database_name = connection.get_dsn_parameters()['dbname']
-        owner_query = 'SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = %s'
-        with connection.cursor() as cursor:
-            cursor.execute(owner_query, (database_name,))
-            owner_result = cursor.fetchall()[0][0]
+        # Get database owner
+        owner_result = connection.get_database_owner()
+        size_result = connection.get_database_size(connection.database_name)
 
         # Set up and send the response
         options = {
-            DatabaseInfo.OWNER: owner_result
+            DatabaseInfo.DBNAME: connection.database_name,
+            DatabaseInfo.OWNER: owner_result,
+            DatabaseInfo.SIZE: size_result
         }
         request_context.send_response(GetDatabaseInfoResponse(DatabaseInfo(options)))
