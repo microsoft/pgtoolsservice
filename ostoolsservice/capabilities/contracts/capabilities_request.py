@@ -29,6 +29,7 @@ class ServiceOption:
     VALUE_TYPE_STRING = 'string'
     VALUE_TYPE_MULTI_STRING = 'multistring'
     VALUE_TYPE_PASSWORD = 'password'
+    VALUE_TYPE_ACCESS_TOKEN = 'azureAccountToken'
     VALUE_TYPE_NUMBER = 'number'
     VALUE_TYPE_CATEGORY = 'category'
     VALUE_TYPE_BOOLEAN = 'boolean'
@@ -52,6 +53,7 @@ class ConnectionOption(ServiceOption):
     SPECIAL_VALUE_AUTH_TYPE = 'authType'
     SPECIAL_VALUE_USER_NAME = 'userName'
     SPECIAL_VALUE_PASSWORD_NAME = 'password'
+    SPECIAL_VALUE_ACCESS_TOKEN_NAME = 'azureAccountToken'
     SPECIAL_VALUE_APP_NAME = 'appName'
 
     def __init__(self, name: str = None, display_name: str = None, description: str = None, group_name: str = None, value_type: str = None,

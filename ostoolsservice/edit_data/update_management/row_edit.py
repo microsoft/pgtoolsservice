@@ -58,7 +58,7 @@ class RowEdit:
 
     def build_where_clause(self):
 
-        if len(self.table_metadata.key_columns) is 0:
+        if len(self.table_metadata.key_columns) == 0:
             raise TypeError(f'Table {self.table_metadata.table_name} does not have a single column that can be trusted for uniqueness')
 
         where_start = 'WHERE {0}'
@@ -75,7 +75,7 @@ class RowEdit:
             column_name = column.name
             if cell.is_null is True:
                 cell_data_clause += 'IS NULL'
-            elif isinstance(cell.raw_object, bytearray) or column.db_column.data_type.lower() is 'text':
+            elif isinstance(cell.raw_object, bytearray) or column.db_column.data_type.lower() == 'text':
                 cell_data_clause += 'IS NOT NULL'
             else:
                 cell_data_clause += '= %s'

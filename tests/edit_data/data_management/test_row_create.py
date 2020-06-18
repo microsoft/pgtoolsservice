@@ -65,7 +65,7 @@ class TestRowCreate(unittest.TestCase):
         self.assertEqual(edit_row.id, self._row_id)
         self.assertEqual(edit_row.state, EditRowState.DIRTY_INSERT)
 
-        self.assertTrue(edit_row.cells[0].display_value is '')
+        self.assertTrue(edit_row.cells[0].display_value == '')
 
     def test_get_script(self):
         column_index = 0
@@ -81,14 +81,14 @@ class TestRowCreate(unittest.TestCase):
         self.assertEquals(script.query_paramters[0], False)
 
     def test_apply_changes(self):
-        self.assertTrue(len(self._result_set.rows) is 2)
+        self.assertTrue(len(self._result_set.rows) == 2)
 
         cursor = MockCursor([('True',)], ['IsTrue'])
 
         self._row_create.apply_changes(cursor)
 
-        self.assertTrue(len(self._result_set.rows) is 3)
-        self.assertTrue(self._result_set.rows[2][0] is 'True')
+        self.assertTrue(len(self._result_set.rows) == 3)
+        self.assertTrue(self._result_set.rows[2][0] == 'True')
 
 
 if __name__ == '__main__':

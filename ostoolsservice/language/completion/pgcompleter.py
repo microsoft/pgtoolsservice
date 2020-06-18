@@ -425,7 +425,7 @@ class PGCompleter(Completer):
                 # case-sensitive one as a tie breaker.
                 # We also use the unescape_name to make sure quoted names have
                 # the same priority as unquoted names.
-                lexical_priority = (tuple(0 if c in(' _') else -ord(c)
+                lexical_priority = (tuple(0 if c in (' _') else -ord(c)
                                           for c in self.unescape_name(item.lower())) + (1,)
                                     + tuple(c for c in item))
 
@@ -601,7 +601,7 @@ class PGCompleter(Completer):
             # is schema-qualified, or (2) new in other schema, except public
             if not suggestion.schema and (qualified[normalize_ref(rtbl.ref)]
                                           and left.schema == right.schema
-                                          or left.schema not in(right.schema, 'public')):
+                                          or left.schema not in (right.schema, 'public')):
                 join = left.schema + '.' + join
             prio = ref_prio[normalize_ref(rtbl.ref)] * 2 + (
                 0 if (left.schema, left.tbl) in other_tbls else 1)

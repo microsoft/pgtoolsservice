@@ -1,5 +1,5 @@
 # Shared Requirements
-psycopg2==2.7.4
+psycopg2==2.7.5
 PyMySQL==0.9.3
 
 # OSToolsService Requirements
@@ -12,11 +12,11 @@ xlsxwriter
 jinja2
 
 # Build/Test Requirements
-cx_freeze==5.0.2
+cx_freeze==6.1.0
 nose
 parameterized
 coverage
 autopep8
-flake8==3.6.0
-ptvsd
+flake8==3.7.0
+ptvsd==4.3.2
 python-dateutil

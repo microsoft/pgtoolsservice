@@ -22,3 +22,5 @@ class QueryCompleteNotificationParams:
 
 
 QUERY_COMPLETE_NOTIFICATION = 'query/complete'
+
+DEPLOY_COMPLETE_NOTIFICATION = 'query/deployComplete'

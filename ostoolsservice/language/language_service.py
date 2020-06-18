@@ -142,11 +142,12 @@ class LanguageService:
         def do_send_default_empty_response():
             request_context.send_response(response)
 
-        if self.should_skip_intellisense(params.text_document.uri):
-            do_send_default_empty_response()
-            return
         script_file: ScriptFile = self._workspace_service.workspace.get_file(params.text_document.uri)
         if script_file is None:
+            do_send_default_empty_response()
+            return
+
+        if self.should_skip_intellisense(script_file.file_uri):
             do_send_default_empty_response()
             return
 

@@ -49,6 +49,9 @@ class MySQLConnection(ServerConnection):
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
         """
+        if 'azureAccountToken' in conn_params:
+            conn_params['password'] = conn_params['azureAccountToken']
+            
         # Map the provided connection parameter names to pymysql param names
         _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param) : value for param, value in conn_params.items()}
 
@@ -62,7 +65,7 @@ class MySQLConnection(ServerConnection):
                 val = self._connection_options[param]
                 if val:
                     self._connection_options[param] = int(val) or None
-        
+
         # Use the default port number if one was not provided
         if 'port' not in self._connection_options or not self._connection_options['port']:
             self._connection_options['port'] = constants.DEFAULT_PORT[constants.MYSQL_PROVIDER_NAME]

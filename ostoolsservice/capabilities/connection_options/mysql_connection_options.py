@@ -53,6 +53,16 @@ mysql_conn_provider_opts = ConnectionProviderOptions([
         group_name='Security'
     ),
     ConnectionOption(
+        name='azureAccountToken',
+        display_name='Access Token',
+        description='Indicates an Active Directory access token to be used when connecting to the data source',
+        value_type=ConnectionOption.VALUE_TYPE_ACCESS_TOKEN,
+        special_value_type=ConnectionOption.SPECIAL_VALUE_ACCESS_TOKEN_NAME,
+        is_identity=True,
+        is_required=False,
+        group_name='Security'
+    ),
+    ConnectionOption(
         name='bindAddress',
         display_name='Host IP address',
         description='IP address of the server',
