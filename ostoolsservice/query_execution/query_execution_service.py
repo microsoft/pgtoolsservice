@@ -19,7 +19,7 @@ from ostoolsservice.query import (
 from ostoolsservice.query.contracts import BatchSummary, ResultSetSubset, SelectionData, SaveResultsRequestParams, SubsetResult  # noqa
 from ostoolsservice.query import ResultSetStorageType
 from ostoolsservice.query_execution.contracts import (
-    EXECUTE_STRING_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
+    EXECUTE_STRING_REQUEST, EXECUTE_DEPLOY_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,
     BATCH_START_NOTIFICATION, BATCH_COMPLETE_NOTIFICATION, EXECUTE_DOCUMENT_STATEMENT_REQUEST,
     ExecuteDocumentStatementParams, ExecutionPlanOptions, ResultSetNotificationParams,
     MESSAGE_NOTIFICATION, DEPLOY_MESSAGE_NOTIFICATION, RESULT_SET_AVAILABLE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, MessageNotificationParams,
