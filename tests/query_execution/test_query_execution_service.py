@@ -24,8 +24,9 @@ from ostoolsservice.query_execution.contracts import (
 from ostoolsservice.utils import constants
 from ostoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 from ostoolsservice.query_execution.contracts import (
-    ExecutionPlanOptions, MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
-    BATCH_START_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION,
+    ExecutionPlanOptions, MESSAGE_NOTIFICATION, DEPLOY_MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
+    BATCH_START_NOTIFICATION, DEPLOY_BATCH_START_NOTIFICATION, DEPLOY_BATCH_COMPLETE_NOTIFICATION,
+    QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, DEPLOY_COMPLETE_NOTIFICATION,
     QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams,
     SaveResultsAsJsonRequestParams, SaveResultRequestResult,
     SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
