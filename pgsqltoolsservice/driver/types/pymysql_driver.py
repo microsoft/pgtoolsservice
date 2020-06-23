@@ -49,9 +49,6 @@ class MySQLConnection(ServerConnection):
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
         """
-        if 'azureAccountToken' in conn_params:
-            conn_params['password'] = conn_params['azureAccountToken']
-            
         # Map the provided connection parameter names to pymysql param names
         _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param) : value for param, value in conn_params.items()}
 
