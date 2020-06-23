@@ -36,6 +36,11 @@ EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
     ExecuteStringParams
 )
 
+EXECUTE_DEPLOY_REQUEST = IncomingMessageConfiguration(
+    'query/executeDeploy',
+    ExecuteStringParams
+)
+
 
 class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
     @classmethod

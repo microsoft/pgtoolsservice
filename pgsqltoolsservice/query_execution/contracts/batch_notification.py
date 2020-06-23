@@ -24,3 +24,7 @@ class BatchNotificationParams:
 BATCH_COMPLETE_NOTIFICATION = 'query/batchComplete'
 
 BATCH_START_NOTIFICATION = 'query/batchStart'
+
+DEPLOY_BATCH_COMPLETE_NOTIFICATION = 'query/deployBatchComplete'
+
+DEPLOY_BATCH_START_NOTIFICATION = 'query/deployBatchStart'

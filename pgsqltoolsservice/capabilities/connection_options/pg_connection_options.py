@@ -30,7 +30,7 @@ pg_conn_provider_opts = ConnectionProviderOptions([
         is_identity=True,
         is_required=False,
         group_name='Source',
-        default_value= constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME]
+        default_value= constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
     ),
     ConnectionOption(
         name='user',
@@ -50,6 +50,16 @@ pg_conn_provider_opts = ConnectionProviderOptions([
         special_value_type=ConnectionOption.SPECIAL_VALUE_PASSWORD_NAME,
         is_identity=True,
         is_required=True,
+        group_name='Security'
+    ),
+    ConnectionOption(
+        name='azureAccountToken',
+        display_name='Access Token',
+        description='Indicates an Active Directory access token to be used when connecting to the data source',
+        value_type=ConnectionOption.VALUE_TYPE_ACCESS_TOKEN,
+        special_value_type=ConnectionOption.SPECIAL_VALUE_ACCESS_TOKEN_NAME,
+        is_identity=True,
+        is_required=False,
         group_name='Security'
     ),
     ConnectionOption(

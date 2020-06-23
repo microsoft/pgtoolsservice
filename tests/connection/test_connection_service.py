@@ -810,6 +810,47 @@ class TestConnectionCancellation(unittest.TestCase):
         # Then the handler should have responded false to indicate that no matching connection was in progress
         request_context.send_response.assert_called_once_with(False)
 
+    def test_connect_with_access_token(self):
+        """Test that the service connects to a PostgreSQL server using an access token as a password"""
+        # Set up the parameters for the connection
+        params: ConnectRequestParams = ConnectRequestParams.from_dict({
+            'ownerUri': 'someUri',
+            'type': ConnectionType.DEFAULT,
+            'connection': {
+                'options': {
+                    'user': 'postgres',
+                    'azureAccountToken': 'exampleToken',
+                    'host': 'myserver',
+                    'dbname': 'postgres'
+                }
+            }
+        })
+
+        # Set up the mock connection for psycopg2's connect method to return
+        mock_connection = MockConnection(dsn_parameters={
+            'host': 'myserver',
+            'dbname': 'postgres',
+            'user': 'postgres'
+        })
+
+        # Set up psycopg2 instance for connection service to call
+        mock_connect_method = mock.Mock(return_value=mock_connection)
+
+        # Set up the connection service and call its connect method with the supported options
+        with mock.patch('psycopg2.connect', new=mock_connect_method):
+            response = self.connection_service.connect(params)
+
+        # Verify that psycopg2's connection method was called with password set to account token.
+        mock_connect_method.assert_called_once_with(user='postgres', password='exampleToken', host='myserver', dbname='postgres')
+
+        # Verify that psycopg2's connection method was called and that the
+        # response has a connection id, indicating success.
+        self.assertIs(self.connection_service.owner_to_connection_map[params.owner_uri].get_connection(params.type),
+                      mock_connection)
+        self.assertIsNotNone(response.connection_id)
+        self.assertIsNotNone(response.server_info.server_version)
+        self.assertFalse(response.server_info.is_cloud)
+
     def _mock_connect(self, **kwargs):
         """Implementation for the mock psycopg2.connect method that saves the current cancellation token"""
         self.token_store.append(self.connection_service._cancellation_map[(self.owner_uri, self.connection_type)])
