@@ -167,6 +167,11 @@ class MySQLConnection(ServerConnection):
         pass
 
     @property
+    def query_canceled_error(self) -> Exception:
+        """Returns query canceled error type"""
+        pass
+
+    @property
     def cancellation_query(self) -> str:
         # TODO generate a query that kills the current query process
         return "-- ;"
