@@ -417,7 +417,7 @@ class QueryExecutionService(object):
 
     def _resolve_query_exception(self, e: Exception, query: Query, worker_args: ExecuteRequestWorkerArgs, is_rollback_error=False):
         utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query.query_text}\n {e}')
-        if isinstance(e, worker_args.connection.database_error) or isinstance(e, RuntimeError) or isinstance(e, worker_args.connection.query_canceled_error):
+        if isinstance(e, conn.database_error) or isinstance(e, RuntimeError):
             error_message = str(e)
         else:
             error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
@@ -434,7 +434,7 @@ class QueryExecutionService(object):
 
         # If there was a failure in the middle of a transaction, roll it back.
         # Note that conn.rollback() won't work since the connection is in autocommit mode
-        if not is_rollback_error and worker_args.connection.transaction_in_error:
+        if not is_rollback_error and worker_args.connection.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR:
             rollback_query = Query(query.owner_uri, 'ROLLBACK', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
             try:
                 rollback_query.execute(worker_args.connection)

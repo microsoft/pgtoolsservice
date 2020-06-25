@@ -131,18 +131,12 @@ class PostgreSQLConnection(ServerConnection):
 
     @property
     def database_error(self):
-        """Returns the type of database error this connection throws"""
+        """ Returns the type of database error this connection throws"""
         return self._database_error
 
     @property
     def transaction_in_error(self) -> bool:
-        """Returns bool indicating if transaction is in error"""
         return self._conn.get_transaction_status() is psycopg2.extensions.TRANSACTION_STATUS_INERROR
-
-    @property
-    def query_canceled_error(self) -> Exception:
-        """Returns driver query canceled error"""
-        return psycopg2.extensions.QueryCanceledError
 
     @property
     def cancellation_query(self) -> str:
