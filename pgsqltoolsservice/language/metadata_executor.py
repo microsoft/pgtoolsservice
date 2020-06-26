@@ -60,7 +60,7 @@ class LightweightMetadata:
         :return: (schema_name, rel_name) tuples
         """
 
-        with self.conn.cursor() as cur:
+        with self.conn.get_cursor() as cur:
             sql = cur.mogrify(self.tables_query, [kinds])
             self._log(f'Tables Query. sql: {sql}')
             cur.execute(sql)
@@ -130,7 +130,7 @@ class LightweightMetadata:
                         AND att.attnum  > 0
                 ORDER BY 1, 2, att.attnum'''
 
-        with self.conn.cursor() as cur:
+        with self.conn.get_cursor() as cur:
             sql = cur.mogrify(columns_query, [kinds])
             self._log(f'Columns Query. sql: {sql}')
             cur.execute(sql)
@@ -146,7 +146,7 @@ class LightweightMetadata:
             yield row
 
     def databases(self):
-        with self.conn.cursor() as cur:
+        with self.conn.get_cursor() as cur:
             self._log(f'Databases Query. sql: {self.databases_query}')
             cur.execute(self.databases_query)
             return [x[0] for x in cur.fetchall()]
@@ -157,7 +157,7 @@ class LightweightMetadata:
         if self.conn.server_version < 90000:
             return
 
-        with self.conn.cursor() as cur:
+        with self.conn.get_cursor() as cur:
             query = '''
                 SELECT s_p.nspname AS parentschema,
                        t_p.relname AS parenttable,
@@ -249,7 +249,7 @@ class LightweightMetadata:
                 ORDER BY 1, 2
                 '''
 
-        with self.conn.cursor() as cur:
+        with self.conn.get_cursor() as cur:
             self._log(f'Functions Query. sql:{query}')
             cur.execute(query)
             for row in cur:
@@ -258,7 +258,7 @@ class LightweightMetadata:
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""
 
-        with self.conn.cursor() as cur:
+        with self.conn.get_cursor() as cur:
             if self.conn.server_version > 90000:
                 query = '''
                     SELECT n.nspname schema_name,
@@ -302,7 +302,7 @@ class LightweightMetadata:
 
     def casing(self):
         """Yields the most common casing for names used in db functions"""
-        with self.conn.cursor() as cur:
+        with self.conn.get_cursor() as cur:
             query = r'''
           WITH Words AS (
                 SELECT regexp_split_to_table(prosrc, '\W+') AS Word, COUNT(1)
