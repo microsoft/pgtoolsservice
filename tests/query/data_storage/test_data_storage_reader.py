@@ -6,7 +6,7 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.query.data_storage import StorageDataReader
+from ossdbtoolsservice.query.data_storage import StorageDataReader
 import tests.utils as utils
 
 
@@ -21,7 +21,7 @@ class TestDataStorageReader(unittest.TestCase):
         self._reader = StorageDataReader(self._cursor)
 
     def execute_read_row_with_patch(self):
-        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=self._get_columns_info_mock):
+        with mock.patch('ossdbtoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=self._get_columns_info_mock):
             return self._reader.read_row()
 
     def test_column_info_property(self):

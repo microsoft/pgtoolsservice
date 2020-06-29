@@ -10,10 +10,10 @@ from typing import Tuple
 import unittest
 from unittest.mock import MagicMock
 
-from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
-from pgsqltoolsservice.workspace import WorkspaceService, IntellisenseConfiguration    # noqa
-from pgsqltoolsservice.workspace.workspace import Workspace, ScriptFile
-from pgsqltoolsservice.workspace.contracts import (
+from ossdbtoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
+from ossdbtoolsservice.workspace import WorkspaceService, IntellisenseConfiguration    # noqa
+from ossdbtoolsservice.workspace.workspace import Workspace, ScriptFile
+from ossdbtoolsservice.workspace.contracts import (
     Configuration,
     DidChangeConfigurationParams,
     DidCloseTextDocumentParams,

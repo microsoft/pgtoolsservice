@@ -8,9 +8,9 @@ $oldPythonpath=$Env:PYTHONPATH
 # Build the program
 Set-Location $scriptloc/..
 $Env:PYTHONPATH = ""
-flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,pgsqltoolsservice,View pgsqltoolsservice
-flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,pgsqltoolsservice,View tests
-flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,pgsqltoolsservice,View pgsmo
+flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,ossdbtoolsservice,View ossdbtoolsservice
+flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,ossdbtoolsservice,View tests
+flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,ossdbtoolsservice,View pgsmo
 
 # Restore the old PYTHONPATH and move back to the original directory
 Set-Location $curloc

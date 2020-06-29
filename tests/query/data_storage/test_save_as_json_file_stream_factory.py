@@ -6,9 +6,9 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.query.data_storage import SaveAsJsonFileStreamFactory
-from pgsqltoolsservice.query.contracts import SaveResultsRequestParams
-from pgsqltoolsservice.query.data_storage import SaveAsJsonWriter, ServiceBufferFileStreamReader
+from ossdbtoolsservice.query.data_storage import SaveAsJsonFileStreamFactory
+from ossdbtoolsservice.query.contracts import SaveResultsRequestParams
+from ossdbtoolsservice.query.data_storage import SaveAsJsonWriter, ServiceBufferFileStreamReader
 
 
 class TestSaveAsJsonFileStreamFactory(unittest.TestCase):

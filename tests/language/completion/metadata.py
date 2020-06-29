@@ -8,9 +8,9 @@ from itertools import product
 from unittest.mock import Mock
 from prompt_toolkit.document import Document
 
-from pgsqltoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata, ForeignKey
-from pgsqltoolsservice.language.completion import PGCompleter
-from pgsqltoolsservice.language.completion.pg_completion import PGCompletion
+from ossdbtoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata, ForeignKey
+from ossdbtoolsservice.language.completion import PGCompleter
+from ossdbtoolsservice.language.completion.pg_completion import PGCompletion
 
 qual = ['if_more_than_one_table', 'always']
 no_qual = ['if_more_than_one_table', 'never']

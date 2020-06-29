@@ -7,7 +7,7 @@ from typing import Tuple, Optional
 import unittest
 import unittest.mock as mock
 
-from pgsqltoolsservice.workspace.workspace import ScriptFile, Workspace
+from ossdbtoolsservice.workspace.workspace import ScriptFile, Workspace
 
 
 class TestWorkspaceService(unittest.TestCase):
@@ -72,7 +72,7 @@ class TestWorkspaceService(unittest.TestCase):
     def test_open_file_no_buffer(self):
         # Setup: Patch open()
         m = mock.mock_open()
-        with mock.patch('pgsqltoolsservice.workspace.workspace.open', m, create=True):
+        with mock.patch('ossdbtoolsservice.workspace.workspace.open', m, create=True):
             # If: I open a file without a buffer
             w, sf = self._get_test_workspace(False)
             result = w.open_file("file_path", None)
@@ -197,7 +197,7 @@ class TestWorkspaceService(unittest.TestCase):
             ('file:///D%3A/path/to/file', 'D:\\path\\to\\file'),
         ]
 
-        with mock.patch('pgsqltoolsservice.workspace.workspace.os.name', 'nt'):
+        with mock.patch('ossdbtoolsservice.workspace.workspace.os.name', 'nt'):
             for test in tests:
                 # If: I attempt to resolve a URI to a file path in windows (aka 'nt'
                 result = Workspace._resolve_file_path(test[0])
@@ -214,7 +214,7 @@ class TestWorkspaceService(unittest.TestCase):
             ('file:///path%20space/to/file', '/path space/to/file'),
         ]
 
-        with mock.patch('pgsqltoolsservice.workspace.workspace.os.name', 'posix'):
+        with mock.patch('ossdbtoolsservice.workspace.workspace.os.name', 'posix'):
             for test in tests:
                 # If: I attempt to resolve a URI to a file path in OSX/Linux (aka 'posix')
                 result = Workspace._resolve_file_path(test[0])
