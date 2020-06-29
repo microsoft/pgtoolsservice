@@ -101,7 +101,7 @@ class ServerConnection(ABC):
         pass
 
     @abstractmethod
-    def get_cursor(self, **kwargs):
+    def cursor(self, **kwargs):
         """
         Returns a cursor for the current connection
         """

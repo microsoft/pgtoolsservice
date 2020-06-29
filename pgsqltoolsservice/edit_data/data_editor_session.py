@@ -16,6 +16,7 @@ from pgsqltoolsservice.edit_data.contracts import (
 from pgsqltoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
 from pgsqltoolsservice.query.contracts import DbColumn, ResultSetSubset
 import pgsqltoolsservice.utils as utils
+from pgsqltoolsservice.driver import ServerConnection    
 
 
 class DataEditSessionExecutionState:
@@ -38,7 +39,7 @@ class DataEditorSession():
         self._result_set: ResultSet = None
         self.table_metadata: EditTableMetadata = None
 
-    def initialize(self, initailize_edit_params: InitializeEditParams, connection: 'psycopg2.extensions.connection',
+    def initialize(self, initailize_edit_params: InitializeEditParams, connection: ServerConnection,
                    query_executer: Callable[[str, List[DbColumn], Callable], None], on_success: Callable, on_failure: Callable):
         """ This method creates the metadata for the object to be edited and creates the query to be
         executed and calls query executer with it """
@@ -88,7 +89,7 @@ class DataEditorSession():
 
         return result
 
-    def commit_edit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
+    def commit_edit(self, connection: ServerConnection, success: Callable, failure: Callable):
         if not self._is_initialized:
             raise RuntimeError("Edit session has not been initialized")
 
@@ -183,7 +184,7 @@ class DataEditorSession():
 
         return edit_rows
 
-    def _do_commit(self, connection: 'psycopg2.extensions.connection', success: Callable, failure: Callable):
+    def _do_commit(self, connection: ServerConnection, success: Callable, failure: Callable):
 
         try:
             edit_operations = self._session_cache.values()
@@ -213,7 +214,7 @@ class DataEditorSession():
         if query.execution_state is not ExecutionState.EXECUTED:
             raise Exception('Execution not completed')
 
-    def _construct_initialize_query(self, connection: 'psycopg2.extensions.connection', metadata: EditTableMetadata, filters: EditInitializerFilter):
+    def _construct_initialize_query(self, connection: ServerConnection, metadata: EditTableMetadata, filters: EditInitializerFilter):
 
         column_names = [sql.Identifier(column.name) for column in metadata.columns_metadata]
 
@@ -226,4 +227,4 @@ class DataEditorSession():
             sql.Identifier(metadata.table_name),
             sql.SQL(limit_clause)
         )
-        return query.as_string(connection)
+        return query.as_string(connection.connection)
