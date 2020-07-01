@@ -14,14 +14,6 @@ from ossdbtoolsservice.scripting.contracts import (
 from ossdbtoolsservice.connection.contracts import ConnectionType
 import ossdbtoolsservice.utils as utils
 
-from pgsmo import Server as PGServer
-from mysqlsmo import Server as MySQLServer
-
-SERVER_TYPES = {
-    utils.constants.MYSQL_PROVIDER_NAME : MySQLServer,
-    utils.constants.PG_PROVIDER_NAME : PGServer
-}
-
 class ScriptingService(object):
     """Service for scripting database objects"""
 
@@ -36,9 +28,6 @@ class ScriptingService(object):
 
         # Find the provider type
         self._provider: str = self._service_provider.provider
-
-        # Find the type of server to use
-        self._server = SERVER_TYPES[self._provider]
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Scripting service successfully initialized')
@@ -62,9 +51,7 @@ class ScriptingService(object):
             connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
             object_metadata = self.create_metadata(params)
 
-            # Initiate server object to find/generate objects for scripter
-            server = self._server(connection)
-            scripter = Scripter(server)
+            scripter = Scripter(connection)
 
             script = scripter.script(scripting_operation, object_metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
