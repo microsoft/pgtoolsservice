@@ -10,17 +10,17 @@ from unittest import mock
 import tests.utils as utils
 from unittest.mock import patch
 
-from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.edit_data.edit_data_service import EditDataService
+from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from pgsqltoolsservice.edit_data.contracts import (
+from ossdbtoolsservice.edit_data.contracts import (
     UpdateCellRequest, CreateRowRequest, SessionOperationRequest, DeleteRowRequest, RevertCellRequest,
     RevertRowRequest, EditCommitRequest, DisposeRequest, InitializeEditParams
 )
-from pgsqltoolsservice.hosting.json_message import JSONRPCMessage
-from pgsqltoolsservice.hosting import RequestContext
-from pgsqltoolsservice.connection import ConnectionService
-from pgsqltoolsservice.query_execution.query_execution_service import QueryExecutionService
+from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
+from ossdbtoolsservice.hosting import RequestContext
+from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.query_execution.query_execution_service import QueryExecutionService
 
 
 class TestEditDataService(unittest.TestCase):
@@ -50,7 +50,7 @@ class TestEditDataService(unittest.TestCase):
         self._initialize_edit_request.object_type = 'Table'
         self._initialize_edit_request.owner_uri = 'testuri'
 
-    @patch('pgsqltoolsservice.edit_data.edit_data_service.DataEditorSession')
+    @patch('ossdbtoolsservice.edit_data.edit_data_service.DataEditorSession')
     def test_initialization(self, mockdataeditorsession):
         queue = Queue()
         message = JSONRPCMessage.from_dictionary({'id': '123', 'method': 'edit/initialize', 'params': {}})

@@ -8,10 +8,10 @@ import unittest.mock as mock
 
 import psycopg2
 
-from pgsqltoolsservice.admin import AdminService
-from pgsqltoolsservice.admin.contracts import GET_DATABASE_INFO_REQUEST, GetDatabaseInfoParameters, GetDatabaseInfoResponse
-from pgsqltoolsservice.connection import ConnectionService
-from pgsqltoolsservice.utils import constants
+from ossdbtoolsservice.admin import AdminService
+from ossdbtoolsservice.admin.contracts import GET_DATABASE_INFO_REQUEST, GetDatabaseInfoParameters, GetDatabaseInfoResponse
+from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.utils import MockConnection, MockCursor, MockRequestContext

@@ -10,7 +10,7 @@ from decimal import Decimal
 import uuid
 import datetime  # noqa
 
-from pgsqltoolsservice.parsers.datatype_parsers import get_parser
+from ossdbtoolsservice.parsers.datatype_parsers import get_parser
 
 
 class TestDataTypeParsers(unittest.TestCase):
