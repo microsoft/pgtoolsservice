@@ -12,9 +12,14 @@ from collections import OrderedDict
 
 from pgsmo import Server
 from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.language.completion import PGCompleter
+from ossdbtoolsservice.language.completion import PGCompleter, MySQLCompleter
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
 
+COMPLETER_MAP = {
+    PG_PROVIDER_NAME: PGCompleter,
+    MYSQL_PROVIDER_NAME: MySQLCompleter
+}
 
 class CompletionRefresher:
     """
@@ -62,7 +67,7 @@ class CompletionRefresher:
 
     def _bg_refresh(self, callbacks, history=None, settings=None):
         settings = settings or {}
-        completer = PGCompleter(smart_completion=True, settings=settings)
+        completer = COMPLETER_MAP[self.connection._provider_name](smart_completion=True, settings=settings)
 
         self.server.refresh()
         metadata_executor = MetadataExecutor(self.server)

@@ -10,7 +10,7 @@ from logging import Logger          # noqa
 import threading
 from typing import Any, Dict, Set, List  # noqa
 
-from prompt_toolkit.completion import Completion    # noqa
+from prompt_toolkit.completion import Completion, Completer    # noqa
 from prompt_toolkit.document import Document    # noqa
 import sqlparse
 
@@ -29,7 +29,6 @@ from ossdbtoolsservice.language.contracts import (
     DOCUMENT_RANGE_FORMATTING_REQUEST, DocumentRangeFormattingParams,
     TextEdit, FormattingOptions, StatusChangeParams, STATUS_CHANGE_NOTIFICATION
 )
-from ossdbtoolsservice.language.completion import PGCompleter   # noqa
 from ossdbtoolsservice.language.operations_queue import ConnectionContext, OperationsQueue, QueuedOperation
 from ossdbtoolsservice.language.keywords import DefaultCompletionHelper
 from ossdbtoolsservice.language.script_parse_info import ScriptParseInfo
@@ -68,7 +67,10 @@ class LanguageService:
         self._service_provider: ServiceProvider = None
         self._server: JSONRPCServer = None
         self._logger: [Logger, None] = None
-        self._non_pgsql_uris: Set[str] = set()
+        self._provider_valid_uri: Dict[str, Set] = {
+            utils.constants.PG_PROVIDER_NAME: set(), 
+            utils.constants.MYSQL_PROVIDER_NAME: set()
+        }
         self._completion_helper = DefaultCompletionHelper()
         self._script_map: Dict[str, 'ScriptParseInfo'] = {}
         self._script_map_lock: threading.Lock = threading.Lock()
@@ -175,10 +177,15 @@ class LanguageService:
         so they can be excluded from intellisense processing
         """
         if params is not None and params.uri is not None:
-            if params.language.lower() == 'sql' and params.flavor.lower() != 'pgsql':
-                self._non_pgsql_uris.add(params.uri)
-            else:
-                self._non_pgsql_uris.discard(params.uri)
+            if params.language.lower() == 'sql':
+                if params.flavor == utils.constants.PG_PROVIDER_NAME:
+                    self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].add(params.uri)
+                else:
+                    self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].discard(params.uri)
+                if params.flavor == utils.constants.MYSQL_PROVIDER_NAME:
+                    self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].add(params.uri)
+                else:
+                    self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].discard(params.uri)
 
     def handle_doc_format_request(self, request_context: RequestContext, params: DocumentFormattingParams) -> None:
         """
@@ -262,16 +269,16 @@ class LanguageService:
             self.operations_queue.stop()
 
     def should_skip_intellisense(self, uri: str) -> bool:
-        return not self._workspace_service.configuration.sql.intellisense.enable_intellisense or not self.is_pgsql_uri(uri)
+        return not self._workspace_service.configuration.sql.intellisense.enable_intellisense or not self.is_valid_uri(uri)
 
     def should_skip_formatting(self, uri: str) -> bool:
-        return not self.is_pgsql_uri(uri)
+        return not self.is_valid_uri(uri)
 
-    def is_pgsql_uri(self, uri: str) -> bool:
+    def is_valid_uri(self, uri: str) -> bool:
         """
-        Checks if this URI can be treated as a PGSQL candidate for processing or should be skipped
+        Checks if this URI can be treated as a candidate for processing or should be skipped ()
         """
-        return uri not in self._non_pgsql_uris
+        return uri in self._provider_valid_uri[self._service_provider.provider]
 
     def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
         # TODO build the cache. For now, sending intellisense ready as a test
@@ -337,7 +344,7 @@ class LanguageService:
         if not context or not context.is_connected:
             return False
         # Else use the completer to query for completions
-        completer: PGCompleter = context.pgcompleter
+        completer: Completer = context.completer
         completions: List[Completion] = completer.get_completions(scriptparseinfo.document, None)
         if completions:
             response = [LanguageService.to_completion_item(completion, params) for completion in completions]
@@ -352,7 +359,7 @@ class LanguageService:
             return False
 
         definition_result: DefinitionResult = None
-        completer: PGCompleter = context.pgcompleter
+        completer: Completer = context.completer
         completions: List[Completion] = completer.get_completions(scriptparseinfo.document, None)
 
         if completions:
