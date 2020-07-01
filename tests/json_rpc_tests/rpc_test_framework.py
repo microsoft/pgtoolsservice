@@ -14,8 +14,8 @@ import threading
 from typing import Callable, List, Optional, Tuple
 from unittest import mock
 
-from pgsqltoolsservice.hosting.json_message import JSONRPCMessageType
-import pgsqltoolsservice.pgtoolsservice_main as pgtoolsservice_main
+from ossdbtoolsservice.hosting.json_message import JSONRPCMessageType
+import ossdbtoolsservice.ossdbtoolsservice_main as ossdbtoolsservice_main
 
 
 class RPCTestMessage:
@@ -194,7 +194,7 @@ class JSONRPCTestCase:
 
         logger = logging.Logger('test')
         logger.addHandler(logging.NullHandler())
-        server = pgtoolsservice_main._create_server(server_input_stream, server_output_stream, logger)
+        server = ossdbtoolsservice_main._create_server(server_input_stream, server_output_stream, logger)
         server.start()
         return test_input_stream, server_output_stream, output_info
 

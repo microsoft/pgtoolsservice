@@ -7,9 +7,9 @@ import unittest
 from unittest import mock
 
 import tests.utils as utils
-from pgsqltoolsservice.query.result_set import ResultSetEvents
-from pgsqltoolsservice.query.in_memory_result_set import InMemoryResultSet
-from pgsqltoolsservice.query.contracts import SaveResultsRequestParams
+from ossdbtoolsservice.query.result_set import ResultSetEvents
+from ossdbtoolsservice.query.in_memory_result_set import InMemoryResultSet
+from ossdbtoolsservice.query.contracts import SaveResultsRequestParams
 from tests.query.test_file_storage_result_set import MockWriter
 
 
@@ -69,7 +69,7 @@ class TestInMemoryResultSet(unittest.TestCase):
     def test_read_result_to_end(self):
 
         get_column_info_mock = mock.Mock()
-        with mock.patch('pgsqltoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
+        with mock.patch('ossdbtoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
             self._result_set.read_result_to_end(self._cursor)
 
         self.assertEqual(len(self._result_set.rows), 2)

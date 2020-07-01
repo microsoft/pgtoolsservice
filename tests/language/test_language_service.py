@@ -13,31 +13,31 @@ from parameterized import parameterized
 
 from prompt_toolkit.completion import Completion
 
-from pgsqltoolsservice.workspace.contracts.common import TextDocumentPosition, Position     # noqa
-from pgsqltoolsservice.hosting import (     # noqa
+from ossdbtoolsservice.workspace.contracts.common import TextDocumentPosition, Position     # noqa
+from ossdbtoolsservice.hosting import (     # noqa
     JSONRPCServer,
     NotificationContext,
     RequestContext,
     ServiceProvider
 )
-from pgsqltoolsservice.language import LanguageService
-from pgsqltoolsservice.language.operations_queue import OperationsQueue
-from pgsqltoolsservice.language.script_parse_info import ScriptParseInfo    # noqa
-from pgsqltoolsservice.language.contracts import (      # noqa
+from ossdbtoolsservice.language import LanguageService
+from ossdbtoolsservice.language.operations_queue import OperationsQueue
+from ossdbtoolsservice.language.script_parse_info import ScriptParseInfo    # noqa
+from ossdbtoolsservice.language.contracts import (      # noqa
     LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
     INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
     DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions, TextEdit
 )
-from pgsqltoolsservice.utils import constants
-from pgsqltoolsservice.workspace import (       # noqa
+from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.workspace import (       # noqa
     WorkspaceService, TextDocumentIdentifier, Configuration,
     PGSQLConfiguration, ScriptFile, Workspace
 )
-from pgsqltoolsservice.workspace.contracts import (
+from ossdbtoolsservice.workspace.contracts import (
     Range
 )
-from pgsqltoolsservice.connection import ConnectionService, ConnectionInfo
-from pgsqltoolsservice.connection.contracts import ConnectionDetails
+from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
+from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from tests.mock_request_validation import RequestFlowValidator
 import tests.utils as utils
 
@@ -235,7 +235,7 @@ class TestLanguageService(unittest.TestCase):
         refresher_mock = mock.MagicMock()
         refresh_method_mock = mock.MagicMock()
         refresher_mock.refresh = refresh_method_mock
-        patch_path = 'pgsqltoolsservice.language.operations_queue.CompletionRefresher'
+        patch_path = 'ossdbtoolsservice.language.operations_queue.CompletionRefresher'
         with mock.patch(patch_path) as refresher_patch:
             refresher_patch.return_value = refresher_mock
             task: threading.Thread = service.on_connect(conn_info)

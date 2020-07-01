@@ -6,7 +6,7 @@
 from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
-from pgsqltoolsservice.driver import ServerConnection
+from ossdbtoolsservice.driver import ServerConnection
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 import smo.utils as utils
 from mysqlsmo.objects.database.database import Database

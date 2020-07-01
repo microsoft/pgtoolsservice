@@ -6,11 +6,11 @@
 import unittest
 import unittest.mock as mock
 
-from pgsqltoolsservice.connection import ConnectionService
-from pgsqltoolsservice.connection.contracts import ConnectionType
-from pgsqltoolsservice.metadata import MetadataService
-from pgsqltoolsservice.metadata.contracts import METADATA_LIST_REQUEST, MetadataListParameters, MetadataListResponse, MetadataType, ObjectMetadata
-from pgsqltoolsservice.utils import constants
+from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.connection.contracts import ConnectionType
+from ossdbtoolsservice.metadata import MetadataService
+from ossdbtoolsservice.metadata.contracts import METADATA_LIST_REQUEST, MetadataListParameters, MetadataListResponse, MetadataType, ObjectMetadata
+from ossdbtoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.utils import MockConnection, MockCursor, MockRequestContext, MockThread
 

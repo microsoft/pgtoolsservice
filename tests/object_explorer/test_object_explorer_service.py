@@ -11,19 +11,19 @@ import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
 
-from pgsqltoolsservice.connection import ConnectionService
-from pgsqltoolsservice.connection.contracts import ConnectionDetails, ConnectionCompleteParams
-from pgsqltoolsservice.hosting import JSONRPCServer, RequestContext, ServiceProvider  # noqa
-from pgsqltoolsservice.metadata.contracts import ObjectMetadata
-from pgsqltoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
-from pgsqltoolsservice.object_explorer.contracts import (
+from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectionCompleteParams
+from ossdbtoolsservice.hosting import JSONRPCServer, RequestContext, ServiceProvider  # noqa
+from ossdbtoolsservice.metadata.contracts import ObjectMetadata
+from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
+from ossdbtoolsservice.object_explorer.contracts import (
     NodeInfo, CloseSessionParameters,
     CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
     ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
 )
 from pgsmo.objects.server.server import Server
 from pgsmo.objects.database.database import Database
-from pgsqltoolsservice.utils import constants
+from ossdbtoolsservice.utils import constants
 import tests.utils as utils
 from tests.pgsmo_tests.utils import MockConnection
 from tests.mock_request_validation import RequestFlowValidator
@@ -177,7 +177,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... Patch the threading to throw
         patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
-        patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.threading.Thread'
+        patch_path = 'ossdbtoolsservice.object_explorer.object_explorer_service.threading.Thread'
         with mock.patch(patch_path, patch_mock):
             # If: I create a new session
             params, session_uri = _connection_details()
@@ -459,7 +459,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... Patch the threading to throw
         patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
-        patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.threading.Thread'
+        patch_path = 'ossdbtoolsservice.object_explorer.object_explorer_service.threading.Thread'
         with mock.patch(patch_path, patch_mock):
             # If: I expand a node (with threading that throws)
             rc = RequestFlowValidator()
@@ -486,7 +486,7 @@ class TestObjectExplorer(unittest.TestCase):
         # ... Patch the route_request to throw
         # ... Patch the threading to throw
         patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
-        patch_path = 'pgsqltoolsservice.object_explorer.object_explorer_service.route_request'
+        patch_path = 'ossdbtoolsservice.object_explorer.object_explorer_service.route_request'
         with mock.patch(patch_path, patch_mock):
             # If: I expand a node (with route_request that throws)
             rc = RequestFlowValidator()

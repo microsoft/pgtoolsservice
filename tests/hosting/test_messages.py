@@ -5,7 +5,7 @@
 
 import unittest
 
-from pgsqltoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
+from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 
 
 class JsonRpcMessageTests(unittest.TestCase):

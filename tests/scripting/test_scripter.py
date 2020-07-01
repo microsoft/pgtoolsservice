@@ -11,9 +11,9 @@ from unittest import mock
 from pgsmo import Table, DataType, Schema, Database, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, \
     Rule, Trigger, Index
 from pgsmo.objects.node_object import NodeCollection
-from pgsqltoolsservice.metadata.contracts.object_metadata import ObjectMetadata
-import pgsqltoolsservice.scripting.scripter as scripter
-from pgsqltoolsservice.scripting.scripting_service import ScriptingService
+from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+import ossdbtoolsservice.scripting.scripter as scripter
+from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 
 
 import tests.utils as utils

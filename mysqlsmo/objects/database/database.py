@@ -8,7 +8,7 @@ from typing import Optional               # noqa
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from smo.utils import templating
-from pgsqltoolsservice.driver import ServerConnection    # noqa
+from ossdbtoolsservice.driver import ServerConnection    # noqa
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
