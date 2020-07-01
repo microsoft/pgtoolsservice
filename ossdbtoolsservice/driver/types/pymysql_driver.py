@@ -176,6 +176,10 @@ class MySQLConnection(ServerConnection):
         # TODO generate a query that kills the current query process
         return "-- ;"
 
+    @property
+    def connection(self) -> pymysql.connections.Connection:
+        return self._conn
+
     ############################# METHODS ##################################
     @autocommit.setter
     def autocommit(self, mode: bool):
@@ -191,7 +195,7 @@ class MySQLConnection(ServerConnection):
         """
         self._conn.commit()
 
-    def get_cursor(self, **kwargs):
+    def cursor(self, **kwargs):
         """
         Returns a cursor for the current connection
         :param kwargs will ignored as PyMySQL does not yet support named cursors 

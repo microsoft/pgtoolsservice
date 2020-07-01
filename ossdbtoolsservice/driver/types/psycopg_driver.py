@@ -149,6 +149,10 @@ class PostgreSQLConnection(ServerConnection):
         backend_pid = self._conn.get_backend_pid()
         return PG_CANCELLATION_QUERY.format(backend_pid)
 
+    @property
+    def connection(self) -> psycopg2.extensions.connection:
+        return self._conn
+
     ############################# METHODS ##################################
     @autocommit.setter
     def autocommit(self, mode: bool):
@@ -164,7 +168,7 @@ class PostgreSQLConnection(ServerConnection):
         """
         self._conn.commit()
     
-    def get_cursor(self, **kwargs):
+    def cursor(self, **kwargs):
         """
         Returns a cursor for the current connection
         :param kwargs (optional) to create a named cursor

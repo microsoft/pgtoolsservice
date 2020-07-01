@@ -89,6 +89,15 @@ class ServerConnection(ABC):
         Returns a SQL command to end the current query execution process
         """
         pass
+
+    @property
+    @abstractmethod
+    def connection(self) -> 'connection':
+        """
+        Returns the underlying connection
+        """
+        pass
+
     
     ############################# METHODS ##################################
     @autocommit.setter
@@ -108,7 +117,7 @@ class ServerConnection(ABC):
         pass
 
     @abstractmethod
-    def get_cursor(self, **kwargs):
+    def cursor(self, **kwargs):
         """
         Returns a cursor for the current connection
         """
