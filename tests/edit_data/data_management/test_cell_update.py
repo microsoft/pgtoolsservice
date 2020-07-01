@@ -6,9 +6,9 @@
 
 import unittest
 
-from pgsqltoolsservice.edit_data.update_management import CellUpdate
-from pgsqltoolsservice.query.contracts import DbColumn, DbCellValue
-from pgsqltoolsservice.edit_data.contracts import EditCell
+from ossdbtoolsservice.edit_data.update_management import CellUpdate
+from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
+from ossdbtoolsservice.edit_data.contracts import EditCell
 
 
 class TestCellUpdate(unittest.TestCase):
