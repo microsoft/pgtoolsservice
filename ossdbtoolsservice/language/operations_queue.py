@@ -6,6 +6,7 @@
 """A module that handles queueing """
 from typing import Callable, Dict, List, Optional   # noqa
 import threading
+from logging import Logger  
 from queue import Queue
 
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
@@ -21,15 +22,16 @@ INTELLISENSE_URI = 'intellisense://'
 class ConnectionContext:
     """Context information needed to look up connections"""
 
-    def __init__(self, key: str):
+    def __init__(self, key: str, logger: Logger):
         self.key = key
         self.intellisense_complete: threading.Event = threading.Event()
         self.pgcompleter: PGCompleter = None
         self.is_connected: bool = False
+        self.logger: Logger = logger
 
     def refresh_metadata(self, connection: ServerConnection):
         # Start metadata refresh so operations can be completed
-        completion_refresher = CompletionRefresher(connection)
+        completion_refresher = CompletionRefresher(connection, self.logger)
         completion_refresher.refresh(self._on_completions_refreshed)
 
     # IMPLEMENTATION DETAILS ###############################################
@@ -122,6 +124,8 @@ class OperationsQueue:
         with self.lock:
             key: str = OperationsQueue.create_key(conn_info)
             context: ConnectionContext = self._context_map.get(key)
+            logger: Logger = self._service_provider.logger
+
             if context:
                 if overwrite:
                     self.disconnect(key)
@@ -129,7 +133,7 @@ class OperationsQueue:
                     # Notify ready and return immediately, the queue exists
                     return context
             # Create the context and start refresh
-            context = ConnectionContext(key)
+            context = ConnectionContext(key, logger)
             conn = self._create_connection(key, conn_info)
             context.refresh_metadata(conn)
             self._context_map[key] = context
