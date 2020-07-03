@@ -90,7 +90,7 @@ class LightweightMetadata:
         :return: list of (schema_name, relation_name, column_name, column_type) tuples
         """
 
-        if self.conn.server_version >= 80400:
+        if self.conn.connection.server_version >= 80400:
             columns_query = '''
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
@@ -154,7 +154,7 @@ class LightweightMetadata:
     def foreignkeys(self):
         """Yields ForeignKey named tuples"""
 
-        if self.conn.server_version < 90000:
+        if self.conn.connection.server_version < 90000:
             return
 
         with self.conn.cursor() as cur:
@@ -194,7 +194,7 @@ class LightweightMetadata:
     def functions(self):
         """Yields FunctionMetadata named tuples"""
 
-        if self.conn.server_version > 90000:
+        if self.conn.connection.server_version > 90000:
             query = '''
                 SELECT n.nspname schema_name,
                         p.proname func_name,
@@ -212,7 +212,7 @@ class LightweightMetadata:
                 WHERE p.prorettype::regtype != 'trigger'::regtype
                 ORDER BY 1, 2
                 '''
-        elif self.conn.server_version >= 80400:
+        elif self.conn.connection.server_version >= 80400:
             query = '''
                 SELECT n.nspname schema_name,
                         p.proname func_name,
@@ -259,7 +259,7 @@ class LightweightMetadata:
         """Yields tuples of (schema_name, type_name)"""
 
         with self.conn.cursor() as cur:
-            if self.conn.server_version > 90000:
+            if self.conn.connection.server_version > 90000:
                 query = '''
                     SELECT n.nspname schema_name,
                            t.typname type_name
