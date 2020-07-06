@@ -58,3 +58,9 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         return {
             "dbname": self._name
         }
+
+    # -CHILD OBJECTS #######################################################
+    @property
+    def schemas(self) -> NodeCollection['Schema']:
+        # TODO: add Schema mysqlsmo
+        return []

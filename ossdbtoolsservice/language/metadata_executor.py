@@ -365,8 +365,9 @@ class MetadataExecutor:
 
     def _load_schemas(self):
         database: Database = self.server.maintenance_db
-        for schema in database.schemas:
-            self.schemas[schema.name] = schema
+        if database:
+            for schema in database.schemas:
+                self.schemas[schema.name] = schema
 
     def _ensure_schemas_loaded(self):
         if not self.schemas_loaded:
