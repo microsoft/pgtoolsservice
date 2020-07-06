@@ -3,13 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
-from logging import Logger  # noqa
-import re
-from itertools import count, repeat, chain      # noqa
 import operator
+import re
 from collections import namedtuple, defaultdict, OrderedDict
+from itertools import count, repeat, chain      # noqa
+from logging import Logger  # noqa
 from prompt_toolkit.completion import Completer, Completion
+from typing import List
 
 from ossdbtoolsservice.language.completion.mysql_completion import MySQLCompletion
 from .packages.sqlcompletion import (   # noqa
@@ -834,23 +834,6 @@ class MySQLCompleter(Completer):
         return self.find_matches(word_before_cursor, keywords,
                                  mode='strict', meta='keyword')
 
-    # {{ PGToolsService EDIT }}
-    # def get_path_matches(self, _, word_before_cursor):
-    #     completer = PathCompleter(expanduser=True)
-    #     document = Document(text=word_before_cursor,
-    #                         cursor_position=len(word_before_cursor))
-    #     for c in completer.get_completions(document, None):
-    #         yield Match(completion=c, priority=(0,))
-
-    # def get_special_matches(self, _, word_before_cursor):
-    #     if not self.pgspecial:
-    #         return []
-
-    #     commands = self.pgspecial.commands
-    #     cmds = commands.keys()
-    #     cmds = [Candidate(cmd, 0, commands[cmd].description) for cmd in cmds]
-    #     return self.find_matches(word_before_cursor, cmds, mode='strict')
-
     def get_datatype_matches(self, suggestion, word_before_cursor):
         # suggest custom datatypes
         types = self.populate_schema_objects(suggestion.schema, 'datatypes')
@@ -864,9 +847,6 @@ class MySQLCompleter(Completer):
 
         return matches
 
-    # {{ PGToolsService EDIT }}
-    # def get_namedquery_matches(self, _, word_before_cursor):
-    #     return self.find_matches(word_before_cursor, NamedQueries.instance.list(), meta='named query')
 
     suggestion_matchers = {
         FromClauseItem: get_from_clause_item_matches,
@@ -880,12 +860,7 @@ class MySQLCompleter(Completer):
         Alias: get_alias_matches,
         Database: get_database_matches,
         Keyword: get_keyword_matches,
-        # {{ PGToolsService EDIT }}
-        # Special: get_special_matches,
         Datatype: get_datatype_matches,
-        # {{ PGToolsService EDIT }}
-        # NamedQuery: get_namedquery_matches,
-        # Path: get_path_matches,
     }
 
     def populate_scoped_cols(self, scoped_tbls, local_tbls=()):

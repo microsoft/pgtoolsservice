@@ -9,7 +9,7 @@ from prompt_toolkit.completion import Completion    # noqa
 class MySQLCompletion(Completion):
     """
     This class extends prompt_toolkit.completion class to include specific fields (eg. schema)
-    while sending completions based on token text in pgcompleter.
+    while sending completions based on token text in mysqslcompleter.
     """
 
     def __init__(self, text, start_position=0, display=None, display_meta=None,

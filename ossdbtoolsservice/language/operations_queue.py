@@ -4,18 +4,18 @@
 # --------------------------------------------------------------------------------------------
 
 """A module that handles queueing """
-from typing import Callable, Dict, List, Optional   # noqa
 import threading
-from logging import Logger  
-from queue import Queue
+from logging import Logger
 from prompt_toolkit.completion import Completer
+from queue import Queue
+from typing import Callable, Dict, List, Optional   # noqa
 
+import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectRequestParams, ConnectionType
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
 from ossdbtoolsservice.driver import ServerConnection
-import ossdbtoolsservice.utils as utils
 
 INTELLISENSE_URI = 'intellisense://'
 
