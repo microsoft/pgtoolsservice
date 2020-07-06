@@ -352,7 +352,7 @@ class LightweightMetadata:
 
 class MetadataExecutor:
     """
-    Handles querying metadata from PGSMO and returning it in a form usable by the
+    Handles querying metadata from PGSMO or MYSQLSMO and returning it in a form usable by the
     autocomplete code
     """
 
@@ -382,7 +382,7 @@ class MetadataExecutor:
         return self._schema_names
 
     def search_path(self) -> List[str]:
-        return list(self.server.search_path)
+        return list(self.server.search_path) if self.server.search_path else []
 
     def databases(self) -> List[str]:
         return [d.name for d in self.server.databases]

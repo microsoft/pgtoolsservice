@@ -115,7 +115,6 @@ class MySQLCompleter(Completer):
         self.databases = []
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
                            'datatypes': {}}
-        self.search_path = []
         self.casing = {}
 
         self.all_completions = set(self.keywords + self.functions)
@@ -304,12 +303,11 @@ class MySQLCompleter(Completer):
             self.prioritizer.update(text)
 
     def set_search_path(self, search_path):
-        self.search_path = self.escaped_names(search_path)
+        pass
 
     def reset_completions(self):
         self.databases = []
         self.special_commands = []
-        self.search_path = []
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
                            'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
@@ -872,25 +870,26 @@ class MySQLCompleter(Completer):
                 cols = ctes[normalize_ref(tbl.name)]
                 addcols(None, tbl.name, 'CTE', tbl.alias, cols)
                 continue
-            schemas = [tbl.schema] if tbl.schema else self.search_path
-            for schema in schemas:
-                relname = self.escape_name(tbl.name)
-                schema = self.escape_name(schema)
-                if tbl.is_function:
-                    # Return column names from a set-returning function
-                    # Get an array of FunctionMetadata objects
-                    functions = meta['functions'].get(schema, {}).get(relname)
-                    for func in (functions or []):
-                        # func is a FunctionMetadata object
-                        cols = func.fields()
-                        addcols(schema, relname, tbl.alias, 'functions', cols)
-                else:
-                    for reltype in ('tables', 'views'):
-                        cols = meta[reltype].get(schema, {}).get(relname)
-                        if cols:
-                            cols = cols.values()
-                            addcols(schema, relname, tbl.alias, reltype, cols)
-                            break
+            if tbl.schema:
+                schemas = [tbl.schema]
+                for schema in schemas:
+                    relname = self.escape_name(tbl.name)
+                    schema = self.escape_name(schema)
+                    if tbl.is_function:
+                        # Return column names from a set-returning function
+                        # Get an array of FunctionMetadata objects
+                        functions = meta['functions'].get(schema, {}).get(relname)
+                        for func in (functions or []):
+                            # func is a FunctionMetadata object
+                            cols = func.fields()
+                            addcols(schema, relname, tbl.alias, 'functions', cols)
+                    else:
+                        for reltype in ('tables', 'views'):
+                            cols = meta[reltype].get(schema, {}).get(relname)
+                            if cols:
+                                cols = cols.values()
+                                addcols(schema, relname, tbl.alias, reltype, cols)
+                                break
 
         return columns
 
@@ -904,10 +903,10 @@ class MySQLCompleter(Completer):
         if schema:
             schema = self.escape_name(schema)
             return [schema] if schema in metadata else []
-        return self.search_path if self.search_path_filter else metadata.keys()
+        return metadata.keys()
 
     def _maybe_schema(self, schema, parent):
-        return None if parent or schema in self.search_path else schema
+        return None if parent else schema
 
     def populate_schema_objects(self, schema, obj_type):
         """Returns a list of SchemaObjects representing tables or views.
