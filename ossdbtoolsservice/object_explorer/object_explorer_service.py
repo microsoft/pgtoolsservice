@@ -8,6 +8,8 @@ import threading
 from typing import Dict, Optional, List     # noqa
 from urllib.parse import quote, urlparse
 
+import ossdbtoolsservice.utils as utils
+from mysqlsmo import MySQLServer
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
@@ -21,12 +23,9 @@ from ossdbtoolsservice.object_explorer.contracts import (
 )
 from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
-import ossdbtoolsservice.utils as utils
-
-from pgsmo import Server as PGServer
-from mysqlsmo import Server as MySQLServer
-
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE, MYSQL_ROUTING_TABLE
+from pgsmo import PGServer
+from smo.common.server import Server
 
 ROUTING_TABLES = {
     utils.constants.MYSQL_PROVIDER_NAME : MYSQL_ROUTING_TABLE,
@@ -63,7 +62,7 @@ class ObjectExplorerService(object):
         self._routing_table = ROUTING_TABLES[self._service_provider.provider]
 
         # Find the type of server to use
-        self._server = SERVER_TYPES[self._provider]
+        self._server: Server = SERVER_TYPES[self._provider]
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info('Object Explorer service successfully initialized')

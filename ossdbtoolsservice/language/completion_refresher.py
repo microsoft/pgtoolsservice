@@ -10,10 +10,10 @@ from logging import Logger  # noqa
 import os
 from collections import OrderedDict
 
-from pgsmo import Server
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.language.completion import PGCompleter
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
+from pgsmo import PGServer
 
 
 class CompletionRefresher:
@@ -27,7 +27,7 @@ class CompletionRefresher:
     def __init__(self, connection: ServerConnection, logger: Logger = None):
         self.connection = connection
         self.logger: Logger = logger
-        self.server: Server = None
+        self.server: PGServer = None
         self._completer_thread: threading.Thread = None
         self._restart_refresh: threading.Event = threading.Event()
 
@@ -43,7 +43,7 @@ class CompletionRefresher:
         """
         if self.server is None:
             # Delay server creation until on background thread
-            self.server = Server(self.connection)
+            self.server = PGServer(self.connection)
 
         if self.is_refreshing():
             self._restart_refresh.set()

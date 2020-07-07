@@ -7,6 +7,7 @@ from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
 from ossdbtoolsservice.driver import ServerConnection
+from smo.common.server import Server
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
@@ -17,7 +18,7 @@ SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
 SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
 
 
-class Server:
+class PGServer(Server):
     TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
     # CONSTRUCTOR ##########################################################

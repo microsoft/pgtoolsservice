@@ -4,121 +4,95 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
-from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
+from abc import ABC, abstractmethod
 
 from ossdbtoolsservice.driver import ServerConnection
-from smo.common.server import Server
-from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
-import smo.utils as utils
-from mysqlsmo.objects.database.database import Database
-from mysqlsmo.objects.table.table import Table
-from mysqlsmo.objects.view.view import View
-from mysqlsmo.objects.procedure.procedure import Procedure
-from mysqlsmo.objects.function.function import Function
+from smo.common.node_object import NodeObject, NodeCollection
 
-
-class MySQLServer(Server):
-    TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
-
-    # CONSTRUCTOR ##########################################################
-    def __init__(self, conn: ServerConnection, db_connection_callback: Callable[[str], ServerConnection] = None):
-        """
-        Initializes a server object using the provided connection
-        :param conn: a connection object
-        """
-        super(MySQLServer, self).__init__()
-        # Everything we know about the server will be based on the connection
-        self._conn = conn
-        self._db_connection_callback = db_connection_callback
-
-        # Declare the server properties
-        self._host: str = self._conn.host_name
-        self._port: int = self._conn.port
-        self._maintenance_db_name: str = self._conn.database_name
-
-        self._child_objects: Mapping[str, NodeCollection] = {
-            Database.__name__: NodeCollection(lambda: Database.get_nodes_for_parent(self, None, None))
-        }
-        # Declare the child objects
-        # self._child_objects: Mapping[str, NodeCollection] = {
-        #     Database.__name__: NodeCollection(lambda: Database.get_nodes_for_parent(self, None))
-        #     # Role.__name__: NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
-        #     # Tablespace.__name__: NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None)),
-        # }
-        # self._search_path = NodeCollection(lambda: self._fetch_search_path())
-
-    # PROPERTIES ###########################################################
+class Server(ABC):
+    """Abstract base class that outlines methods and properties that servers must implement"""
+     # PROPERTIES ###########################################################
     @property
+    @abstractmethod
     def connection(self) -> ServerConnection:
         """Connection to the server/db that this object will use"""
-        return self._conn
+        pass
 
     @property
+    @abstractmethod
     def db_connection_callback(self):
         """Connection to the server/db that this object will use"""
-        return self._db_connection_callback
+        pass
 
     @property
+    @abstractmethod
     def host(self) -> str:
         """Hostname of the server"""
-        return self._host
+        pass
 
     @property
+    @abstractmethod
     def in_recovery(self) -> Optional[bool]:
         """Whether or not the server is in recovery mode. If None, value was not loaded from server"""
         pass
 
     @property
+    @abstractmethod
     def maintenance_db_name(self) -> str:
         """Name of the database this server's connection is connected to"""
-        return self._maintenance_db_name
+        pass
 
     @property
+    @abstractmethod
     def port(self) -> int:
         """Port number of the server"""
-        return self._port
+        pass
 
     @property
+    @abstractmethod
     def version(self) -> Tuple[int, int, int]:
         """Tuple representing the server version: (major, minor, patch)"""
-        return self._conn.server_version
+        pass
 
     @property
+    @abstractmethod
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
-        user = quote_plus(str(self.connection.user_name))
-        host = quote_plus(str(self.host))
-        port = quote_plus(str(self.port))
-        return f'//{user}@{host}:{port}/'
-        # TODO: Ensure that this formatting works with non-username/password logins
+        pass
 
     @property
+    @abstractmethod
     def wal_paused(self) -> Optional[bool]:
         """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
         pass
-
-    # # -CHILD OBJECTS #######################################################
+    
+    # -CHILD OBJECTS #######################################################
     @property
-    def databases(self) -> NodeCollection[Database]:
+    @abstractmethod
+    def databases(self) -> NodeCollection['Database']:
         """Databases that belong to the server"""
-        return self._child_objects[Database.__name__]
+        pass
 
     @property
+    @abstractmethod
     def maintenance_db(self) -> 'Database':
         """Database that this server's connection is connected to"""
         pass
 
     @property
+    @abstractmethod
     def roles(self) -> NodeCollection['Role']:
         """Roles that belong to the server"""
         pass
 
     @property
+    @abstractmethod
     def tablespaces(self) -> NodeCollection['Tablespace']:
         """Tablespaces defined for the server"""
         pass
 
     @property
+    @abstractmethod
     def search_path(self) -> NodeCollection[str]:
         """
         The search_path for the current role. Defined at the server level as it's a global property,
@@ -127,49 +101,60 @@ class MySQLServer(Server):
         pass
 
     # METHODS ##############################################################
+    @abstractmethod
     def get_object_by_urn(self, urn: str) -> NodeObject:
         pass
 
+    @abstractmethod
     def refresh(self) -> None:
-        # Reset child objects
         pass
-
+    
+    @abstractmethod
     def find_schema(self, metadata):
         """ Find the schema in the server to script as """
         pass
 
+    @abstractmethod
     def find_table(self, metadata):
         """ Find the table in the server to script as """
         pass
 
+    @abstractmethod
     def find_function(self, metadata):
         """ Find the function in the server to script as """
         pass
 
+    @abstractmethod
     def find_database(self, metadata):
         """ Find a database in the server """
         pass
 
+    @abstractmethod
     def find_view(self, metadata):
         """ Find a view in the server """
         pass
 
+    @abstractmethod
     def find_materialized_view(self, metadata):
         """ Find a view in the server """
         pass
 
+    @abstractmethod
     def find_role(self, metadata):
         """ Find a role in the server """
         pass
 
+    @abstractmethod
     def find_sequence(self, metadata):
         """ Find a sequence in the server """
         pass
 
+    @abstractmethod
     def find_datatype(self, metadata):
         """ Find a datatype in the server """
         pass
 
+    @abstractmethod
     def find_schema_child_object(self, prop_name: str, metadata):
         """
         Find an object that is a child of a schema object.
@@ -179,13 +164,7 @@ class MySQLServer(Server):
         """
         pass
 
+    @abstractmethod
     def get_object(self, object_type: str, metadata):
         """ Retrieve a given object """
-        object_map = {
-            "Table": lambda met: Table(self, met.name, met.schema),
-            "View": lambda met: View(self, met.name, met.schema),
-            "Procedure": lambda met: Procedure(self, met.name, met.schema),
-            "Function": lambda met: Function(self, met.name, met.schema)
-        }
-        return object_map[object_type.capitalize()](metadata)
-    
+        pass

@@ -6,20 +6,20 @@
 
 from typing import List  # noqa
 
-from pgsmo import Server
-from pgsmo.objects.table.table import Table  # noqa
-from pgsmo.objects.table_objects.column import Column  # noqa
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.query.contracts import DbColumn
+from pgsmo import PGServer
+from pgsmo.objects.table.table import Table  # noqa
+from pgsmo.objects.table_objects.column import Column  # noqa
 
 
 class SmoEditTableMetadataFactory:
 
     def get(self, connection: ServerConnection, schema_name: str, object_name: str, object_type: str) -> EditTableMetadata:
 
-        server = Server(connection)
+        server: PGServer = PGServer(connection)
         result_object: Table = None
         object_metadata = ObjectMetadata(server.urn_base, None, object_type, object_name, schema_name)
 

@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from mysqlsmo.objects.server.server import Server
+from mysqlsmo.objects.server.server import MySQLServer
 from mysqlsmo.objects.database.database import Database
 from mysqlsmo.objects.character_set.character_set import CharacterSet
 from mysqlsmo.objects.collation.collation import Collation
@@ -31,7 +31,7 @@ __all__ = [
     'Index',
     'PrimaryKeyConstraint',
     'Procedure',
-    'Server',
+    'MySQLServer',
     'Table',
     'Tablespace',
     'Trigger',

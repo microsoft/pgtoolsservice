@@ -10,21 +10,21 @@ import unittest.mock as mock
 from psycopg2 import DatabaseError
 from psycopg2.extensions import Column, connection
 
-from pgsmo import Server
-from pgsmo.objects.node_object import NodeCollection, NodeObject
+from pgsmo import PGServer
+from smo.common.node_object import NodeCollection, NodeObject
 
 
 # MOCK NODE OBJECT #########################################################
 class MockNodeObject(NodeObject):
     @classmethod
-    def _from_node_query(cls, root_server: Server, parent: Optional[NodeObject], **kwargs):
+    def _from_node_query(cls, root_server: PGServer, parent: Optional[NodeObject], **kwargs):
         pass
 
-    def __init__(self, root_server: Server, parent: Optional[NodeObject], name: str):
+    def __init__(self, root_server: PGServer, parent: Optional[NodeObject], name: str):
         super(MockNodeObject, self).__init__(root_server, parent, name)
 
     @classmethod
-    def _template_root(cls, root_server: Server):
+    def _template_root(cls, root_server: PGServer):
         return 'template_root'
 
     @property

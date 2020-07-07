@@ -6,10 +6,11 @@
 from typing import Any, Dict, List, Tuple   # noqa
 from logging import Logger  # noqa
 
-from pgsmo import Column, Database, Schema, Server, Function, Table, View       # noqa
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.language.completion.packages.parseutils.meta import ColumnMetadata, ForeignKey, FunctionMetadata     # noqa
+from pgsmo import Column, Database, Schema, Function, Table, View       # noqa
 from smo.common.node_object import NodeCollection
+from smo.common.server import Server
 
 class LightweightMetadata:
 
