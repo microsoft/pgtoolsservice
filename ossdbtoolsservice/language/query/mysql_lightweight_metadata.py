@@ -10,20 +10,6 @@ from ossdbtoolsservice.language.completion.packages.parseutils.meta import Colum
 
 class MySQLLightweightMetadata:
 
-    # The boolean argument to the current_schemas function indicates whether
-    # implicit schemas, e.g. pg_catalog
-    search_path_query = '''
-    '''
-
-    schemata_query = '''
-    '''
-
-    tables_query = '''
-    '''
-
-    databases_query = '''
-    '''
-
     def __init__(self, conn: ServerConnection, logger: Logger = None):
         self.conn = conn
         self._logger: Logger = logger
