@@ -27,24 +27,6 @@ _Candidate = namedtuple(
     'Candidate', 'completion prio meta synonyms prio2 display schema'
 )
 
-# Used to strip trailing '::some_type' from default-value expressions
-arg_default_type_strip_regex = re.compile(r'::[\w\.]+(\[\])?$')
-
-
-def normalize_ref(ref):
-    return ref if ref[0] == '"' else '"' + ref.lower() + '"'
-
-
-def generate_alias(tbl):
-    """ Generate a table alias, consisting of all upper-case letters in
-    the table name, or, if there are no upper-case letters, the first letter +
-    all letters preceded by _
-    param tbl - unescaped name of the table to alias
-    """
-    return ''.join([letter for letter in tbl if letter.isupper()] or
-                   [letter for letter, prev in zip(tbl, '_' + tbl) if prev == '_' and letter != '_'])
-
-
 class MySQLCompleter(Completer):
     # keywords_tree: A dict mapping keywords to well known following keywords.
     # e.g. 'CREATE': ['TABLE', 'USER', ...],
@@ -60,28 +42,16 @@ class MySQLCompleter(Completer):
         self.logger: Logger = logger
         self.prioritizer = PrevalenceCounter()
         settings = settings or {}
-        self.signature_arg_style = settings.get(
-            'signature_arg_style', '{arg_name} {arg_type}'
-        )
-        self.call_arg_style = settings.get(
-            'call_arg_style', '{arg_name: <{max_arg_len}} := {arg_default}'
-        )
-        self.call_arg_display_style = settings.get(
-            'call_arg_display_style', '{arg_name}'
-        )
-        self.call_arg_oneliner_max = settings.get('call_arg_oneliner_max', 2)
 
         keyword_casing = settings.get('keyword_casing', 'upper').lower()
         if keyword_casing not in ('upper', 'lower', 'auto'):
             keyword_casing = 'upper'
         self.keyword_casing = keyword_casing
-        self.name_pattern = re.compile(r"^[_a-z][_a-z0-9\$]*$")
 
-        self.databases = []
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
                            'datatypes': {}}
         self.casing = {}
-
+        self.casing_file = settings.get('casing_file')
         self.all_completions = set(self.keywords + self.functions)
 
     def _log(self, is_error: bool, msg: str, *args) -> None:
@@ -91,17 +61,6 @@ class MySQLCompleter(Completer):
             else:
                 self.logger.debug(msg, *args)
 
-    def escape_name(self, name):
-        if name and ((not self.name_pattern.match(name))
-                     or (name.upper() in self.reserved_words)
-                     or (name.upper() in self.functions)):
-            name = '"%s"' % name
-
-        return name
-
-    def escape_schema(self, name):
-        return "'{}'".format(self.unescape_name(name))
-
     def unescape_name(self, name):
         """ Unquote a string."""
         if name and name[0] == '"' and name[-1] == '"':
@@ -109,41 +68,21 @@ class MySQLCompleter(Completer):
 
         return name
 
-    def escaped_names(self, names):
-        return [self.escape_name(name) for name in names]
-
     def extend_database_names(self, databases):
-        databases = self.escaped_names(databases)
-        self.databases.extend(databases)
+        pass
 
     def extend_keywords(self, additional_keywords):
-        keywords_list = list(self.keywords)
-        keywords_list.extend(additional_keywords)
-        self.keywords = tuple(keywords_list)
-        self.all_completions.update(additional_keywords)
+        pass
 
     def extend_schemata(self, schemata):
-
-        # schemata is a list of schema names
-        schemata = self.escaped_names(schemata)
-        metadata = self.dbmetadata['tables']
-        for schema in schemata:
-            metadata[schema] = {}
-
-        # dbmetadata.values() are the 'tables' and 'functions' dicts
-        for metadata in self.dbmetadata.values():
-            for schema in schemata:
-                metadata[schema] = {}
-
-        self.all_completions.update(schemata)
+        pass
 
     def extend_casing(self, words):
         """ extend casing data
 
         :return:
         """
-        # casing should be a dict {lowercasename:PreferredCasingName}
-        self.casing = dict((word.lower(), word) for word in words)
+        pass
 
     def extend_relations(self, data, kind):
         """extend metadata for tables or views.
@@ -154,19 +93,7 @@ class MySQLCompleter(Completer):
         :return:
 
         """
-
-        data = [self.escaped_names(d) for d in data]
-
-        # dbmetadata['tables']['schema_name']['table_name'] should be an
-        # OrderedDict {column_name:ColumnMetaData}.
-        metadata = self.dbmetadata[kind]
-        for schema, relname in data:
-            try:
-                metadata[schema][relname] = OrderedDict()
-            except KeyError:
-                self._log(True, '%r %r listed in unrecognized schema %r',
-                          kind, relname, schema)
-            self.all_completions.add(relname)
+        pass
 
     def extend_columns(self, column_data, kind):
         """extend column metadata.
@@ -178,103 +105,24 @@ class MySQLCompleter(Completer):
         :return:
 
         """
-        metadata = self.dbmetadata[kind]
-        for schema, relname, colname, datatype, has_default, default in column_data:
-            (schema, relname, colname) = self.escaped_names(
-                [schema, relname, colname])
-            column = ColumnMetadata(
-                name=colname,
-                datatype=datatype,
-                has_default=has_default,
-                default=default
-            )
-            metadata[schema][relname][colname] = column
-            self.all_completions.add(colname)
+        pass
 
     def extend_functions(self, func_data):
-
-        # func_data is a list of function metadata namedtuples
-
-        # dbmetadata['schema_name']['functions']['function_name'] should return
-        # the function metadata namedtuple for the corresponding function
-        metadata = self.dbmetadata['functions']
-
-        for f in func_data:
-            schema, func = self.escaped_names([f.schema_name, f.func_name])
-
-            if func in metadata[schema]:
-                metadata[schema][func].append(f)
-            else:
-                metadata[schema][func] = [f]
-
-            self.all_completions.add(func)
-
-        self._refresh_arg_list_cache()
-
-    def _refresh_arg_list_cache(self):
-        # We keep a cache of {function_usage:{function_metadata: function_arg_list_string}}
-        # This is used when suggesting functions, to avoid the latency that would result
-        # if we'd recalculate the arg lists each time we suggest functions (in large DBs)
-        self._arg_list_cache = {
-            usage: {
-                meta: self._arg_list(meta, usage)
-                for sch, funcs in self.dbmetadata['functions'].items()
-                for func, metas in funcs.items()
-                for meta in metas
-            }
-            for usage in ('call', 'call_display', 'signature')
-        }
+        pass
 
     def extend_foreignkeys(self, fk_data):
-
-        # fk_data is a list of ForeignKey namedtuples, with fields
-        # parentschema, childschema, parenttable, childtable,
-        # parentcolumns, childcolumns
-
-        # These are added as a list of ForeignKey namedtuples to the
-        # ColumnMetadata namedtuple for both the child and parent
-        meta = self.dbmetadata['tables']
-
-        for fk in fk_data:
-            e = self.escaped_names
-            parentschema, childschema = e([fk.parentschema, fk.childschema])
-            parenttable, childtable = e([fk.parenttable, fk.childtable])
-            childcol, parcol = e([fk.childcolumn, fk.parentcolumn])
-            childcolmeta = meta[childschema][childtable][childcol]
-            parcolmeta = meta[parentschema][parenttable][parcol]
-            fk = ForeignKey(parentschema, parenttable, parcol,
-                            childschema, childtable, childcol)
-            childcolmeta.foreignkeys.append((fk))
-            parcolmeta.foreignkeys.append((fk))
+        pass
 
     def extend_datatypes(self, type_data):
-
-        # dbmetadata['datatypes'][schema_name][type_name] should store type
-        # metadata, such as composite type field names. Currently, we're not
-        # storing any metadata beyond typename, so just store None
-        meta = self.dbmetadata['datatypes']
-
-        for t in type_data:
-            schema, type_name = self.escaped_names(t)
-            meta[schema][type_name] = None
-            self.all_completions.add(type_name)
+        pass
 
     def extend_query_history(self, text, is_init=False):
-        if is_init:
-            # During completer initialization, only load keyword preferences,
-            # not names
-            self.prioritizer.update_keywords(text)
-        else:
-            self.prioritizer.update(text)
+        pass
 
     def set_search_path(self, search_path):
         pass
 
     def reset_completions(self):
-        self.databases = []
-        self.special_commands = []
-        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
-                           'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
 
     def find_matches(self, text, collection, mode='fuzzy', meta=None):
@@ -436,54 +284,6 @@ class MySQLCompleter(Completer):
                          reverse=True)
 
         return [m.completion for m in matches]
-
-
-    def _arg_list(self, func, usage):
-        """Returns a an arg list string, e.g. `(_foo:=23)` for a func.
-
-        :param func is a FunctionMetadata object
-        :param usage is 'call', 'call_display' or 'signature'
-
-        """
-        template = {
-            'call': self.call_arg_style,
-            'call_display': self.call_arg_display_style,
-            'signature': self.signature_arg_style
-        }[usage]
-        args = func.args()
-        if not template:
-            return '()'
-        elif usage == 'call' and len(args) < 2:
-            return '()'
-        elif usage == 'call' and func.has_variadic():
-            return '()'
-        multiline = usage == 'call' and len(args) > self.call_arg_oneliner_max
-        max_arg_len = max(len(a.name) for a in args) if multiline else 0
-        args = (
-            self._format_arg(template, arg, arg_num + 1, max_arg_len)
-            for arg_num, arg in enumerate(args)
-        )
-        if multiline:
-            return '(' + ','.join('\n    ' + a for a in args if a) + '\n)'
-        else:
-            return '(' + ', '.join(a for a in args if a) + ')'
-
-    def _format_arg(self, template, arg, arg_num, max_arg_len):
-        if not template:
-            return None
-        if arg.has_default:
-            arg_default = 'NULL' if arg.default is None else arg.default
-            # Remove trailing ::(schema.)type
-            arg_default = arg_default_type_strip_regex.sub('', arg_default)
-        else:
-            arg_default = ''
-        return template.format(
-            max_arg_len=max_arg_len,
-            arg_name=self.case(arg.name),
-            arg_num=arg_num,
-            arg_type=arg.datatype,
-            arg_default=arg_default
-        )
 
     def get_keyword_matches(self, suggestion, word_before_cursor):
         keywords = self.keywords_tree.keys()
