@@ -47,9 +47,7 @@ class MySQLCompleter(Completer):
         if keyword_casing not in ('upper', 'lower', 'auto'):
             keyword_casing = 'upper'
         self.keyword_casing = keyword_casing
-
-        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
-                           'datatypes': {}}
+ 
         self.casing = {}
         self.casing_file = settings.get('casing_file')
         self.all_completions = set(self.keywords + self.functions)
@@ -308,6 +306,14 @@ class MySQLCompleter(Completer):
         return self.find_matches(word_before_cursor, keywords,
                                  mode='strict', meta='keyword')
 
+    def get_function_matches(self, suggestion, word_before_cursor, alias=False):
+        matches = self.find_matches(
+            word_before_cursor, self.functions, mode='strict',
+            meta='function')
+
+        return matches
+
     suggestion_matchers = {
         Keyword: get_keyword_matches,
+        Function: get_function_matches,
     }
