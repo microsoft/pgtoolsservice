@@ -7,7 +7,7 @@ from typing import Optional
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.server import PGserver    # noqa
 import smo.utils.templating as templating
 
 
@@ -15,7 +15,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'index')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Index':
+    def _from_node_query(cls, server: PGserver, parent: NodeObject, **kwargs) -> 'Index':
         """
         Creates a new Index object based on the results of a nodes query
         :param server: Server that owns the index
@@ -34,7 +34,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         idx._is_valid = kwargs['indisvalid']
         return idx
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: PGserver, parent: NodeObject, name: str):
         """
         Initializes a new instance of an Index
         :param server: Server that owns the index
@@ -119,7 +119,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     # IMPLEMENTATION DETAILS ###############################################
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:

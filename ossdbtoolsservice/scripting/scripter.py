@@ -5,15 +5,15 @@
 
 from typing import Callable, Dict, Tuple, TypeVar
 
-from smo.common.node_object import NodeObject
-from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
+import ossdbtoolsservice.utils as utils
+from mysqlsmo import MySQLServer
 from ossdbtoolsservice.driver import ConnectionManager, ServerConnection
 from ossdbtoolsservice.scripting.contracts import ScriptOperation
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
-import ossdbtoolsservice.utils as utils
-
-from pgsmo import Server as PGServer
-from mysqlsmo import Server as MySQLServer
+from pgsmo import PGServer
+from smo.common.node_object import NodeObject
+from smo.common.server import Server
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 
 SERVER_TYPES = {
     utils.constants.MYSQL_PROVIDER_NAME : MySQLServer,
@@ -31,7 +31,7 @@ class Scripter(object):
     }
 
     def __init__(self, conn: ServerConnection):
-        self.server: "Server" = SERVER_TYPES[conn._provider_name](conn)
+        self.server: Server = SERVER_TYPES[conn._provider_name](conn)
 
     # SCRIPTING METHODS ############################
     def script(self, operation: ScriptOperation, metadata: ObjectMetadata) -> str:

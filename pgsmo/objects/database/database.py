@@ -7,7 +7,7 @@ from typing import Optional               # noqa
 
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
-from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.server import PGServer    # noqa
 from pgsmo.objects.schema.schema import Schema
 import smo.utils.templating as templating
 from pgsmo.objects.collation.collation import Collation
@@ -27,7 +27,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Database':
+    def _from_node_query(cls, server: PGServer, parent: None, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -56,7 +56,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         db._datlastsysoid = kwargs['datlastsysoid']
         return db
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: PGServer, name: str):
         """
         Initializes a new instance of a database
         """
@@ -235,7 +235,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGServer) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:

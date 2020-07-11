@@ -21,7 +21,7 @@ from ossdbtoolsservice.object_explorer.contracts import (
     CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
     ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
 )
-from pgsmo.objects.server.server import Server
+from pgsmo.objects.server.pgserver import PGServer
 from pgsmo.objects.database.database import Database
 from ossdbtoolsservice.utils import constants
 import tests.utils as utils
@@ -250,7 +250,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # ... The session should still exist and should have connection and server setup
         self.assertIn(session_uri, oe._session_map)
-        self.assertIsInstance(oe._session_map[session_uri].server, Server)
+        self.assertIsInstance(oe._session_map[session_uri].server, PGServer)
         self.assertTrue(oe._session_map[session_uri].is_ready)
 
     def test_init_session_cancelled_connection(self):
@@ -619,7 +619,7 @@ class SessionTestCase(unittest.TestCase):
         self.session = ObjectExplorerSession(session_uri, params)
         self.oe._session_map[session_uri] = self.session
         name = 'dbname'
-        self.mock_server = Server(MockConnection(name))
+        self.mock_server = PGServer(MockConnection(name))
         self.session.server = self.mock_server
         self.db = Database(self.mock_server, name)
         self.db._connection = MockConnection(name)

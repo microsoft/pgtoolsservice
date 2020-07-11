@@ -5,7 +5,7 @@
 
 import unittest
 
-from pgsmo.objects.server.server import Server
+from pgsmo.objects.server.pgserver import PGServer
 from pgsmo.objects.table_objects.column import Column
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 import tests.pgsmo_tests.utils as utils
@@ -115,11 +115,11 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
 
     # CUSTOM VALIDATION ####################################################
     @staticmethod
-    def _custom_validate_from_node(obj, mock_server: Server):
+    def _custom_validate_from_node(obj, mock_server: PGServer):
         # Make sure that the datatype value is set
         utils.assert_threeway_equals('character', obj._datatype, obj.datatype)
 
     @staticmethod
-    def _custom_validate_init(obj, mock_server: Server):
+    def _custom_validate_init(obj, mock_server: PGServer):
         # Make sure that the datatype value is set
         utils.assert_threeway_equals('character', obj._datatype, obj.datatype)

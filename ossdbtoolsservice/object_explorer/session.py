@@ -7,9 +7,9 @@ import threading                    # noqa
 from typing import Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urljoin
 
-from pgsmo import Server            # noqa
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.object_explorer.contracts import NodeInfo
+from smo.common.server import Server
 
 class ObjectExplorerSession:
     def __init__(self, session_id: str, params: ConnectionDetails):

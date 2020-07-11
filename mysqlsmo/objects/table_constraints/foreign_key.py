@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from mysqlsmo.objects.server import MySQLServer
 from typing import Optional
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.utils import templating
@@ -12,7 +13,7 @@ class ForeignKeyConstraint(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'foreign_key')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'ForeignKeyConstraint':
+    def _from_node_query(cls, server: MySQLServer, parent: None, **kwargs) -> 'ForeignKeyConstraint':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -32,12 +33,12 @@ class ForeignKeyConstraint(NodeObject):
         foreign = cls(server, kwargs["name"])
         return foreign
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: MySQLServer, name: str):
         """
         Initializes a new instance of a database
         """
         NodeObject.__init__(self, server, None, name)
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: MySQLServer) -> str:
         return cls.TEMPLATE_ROOT

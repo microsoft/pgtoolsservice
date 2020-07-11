@@ -7,6 +7,7 @@ from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
 from ossdbtoolsservice.driver import ServerConnection
+from smo.common.server import Server
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 import smo.utils as utils
 from mysqlsmo.objects.database.database import Database
@@ -16,7 +17,7 @@ from mysqlsmo.objects.procedure.procedure import Procedure
 from mysqlsmo.objects.function.function import Function
 
 
-class Server:
+class MySQLServer(Server):
     TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
 
     # CONSTRUCTOR ##########################################################
@@ -25,6 +26,7 @@ class Server:
         Initializes a server object using the provided connection
         :param conn: a connection object
         """
+        super(MySQLServer, self).__init__()
         # Everything we know about the server will be based on the connection
         self._conn = conn
         self._db_connection_callback = db_connection_callback
@@ -62,6 +64,11 @@ class Server:
         return self._host
 
     @property
+    def in_recovery(self) -> Optional[bool]:
+        """Whether or not the server is in recovery mode. If None, value was not loaded from server"""
+        pass
+
+    @property
     def maintenance_db_name(self) -> str:
         """Name of the database this server's connection is connected to"""
         return self._maintenance_db_name
@@ -76,11 +83,6 @@ class Server:
         """Tuple representing the server version: (major, minor, patch)"""
         return self._conn.server_version
 
-    # @property
-    # def server_type(self) -> str:
-    #     """Server type for distinguishing between standard PG and PG supersets"""
-    #     return 'pg'  # TODO: Determine if a server is PPAS or PG
-
     @property
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
@@ -90,37 +92,91 @@ class Server:
         return f'//{user}@{host}:{port}/'
         # TODO: Ensure that this formatting works with non-username/password logins
 
+    @property
+    def wal_paused(self) -> Optional[bool]:
+        """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
+        pass
+
     # # -CHILD OBJECTS #######################################################
     @property
     def databases(self) -> NodeCollection[Database]:
         """Databases that belong to the server"""
         return self._child_objects[Database.__name__]
 
-    # @property
-    # def maintenance_db(self) -> Database:
-    #     """Database that this server's connection is connected to"""
-    #     return self.databases[self._maintenance_db_name]
+    @property
+    def maintenance_db(self) -> 'Database':
+        """Database that this server's connection is connected to"""
+        pass
 
-    # # @property
-    # # def roles(self) -> NodeCollection[Role]:
-    # #     """Roles that belong to the server"""
-    # #     return self._child_objects[Role.__name__]
+    @property
+    def roles(self) -> NodeCollection['Role']:
+        """Roles that belong to the server"""
+        pass
 
-    # # @property
-    # # def tablespaces(self) -> NodeCollection[Tablespace]:
-    # #     """Tablespaces defined for the server"""
-    # #     return self._child_objects[Tablespace.__name__]
+    @property
+    def tablespaces(self) -> NodeCollection['Tablespace']:
+        """Tablespaces defined for the server"""
+        pass
 
-    # # @property
-    # # def search_path(self) -> NodeCollection[str]:
-    # #     """
-    # #     The search_path for the current role. Defined at the server level as it's a global property,
-    # #     and as a collection as it is a list of schema names
-    # #     """
-    # #     return self._search_path
+    @property
+    def search_path(self) -> NodeCollection[str]:
+        """
+        The search_path for the current role. Defined at the server level as it's a global property,
+        and as a collection as it is a list of schema names
+        """
+        pass
+
+    # METHODS ##############################################################
+    def get_object_by_urn(self, urn: str) -> NodeObject:
+        pass
 
     def refresh(self) -> None:
         # Reset child objects
+        pass
+
+    def find_schema(self, metadata):
+        """ Find the schema in the server to script as """
+        pass
+
+    def find_table(self, metadata):
+        """ Find the table in the server to script as """
+        pass
+
+    def find_function(self, metadata):
+        """ Find the function in the server to script as """
+        pass
+
+    def find_database(self, metadata):
+        """ Find a database in the server """
+        pass
+
+    def find_view(self, metadata):
+        """ Find a view in the server """
+        pass
+
+    def find_materialized_view(self, metadata):
+        """ Find a view in the server """
+        pass
+
+    def find_role(self, metadata):
+        """ Find a role in the server """
+        pass
+
+    def find_sequence(self, metadata):
+        """ Find a sequence in the server """
+        pass
+
+    def find_datatype(self, metadata):
+        """ Find a datatype in the server """
+        pass
+
+    def find_schema_child_object(self, prop_name: str, metadata):
+        """
+        Find an object that is a child of a schema object.
+        :param prop_name: name of the property used to query for objects
+        of this type on the schema
+        :param metadata: metadata including object name and schema name
+        """
         pass
 
     def get_object(self, object_type: str, metadata):

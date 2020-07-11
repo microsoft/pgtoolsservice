@@ -7,7 +7,7 @@ from abc import ABCMeta
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.server import PGserver    # noqa
 import smo.utils.templating as templating
 
 
@@ -15,7 +15,7 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
     """Base class for constraints. Provides basic properties for all constraints"""
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Constraint':
+    def _from_node_query(cls, server: PGserver, parent: NodeObject, **kwargs) -> 'Constraint':
         """
         Creates a constraint from the results of a node query for any constraint
         :param server: Server that owns the constraint
@@ -33,7 +33,7 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
 
         return constraint
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: PGserver, parent: NodeObject, name: str):
         """
         Initializes a new instance of a constraint
         :param server: Connection the constraint belongs to
@@ -73,7 +73,7 @@ class CheckConstraint(Constraint):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
@@ -157,7 +157,7 @@ class ExclusionConstraint(Constraint):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
@@ -251,7 +251,7 @@ class ForeignKeyConstraint(Constraint):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
@@ -334,7 +334,7 @@ class IndexConstraint(Constraint):
     # IMPLEMENTATION DETAILS ###############################################
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:

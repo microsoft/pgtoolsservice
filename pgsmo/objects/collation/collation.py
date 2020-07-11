@@ -7,7 +7,7 @@ from typing import List
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.server import PGServer   # noqa
 import smo.utils.templating as templating
 
 
@@ -17,7 +17,7 @@ class Collation(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate
     GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Collation':
+    def _from_node_query(cls, server: PGServer, parent: NodeObject, **kwargs) -> 'Collation':
         """
         Creates a Collation object from the results of a node query
         :param server: Server that owns the collation
@@ -36,7 +36,7 @@ class Collation(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate
 
         return collation
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: PGServer, parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
@@ -84,7 +84,7 @@ class Collation(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGServer) -> str:
         return cls.TEMPLATE_ROOT
 
     @classmethod

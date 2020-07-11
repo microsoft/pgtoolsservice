@@ -10,11 +10,18 @@ from logging import Logger  # noqa
 import os
 from collections import OrderedDict
 
-from pgsmo import Server
+import ossdbtoolsservice.utils as utils
+from mysqlsmo import MySQLServer
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.language.completion import PGCompleter
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
+from smo.common import Server
+from pgsmo import PGServer
 
+SERVER_TYPES = {
+    utils.constants.MYSQL_PROVIDER_NAME : MySQLServer,
+    utils.constants.PG_PROVIDER_NAME : PGServer
+}
 
 class CompletionRefresher:
     """
@@ -43,7 +50,7 @@ class CompletionRefresher:
         """
         if self.server is None:
             # Delay server creation until on background thread
-            self.server = Server(self.connection)
+            self.server = SERVER_TYPES[self.connection._provider_name](self.connection)
 
         if self.is_refreshing():
             self._restart_refresh.set()
