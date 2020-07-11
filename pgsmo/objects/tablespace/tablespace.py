@@ -7,7 +7,7 @@ from typing import List, Optional
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.server import PGserver    # noqa
 import smo.utils.templating as templating
 
 
@@ -16,7 +16,7 @@ class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Tablespace':
+    def _from_node_query(cls, server: PGserver, parent: None, **kwargs) -> 'Tablespace':
         """
         Creates a tablespace from a row of a nodes query result
         :param server: Server that owns the tablespace
@@ -31,7 +31,7 @@ class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
 
         return tablespace
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: PGserver, name: str):
         """
         Initializes internal state of a Role object
         """
@@ -77,7 +77,7 @@ class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
         return [cls.MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self):

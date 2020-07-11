@@ -8,7 +8,7 @@ from typing import List
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
-from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.server import PGserver    # noqa
 import smo.utils.templating as templating
 
 
@@ -18,7 +18,7 @@ class Extension(NodeObject, ScriptableCreate, ScriptableDelete):
     GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Extension':
+    def _from_node_query(cls, server: PGserver, parent: NodeObject, **kwargs) -> 'Extension':
         """
         Creates a table instance from the results of a node query
         :param server: Server that owns the table
@@ -37,7 +37,7 @@ class Extension(NodeObject, ScriptableCreate, ScriptableDelete):
 
         return extension
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: PGserver, parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
@@ -81,7 +81,7 @@ class Extension(NodeObject, ScriptableCreate, ScriptableDelete):
         return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return path.join(cls.TEMPLATE_ROOT, server.server_type)
 
     def _create_query_data(self) -> dict:

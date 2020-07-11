@@ -7,7 +7,7 @@ from typing import Optional, List, Any
 
 from smo.common.node_object import NodeObject, NodeLazyPropertyCollection    # noqa
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s        # noqa
+from pgsmo.objects.server import PGserver        # noqa
 import smo.utils.templating as templating
 
 TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
@@ -19,7 +19,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
     """Represents a data type"""
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'DataType':
+    def _from_node_query(cls, server: PGserver, parent: NodeObject, **kwargs) -> 'DataType':
         """
         Creates a Type object from the result of a DataType node query
         :param server: Server that owns the DataType
@@ -40,7 +40,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
 
         return datatype
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: PGserver, parent: NodeObject, name: str):
         """
         Initializes internal state of a DataType object
         :param server: Server that owns the role
@@ -131,7 +131,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return TEMPLATE_ROOT
 
     @classmethod

@@ -7,7 +7,7 @@ from typing import List
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.server import PGserver    # noqa
 import smo.utils.templating as templating
 
 
@@ -17,7 +17,7 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
     GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Sequence':
+    def _from_node_query(cls, server: PGserver, parent: NodeObject, **kwargs) -> 'Sequence':
         """
         Creates a Sequence object from the result of a sequence node query
         :param server: Server that owns the sequence
@@ -36,7 +36,7 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
 
         return seq
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: PGserver, parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
@@ -101,7 +101,7 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return cls.TEMPLATE_ROOT
 
     # HELPER METHODS ##################################################################

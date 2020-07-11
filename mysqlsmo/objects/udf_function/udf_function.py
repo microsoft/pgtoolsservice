@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from mysqlsmo.objects.server import MySQLServer
 from typing import Optional
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
@@ -13,7 +14,7 @@ class UserDefinedFunction(NodeObject, ScriptableCreate, ScriptableDelete):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'UserDefinedFunction':
+    def _from_node_query(cls, server: MySQLServer, parent: None, **kwargs) -> 'UserDefinedFunction':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -35,7 +36,7 @@ class UserDefinedFunction(NodeObject, ScriptableCreate, ScriptableDelete):
         udf._return_type = kwargs["return_type"]
         return udf
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: MySQLServer, name: str):
         """
         Initializes a new instance of a database
         """
@@ -44,7 +45,7 @@ class UserDefinedFunction(NodeObject, ScriptableCreate, ScriptableDelete):
         ScriptableDelete.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: MySQLServer) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:

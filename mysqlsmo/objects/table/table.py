@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from mysqlsmo.objects.server import MySQLServer
 from typing import List
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from smo.common.node_object import NodeCollection, NodeObject
@@ -13,7 +14,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Table':
+    def _from_node_query(cls, server: MySQLServer, parent: NodeObject, **kwargs) -> 'Table':
         """
         Creates a table instance from the results of a node query
         :param server: Server that owns the table
@@ -27,7 +28,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
         table = cls(server, kwargs["name"], kwargs["dbname"])
         return table
 
-    def __init__(self, server: 's.Server', name: str, dbname: str):
+    def __init__(self, server: MySQLServer, name: str, dbname: str):
         NodeObject.__init__(self, server, None, name)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
@@ -40,7 +41,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
 
     # PROPERTIES ###########################################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: MySQLServer) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:

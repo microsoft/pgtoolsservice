@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 # NOTE: Server must be the first import, otherwise circular dependencies block proper importing
-from pgsmo.objects.server.server import PGServer
+from pgsmo.objects.server.pgserver import PGServer
 
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.database.database import Database

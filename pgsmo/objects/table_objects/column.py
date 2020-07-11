@@ -8,7 +8,7 @@ from typing import Optional, List
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.server import PGserver    # noqa
 import smo.utils.templating as templating
 
 
@@ -17,7 +17,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Column':
+    def _from_node_query(cls, server: PGserver, parent: NodeObject, **kwargs) -> 'Column':
         """
         Creates a new Column object based on the the results from the column nodes query
         :param server: Server that owns the column
@@ -46,7 +46,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
         return col
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str, datatype: str):
+    def __init__(self, server: PGserver, parent: NodeObject, name: str, datatype: str):
         """
         Initializes a new instance of a Column
         :param server: Connection to the server/database that this object will belong to
@@ -211,7 +211,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return [cls.MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return cls.TEMPLATE_ROOT
 
     @property
@@ -312,92 +312,92 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return length, precision
 
 
-def get_full_type(self, nsp, typname, isDup, numdims, typmod):
-    """
-    Returns full type name with Length and Precision.
+    def get_full_type(self, nsp, typname, isDup, numdims, typmod):
+        """
+        Returns full type name with Length and Precision.
 
-    Args:
-        conn: Connection Object
-        condition: condition to restrict SQL statement
-    """
-    schema = nsp if nsp is not None else ''
-    name = ''
-    array = ''
-    length = ''
+        Args:
+            conn: Connection Object
+            condition: condition to restrict SQL statement
+        """
+        schema = nsp if nsp is not None else ''
+        name = ''
+        array = ''
+        length = ''
 
-    # Above 7.4, format_type also sends the schema name if it's not included
-    # in the search_path, so we need to skip it in the typname
-    if typname.find(schema + '".') >= 0:
-        name = typname[len(schema) + 3]
-    elif typname.find(schema + '.') >= 0:
-        name = typname[len(schema) + 1]
-    else:
-        name = typname
-
-    if name.startswith('_'):
-        if not numdims:
-            numdims = 1
-        name = name[1:]
-
-    if name.endswith('[]'):
-        if not numdims:
-            numdims = 1
-        name = name[:-2]
-
-    if name.startswith('"') and name.endswith('"'):
-        name = name[1:-1]
-
-    if numdims > 0:
-        while numdims:
-            array += '[]'
-            numdims -= 1
-
-    if typmod != -1:
-        length = '('
-        if name == 'numeric':
-            _len = (typmod - 4) >> 16
-            _prec = (typmod - 4) & 0xffff
-            length += str(_len)
-            if (_prec):
-                length += ',' + str(_prec)
-        elif name == 'time' or \
-            name == 'timetz' or \
-            name == 'time without time zone' or \
-            name == 'time with time zone' or \
-            name == 'timestamp' or \
-            name == 'timestamptz' or \
-            name == 'timestamp without time zone' or \
-            name == 'timestamp with time zone' or \
-            name == 'bit' or \
-            name == 'bit varying' or \
-                name == 'varbit':
-            _prec = 0
-            _len = typmod
-            length += str(_len)
-        elif name == 'interval':
-            _prec = 0
-            _len = typmod & 0xffff
-            length += str(_len)
-        elif name == 'date':
-            # Clear length
-            length = ''
+        # Above 7.4, format_type also sends the schema name if it's not included
+        # in the search_path, so we need to skip it in the typname
+        if typname.find(schema + '".') >= 0:
+            name = typname[len(schema) + 3]
+        elif typname.find(schema + '.') >= 0:
+            name = typname[len(schema) + 1]
         else:
-            _len = typmod - 4
-            _prec = 0
-            length += str(_len)
+            name = typname
 
-        if len(length) > 0:
-            length += ')'
+        if name.startswith('_'):
+            if not numdims:
+                numdims = 1
+            name = name[1:]
 
-    if name == 'char' and schema == 'pg_catalog':
-        return '"char"' + array
-    elif name == 'time with time zone':
-        return 'time' + length + ' with time zone' + array
-    elif name == 'time without time zone':
-        return 'time' + length + ' without time zone' + array
-    elif name == 'timestamp with time zone':
-        return 'timestamp' + length + ' with time zone' + array
-    elif name == 'timestamp without time zone':
-        return 'timestamp' + length + ' without time zone' + array
-    else:
-        return name + length + array
+        if name.endswith('[]'):
+            if not numdims:
+                numdims = 1
+            name = name[:-2]
+
+        if name.startswith('"') and name.endswith('"'):
+            name = name[1:-1]
+
+        if numdims > 0:
+            while numdims:
+                array += '[]'
+                numdims -= 1
+
+        if typmod != -1:
+            length = '('
+            if name == 'numeric':
+                _len = (typmod - 4) >> 16
+                _prec = (typmod - 4) & 0xffff
+                length += str(_len)
+                if (_prec):
+                    length += ',' + str(_prec)
+            elif name == 'time' or \
+                name == 'timetz' or \
+                name == 'time without time zone' or \
+                name == 'time with time zone' or \
+                name == 'timestamp' or \
+                name == 'timestamptz' or \
+                name == 'timestamp without time zone' or \
+                name == 'timestamp with time zone' or \
+                name == 'bit' or \
+                name == 'bit varying' or \
+                    name == 'varbit':
+                _prec = 0
+                _len = typmod
+                length += str(_len)
+            elif name == 'interval':
+                _prec = 0
+                _len = typmod & 0xffff
+                length += str(_len)
+            elif name == 'date':
+                # Clear length
+                length = ''
+            else:
+                _len = typmod - 4
+                _prec = 0
+                length += str(_len)
+
+            if len(length) > 0:
+                length += ')'
+
+        if name == 'char' and schema == 'pg_catalog':
+            return '"char"' + array
+        elif name == 'time with time zone':
+            return 'time' + length + ' with time zone' + array
+        elif name == 'time without time zone':
+            return 'time' + length + ' without time zone' + array
+        elif name == 'timestamp with time zone':
+            return 'timestamp' + length + ' with time zone' + array
+        elif name == 'timestamp without time zone':
+            return 'timestamp' + length + ' without time zone' + array
+        else:
+            return name + length + array

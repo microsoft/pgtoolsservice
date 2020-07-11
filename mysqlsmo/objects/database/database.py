@@ -5,6 +5,7 @@
 
 from typing import Optional               # noqa
 
+from mysqlsmo.objects.server import MySQLServer
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from smo.utils import templating
@@ -15,7 +16,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Database':
+    def _from_node_query(cls, server: MySQLServer, parent: None, **kwargs) -> 'Database':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -35,7 +36,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         db = cls(server, kwargs["Database"])
         return db
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: MySQLServer, name: str):
         """
         Initializes a new instance of a database
         """
@@ -46,7 +47,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: MySQLServer) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:

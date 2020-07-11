@@ -7,7 +7,7 @@ from typing import List, Optional
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableUpdate
-from pgsmo.objects.server import server as s        # noqa
+from pgsmo.objects.server import PGserver        # noqa
 import smo.utils.templating as templating
 
 
@@ -16,7 +16,7 @@ class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
     MACRO_ROOT = templating.get_template_root(__file__, 'macros')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Role':
+    def _from_node_query(cls, server: PGserver, parent: None, **kwargs) -> 'Role':
         """
         Creates a Role object from the result of a role node query
         :param server: Server that owns the role
@@ -38,7 +38,7 @@ class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
 
         return role
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: PGserver, name: str):
         """
         Initializes internal state of a Role object
         """
@@ -125,7 +125,7 @@ class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
         return [cls.MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: PGserver) -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self):
