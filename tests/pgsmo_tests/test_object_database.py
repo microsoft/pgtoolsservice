@@ -9,7 +9,7 @@ import unittest.mock as mock    # noqa
 
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.node_object import NodeCollection
-from pgsmo.objects.server.server import Server
+from pgsmo.objects.server.pgserver import PGServer
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 from tests.utils import MockConnection    # noqa
 
@@ -94,7 +94,7 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
     def test_init_connected(self):
         # If: I create a DB that is connected
         name = 'dbname'
-        mock_server = Server(utils.MockConnection(None, name=name))
+        mock_server = PGServer(utils.MockConnection(None, name=name))
         db = Database(mock_server, name)
 
         # Then:
@@ -108,7 +108,7 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
     def test_init_not_connected(self):
         # If: I create a DB that is connected
         name = 'dbname'
-        mock_conn = Server(utils.MockConnection(None, name='not_connected'))
+        mock_conn = PGServer(utils.MockConnection(None, name='not_connected'))
         db = Database(mock_conn, name)
 
         # Then:

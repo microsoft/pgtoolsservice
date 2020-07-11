@@ -12,7 +12,7 @@ import inflection
 
 from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.database.database import Database
-from pgsmo.objects.server.server import Server
+from pgsmo.objects.server.pgserver import PGServer
 from pgsmo.utils.querying import ServerConnection
 import tests.pgsmo_tests.utils as utils
 
@@ -29,7 +29,7 @@ class TestServer(unittest.TestCase):
         port = '1234'
         dbname = 'dbname'
         mock_conn = utils.MockConnection(None, name=dbname, host=host, port=port)
-        server = Server(mock_conn)
+        server = PGServer(mock_conn)
 
         # Then:
         # ... The assigned properties should be assigned
@@ -64,7 +64,7 @@ class TestServer(unittest.TestCase):
         # ... Create an instance of the class and override the connection
         mock_conn = ServerConnection(utils.MockConnection(None))
         mock_conn.execute_dict = mock_exec_dict
-        obj = Server(utils.MockConnection(None))
+        obj = PGServer(utils.MockConnection(None))
         obj._conn = mock_conn
 
         # If: I retrieve all the values in the recovery properties
@@ -76,7 +76,7 @@ class TestServer(unittest.TestCase):
     def test_maintenance_db(self):
         # Setup:
         # ... Create a server object that has a connection
-        obj = Server(utils.MockConnection(None, name='dbname'))
+        obj = PGServer(utils.MockConnection(None, name='dbname'))
 
         # ... Mock out the database lazy loader's indexer
         mock_db = {}
@@ -95,7 +95,7 @@ class TestServer(unittest.TestCase):
     def test_refresh(self):
         # Setup:
         # ... Create a server object that has a connection
-        obj = Server(utils.MockConnection(None))
+        obj = PGServer(utils.MockConnection(None))
 
         # ... Mock out the reset methods on the various collections
         obj.databases.reset = mock.MagicMock()
@@ -115,7 +115,7 @@ class TestServer(unittest.TestCase):
     def test_urn_base(self):
         # Setup:
         # ... Create a server object that has a connection
-        server = Server(utils.MockConnection(None))
+        server = PGServer(utils.MockConnection(None))
 
         # If: I get the URN base for the server
         urn_base = server.urn_base
@@ -130,7 +130,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_empty(self):
         # Setup: Create a server object
-        server = Server(utils.MockConnection(None))
+        server = PGServer(utils.MockConnection(None))
 
         test_cases = [None, '', '\t \n\r']
         for test_case in test_cases:
@@ -141,7 +141,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_wrong_server(self):
         # Setup: Create a server object
-        server = Server(utils.MockConnection(None))
+        server = PGServer(utils.MockConnection(None))
 
         with self.assertRaises(ValueError):
             # If: I get an object by its URN with a URN that is invalid for the server
@@ -151,7 +151,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_wrong_collection(self):
         # Setup: Create a server object
-        server = Server(utils.MockConnection(None))
+        server = PGServer(utils.MockConnection(None))
 
         with self.assertRaises(ValueError):
             # If: I get an object by its URN with a URN that points to an invalid path off the server
@@ -161,7 +161,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_success(self):
         # Setup: Create a server with a database under it
-        server = Server(utils.MockConnection(None))
+        server = PGServer(utils.MockConnection(None))
         mock_db = Database(server, 'test_db')
         mock_db._oid = 123
         server._child_objects[Database.__name__] = {123: mock_db}
