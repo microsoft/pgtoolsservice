@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.language.completion.pgcompleter import PGCompleter
-from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
+from ossdbtoolsservice.language.query.pg_lightweight_metadata import PGLightweightMetadata
+from ossdbtoolsservice.language.query.mysql_lightweight_metadata import MySQLLightweightMetadata
 
-__all__ = ['PGCompleter', 'MySQLCompleter']
+__all__ = ['PGLightweightMetadata', 'MySQLLightweightMetadata']

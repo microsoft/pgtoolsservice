@@ -96,10 +96,10 @@ class Server:
         """Databases that belong to the server"""
         return self._child_objects[Database.__name__]
 
-    # @property
-    # def maintenance_db(self) -> Database:
-    #     """Database that this server's connection is connected to"""
-    #     return self.databases[self._maintenance_db_name]
+    @property
+    def maintenance_db(self) -> Database:
+        """Database that this server's connection is connected to"""
+        return self.databases[self._maintenance_db_name] if self._maintenance_db_name else None
 
     # # @property
     # # def roles(self) -> NodeCollection[Role]:
@@ -111,13 +111,13 @@ class Server:
     # #     """Tablespaces defined for the server"""
     # #     return self._child_objects[Tablespace.__name__]
 
-    # # @property
-    # # def search_path(self) -> NodeCollection[str]:
-    # #     """
-    # #     The search_path for the current role. Defined at the server level as it's a global property,
-    # #     and as a collection as it is a list of schema names
-    # #     """
-    # #     return self._search_path
+    @property
+    def search_path(self) -> NodeCollection[str]:
+        """
+        The search_path for the current role. Defined at the server level as it's a global property,
+        and as a collection as it is a list of schema names
+        """
+        pass
 
     def refresh(self) -> None:
         # Reset child objects
