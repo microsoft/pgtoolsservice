@@ -117,11 +117,10 @@ class Batch:
 
         if self._batch_events and self._batch_events._on_execution_started:
             self._batch_events._on_execution_started(self)
-
+        
+        cursor = self.get_cursor(connection)
         try:
-            cursor = self.get_cursor(connection)
             cursor.execute(self.batch_text)
-
             self.after_execute(cursor)
         except psycopg2.DatabaseError as error:
             self._has_error = True
