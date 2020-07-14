@@ -117,7 +117,7 @@ class Batch:
 
         if self._batch_events and self._batch_events._on_execution_started:
             self._batch_events._on_execution_started(self)
-        
+
         cursor = self.get_cursor(connection)
         try:
             cursor.execute(self.batch_text)
