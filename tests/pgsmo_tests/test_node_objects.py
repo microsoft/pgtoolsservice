@@ -7,7 +7,7 @@ import urllib.parse as parse
 import unittest
 import unittest.mock as mock
 
-import pgsmo.objects.node_object as node
+import smo.common.node_object as node
 from pgsmo.objects.server.server import Server
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
@@ -355,8 +355,8 @@ class TestNodeObject(unittest.TestCase):
         mock_template_path = mock.MagicMock(return_value="path")
 
         # ... Patch the template rendering, and the _from_node_query
-        patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
-        patch_template_path = 'pgsmo.objects.node_object.templating.get_template_path'
+        patch_render_template = 'smo.utils.templating.render_template'
+        patch_template_path = 'smo.utils.templating.get_template_path'
         patch_from_node_query = 'tests.pgsmo_tests.utils.MockNodeObject._from_node_query'
         with mock.patch(patch_render_template, mock_render, create=True):
             with mock.patch(patch_template_path, mock_template_path, create=True):
@@ -401,8 +401,8 @@ class TestNodeObject(unittest.TestCase):
         parent._connection.execute_dict = mock_executor
 
         # ... Patch the template rendering, and the _from_node_query
-        patch_render_template = 'pgsmo.objects.node_object.templating.render_template'
-        patch_template_path = 'pgsmo.objects.node_object.templating.get_template_path'
+        patch_render_template = 'smo.utils.templating.render_template'
+        patch_template_path = 'smo.utils.templating.get_template_path'
         patch_from_node_query = 'tests.pgsmo_tests.utils.MockNodeObject._from_node_query'
 
         with mock.patch(patch_render_template, mock_render, create=True), \

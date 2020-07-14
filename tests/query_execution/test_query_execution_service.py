@@ -18,7 +18,7 @@ from os.path import isfile, join
 
 from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
 from ossdbtoolsservice.query_execution.query_execution_service import (
-    QueryExecutionService, CANCELATION_QUERY, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
+    QueryExecutionService, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
 from ossdbtoolsservice.query_execution.contracts import (
     ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase)
 from ossdbtoolsservice.utils import constants
@@ -42,6 +42,7 @@ import tests.utils as utils
 from ossdbtoolsservice.query.data_storage import (
     SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
 )
+from ossdbtoolsservice.driver.types.psycopg_driver import PG_CANCELLATION_QUERY
 
 
 class TestQueryService(unittest.TestCase):
@@ -58,7 +59,7 @@ class TestQueryService(unittest.TestCase):
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.query_execution_service = QueryExecutionService()
-        self.service_provider = ServiceProvider(None, {})
+        self.service_provider = ServiceProvider(None, {}, constants.PG_PROVIDER_NAME)
         self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: self.connection_service}
         self.service_provider._is_initialized = True
         self.query_execution_service._service_provider = self.service_provider
@@ -524,7 +525,7 @@ class TestQueryService(unittest.TestCase):
 
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
-        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY)
 
         # The batch is also marked as canceled and executed. There should have been no commits and
         # we should have rolled back. During execute_query call,
@@ -569,7 +570,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(self.request_context.last_response_params.messages, None)
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
-        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY)
 
         # The batch should be marked as canceled, the state should be executed, and we should have rolled back
         self.assertTrue(query.is_canceled)
@@ -835,7 +836,7 @@ class TestQueryService(unittest.TestCase):
         self.cursor_cancel.execute.assert_called_once()
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
-        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY)
 
     def test_query_disposal_with_query_not_started(self):
         """Test query disposal while a query has not started executing"""
@@ -852,7 +853,7 @@ class TestQueryService(unittest.TestCase):
         self.cursor_cancel.execute.assert_called_once()
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
-        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY)
 
     def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_first_batch(self):
         ''' Multiple batch in SAME line test with cursor on 1st batch, returns the query for first batch '''

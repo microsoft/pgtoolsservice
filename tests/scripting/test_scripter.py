@@ -10,11 +10,10 @@ from unittest import mock
 
 from pgsmo import Table, DataType, Schema, Database, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, \
     Rule, Trigger, Index
-from pgsmo.objects.node_object import NodeCollection
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import ossdbtoolsservice.scripting.scripter as scripter
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
-
+from smo.common.node_object import NodeCollection
 
 import tests.utils as utils
 

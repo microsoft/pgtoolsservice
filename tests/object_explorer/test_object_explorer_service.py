@@ -27,18 +27,21 @@ from ossdbtoolsservice.utils import constants
 import tests.utils as utils
 from tests.pgsmo_tests.utils import MockConnection
 from tests.mock_request_validation import RequestFlowValidator
+
+
 TEST_HOST = 'testhost'
 TEST_DBNAME = 'testdb'
 TEST_USER = 'testuser'
 TEST_PASSWORD = 'testpassword'
-
+TEST_PORT = '5432'
 
 def _connection_details() -> Tuple[ConnectionDetails, str]:
     param = ConnectionDetails()
     param.options = {
         'host': TEST_HOST,
         'dbname': TEST_DBNAME,
-        'user': TEST_USER
+        'user': TEST_USER,
+        'port': TEST_PORT
     }
     session_uri = ObjectExplorerService._generate_session_uri(param)
     return param, session_uri
@@ -87,9 +90,10 @@ class TestObjectExplorer(unittest.TestCase):
     def test_generate_uri_missing_params(self):
         # Setup: Create the parameter sets that will be missing a param each
         params = [
-            ConnectionDetails.from_data({'host': None, 'dbname': TEST_DBNAME, 'user': TEST_USER}),
-            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': None, 'user': TEST_USER}),
-            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': None})
+            ConnectionDetails.from_data({'host': None, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': TEST_PORT}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': None, 'user': TEST_USER, 'port': TEST_PORT}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': None, 'port': TEST_PORT}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': None})
         ]
 
         for param_set in params:
@@ -108,10 +112,11 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertEqual(parse_result.scheme, 'objectexplorer')
         self.assertTrue(parse_result.netloc)
 
-        re_match = re.match(r'(?P<username>\w+)@(?P<host>\w+):(?P<db_name>\w+)', parse_result.netloc)
+        re_match = re.match(r'(?P<username>\w+)@(?P<host>\w+):(?P<port>\w+):(?P<db_name>\w+)', parse_result.netloc)
         self.assertIsNotNone(re_match)
         self.assertEqual(re_match.group('username'), TEST_USER)
         self.assertEqual(re_match.group('host'), TEST_HOST)
+        self.assertEqual(re_match.group('port'), TEST_PORT)
         self.assertEqual(re_match.group('db_name'), TEST_DBNAME)
 
     # CREATE SESSION #######################################################

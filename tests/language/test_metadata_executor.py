@@ -8,8 +8,9 @@ import unittest
 from unittest import mock
 import psycopg2
 
-from pgsmo import Database, NodeCollection, Schema, Server
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
+from pgsmo import Database, Schema, Server
+from smo.common.node_object import NodeCollection
 
 import tests.pgsmo_tests.utils as utils
 

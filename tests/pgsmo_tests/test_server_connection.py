@@ -5,8 +5,8 @@
 
 import unittest
 
-import pgsmo.utils as pgsmo_utils
 import tests.pgsmo_tests.utils as utils
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 
 
 class TestServerConnection(unittest.TestCase):
@@ -16,22 +16,22 @@ class TestServerConnection(unittest.TestCase):
 
         # If: I initialize a server connection
         # noinspection PyTypeChecker
-        server_conn = pgsmo_utils.querying.ServerConnection(mock_conn)
+        server_conn = PostgreSQLConnection(mock_conn)
 
         # Then: The properties should be properly set
         self.assertEqual(server_conn._conn, mock_conn)
         self.assertEqual(server_conn.connection, mock_conn)
         expected_dict = {'dbname': 'postgres', 'host': 'localhost', 'port': '25565', 'user': 'postgres'}
         self.assertDictEqual(server_conn._dsn_parameters, expected_dict)
-        self.assertDictEqual(server_conn.dsn_parameters, expected_dict)
-        self.assertTupleEqual((10, 2, 16), server_conn.version)
+        self.assertDictEqual(server_conn._dsn_parameters, expected_dict)
+        self.assertTupleEqual((10, 2, 16), server_conn._version)
 
     def test_execute_dict_success(self):
         # Setup: Create a mock server connection that will return a result set
         mock_cursor = utils.MockCursor(utils.get_mock_results())
         mock_conn = utils.MockConnection(mock_cursor)
         # noinspection PyTypeChecker
-        server_conn = pgsmo_utils.querying.ServerConnection(mock_conn)
+        server_conn = PostgreSQLConnection(mock_conn)
 
         # If: I execute a query as a dictionary
         results = server_conn.execute_dict('SELECT * FROM pg_class')
@@ -60,7 +60,7 @@ class TestServerConnection(unittest.TestCase):
         mock_cursor = utils.MockCursor(None, throw_on_execute=True)
         mock_conn = utils.MockConnection(mock_cursor)
         # noinspection PyTypeChecker
-        server_conn = pgsmo_utils.querying.ServerConnection(mock_conn)
+        server_conn = PostgreSQLConnection(mock_conn)
 
         # If: I execute a query as a dictionary
         # Then:

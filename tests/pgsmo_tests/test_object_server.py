@@ -9,13 +9,14 @@ import unittest.mock as mock
 import urllib.parse as parse
 
 import inflection
+from psycopg2.extensions import connection
 
-from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
-from pgsmo.utils.querying import ServerConnection
+from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection
+from tests.utils import MockConnection as MockPGConnection
 import tests.pgsmo_tests.utils as utils
-
 
 class TestServer(unittest.TestCase):
     CHECK_RECOVERY_ROW = {
@@ -33,16 +34,16 @@ class TestServer(unittest.TestCase):
 
         # Then:
         # ... The assigned properties should be assigned
-        self.assertIsInstance(server._conn, ServerConnection)
-        self.assertIsInstance(server.connection, ServerConnection)
-        self.assertIs(server.connection.connection, mock_conn)
+        self.assertIsInstance(server._conn, connection)
+        self.assertIsInstance(server.connection, connection)
+        self.assertIs(server.connection, mock_conn)
         self.assertEqual(server._host, host)
         self.assertEqual(server.host, host)
-        self.assertEqual(server._port, int(port))
-        self.assertEqual(server.port, int(port))
+        self.assertEqual(server._port, port)
+        self.assertEqual(server.port, port)
         self.assertEqual(server._maintenance_db_name, dbname)
         self.assertEqual(server.maintenance_db_name, dbname)
-        self.assertTupleEqual(server.version, server._conn.version)
+        self.assertTupleEqual(server.version, server._conn.server_version)
 
         # ... Recovery options should be a lazily loaded thing
         self.assertIsInstance(server._recovery_props, NodeLazyPropertyCollection)
@@ -62,10 +63,11 @@ class TestServer(unittest.TestCase):
         mock_exec_dict = mock.MagicMock(return_value=([], [TestServer.CHECK_RECOVERY_ROW]))
 
         # ... Create an instance of the class and override the connection
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        mock_conn.execute_dict = mock_exec_dict
-        obj = Server(utils.MockConnection(None))
-        obj._conn = mock_conn
+        mock_connection = MockPGConnection({'host': 'host', 'dbname': 'dbname'})
+        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+            pg_connection = PostgreSQLConnection({})
+        pg_connection.execute_dict = mock_exec_dict
+        obj = Server(pg_connection)
 
         # If: I retrieve all the values in the recovery properties
         # Then:
@@ -124,9 +126,9 @@ class TestServer(unittest.TestCase):
         urn_base_regex = re.compile(r'//(?P<user>.+)@(?P<host>.+):(?P<port>\d+)')
         urn_base_match = urn_base_regex.match(urn_base)
         self.assertIsNotNone(urn_base_match)
-        self.assertEqual(urn_base_match.groupdict()['user'], server.connection.dsn_parameters['user'])
+        self.assertEqual(urn_base_match.groupdict()['user'], server.connection.user_name)
         self.assertEqual(urn_base_match.groupdict()['host'], server.host)
-        self.assertEqual(int(urn_base_match.groupdict()['port']), server.port)
+        self.assertEqual(urn_base_match.groupdict()['port'], server.port)
 
     def test_get_obj_by_urn_empty(self):
         # Setup: Create a server object

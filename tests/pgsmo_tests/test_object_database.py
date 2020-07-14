@@ -8,8 +8,8 @@ import tests.pgsmo_tests.utils as utils
 import unittest.mock as mock    # noqa
 
 from pgsmo.objects.database.database import Database
-from pgsmo.objects.node_object import NodeCollection
 from pgsmo.objects.server.server import Server
+from smo.common.node_object import NodeCollection
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 from tests.utils import MockConnection    # noqa
 

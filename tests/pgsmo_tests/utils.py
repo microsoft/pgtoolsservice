@@ -11,7 +11,7 @@ from psycopg2 import DatabaseError
 from psycopg2.extensions import Column, connection
 
 from pgsmo import Server
-from pgsmo.objects.node_object import NodeCollection, NodeObject
+from smo.common.node_object import NodeCollection, NodeObject
 
 
 # MOCK NODE OBJECT #########################################################
@@ -115,15 +115,30 @@ class MockConnection(connection):
             host: str = 'localhost',
             port: str = '25565',
             user: str = 'postgres'):
-        # Setup the properties
-        self._server_version = version
 
+        # Setup the properties
+        self._server_version: Tuple[int, int, int] = (
+            int(version[:-4]),
+            int(version[-4:-2]),
+            int(version[-2:])
+        )
+        self.host_name = host
+        self.port = port
+        self.database_name = name
+        self.user_name = user
+        
         # Setup mocks for the connection
         self.close = mock.MagicMock()
         self.cursor = mock.MagicMock(return_value=cur)
 
-        dsn_params = {'dbname': name, 'host': host, 'port': port, 'user': user}
-        self.get_dsn_parameters = mock.MagicMock(return_value=dsn_params)
+    @property
+    def autocommit(self):
+        return True
+
+    @autocommit.setter
+    def autocommit(self, value):
+         self._autocommit = value
+
 
     @property
     def server_version(self):

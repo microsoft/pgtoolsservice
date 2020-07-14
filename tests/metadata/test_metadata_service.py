@@ -64,7 +64,7 @@ class TestMetadataService(unittest.TestCase):
             # If I call the metadata list request handler
             self.metadata_service._handle_metadata_list_request(request_context, params)
             # Then the worker thread was kicked off
-            self.assertEqual(mock_thread.target, self.metadata_service._metadata_list_worker)
+            self.assertEqual(mock_thread.target, self.metadata_service._handle_metadata_list_request)
             mock_thread.start.assert_called_once()
         # And the worker retrieved the correct connection and executed a query on it
         self.connection_service.get_connection.assert_called_once_with(self.test_uri, ConnectionType.DEFAULT)

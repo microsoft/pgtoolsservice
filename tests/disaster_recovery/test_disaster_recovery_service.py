@@ -268,7 +268,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             self.mock_task.start.assert_called_once()
             # And the mock task was initialized with the expected parameters
             parameters = mock_task_constructor.call_args[0]
-            self.assertEqual(parameters[2], constants.PROVIDER_NAME)
+            self.assertEqual(parameters[2], constants.PG_PROVIDER_NAME)
             self.assertEqual(parameters[3], self.host)
             self.assertEqual(parameters[4], self.dbname)
             self.assertIs(parameters[6], self.mock_action)

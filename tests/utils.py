@@ -9,6 +9,7 @@ import unittest.mock as mock
 import psycopg2
 
 from ossdbtoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 
 def assert_not_none_or_empty(value: str):
@@ -112,6 +113,11 @@ class MockConnection(object):
         self.notices = []
         self.autocommit = True
         self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+        self._provider_name = PG_PROVIDER_NAME
+        self.host_name = dsn_parameters.get('host') if dsn_parameters else None
+        self.port = dsn_parameters.get('port') if dsn_parameters else None
+        self.database_name = dsn_parameters.get('dbname') if dsn_parameters else None
+        self.user_name = dsn_parameters.get('user') if dsn_parameters else None
 
     @property
     def closed(self):
@@ -129,6 +135,21 @@ class MockConnection(object):
         else:
             raise NotImplementedError()
 
+    @property
+    def database_error(self):
+        """Returns the type of database error this connection throws"""
+        return psycopg2.DatabaseError
+        
+    @property
+    def transaction_in_error(self) -> bool:
+        """Returns bool indicating if transaction is in error"""
+        pass
+
+    def commit(self):
+        """
+        Commits the current transaction
+        """
+        pass
 
 class MockCursor:
     """Class used to mock psycopg2 cursor objects for testing"""

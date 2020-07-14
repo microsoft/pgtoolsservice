@@ -5,7 +5,7 @@
 
 import unittest
 
-import pgsmo.utils.urn as urn
+import smo.utils.urn as urn
 
 
 class TestUtilsUrn(unittest.TestCase):

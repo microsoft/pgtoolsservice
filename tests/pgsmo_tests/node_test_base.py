@@ -9,8 +9,8 @@ from typing import Callable, List, Mapping, Type
 import unittest
 import unittest.mock as mock
 
-from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection, NodeObject
-from pgsmo.objects.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
+from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from pgsmo.objects.server.server import Server
 import tests.pgsmo_tests.utils as utils
 

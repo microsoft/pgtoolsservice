@@ -877,7 +877,7 @@ class ConnectionServiceIntegrationTests(unittest.TestCase):
         # Then a response is returned that lists all the databases
         database_names = request_context.last_response_params.database_names
         self.assertGreater(len(database_names), 0)
-        self.assertIn(connection.get_dsn_parameters()['dbname'], database_names)
+        self.assertIn(connection.database_name, database_names)
 
 
 if __name__ == '__main__':
