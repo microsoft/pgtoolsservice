@@ -66,7 +66,7 @@ def get_mock_service_provider(service_map: dict = None) -> ServiceProvider:
 
     :param service_map: A dictionary mapping service names to services
     """
-    provider = ServiceProvider(None, {}, get_mock_logger())
+    provider = ServiceProvider(None, {}, PG_PROVIDER_NAME, get_mock_logger())
     if service_map is not None:
         provider._services = service_map
     provider._is_initialized = True
@@ -113,11 +113,6 @@ class MockConnection(object):
         self.notices = []
         self.autocommit = True
         self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
-        self._provider_name = PG_PROVIDER_NAME
-        self.host_name = dsn_parameters.get('host') if dsn_parameters else None
-        self.port = dsn_parameters.get('port') if dsn_parameters else None
-        self.database_name = dsn_parameters.get('dbname') if dsn_parameters else None
-        self.user_name = dsn_parameters.get('user') if dsn_parameters else None
 
     @property
     def closed(self):
@@ -135,21 +130,6 @@ class MockConnection(object):
         else:
             raise NotImplementedError()
 
-    @property
-    def database_error(self):
-        """Returns the type of database error this connection throws"""
-        return psycopg2.DatabaseError
-        
-    @property
-    def transaction_in_error(self) -> bool:
-        """Returns bool indicating if transaction is in error"""
-        pass
-
-    def commit(self):
-        """
-        Commits the current transaction
-        """
-        pass
 
 class MockCursor:
     """Class used to mock psycopg2 cursor objects for testing"""

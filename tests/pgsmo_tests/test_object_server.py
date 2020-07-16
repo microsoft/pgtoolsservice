@@ -15,7 +15,7 @@ from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection
-from tests.utils import MockConnection as MockPGConnection
+from tests.utils import MockConnection as MockPsycopgConnection
 import tests.pgsmo_tests.utils as utils
 
 class TestServer(unittest.TestCase):
@@ -63,7 +63,7 @@ class TestServer(unittest.TestCase):
         mock_exec_dict = mock.MagicMock(return_value=([], [TestServer.CHECK_RECOVERY_ROW]))
 
         # ... Create an instance of the class and override the connection
-        mock_connection = MockPGConnection({'host': 'host', 'dbname': 'dbname'})
+        mock_connection = MockPsycopgConnection({'host': 'host', 'dbname': 'dbname'})
         with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
             pg_connection = PostgreSQLConnection({})
         pg_connection.execute_dict = mock_exec_dict

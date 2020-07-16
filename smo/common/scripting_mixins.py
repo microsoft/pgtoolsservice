@@ -23,7 +23,6 @@ class ScriptableCreate(ScriptableBase, metaclass=ABCMeta):
 
     def create_script(self):
         """Generates a script that creates an object of the inheriting type"""
-        print(self._mxin_server_version)
         data = self._create_query_data()
         return templating.render_template(
             templating.get_template_path(self._mxin_template_root, 'create.sql', self._mxin_server_version),

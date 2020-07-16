@@ -4,34 +4,38 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
+import unittest.mock as mock
 
 import tests.pgsmo_tests.utils as utils
+from tests.utils import MockConnection as MockPsycopgConnection
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 
 
 class TestServerConnection(unittest.TestCase):
     def test_server_conn_init(self):
         # Setup: Create a mock connection with an 'interesting' version
-        mock_conn = utils.MockConnection(None, version='100216')
+        mock_conn = MockPsycopgConnection()
+        mock_conn.server_version = '100216'
 
         # If: I initialize a server connection
         # noinspection PyTypeChecker
-        server_conn = PostgreSQLConnection(mock_conn)
+        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_conn)):
+            server_conn = PostgreSQLConnection({})
 
         # Then: The properties should be properly set
         self.assertEqual(server_conn._conn, mock_conn)
         self.assertEqual(server_conn.connection, mock_conn)
-        expected_dict = {'dbname': 'postgres', 'host': 'localhost', 'port': '25565', 'user': 'postgres'}
-        self.assertDictEqual(server_conn._dsn_parameters, expected_dict)
-        self.assertDictEqual(server_conn._dsn_parameters, expected_dict)
-        self.assertTupleEqual((10, 2, 16), server_conn._version)
+        self.assertEqual(server_conn._dsn_parameters, None)
+        self.assertTupleEqual((10, 2, 16), server_conn.server_version)
 
     def test_execute_dict_success(self):
         # Setup: Create a mock server connection that will return a result set
         mock_cursor = utils.MockCursor(utils.get_mock_results())
-        mock_conn = utils.MockConnection(mock_cursor)
+        mock_conn = MockPsycopgConnection(cursor=mock_cursor)
+
         # noinspection PyTypeChecker
-        server_conn = PostgreSQLConnection(mock_conn)
+        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_conn)):
+            server_conn = PostgreSQLConnection({})
 
         # If: I execute a query as a dictionary
         results = server_conn.execute_dict('SELECT * FROM pg_class')
@@ -58,9 +62,10 @@ class TestServerConnection(unittest.TestCase):
     def test_execute_dict_fail(self):
         # Setup: Create a mock server connection that will raise an exception
         mock_cursor = utils.MockCursor(None, throw_on_execute=True)
-        mock_conn = utils.MockConnection(mock_cursor)
+        mock_conn = MockPsycopgConnection(cursor=mock_cursor)
         # noinspection PyTypeChecker
-        server_conn = PostgreSQLConnection(mock_conn)
+        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_conn)):
+            server_conn = PostgreSQLConnection({})
 
         # If: I execute a query as a dictionary
         # Then:

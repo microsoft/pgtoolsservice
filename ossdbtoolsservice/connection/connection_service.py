@@ -97,7 +97,6 @@ class ConnectionService:
         If a connection was already open, disconnect first. Return a connection response indicating
         whether the connection was successful
         """
-
         connection_info: ConnectionInfo = self.owner_to_connection_map.get(params.owner_uri)
 
         # If there is no saved connection or the saved connection's options do not match, create a new one

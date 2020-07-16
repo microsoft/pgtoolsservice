@@ -22,7 +22,7 @@ INTELLISENSE_URI = 'intellisense://'
 class ConnectionContext:
     """Context information needed to look up connections"""
 
-    def __init__(self, key: str, logger: Logger):
+    def __init__(self, key: str, logger: Optional[Logger] = None):
         self.key = key
         self.intellisense_complete: threading.Event = threading.Event()
         self.pgcompleter: PGCompleter = None

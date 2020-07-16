@@ -8,7 +8,7 @@ from collections import namedtuple
 
 from ossdbtoolsservice.query.column_info import get_columns_info
 import tests.utils as utils
-
+from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
 
 class TestGetColumnsInfo(unittest.TestCase):
 
@@ -23,7 +23,7 @@ class TestGetColumnsInfo(unittest.TestCase):
 
     def test_get_column_info_executes_cursor(self):
 
-        columns_info = get_columns_info(self._cursor.description, self._connection)
+        columns_info = get_columns_info(self._cursor)
 
         self._connection.cursor.assert_called_once()
         self._cursor.execute.assert_called_once()

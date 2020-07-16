@@ -13,8 +13,8 @@ from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.object_explorer.routing.pg_routing import PG_ROUTING_TABLE
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.object_explorer.contracts import NodeInfo
-from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
-
+from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 class TestObjectExplorerRouting(unittest.TestCase):
     # FOLDER TESTING #######################################################
@@ -56,7 +56,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
     def test_routing_target_init_with_folders(self):
         # If: I create a routing target with folders defined
         node_generator = mock.MagicMock()
-        folder_list = [routing.Folder('FolderName', 'folder_path')]
+        folder_list = [session.Folder('FolderName', 'folder_path')]
         rt = session.RoutingTarget(folder_list, node_generator)
 
         # Then: The internal state should reflect a list of folders being provided
@@ -76,7 +76,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
         node1 = NodeInfo()
         node2 = NodeInfo()
         node_generator = mock.MagicMock(return_value=[node1, node2])
-        folder_list = [session.Folder('Folder1', 'fp1'), routing.Folder('Folder2', 'fp2')]
+        folder_list = [session.Folder('Folder1', 'fp1'), session.Folder('Folder2', 'fp2')]
 
         # If: I ask for nodes for a routing target
         rt = session.RoutingTarget(folder_list, node_generator)
@@ -106,22 +106,26 @@ class TestObjectExplorerRouting(unittest.TestCase):
         re_class = re.compile('^/$').__class__
         for key, item in PG_ROUTING_TABLE.items():
             self.assertIsInstance(key, re_class)
-            self.assertIsInstance(item, routing.RoutingTarget)
+            self.assertIsInstance(item, session.RoutingTarget)
 
     def test_routing_invalid_path(self):
         # If: Ask to route a path without a route
         # Then: I should get an exception
-        service_provider =  ServiceProvider(None, {}, constants.PG_PROVIDER_NAME)
-        object_explorer_service = ObjectExplorerService(service_provider)
+        service_provider =  ServiceProvider(None, {}, PG_PROVIDER_NAME)
+        object_explorer_service = ObjectExplorerService()
+        object_explorer_service.service_provider = service_provider
+        object_explorer_service._routing_table = PG_ROUTING_TABLE
 
         with self.assertRaises(ValueError):
             object_explorer_service._route_request(False, 
-                ObjectExplorerSession('session_id', ConnectionDetails()), '!/invalid!')
+                ObjectExplorerSession('session_id', ConnectionDetails()), '!/invalid!/')
 
     def test_routing_match(self):
         # If: Ask to route a request that is valid
-        service_provider =  ServiceProvider(None, {}, constants.PG_PROVIDER_NAME)
-        object_explorer_service = ObjectExplorerService(service_provider)
+        service_provider =  ServiceProvider(None, {}, PG_PROVIDER_NAME)
+        object_explorer_service = ObjectExplorerService()
+        object_explorer_service.service_provider = service_provider
+        object_explorer_service._routing_table = PG_ROUTING_TABLE
         output = object_explorer_service._route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '/')
 
         # Then: The output should be a list of nodes
