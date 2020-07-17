@@ -79,7 +79,7 @@ class ObjectExplorerService(object):
 
             # Use the provider's default db if db name was not specified
             if params.database_name is None or params.database_name == '':
-                params.database_name = utils.constants.DEFAULT_DB[self._provider]
+                params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
 
             # Use the provider's default port if port number was not specified
             if not params.port:
@@ -335,6 +335,7 @@ class ObjectExplorerService(object):
         utils.validate.is_not_none_or_whitespace('params.server_name', params.options.get('host'))
         utils.validate.is_not_none_or_whitespace('params.user_name', params.options.get('user'))
         utils.validate.is_not_none_or_whitespace('params.database_name', params.options.get('dbname'))
+        utils.validate.is_not_none('params.port', params.options.get('port'))
 
         # Generates a session ID that will function as the base URI for the session
         host = quote(params.options['host'])

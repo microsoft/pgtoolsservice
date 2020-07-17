@@ -119,11 +119,12 @@ class ConnectionService:
                 self._cancellation_map[cancellation_key].cancel()
             self._cancellation_map[cancellation_key] = cancellation_token
         
-        # Get the type of server
+        # Get the type of server and configs
         provider_name = self._service_provider.provider
+        configs = self._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration
         try:
             # Get connection to DB server using the provided connection params
-            connection: ServerConnection = ConnectionManager(provider_name, params.connection.options).get_connection()
+            connection: ServerConnection = ConnectionManager(provider_name, configs, params.connection.options).get_connection()
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
