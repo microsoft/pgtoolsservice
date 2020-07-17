@@ -139,6 +139,7 @@ class MockConnection():
                                                 'user': user
                                                 }, cur)
         self.transaction_in_error = False
+        self.notices = []
 
         # Setup mocks for the connection
         self.close = mock.MagicMock()
