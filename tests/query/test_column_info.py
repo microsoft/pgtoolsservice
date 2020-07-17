@@ -20,9 +20,10 @@ class TestGetColumnsInfo(unittest.TestCase):
 
         self._cursor.description = [column('id', 1, None, None, None, None, True), column('is_valid', 2, None, None, None, None, True)]
         self._connection = utils.MockConnection(cursor=self._cursor)
+        self._cursor.connection = self._connection
 
     def test_get_column_info_executes_cursor(self):
-
+        
         columns_info = get_columns_info(self._cursor)
 
         self._connection.cursor.assert_called_once()

@@ -40,7 +40,7 @@ from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectionDet
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
+from tests.pgsmo_tests.utils import MockConnection as MockServerConnection, MockCursor as MockServerCursor
 from ossdbtoolsservice.query.data_storage import (
     SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
 )
@@ -95,7 +95,7 @@ class TestQueryService(unittest.TestCase):
         mock_server_set_request = mock.MagicMock()
         mock_server = JSONRPCServer(None, None)
         mock_server.set_request_handler = mock_server_set_request
-        mock_service_provider = ServiceProvider(mock_server, {}, None)
+        mock_service_provider = ServiceProvider(mock_server, {}, constants.PG_PROVIDER_NAME, None)
         service = QueryExecutionService()
 
         # If: I initialize the service
@@ -964,7 +964,7 @@ class TestQueryService(unittest.TestCase):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
-        self.connection.transaction_in_error.return_value = True
+        self.connection.transaction_in_error = True
         query_params = get_execute_string_params()
         query = Query(query_params.owner_uri, query_params.query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         self.query_execution_service.query_results[query_params.owner_uri] = query

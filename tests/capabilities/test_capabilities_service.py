@@ -12,6 +12,7 @@ from ossdbtoolsservice.capabilities.contracts import InitializeResult, Capabilit
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace import WorkspaceService
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 import tests.utils as utils
 
 
@@ -23,7 +24,7 @@ class TestCapabilitiesService(unittest.TestCase):
         mock_server_set_request = mock.MagicMock()
         mock_server = JSONRPCServer(None, None)
         mock_server.set_request_handler = mock_server_set_request
-        mock_service_provider = ServiceProvider(mock_server, {}, None)
+        mock_service_provider = ServiceProvider(mock_server, {}, PG_PROVIDER_NAME, None)
         service = CapabilitiesService()
 
         # If: I initialize the service

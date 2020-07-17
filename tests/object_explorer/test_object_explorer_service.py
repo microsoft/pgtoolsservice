@@ -35,7 +35,7 @@ TEST_HOST = 'testhost'
 TEST_DBNAME = 'testdb'
 TEST_USER = 'testuser'
 TEST_PASSWORD = 'testpassword'
-TEST_PORT = '5432'
+TEST_PORT = 5432
 
 def _connection_details() -> Tuple[ConnectionDetails, str]:
     param = ConnectionDetails()
@@ -118,7 +118,7 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertIsNotNone(re_match)
         self.assertEqual(re_match.group('username'), TEST_USER)
         self.assertEqual(re_match.group('host'), TEST_HOST)
-        self.assertEqual(re_match.group('port'), TEST_PORT)
+        self.assertEqual(int(re_match.group('port')), TEST_PORT)
         self.assertEqual(re_match.group('db_name'), TEST_DBNAME)
 
     # CREATE SESSION #######################################################
@@ -216,6 +216,7 @@ class TestObjectExplorer(unittest.TestCase):
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        oe._server = Server
 
         # ... Create parameters, session, request context validator
         params, session_uri = _connection_details()

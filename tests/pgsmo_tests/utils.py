@@ -8,7 +8,7 @@ import unittest
 import unittest.mock as mock
 
 from psycopg2 import DatabaseError
-from psycopg2.extensions import Column
+from psycopg2.extensions import Column, QueryCanceledError
 
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from ossdbtoolsservice.driver.types.psycopg_driver import PG_CANCELLATION_QUERY
@@ -138,11 +138,11 @@ class MockConnection():
                                                 'port': port, 
                                                 'user': user
                                                 }, cur)
+        self.transaction_in_error = False
 
         # Setup mocks for the connection
         self.close = mock.MagicMock()
         self.cursor = mock.MagicMock(return_value=cur)
-        self.transaction_in_error = mock.MagicMock(return_value=False)
 
     @property
     def server_version(self):
@@ -167,6 +167,11 @@ class MockConnection():
     def cancellation_query(self) -> str:
         backend_pid = self._conn.get_backend_pid()
         return PG_CANCELLATION_QUERY.format(backend_pid)
+
+    @property
+    def query_canceled_error(self) -> Exception:
+        """Returns driver query canceled error"""
+        return QueryCanceledError
 
     @autocommit.setter
     def autocommit(self, mode: bool):

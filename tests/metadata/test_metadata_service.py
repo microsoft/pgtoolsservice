@@ -12,7 +12,8 @@ from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.metadata.contracts import METADATA_LIST_REQUEST, MetadataListParameters, MetadataListResponse, MetadataType, ObjectMetadata
 from ossdbtoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from tests.utils import MockConnection, MockCursor, MockRequestContext, MockThread
+from tests.utils import MockCursor, MockRequestContext, MockThread
+from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
 
 
 class TestMetadataService(unittest.TestCase):
@@ -54,7 +55,7 @@ class TestMetadataService(unittest.TestCase):
         # Query results have schema_name, object_name, and object_type columns in that order
         list_query_result = [(metadata.schema, metadata.name, metadata_type_to_str_map[metadata.metadata_type]) for metadata in expected_metadata]
         mock_cursor = MockCursor(list_query_result)
-        mock_connection = MockConnection(cursor=mock_cursor)
+        mock_connection = MockServerConnection(cur=mock_cursor)
         self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
         request_context = MockRequestContext()
         params = MetadataListParameters()
@@ -64,7 +65,7 @@ class TestMetadataService(unittest.TestCase):
             # If I call the metadata list request handler
             self.metadata_service._handle_metadata_list_request(request_context, params)
             # Then the worker thread was kicked off
-            self.assertEqual(mock_thread.target, self.metadata_service._handle_metadata_list_request)
+            self.assertEqual(mock_thread.target, self.metadata_service._metadata_list_worker)
             mock_thread.start.assert_called_once()
         # And the worker retrieved the correct connection and executed a query on it
         self.connection_service.get_connection.assert_called_once_with(self.test_uri, ConnectionType.DEFAULT)

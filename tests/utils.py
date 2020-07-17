@@ -161,7 +161,6 @@ class MockCursor:
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        self.description = []
         self.rowcount = len(self._query_results) if self._query_results is not None else 0
 
     def execute_failure_side_effects(self, *args):

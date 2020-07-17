@@ -83,7 +83,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
         current_path = '/'
         match_params = {}
         object_explorer_session = ObjectExplorerSession('session_id', ConnectionDetails())
-        output = rt.get_nodes(False, current_path, session, match_params)
+        output = rt.get_nodes(False, current_path, object_explorer_session, match_params)
 
         # Then:
         # ... I should get back a list of nodes
@@ -95,7 +95,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
         self.assertEqual(output[1].node_type, 'Folder')
         self.assertIs(output[2], node1)
         self.assertIs(output[3], node2)
-
+        
         # ... The node generator should have been called
         node_generator.assert_called_once_with(False, current_path, object_explorer_session, match_params)
 

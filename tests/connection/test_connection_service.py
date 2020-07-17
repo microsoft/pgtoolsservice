@@ -451,7 +451,12 @@ class TestConnectionService(unittest.TestCase):
         # Set up the test with mock data
         connection_uri = 'someuri'
         connection_type = ConnectionType.EDIT
-        mock_connection = MockServerConnection(cur = None, host = 'myserver', name = 'postgres', user = 'postgres')
+        mock_connection = MockPsycopgConnection(
+            dsn_parameters={
+                'host': 'myserver',
+                'dbname': 'postgres',
+                'user': 'postgres'
+            })
 
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
@@ -462,7 +467,7 @@ class TestConnectionService(unittest.TestCase):
         with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)) as mock_psycopg2_connect:
             connection = self.connection_service.get_connection(connection_uri, connection_type)
             mock_psycopg2_connect.assert_called_once()
-        self.assertEqual(connection, mock_connection)
+        self.assertEqual(connection._conn, mock_connection)
 
     def test_get_connection_creates_connection(self):
         """Test that get_connection creates a new connection when none exists for the given URI and type"""
@@ -576,12 +581,12 @@ class TestConnectionService(unittest.TestCase):
 
         # If I connect with an empty database name
         with mock.patch('ossdbtoolsservice.connection.connection_service._build_connection_response'), \
-                mock.patch('psycopg2.connect') as mock_psycopg2_connect:
+                mock.patch('psycopg2.connect', return_value=MockPsycopgConnection()) as mock_psycopg2_connect:
             self.connection_service.connect(params)
 
             # Then psycopg2's connect method was called with the default database
             calls = mock_psycopg2_connect.mock_calls
-            # self.assertEqual(len(calls), 1)
+            self.assertEqual(len(calls), 1)
             self.assertEqual(calls[0][2]['dbname'], default_db)
 
     def test_non_default_database(self):
@@ -605,7 +610,7 @@ class TestConnectionService(unittest.TestCase):
 
         # If I connect with an empty database name
         with mock.patch('ossdbtoolsservice.connection.connection_service._build_connection_response'), \
-                mock.patch('psycopg2.connect') as mock_psycopg2_connect:
+                mock.patch('psycopg2.connect', return_value=MockPsycopgConnection()) as mock_psycopg2_connect:
             self.connection_service.connect(params)
 
             # Then psycopg2's connect method was called with the default database
