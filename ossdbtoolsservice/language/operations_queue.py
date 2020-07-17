@@ -4,18 +4,18 @@
 # --------------------------------------------------------------------------------------------
 
 """A module that handles queueing """
-from typing import Callable, Dict, List, Optional   # noqa
 import threading
-from logging import Logger  
+from logging import Logger
+from prompt_toolkit.completion import Completer
 from queue import Queue
+from typing import Callable, Dict, List, Optional   # noqa
 
+import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectRequestParams, ConnectionType
 from ossdbtoolsservice.hosting import ServiceProvider
-from ossdbtoolsservice.language.completion import PGCompleter
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
 from ossdbtoolsservice.driver import ServerConnection
-import ossdbtoolsservice.utils as utils
 
 INTELLISENSE_URI = 'intellisense://'
 
@@ -25,7 +25,7 @@ class ConnectionContext:
     def __init__(self, key: str, logger: Optional[Logger] = None):
         self.key = key
         self.intellisense_complete: threading.Event = threading.Event()
-        self.pgcompleter: PGCompleter = None
+        self.completer: Completer = None
         self.is_connected: bool = False
         self.logger: Logger = logger
 
@@ -35,8 +35,8 @@ class ConnectionContext:
         completion_refresher.refresh(self._on_completions_refreshed)
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _on_completions_refreshed(self, new_completer: PGCompleter):
-        self.pgcompleter = new_completer
+    def _on_completions_refreshed(self, new_completer: Completer):
+        self.completer = new_completer
         self.is_connected = True
         self.intellisense_complete.set()
 
@@ -44,14 +44,14 @@ class ConnectionContext:
 class QueuedOperation:
     """Information about an operation to be queued"""
 
-    def __init__(self, key: str, task: Callable[[PGCompleter], bool], timeout_task: Callable[[None], bool]):
+    def __init__(self, key: str, task: Callable[[Completer], bool], timeout_task: Callable[[None], bool]):
         """
         Initializes a queued operation with a key defining the connection it maps to,
         a task to be run for a connected queue, and a timeout task. Currently the timeout
         task is just used if the queue is not yet connected
         """
         self.key = key
-        self.task: Callable[[PGCompleter], bool] = task
+        self.task: Callable[[Completer], bool] = task
         self.timeout_task: Callable[[None], bool] = timeout_task
         self.context: ConnectionContext = None
 
