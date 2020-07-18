@@ -178,11 +178,11 @@ class LanguageService:
         """
         if params is not None and params.uri is not None:
             if params.language.lower() == 'sql':
-                if params.flavor == utils.constants.PG_PROVIDER_NAME:
+                if params.flavor.lower() == 'pgsql':
                     self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].add(params.uri)
                 else:
                     self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].discard(params.uri)
-                if params.flavor == utils.constants.MYSQL_PROVIDER_NAME:
+                if params.flavor.lower() == 'mssql':
                     self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].add(params.uri)
                 else:
                     self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].discard(params.uri)
