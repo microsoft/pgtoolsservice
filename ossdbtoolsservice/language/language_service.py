@@ -69,7 +69,8 @@ class LanguageService:
         self._logger: [Logger, None] = None
         self._provider_valid_uri: Dict[str, Set] = {
             utils.constants.PG_PROVIDER_NAME: set(), 
-            utils.constants.MYSQL_PROVIDER_NAME: set()
+            utils.constants.MYSQL_PROVIDER_NAME: set(),
+            utils.constants.MSSQL_PROVIDER_NAME: set()
         }
         self._completion_helper = DefaultCompletionHelper()
         self._script_map: Dict[str, 'ScriptParseInfo'] = {}
@@ -178,11 +179,16 @@ class LanguageService:
         """
         if params is not None and params.uri is not None:
             if params.language.lower() == 'sql':
-                if params.flavor.lower() == 'pgsql':
+                # provider.flavor can be PGSQL, MySQL, MSSQL
+                if params.flavor.lower() == utils.constants.PG_PROVIDER_NAME.lower():
                     self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].add(params.uri)
                 else:
                     self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].discard(params.uri)
-                if params.flavor.lower() == 'mssql':
+                if params.flavor == utils.constants.MSSQL_PROVIDER_NAME:
+                    self._provider_valid_uri[utils.constants.MSSQL_PROVIDER_NAME].add(params.uri)
+                else:
+                    self._provider_valid_uri[utils.constants.MSSQL_PROVIDER_NAME].discard(params.uri)
+                if params.flavor.lower() == utils.constants.MYSQL_PROVIDER_NAME.lower():
                     self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].add(params.uri)
                 else:
                     self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].discard(params.uri)

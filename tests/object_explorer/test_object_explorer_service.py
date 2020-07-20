@@ -45,7 +45,7 @@ def _connection_details() -> Tuple[ConnectionDetails, str]:
         'user': TEST_USER,
         'port': TEST_PORT
     }
-    session_uri = ObjectExplorerService._generate_session_uri(param)
+    session_uri = ObjectExplorerService._generate_session_uri(param, PG_PROVIDER_NAME)
     return param, session_uri
 
 
@@ -102,12 +102,12 @@ class TestObjectExplorer(unittest.TestCase):
             # If: I generate a session URI from params that are missing a value
             # Then: I should get an exception
             with self.assertRaises(Exception):
-                ObjectExplorerService._generate_session_uri(param_set)
+                ObjectExplorerService._generate_session_uri(param_set, PG_PROVIDER_NAME)
 
     def test_generate_uri_valid_params(self):
         # If: I generate a session URI from a valid connection details object
         params, session_uri = _connection_details()
-        output = ObjectExplorerService._generate_session_uri(params)
+        output = ObjectExplorerService._generate_session_uri(params, PG_PROVIDER_NAME)
 
         # Then: The output should be a properly formed URI
         parse_result = url_parse.urlparse(output)
@@ -164,6 +164,7 @@ class TestObjectExplorer(unittest.TestCase):
         params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
+        oe._provider = PG_PROVIDER_NAME
 
         # If: I attempt to create an OE session that already exists
         rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
@@ -216,6 +217,7 @@ class TestObjectExplorer(unittest.TestCase):
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        oe._provider = PG_PROVIDER_NAME
         oe._server = Server
 
         # ... Create parameters, session, request context validator

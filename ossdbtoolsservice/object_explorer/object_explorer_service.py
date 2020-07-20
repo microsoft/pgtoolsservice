@@ -79,14 +79,17 @@ class ObjectExplorerService(object):
 
             # Use the provider's default db if db name was not specified
             if params.database_name is None or params.database_name == '':
-                params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
+                if self._provider == utils.constants.MYSQL_PROVIDER_NAME:
+                    params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.my_sql.default_database
+                elif self._provider == utils.constants.PG_PROVIDER_NAME:
+                    params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
 
             # Use the provider's default port if port number was not specified
             if not params.port:
                 params.port = utils.constants.DEFAULT_PORT[self._provider]
 
             # Generate the session ID and create/store the session
-            session_id = self._generate_session_uri(params)
+            session_id = self._generate_session_uri(params, self._provider)
             session: ObjectExplorerSession = ObjectExplorerSession(session_id, params)
 
             # Add the session to session map in a lock to prevent race conditions between check and add
@@ -330,11 +333,12 @@ class ObjectExplorerService(object):
         self._session_map.pop(session.id)
 
     @staticmethod
-    def _generate_session_uri(params: ConnectionDetails) -> str:
+    def _generate_session_uri(params: ConnectionDetails, provider_name: str) -> str:
         # Make sure the required params are provided
         utils.validate.is_not_none_or_whitespace('params.server_name', params.options.get('host'))
         utils.validate.is_not_none_or_whitespace('params.user_name', params.options.get('user'))
-        utils.validate.is_not_none_or_whitespace('params.database_name', params.options.get('dbname'))
+        if provider_name == utils.constants.PG_PROVIDER_NAME:
+            utils.validate.is_not_none_or_whitespace('params.database_name', params.options.get('dbname'))
         utils.validate.is_not_none('params.port', params.options.get('port'))
 
         # Generates a session ID that will function as the base URI for the session

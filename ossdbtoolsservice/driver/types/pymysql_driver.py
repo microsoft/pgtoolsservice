@@ -65,6 +65,11 @@ class MySQLConnection(ServerConnection):
                 if val:
                     self._connection_options[param] = int(val) or None
 
+        # Use the default database if one was not provided
+        if 'database' not in self._connection_options or not self._connection_options['database']:
+            if configs:
+                self._connection_options['database'] = configs.my_sql.default_database
+
         # Use the default port number if one was not provided
         if 'port' not in self._connection_options or not self._connection_options['port']:
             self._connection_options['port'] = constants.DEFAULT_PORT[constants.MYSQL_PROVIDER_NAME]
