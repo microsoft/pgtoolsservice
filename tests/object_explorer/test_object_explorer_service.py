@@ -182,6 +182,7 @@ class TestObjectExplorer(unittest.TestCase):
         # ... Create an OE service
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
+        oe._provider = PG_PROVIDER_NAME
 
         # ... Patch the threading to throw
         patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
