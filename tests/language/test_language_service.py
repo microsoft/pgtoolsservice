@@ -188,7 +188,8 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: I create a new language service
         pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', 'pgsql')
-        mssqql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'mssql')
+        mysql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'mysql')
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'mssql')
         other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
         provider = utils.get_mock_service_provider()
         service = LanguageService()
@@ -198,22 +199,30 @@ class TestLanguageService(unittest.TestCase):
         context: NotificationContext = utils.get_mock_notification_context()
 
         service.handle_flavor_change(context, pgsql_params)
-        service.handle_flavor_change(context, mssqql_params)
+        service.handle_flavor_change(context, mssql_params)
+        service.handle_flavor_change(context, mysql_params)
         service.handle_flavor_change(context, other_params)
 
         # Then:
         # ... Only non-PGSQL SQL files should be ignored
         context.send_notification.assert_not_called()
-        self.assertFalse(service.is_valid_uri(mssqql_params.uri))
+        self.assertFalse(service.is_valid_uri(mssql_params.uri))
         self.assertTrue(service.is_valid_uri(pgsql_params.uri))
         self.assertFalse(service.is_valid_uri(other_params.uri))
 
         # When: I change from MSSQL to PGSQL
-        mssqql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'pgsql')
-        service.handle_flavor_change(context, mssqql_params)
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'pgsql')
+        service.handle_flavor_change(context, mssql_params)
 
         # Then: the service is updated to allow intellisense
-        self.assertTrue(service.is_valid_uri(mssqql_params.uri))
+        self.assertTrue(service.is_valid_uri(mssql_params.uri))
+
+        # When: I change from PGSQL to MYSQL
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'mysql')
+        service.handle_flavor_change(context, mssql_params)
+
+        # Then: the service is updated to not allow intellisense
+        self.assertFalse(service.is_valid_uri(mssql_params.uri))
 
     def test_on_connect_sends_notification(self):
         """
@@ -278,6 +287,8 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
+        # add uri to valid uri set ensure request passes uri check
+        # normally done in flavor change handler, but we are not testing that here
         service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
 
         # When: I have no useful formatting defaults defined
@@ -321,6 +332,8 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
+        # add uri to valid uri set ensure request passes uri check
+        # normally done in flavor change handler, but we are not testing that here
         service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
 
         # When: I request document formatting
@@ -366,6 +379,8 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentRangeFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
+        # add uri to valid uri set ensure request passes uri check
+        # normally done in flavor change handler, but we are not testing that here
         service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
         
         # When: I request format the 2nd line of a document
