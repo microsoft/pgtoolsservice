@@ -15,8 +15,8 @@ from ossdbtoolsservice.driver import ServerConnection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection
-from tests.utils import MockConnection as MockPsycopgConnection
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
+from tests.utils import MockPsycopgConnection
+from tests.pgsmo_tests.utils import MockServerConnection
 
 class TestServer(unittest.TestCase):
     CHECK_RECOVERY_ROW = {
@@ -97,7 +97,7 @@ class TestServer(unittest.TestCase):
     def test_refresh(self):
         # Setup:
         # ... Create a server object that has a connection
-        obj = Server(MockServerConnection(None))
+        obj = Server(MockServerConnection())
 
         # ... Mock out the reset methods on the various collections
         obj.databases.reset = mock.MagicMock()
@@ -117,7 +117,7 @@ class TestServer(unittest.TestCase):
     def test_urn_base(self):
         # Setup:
         # ... Create a server object that has a connection
-        server = Server(MockServerConnection(None))
+        server = Server(MockServerConnection())
 
         # If: I get the URN base for the server
         urn_base = server.urn_base
@@ -132,7 +132,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_empty(self):
         # Setup: Create a server object
-        server = Server(MockServerConnection(None))
+        server = Server(MockServerConnection())
 
         test_cases = [None, '', '\t \n\r']
         for test_case in test_cases:
@@ -143,7 +143,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_wrong_server(self):
         # Setup: Create a server object
-        server = Server(MockServerConnection(None))
+        server = Server(MockServerConnection())
 
         with self.assertRaises(ValueError):
             # If: I get an object by its URN with a URN that is invalid for the server
@@ -153,7 +153,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_wrong_collection(self):
         # Setup: Create a server object
-        server = Server(MockServerConnection(None))
+        server = Server(MockServerConnection())
 
         with self.assertRaises(ValueError):
             # If: I get an object by its URN with a URN that points to an invalid path off the server
@@ -163,7 +163,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_success(self):
         # Setup: Create a server with a database under it
-        server = Server(MockServerConnection(None))
+        server = Server(MockServerConnection())
         mock_db = Database(server, 'test_db')
         mock_db._oid = 123
         server._child_objects[Database.__name__] = {123: mock_db}

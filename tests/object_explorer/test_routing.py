@@ -17,6 +17,13 @@ from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExpl
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 class TestObjectExplorerRouting(unittest.TestCase):
+
+    def setUp(self):
+        service_provider =  ServiceProvider(None, {}, PG_PROVIDER_NAME)
+        self.object_explorer_service = ObjectExplorerService()
+        self.object_explorer_service.service_provider = service_provider
+        self.object_explorer_service._routing_table = PG_ROUTING_TABLE
+
     # FOLDER TESTING #######################################################
     def test_folder_init(self):
         # If: I create a folder
@@ -110,23 +117,15 @@ class TestObjectExplorerRouting(unittest.TestCase):
 
     def test_routing_invalid_path(self):
         # If: Ask to route a path without a route
-        # Then: I should get an exception
-        service_provider =  ServiceProvider(None, {}, PG_PROVIDER_NAME)
-        object_explorer_service = ObjectExplorerService()
-        object_explorer_service.service_provider = service_provider
-        object_explorer_service._routing_table = PG_ROUTING_TABLE
 
+        # Then: I should get an exception
         with self.assertRaises(ValueError):
-            object_explorer_service._route_request(False, 
+            self.object_explorer_service._route_request(False, 
                 ObjectExplorerSession('session_id', ConnectionDetails()), '!/invalid!/')
 
     def test_routing_match(self):
         # If: Ask to route a request that is valid
-        service_provider =  ServiceProvider(None, {}, PG_PROVIDER_NAME)
-        object_explorer_service = ObjectExplorerService()
-        object_explorer_service.service_provider = service_provider
-        object_explorer_service._routing_table = PG_ROUTING_TABLE
-        output = object_explorer_service._route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '/')
+        output = self.object_explorer_service._route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '/')
 
         # Then: The output should be a list of nodes
         self.assertIsInstance(output, list)

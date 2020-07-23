@@ -45,11 +45,11 @@ GROUP BY
 class MySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
 
-    def __init__(self, conn_params: {}, configs: Optional[Configuration] = None):
+    def __init__(self, conn_params: {}, config: Optional[Configuration] = None):
         """
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
-        :param configs: optional Configuration object with mysql connection configs
+        :param config: optional Configuration object with mysql connection config
         """
         # Map the provided connection parameter names to pymysql param names
         _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param) : value for param, value in conn_params.items()}
@@ -67,8 +67,8 @@ class MySQLConnection(ServerConnection):
 
         # Use the default database if one was not provided
         if 'database' not in self._connection_options or not self._connection_options['database']:
-            if configs:
-                self._connection_options['database'] = configs.my_sql.default_database
+            if config:
+                self._connection_options['database'] = config.my_sql.default_database
 
         # Use the default port number if one was not provided
         if 'port' not in self._connection_options or not self._connection_options['port']:

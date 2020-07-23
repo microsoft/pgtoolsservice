@@ -15,7 +15,7 @@ import ossdbtoolsservice.scripting.scripter as scripter
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from smo.common.node_object import NodeCollection
 
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
+from tests.pgsmo_tests.utils import MockServerConnection
 from tests.utils import assert_not_none_or_whitespace
 
 class TestScripter(unittest.TestCase):

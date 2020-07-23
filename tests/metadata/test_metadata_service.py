@@ -12,8 +12,8 @@ from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.metadata.contracts import METADATA_LIST_REQUEST, MetadataListParameters, MetadataListResponse, MetadataType, ObjectMetadata
 from ossdbtoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from tests.utils import MockCursor, MockRequestContext, MockThread
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
+from tests.utils import MockCursor, MockRequestContext, MockThread, MockPsycopgConnection
+from tests.pgsmo_tests.utils import MockServerConnection
 
 
 class TestMetadataService(unittest.TestCase):

@@ -8,7 +8,8 @@ import unittest
 from unittest import mock
 
 from ossdbtoolsservice.edit_data import SmoEditTableMetadataFactory
-from tests.pgsmo_tests.utils import MockConnection
+from tests.pgsmo_tests.utils import MockServerConnection
+from tests.utils import MockPsycopgConnection
 from pgsmo import Server, Table, View, Column
 
 
@@ -16,7 +17,7 @@ class TestSmoEditTableMetadataFactory(unittest.TestCase):
 
     def setUp(self):
         self._smo_metadata_factory = SmoEditTableMetadataFactory()
-        self._connection = MockConnection(cur=None, port= "8080", host= "test", name= "test", user= "test")
+        self._connection = MockServerConnection(cur=None, port= "8080", host= "test", name= "test", user= "test")
         self._server = Server(self._connection)
         self._schema_name = 'public'
         self._table_name = 'Employee'

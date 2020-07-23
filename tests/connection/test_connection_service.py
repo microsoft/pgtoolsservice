@@ -11,22 +11,21 @@ from unittest.mock import Mock, MagicMock
 
 import psycopg2
 
+import ossdbtoolsservice.connection.connection_service
+import tests.utils as utils
 from ossdbtoolsservice.connection.contracts import (
     CONNECTION_COMPLETE_METHOD, ConnectionType, ConnectRequestParams, ConnectionDetails,
     DisconnectRequestParams, ListDatabasesParams, ConnectionCompleteParams, CancelConnectParams,
     ChangeDatabaseRequestParams
 )
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
-import ossdbtoolsservice.connection.connection_service
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.workspace import WorkspaceService
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from tests.integration import get_connection_details, integration_test
-import tests.utils as utils
-from tests.utils import MockCursor, MockRequestContext
-from tests.utils import MockConnection as MockPsycopgConnection
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
+from tests.pgsmo_tests.utils import MockServerConnection
+from tests.utils import MockCursor, MockRequestContext, MockPsycopgConnection
 
 
 class TestConnectionService(unittest.TestCase):
@@ -159,7 +158,7 @@ class TestConnectionService(unittest.TestCase):
             'user': 'postgres'
         })
         mock_server_connection = MockServerConnection(cur = None, host = 'myserver', 
-            name = 'postgres', user = 'postgres')
+                name = 'postgres', user = 'postgres')
 
         # Insert a ConnectionInfo object into the connection service's map
         old_connection_details = ConnectionDetails.from_data({
@@ -233,7 +232,7 @@ class TestConnectionService(unittest.TestCase):
         connection_type = conn_type
 
         # Set up the mock connection for psycopg2's connect method to return
-        mock_connection = MockPsycopgConnection(dsn_parameters={
+        mock_psycopg_connection = MockPsycopgConnection(dsn_parameters={
             'host': f'myserver',
             'dbname': 'postgres',
             'user': 'postgres@myserver'
@@ -241,10 +240,10 @@ class TestConnectionService(unittest.TestCase):
 
         # Set up the connection service and call its connect method with the
         # supported options
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_psycopg_connection)):
             self.connection_service.connect(
-                ConnectRequestParams(connection_details, connection_uri, connection_type))
-            self.connection_service.get_connection(connection_uri, conn_type)
+            ConnectRequestParams(connection_details, connection_uri, connection_type))
+        self.connection_service.get_connection(connection_uri, conn_type)
         # ... The mock config change callbacks should have been called
         for callback in callbacks:
             if (expect_callback):
@@ -423,7 +422,7 @@ class TestConnectionService(unittest.TestCase):
         # Set up the test with mock data
         mock_query_results = [('database1',), ('database2',)]
         connection_uri = 'someuri'
-        mock_connection = MockPsycopgConnection(
+        mock_psycopg_connection = MockPsycopgConnection(
             dsn_parameters={
                 'host': 'myserver',
                 'dbname': 'postgres',
@@ -441,7 +440,7 @@ class TestConnectionService(unittest.TestCase):
         params = ListDatabasesParams()
         params.owner_uri = connection_uri
 
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_psycopg_connection)):
             self.connection_service.handle_list_databases(mock_request_context, params)
         expected_databases = [result[0] for result in mock_query_results]
         self.assertEqual(mock_request_context.last_response_params.database_names, expected_databases)
@@ -661,7 +660,7 @@ class TestConnectionCancellation(unittest.TestCase):
                 }
             }
         })
-        self.mock_connection = MockPsycopgConnection(dsn_parameters={
+        self.mock_psycopg_connection = MockPsycopgConnection(dsn_parameters={
             'host': 'myserver',
             'dbname': 'postgres',
             'user': 'postgres'
@@ -793,15 +792,8 @@ class TestConnectionCancellation(unittest.TestCase):
             }
         })
 
-        # Set up the mock connection for psycopg2's connect method to return
-        mock_connection = MockPsycopgConnection(dsn_parameters={
-            'host': 'myserver',
-            'dbname': 'postgres',
-            'user': 'postgres'
-        })
-
         # Set up psycopg2 instance for connection service to call
-        mock_connect_method = mock.Mock(return_value=mock_connection)
+        mock_connect_method = mock.Mock(return_value=self.mock_psycopg_connection)
 
         # Set up the connection service and call its connect method with the supported options
         with mock.patch('psycopg2.connect', new=mock_connect_method):
@@ -813,7 +805,7 @@ class TestConnectionCancellation(unittest.TestCase):
         # Verify that psycopg2's connection method was called and that the
         # response has a connection id, indicating success.
         self.assertIs(self.connection_service.owner_to_connection_map[params.owner_uri].get_connection(params.type)._conn,
-                      mock_connection)
+                      self.mock_psycopg_connection)
         self.assertIsNotNone(response.connection_id)
         self.assertIsNotNone(response.server_info.server_version)
         self.assertFalse(response.server_info.is_cloud)
@@ -821,7 +813,7 @@ class TestConnectionCancellation(unittest.TestCase):
     def _mock_connect(self, **kwargs):
         """Implementation for the mock psycopg2.connect method that saves the current cancellation token"""
         self.token_store.append(self.connection_service._cancellation_map[(self.owner_uri, self.connection_type)])
-        return self.mock_connection
+        return self.mock_psycopg_connection
 
 
 class ConnectionServiceIntegrationTests(unittest.TestCase):

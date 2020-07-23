@@ -35,11 +35,11 @@ PG_CONNECTION_PARAM_KEYWORDS = [
 class PostgreSQLConnection(ServerConnection):
     """Wrapper for a psycopg2 connection that makes various properties easier to access"""
 
-    def __init__(self, conn_params: {}, configs: Optional[Configuration] = None):
+    def __init__(self, conn_params: {}, config: Optional[Configuration] = None):
         """
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
-        :param configs: optional Configuration object with pgsql connection configs
+        :param config: optional Configuration object with pgsql connection config
         """
         # If options contains azureSecurityToken, then just copy it over to password, which is how it is
         # passed to PostgreSQL.
@@ -52,8 +52,8 @@ class PostgreSQLConnection(ServerConnection):
         
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
-            if configs:
-                connection_options['dbname'] = configs.pgsql.default_database
+            if config:
+                connection_options['dbname'] = config.pgsql.default_database
             else:
                 connection_options['dbname'] = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
 

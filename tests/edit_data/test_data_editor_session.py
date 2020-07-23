@@ -9,7 +9,7 @@ from unittest import mock
 
 from ossdbtoolsservice.edit_data import DataEditorSession
 from ossdbtoolsservice.edit_data.contracts import InitializeEditParams, EditInitializerFilter, CreateRowResponse  # noqa
-from tests.utils import MockConnection, MockCursor
+from tests.utils import MockPsycopgConnection, MockCursor
 from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata, DataEditSessionExecutionState
 from ossdbtoolsservice.query import (
     Batch, create_result_set, ExecutionState, Query, QueryExecutionSettings, QueryEvents, ResultSet, ResultSetStorageType
@@ -24,7 +24,7 @@ class TestDataEditorSession(unittest.TestCase):
     def setUp(self):
         self._metadata_factory = mock.MagicMock()
         self._mock_cursor = MockCursor(None)
-        self._connection = MockConnection({"port": "8080", "host": "test", "dbname": "test"}, self._mock_cursor)
+        self._connection = MockPsycopgConnection({"port": "8080", "host": "test", "dbname": "test"}, self._mock_cursor)
         self._initialize_edit_request = InitializeEditParams()
 
         self._initialize_edit_request.schema_name = 'public'

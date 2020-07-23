@@ -8,13 +8,13 @@ import unittest
 import unittest.mock as mock
 
 from psycopg2 import DatabaseError
-from psycopg2.extensions import Column, QueryCanceledError
+from psycopg2.extensions import Column
 
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
-from ossdbtoolsservice.driver.types.psycopg_driver import PG_CANCELLATION_QUERY
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from pgsmo import Server
-from tests.utils import MockConnection as MockPsycopgConnection
 from smo.common.node_object import NodeCollection, NodeObject
+from tests.utils import MockPsycopgConnection
 
 # MOCK NODE OBJECT #########################################################
 class MockNodeObject(NodeObject):
@@ -108,108 +108,30 @@ class MockCursor:
         self._has_been_read = True
 
 
-class MockConnection():
+class MockServerConnection(PostgreSQLConnection):
     '''Class used to mock ServerConnection objects for testing'''
     def __init__(
-            self,
-            cur: Optional[MockCursor],
-            version: str = '90602',
-            name: str = 'postgres',
-            host: str = 'localhost',
-            port: str = '25565',
-            user: str = 'postgres'):
-
-        # Setup the properties
-        self._server_version: Tuple[int, int, int] = (
-            int(version[:-4]),
-            int(version[-4:-2]),
-            int(version[-2:])
-        )
-        self.host_name = host
-        self.port = port
-        self.database_name = name
-        self.user_name = user
-        self._provider_name = PG_PROVIDER_NAME
-        self._server_type = "PostgreSQL"
-        self._database_error = DatabaseError
-        self._conn = MockPsycopgConnection({'version': version, 
-                                                'name': name, 
-                                                'host': host, 
-                                                'port': port, 
-                                                'user': user
-                                                }, cur)
-        self.transaction_in_error = False
-        self.notices = []
+        self,
+        cur: Optional[MockCursor] = None,
+        connection: Optional[MockPsycopgConnection] = None,
+        version: str = '90602',
+        name: str = 'postgres',
+        host: str = 'localhost',
+        port: str = '25565',
+        user: str = 'postgres'):
 
         # Setup mocks for the connection
         self.close = mock.MagicMock()
         self.cursor = mock.MagicMock(return_value=cur)
 
-    @property
-    def server_version(self):
-        return self._server_version
-    
-    @property
-    def server_type(self) -> str:
-        """Server type for distinguishing between standard PG and PG supersets"""
-        return self._server_type
+        # if no mock pyscopg connection passed, create default one
+        if not connection:
+            connection = MockPsycopgConnection(cursor=cur, dsn_parameters={
+                'dbname': name, 'host': host, 'port': port, 'user': user})
 
-    @property
-    def autocommit(self) -> bool:
-        """Returns the current autocommit status for this connection"""
-        pass
-
-    @property
-    def database_error(self):
-        """Returns the type of database error this connection throws"""
-        return self._database_error
-        
-    @property
-    def cancellation_query(self) -> str:
-        backend_pid = self._conn.get_backend_pid()
-        return PG_CANCELLATION_QUERY.format(backend_pid)
-
-    @property
-    def query_canceled_error(self) -> Exception:
-        """Returns driver query canceled error"""
-        return QueryCanceledError
-
-    @autocommit.setter
-    def autocommit(self, mode: bool):
-        """
-        Sets the current autocommit status for this connection
-        :param mode: True or False
-        """
-        pass
-
-    def get_database_owner(self):
-        """
-        List the owner(s) of the current database
-        """
-        database_name = self.database_name
-        owner_query = "SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{}'".format(database_name)
-        return self.execute_query(owner_query, all=True)[0][0]
-        
-    def get_database_size(self, dbname: str):
-        """
-        Gets the size of a particular database in MB
-        """
-        pass
-
-    def execute_query(self, query, all=True):
-        """
-        Execute a simple query without arguments for the given connection
-        :raises psycopg2.ProgrammingError: if there was no result set when executing the query
-        """
-        cursor = self._conn.cursor()
-        cursor.execute(query)
-        if all:
-            query_results = cursor.fetchall()
-        else:
-            query_results = cursor.fetchone()
-
-        cursor.close()
-        return query_results
+        # mock psycopg2.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
+        with mock.patch('psycopg2.connect', mock.Mock(return_value=connection)):
+            super().__init__({"host_name": host, "user_name": user, "port": port, "database_name": name})
 
 # OBJECT TEST HELPERS ######################################################
 def assert_node_collection(prop: any, attrib: any):

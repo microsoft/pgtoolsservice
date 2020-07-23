@@ -8,7 +8,6 @@ from collections import namedtuple
 
 from ossdbtoolsservice.query.column_info import get_columns_info
 import tests.utils as utils
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
 
 class TestGetColumnsInfo(unittest.TestCase):
 
@@ -19,7 +18,7 @@ class TestGetColumnsInfo(unittest.TestCase):
         column = namedtuple('Column', ['name', 'type_code', 'display_size', 'internal_size', 'precision', 'scale', 'null_ok'])
 
         self._cursor.description = [column('id', 1, None, None, None, None, True), column('is_valid', 2, None, None, None, None, True)]
-        self._connection = utils.MockConnection(cursor=self._cursor)
+        self._connection = utils.MockPsycopgConnection(cursor=self._cursor)
         self._cursor.connection = self._connection
 
     def test_get_column_info_executes_cursor(self):

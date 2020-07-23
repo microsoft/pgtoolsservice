@@ -40,7 +40,7 @@ from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectionDet
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection, MockCursor as MockServerCursor
+from tests.pgsmo_tests.utils import MockServerConnection
 from ossdbtoolsservice.query.data_storage import (
     SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
 )
@@ -57,7 +57,11 @@ class TestQueryService(unittest.TestCase):
 
         self.rows = [(1, 'Text 1'), (2, 'Text 2')]
         self.cursor = utils.MockCursor(self.rows)
-        self.connection = MockServerConnection(cur=self.cursor)
+        self.mock_psycopg_connection = utils.MockPsycopgConnection(dsn_parameters={
+            'host': 'test', 
+            'dbname': 'test',
+        })
+        self.connection = MockServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.query_execution_service = QueryExecutionService()
@@ -410,7 +414,7 @@ class TestQueryService(unittest.TestCase):
         # access to the arguments list of the notification call
         notification_calls = self.request_context.send_notification.mock_calls
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == DEPLOY_MESSAGE_NOTIFICATION]
-
+        
         # Assert that at least one message notification was sent and that there were no errors
         self.assertGreaterEqual(len(call_params_list), 1)
         for param in call_params_list:
@@ -964,7 +968,7 @@ class TestQueryService(unittest.TestCase):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
-        self.connection.transaction_in_error = True
+        self.mock_psycopg_connection.get_transaction_status = mock.MagicMock(return_value=psycopg2.extensions.TRANSACTION_STATUS_INERROR)
         query_params = get_execute_string_params()
         query = Query(query_params.owner_uri, query_params.query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         self.query_execution_service.query_results[query_params.owner_uri] = query

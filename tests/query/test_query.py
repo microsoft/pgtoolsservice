@@ -13,7 +13,7 @@ from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, Selectio
 from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.utils import MockCursor
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
+from tests.pgsmo_tests.utils import MockServerConnection
 
 
 class TestQuery(unittest.TestCase):

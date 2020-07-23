@@ -27,7 +27,7 @@ from pgsmo.objects.server.server import Server
 from pgsmo.objects.database.database import Database
 from ossdbtoolsservice.utils import constants
 import tests.utils as utils
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
+from tests.pgsmo_tests.utils import MockServerConnection
 from tests.mock_request_validation import RequestFlowValidator
 
 
@@ -318,7 +318,7 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_create_connection_successful(self):
         # Setup:
-        mock_connection = MockServerConnection('test')
+        mock_connection = MockServerConnection()
         oe = ObjectExplorerService()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
@@ -632,10 +632,10 @@ class SessionTestCase(unittest.TestCase):
         self.session = ObjectExplorerSession(session_uri, params)
         self.oe._session_map[session_uri] = self.session
         name = 'dbname'
-        self.mock_server = Server(MockServerConnection(name))
+        self.mock_server = Server(MockServerConnection())
         self.session.server = self.mock_server
-        self.db = Database(self.mock_server, name)
-        self.db._connection = MockServerConnection(name)
+        self.db = Database(self.mock_server, name)        
+        self.db._connection = self.mock_server._conn
         self.session.server._child_objects[Database.__name__] = [self.db]
         self.cs.get_connection = mock.MagicMock(return_value=self.mock_connection)
 

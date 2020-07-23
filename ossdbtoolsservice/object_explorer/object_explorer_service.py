@@ -337,6 +337,7 @@ class ObjectExplorerService(object):
         # Make sure the required params are provided
         utils.validate.is_not_none_or_whitespace('params.server_name', params.options.get('host'))
         utils.validate.is_not_none_or_whitespace('params.user_name', params.options.get('user'))
+        # database_name is not required for mysql connection
         if provider_name == utils.constants.PG_PROVIDER_NAME:
             utils.validate.is_not_none_or_whitespace('params.database_name', params.options.get('dbname'))
         utils.validate.is_not_none('params.port', params.options.get('port'))

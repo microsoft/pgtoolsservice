@@ -11,12 +11,12 @@ import psycopg2
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.admin.contracts import GET_DATABASE_INFO_REQUEST, GetDatabaseInfoParameters, GetDatabaseInfoResponse
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from tests.utils import MockCursor, MockRequestContext
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
+from tests.pgsmo_tests.utils import MockServerConnection
+from tests.utils import MockCursor, MockRequestContext, MockPsycopgConnection
 
 class TestAdminService(unittest.TestCase):
     """Methods for testing the admin service"""

@@ -19,15 +19,15 @@ class ConnectionManager:
         MARIADB_PROVIDER_NAME: MySQLConnection
     }
 
-    def __init__(self, provider: str, configs: Configuration, conn_options: {}):
+    def __init__(self, provider: str, config: Configuration, conn_options: {}):
 
         # Get info about this connection's provider
         self._provider = provider
 
         # Create a connection using the provider and connection options
-        self._conn_object = self._create_connection(conn_options, configs)
+        self._conn_object = self._create_connection(conn_options, config)
 
-    def _create_connection(self, options, configs) -> ServerConnection:
+    def _create_connection(self, options, config) -> ServerConnection:
         """
         Creates a ServerConnection according to the provider and connection options
         :param options: a dict containing connection parameters
@@ -35,7 +35,7 @@ class ConnectionManager:
         if self._provider not in self.CONNECTORS.keys():
             raise AssertionError(str(self._provider) + " is not a supported database engine.")
         
-        return self.CONNECTORS[self._provider](options, configs)
+        return self.CONNECTORS[self._provider](options, config)
 
     def get_connection(self):
         return self._conn_object

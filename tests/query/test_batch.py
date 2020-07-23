@@ -7,7 +7,7 @@ import unittest
 from unittest import mock
 
 import tests.utils as utils
-from tests.pgsmo_tests.utils import MockConnection as MockServerConnection
+from tests.pgsmo_tests.utils import MockServerConnection
 from ossdbtoolsservice.query.batch import (
     Batch, BatchEvents, create_batch, create_result_set, ResultSetStorageType, SelectBatch
 )

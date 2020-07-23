@@ -101,7 +101,7 @@ class MockRequestContext(RequestContext):
         self.last_error_message = str(ex)
 
 
-class MockConnection(object):
+class MockPsycopgConnection(object):
     """Class used to mock psycopg2 connection objects for testing"""
 
     def __init__(self, dsn_parameters=None, cursor=None):
@@ -113,6 +113,7 @@ class MockConnection(object):
         self.notices = []
         self.autocommit = True
         self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+        self.commit = mock.Mock()
 
     @property
     def closed(self):
