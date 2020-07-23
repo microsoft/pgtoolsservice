@@ -38,7 +38,7 @@ from ossdbtoolsservice.workspace.contracts import (
 )
 from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME, MSSQL_PROVIDER_NAME
 from tests.mock_request_validation import RequestFlowValidator
 import tests.utils as utils
 
@@ -170,7 +170,7 @@ class TestLanguageService(unittest.TestCase):
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
         service: LanguageService = self._init_service()
-        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(doc_position.text_document.uri)
+        service._valid_uri.add(doc_position.text_document.uri)
 
         # When: I request completion item
         service.handle_completion_request(context, doc_position)
@@ -187,9 +187,9 @@ class TestLanguageService(unittest.TestCase):
         Test that the service ignores files registered as being for non-PGSQL flavors
         """
         # If: I create a new language service
-        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', 'pgsql')
-        mysql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'mysql')
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'mssql')
+        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
+        mysql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
         other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
         provider = utils.get_mock_service_provider()
         service = LanguageService()
@@ -211,14 +211,14 @@ class TestLanguageService(unittest.TestCase):
         self.assertFalse(service.is_valid_uri(other_params.uri))
 
         # When: I change from MSSQL to PGSQL
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'pgsql')
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
         service.handle_flavor_change(context, mssql_params)
 
         # Then: the service is updated to allow intellisense
         self.assertTrue(service.is_valid_uri(mssql_params.uri))
 
         # When: I change from PGSQL to MYSQL
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'mysql')
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
         service.handle_flavor_change(context, mssql_params)
 
         # Then: the service is updated to not allow intellisense
@@ -289,7 +289,7 @@ class TestLanguageService(unittest.TestCase):
         format_params.text_document = self.default_text_document_id
         # add uri to valid uri set ensure request passes uri check
         # normally done in flavor change handler, but we are not testing that here
-        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
+        service._valid_uri.add(format_params.text_document.uri)
 
         # When: I have no useful formatting defaults defined
         service.handle_doc_format_request(context, format_params)
@@ -334,7 +334,7 @@ class TestLanguageService(unittest.TestCase):
         format_params.text_document = self.default_text_document_id
         # add uri to valid uri set ensure request passes uri check
         # normally done in flavor change handler, but we are not testing that here
-        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
+        service._valid_uri.add(format_params.text_document.uri)
 
         # When: I request document formatting
         service.handle_doc_format_request(context, format_params)
@@ -381,7 +381,7 @@ class TestLanguageService(unittest.TestCase):
         format_params.text_document = self.default_text_document_id
         # add uri to valid uri set ensure request passes uri check
         # normally done in flavor change handler, but we are not testing that here
-        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
+        service._valid_uri.add(format_params.text_document.uri)
         
         # When: I request format the 2nd line of a document
         format_params.range = Range.from_data(1, 0, 1, len(input_lines[1]))

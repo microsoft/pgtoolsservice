@@ -67,10 +67,7 @@ class LanguageService:
         self._service_provider: ServiceProvider = None
         self._server: JSONRPCServer = None
         self._logger: [Logger, None] = None
-        self._provider_valid_uri: Dict[str, Set] = {
-            utils.constants.PG_PROVIDER_NAME: set(), 
-            utils.constants.MYSQL_PROVIDER_NAME: set()
-        }
+        self._valid_uri: Set = set()
         self._completion_helper = DefaultCompletionHelper()
         self._script_map: Dict[str, 'ScriptParseInfo'] = {}
         self._script_map_lock: threading.Lock = threading.Lock()
@@ -179,14 +176,10 @@ class LanguageService:
         if params is not None and params.uri is not None:
             if params.language.lower() == 'sql':
                 # provider.flavor can be PGSQL, MySQL
-                if params.flavor.lower() == utils.constants.PG_PROVIDER_NAME.lower():
-                    self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].add(params.uri)
+                if params.flavor == self._service_provider.provider:
+                    self._valid_uri.add(params.uri)
                 else:
-                    self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].discard(params.uri)
-                if params.flavor.lower() == utils.constants.MYSQL_PROVIDER_NAME.lower():
-                    self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].add(params.uri)
-                else:
-                    self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].discard(params.uri)
+                    self._valid_uri.discard(params.uri)
 
     def handle_doc_format_request(self, request_context: RequestContext, params: DocumentFormattingParams) -> None:
         """
@@ -279,7 +272,7 @@ class LanguageService:
         """
         Checks if this URI can be treated as a candidate for processing or should be skipped ()
         """
-        return uri in self._provider_valid_uri[self._service_provider.provider]
+        return uri in self._valid_uri
 
     def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
         # TODO build the cache. For now, sending intellisense ready as a test
