@@ -75,3 +75,39 @@ class TestSqlCompletionRefresher(unittest.TestCase):
             self.refresher.refresh(callbacks)
             self.refresher._completer_thread.join()
             self.assertEqual(callbacks[0].call_count, 1)
+            
+    def test_refresh_selects_pg_completer(self):
+        """
+        The correct completer (pg vs mysql) should be selected.
+        """
+        callbacks = Mock()
+        pg_completer = Mock()
+        mysql_completer = Mock()
+
+        mock_COMPLETER_MAP = {
+            PG_PROVIDER_NAME: pg_completer,
+            MYSQL_PROVIDER_NAME: mysql_completer
+        }
+        with patch('ossdbtoolsservice.language.completion_refresher.COMPLETER_MAP', mock_COMPLETER_MAP):
+            # Set refreshers to 0: we're not testing refresh logic here
+            self.refresher.refreshers = {}
+            self.refresher.refresh(callbacks)
+            pg_completer.assert_called_once()
+            mysql_completer.assert_not_called()
+
+    def test_refresh_selects_mysql_completer(self):
+        callbacks = Mock()
+        pg_completer = Mock()
+        mysql_completer = Mock()       
+         
+        mock_COMPLETER_MAP = {
+            PG_PROVIDER_NAME: pg_completer,
+            MYSQL_PROVIDER_NAME: mysql_completer
+        }
+        with patch('ossdbtoolsservice.language.completion_refresher.COMPLETER_MAP', mock_COMPLETER_MAP):
+            # Set refreshers to 0: we're not testing refresh logic here
+            self.refresher.connection._provider_name = MYSQL_PROVIDER_NAME
+            self.refresher.refreshers = {}
+            self.refresher.refresh(callbacks)
+            mysql_completer.assert_called_once()
+            pg_completer.assert_not_called()
