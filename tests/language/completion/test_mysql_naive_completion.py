@@ -9,6 +9,7 @@ from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
 from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
+from ossdbtoolsservice.language.completion.mysql_completion import MySQLCompletion
 
 
 class TestNaiveCompletion(unittest.TestCase):
@@ -41,6 +42,7 @@ class TestNaiveCompletion(unittest.TestCase):
             Document(text=text, cursor_position=position),
             self.complete_event))
 
+        # grabbed these completions from mysqlliterals.json
         self.assertSetEqual(result, set([
             Completion(text='MANAGED', start_position=-2),
             Completion(text='MASTER_DELAY', start_position=-2),
@@ -107,3 +109,13 @@ class TestNaiveCompletion(unittest.TestCase):
             Completion(text="LOGFILE GROUP", display_meta='keyword'),
         ]))
         self.assertTrue(Completion(text="CREATE", display_meta="keyword") not in result)
+
+    def test_keyword_lower_casing(self):
+        new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing':'lower'})        
+        text = 'SEL'
+        position = len('SEL')
+        result = set(new_completer.get_completions(
+            Document(text=text, cursor_position=position),
+            self.complete_event))
+        self.assertSetEqual(result, set([Completion(text='select', start_position=-3)]))
+
