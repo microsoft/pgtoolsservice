@@ -11,8 +11,9 @@ from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesServ
 from ossdbtoolsservice.capabilities.contracts import InitializeResult, CapabilitiesResult
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.workspace import WorkspaceService
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.workspace import WorkspaceService
+
 import tests.utils as utils
 
 

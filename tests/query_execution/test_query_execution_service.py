@@ -16,35 +16,33 @@ import os
 from os import listdir
 from os.path import isfile, join
 
+import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
-from ossdbtoolsservice.query_execution.query_execution_service import (
-    QueryExecutionService, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
-from ossdbtoolsservice.query_execution.contracts import (
-    ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase)
-from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectionDetails
+from ossdbtoolsservice.driver.types.psycopg_driver import PG_CANCELLATION_QUERY, PostgreSQLConnection
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from ossdbtoolsservice.query import (
+    Batch, create_result_set, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
+    ResultSetStorageType
+)
+from ossdbtoolsservice.query.contracts import DbColumn, ResultSetSubset, SelectionData, SubsetResult
+from ossdbtoolsservice.query.data_storage import (
+    SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
+)
 from ossdbtoolsservice.query_execution.contracts import (
+    ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase,
     ExecutionPlanOptions, MESSAGE_NOTIFICATION, DEPLOY_MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, DEPLOY_BATCH_START_NOTIFICATION, DEPLOY_BATCH_COMPLETE_NOTIFICATION,
     QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, DEPLOY_COMPLETE_NOTIFICATION,
     QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams,
     SaveResultsAsJsonRequestParams, SaveResultRequestResult,
-    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
-)
-from ossdbtoolsservice.query.contracts import DbColumn, ResultSetSubset, SelectionData, SubsetResult
-from ossdbtoolsservice.query import (
-    Batch, create_result_set, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
-    ResultSetStorageType
-)
-from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectionDetails
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams)
+from ossdbtoolsservice.query_execution.query_execution_service import (
+    QueryExecutionService, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
+from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
-import tests.utils as utils
 from tests.pgsmo_tests.utils import MockServerConnection
-from ossdbtoolsservice.query.data_storage import (
-    SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
-)
-from ossdbtoolsservice.driver.types.psycopg_driver import PG_CANCELLATION_QUERY
+
 
 
 class TestQueryService(unittest.TestCase):
