@@ -182,13 +182,13 @@ class TestLanguageService(unittest.TestCase):
         self.assertTrue(len(completions) > 0)
         self.verify_match('TABLE', completions, Range.from_data(0, 7, 0, 10))
 
-    def test_language_flavor(self):
+    def test_pg_language_flavor(self):
         """
-        Test that the service ignores files registered as being for non-PGSQL flavors
+        Test that if provider is PGSQL, the service ignores files registered as being for non-PGSQL flavors
         """
         # If: I create a new language service
         pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
-        mysql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
+        mysql_params = LanguageFlavorChangeParams.from_data('file://mysqluri.sql', 'sql', MYSQL_PROVIDER_NAME)
         mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
         other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
         provider = utils.get_mock_service_provider()
@@ -209,6 +209,7 @@ class TestLanguageService(unittest.TestCase):
         self.assertFalse(service.is_valid_uri(mssql_params.uri))
         self.assertTrue(service.is_valid_uri(pgsql_params.uri))
         self.assertFalse(service.is_valid_uri(other_params.uri))
+        self.assertFalse(service.is_valid_uri(mysql_params.uri))
 
         # When: I change from MSSQL to PGSQL
         mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
@@ -223,6 +224,51 @@ class TestLanguageService(unittest.TestCase):
 
         # Then: the service is updated to not allow intellisense
         self.assertFalse(service.is_valid_uri(mssql_params.uri))
+
+    def test_mysql_language_flavor(self):
+        """
+        Test that if provider is MySQL, the service ignores files registered as being for non-MySQL flavors
+        """
+        # If: I create a new language service
+        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
+        mysql_params = LanguageFlavorChangeParams.from_data('file://mysqluri.sql', 'sql', MYSQL_PROVIDER_NAME)
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
+        other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
+
+        # create a mock mysql service provider
+        provider = utils.get_mock_service_provider(provider_name = MYSQL_PROVIDER_NAME)
+        service = LanguageService()
+        service._service_provider = provider
+
+        # When: I notify of language preferences
+        context: NotificationContext = utils.get_mock_notification_context()
+
+        service.handle_flavor_change(context, pgsql_params)
+        service.handle_flavor_change(context, mssql_params)
+        service.handle_flavor_change(context, mysql_params)
+        service.handle_flavor_change(context, other_params)
+
+        # Then:
+        # ... Only non-MySQL SQL files should be ignored
+        context.send_notification.assert_not_called()
+        self.assertFalse(service.is_valid_uri(mssql_params.uri))
+        self.assertFalse(service.is_valid_uri(pgsql_params.uri))
+        self.assertFalse(service.is_valid_uri(other_params.uri))
+        self.assertTrue(service.is_valid_uri(mysql_params.uri))
+
+        # When: I change from MSSQL to PGSQL
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
+        service.handle_flavor_change(context, mssql_params)
+
+        # Then: the service is updated to not allow intellisense
+        self.assertFalse(service.is_valid_uri(mssql_params.uri))
+
+        # When: I change from PGSQL to MYSQL
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
+        service.handle_flavor_change(context, mssql_params)
+
+        # Then: the service is updated to allow intellisense
+        self.assertTrue(service.is_valid_uri(mssql_params.uri))
 
     def test_on_connect_sends_notification(self):
         """

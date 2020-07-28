@@ -7,6 +7,7 @@ import logging
 import unittest
 import unittest.mock as mock
 import psycopg2
+from typing import Optional
 
 from ossdbtoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
@@ -60,13 +61,13 @@ def get_mock_logger() -> logging.Logger:
 
 # PLEASE USE SERVICEPROVIDERMOCK from tests/mocks/service_provider_mock. #
 # This mock will be deprecated #
-def get_mock_service_provider(service_map: dict = None) -> ServiceProvider:
+def get_mock_service_provider(service_map: dict = None, provider_name: Optional[str] = PG_PROVIDER_NAME) -> ServiceProvider:
     """
     Generates a ServiceProvider with the given services
 
     :param service_map: A dictionary mapping service names to services
     """
-    provider = ServiceProvider(None, {}, PG_PROVIDER_NAME, get_mock_logger())
+    provider = ServiceProvider(None, {}, provider_name, get_mock_logger())
     if service_map is not None:
         provider._services = service_map
     provider._is_initialized = True
