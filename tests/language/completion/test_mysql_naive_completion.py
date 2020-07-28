@@ -4,9 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-from unittest.mock import Mock
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
+from unittest.mock import Mock
 
 from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
 from ossdbtoolsservice.language.completion.mysql_completion import MySQLCompletion
@@ -29,7 +29,7 @@ class TestNaiveCompletion(unittest.TestCase):
 
     def test_select_keyword_completion(self):
         text = 'SEL'
-        position = len('SEL')
+        position = len(text)
         result = set(self.completer.get_completions(
             Document(text=text, cursor_position=position),
             self.complete_event))
@@ -37,13 +37,15 @@ class TestNaiveCompletion(unittest.TestCase):
 
     def test_function_name_completion(self):
         text = 'SELECT MA'
-        position = len('SELECT MA')
+        position = len(text)
         result = set(self.completer.get_completions(
             Document(text=text, cursor_position=position),
             self.complete_event))
 
         # grabbed these completions from mysqlliterals.json
         self.assertSetEqual(result, set([
+            # start_position is the position relative to the cursor_position where the new text will start.
+            # in this example, start_position refers to start of MA, 2 before cursor_position
             Completion(text='MANAGED', start_position=-2),
             Completion(text='MASTER_DELAY', start_position=-2),
             Completion(text='MASTER_SSL_CERT', start_position=-2),
@@ -113,9 +115,23 @@ class TestNaiveCompletion(unittest.TestCase):
     def test_keyword_lower_casing(self):
         new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing':'lower'})        
         text = 'SEL'
-        position = len('SEL')
+        position = len(text)
         result = set(new_completer.get_completions(
             Document(text=text, cursor_position=position),
             self.complete_event))
+
+        # then completions should now be lower case
         self.assertSetEqual(result, set([Completion(text='select', start_position=-3)]))
 
+    def test_keyword_auto_casing(self):
+        new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing':'auto'})
+        
+        # if text is lower case   
+        text = 'sel'
+        position = len(text)
+        result = set(new_completer.get_completions(
+            Document(text=text, cursor_position=position),
+            self.complete_event))
+
+        # then completions should be lower case as well
+        self.assertSetEqual(result, set([Completion(text='select', start_position=-3)]))

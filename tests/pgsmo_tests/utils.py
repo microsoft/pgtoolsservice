@@ -108,8 +108,8 @@ class MockCursor:
         self._has_been_read = True
 
 
-class MockServerConnection(PostgreSQLConnection):
-    '''Class used to mock ServerConnection objects for testing'''
+class MockPGServerConnection(PostgreSQLConnection):
+    '''Class used to mock PGSQL ServerConnection objects for testing'''
     def __init__(
         self,
         cur: Optional[MockCursor] = None,

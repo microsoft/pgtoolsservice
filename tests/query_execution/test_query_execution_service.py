@@ -5,44 +5,49 @@
 
 """Module for testing the query execution service"""
 
+import os
 import unittest
+import uuid
+from os import listdir
+from os.path import isfile, join
+from typing import Dict, List  # noqa
 from unittest import mock
-from typing import List, Dict  # noqa
 
 import psycopg2
 from dateutil import parser
-import uuid
-import os
-from os import listdir
-from os.path import isfile, join
 
 import tests.utils as utils
-from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
-from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectionDetails
-from ossdbtoolsservice.driver.types.psycopg_driver import PG_CANCELLATION_QUERY, PostgreSQLConnection
-from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
+from ossdbtoolsservice.connection.contracts import (ConnectionDetails,
+                                                    ConnectionType)
+from ossdbtoolsservice.driver.types.psycopg_driver import (
+    PG_CANCELLATION_QUERY, PostgreSQLConnection)
+from ossdbtoolsservice.hosting import (IncomingMessageConfiguration,
+                                       JSONRPCServer, ServiceProvider)
 from ossdbtoolsservice.query import (
-    Batch, create_result_set, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
-    ResultSetStorageType
-)
-from ossdbtoolsservice.query.contracts import DbColumn, ResultSetSubset, SelectionData, SubsetResult
+    Batch, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
+    ResultSetStorageType, create_result_set)
+from ossdbtoolsservice.query.contracts import (DbColumn, ResultSetSubset,
+                                               SelectionData, SubsetResult)
 from ossdbtoolsservice.query.data_storage import (
-    SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
-)
+    SaveAsCsvFileStreamFactory, SaveAsExcelFileStreamFactory,
+    SaveAsJsonFileStreamFactory)
 from ossdbtoolsservice.query_execution.contracts import (
-    ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase,
-    ExecutionPlanOptions, MESSAGE_NOTIFICATION, DEPLOY_MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
-    BATCH_START_NOTIFICATION, DEPLOY_BATCH_START_NOTIFICATION, DEPLOY_BATCH_COMPLETE_NOTIFICATION,
-    QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, DEPLOY_COMPLETE_NOTIFICATION,
-    QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams,
-    SaveResultsAsJsonRequestParams, SaveResultRequestResult,
-    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams)
+    BATCH_COMPLETE_NOTIFICATION, BATCH_START_NOTIFICATION,
+    DEPLOY_BATCH_COMPLETE_NOTIFICATION, DEPLOY_BATCH_START_NOTIFICATION,
+    DEPLOY_COMPLETE_NOTIFICATION, DEPLOY_MESSAGE_NOTIFICATION,
+    MESSAGE_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION,
+    RESULT_SET_COMPLETE_NOTIFICATION, ExecuteDocumentSelectionParams,
+    ExecuteDocumentStatementParams, ExecuteRequestParamsBase,
+    ExecuteStringParams, ExecutionPlanOptions, QueryCancelResult,
+    QueryDisposeParams, SaveResultRequestResult, SaveResultsAsCsvRequestParams,
+    SaveResultsAsExcelRequestParams, SaveResultsAsJsonRequestParams,
+    SimpleExecuteRequest, SubsetParams)
 from ossdbtoolsservice.query_execution.query_execution_service import (
-    QueryExecutionService, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
+    NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs, QueryExecutionService)
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
-from tests.pgsmo_tests.utils import MockServerConnection
-
+from tests.pgsmo_tests.utils import MockPGServerConnection
 
 
 class TestQueryService(unittest.TestCase):
@@ -59,7 +64,7 @@ class TestQueryService(unittest.TestCase):
             'host': 'test', 
             'dbname': 'test',
         })
-        self.connection = MockServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
+        self.connection = MockPGServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.query_execution_service = QueryExecutionService()
@@ -70,7 +75,7 @@ class TestQueryService(unittest.TestCase):
         self.request_context = utils.MockRequestContext()
 
         self.cursor_cancel = utils.MockCursor(None)
-        self.connection_cancel = MockServerConnection(cur=self.cursor_cancel)
+        self.connection_cancel = MockPGServerConnection(cur=self.cursor_cancel)
         self.cursor_cancel.connection = self.connection_cancel
 
         def connection_side_effect(owner_uri: str, connection_type: ConnectionType):

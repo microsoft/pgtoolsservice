@@ -6,29 +6,30 @@
 """Module for testing the object explorer service"""
 import re
 import threading
-from typing import Callable, Tuple, TypeVar
 import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
+from typing import Callable, Tuple, TypeVar
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectionCompleteParams
-from ossdbtoolsservice.hosting import JSONRPCServer, RequestContext, ServiceProvider  # noqa
+from ossdbtoolsservice.connection.contracts import (ConnectionCompleteParams,
+                                                    ConnectionDetails)
+from ossdbtoolsservice.hosting import (JSONRPCServer, RequestContext,  # noqa
+                                       ServiceProvider)
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
 from ossdbtoolsservice.object_explorer.contracts import (
-    NodeInfo, CloseSessionParameters,
-    CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
-    ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
-)
-from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
+    EXPAND_COMPLETED_METHOD, SESSION_CREATED_METHOD, CloseSessionParameters,
+    CreateSessionResponse, ExpandCompletedParameters, ExpandParameters,
+    NodeInfo, SessionCreatedParameters)
+from ossdbtoolsservice.object_explorer.object_explorer_service import (
+    ObjectExplorerService, ObjectExplorerSession)
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 from ossdbtoolsservice.utils import constants
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
-from tests.pgsmo_tests.utils import MockServerConnection
 from tests.mock_request_validation import RequestFlowValidator
-
+from tests.pgsmo_tests.utils import MockPGServerConnection
 
 TEST_HOST = 'testhost'
 TEST_DBNAME = 'testdb'
@@ -211,7 +212,7 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_successful(self):
         # Setup:
         # ... Create OE service with mock connection service that returns a successful connection response
-        mock_connection = MockServerConnection(cur=None, host= 'myserver', name= 'postgres',  user= 'postgres', port= 123)
+        mock_connection = MockPGServerConnection(cur=None, host= 'myserver', name= 'postgres',  user= 'postgres', port= 123)
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
@@ -317,7 +318,7 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_create_connection_successful(self):
         # Setup:
-        mock_connection = MockServerConnection()
+        mock_connection = MockPGServerConnection()
         oe = ObjectExplorerService()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
@@ -631,7 +632,7 @@ class SessionTestCase(unittest.TestCase):
         self.session = ObjectExplorerSession(session_uri, params)
         self.oe._session_map[session_uri] = self.session
         name = 'dbname'
-        self.mock_server = Server(MockServerConnection())
+        self.mock_server = Server(MockPGServerConnection())
         self.session.server = self.mock_server
         self.db = Database(self.mock_server, name)        
         self.db._connection = self.mock_server._conn

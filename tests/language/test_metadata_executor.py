@@ -68,7 +68,7 @@ class TestMetadataExecutor(unittest.TestCase):
     """Methods for testing the MetadataExecutor module"""
 
     def setUp(self):
-        mock_server = Server(utils.MockServerConnection())
+        mock_server = Server(utils.MockPGServerConnection())
         db = Database(mock_server, mock_server.maintenance_db_name)
         mock_server._child_objects[Database.__name__] = self._as_node_collection([db])
         mock_server._search_path = self._as_node_collection([MYSCHEMA])
@@ -98,7 +98,7 @@ class TestMetadataExecutor(unittest.TestCase):
             expected_table_tuples.append(tuple([self.schema2.name, s2_table_name]))
 
         cursor = MockCursor(expected_table_tuples)
-        mock_server = Server(utils.MockServerConnection(cursor))
+        mock_server = Server(utils.MockPGServerConnection(cursor))
         executor: MetadataExecutor = MetadataExecutor(mock_server)
         # When I query tables
         actual_table_tuples = executor.tables()

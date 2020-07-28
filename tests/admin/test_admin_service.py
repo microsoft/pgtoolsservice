@@ -15,7 +15,7 @@ from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from tests.pgsmo_tests.utils import MockServerConnection
+from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.utils import MockCursor, MockRequestContext, MockPsycopgConnection
 
 class TestAdminService(unittest.TestCase):
@@ -48,7 +48,7 @@ class TestAdminService(unittest.TestCase):
         # Set up a mock connection and cursor for the test
         mock_query_results = [(user_name,)]
         mock_cursor = MockCursor(mock_query_results)
-        mock_connection = MockServerConnection(mock_cursor, name = db_name)
+        mock_connection = MockPGServerConnection(mock_cursor, name = db_name)
         self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
 
         # If I send a get_database_info request

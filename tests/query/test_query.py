@@ -8,11 +8,15 @@ from unittest import mock
 
 import psycopg2
 
-from ossdbtoolsservice.query import ExecutionState, Query, QueryExecutionSettings, QueryEvents, ResultSetStorageType
-from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData, DbColumn
+from ossdbtoolsservice.query import (ExecutionState, Query, QueryEvents,
+                                     QueryExecutionSettings,
+                                     ResultSetStorageType)
+from ossdbtoolsservice.query.contracts import (DbColumn,
+                                               SaveResultsRequestParams,
+                                               SelectionData)
 from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
-from tests.pgsmo_tests.utils import MockServerConnection
+from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.utils import MockCursor
 
 
@@ -28,7 +32,7 @@ class TestQuery(unittest.TestCase):
 
         self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
         self.cursor = MockCursor(self.mock_query_results)
-        self.connection = MockServerConnection(cur=self.cursor)
+        self.connection = MockPGServerConnection(cur=self.cursor)
 
         self.columns_info = []
         db_column_id = DbColumn()

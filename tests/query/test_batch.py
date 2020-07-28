@@ -7,7 +7,7 @@ import unittest
 from unittest import mock
 
 import tests.utils as utils
-from tests.pgsmo_tests.utils import MockServerConnection
+from tests.pgsmo_tests.utils import MockPGServerConnection
 from ossdbtoolsservice.query.batch import (
     Batch, BatchEvents, create_batch, create_result_set, ResultSetStorageType, SelectBatch
 )
@@ -20,7 +20,7 @@ class TestBatch(unittest.TestCase):
 
     def setUp(self):
         self._cursor = utils.MockCursor(None)
-        self._connection = MockServerConnection(cur=self._cursor)
+        self._connection = MockPGServerConnection(cur=self._cursor)
         self._batch_text = 'Select * from t1'
         self._batch_id = 1
         self._batch_events = BatchEvents()
