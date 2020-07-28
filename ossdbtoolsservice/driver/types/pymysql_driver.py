@@ -91,8 +91,6 @@ class MySQLConnection(ServerConnection):
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = pymysql.connect(**self._connection_options)
 
-        # Check that we connected successfully
-        assert type(self._conn) is pymysql.connections.Connection
         self._connection_closed = False
 
         # Find the class of the database error this driver throws
@@ -236,7 +234,8 @@ class MySQLConnection(ServerConnection):
                     query_results = cursor.fetchone()
 
                 return query_results
-            except Exception:
+            except Exception as e:
+                print(e)
                 return False
             finally:
                 cursor.close()

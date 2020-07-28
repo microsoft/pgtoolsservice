@@ -27,7 +27,7 @@ from pgsmo.objects.server.server import Server
 from pgsmo.objects.database.database import Database
 from ossdbtoolsservice.utils import constants
 import tests.utils as utils
-from tests.pgsmo_tests.utils import MockServerConnection
+from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.mock_request_validation import RequestFlowValidator
 
 
@@ -212,7 +212,7 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_successful(self):
         # Setup:
         # ... Create OE service with mock connection service that returns a successful connection response
-        mock_connection = MockServerConnection(cur=None, host= 'myserver', name= 'postgres',  user= 'postgres', port= 123)
+        mock_connection = MockPGServerConnection(cur=None, host= 'myserver', name= 'postgres',  user= 'postgres', port= 123)
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
@@ -318,7 +318,7 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_create_connection_successful(self):
         # Setup:
-        mock_connection = MockServerConnection()
+        mock_connection = MockPGServerConnection()
         oe = ObjectExplorerService()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
@@ -632,7 +632,7 @@ class SessionTestCase(unittest.TestCase):
         self.session = ObjectExplorerSession(session_uri, params)
         self.oe._session_map[session_uri] = self.session
         name = 'dbname'
-        self.mock_server = Server(MockServerConnection())
+        self.mock_server = Server(MockPGServerConnection())
         self.session.server = self.mock_server
         self.db = Database(self.mock_server, name)        
         self.db._connection = self.mock_server._conn

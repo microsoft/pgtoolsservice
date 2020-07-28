@@ -40,7 +40,7 @@ from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectionDet
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
-from tests.pgsmo_tests.utils import MockServerConnection
+from tests.pgsmo_tests.utils import MockPGServerConnection
 from ossdbtoolsservice.query.data_storage import (
     SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
 )
@@ -61,7 +61,7 @@ class TestQueryService(unittest.TestCase):
             'host': 'test', 
             'dbname': 'test',
         })
-        self.connection = MockServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
+        self.connection = MockPGServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.query_execution_service = QueryExecutionService()
@@ -72,7 +72,7 @@ class TestQueryService(unittest.TestCase):
         self.request_context = utils.MockRequestContext()
 
         self.cursor_cancel = utils.MockCursor(None)
-        self.connection_cancel = MockServerConnection(cur=self.cursor_cancel)
+        self.connection_cancel = MockPGServerConnection(cur=self.cursor_cancel)
         self.cursor_cancel.connection = self.connection_cancel
 
         def connection_side_effect(owner_uri: str, connection_type: ConnectionType):

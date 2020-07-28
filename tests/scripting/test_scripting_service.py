@@ -15,7 +15,7 @@ from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from ossdbtoolsservice.scripting.contracts.scriptas_request import ScriptOperation, ScriptAsParameters, ScriptAsResponse
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.mock_request_validation import RequestFlowValidator
-from tests.pgsmo_tests.utils import MockServerConnection      # TODO: Replace with global
+from tests.pgsmo_tests.utils import MockPGServerConnection
 import tests.utils as utils
 
 
@@ -92,7 +92,7 @@ class TestScriptingService(unittest.TestCase):
 
         # Setup:
         # ... Create a scripting service
-        mock_connection = MockServerConnection()
+        mock_connection = MockPGServerConnection()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)

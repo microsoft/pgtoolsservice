@@ -24,7 +24,7 @@ from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.workspace import WorkspaceService
 from tests.integration import get_connection_details, integration_test
-from tests.pgsmo_tests.utils import MockServerConnection
+from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.utils import MockCursor, MockRequestContext, MockPsycopgConnection
 
 
@@ -115,7 +115,7 @@ class TestConnectionService(unittest.TestCase):
         # Set up the test with mock data
         connection_uri = 'someuri'
         connection_type = ConnectionType.DEFAULT
-        mock_connection = MockServerConnection(cur = None, host = 'myserver', name = 'postgres', user = 'postgres')
+        mock_connection = MockPGServerConnection(cur = None, host = 'myserver', name = 'postgres', user = 'postgres')
 
         # Insert a ConnectionInfo object into the connection service's map
         old_connection_details = ConnectionDetails.from_data({
@@ -157,7 +157,7 @@ class TestConnectionService(unittest.TestCase):
             'dbname': 'postgres',
             'user': 'postgres'
         })
-        mock_server_connection = MockServerConnection(cur = None, host = 'myserver', 
+        mock_server_connection = MockPGServerConnection(cur = None, host = 'myserver', 
                 name = 'postgres', user = 'postgres')
 
         # Insert a ConnectionInfo object into the connection service's map
@@ -260,8 +260,8 @@ class TestConnectionService(unittest.TestCase):
         connection_uri = 'someuri'
         connection_type_1 = ConnectionType.DEFAULT
         connection_type_2 = ConnectionType.EDIT
-        mock_connection_1 = MockServerConnection(cur = None, host = 'myserver1', name = 'postgres1', user = 'postgres1')
-        mock_connection_2 = MockServerConnection(cur = None, host = 'myserver2', name = 'postgres2', user = 'postgres2')
+        mock_connection_1 = MockPGServerConnection(cur = None, host = 'myserver1', name = 'postgres1', user = 'postgres1')
+        mock_connection_2 = MockPGServerConnection(cur = None, host = 'myserver2', name = 'postgres2', user = 'postgres2')
 
         # Insert a ConnectionInfo object into the connection service's map
         old_connection_details = ConnectionDetails.from_data({'abc': 123})
@@ -282,8 +282,8 @@ class TestConnectionService(unittest.TestCase):
         connection_uri = 'someuri'
         connection_type_1 = ConnectionType.DEFAULT
         connection_type_2 = ConnectionType.EDIT
-        mock_connection_1 = MockServerConnection(cur = None, host = 'myserver1', name = 'postgres1', user = 'postgres1')
-        mock_connection_2 = MockServerConnection(cur = None, host = 'myserver2', name = 'postgres2', user = 'postgres2')
+        mock_connection_1 = MockPGServerConnection(cur = None, host = 'myserver1', name = 'postgres1', user = 'postgres1')
+        mock_connection_2 = MockPGServerConnection(cur = None, host = 'myserver2', name = 'postgres2', user = 'postgres2')
 
         # Insert a ConnectionInfo object into the connection service's map
         old_connection_details = ConnectionDetails.from_data({'abc': 123})
@@ -303,7 +303,7 @@ class TestConnectionService(unittest.TestCase):
         # Set up the test with mock data
         connection_uri = 'someuri'
         connection_type_1 = ConnectionType.DEFAULT
-        mock_connection_1 = MockServerConnection(cur = None, host = 'myserver1', name = 'postgres1', user = 'postgres1')
+        mock_connection_1 = MockPGServerConnection(cur = None, host = 'myserver1', name = 'postgres1', user = 'postgres1')
 
         # Insert a ConnectionInfo object into the connection service's map
         old_connection_details = ConnectionDetails.from_data({'abc': 123})
@@ -473,7 +473,7 @@ class TestConnectionService(unittest.TestCase):
         # Set up the test with mock data
         connection_uri = 'someuri'
         connection_type = ConnectionType.EDIT
-        mock_connection = MockServerConnection(cur = None, host = 'myserver', name = 'postgres', user = 'postgres')
+        mock_connection = MockPGServerConnection(cur = None, host = 'myserver', name = 'postgres', user = 'postgres')
 
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
@@ -513,7 +513,7 @@ class TestConnectionService(unittest.TestCase):
         connection_uri = 'someuri'
         mock_cursor = MockCursor(mock_query_results)
         mock_cursor.fetchall.side_effect = psycopg2.ProgrammingError('')
-        mock_connection = MockServerConnection(cur = mock_cursor, host = 'myserver', name = 'postgres', user = 'postgres')
+        mock_connection = MockPGServerConnection(cur = mock_cursor, host = 'myserver', name = 'postgres', user = 'postgres')
         mock_request_context = utils.MockRequestContext()
 
         # Insert a ConnectionInfo object into the connection service's map
@@ -539,7 +539,7 @@ class TestConnectionService(unittest.TestCase):
         server_name = 'testserver'
         db_name = 'testdb'
         user = 'testuser'
-        mock_connection = MockServerConnection(cur = None, host = server_name, name = db_name, user = user)
+        mock_connection = MockPGServerConnection(cur = None, host = server_name, name = db_name, user = user)
         connection_type = ConnectionType.EDIT
         connection_details = ConnectionDetails.from_data(opts={})
         owner_uri = 'test_uri'
