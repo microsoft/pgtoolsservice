@@ -17,7 +17,7 @@ from prompt_toolkit.completion import Completer, Completion
 # from prompt_toolkit.document import Document
 # {{ PGToolsService EDIT }}
 from ossdbtoolsservice.language.completion.pg_completion import PGCompletion
-from .packages.sqlcompletion import (   # noqa
+from .packages.pgsql_completion_engine import (   # noqa
     FromClauseItem, suggest_type, Database, Schema, Table, Function, Column, View,
     Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join
 )
