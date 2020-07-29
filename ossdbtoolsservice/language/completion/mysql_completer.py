@@ -197,8 +197,7 @@ class MySQLCompleter(Completer):
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
         self.all_completions = set(self.keywords + self.functions)
 
-    @staticmethod
-    def find_matches(text, collection, start_only=False, fuzzy=True, casing=None):
+    def find_matches(self, text, collection, start_only=False, fuzzy=True, casing=None, meta=None):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -239,7 +238,8 @@ class MySQLCompleter(Completer):
                 return kw.upper()
             return kw.lower()
 
-        return (MySQLCompletion(z if casing is None else apply_case(z), -len(text))
+        return (MySQLCompletion(z if casing is None else apply_case(z), -len(text), 
+                display_meta=meta, schema=self.dbname)
                 for x, y, z in sorted(completions))
 
     def get_completions(self, document, complete_event, smart_completion=None):
@@ -273,7 +273,7 @@ class MySQLCompleter(Completer):
                         if count > 1 and col != '*'
                     ]
 
-                cols = self.find_matches(word_before_cursor, scoped_cols)
+                cols = self.find_matches(word_before_cursor, scoped_cols, meta='column')
                 completions.extend(cols)
 
             elif suggestion['type'] == 'function':
@@ -292,35 +292,36 @@ class MySQLCompleter(Completer):
                                                          self.functions,
                                                          start_only=True,
                                                          fuzzy=False,
-                                                         casing=self.keyword_casing)
+                                                         casing=self.keyword_casing,
+                                                         meta='function')
                     completions.extend(predefined_funcs)
 
             elif suggestion['type'] == 'table':
                 tables = self.populate_schema_objects(suggestion['schema'],
                                                       'tables')
-                tables = self.find_matches(word_before_cursor, tables)
+                tables = self.find_matches(word_before_cursor, tables, meta='table')
                 completions.extend(tables)
 
             elif suggestion['type'] == 'view':
                 views = self.populate_schema_objects(suggestion['schema'],
                                                      'views')
-                views = self.find_matches(word_before_cursor, views)
+                views = self.find_matches(word_before_cursor, views, meta='view')
                 completions.extend(views)
 
             elif suggestion['type'] == 'alias':
                 aliases = suggestion['aliases']
-                aliases = self.find_matches(word_before_cursor, aliases)
+                aliases = self.find_matches(word_before_cursor, aliases, meta='alias')
                 completions.extend(aliases)
 
             elif suggestion['type'] == 'database':
-                dbs = self.find_matches(word_before_cursor, self.databases)
+                dbs = self.find_matches(word_before_cursor, self.databases, meta='database')
                 completions.extend(dbs)
 
             elif suggestion['type'] == 'keyword':
                 keywords = self.find_matches(word_before_cursor, self.keywords,
                                              start_only=True,
                                              fuzzy=False,
-                                             casing=self.keyword_casing)
+                                             casing=self.keyword_casing, meta='keyword')
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'show':
@@ -328,19 +329,19 @@ class MySQLCompleter(Completer):
                                                self.show_items,
                                                start_only=False,
                                                fuzzy=True,
-                                               casing=self.keyword_casing)
+                                               casing=self.keyword_casing, meta='show')
                 completions.extend(show_items)
 
             elif suggestion['type'] == 'change':
                 change_items = self.find_matches(word_before_cursor,
                                                  self.change_items,
                                                  start_only=False,
-                                                 fuzzy=True)
+                                                 fuzzy=True, meta='change')
                 completions.extend(change_items)
             elif suggestion['type'] == 'user':
                 users = self.find_matches(word_before_cursor, self.users,
                                           start_only=False,
-                                          fuzzy=True)
+                                          fuzzy=True, meta='user')
                 completions.extend(users)
 
         return completions
