@@ -121,7 +121,18 @@ class TestNaiveCompletion(unittest.TestCase):
             self.complete_event))
 
         # then completions should now be lower case
-        self.assertSetEqual(result, set([Completion(text='select', start_position=-3)]))
+        self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
+
+    def test_keyword_upper_casing(self):
+        new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing':'upper'})        
+        text = 'sel'
+        position = len(text)
+        result = set(new_completer.get_completions(
+            Document(text=text, cursor_position=position),
+            self.complete_event))
+
+        # then completions should now be lower case
+        self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_auto_casing(self):
         new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing':'auto'})
@@ -134,4 +145,4 @@ class TestNaiveCompletion(unittest.TestCase):
             self.complete_event))
 
         # then completions should be lower case as well
-        self.assertSetEqual(result, set([Completion(text='select', start_position=-3)]))
+        self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
