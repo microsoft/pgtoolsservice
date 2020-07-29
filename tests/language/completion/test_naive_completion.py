@@ -8,7 +8,7 @@ from unittest.mock import Mock
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
-from ossdbtoolsservice.language.completion.pgcompleter import PGCompleter
+from ossdbtoolsservice.language.completion.pg_completer import PGCompleter
 
 
 class TestNaiveCompletion(unittest.TestCase):

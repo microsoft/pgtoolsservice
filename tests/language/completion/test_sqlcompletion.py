@@ -6,7 +6,7 @@
 from parameterized import parameterized
 import unittest
 
-from ossdbtoolsservice.language.completion.packages.sqlcompletion import (
+from ossdbtoolsservice.language.completion.packages.pgsql_completion_engine import (
     suggest_type, Database, Schema, Table, Column, View, Keyword,
     FromClauseItem, Function, Datatype, Alias, JoinCondition, Join)
 from ossdbtoolsservice.language.completion.packages.parseutils.tables import TableReference

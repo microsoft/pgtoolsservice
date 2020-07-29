@@ -5,8 +5,10 @@
 
 from parameterized import parameterized
 import unittest
+
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils import is_open_quote
 from ossdbtoolsservice.language.completion.packages.parseutils.tables import extract_tables
-from ossdbtoolsservice.language.completion.packages.parseutils.utils import find_prev_keyword, is_open_quote
+from ossdbtoolsservice.language.completion.packages.parseutils.utils import find_prev_keyword
 
 
 class TestParseUtils(unittest.TestCase):
