@@ -251,6 +251,12 @@ class PostgreSQLConnection(ServerConnection):
         """
         pass
 
+    def get_error_message(self, error) -> str:
+        """
+        Get the message from DatabaseError instance 
+        """
+        return "ERROR: " + error.diag.message_primary
+
     def close(self):
         """
         Closes this current connection.
