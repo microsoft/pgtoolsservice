@@ -109,7 +109,7 @@ class Batch:
 
     def execute(self, conn: ServerConnection) -> None:
         """
-        Execute the batch using the psycopg2 cursor retrieved from the given connection
+        Execute the batch using a cursor retrieved from the given connection
 
         :raises DatabaseError: if an error is encountered while running the batch's query
         """
@@ -128,8 +128,7 @@ class Batch:
             self.after_execute(cursor)
         except conn.database_error as error:
             self._has_error = True
-            # We just raise the error with primary message and not the cursor stacktrace
-            raise conn.database_error(error.diag.message_primary) from error
+            raise error
         finally:
             # We are doing this because when the execute fails for named cursors
             # cursor is not activated on the server which results in failure on close
