@@ -3,9 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Mapping, Tuple
+from typing import List, Mapping, Tuple, Optional
 from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.workspace.contracts import Configuration
 import re
 import pymysql
 
@@ -44,10 +45,11 @@ GROUP BY
 class MySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
 
-    def __init__(self, conn_params):
+    def __init__(self, conn_params: {}, config: Optional[Configuration] = None):
         """
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
+        :param config: optional Configuration object with mysql connection config
         """
         # Map the provided connection parameter names to pymysql param names
         _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param) : value for param, value in conn_params.items()}
@@ -62,6 +64,11 @@ class MySQLConnection(ServerConnection):
                 val = self._connection_options[param]
                 if val:
                     self._connection_options[param] = int(val) or None
+
+        # Use the default database if one was not provided
+        if 'database' not in self._connection_options or not self._connection_options['database']:
+            if config:
+                self._connection_options['database'] = config.my_sql.default_database
 
         # Use the default port number if one was not provided
         if 'port' not in self._connection_options or not self._connection_options['port']:

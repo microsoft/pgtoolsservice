@@ -11,7 +11,9 @@ import psycopg2
 from ossdbtoolsservice.query import ExecutionState, Query, QueryExecutionSettings, QueryEvents, ResultSetStorageType
 from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData, DbColumn
 from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
-import tests.utils as utils
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from tests.pgsmo_tests.utils import MockServerConnection
+from tests.utils import MockCursor
 
 
 class TestQuery(unittest.TestCase):
@@ -25,16 +27,18 @@ class TestQuery(unittest.TestCase):
         self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions(), ResultSetStorageType.FILE_STORAGE), QueryEvents())
 
         self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
-        self.cursor = utils.MockCursor(self.mock_query_results)
-        self.connection = utils.MockConnection(cursor=self.cursor)
+        self.cursor = MockCursor(self.mock_query_results)
+        self.connection = MockServerConnection(cur=self.cursor)
 
         self.columns_info = []
         db_column_id = DbColumn()
         db_column_id.data_type = 'text'
         db_column_id.column_name = 'Id'
+        db_column_id.provider = PG_PROVIDER_NAME
         db_column_value = DbColumn()
         db_column_value.data_type = 'text'
         db_column_value.column_name = 'Value'
+        db_column_value.provider = PG_PROVIDER_NAME
         self.columns_info = [db_column_id, db_column_value]
         self.get_columns_info_mock = mock.Mock(return_value=self.columns_info)
 

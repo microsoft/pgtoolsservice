@@ -38,7 +38,6 @@ def get_columns_info(cursor) -> List[DbColumn]:
             sql.SQL(', ').join(sql.Placeholder() * len(column_type_oids))
         )
         columns_info = []
-
         with cursor.connection.cursor() as type_cursor:
             type_cursor.execute(query_template, column_type_oids)
             rows = type_cursor.fetchall()

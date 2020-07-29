@@ -31,7 +31,7 @@ class TestEditDataService(unittest.TestCase):
         self._service_provider = ServiceProviderMock({'query_execution': {}, 'connection': self._mock_connection})
 
         self.cursor = utils.MockCursor(None)
-        self.connection = utils.MockConnection(cursor=self.cursor)
+        self.connection = utils.MockPsycopgConnection(cursor=self.cursor)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.connection_service.get_connection = mock.Mock(return_value=self.connection)

@@ -3,10 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Mapping, Tuple
+from typing import List, Mapping, Tuple, Optional
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.workspace.contracts import Configuration
 import psycopg2
 from psycopg2.extensions import Column, connection, cursor, TRANSACTION_STATUS_INERROR
 
@@ -34,10 +35,11 @@ PG_CONNECTION_PARAM_KEYWORDS = [
 class PostgreSQLConnection(ServerConnection):
     """Wrapper for a psycopg2 connection that makes various properties easier to access"""
 
-    def __init__(self, conn_params):
+    def __init__(self, conn_params: {}, config: Optional[Configuration] = None):
         """
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
+        :param config: optional Configuration object with pgsql connection config
         """
         # If options contains azureSecurityToken, then just copy it over to password, which is how it is
         # passed to PostgreSQL.
@@ -50,7 +52,10 @@ class PostgreSQLConnection(ServerConnection):
         
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['dbname'] = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
+            if config:
+                connection_options['dbname'] = config.pgsql.default_database
+            else:
+                connection_options['dbname'] = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
 
         # Use the default port number if one was not provided
         if 'port' not in connection_options or not connection_options['port']:
@@ -58,9 +63,6 @@ class PostgreSQLConnection(ServerConnection):
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg2.connect(**connection_options)
-
-        # Check that we connected successfully
-        assert type(self._conn) is connection
 
         # Set autocommit mode so that users have control over transactions
         self._conn.autocommit = True

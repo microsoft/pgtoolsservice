@@ -38,6 +38,7 @@ from ossdbtoolsservice.workspace.contracts import (
 )
 from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.mock_request_validation import RequestFlowValidator
 import tests.utils as utils
 
@@ -54,7 +55,7 @@ class TestLanguageService(unittest.TestCase):
         self.mock_server.set_request_handler = self.mock_server_set_request
         self.mock_workspace_service = WorkspaceService()
         self.mock_connection_service = ConnectionService()
-        self.mock_service_provider = ServiceProvider(self.mock_server, {}, None)
+        self.mock_service_provider = ServiceProvider(self.mock_server, {}, PG_PROVIDER_NAME, None)
         self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
         self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
         self.mock_service_provider._is_initialized = True
@@ -80,7 +81,7 @@ class TestLanguageService(unittest.TestCase):
         server.set_request_handler = mock.MagicMock()
         provider: ServiceProvider = ServiceProvider(server, {
             constants.CONNECTION_SERVICE_NAME: ConnectionService
-        }, utils.get_mock_logger())
+        }, PG_PROVIDER_NAME, utils.get_mock_logger())
         provider._is_initialized = True
         conn_service: ConnectionService = provider[constants.CONNECTION_SERVICE_NAME]
         self.assertEqual(0, len(conn_service._on_connect_callbacks))
@@ -169,6 +170,7 @@ class TestLanguageService(unittest.TestCase):
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
         service: LanguageService = self._init_service()
+        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(doc_position.text_document.uri)
 
         # When: I request completion item
         service.handle_completion_request(context, doc_position)
@@ -188,7 +190,9 @@ class TestLanguageService(unittest.TestCase):
         pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', 'pgsql')
         mssqql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'mssql')
         other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
+        provider = utils.get_mock_service_provider()
         service = LanguageService()
+        service._service_provider = provider
 
         # When: I notify of language preferences
         context: NotificationContext = utils.get_mock_notification_context()
@@ -200,16 +204,16 @@ class TestLanguageService(unittest.TestCase):
         # Then:
         # ... Only non-PGSQL SQL files should be ignored
         context.send_notification.assert_not_called()
-        self.assertFalse(service.is_pgsql_uri(mssqql_params.uri))
-        self.assertTrue(service.is_pgsql_uri(pgsql_params.uri))
-        self.assertTrue(service.is_pgsql_uri(other_params.uri))
+        self.assertFalse(service.is_valid_uri(mssqql_params.uri))
+        self.assertTrue(service.is_valid_uri(pgsql_params.uri))
+        self.assertFalse(service.is_valid_uri(other_params.uri))
 
         # When: I change from MSSQL to PGSQL
         mssqql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'pgsql')
         service.handle_flavor_change(context, mssqql_params)
 
         # Then: the service is updated to allow intellisense
-        self.assertTrue(service.is_pgsql_uri(mssqql_params.uri))
+        self.assertTrue(service.is_valid_uri(mssqql_params.uri))
 
     def test_on_connect_sends_notification(self):
         """
@@ -274,6 +278,7 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
+        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
 
         # When: I have no useful formatting defaults defined
         service.handle_doc_format_request(context, format_params)
@@ -316,6 +321,7 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
+        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
 
         # When: I request document formatting
         service.handle_doc_format_request(context, format_params)
@@ -360,7 +366,8 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentRangeFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
-
+        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
+        
         # When: I request format the 2nd line of a document
         format_params.range = Range.from_data(1, 0, 1, len(input_lines[1]))
         service.handle_doc_range_format_request(context, format_params)

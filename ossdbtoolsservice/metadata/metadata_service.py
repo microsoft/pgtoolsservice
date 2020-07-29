@@ -71,15 +71,19 @@ class MetadataService:
 
     # REQUEST HANDLERS #####################################################
 
-    # def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
-    #     thread = threading.Thread(
-    #         target=self._metadata_list_worker,
-    #         args=(request_context, params)
-    #     )
-    #     thread.daemon = True
-    #     thread.start()
-
     def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
+        # psycopg is thread safe while PyMYSQL is not 
+        if self._service_provider.provider == constants.PG_PROVIDER_NAME:
+            thread = threading.Thread(
+            target=self._metadata_list_worker,
+            args=(request_context, params)
+            )
+            thread.daemon = True
+            thread.start()
+        else:
+            self._metadata_list_worker(request_context, params)
+
+    def _metadata_list_worker(self, request_context: RequestContext, params: MetadataListParameters) -> None:
         try:
             metadata = self._list_metadata(params.owner_uri)
             request_context.send_response(MetadataListResponse(metadata))

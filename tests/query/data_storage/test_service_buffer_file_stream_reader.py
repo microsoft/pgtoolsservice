@@ -11,6 +11,7 @@ import json
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_reader import ServiceBufferFileStreamReader
 from ossdbtoolsservice.query.contracts.column import DbColumn
 from ossdbtoolsservice.parsers import datatypes
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 DECODING_METHOD = 'utf-8'
 
@@ -175,6 +176,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_BOOL
+        col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._bool_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -187,6 +189,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_REAL
+        col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._float_reader1.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -199,6 +202,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_REAL
+        col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._float_reader2.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -211,6 +215,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_BYTEA
+        col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._bytea_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -226,13 +231,14 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         for datatype in [datatypes.DATATYPE_JSON, datatypes.DATATYPE_JSONB]:
             col = DbColumn()
             col.data_type = datatype
+            col.provider = PG_PROVIDER_NAME
             test_columns_info = [col]
             reader = ServiceBufferFileStreamReader(self._dict_file_stream)
 
             res = reader.read_row(test_file_offset, test_row_id, test_columns_info)
 
             self.assertEqual(1, len(res))
-            self.assertEqual(json.dumps(self._dict_test_value), res[0].raw_object)
+            self.assertEqual(self._dict_test_value, res[0].raw_object)
 
     def test_read_numericrange(self):
         test_file_offset = 0
@@ -241,6 +247,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_INT4RANGE
+        col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._numericrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -253,6 +260,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TSRANGE
+        col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._datetimerange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -265,6 +273,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TSTZRANGE
+        col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._datetimetzrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -277,6 +286,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_DATERANGE
+        col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._daterange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -289,12 +299,16 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         real_column1 = DbColumn()
         real_column1.data_type = datatypes.DATATYPE_REAL
+        real_column1.provider = PG_PROVIDER_NAME
         integer_column = DbColumn()
         integer_column.data_type = datatypes.DATATYPE_INTEGER
+        integer_column.provider = PG_PROVIDER_NAME
         text_column = DbColumn()
         text_column.data_type = datatypes.DATATYPE_TEXT
+        text_column.provider = PG_PROVIDER_NAME
         real_column2 = DbColumn()
         real_column2.data_type = datatypes.DATATYPE_REAL
+        real_column2.provider = PG_PROVIDER_NAME
 
         test_columns_info.append(real_column1)
         test_columns_info.append(integer_column)

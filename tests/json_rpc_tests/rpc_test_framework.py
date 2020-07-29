@@ -16,7 +16,7 @@ from unittest import mock
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessageType
 import ossdbtoolsservice.ossdbtoolsservice_main as ossdbtoolsservice_main
-
+from ossdbtoolsservice.utils import constants
 
 class RPCTestMessage:
     """
@@ -194,7 +194,7 @@ class JSONRPCTestCase:
 
         logger = logging.Logger('test')
         logger.addHandler(logging.NullHandler())
-        server = ossdbtoolsservice_main._create_server(server_input_stream, server_output_stream, logger)
+        server = ossdbtoolsservice_main._create_server(server_input_stream, server_output_stream, logger, constants.PG_PROVIDER_NAME)
         server.start()
         return test_input_stream, server_output_stream, output_info
 
