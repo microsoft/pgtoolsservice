@@ -11,36 +11,40 @@ import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
 
+import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectionCompleteParams
 from ossdbtoolsservice.hosting import JSONRPCServer, RequestContext, ServiceProvider  # noqa
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
-from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
 from ossdbtoolsservice.object_explorer.contracts import (
     NodeInfo, CloseSessionParameters,
     CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
     ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
 )
-from pgsmo.objects.server.server import Server
-from pgsmo.objects.database.database import Database
+from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
+from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 from ossdbtoolsservice.utils import constants
-import tests.utils as utils
-from tests.pgsmo_tests.utils import MockConnection
+from pgsmo.objects.database.database import Database
+from pgsmo.objects.server.server import Server
+from tests.pgsmo_tests.utils import MockServerConnection
 from tests.mock_request_validation import RequestFlowValidator
+
+
 TEST_HOST = 'testhost'
 TEST_DBNAME = 'testdb'
 TEST_USER = 'testuser'
 TEST_PASSWORD = 'testpassword'
-
+TEST_PORT = 5432
 
 def _connection_details() -> Tuple[ConnectionDetails, str]:
     param = ConnectionDetails()
     param.options = {
         'host': TEST_HOST,
         'dbname': TEST_DBNAME,
-        'user': TEST_USER
+        'user': TEST_USER,
+        'port': TEST_PORT
     }
-    session_uri = ObjectExplorerService._generate_session_uri(param)
+    session_uri = ObjectExplorerService._generate_session_uri(param, constants.PG_PROVIDER_NAME)
     return param, session_uri
 
 
@@ -70,7 +74,7 @@ class TestObjectExplorer(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
+        sp: ServiceProvider = ServiceProvider(server, {}, constants.PG_PROVIDER_NAME, utils.get_mock_logger())
 
         # If: I register a OE service
         oe = ObjectExplorerService()
@@ -87,31 +91,33 @@ class TestObjectExplorer(unittest.TestCase):
     def test_generate_uri_missing_params(self):
         # Setup: Create the parameter sets that will be missing a param each
         params = [
-            ConnectionDetails.from_data({'host': None, 'dbname': TEST_DBNAME, 'user': TEST_USER}),
-            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': None, 'user': TEST_USER}),
-            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': None})
+            ConnectionDetails.from_data({'host': None, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': TEST_PORT}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': None, 'user': TEST_USER, 'port': TEST_PORT}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': None, 'port': TEST_PORT}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': None})
         ]
 
         for param_set in params:
             # If: I generate a session URI from params that are missing a value
             # Then: I should get an exception
             with self.assertRaises(Exception):
-                ObjectExplorerService._generate_session_uri(param_set)
+                ObjectExplorerService._generate_session_uri(param_set, constants.PG_PROVIDER_NAME)
 
     def test_generate_uri_valid_params(self):
         # If: I generate a session URI from a valid connection details object
         params, session_uri = _connection_details()
-        output = ObjectExplorerService._generate_session_uri(params)
+        output = ObjectExplorerService._generate_session_uri(params, constants.PG_PROVIDER_NAME)
 
         # Then: The output should be a properly formed URI
         parse_result = url_parse.urlparse(output)
         self.assertEqual(parse_result.scheme, 'objectexplorer')
         self.assertTrue(parse_result.netloc)
 
-        re_match = re.match(r'(?P<username>\w+)@(?P<host>\w+):(?P<db_name>\w+)', parse_result.netloc)
+        re_match = re.match(r'(?P<username>\w+)@(?P<host>\w+):(?P<port>\w+):(?P<db_name>\w+)', parse_result.netloc)
         self.assertIsNotNone(re_match)
         self.assertEqual(re_match.group('username'), TEST_USER)
         self.assertEqual(re_match.group('host'), TEST_HOST)
+        self.assertEqual(int(re_match.group('port')), TEST_PORT)
         self.assertEqual(re_match.group('db_name'), TEST_DBNAME)
 
     # CREATE SESSION #######################################################
@@ -157,6 +163,7 @@ class TestObjectExplorer(unittest.TestCase):
         params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
+        oe._provider = constants.PG_PROVIDER_NAME
 
         # If: I attempt to create an OE session that already exists
         rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
@@ -174,6 +181,7 @@ class TestObjectExplorer(unittest.TestCase):
         # ... Create an OE service
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
+        oe._provider = constants.PG_PROVIDER_NAME
 
         # ... Patch the threading to throw
         patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
@@ -203,12 +211,14 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_successful(self):
         # Setup:
         # ... Create OE service with mock connection service that returns a successful connection response
-        mock_connection = utils.MockConnection({'host': 'myserver', 'dbname': 'postgres', 'user': 'postgres', 'port': 123})
+        mock_connection = MockServerConnection(cur=None, host= 'myserver', name= 'postgres',  user= 'postgres', port= 123)
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        oe._provider = constants.PG_PROVIDER_NAME
+        oe._server = Server
 
         # ... Create parameters, session, request context validator
         params, session_uri = _connection_details()
@@ -307,7 +317,7 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_create_connection_successful(self):
         # Setup:
-        mock_connection = MockConnection('test')
+        mock_connection = MockServerConnection()
         oe = ObjectExplorerService()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
@@ -486,7 +496,7 @@ class TestObjectExplorer(unittest.TestCase):
         # ... Patch the route_request to throw
         # ... Patch the threading to throw
         patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
-        patch_path = 'ossdbtoolsservice.object_explorer.object_explorer_service.route_request'
+        patch_path = 'ossdbtoolsservice.object_explorer.object_explorer_service.ObjectExplorerService._route_request'
         with mock.patch(patch_path, patch_mock):
             # If: I expand a node (with route_request that throws)
             rc = RequestFlowValidator()
@@ -582,6 +592,8 @@ class TestObjectExplorer(unittest.TestCase):
     def _preloaded_oe_service(self) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
+        oe._routing_table = PG_ROUTING_TABLE
+
         conn_details, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, conn_details)
         session.server = mock.Mock()
@@ -619,10 +631,10 @@ class SessionTestCase(unittest.TestCase):
         self.session = ObjectExplorerSession(session_uri, params)
         self.oe._session_map[session_uri] = self.session
         name = 'dbname'
-        self.mock_server = Server(MockConnection(name))
+        self.mock_server = Server(MockServerConnection())
         self.session.server = self.mock_server
-        self.db = Database(self.mock_server, name)
-        self.db._connection = MockConnection(name)
+        self.db = Database(self.mock_server, name)        
+        self.db._connection = self.mock_server._conn
         self.session.server._child_objects[Database.__name__] = [self.db]
         self.cs.get_connection = mock.MagicMock(return_value=self.mock_connection)
 
@@ -677,7 +689,7 @@ class SessionTestCase(unittest.TestCase):
 
         # Then: I should get a successful response
         rc.validate()
-        self.oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id objectexplorer://testuser@testhost:testdb/')
+        self.oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id objectexplorer://testuser@testhost:5432:testdb/')
 
     def test_handle_close_session_throwsException(self):
         # setup to throw exception on disconnect
@@ -715,7 +727,7 @@ class SessionTestCase(unittest.TestCase):
     def test_handle_shutdown_successfulWithSessions(self):
         # shutdown the session
         self.oe._handle_shutdown()
-        self.oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')
+        self.oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:5432:testdb/')
 
     def test_handle_shutdown_successfulNoDatabase(self):
         # Setup: Create an OE service and add a session to it
@@ -723,7 +735,7 @@ class SessionTestCase(unittest.TestCase):
 
         # shutdown the session
         self.oe._handle_shutdown()
-        self.oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:testdb/')
+        self.oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:5432:testdb/')
 
     def test_handle_shutdown_UnsuccessfulWithSessions(self):
         # Setup: Create an OE service and add a session to it
@@ -731,7 +743,7 @@ class SessionTestCase(unittest.TestCase):
 
         # shutdown the session
         self.oe._handle_shutdown()
-        self.oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id: objectexplorer://testuser@testhost:testdb/')
+        self.oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id: objectexplorer://testuser@testhost:5432:testdb/')
 
     def test_handle_shutdown_successfulNoSessions(self):
         # Setup: Create an empty session dictionary

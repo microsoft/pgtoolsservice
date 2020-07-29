@@ -16,32 +16,33 @@ import os
 from os import listdir
 from os.path import isfile, join
 
+import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
-from ossdbtoolsservice.query_execution.query_execution_service import (
-    QueryExecutionService, CANCELATION_QUERY, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
-from ossdbtoolsservice.query_execution.contracts import (
-    ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase)
-from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectionDetails
+from ossdbtoolsservice.driver.types.psycopg_driver import PG_CANCELLATION_QUERY, PostgreSQLConnection
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from ossdbtoolsservice.query import (
+    Batch, create_result_set, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
+    ResultSetStorageType
+)
+from ossdbtoolsservice.query.contracts import DbColumn, ResultSetSubset, SelectionData, SubsetResult
+from ossdbtoolsservice.query.data_storage import (
+    SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
+)
 from ossdbtoolsservice.query_execution.contracts import (
+    ExecuteDocumentSelectionParams, ExecuteStringParams, ExecuteRequestParamsBase,
     ExecutionPlanOptions, MESSAGE_NOTIFICATION, DEPLOY_MESSAGE_NOTIFICATION, SubsetParams, BATCH_COMPLETE_NOTIFICATION,
     BATCH_START_NOTIFICATION, DEPLOY_BATCH_START_NOTIFICATION, DEPLOY_BATCH_COMPLETE_NOTIFICATION,
     QUERY_COMPLETE_NOTIFICATION, RESULT_SET_COMPLETE_NOTIFICATION, DEPLOY_COMPLETE_NOTIFICATION,
     QueryCancelResult, QueryDisposeParams, SimpleExecuteRequest, ExecuteDocumentStatementParams,
     SaveResultsAsJsonRequestParams, SaveResultRequestResult,
-    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
-)
-from ossdbtoolsservice.query.contracts import DbColumn, ResultSetSubset, SelectionData, SubsetResult
-from ossdbtoolsservice.query import (
-    Batch, create_result_set, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
-    ResultSetStorageType
-)
-from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectionDetails
+    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams)
+from ossdbtoolsservice.query_execution.query_execution_service import (
+    QueryExecutionService, NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs)
+from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
-import tests.utils as utils
-from ossdbtoolsservice.query.data_storage import (
-    SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
-)
+from tests.pgsmo_tests.utils import MockServerConnection
+
 
 
 class TestQueryService(unittest.TestCase):
@@ -54,18 +55,22 @@ class TestQueryService(unittest.TestCase):
 
         self.rows = [(1, 'Text 1'), (2, 'Text 2')]
         self.cursor = utils.MockCursor(self.rows)
-        self.connection = utils.MockConnection(cursor=self.cursor)
+        self.mock_psycopg_connection = utils.MockPsycopgConnection(dsn_parameters={
+            'host': 'test', 
+            'dbname': 'test',
+        })
+        self.connection = MockServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.query_execution_service = QueryExecutionService()
-        self.service_provider = ServiceProvider(None, {})
+        self.service_provider = ServiceProvider(None, {}, constants.PG_PROVIDER_NAME)
         self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: self.connection_service}
         self.service_provider._is_initialized = True
         self.query_execution_service._service_provider = self.service_provider
         self.request_context = utils.MockRequestContext()
 
         self.cursor_cancel = utils.MockCursor(None)
-        self.connection_cancel = utils.MockConnection(cursor=self.cursor_cancel)
+        self.connection_cancel = MockServerConnection(cur=self.cursor_cancel)
         self.cursor_cancel.connection = self.connection_cancel
 
         def connection_side_effect(owner_uri: str, connection_type: ConnectionType):
@@ -92,7 +97,7 @@ class TestQueryService(unittest.TestCase):
         mock_server_set_request = mock.MagicMock()
         mock_server = JSONRPCServer(None, None)
         mock_server.set_request_handler = mock_server_set_request
-        mock_service_provider = ServiceProvider(mock_server, {}, None)
+        mock_service_provider = ServiceProvider(mock_server, {}, constants.PG_PROVIDER_NAME, None)
         service = QueryExecutionService()
 
         # If: I initialize the service
@@ -407,7 +412,7 @@ class TestQueryService(unittest.TestCase):
         # access to the arguments list of the notification call
         notification_calls = self.request_context.send_notification.mock_calls
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == DEPLOY_MESSAGE_NOTIFICATION]
-
+        
         # Assert that at least one message notification was sent and that there were no errors
         self.assertGreaterEqual(len(call_params_list), 1)
         for param in call_params_list:
@@ -524,7 +529,7 @@ class TestQueryService(unittest.TestCase):
 
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
-        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY.format(0))
 
         # The batch is also marked as canceled and executed. There should have been no commits and
         # we should have rolled back. During execute_query call,
@@ -569,7 +574,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(self.request_context.last_response_params.messages, None)
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
-        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY.format(0))
 
         # The batch should be marked as canceled, the state should be executed, and we should have rolled back
         self.assertTrue(query.is_canceled)
@@ -835,7 +840,7 @@ class TestQueryService(unittest.TestCase):
         self.cursor_cancel.execute.assert_called_once()
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
-        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY.format(0))
 
     def test_query_disposal_with_query_not_started(self):
         """Test query disposal while a query has not started executing"""
@@ -852,7 +857,7 @@ class TestQueryService(unittest.TestCase):
         self.cursor_cancel.execute.assert_called_once()
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
-        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], CANCELATION_QUERY)
+        self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY.format(0))
 
     def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_first_batch(self):
         ''' Multiple batch in SAME line test with cursor on 1st batch, returns the query for first batch '''
@@ -961,7 +966,7 @@ class TestQueryService(unittest.TestCase):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
-        self.connection.get_transaction_status.return_value = psycopg2.extensions.TRANSACTION_STATUS_INERROR
+        self.mock_psycopg_connection.get_transaction_status = mock.MagicMock(return_value=psycopg2.extensions.TRANSACTION_STATUS_INERROR)
         query_params = get_execute_string_params()
         query = Query(query_params.owner_uri, query_params.query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         self.query_execution_service.query_results[query_params.owner_uri] = query
@@ -1115,7 +1120,7 @@ class TestQueryService(unittest.TestCase):
         query_params.query = 'select usename, usesysid from pg_catalog.pg_user'
         query_params.owner_uri = 'test_uri'
 
-        connection = psycopg2.connect(**get_connection_details())
+        connection = PostgreSQLConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
 
         mock_thread = utils.MockThread()

@@ -76,7 +76,7 @@ class TestInMemoryResultSet(unittest.TestCase):
         self.assertEqual(self._result_set.rows[0], self._first_row)
         self.assertEqual(self._result_set.rows[1], self._second_row)
 
-        get_column_info_mock.assert_called_once_with(self._cursor.description, self._cursor.connection)
+        get_column_info_mock.assert_called_once_with(self._cursor)
 
     def test_save_as_result_set_when_not_read(self):
         params = SaveResultsRequestParams()

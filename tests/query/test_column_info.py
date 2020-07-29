@@ -9,7 +9,6 @@ from collections import namedtuple
 from ossdbtoolsservice.query.column_info import get_columns_info
 import tests.utils as utils
 
-
 class TestGetColumnsInfo(unittest.TestCase):
 
     def setUp(self):
@@ -19,11 +18,12 @@ class TestGetColumnsInfo(unittest.TestCase):
         column = namedtuple('Column', ['name', 'type_code', 'display_size', 'internal_size', 'precision', 'scale', 'null_ok'])
 
         self._cursor.description = [column('id', 1, None, None, None, None, True), column('is_valid', 2, None, None, None, None, True)]
-        self._connection = utils.MockConnection(cursor=self._cursor)
+        self._connection = utils.MockPsycopgConnection(cursor=self._cursor)
+        self._cursor.connection = self._connection
 
     def test_get_column_info_executes_cursor(self):
-
-        columns_info = get_columns_info(self._cursor.description, self._connection)
+        
+        columns_info = get_columns_info(self._cursor)
 
         self._connection.cursor.assert_called_once()
         self._cursor.execute.assert_called_once()

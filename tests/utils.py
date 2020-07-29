@@ -9,6 +9,7 @@ import unittest.mock as mock
 import psycopg2
 
 from ossdbtoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 
 def assert_not_none_or_empty(value: str):
@@ -65,7 +66,7 @@ def get_mock_service_provider(service_map: dict = None) -> ServiceProvider:
 
     :param service_map: A dictionary mapping service names to services
     """
-    provider = ServiceProvider(None, {}, get_mock_logger())
+    provider = ServiceProvider(None, {}, PG_PROVIDER_NAME, get_mock_logger())
     if service_map is not None:
         provider._services = service_map
     provider._is_initialized = True
@@ -100,7 +101,7 @@ class MockRequestContext(RequestContext):
         self.last_error_message = str(ex)
 
 
-class MockConnection(object):
+class MockPsycopgConnection(object):
     """Class used to mock psycopg2 connection objects for testing"""
 
     def __init__(self, dsn_parameters=None, cursor=None):
@@ -112,6 +113,7 @@ class MockConnection(object):
         self.notices = []
         self.autocommit = True
         self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+        self.commit = mock.Mock()
 
     @property
     def closed(self):
@@ -160,7 +162,6 @@ class MockCursor:
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        self.description = []
         self.rowcount = len(self._query_results) if self._query_results is not None else 0
 
     def execute_failure_side_effects(self, *args):

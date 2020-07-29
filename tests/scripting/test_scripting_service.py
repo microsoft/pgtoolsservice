@@ -13,8 +13,9 @@ from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
 from ossdbtoolsservice.scripting.scripter import Scripter
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from ossdbtoolsservice.scripting.contracts.scriptas_request import ScriptOperation, ScriptAsParameters, ScriptAsResponse
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.mock_request_validation import RequestFlowValidator
-from tests.pgsmo_tests.utils import MockConnection      # TODO: Replace with global
+from tests.pgsmo_tests.utils import MockServerConnection
 import tests.utils as utils
 
 
@@ -40,7 +41,7 @@ class TestScriptingService(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
+        sp: ServiceProvider = ServiceProvider(server, {}, PG_PROVIDER_NAME, utils.get_mock_logger())
 
         # If: I register a scripting service
         ss: ScriptingService = ScriptingService()
@@ -91,7 +92,7 @@ class TestScriptingService(unittest.TestCase):
 
         # Setup:
         # ... Create a scripting service
-        mock_connection = MockConnection(None)
+        mock_connection = MockServerConnection()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)

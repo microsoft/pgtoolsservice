@@ -97,7 +97,6 @@ class ConnectionService:
         If a connection was already open, disconnect first. Return a connection response indicating
         whether the connection was successful
         """
-
         connection_info: ConnectionInfo = self.owner_to_connection_map.get(params.owner_uri)
 
         # If there is no saved connection or the saved connection's options do not match, create a new one
@@ -120,11 +119,12 @@ class ConnectionService:
                 self._cancellation_map[cancellation_key].cancel()
             self._cancellation_map[cancellation_key] = cancellation_token
         
-        # Get the type of server
+        # Get the type of server and config
         provider_name = self._service_provider.provider
+        config = self._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration
         try:
             # Get connection to DB server using the provided connection params
-            connection: ServerConnection = ConnectionManager(provider_name, params.connection.options).get_connection()
+            connection: ServerConnection = ConnectionManager(provider_name, config, params.connection.options).get_connection()
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:

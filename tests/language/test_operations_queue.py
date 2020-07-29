@@ -16,6 +16,7 @@ from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
 from ossdbtoolsservice.language.operations_queue import (
     ConnectionContext, OperationsQueue, QueuedOperation, INTELLISENSE_URI
 )
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 COMPLETIONREFRESHER_PATH_PATH = 'ossdbtoolsservice.language.operations_queue.CompletionRefresher'
 
@@ -28,7 +29,7 @@ class TestOperationsQueue(unittest.TestCase):
         self.default_connection_key = 'server_db_user'
         self.mock_connection_service = ConnectionService()
         self.mock_server = JSONRPCServer(None, None)
-        self.mock_service_provider = ServiceProvider(self.mock_server, {}, None)
+        self.mock_service_provider = ServiceProvider(self.mock_server, {}, PG_PROVIDER_NAME, None)
         self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
         self.mock_service_provider._is_initialized = True
 
@@ -162,7 +163,7 @@ class TestOperationsQueue(unittest.TestCase):
         # Given an operation with a connected context
         context = ConnectionContext(self.expected_context_key)
         context.is_connected = True
-        context.pgcompleter = mock.Mock()
+        context.completer = mock.Mock()
         task = mock.MagicMock(return_value=True)
         timeout_task = mock.Mock()
         operations_queue = OperationsQueue(self.mock_service_provider)
@@ -181,7 +182,7 @@ class TestOperationsQueue(unittest.TestCase):
         # Given an operation where the task will fail (return false)
         context = ConnectionContext(self.expected_context_key)
         context.is_connected = True
-        context.pgcompleter = mock.Mock()
+        context.completer = mock.Mock()
         task = mock.MagicMock(return_value=False)
         timeout_task = mock.Mock()
         operations_queue = OperationsQueue(self.mock_service_provider)
@@ -223,7 +224,7 @@ class TestConnectionContextQueue(unittest.TestCase):
         connection_context = ConnectionContext(self.expected_context_key)
         self.assertEqual(connection_context.key, self.expected_context_key)
         self.assertFalse(connection_context.intellisense_complete.is_set())
-        self.assertIsNone(connection_context.pgcompleter)
+        self.assertIsNone(connection_context.completer)
         self.assertFalse(connection_context.is_connected)
 
     def test_on_completions_refreshed(self):
@@ -236,7 +237,7 @@ class TestConnectionContextQueue(unittest.TestCase):
             completer = mock.Mock()
             self._complete_refresh(completer)
             # Then the completer object should be saved and an event raised
-            self.assertEqual(connection_context.pgcompleter, completer)
+            self.assertEqual(connection_context.completer, completer)
             self.assertTrue(connection_context.is_connected)
             self.assertTrue(connection_context.intellisense_complete.is_set())
         self._run_with_mock_refresher(do_test)

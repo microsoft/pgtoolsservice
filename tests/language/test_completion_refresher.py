@@ -9,7 +9,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
-
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
+from tests.utils import MockPsycopgConnection
 import tests.pgsmo_tests.utils as utils
 
 MYSCHEMA = 'myschema'
@@ -20,7 +21,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
     """Methods for testing the SqlCompletion refresher module"""
 
     def setUp(self):
-        self.refresher: CompletionRefresher = CompletionRefresher(utils.MockConnection(None))
+        self.refresher: CompletionRefresher = CompletionRefresher(utils.MockServerConnection())
 
     def test_pg_refreshers(self):
         """

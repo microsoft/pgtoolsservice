@@ -36,7 +36,7 @@ class TestDataStorageReader(unittest.TestCase):
             self.assertEqual(self._reader.get_value(0), self._rows[read_row_count][0])
             self.assertEqual(self._reader.get_values(), self._rows[read_row_count])
 
-            self._get_columns_info_mock.assert_called_once_with(self._cursor.description, self._cursor.connection)
+            self._get_columns_info_mock.assert_called_once_with(self._cursor)
             read_row_count += 1
 
         self.assertEqual(read_row_count, total_rows)
