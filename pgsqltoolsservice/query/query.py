@@ -141,7 +141,10 @@ class Query:
 
                 batch.execute(connection)
         finally:
-            connection.autocommit = current_auto_commit_status
+            # 0 if the connection is open, nonzero if it is closed or broken.
+            # We can only set autocommit when the connection is open.
+            if (connection.closed == 0):
+                connection.autocommit = current_auto_commit_status
             self._execution_state = ExecutionState.EXECUTED
 
     def get_subset(self, batch_index: int, start_index: int, end_index: int):
