@@ -12,8 +12,8 @@ from ossdbtoolsservice.query import ExecutionState, Query, QueryExecutionSetting
 from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData, DbColumn
 from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
-from tests.utils import MockCursor
 from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.utils import MockCursor
 
 
 class TestQuery(unittest.TestCase):

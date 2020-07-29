@@ -9,9 +9,9 @@ import unittest.mock as mock
 from urllib.parse import urlparse
 
 import ossdbtoolsservice.object_explorer.session as session
+from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.object_explorer.routing.pg_routing import PG_ROUTING_TABLE
-from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.object_explorer.contracts import NodeInfo
 from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
