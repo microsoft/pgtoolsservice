@@ -141,6 +141,7 @@ class Query:
 
                 batch.execute(connection)
         finally:
+            # 0 if the connection is open, nonzero if it is closed or broken.
             if (connection.closed == 0):
                 connection.autocommit = current_auto_commit_status
             self._execution_state = ExecutionState.EXECUTED
