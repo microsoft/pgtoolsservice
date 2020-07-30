@@ -43,10 +43,7 @@ from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 import tests.utils as utils
 from tests.pgsmo_tests.utils import MockPGServerConnection
-from ossdbtoolsservice.query.data_storage import (
-    SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
-)
-from ossdbtoolsservice.driver.types.psycopg_driver import PG_CANCELLATION_QUERY
+
 
 
 class TestQueryService(unittest.TestCase):
@@ -60,7 +57,7 @@ class TestQueryService(unittest.TestCase):
         self.rows = [(1, 'Text 1'), (2, 'Text 2')]
         self.cursor = utils.MockCursor(self.rows)
         self.mock_psycopg_connection = utils.MockPsycopgConnection(dsn_parameters={
-            'host': 'test', 
+            'host': 'test',
             'dbname': 'test',
         })
         self.connection = MockPGServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
@@ -416,7 +413,7 @@ class TestQueryService(unittest.TestCase):
         # access to the arguments list of the notification call
         notification_calls = self.request_context.send_notification.mock_calls
         call_params_list = [call[1][1] for call in notification_calls if call[1][0] == DEPLOY_MESSAGE_NOTIFICATION]
-        
+
         # Assert that at least one message notification was sent and that there were no errors
         self.assertGreaterEqual(len(call_params_list), 1)
         for param in call_params_list:

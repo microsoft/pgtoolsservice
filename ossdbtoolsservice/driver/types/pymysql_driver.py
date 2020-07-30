@@ -234,8 +234,7 @@ class MySQLConnection(ServerConnection):
                     query_results = cursor.fetchone()
 
                 return query_results
-            except Exception as e:
-                print(e)
+            except Exception:
                 return False
             finally:
                 cursor.close()
