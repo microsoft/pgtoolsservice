@@ -3,15 +3,16 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List     # noqa
 import time
 import unittest
+from typing import List  # noqa
 from unittest.mock import Mock, patch
 
-from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
-from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 import tests.pgsmo_tests.utils as utils
+from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
+from ossdbtoolsservice.utils.constants import (MYSQL_PROVIDER_NAME,
+                                               PG_PROVIDER_NAME)
+from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 
 MYSCHEMA = 'myschema'
 MYSCHEMA2 = 'myschema2'

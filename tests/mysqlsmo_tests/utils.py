@@ -1,7 +1,8 @@
 import unittest
 import unittest.mock as mock
-from pymysql.err import DatabaseError
 from typing import List, Optional, Tuple
+
+from pymysql.err import DatabaseError
 
 from ossdbtoolsservice.driver.types.pymysql_driver import MySQLConnection
 from tests.utils import MockPyMySQLConnection

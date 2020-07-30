@@ -3,13 +3,16 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Mapping, Tuple, Optional
+from typing import List, Mapping, Optional, Tuple
+
+import psycopg2
+from psycopg2.extensions import (TRANSACTION_STATUS_INERROR, Column,
+                                 connection, cursor)
+
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace.contracts import Configuration
-import psycopg2
-from psycopg2.extensions import Column, connection, cursor, TRANSACTION_STATUS_INERROR
 
 PG_CANCELLATION_QUERY = 'SELECT pg_cancel_backend ({})'
 

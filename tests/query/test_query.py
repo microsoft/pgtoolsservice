@@ -8,8 +8,12 @@ from unittest import mock
 
 import psycopg2
 
-from ossdbtoolsservice.query import ExecutionState, Query, QueryExecutionSettings, QueryEvents, ResultSetStorageType
-from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData, DbColumn
+from ossdbtoolsservice.query import (ExecutionState, Query, QueryEvents,
+                                     QueryExecutionSettings,
+                                     ResultSetStorageType)
+from ossdbtoolsservice.query.contracts import (DbColumn,
+                                               SaveResultsRequestParams,
+                                               SelectionData)
 from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.pgsmo_tests.utils import MockPGServerConnection

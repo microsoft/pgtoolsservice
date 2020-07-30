@@ -10,13 +10,14 @@ import urllib.parse as parse
 
 import inflection
 
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection
-from tests.utils import MockPsycopgConnection
 from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.utils import MockPsycopgConnection
+
 
 class TestServer(unittest.TestCase):
     CHECK_RECOVERY_ROW = {

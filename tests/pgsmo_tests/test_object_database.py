@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-import unittest.mock as mock    # noqa
+import unittest.mock as mock  # noqa
 
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server

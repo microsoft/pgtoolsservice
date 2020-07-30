@@ -4,12 +4,14 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-from prompt_toolkit.completion import Completion
-from prompt_toolkit.document import Document
 from unittest.mock import Mock
 
+from prompt_toolkit.completion import Completion
+from prompt_toolkit.document import Document
+
+from ossdbtoolsservice.language.completion.mysql_completion import \
+    MySQLCompletion
 from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
-from ossdbtoolsservice.language.completion.mysql_completion import MySQLCompletion
 
 
 class TestNaiveCompletion(unittest.TestCase):

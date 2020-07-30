@@ -5,6 +5,7 @@
 
 import unittest
 from unittest.mock import Mock
+
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 

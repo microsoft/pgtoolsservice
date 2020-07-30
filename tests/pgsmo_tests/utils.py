@@ -5,15 +5,17 @@
 
 import unittest
 import unittest.mock as mock
-from psycopg2 import DatabaseError
-from psycopg2.extensions import Column
 from typing import List, Optional, Tuple
 
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from psycopg2 import DatabaseError
+from psycopg2.extensions import Column
+
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from pgsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
 from tests.utils import MockPsycopgConnection
+
 
 # MOCK NODE OBJECT #########################################################
 class MockNodeObject(NodeObject):

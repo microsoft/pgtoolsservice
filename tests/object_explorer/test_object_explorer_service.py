@@ -6,29 +6,30 @@
 """Module for testing the object explorer service"""
 import re
 import threading
-from typing import Callable, Tuple, TypeVar
 import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
+from typing import Callable, Tuple, TypeVar
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectionCompleteParams
-from ossdbtoolsservice.hosting import JSONRPCServer, RequestContext, ServiceProvider  # noqa
+from ossdbtoolsservice.connection.contracts import (ConnectionCompleteParams,
+                                                    ConnectionDetails)
+from ossdbtoolsservice.hosting import (JSONRPCServer, RequestContext,  # noqa
+                                       ServiceProvider)
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
 from ossdbtoolsservice.object_explorer.contracts import (
-    NodeInfo, CloseSessionParameters,
-    CreateSessionResponse, SessionCreatedParameters, SESSION_CREATED_METHOD,
-    ExpandParameters, ExpandCompletedParameters, EXPAND_COMPLETED_METHOD
-)
-from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
+    EXPAND_COMPLETED_METHOD, SESSION_CREATED_METHOD, CloseSessionParameters,
+    CreateSessionResponse, ExpandCompletedParameters, ExpandParameters,
+    NodeInfo, SessionCreatedParameters)
+from ossdbtoolsservice.object_explorer.object_explorer_service import (
+    ObjectExplorerService, ObjectExplorerSession)
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 from ossdbtoolsservice.utils import constants
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
-from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.mock_request_validation import RequestFlowValidator
-
+from tests.pgsmo_tests.utils import MockPGServerConnection
 
 TEST_HOST = 'testhost'
 TEST_DBNAME = 'testdb'

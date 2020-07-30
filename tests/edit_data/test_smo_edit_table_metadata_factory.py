@@ -8,9 +8,9 @@ import unittest
 from unittest import mock
 
 from ossdbtoolsservice.edit_data import SmoEditTableMetadataFactory
+from pgsmo import Column, Server, Table, View
 from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.utils import MockPsycopgConnection
-from pgsmo import Server, Table, View, Column
 
 
 class TestSmoEditTableMetadataFactory(unittest.TestCase):
