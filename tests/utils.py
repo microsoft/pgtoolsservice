@@ -6,10 +6,12 @@
 import logging
 import unittest
 import unittest.mock as mock
-import psycopg2
 from typing import Optional
 
-from ossdbtoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
+import psycopg2
+
+from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
+                                       ServiceProvider)
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 
