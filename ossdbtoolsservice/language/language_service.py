@@ -6,39 +6,43 @@
     Language Service Implementation
 """
 import functools
-from logging import Logger          # noqa
+import tempfile
 import threading
-from typing import Any, Dict, Set, List  # noqa
+from logging import Logger  # noqa
+from typing import Any, Dict, List, Set  # noqa
 
-from prompt_toolkit.completion import Completion, Completer    # noqa
-from prompt_toolkit.document import Document    # noqa
 import sqlparse
+from prompt_toolkit.completion import Completer, Completion  # noqa
+from prompt_toolkit.document import Document  # noqa
 
-from ossdbtoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
-from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
+import ossdbtoolsservice.scripting.scripter as scripter
+import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.workspace.contracts import Position, TextDocumentPosition, Range, Location
-from ossdbtoolsservice.workspace import WorkspaceService    # noqa
-from ossdbtoolsservice.workspace.script_file import ScriptFile  # noqa
+from ossdbtoolsservice.hosting import (JSONRPCServer,  # noqa
+                                       NotificationContext, RequestContext,
+                                       ServiceProvider)
 from ossdbtoolsservice.language.contracts import (
-    COMPLETION_REQUEST, CompletionItem, CompletionItemKind,
-    COMPLETION_RESOLVE_REQUEST, DEFINITION_REQUEST,
-    LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams,
-    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
-    DOCUMENT_FORMATTING_REQUEST, DocumentFormattingParams,
-    DOCUMENT_RANGE_FORMATTING_REQUEST, DocumentRangeFormattingParams,
-    TextEdit, FormattingOptions, StatusChangeParams, STATUS_CHANGE_NOTIFICATION
-)
-from ossdbtoolsservice.language.operations_queue import ConnectionContext, OperationsQueue, QueuedOperation
+    COMPLETION_REQUEST, COMPLETION_RESOLVE_REQUEST, DEFINITION_REQUEST,
+    DOCUMENT_FORMATTING_REQUEST, DOCUMENT_RANGE_FORMATTING_REQUEST,
+    INTELLISENSE_READY_NOTIFICATION, LANGUAGE_FLAVOR_CHANGE_NOTIFICATION,
+    STATUS_CHANGE_NOTIFICATION, CompletionItem, CompletionItemKind,
+    DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions,
+    IntelliSenseReadyParams, LanguageFlavorChangeParams, StatusChangeParams,
+    TextEdit)
 from ossdbtoolsservice.language.keywords import DefaultCompletionHelper
+from ossdbtoolsservice.language.operations_queue import (ConnectionContext,
+                                                         OperationsQueue,
+                                                         QueuedOperation)
+from ossdbtoolsservice.language.peek_definition_result import DefinitionResult
 from ossdbtoolsservice.language.script_parse_info import ScriptParseInfo
 from ossdbtoolsservice.language.text import TextUtilities
-from ossdbtoolsservice.language.peek_definition_result import DefinitionResult
-from ossdbtoolsservice.scripting.contracts import ScriptOperation
-import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
-import ossdbtoolsservice.scripting.scripter as scripter
-import tempfile
+from ossdbtoolsservice.scripting.contracts import ScriptOperation
+from ossdbtoolsservice.workspace import WorkspaceService  # noqa
+from ossdbtoolsservice.workspace.contracts import (Location, Position, Range,
+                                                   TextDocumentPosition)
+from ossdbtoolsservice.workspace.script_file import ScriptFile  # noqa
 
 # Map of meta or display_meta values to completion items. Based on SqlToolsService definitions
 DISPLAY_META_MAP: Dict[str, CompletionItemKind] = {

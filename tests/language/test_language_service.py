@@ -5,42 +5,40 @@
 
 """Test the language service"""
 
-import threading    # noqa
-from typing import List, Tuple, Optional
+import threading  # noqa
 import unittest
+from typing import List, Optional, Tuple
 from unittest import mock
-from parameterized import parameterized
 
+from parameterized import parameterized
 from prompt_toolkit.completion import Completion
 
-from ossdbtoolsservice.workspace.contracts.common import TextDocumentPosition, Position     # noqa
-from ossdbtoolsservice.hosting import (     # noqa
-    JSONRPCServer,
-    NotificationContext,
-    RequestContext,
-    ServiceProvider
-)
-from ossdbtoolsservice.language import LanguageService
-from ossdbtoolsservice.language.operations_queue import OperationsQueue
-from ossdbtoolsservice.language.script_parse_info import ScriptParseInfo    # noqa
-from ossdbtoolsservice.language.contracts import (      # noqa
-    LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
-    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
-    DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions, TextEdit
-)
-from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.workspace import (       # noqa
-    WorkspaceService, TextDocumentIdentifier, Configuration,
-    PGSQLConfiguration, ScriptFile, Workspace
-)
-from ossdbtoolsservice.workspace.contracts import (
-    Range
-)
-from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
-from ossdbtoolsservice.connection.contracts import ConnectionDetails
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME, MSSQL_PROVIDER_NAME
-from tests.mock_request_validation import RequestFlowValidator
 import tests.utils as utils
+from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
+from ossdbtoolsservice.connection.contracts import ConnectionDetails
+from ossdbtoolsservice.hosting import (JSONRPCServer,  # noqa
+                                       NotificationContext, RequestContext,
+                                       ServiceProvider)
+from ossdbtoolsservice.language import LanguageService
+from ossdbtoolsservice.language.contracts import (  # noqa
+    INTELLISENSE_READY_NOTIFICATION, CompletionItem, CompletionItemKind,
+    DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions,
+    IntelliSenseReadyParams, LanguageFlavorChangeParams, TextEdit)
+from ossdbtoolsservice.language.operations_queue import OperationsQueue
+from ossdbtoolsservice.language.script_parse_info import \
+    ScriptParseInfo  # noqa
+from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.utils.constants import (MSSQL_PROVIDER_NAME,
+                                               MYSQL_PROVIDER_NAME,
+                                               PG_PROVIDER_NAME)
+from ossdbtoolsservice.workspace import (Configuration,  # noqa
+                                         PGSQLConfiguration, ScriptFile,
+                                         TextDocumentIdentifier, Workspace,
+                                         WorkspaceService)
+from ossdbtoolsservice.workspace.contracts import Range
+from ossdbtoolsservice.workspace.contracts.common import (Position,  # noqa
+                                                          TextDocumentPosition)
+from tests.mock_request_validation import RequestFlowValidator
 
 
 class TestLanguageService(unittest.TestCase):
