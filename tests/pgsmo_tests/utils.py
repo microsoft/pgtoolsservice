@@ -3,12 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional, Tuple
 import unittest
 import unittest.mock as mock
-
 from psycopg2 import DatabaseError
 from psycopg2.extensions import Column
+from typing import List, Optional, Tuple
 
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection

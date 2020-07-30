@@ -134,7 +134,8 @@ class MockPsycopgConnection(object):
         else:
             raise NotImplementedError()
 
-class MockMySQLConnection(object):
+
+class MockPyMySQLConnection(object):
     """Class used to mock pymysql connection objects for testing"""
 
     def __init__(self, parameters=None, cursor=None):
@@ -142,6 +143,7 @@ class MockMySQLConnection(object):
         self.cursor = mock.Mock(return_value=cursor)
         self.commit = mock.Mock()
         self.ping = mock.Mock()
+
 
 class MockCursor:
     """Class used to mock psycopg2 cursor objects for testing"""
