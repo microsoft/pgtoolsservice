@@ -3,9 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Any
 import unittest
+from typing import Any, List
 from unittest import mock
+
 import psycopg2
 
 import tests.pgsmo_tests.utils as utils

@@ -4,19 +4,20 @@
 # --------------------------------------------------------------------------------------------
 
 """Tests the scripter module"""
-from typing import List, Any
 import unittest
+from typing import Any, List
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Database, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, \
-    Rule, Trigger, Index
-from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import ossdbtoolsservice.scripting.scripter as scripter
+from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
+from pgsmo import (CheckConstraint, Column, Database, DataType,
+                   ExclusionConstraint, ForeignKeyConstraint, Index,
+                   IndexConstraint, Rule, Schema, Server, Table, Trigger)
 from smo.common.node_object import NodeCollection
-
 from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.utils import assert_not_none_or_whitespace
+
 
 class TestScripter(unittest.TestCase):
     """Methods for testing the scripter module"""

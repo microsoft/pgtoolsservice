@@ -3,16 +3,18 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta, abstractmethod
 import os.path
-from typing import Callable, List, Mapping, Type
 import unittest
 import unittest.mock as mock
+from abc import ABCMeta, abstractmethod
+from typing import Callable, List, Mapping, Type
 
-from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection, NodeObject
-from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
-from pgsmo.objects.server.server import Server
 import tests.pgsmo_tests.utils as utils
+from pgsmo.objects.server.server import Server
+from smo.common.node_object import (
+    NodeCollection, NodeLazyPropertyCollection, NodeObject)
+from smo.common.scripting_mixins import (ScriptableCreate, ScriptableDelete,
+                                         ScriptableSelect, ScriptableUpdate)
 
 
 class NodeObjectTestBase(metaclass=ABCMeta):

@@ -3,17 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import urllib.parse as parse
 import unittest
 import unittest.mock as mock
+import urllib.parse as parse
 
 import smo.common.node_object as node
-from pgsmo.objects.server.server import Server
+import tests.pgsmo_tests.utils as utils
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.schema.schema import Schema
+from pgsmo.objects.server.server import Server
 from pgsmo.objects.table.table import Table
-import tests.pgsmo_tests.utils as utils
 
 
 class TestNodeCollection(unittest.TestCase):

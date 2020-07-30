@@ -7,25 +7,25 @@
 
 import unittest
 from unittest import mock
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
 
 import psycopg2
 
 import ossdbtoolsservice.connection.connection_service
 import tests.utils as utils
-from ossdbtoolsservice.connection.contracts import (
-    CONNECTION_COMPLETE_METHOD, ConnectionType, ConnectRequestParams, ConnectionDetails,
-    DisconnectRequestParams, ListDatabasesParams, ConnectionCompleteParams, CancelConnectParams,
-    ChangeDatabaseRequestParams
-)
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
+from ossdbtoolsservice.connection.contracts import (
+    CONNECTION_COMPLETE_METHOD, CancelConnectParams,
+    ChangeDatabaseRequestParams, ConnectionCompleteParams, ConnectionDetails,
+    ConnectionType, ConnectRequestParams, DisconnectRequestParams,
+    ListDatabasesParams)
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.workspace import WorkspaceService
 from tests.integration import get_connection_details, integration_test
 from tests.pgsmo_tests.utils import MockPGServerConnection
-from tests.utils import MockCursor, MockRequestContext, MockPsycopgConnection
+from tests.utils import MockCursor, MockPsycopgConnection, MockRequestContext
 
 
 class TestConnectionService(unittest.TestCase):

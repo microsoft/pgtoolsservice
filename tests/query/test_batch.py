@@ -7,13 +7,15 @@ import unittest
 from unittest import mock
 
 import tests.utils as utils
-from tests.pgsmo_tests.utils import MockPGServerConnection
-from ossdbtoolsservice.query.batch import (
-    Batch, BatchEvents, create_batch, create_result_set, ResultSetStorageType, SelectBatch
-)
-from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
+from ossdbtoolsservice.query.batch import (Batch, BatchEvents,
+                                           ResultSetStorageType, SelectBatch,
+                                           create_batch, create_result_set)
+from ossdbtoolsservice.query.contracts import (SaveResultsRequestParams,
+                                               SelectionData)
+from ossdbtoolsservice.query.file_storage_result_set import \
+    FileStorageResultSet
 from ossdbtoolsservice.query.in_memory_result_set import InMemoryResultSet
-from ossdbtoolsservice.query.file_storage_result_set import FileStorageResultSet
+from tests.pgsmo_tests.utils import MockPGServerConnection
 
 
 class TestBatch(unittest.TestCase):
