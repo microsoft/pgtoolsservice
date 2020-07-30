@@ -59,6 +59,6 @@ class MockMySQLServerConnection(MySQLConnection):
             connection = MockPyMySQLConnection(cursor=cur, parameters={
                 'database': name, 'host': host, 'port': port, 'user': user})
 
-        # mock pymysql.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
+        # mock pymysql.connect call in MySQLConnection.__init__ to return mock pymysql connection
         with mock.patch('pymysql.connect', mock.Mock(return_value=connection)):
             super().__init__({"host": host, "user": user, "port": port, "database": name})
