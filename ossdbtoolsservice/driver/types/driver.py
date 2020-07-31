@@ -163,6 +163,13 @@ class ServerConnection(ABC):
         Gets the size of a particular database in MB
         """
         pass
+
+    @abstractmethod
+    def get_error_message(self, error) -> str:
+        """
+        Get the message from database error instance 
+        """
+        pass
     
     @abstractmethod
     def close(self):
