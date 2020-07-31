@@ -6,18 +6,18 @@
 import unittest
 from unittest import mock
 
+import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionCompleteParams
-from ossdbtoolsservice.utils.constants import CONNECTION_SERVICE_NAME
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
+from ossdbtoolsservice.scripting.contracts.scriptas_request import (
+    ScriptAsParameters, ScriptAsResponse, ScriptOperation)
 from ossdbtoolsservice.scripting.scripter import Scripter
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
-from ossdbtoolsservice.scripting.contracts.scriptas_request import ScriptOperation, ScriptAsParameters, ScriptAsResponse
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import (CONNECTION_SERVICE_NAME,
+                                               PG_PROVIDER_NAME)
 from tests.mock_request_validation import RequestFlowValidator
-from tests.pgsmo_tests.utils import MockServerConnection
-import tests.utils as utils
-
+from tests.pgsmo_tests.utils import MockPGServerConnection
 
 """Module for testing the scripting service"""
 
@@ -92,7 +92,7 @@ class TestScriptingService(unittest.TestCase):
 
         # Setup:
         # ... Create a scripting service
-        mock_connection = MockServerConnection()
+        mock_connection = MockPGServerConnection()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)

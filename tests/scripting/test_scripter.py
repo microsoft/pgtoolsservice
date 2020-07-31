@@ -4,19 +4,20 @@
 # --------------------------------------------------------------------------------------------
 
 """Tests the scripter module"""
-from typing import List, Any
 import unittest
+from typing import Any, List
 from unittest import mock
 
-from pgsmo import Table, DataType, Schema, Database, Server, Column, CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint, \
-    Rule, Trigger, Index
-from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import ossdbtoolsservice.scripting.scripter as scripter
+from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
+from pgsmo import (CheckConstraint, Column, Database, DataType,
+                   ExclusionConstraint, ForeignKeyConstraint, Index,
+                   IndexConstraint, Rule, Schema, Server, Table, Trigger)
 from smo.common.node_object import NodeCollection
-
-from tests.pgsmo_tests.utils import MockServerConnection
+from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.utils import assert_not_none_or_whitespace
+
 
 class TestScripter(unittest.TestCase):
     """Methods for testing the scripter module"""
@@ -25,7 +26,7 @@ class TestScripter(unittest.TestCase):
         """Set up mock objects for testing the scripting service.
         Ran before each unit test.
         """
-        self.conn = MockServerConnection(cur=None, port="8080", host= "test", name= "test")
+        self.conn = MockPGServerConnection(cur=None, port="8080", host= "test", name= "test")
         self.script = scripter.Scripter(self.conn)
         
     def test_init(self):
@@ -104,7 +105,7 @@ class TestScripterOld(unittest.TestCase):
         """Set up mock objects for testing the scripting service.
         Ran before each unit test.
         """
-        self.connection = MockServerConnection(cur=None, port="8080", host= "test", name= "test")
+        self.connection = MockPGServerConnection(cur=None, port="8080", host= "test", name= "test")
         self.scripter = scripter.Scripter(self.connection)
         self.server = self.scripter.server
         self.service = ScriptingService()

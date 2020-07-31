@@ -3,16 +3,18 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta, abstractmethod
 import os.path
-from typing import Callable, List, Mapping, Type
 import unittest
 import unittest.mock as mock
+from abc import ABCMeta, abstractmethod
+from typing import Callable, List, Mapping, Type
 
-from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection, NodeObject
-from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
-from pgsmo.objects.server.server import Server
 import tests.pgsmo_tests.utils as utils
+from pgsmo.objects.server.server import Server
+from smo.common.node_object import (
+    NodeCollection, NodeLazyPropertyCollection, NodeObject)
+from smo.common.scripting_mixins import (ScriptableCreate, ScriptableDelete,
+                                         ScriptableSelect, ScriptableUpdate)
 
 
 class NodeObjectTestBase(metaclass=ABCMeta):
@@ -58,7 +60,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
     # TEST METHODS #########################################################
     def test_from_node_query(self):
         # If: I create a new object from a node row with the expected parent type
-        mock_server = Server(utils.MockServerConnection())
+        mock_server = Server(utils.MockPGServerConnection())
         mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
 
         obj = self.class_for_test._from_node_query(mock_server, mock_parent, **self.node_query)
@@ -91,7 +93,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         mock_exec_dict = mock.MagicMock(return_value=([], [self.property_query]))
 
         # ... Create an instance of the class
-        mock_server = Server(utils.MockServerConnection())
+        mock_server = Server(utils.MockPGServerConnection())
         mock_server.connection.execute_dict = mock_exec_dict
 
         mock_grand_grand_parent = utils.MockNodeObject(mock_server, None, 'grandgrandparent') if not self.parent_expected_to_be_none else None
@@ -104,7 +106,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
 
     def test_init(self):
         # If: I create an instance of the provided class
-        mock_server = Server(utils.MockServerConnection())
+        mock_server = Server(utils.MockPGServerConnection())
         mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
 
         name = 'test'
@@ -120,7 +122,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
 
     def test_template_path_pg(self):
         # Setup: Create a mock connection that has PG as the server type
-        mock_server = Server(utils.MockServerConnection())
+        mock_server = Server(utils.MockPGServerConnection())
         mock_server._ServerConnection__server_type = mock.MagicMock(return_value='pg')
 
         # If: I ask for the template path of the class
@@ -133,7 +135,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
     # TODO: Disabled 08/23/2017 beruss -- reenable once properties are fixed, tracked by https://github.com/Microsoft/carbon/issues/1734
     def _test_scripting_mixins(self):
         # Setup: Create an instance of the object
-        mock_server = Server(utils.MockServerConnection())
+        mock_server = Server(utils.MockPGServerConnection())
 
         mock_grand_parent = utils.MockNodeObject(mock_server, None, 'grandparent') if not self.parent_expected_to_be_none else None
         mock_parent = utils.MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
