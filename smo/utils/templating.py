@@ -35,7 +35,7 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     containing_folders: List[str] = [x for x in all_folders if template_name in next(os.walk(x))[2]]
 
     def sortlist(item):
-        number = item[item.rfind('\\') + 1: len(item)].partition('_')[0]
+        number = os.path.basename(item).partition('_')[0]
         try:
             number = float(number)
         except ValueError:
