@@ -5,42 +5,40 @@
 
 """Test the language service"""
 
-import threading    # noqa
-from typing import List, Tuple, Optional
+import threading  # noqa
 import unittest
+from typing import List, Optional, Tuple
 from unittest import mock
-from parameterized import parameterized
 
+from parameterized import parameterized
 from prompt_toolkit.completion import Completion
 
-from ossdbtoolsservice.workspace.contracts.common import TextDocumentPosition, Position     # noqa
-from ossdbtoolsservice.hosting import (     # noqa
-    JSONRPCServer,
-    NotificationContext,
-    RequestContext,
-    ServiceProvider
-)
-from ossdbtoolsservice.language import LanguageService
-from ossdbtoolsservice.language.operations_queue import OperationsQueue
-from ossdbtoolsservice.language.script_parse_info import ScriptParseInfo    # noqa
-from ossdbtoolsservice.language.contracts import (      # noqa
-    LanguageFlavorChangeParams, CompletionItem, CompletionItemKind,
-    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
-    DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions, TextEdit
-)
-from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.workspace import (       # noqa
-    WorkspaceService, TextDocumentIdentifier, Configuration,
-    PGSQLConfiguration, ScriptFile, Workspace
-)
-from ossdbtoolsservice.workspace.contracts import (
-    Range
-)
-from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
-from ossdbtoolsservice.connection.contracts import ConnectionDetails
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
-from tests.mock_request_validation import RequestFlowValidator
 import tests.utils as utils
+from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
+from ossdbtoolsservice.connection.contracts import ConnectionDetails
+from ossdbtoolsservice.hosting import (JSONRPCServer,  # noqa
+                                       NotificationContext, RequestContext,
+                                       ServiceProvider)
+from ossdbtoolsservice.language import LanguageService
+from ossdbtoolsservice.language.contracts import (  # noqa
+    INTELLISENSE_READY_NOTIFICATION, CompletionItem, CompletionItemKind,
+    DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions,
+    IntelliSenseReadyParams, LanguageFlavorChangeParams, TextEdit)
+from ossdbtoolsservice.language.operations_queue import OperationsQueue
+from ossdbtoolsservice.language.script_parse_info import \
+    ScriptParseInfo  # noqa
+from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.utils.constants import (MSSQL_PROVIDER_NAME,
+                                               MYSQL_PROVIDER_NAME,
+                                               PG_PROVIDER_NAME)
+from ossdbtoolsservice.workspace import (Configuration,  # noqa
+                                         PGSQLConfiguration, ScriptFile,
+                                         TextDocumentIdentifier, Workspace,
+                                         WorkspaceService)
+from ossdbtoolsservice.workspace.contracts import Range
+from ossdbtoolsservice.workspace.contracts.common import (Position,  # noqa
+                                                          TextDocumentPosition)
+from tests.mock_request_validation import RequestFlowValidator
 
 
 class TestLanguageService(unittest.TestCase):
@@ -170,7 +168,7 @@ class TestLanguageService(unittest.TestCase):
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
         service: LanguageService = self._init_service()
-        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(doc_position.text_document.uri)
+        service._valid_uri.add(doc_position.text_document.uri)
 
         # When: I request completion item
         service.handle_completion_request(context, doc_position)
@@ -182,13 +180,14 @@ class TestLanguageService(unittest.TestCase):
         self.assertTrue(len(completions) > 0)
         self.verify_match('TABLE', completions, Range.from_data(0, 7, 0, 10))
 
-    def test_language_flavor(self):
+    def test_pg_language_flavor(self):
         """
-        Test that the service ignores files registered as being for non-PGSQL flavors
+        Test that if provider is PGSQL, the service ignores files registered as being for non-PGSQL flavors
         """
         # If: I create a new language service
-        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', 'pgsql')
-        mssqql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'mssql')
+        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
+        mysql_params = LanguageFlavorChangeParams.from_data('file://mysqluri.sql', 'sql', MYSQL_PROVIDER_NAME)
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
         other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
         provider = utils.get_mock_service_provider()
         service = LanguageService()
@@ -198,22 +197,76 @@ class TestLanguageService(unittest.TestCase):
         context: NotificationContext = utils.get_mock_notification_context()
 
         service.handle_flavor_change(context, pgsql_params)
-        service.handle_flavor_change(context, mssqql_params)
+        service.handle_flavor_change(context, mssql_params)
+        service.handle_flavor_change(context, mysql_params)
         service.handle_flavor_change(context, other_params)
 
         # Then:
         # ... Only non-PGSQL SQL files should be ignored
         context.send_notification.assert_not_called()
-        self.assertFalse(service.is_valid_uri(mssqql_params.uri))
+        self.assertFalse(service.is_valid_uri(mssql_params.uri))
         self.assertTrue(service.is_valid_uri(pgsql_params.uri))
         self.assertFalse(service.is_valid_uri(other_params.uri))
+        self.assertFalse(service.is_valid_uri(mysql_params.uri))
 
         # When: I change from MSSQL to PGSQL
-        mssqql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', 'pgsql')
-        service.handle_flavor_change(context, mssqql_params)
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
+        service.handle_flavor_change(context, mssql_params)
 
         # Then: the service is updated to allow intellisense
-        self.assertTrue(service.is_valid_uri(mssqql_params.uri))
+        self.assertTrue(service.is_valid_uri(mssql_params.uri))
+
+        # When: I change from PGSQL to MYSQL
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
+        service.handle_flavor_change(context, mssql_params)
+
+        # Then: the service is updated to not allow intellisense
+        self.assertFalse(service.is_valid_uri(mssql_params.uri))
+
+    def test_mysql_language_flavor(self):
+        """
+        Test that if provider is MySQL, the service ignores files registered as being for non-MySQL flavors
+        """
+        # If: I create a new language service
+        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
+        mysql_params = LanguageFlavorChangeParams.from_data('file://mysqluri.sql', 'sql', MYSQL_PROVIDER_NAME)
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
+        other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
+
+        # create a mock mysql service provider
+        provider = utils.get_mock_service_provider(provider_name = MYSQL_PROVIDER_NAME)
+        service = LanguageService()
+        service._service_provider = provider
+
+        # When: I notify of language preferences
+        context: NotificationContext = utils.get_mock_notification_context()
+
+        service.handle_flavor_change(context, pgsql_params)
+        service.handle_flavor_change(context, mssql_params)
+        service.handle_flavor_change(context, mysql_params)
+        service.handle_flavor_change(context, other_params)
+
+        # Then:
+        # ... Only non-MySQL SQL files should be ignored
+        context.send_notification.assert_not_called()
+        self.assertFalse(service.is_valid_uri(mssql_params.uri))
+        self.assertFalse(service.is_valid_uri(pgsql_params.uri))
+        self.assertFalse(service.is_valid_uri(other_params.uri))
+        self.assertTrue(service.is_valid_uri(mysql_params.uri))
+
+        # When: I change from MSSQL to PGSQL
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
+        service.handle_flavor_change(context, mssql_params)
+
+        # Then: the service is updated to not allow intellisense
+        self.assertFalse(service.is_valid_uri(mssql_params.uri))
+
+        # When: I change from PGSQL to MYSQL
+        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
+        service.handle_flavor_change(context, mssql_params)
+
+        # Then: the service is updated to allow intellisense
+        self.assertTrue(service.is_valid_uri(mssql_params.uri))
 
     def test_on_connect_sends_notification(self):
         """
@@ -278,7 +331,9 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
-        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
+        # add uri to valid uri set ensure request passes uri check
+        # normally done in flavor change handler, but we are not testing that here
+        service._valid_uri.add(format_params.text_document.uri)
 
         # When: I have no useful formatting defaults defined
         service.handle_doc_format_request(context, format_params)
@@ -321,7 +376,9 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
-        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
+        # add uri to valid uri set ensure request passes uri check
+        # normally done in flavor change handler, but we are not testing that here
+        service._valid_uri.add(format_params.text_document.uri)
 
         # When: I request document formatting
         service.handle_doc_format_request(context, format_params)
@@ -366,7 +423,9 @@ class TestLanguageService(unittest.TestCase):
         format_params = DocumentRangeFormattingParams()
         format_params.options = format_options
         format_params.text_document = self.default_text_document_id
-        service._provider_valid_uri[constants.PG_PROVIDER_NAME].add(format_params.text_document.uri)
+        # add uri to valid uri set ensure request passes uri check
+        # normally done in flavor change handler, but we are not testing that here
+        service._valid_uri.add(format_params.text_document.uri)
         
         # When: I request format the 2nd line of a document
         format_params.range = Range.from_data(1, 0, 1, len(input_lines[1]))

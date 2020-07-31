@@ -6,39 +6,43 @@
     Language Service Implementation
 """
 import functools
-from logging import Logger          # noqa
+import tempfile
 import threading
-from typing import Any, Dict, Set, List  # noqa
+from logging import Logger  # noqa
+from typing import Any, Dict, List, Set  # noqa
 
-from prompt_toolkit.completion import Completion, Completer    # noqa
-from prompt_toolkit.document import Document    # noqa
 import sqlparse
+from prompt_toolkit.completion import Completer, Completion  # noqa
+from prompt_toolkit.document import Document  # noqa
 
-from ossdbtoolsservice.hosting import JSONRPCServer, NotificationContext, RequestContext, ServiceProvider   # noqa
-from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
+import ossdbtoolsservice.scripting.scripter as scripter
+import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.workspace.contracts import Position, TextDocumentPosition, Range, Location
-from ossdbtoolsservice.workspace import WorkspaceService    # noqa
-from ossdbtoolsservice.workspace.script_file import ScriptFile  # noqa
+from ossdbtoolsservice.hosting import (JSONRPCServer,  # noqa
+                                       NotificationContext, RequestContext,
+                                       ServiceProvider)
 from ossdbtoolsservice.language.contracts import (
-    COMPLETION_REQUEST, CompletionItem, CompletionItemKind,
-    COMPLETION_RESOLVE_REQUEST, DEFINITION_REQUEST,
-    LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, LanguageFlavorChangeParams,
-    INTELLISENSE_READY_NOTIFICATION, IntelliSenseReadyParams,
-    DOCUMENT_FORMATTING_REQUEST, DocumentFormattingParams,
-    DOCUMENT_RANGE_FORMATTING_REQUEST, DocumentRangeFormattingParams,
-    TextEdit, FormattingOptions, StatusChangeParams, STATUS_CHANGE_NOTIFICATION
-)
-from ossdbtoolsservice.language.operations_queue import ConnectionContext, OperationsQueue, QueuedOperation
+    COMPLETION_REQUEST, COMPLETION_RESOLVE_REQUEST, DEFINITION_REQUEST,
+    DOCUMENT_FORMATTING_REQUEST, DOCUMENT_RANGE_FORMATTING_REQUEST,
+    INTELLISENSE_READY_NOTIFICATION, LANGUAGE_FLAVOR_CHANGE_NOTIFICATION,
+    STATUS_CHANGE_NOTIFICATION, CompletionItem, CompletionItemKind,
+    DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions,
+    IntelliSenseReadyParams, LanguageFlavorChangeParams, StatusChangeParams,
+    TextEdit)
 from ossdbtoolsservice.language.keywords import DefaultCompletionHelper
+from ossdbtoolsservice.language.operations_queue import (ConnectionContext,
+                                                         OperationsQueue,
+                                                         QueuedOperation)
+from ossdbtoolsservice.language.peek_definition_result import DefinitionResult
 from ossdbtoolsservice.language.script_parse_info import ScriptParseInfo
 from ossdbtoolsservice.language.text import TextUtilities
-from ossdbtoolsservice.language.peek_definition_result import DefinitionResult
-from ossdbtoolsservice.scripting.contracts import ScriptOperation
-import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
-import ossdbtoolsservice.scripting.scripter as scripter
-import tempfile
+from ossdbtoolsservice.scripting.contracts import ScriptOperation
+from ossdbtoolsservice.workspace import WorkspaceService  # noqa
+from ossdbtoolsservice.workspace.contracts import (Location, Position, Range,
+                                                   TextDocumentPosition)
+from ossdbtoolsservice.workspace.script_file import ScriptFile  # noqa
 
 # Map of meta or display_meta values to completion items. Based on SqlToolsService definitions
 DISPLAY_META_MAP: Dict[str, CompletionItemKind] = {
@@ -67,11 +71,7 @@ class LanguageService:
         self._service_provider: ServiceProvider = None
         self._server: JSONRPCServer = None
         self._logger: [Logger, None] = None
-        self._provider_valid_uri: Dict[str, Set] = {
-            utils.constants.PG_PROVIDER_NAME: set(), 
-            utils.constants.MYSQL_PROVIDER_NAME: set(),
-            utils.constants.MSSQL_PROVIDER_NAME: set()
-        }
+        self._valid_uri: Set = set()
         self._completion_helper = DefaultCompletionHelper()
         self._script_map: Dict[str, 'ScriptParseInfo'] = {}
         self._script_map_lock: threading.Lock = threading.Lock()
@@ -179,19 +179,11 @@ class LanguageService:
         """
         if params is not None and params.uri is not None:
             if params.language.lower() == 'sql':
-                # provider.flavor can be PGSQL, MySQL, MSSQL
-                if params.flavor.lower() == utils.constants.PG_PROVIDER_NAME.lower():
-                    self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].add(params.uri)
+                # provider.flavor can be PGSQL, MySQL
+                if params.flavor == self._service_provider.provider:
+                    self._valid_uri.add(params.uri)
                 else:
-                    self._provider_valid_uri[utils.constants.PG_PROVIDER_NAME].discard(params.uri)
-                if params.flavor == utils.constants.MSSQL_PROVIDER_NAME:
-                    self._provider_valid_uri[utils.constants.MSSQL_PROVIDER_NAME].add(params.uri)
-                else:
-                    self._provider_valid_uri[utils.constants.MSSQL_PROVIDER_NAME].discard(params.uri)
-                if params.flavor.lower() == utils.constants.MYSQL_PROVIDER_NAME.lower():
-                    self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].add(params.uri)
-                else:
-                    self._provider_valid_uri[utils.constants.MYSQL_PROVIDER_NAME].discard(params.uri)
+                    self._valid_uri.discard(params.uri)
 
     def handle_doc_format_request(self, request_context: RequestContext, params: DocumentFormattingParams) -> None:
         """
@@ -284,7 +276,7 @@ class LanguageService:
         """
         Checks if this URI can be treated as a candidate for processing or should be skipped ()
         """
-        return uri in self._provider_valid_uri[self._service_provider.provider]
+        return uri in self._valid_uri
 
     def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
         # TODO build the cache. For now, sending intellisense ready as a test
