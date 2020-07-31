@@ -3,12 +3,14 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Mapping, Tuple, Optional
+import re
+from typing import List, Mapping, Optional, Tuple
+
+import pymysql
+
 from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace.contracts import Configuration
-import re
-import pymysql
 
 # Recognized parameter keywords for MySQL connections
 # Source: https://dev.mysql.com/doc/refman/8.0/en/connection-options.html
@@ -95,8 +97,6 @@ class MySQLConnection(ServerConnection):
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = pymysql.connect(**self._connection_options)
 
-        # Check that we connected successfully
-        assert type(self._conn) is pymysql.connections.Connection
         self._connection_closed = False
 
         # Find the class of the database error this driver throws

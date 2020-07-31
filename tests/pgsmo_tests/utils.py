@@ -3,18 +3,19 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional, Tuple
 import unittest
 import unittest.mock as mock
+from typing import List, Optional, Tuple
 
 from psycopg2 import DatabaseError
 from psycopg2.extensions import Column
 
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from pgsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
 from tests.utils import MockPsycopgConnection
+
 
 # MOCK NODE OBJECT #########################################################
 class MockNodeObject(NodeObject):
@@ -108,8 +109,8 @@ class MockCursor:
         self._has_been_read = True
 
 
-class MockServerConnection(PostgreSQLConnection):
-    '''Class used to mock ServerConnection objects for testing'''
+class MockPGServerConnection(PostgreSQLConnection):
+    '''Class used to mock PGSQL ServerConnection objects for testing'''
     def __init__(
         self,
         cur: Optional[MockCursor] = None,
