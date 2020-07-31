@@ -176,7 +176,7 @@ class MySQLConnection(ServerConnection):
     @property
     def query_canceled_error(self) -> Exception:
         """Returns query canceled error type"""
-        pass
+        return self._database_error
 
     @property
     def cancellation_query(self) -> str:
@@ -296,6 +296,12 @@ class MySQLConnection(ServerConnection):
             size_query = MYSQL_SIZE_QUERY.format(dbname)
             result = self.execute_query(size_query, all=True)
             return str(result[0][1])
+    
+    def get_error_message(self, error) -> str:
+        """
+        Get the message from DatabaseError instance 
+        """
+        return "SQL ERROR:" + str(error)
 
     def close(self):
         """
