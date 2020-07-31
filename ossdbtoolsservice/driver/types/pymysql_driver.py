@@ -305,7 +305,7 @@ class MySQLConnection(ServerConnection):
         """
         Get the message from DatabaseError instance 
         """
-        return "SQL ERROR:" + str(error)
+        return str(error)
 
     def close(self):
         """
