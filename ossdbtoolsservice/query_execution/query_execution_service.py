@@ -420,7 +420,8 @@ class QueryExecutionService(object):
         
         # If the error relates to the database, display the appropriate error message based on the provider
         if isinstance(e, worker_args.connection.database_error) or isinstance(e, worker_args.connection.query_canceled_error):
-            error_message = worker_args.connection.get_error_message(e)
+            # get_error_message may return None so ensure error_message is str type
+            error_message = str(worker_args.connection.get_error_message(e))
         
         elif isinstance(e, RuntimeError):
             error_message = str(e)
