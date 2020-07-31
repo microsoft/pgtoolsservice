@@ -184,12 +184,19 @@ class MySQLConnection(ServerConnection):
 
     @property
     def cancellation_query(self) -> str:
+        """Returns a SQL command to end the current query execution process"""
         # TODO generate a query that kills the current query process
         return "-- ;"
 
     @property
     def connection(self) -> pymysql.connections.Connection:
+        """Returns the underlying connection"""
         return self._conn
+
+    @property
+    def open(self) -> bool:
+        """Returns bool indicating if connection is open"""
+        return self._conn.open
 
     ############################# METHODS ##################################
     @autocommit.setter
@@ -271,7 +278,7 @@ class MySQLConnection(ServerConnection):
                         row_dict = {col_names[index]: row for index, row in enumerate(row)}
                         rows.append(row_dict)
                 return col_names, rows
-            except Exception as e:
+            except Exception:
                 return False
             finally:
                 cursor.close()

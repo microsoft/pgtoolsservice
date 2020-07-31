@@ -151,12 +151,19 @@ class PostgreSQLConnection(ServerConnection):
 
     @property
     def cancellation_query(self) -> str:
+        """Returns a SQL command to end the current query execution process"""
         backend_pid = self._conn.get_backend_pid()
         return PG_CANCELLATION_QUERY.format(backend_pid)
 
     @property
     def connection(self) -> psycopg2.extensions.connection:
+        """Returns the underlying connection"""
         return self._conn
+
+    @property
+    def open(self) -> bool:
+        """Returns bool indicating if connection is open"""
+        return self._conn.closed == 0
 
     ############################# METHODS ##################################
     @autocommit.setter
