@@ -252,7 +252,7 @@ class PostgreSQLConnection(ServerConnection):
         """
         Get the message from DatabaseError instance 
         """
-        return "ERROR: " + error.diag.message_primary
+        return error.diag.message_primary
 
     def close(self):
         """
