@@ -1,52 +1,27 @@
 import logging
-from re import compile, escape
 from collections import Counter
+from itertools import chain
 from logging import Logger
+from re import compile, escape
 
 from prompt_toolkit.completion import Completer
 
-from .packages.mysql_completion_engine import suggest_type
-from .packages.parseutils.utils import last_word
 from .mysql_completion import MySQLCompletion
+from .packages.mysql_completion_engine import suggest_type
+from .packages.mysqlliterals.main import get_literals
+from .packages.parseutils.utils import find_prev_keyword, last_word
+
 
 class MySQLCompleter(Completer):
-    keywords = ['ACCESS', 'ADD', 'ALL', 'ALTER TABLE', 'AND', 'ANY', 'AS',
-                'ASC', 'AUTO_INCREMENT', 'BEFORE', 'BEGIN', 'BETWEEN',
-                'BIGINT', 'BINARY', 'BY', 'CASE', 'CHANGE MASTER TO', 'CHAR',
-                'CHARACTER SET', 'CHECK', 'COLLATE', 'COLUMN', 'COMMENT',
-                'COMMIT', 'CONSTRAINT', 'CREATE', 'CURRENT',
-                'CURRENT_TIMESTAMP', 'DATABASE', 'DATE', 'DECIMAL', 'DEFAULT',
-                'DELETE FROM', 'DESC', 'DESCRIBE', 'DROP',
-                'ELSE', 'END', 'ENGINE', 'ESCAPE', 'EXISTS', 'FILE', 'FLOAT',
-                'FOR', 'FOREIGN KEY', 'FORMAT', 'FROM', 'FULL', 'FUNCTION',
-                'GRANT', 'GROUP BY', 'HAVING', 'HOST', 'IDENTIFIED', 'IN',
-                'INCREMENT', 'INDEX', 'INSERT INTO', 'INT', 'INTEGER',
-                'INTERVAL', 'INTO', 'IS', 'JOIN', 'KEY', 'LEFT', 'LEVEL',
-                'LIKE', 'LIMIT', 'LOCK', 'LOGS', 'LONG', 'MASTER',
-                'MEDIUMINT', 'MODE', 'MODIFY', 'NOT', 'NULL', 'NUMBER',
-                'OFFSET', 'ON', 'OPTION', 'OR', 'ORDER BY', 'OUTER', 'OWNER',
-                'PASSWORD', 'PORT', 'PRIMARY', 'PRIVILEGES', 'PROCESSLIST',
-                'PURGE', 'REFERENCES', 'REGEXP', 'RENAME', 'REPAIR', 'RESET',
-                'REVOKE', 'RIGHT', 'ROLLBACK', 'ROW', 'ROWS', 'ROW_FORMAT',
-                'SAVEPOINT', 'SELECT', 'SESSION', 'SET', 'SHARE', 'SHOW',
-                'SLAVE', 'SMALLINT', 'SMALLINT', 'START', 'STOP', 'TABLE',
-                'THEN', 'TINYINT', 'TO', 'TRANSACTION', 'TRIGGER', 'TRUNCATE',
-                'UNION', 'UNIQUE', 'UNSIGNED', 'UPDATE', 'USE', 'USER',
-                'USING', 'VALUES', 'VARCHAR', 'VIEW', 'WHEN', 'WHERE', 'WITH']
-
-    functions = ['AVG', 'CONCAT', 'COUNT', 'DISTINCT', 'FIRST', 'FORMAT',
-                 'FROM_UNIXTIME', 'LAST', 'LCASE', 'LEN', 'MAX', 'MID',
-                 'MIN', 'NOW', 'ROUND', 'SUM', 'TOP', 'UCASE', 'UNIX_TIMESTAMP']
+    keywords_tree = get_literals('keywords', type_=dict)
+    keywords = tuple(set(chain(keywords_tree.keys(), *keywords_tree.values())))
+    functions = get_literals('functions')
+    datatypes = get_literals('datatypes')
+    reserved_words = set(get_literals('reserved'))
 
     show_items = []
 
-    change_items = ['MASTER_BIND', 'MASTER_HOST', 'MASTER_USER',
-                    'MASTER_PASSWORD', 'MASTER_PORT', 'MASTER_CONNECT_RETRY',
-                    'MASTER_HEARTBEAT_PERIOD', 'MASTER_LOG_FILE',
-                    'MASTER_LOG_POS', 'RELAY_LOG_FILE', 'RELAY_LOG_POS',
-                    'MASTER_SSL', 'MASTER_SSL_CA', 'MASTER_SSL_CAPATH',
-                    'MASTER_SSL_CERT', 'MASTER_SSL_KEY', 'MASTER_SSL_CIPHER',
-                    'MASTER_SSL_VERIFY_SERVER_CERT', 'IGNORE_SERVER_IDS']
+    change_items = get_literals('change_items')
 
     users = []
 
@@ -96,7 +71,9 @@ class MySQLCompleter(Completer):
         self.databases.extend(databases)
 
     def extend_keywords(self, additional_keywords):
-        self.keywords.extend(additional_keywords)
+        keywords_list = list(self.keywords)
+        keywords_list.extend(additional_keywords)
+        self.keywords = tuple(keywords_list)
         self.all_completions.update(additional_keywords)
 
     def extend_show_items(self, show_items):
@@ -197,7 +174,7 @@ class MySQLCompleter(Completer):
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
         self.all_completions = set(self.keywords + self.functions)
 
-    def find_matches(self, text, collection, start_only=False, fuzzy=True, casing=None, meta=None):
+    def find_matches(self, text, collection, start_only=False, fuzzy=True, meta=None):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -230,15 +207,15 @@ class MySQLCompleter(Completer):
                 if match_point >= 0:
                     completions.append((len(text), match_point, item))
 
-        if casing == 'auto':
-            casing = 'lower' if last and last[-1].islower() else 'upper'
+        if self.keyword_casing == 'auto':
+            self.keyword_casing = 'lower' if last and last[-1].islower() else 'upper'
 
         def apply_case(kw):
-            if casing == 'upper':
+            if self.keyword_casing == 'upper':
                 return kw.upper()
             return kw.lower()
 
-        return (MySQLCompletion(z if casing is None else apply_case(z), -len(text), 
+        return (MySQLCompletion(apply_case(z), -len(text), 
                 display_meta=meta, schema=self.dbname)
                 for x, y, z in sorted(completions))
 
@@ -292,7 +269,6 @@ class MySQLCompleter(Completer):
                                                          self.functions,
                                                          start_only=True,
                                                          fuzzy=False,
-                                                         casing=self.keyword_casing,
                                                          meta='function')
                     completions.extend(predefined_funcs)
 
@@ -318,10 +294,16 @@ class MySQLCompleter(Completer):
                 completions.extend(dbs)
 
             elif suggestion['type'] == 'keyword':
-                keywords = self.find_matches(word_before_cursor, self.keywords,
-                                             start_only=True,
-                                             fuzzy=False,
-                                             casing=self.keyword_casing, meta='keyword')
+                keywords_suggestions = self.keywords_tree.keys()
+                # Get well known following keywords for the last token. If any, narrow      
+                # candidates to this list.
+                next_keywords = self.keywords_tree.get(find_prev_keyword(document.text_before_cursor)[1], [])
+                if next_keywords:
+                    keywords_suggestions = next_keywords
+                keywords = self.find_matches(word_before_cursor, keywords_suggestions,
+                                            start_only=True,
+                                            fuzzy=False,
+                                            meta='keyword')
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'show':
@@ -329,7 +311,7 @@ class MySQLCompleter(Completer):
                                                self.show_items,
                                                start_only=False,
                                                fuzzy=True,
-                                               casing=self.keyword_casing, meta='show')
+                                                meta='show')
                 completions.extend(show_items)
 
             elif suggestion['type'] == 'change':
