@@ -5,9 +5,11 @@
 # --------------------------------------------------------------------------------------------
 
 import re
+
 import sqlparse
 from sqlparse.sql import Identifier
-from sqlparse.tokens import Token, Error
+from sqlparse.tokens import Error, Token
+
 
 def is_open_quote(sql):
     """Returns true if the query contains an unclosed quote"""

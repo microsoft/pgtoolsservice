@@ -11,7 +11,7 @@ from prompt_toolkit.document import Document
 
 from ossdbtoolsservice.language.completion.mysql_completion import \
     MySQLCompletion
-from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
+from ossdbtoolsservice.language.completion.mysql_completer import MySQLCompleter
 
 
 class TestNaiveCompletion(unittest.TestCase):

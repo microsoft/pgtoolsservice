@@ -3,12 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from sqlparse import parse
-from sqlparse.tokens import Keyword, CTE, DML
-from sqlparse.sql import Identifier, IdentifierList, Parenthesis
 from collections import namedtuple
-from .meta import TableMetadata, ColumnMetadata
 
+from sqlparse import parse
+from sqlparse.sql import Identifier, IdentifierList, Parenthesis
+from sqlparse.tokens import CTE, DML, Keyword
+
+from meta import ColumnMetadata, TableMetadata
 
 # TableExpression is a namedtuple representing a CTE, used internally
 # name: cte alias assigned in the query

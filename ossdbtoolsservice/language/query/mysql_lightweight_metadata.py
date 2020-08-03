@@ -7,7 +7,6 @@ from logging import Logger  # noqa
 import pymysql
 
 from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.language.completion.packages.parseutils.meta import ColumnMetadata, ForeignKey, FunctionMetadata     # noqa
 
 class MySQLLightweightMetadata:
 

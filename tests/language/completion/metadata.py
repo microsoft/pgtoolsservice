@@ -6,10 +6,12 @@
 from functools import partial
 from itertools import product
 from unittest.mock import Mock
+
 from prompt_toolkit.document import Document
 
-from ossdbtoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata, ForeignKey
 from ossdbtoolsservice.language.completion import PGCompleter
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.meta import (
+    ForeignKey, FunctionMetadata)
 from ossdbtoolsservice.language.completion.pg_completion import PGCompletion
 
 qual = ['if_more_than_one_table', 'always']

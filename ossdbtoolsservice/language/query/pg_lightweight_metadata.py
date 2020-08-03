@@ -6,7 +6,9 @@
 from logging import Logger  # noqa
 
 from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.language.completion.packages.parseutils.meta import ForeignKey, FunctionMetadata     # noqa
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.meta import (  # noqa
+    ForeignKey, FunctionMetadata)
+
 
 class PGLightweightMetadata:
 

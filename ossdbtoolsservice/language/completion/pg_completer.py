@@ -3,12 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
-from logging import Logger  # noqa
-import re
-from itertools import count, repeat, chain      # noqa
 import operator
-from collections import namedtuple, defaultdict, OrderedDict
+import re
+from collections import OrderedDict, defaultdict, namedtuple
+from itertools import chain, count, repeat  # noqa
+from logging import Logger  # noqa
+from typing import List
+
 # {{ PGToolsService EDIT }}
 # from pgspecial.namedqueries import NamedQueries
 from prompt_toolkit.completion import Completer, Completion
@@ -17,16 +18,18 @@ from prompt_toolkit.completion import Completer, Completion
 # from prompt_toolkit.document import Document
 # {{ PGToolsService EDIT }}
 from ossdbtoolsservice.language.completion.pg_completion import PGCompletion
-from .packages.pgsql_completion_engine import (   # noqa
-    FromClauseItem, suggest_type, Database, Schema, Table, Function, Column, View,
-    Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join
-)
-from .packages.parseutils.meta import ColumnMetadata, ForeignKey
+
+from .completer import Match, MyCompleter, _Candidate
+from .packages.parseutils.pg_utils.meta import ColumnMetadata, ForeignKey
+from .packages.parseutils.pg_utils.tables import TableReference
 from .packages.parseutils.utils import last_word
-from .packages.parseutils.tables import TableReference
 from .packages.pgliterals.main import get_literals
+from .packages.pgsql_completion_engine import (  # noqa
+    Alias, Column, Database, Datatype, FromClauseItem, Function, Join,
+    JoinCondition, Keyword, NamedQuery, Path, Schema, Table, View,
+    suggest_type)
 from .packages.prioritization import PrevalenceCounter
-from .completer import MyCompleter, _Candidate, Match
+
 # {{ PGToolsService EDIT }}
 # from .config import load_config, config_location
 

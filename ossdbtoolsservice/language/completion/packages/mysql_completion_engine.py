@@ -4,7 +4,7 @@ import sqlparse
 from sqlparse.sql import Comparison, Identifier, Where
 from sqlparse.compat import text_type
 from .parseutils.utils import last_word, find_prev_keyword
-from .parseutils.mysql_utils import extract_tables
+from .parseutils.mysql_utils.mysql_utils import extract_tables
 
 
 def suggest_type(full_text, text_before_cursor):

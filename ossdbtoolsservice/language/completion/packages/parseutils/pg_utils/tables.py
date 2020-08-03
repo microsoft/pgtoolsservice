@@ -4,10 +4,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import sqlparse
 from collections import namedtuple
-from sqlparse.sql import IdentifierList, Identifier, Function
-from sqlparse.tokens import Keyword, DML, Punctuation
+
+import sqlparse
+from sqlparse.sql import Function, Identifier, IdentifierList
+from sqlparse.tokens import DML, Keyword, Punctuation
 
 TableReference = namedtuple('TableReference', ['schema', 'name', 'alias',
                                                'is_function'])
