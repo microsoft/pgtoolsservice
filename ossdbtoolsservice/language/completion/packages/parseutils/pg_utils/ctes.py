@@ -9,7 +9,7 @@ from sqlparse import parse
 from sqlparse.sql import Identifier, IdentifierList, Parenthesis
 from sqlparse.tokens import CTE, DML, Keyword
 
-from meta import ColumnMetadata, TableMetadata
+from .meta import ColumnMetadata, TableMetadata
 
 # TableExpression is a namedtuple representing a CTE, used internally
 # name: cte alias assigned in the query

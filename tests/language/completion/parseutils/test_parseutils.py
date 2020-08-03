@@ -3,12 +3,16 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from parameterized import parameterized
 import unittest
 
-from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils import is_open_quote
-from ossdbtoolsservice.language.completion.packages.parseutils.tables import extract_tables
-from ossdbtoolsservice.language.completion.packages.parseutils.utils import find_prev_keyword
+from parameterized import parameterized
+
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.pg_utils import \
+    is_open_quote
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.tables import \
+    extract_tables
+from ossdbtoolsservice.language.completion.packages.parseutils.utils import \
+    find_prev_keyword
 
 
 class TestParseUtils(unittest.TestCase):

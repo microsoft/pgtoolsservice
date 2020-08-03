@@ -3,14 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from parameterized import parameterized
 import unittest
 
-from ossdbtoolsservice.language.completion.packages.pgsql_completion_engine import (
-    suggest_type, Database, Schema, Table, Column, View, Keyword,
-    FromClauseItem, Function, Datatype, Alias, JoinCondition, Join)
-from ossdbtoolsservice.language.completion.packages.parseutils.tables import TableReference
+from parameterized import parameterized
 
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.tables import \
+    TableReference
+from ossdbtoolsservice.language.completion.packages.pgsql_completion_engine import (
+    Alias, Column, Database, Datatype, FromClauseItem, Function, Join,
+    JoinCondition, Keyword, Schema, Table, View, suggest_type)
 
 FUNCTIONS = [
     '''
