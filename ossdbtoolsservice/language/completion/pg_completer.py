@@ -118,12 +118,7 @@ class PGCompleter(Completer, MyCompleter):
         self.keyword_casing = keyword_casing
         self.name_pattern = re.compile(r"^[_a-z][_a-z0-9\$]*$")
 
-        self.databases = []
-        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
-                           'datatypes': {}}
-        self.search_path = []
-
-        self.all_completions = set(self.keywords + self.functions)
+        self.reset_completions()
 
     def _log(self, is_error: bool, msg: str, *args) -> None:
         if self.logger is not None:
@@ -306,7 +301,6 @@ class PGCompleter(Completer, MyCompleter):
 
     def reset_completions(self):
         self.databases = []
-        self.special_commands = []
         self.search_path = []
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
                            'datatypes': {}}
