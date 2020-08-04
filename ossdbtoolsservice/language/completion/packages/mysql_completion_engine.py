@@ -1,10 +1,12 @@
 import os
 import sys
+
 import sqlparse
-from sqlparse.sql import Comparison, Identifier, Where
 from sqlparse.compat import text_type
-from .parseutils.utils import last_word, find_prev_keyword
+from sqlparse.sql import Comparison, Identifier, Where
+
 from .parseutils.mysql_utils.mysql_utils import extract_tables
+from .parseutils.utils import find_prev_keyword, last_word
 
 
 def suggest_type(full_text, text_before_cursor):
@@ -153,7 +155,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
 
         # We're probably in a function argument list
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
-    elif token_v in ('set', 'order by', 'distinct'):
+    elif token_v in ('set', 'by', 'distinct'):
         return [{'type': 'column', 'tables': extract_tables(full_text)}]
     elif token_v == 'as':
         # Don't suggest anything for an alias

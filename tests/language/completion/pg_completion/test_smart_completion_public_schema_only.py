@@ -3,13 +3,20 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from parameterized import parameterized, param
-import unittest
 import itertools
-from tests.language.completion.metadata import (MetaData, alias, name_join, fk_join, join, keyword,
-                                                schema, table, view, function, column, wildcard_expansion,
-                                                get_result, result_set, qual, no_qual)
+import unittest
+from unittest.mock import Mock
+
+from parameterized import param, parameterized
+from prompt_toolkit.completion import Completion
+from prompt_toolkit.document import Document
+
+from ossdbtoolsservice.language.completion.pg_completer import PGCompleter
 from ossdbtoolsservice.language.completion.pg_completion import PGCompletion
+
+from .metadata import (MetaData, alias, column, fk_join, function, get_result,
+                       join, keyword, name_join, no_qual, qual, result_set,
+                       schema, table, view, wildcard_expansion)
 
 METADATA = {
     'tables': {
@@ -856,3 +863,40 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         result = result_set(completer, text)
         expected = set([schema(u"'public'")])
         self.assertEqual(result, expected)
+
+    def test_keyword_lower_casing(self, ):
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'lower'})
+
+        text = 'SEL'
+        position = len(text)
+        result = set(new_completer.get_completions(
+            Document(text=text, cursor_position=position),
+            Mock()))
+
+        # then completions should now be lower case
+        self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
+
+    def test_keyword_upper_casing(self, ):
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'upper'})
+
+        text = 'sel'
+        position = len(text)
+        result = set(new_completer.get_completions(
+            Document(text=text, cursor_position=position),
+            Mock()))
+
+        # then completions should now be lower case
+        self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3, display_meta="keyword")]))
+
+    def test_keyword_auto_casing(self, ):        
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'auto'})
+
+        # if text is lower case   
+        text = 'sel'
+        position = len(text)
+        result = set(new_completer.get_completions(
+            Document(text=text, cursor_position=position),
+            Mock()))
+
+        # then completions should be lower case as well
+        self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))

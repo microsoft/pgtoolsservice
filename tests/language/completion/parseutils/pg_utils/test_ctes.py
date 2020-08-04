@@ -3,12 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from parameterized import parameterized
 import unittest
+
+from parameterized import parameterized
 from sqlparse import parse
+
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.ctes import \
+    extract_column_names as _extract_column_names
 from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.ctes import (
-    token_start_pos, extract_ctes,
-    extract_column_names as _extract_column_names)
+    extract_ctes, token_start_pos)
 
 
 def extract_column_names(sql):

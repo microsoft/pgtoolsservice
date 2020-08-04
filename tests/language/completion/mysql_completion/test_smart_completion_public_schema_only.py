@@ -328,3 +328,40 @@ class TestSmartCompletion(unittest.TestCase):
             list(map(lambda completion: Completion(completion, display_meta='function'), self.completer.functions)) +
             [Completion(text='réveillé', start_position=0, display_meta='alias')] +
             list(map(lambda completion: Completion(completion, display_meta='keyword'), self.keywords))))
+
+    def test_keyword_lower_casing(self):
+        self.completer.keyword_casing = 'lower'
+
+        text = 'SEL'
+        position = len(text)
+        result = set(self.completer.get_completions(
+            Document(text=text, cursor_position=position),
+            self.complete_event))
+
+        # then completions should now be lower case
+        self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
+
+    def test_keyword_upper_casing(self):
+        self.completer.keyword_casing = 'upper'
+
+        text = 'sel'
+        position = len(text)
+        result = set(self.completer.get_completions(
+            Document(text=text, cursor_position=position),
+            self.complete_event))
+
+        # then completions should now be lower case
+        self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3, display_meta="keyword")]))
+
+    def test_keyword_auto_casing(self):
+        self.completer.keyword_casing = 'auto'
+        
+        # if text is lower case   
+        text = 'sel'
+        position = len(text)
+        result = set(self.completer.get_completions(
+            Document(text=text, cursor_position=position),
+            self.complete_event))
+
+        # then completions should be lower case as well
+        self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
