@@ -13,6 +13,8 @@ from .packages.parseutils.utils import find_prev_keyword, last_word
 
 
 class MySQLCompleter(Completer):
+    # keywords_tree: A dict mapping keywords to well known following keywords.
+    # e.g. 'CREATE': ['TABLE', 'USER', ...],
     keywords_tree = get_literals('keywords', type_=dict)
     keywords = tuple(set(chain(keywords_tree.keys(), *keywords_tree.values())))
     functions = get_literals('functions')
@@ -54,13 +56,6 @@ class MySQLCompleter(Completer):
                 or (name.upper() in self.reserved_words)
                 or (name.upper() in self.functions)):
                     name = '`%s`' % name
-
-        return name
-
-    def unescape_name(self, name):
-        """Unquote a string."""
-        if name and name[0] == '"' and name[-1] == '"':
-            name = name[1:-1]
 
         return name
 
@@ -207,17 +202,9 @@ class MySQLCompleter(Completer):
                 if match_point >= 0:
                     completions.append((len(text), match_point, item))
 
-        if self.keyword_casing == 'auto':
-            self.keyword_casing = 'lower' if last and last[-1].islower() else 'upper'
-
-        def apply_case(kw):
-            if self.keyword_casing == 'upper':
-                return kw.upper()
-            return kw.lower()
-
-        return (MySQLCompletion(apply_case(z), -len(text), 
+        return [MySQLCompletion(z, -len(text), 
                 display_meta=meta, schema=self.dbname)
-                for x, y, z in sorted(completions))
+                for x, y, z in sorted(completions)]
 
     def get_completions(self, document, complete_event, smart_completion=None):
         word_before_cursor = document.get_word_before_cursor(WORD=True)
@@ -229,6 +216,23 @@ class MySQLCompleter(Completer):
         if not smart_completion:
             return self.find_matches(word_before_cursor, self.all_completions,
                                      start_only=True, fuzzy=False)
+
+        # case should only be applied to function, keyword, and show completions
+        # other types should follow casing returned from executor
+        def apply_case(words):
+            casing = self.keyword_casing
+            if casing == 'auto':
+                if word_before_cursor and word_before_cursor[-1].islower():
+                    casing = 'lower'
+                else:
+                    casing = 'upper'
+
+            if casing == 'upper':
+                words = [k.upper() for k in words]
+            else:
+                words = [k.lower() for k in words]
+                
+            return words
 
         completions = []
         suggestions = suggest_type(document.text, document.text_before_cursor)
@@ -266,7 +270,7 @@ class MySQLCompleter(Completer):
                 # eg: SELECT * FROM users u WHERE u.
                 if not suggestion['schema']:
                     predefined_funcs = self.find_matches(word_before_cursor,
-                                                         self.functions,
+                                                         apply_case(self.functions),
                                                          start_only=True,
                                                          fuzzy=False,
                                                          meta='function')
@@ -300,7 +304,7 @@ class MySQLCompleter(Completer):
                 next_keywords = self.keywords_tree.get(find_prev_keyword(document.text_before_cursor)[1], [])
                 if next_keywords:
                     keywords_suggestions = next_keywords
-                keywords = self.find_matches(word_before_cursor, keywords_suggestions,
+                keywords = self.find_matches(word_before_cursor, apply_case(keywords_suggestions),
                                             start_only=True,
                                             fuzzy=False,
                                             meta='keyword')
@@ -308,7 +312,7 @@ class MySQLCompleter(Completer):
 
             elif suggestion['type'] == 'show':
                 show_items = self.find_matches(word_before_cursor,
-                                               self.show_items,
+                                               apply_case(self.show_items),
                                                start_only=False,
                                                fuzzy=True,
                                                 meta='show')
