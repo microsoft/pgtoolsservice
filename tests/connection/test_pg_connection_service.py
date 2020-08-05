@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Test connection.ConnectionService"""
+"""Test connection.ConnectionService with a PG connection"""
 
 import unittest
 from unittest import mock
@@ -20,7 +20,7 @@ from ossdbtoolsservice.connection.contracts import (
     ConnectionType, ConnectRequestParams, DisconnectRequestParams,
     ListDatabasesParams)
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
-from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.utils.constants import DEFAULT_PORT, WORKSPACE_SERVICE_NAME, PG_PROVIDER_NAME
 from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.workspace import WorkspaceService
 from tests.integration import get_connection_details, integration_test
@@ -28,13 +28,13 @@ from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.utils import MockCursor, MockPsycopgConnection, MockRequestContext
 
 
-class TestConnectionService(unittest.TestCase):
-    """Methods for testing the connection service"""
+class TestPGConnectionService(unittest.TestCase):
+    """Methods for testing the connection service with a PG connection"""
 
     def setUp(self):
         """Set up the tests with a connection service"""
         self.connection_service = ConnectionService()
-        self.connection_service._service_provider = utils.get_mock_service_provider({constants.WORKSPACE_SERVICE_NAME: WorkspaceService()})
+        self.connection_service._service_provider = utils.get_mock_service_provider({WORKSPACE_SERVICE_NAME: WorkspaceService()})
 
     def test_connect(self):
         """Test that the service connects to a PostgreSQL server"""
@@ -564,7 +564,7 @@ class TestConnectionService(unittest.TestCase):
         """Test that if no database is given, the default database is used"""
         # Set up the connection params and default database name
         default_db = 'test_db'
-        self.connection_service._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database = default_db
+        self.connection_service._service_provider[WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database = default_db
         params: ConnectRequestParams = ConnectRequestParams.from_dict({
             'ownerUri': 'someUri',
             'type': ConnectionType.DEFAULT,
@@ -593,7 +593,7 @@ class TestConnectionService(unittest.TestCase):
         # Set up the connection params and default database name
         default_db = 'test_db'
         actual_db = 'postgres'
-        self.connection_service._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database = default_db
+        self.connection_service._service_provider[WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database = default_db
         params: ConnectRequestParams = ConnectRequestParams.from_dict({
             'ownerUri': 'someUri',
             'type': ConnectionType.DEFAULT,
@@ -649,7 +649,7 @@ class TestConnectionCancellation(unittest.TestCase):
         """Set up the tests with common connection parameters"""
         # Set up the mock connection service and connection info
         self.connection_service = ConnectionService()
-        self.connection_service._service_provider = utils.get_mock_service_provider({constants.WORKSPACE_SERVICE_NAME: WorkspaceService()})
+        self.connection_service._service_provider = utils.get_mock_service_provider({WORKSPACE_SERVICE_NAME: WorkspaceService()})
         self.owner_uri = 'test_uri'
         self.connection_type = ConnectionType.DEFAULT
         self.connect_params: ConnectRequestParams = ConnectRequestParams.from_dict({
@@ -800,7 +800,8 @@ class TestConnectionCancellation(unittest.TestCase):
             response = self.connection_service.connect(params)
 
         # Verify that psycopg2's connection method was called with password set to account token.
-        mock_connect_method.assert_called_once_with(user='postgres', password='exampleToken', host='myserver', port=5432, dbname='postgres')
+        mock_connect_method.assert_called_once_with(user='postgres', password='exampleToken', host='myserver', 
+                                                    port=DEFAULT_PORT[PG_PROVIDER_NAME], dbname='postgres')
 
         # Verify that psycopg2's connection method was called and that the
         # response has a connection id, indicating success.
