@@ -29,15 +29,52 @@ class Column(NodeObject):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        col = cls(server, kwargs["name"])
+        col = cls(server, kwargs['name'], kwargs['type'])
+
         return col
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: 's.Server', name: str, datatype: str):
         """
         Initializes a new instance of a database
         """
         NodeObject.__init__(self, server, None, name)
+        self._datatype: str = datatype
+        self._default_value: Optional[str] = None
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
+
+    # PROPERTIES ###########################################################
+
+    @property
+    def not_null(self) -> Optional[bool]:
+        pass
+
+    @property
+    def column_ordinal(self) -> int:
+        pass
+
+    @property
+    def datatype(self) -> str:
+        pass
+
+    @property
+    def is_readonly(self) -> bool:
+        pass
+
+    @property
+    def is_unique(self) -> bool:
+        pass
+
+    @property
+    def is_auto_increment(self) -> bool:
+        pass
+
+    @property
+    def is_key(self) -> bool:
+        pass
+
+    @property
+    def default_value(self) -> Optional[str]:
+        return self._default_value

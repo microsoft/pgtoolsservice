@@ -7,6 +7,7 @@ from typing import Callable, Dict, List, Optional, Tuple  # noqa
 from psycopg2 import sql
 import threading
 
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
 from ossdbtoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete  # noqa
 from ossdbtoolsservice.query import ExecutionState, ResultSet, Query  # noqa
 from ossdbtoolsservice.edit_data.contracts import (
@@ -221,10 +222,20 @@ class DataEditorSession():
         if filters.limit_results is not None and filters.limit_results > 0:
             limit_clause = ' '.join([' LIMIT', str(filters.limit_results)])
 
-        query = sql.SQL('SELECT {0} FROM {1}.{2} {3}').format(
-            sql.SQL(', ').join(column_names),
-            sql.Identifier(metadata.schema_name),
-            sql.Identifier(metadata.table_name),
-            sql.SQL(limit_clause)
-        )
-        return query.as_string(connection.connection)
+        if connection._provider_name == PG_PROVIDER_NAME:
+            query = sql.SQL('SELECT {0} FROM {1}.{2} {3}').format(
+                sql.SQL(', ').join(column_names),
+                sql.Identifier(metadata.schema_name),
+                sql.Identifier(metadata.table_name),
+                sql.SQL(limit_clause)
+            )
+            query_string = query.as_string(connection.connection)
+        else:
+            query_string = 'SELECT {0} FROM {1}.{2} {3}'.format(
+                ', '.join([name.string for name in column_names]),
+                metadata.schema_name,
+                metadata.table_name,
+                limit_clause
+            )
+
+        return query_string
