@@ -312,7 +312,6 @@ class PGCompleter(Completer, MyCompleter):
                            'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
 
-
     def get_completions(self, document, complete_event, smart_completion=None) -> List[Completion]:
         word_before_cursor = document.get_word_before_cursor(WORD=True)
 

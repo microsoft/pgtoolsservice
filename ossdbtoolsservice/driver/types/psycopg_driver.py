@@ -163,6 +163,7 @@ class PostgreSQLConnection(ServerConnection):
     @property
     def open(self) -> bool:
         """Returns bool indicating if connection is open"""
+        # 0 if the connection is open, nonzero if it is closed or broken.
         return self._conn.closed == 0
 
     ############################# METHODS ##################################
