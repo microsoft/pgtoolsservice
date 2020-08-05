@@ -19,7 +19,6 @@ from ossdbtoolsservice.connection.contracts import (
     ChangeDatabaseRequestParams, ConnectionCompleteParams, ConnectionDetails,
     ConnectionType, ConnectRequestParams, DisconnectRequestParams,
     ListDatabasesParams)
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME, DEFAULT_PORT, WORKSPACE_SERVICE_NAME
 from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.workspace import WorkspaceService
@@ -28,8 +27,8 @@ from tests.mysqlsmo_tests.utils import MockCursor
 from tests.utils import MockPyMySQLConnection, MockRequestContext
 
 
-class TestConnectionService(unittest.TestCase):
-    """Methods for testing the connection service"""
+class TestMySQLConnectionService(unittest.TestCase):
+    """Methods for testing the connection service with a MySQL Connection"""
 
     def setUp(self):
         """Set up the tests with a connection service"""
@@ -72,7 +71,7 @@ class TestConnectionService(unittest.TestCase):
         self.assertFalse(response.server_info.is_cloud)
     
     def test_connect_with_access_token(self):
-        """Test that the service connects to a PostgreSQL server using an access token as a password"""
+        """Test that the service connects to a MySQL server using an access token as a password"""
         # Set up the parameters for the connection
         params: ConnectRequestParams = ConnectRequestParams.from_dict({
             'ownerUri': 'someUri',

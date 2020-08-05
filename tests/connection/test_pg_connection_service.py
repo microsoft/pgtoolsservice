@@ -28,8 +28,8 @@ from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.utils import MockCursor, MockPsycopgConnection, MockRequestContext
 
 
-class TestConnectionService(unittest.TestCase):
-    """Methods for testing the connection service"""
+class TestPGConnectionService(unittest.TestCase):
+    """Methods for testing the connection service with a PG connection"""
 
     def setUp(self):
         """Set up the tests with a connection service"""
