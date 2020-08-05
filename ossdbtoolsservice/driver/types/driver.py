@@ -98,6 +98,14 @@ class ServerConnection(ABC):
         """
         pass
 
+    @property
+    @abstractmethod
+    def open(self) -> bool:
+        """
+        Returns bool indicating if connection is open
+        """
+        pass
+
     
     ############################# METHODS ##################################
     @autocommit.setter

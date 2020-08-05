@@ -119,9 +119,10 @@ class Batch:
         if self._batch_events and self._batch_events._on_execution_started:
             self._batch_events._on_execution_started(self)
 
+        cursor = self.get_cursor(conn)
         try:
-            cursor = self.get_cursor(conn)
             cursor.execute(self.batch_text)
+
             # Commit the transaction if autocommit is True
             if conn.autocommit:
                 conn.commit()
