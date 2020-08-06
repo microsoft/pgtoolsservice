@@ -32,7 +32,7 @@ from ossdbtoolsservice.utils.constants import (MSSQL_PROVIDER_NAME,
                                                MYSQL_PROVIDER_NAME,
                                                PG_PROVIDER_NAME)
 from ossdbtoolsservice.workspace import (Configuration,  # noqa
-                                         PGSQLConfiguration, ScriptFile,
+                                         MySQLConfiguration, PGSQLConfiguration, ScriptFile,
                                          TextDocumentIdentifier, Workspace,
                                          WorkspaceService)
 from ossdbtoolsservice.workspace.contracts import Range
@@ -390,6 +390,58 @@ class TestLanguageService(unittest.TestCase):
         self.assertTrue(len(edits) > 0)
         self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
         self.assertEqual(edits[0].new_text, expected_output)
+
+    def test_format_mysql_doc(self):
+        """
+        Test that the format document codepath works as expected
+        """
+        # set up service provider with mysql connection
+        self.mock_service_provider = ServiceProvider(self.mock_server, {}, MYSQL_PROVIDER_NAME, None)
+        self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
+        self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
+        self.mock_service_provider._is_initialized = True
+
+        # If: We have a basic string to be formatted
+        input_text = 'select * from foo where id in (select id from bar);'
+        # Note: sqlparse always uses '\n\ for line separator even on windows.
+        # For now, respecting this behavior and leaving as-is
+        expected_output = '\n'.join([
+            'SELECT *',
+            'FROM foo',
+            'WHERE id IN',
+            '\t\t\t\t(SELECT id',
+            '\t\t\t\t\tFROM bar);'
+        ])
+
+        context: RequestContext = utils.MockRequestContext()
+        config = Configuration()
+        config.my_sql = MySQLConfiguration()
+        config.my_sql.format.keyword_case = 'upper'
+        self.mock_workspace_service._configuration = config
+        workspace, script_file = self._get_test_workspace(True, input_text)
+        self.mock_workspace_service._workspace = workspace
+        service: LanguageService = self._init_service()
+
+        format_options = FormattingOptions()
+        format_options.insert_spaces = False
+        format_params = DocumentFormattingParams()
+        format_params.options = format_options
+        format_params.text_document = self.default_text_document_id
+        # add uri to valid uri set ensure request passes uri check
+        # normally done in flavor change handler, but we are not testing that here
+        service._valid_uri.add(format_params.text_document.uri)
+
+        # When: I request document formatting
+        service.handle_doc_format_request(context, format_params)
+
+        # Then:
+        # ... The entire document text should be formatted
+        context.send_response.assert_called_once()
+        edits: List[TextEdit] = context.last_response_params
+        self.assertTrue(len(edits) > 0)
+        self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
+        self.assertEqual(edits[0].new_text, expected_output)
+
 
     def test_format_doc_range(self):
         """
