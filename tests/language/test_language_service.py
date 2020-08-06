@@ -442,7 +442,6 @@ class TestLanguageService(unittest.TestCase):
         self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
         self.assertEqual(edits[0].new_text, expected_output)
 
-
     def test_format_doc_range(self):
         """
         Test that the format document range codepath works as expected
