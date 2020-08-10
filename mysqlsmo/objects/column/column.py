@@ -30,7 +30,13 @@ class Column(NodeObject):
         :return: Instance of the Database
         """
         col = cls(server, kwargs['name'], kwargs['type'])
-
+        col._column_ordinal = kwargs['ordinal']
+        col._is_key = kwargs['column_key'] == 'PRI'
+        col._is_unique = kwargs['column_key'] == 'UNI'
+        col._is_nullable = kwargs['is_nullable'] == 'YES'
+        col._default = kwargs['column_default']
+        col._is_auto_increment = 'auto_increment' in kwargs['extra']
+        col._is_read_only = not kwargs['is_updatable']
         return col
 
     def __init__(self, server: 's.Server', name: str, datatype: str):
@@ -49,31 +55,31 @@ class Column(NodeObject):
 
     @property
     def not_null(self) -> Optional[bool]:
-        pass
+        return self._is_nullable
 
     @property
     def column_ordinal(self) -> int:
-        pass
+        return self._column_ordinal
 
     @property
     def datatype(self) -> str:
-        pass
+        return self._datatype
 
     @property
     def is_readonly(self) -> bool:
-        pass
+        return self._is_read_only
 
     @property
     def is_unique(self) -> bool:
-        pass
+        return self._is_unique
 
     @property
     def is_auto_increment(self) -> bool:
-        pass
+        return self._is_auto_increment
 
     @property
     def is_key(self) -> bool:
-        pass
+        return self._is_key
 
     @property
     def default_value(self) -> Optional[str]:

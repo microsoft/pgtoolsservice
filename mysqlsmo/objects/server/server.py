@@ -38,13 +38,6 @@ class Server:
         self._child_objects: Mapping[str, NodeCollection] = {
             Database.__name__: NodeCollection(lambda: Database.get_nodes_for_parent(self, None, None))
         }
-        # Declare the child objects
-        # self._child_objects: Mapping[str, NodeCollection] = {
-        #     Database.__name__: NodeCollection(lambda: Database.get_nodes_for_parent(self, None))
-        #     # Role.__name__: NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
-        #     # Tablespace.__name__: NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None)),
-        # }
-        # self._search_path = NodeCollection(lambda: self._fetch_search_path())
 
     # PROPERTIES ###########################################################
     @property
@@ -77,11 +70,6 @@ class Server:
         """Tuple representing the server version: (major, minor, patch)"""
         return self._conn.server_version
 
-    # @property
-    # def server_type(self) -> str:
-    #     """Server type for distinguishing between standard PG and PG supersets"""
-    #     return 'pg'  # TODO: Determine if a server is PPAS or PG
-
     @property
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
@@ -101,16 +89,6 @@ class Server:
     def maintenance_db(self) -> Database:
         """Database that this server's connection is connected to"""
         return self.databases[self._maintenance_db_name] if self._maintenance_db_name else None
-
-    # # @property
-    # # def roles(self) -> NodeCollection[Role]:
-    # #     """Roles that belong to the server"""
-    # #     return self._child_objects[Role.__name__]
-
-    # # @property
-    # # def tablespaces(self) -> NodeCollection[Tablespace]:
-    # #     """Tablespaces defined for the server"""
-    # #     return self._child_objects[Tablespace.__name__]
 
     @property
     def search_path(self) -> NodeCollection[str]:
@@ -142,5 +120,5 @@ class Server:
             obj = next((object for object in obj_collection if object.name == metadata.name), None)
             obj._columns = Column.get_nodes_for_parent(self, parent_obj=None, context_args={'dbname': metadata.schema, 'tbl_name': metadata.name})
             return obj
-        except Exception:
+        except Exception as e:
             return None
