@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-from typing import List, Mapping, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import pymysql
 
@@ -16,7 +16,7 @@ from ossdbtoolsservice.workspace.contracts import Configuration
 # Source: https://dev.mysql.com/doc/refman/8.0/en/connection-options.html
 
 MYSQL_CONNECTION_OPTION_KEY_MAP = {
-    'dbname':'database',
+    'dbname': 'database',
     'connectTimeout': 'connect_timeout',
     'bindAddress': 'bind_address',
     'readTimeout': 'read_timeout',
@@ -27,7 +27,7 @@ MYSQL_CONNECTION_OPTION_KEY_MAP = {
 
 # Source:https://pymysql.readthedocs.io/en/latest/modules/connections.html
 MYSQL_CONNECTION_PARAM_KEYWORDS = [
-    'host', 'database', 'user', 'password', 'bind_address', 'port', 'connect_timeout', 
+    'host', 'database', 'user', 'password', 'bind_address', 'port', 'connect_timeout',
     'read_timeout', 'write_timeout', 'client_flag', 'sql_mode', 'sslmode', 'ssl'
 ]
 
@@ -44,6 +44,7 @@ GROUP BY
     table_schema;
 """
 
+
 class MySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
 
@@ -53,12 +54,12 @@ class MySQLConnection(ServerConnection):
         :param conn_params: connection parameters dict
         :param config: optional Configuration object with mysql connection config
         """
-        
+
         if 'azureAccountToken' in conn_params:
-            conn_params['password'] = conn_params['azureAccountToken']            
+            conn_params['password'] = conn_params['azureAccountToken']
 
         # Map the provided connection parameter names to pymysql param names
-        _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param) : value for param, value in conn_params.items()}
+        _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param): value for param, value in conn_params.items()}
 
         # Filter the parameters to only those accepted by PyMySQL
         self._connection_options = {param: value for param, value in _params.items() if param in MYSQL_CONNECTION_PARAM_KEYWORDS}
@@ -84,10 +85,10 @@ class MySQLConnection(ServerConnection):
         if "ssl" in conn_params.keys() and self._connection_options["ssl"] != "disable":
             # Find all the ssl options (key, ca, cipher)
             ssl_params = {param for param in conn_params if param.startswith("ssl.")}
-            
+
             # Map the ssl option names to their values
-            ssl_dict = {param.strip("ssl."):conn_params[param] for param in ssl_params}
-            
+            ssl_dict = {param.strip("ssl."): conn_params[param] for param in ssl_params}
+
             # Assign the ssl options to the dict
             self._connection_options["ssl"] = ssl_dict
 
@@ -120,9 +121,9 @@ class MySQLConnection(ServerConnection):
             self._server_type = "MariaDB"
         else:
             self._server_type = "MySQL"
-        
 
-    ###################### PROPERTIES ##################################
+    # PROPERTIES ###########################################################
+
     @property
     def autocommit(self) -> bool:
         """Returns the current autocommit status for this connection"""
@@ -180,7 +181,6 @@ class MySQLConnection(ServerConnection):
     @property
     def query_canceled_error(self) -> Exception:
         """Returns query canceled error type"""
-        pass
 
     @property
     def cancellation_query(self) -> str:
@@ -198,7 +198,7 @@ class MySQLConnection(ServerConnection):
         """Returns bool indicating if connection is open"""
         return self._conn.open
 
-    ############################# METHODS ##################################
+    # METHODS ##############################################################
     @autocommit.setter
     def autocommit(self, mode: bool):
         """
@@ -206,7 +206,7 @@ class MySQLConnection(ServerConnection):
         :param mode: True or False
         """
         self._autocommit_status = mode
-    
+
     def commit(self):
         """
         Commits the current transaction
@@ -216,7 +216,7 @@ class MySQLConnection(ServerConnection):
     def cursor(self, **kwargs):
         """
         Returns a cursor for the current connection
-        :param kwargs will ignored as PyMySQL does not yet support named cursors 
+        :param kwargs will ignored as PyMySQL does not yet support named cursors
         """
         self._conn.ping()
         # Create a new cursor from the current connection
@@ -228,7 +228,7 @@ class MySQLConnection(ServerConnection):
         setattr(cursor_instance, attr, value)
 
         return cursor_instance
-    
+
     def execute_query(self, query: str, all=True):
         """
         Execute a simple query without arguments for the given connection
@@ -288,14 +288,14 @@ class MySQLConnection(ServerConnection):
         List the databases accessible by the current connection.
         """
         return self.execute_query('SHOW DATABASES')
-    
+
     def get_database_owner(self):
         """
         List the owner(s) of the current database
         """
         owner_query = 'SELECT CURRENT_USER();'
         result = self.execute_query(owner_query, all=True)[0][0]
-        
+
         # Strip the hostname from the result
         return re.sub(r'@(.*)', '', result)
 

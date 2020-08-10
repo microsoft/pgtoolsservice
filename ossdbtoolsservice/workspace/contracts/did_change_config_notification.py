@@ -9,6 +9,7 @@ from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.utils import constants
 
+
 class SQLConfiguration(Serializable):
     """
     Configuration for SQL settings in general. These are common to any SQL provider
@@ -41,6 +42,7 @@ class PGSQLConfiguration(Serializable):
         self.default_database: str = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
         self.format: FormatterConfiguration = FormatterConfiguration()
 
+
 class MySQLConfiguration(Serializable):
     """
     Configuration for MySQL tool service
@@ -56,6 +58,7 @@ class MySQLConfiguration(Serializable):
     def __init__(self):
         self.default_database: str = constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME]
         self.format: FormatterConfiguration = FormatterConfiguration()
+
 
 class Case(Enum):
     """Case options for keyword and identifier formatting"""
@@ -109,7 +112,8 @@ class Configuration(Serializable):
         self.my_sql = MySQLConfiguration()
 
     def get_configuration(self, provider):
-        return {'MySQL': self.my_sql, 'PGSQL':self.pgsql}[provider]
+        return {'MySQL': self.my_sql, 'PGSQL': self.pgsql}[provider]
+
 
 class DidChangeConfigurationParams(Serializable):
     """

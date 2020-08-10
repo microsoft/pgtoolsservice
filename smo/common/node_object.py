@@ -16,7 +16,7 @@ class NodeObject(metaclass=ABCMeta):
             cls,
             root_server: 'Server',
             parent_obj: Optional['NodeObject'],
-            context_args = None
+            context_args=None
     ) -> List['NodeObject']:
         """
         Renders and executes nodes.sql for the class to generate a list of NodeObjects
@@ -164,7 +164,6 @@ class NodeObject(metaclass=ABCMeta):
         :param root_server: The server that the object belongs to
         :return: Path to the root of templates used by this class
         """
-        pass
 
     # PROTECTED HELPERS ####################################################
     TRCC = TypeVar('TRCC')

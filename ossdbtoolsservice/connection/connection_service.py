@@ -26,8 +26,8 @@ from ossdbtoolsservice.connection.contracts import (
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
-from ossdbtoolsservice.driver import *
-from ossdbtoolsservice.parsers.owner_uri_parser import get_attribute_value
+from ossdbtoolsservice.driver import ServerConnection, ConnectionManager
+
 
 class ConnectionInfo(object):
     """Information pertaining to a unique connection instance"""
@@ -118,7 +118,7 @@ class ConnectionService:
             if cancellation_key in self._cancellation_map:
                 self._cancellation_map[cancellation_key].cancel()
             self._cancellation_map[cancellation_key] = cancellation_token
-        
+
         # Get the type of server and config
         provider_name = self._service_provider.provider
         config = self._service_provider[constants.WORKSPACE_SERVICE_NAME].configuration
@@ -203,7 +203,7 @@ class ConnectionService:
         except ValueError as err:
             request_context.send_error(str(err))
             return
-        
+
         query_results = None
         try:
             query_results = connection.list_databases()
@@ -213,10 +213,9 @@ class ConnectionService:
                 self._service_provider.logger.exception('Error listing databases')
             request_context.send_error(str(err))
             return
-        
+
         database_names = [result[0] for result in query_results]
         request_context.send_response(ListDatabasesResponse(database_names))
-        
 
     def handle_cancellation_request(self, request_context: RequestContext, params: CancelConnectParams) -> None:
         """Cancel a connection attempt in response to a cancellation request"""
@@ -299,7 +298,7 @@ class ConnectionService:
 def _build_connection_response(connection_info: ConnectionInfo, connection_type: ConnectionType) -> ConnectionCompleteParams:
     """Build a connection complete response object"""
     connection: ServerConnection = connection_info.get_connection(connection_type)
-   
+
     connection_summary = ConnectionSummary(
         server_name=connection.host_name,
         database_name=connection.database_name,
@@ -334,4 +333,3 @@ def _get_server_info(connection: ServerConnection):
     host = connection.host_name
     is_cloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
     return ServerInfo(server, server_version, is_cloud)
-

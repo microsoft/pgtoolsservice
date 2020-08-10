@@ -9,6 +9,7 @@ from collections import namedtuple
 from ossdbtoolsservice.query.column_info import get_columns_info
 import tests.utils as utils
 
+
 class TestGetColumnsInfo(unittest.TestCase):
 
     def setUp(self):
@@ -22,7 +23,7 @@ class TestGetColumnsInfo(unittest.TestCase):
         self._cursor.connection = self._connection
 
     def test_get_column_info_executes_cursor(self):
-        
+
         columns_info = get_columns_info(self._cursor)
 
         self._connection.cursor.assert_called_once()

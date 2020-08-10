@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import operator
-from collections import namedtuple, defaultdict, OrderedDict
 from itertools import count, repeat, chain      # noqa
 from logging import Logger  # noqa
 from prompt_toolkit.completion import Completer, Completion
@@ -16,9 +15,8 @@ from .packages.sqlcompletion import (   # noqa
     FromClauseItem, suggest_type, Database, Schema, Table, Function, Column, View,
     Keyword, NamedQuery, Datatype, Alias, Path, JoinCondition, Join
 )
-from .packages.parseutils.meta import ColumnMetadata, ForeignKey
 from .packages.mysqlliterals.main import get_literals
-from .packages.prioritization import PrevalenceCounter
+
 
 class MySQLCompleter(Completer, MyCompleter):
     # keywords_tree: A dict mapping keywords to well known following keywords.
@@ -49,7 +47,6 @@ class MySQLCompleter(Completer, MyCompleter):
             else:
                 self.logger.debug(msg, *args)
 
-
     def extend_database_names(self, databases):
         pass
 
@@ -64,7 +61,6 @@ class MySQLCompleter(Completer, MyCompleter):
 
         :return:
         """
-        pass
 
     def extend_relations(self, data, kind):
         """extend metadata for tables or views.
@@ -75,7 +71,6 @@ class MySQLCompleter(Completer, MyCompleter):
         :return:
 
         """
-        pass
 
     def extend_columns(self, column_data, kind):
         """extend column metadata.
@@ -87,7 +82,6 @@ class MySQLCompleter(Completer, MyCompleter):
         :return:
 
         """
-        pass
 
     def extend_functions(self, func_data):
         pass

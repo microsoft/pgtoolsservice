@@ -8,6 +8,7 @@ from logging import Logger  # noqa
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.language.completion.packages.parseutils.meta import ColumnMetadata, ForeignKey, FunctionMetadata     # noqa
 
+
 class MySQLLightweightMetadata:
 
     def __init__(self, conn: ServerConnection, logger: Logger = None):
@@ -32,12 +33,10 @@ class MySQLLightweightMetadata:
                 'm' - materialized view
         :return: (schema_name, rel_name) tuples
         """
-        pass
 
     def tables(self):
         """Yields (schema_name, table_name) tuples"""
         return []
-
 
     def views(self):
         """Yields (schema_name, view_name) tuples.
@@ -45,7 +44,6 @@ class MySQLLightweightMetadata:
             Includes both views and and materialized views
         """
         return []
-
 
     def _columns(self, kinds=('r', 'v', 'm')):
         """Get column metadata for tables and views
@@ -56,7 +54,6 @@ class MySQLLightweightMetadata:
                 'm' - materialized view
         :return: list of (schema_name, relation_name, column_name, column_type) tuples
         """
-        pass
 
     def table_columns(self):
         return []
@@ -75,11 +72,9 @@ class MySQLLightweightMetadata:
         """Yields FunctionMetadata named tuples"""
         return []
 
-
     def datatypes(self):
         """Yields tuples of (schema_name, type_name)"""
         return []
-
 
     def casing(self):
         """Yields the most common casing for names used in db functions"""

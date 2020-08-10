@@ -26,9 +26,9 @@ class TestScripter(unittest.TestCase):
         """Set up mock objects for testing the scripting service.
         Ran before each unit test.
         """
-        self.conn = MockPGServerConnection(cur=None, port="8080", host= "test", name= "test")
+        self.conn = MockPGServerConnection(cur=None, port="8080", host="test", name="test")
         self.script = scripter.Scripter(self.conn)
-        
+
     def test_init(self):
         # Then: Internal state should be properly setup
         self.assertIsInstance(self.script.server, Server)
@@ -105,7 +105,7 @@ class TestScripterOld(unittest.TestCase):
         """Set up mock objects for testing the scripting service.
         Ran before each unit test.
         """
-        self.connection = MockPGServerConnection(cur=None, port="8080", host= "test", name= "test")
+        self.connection = MockPGServerConnection(cur=None, port="8080", host="test", name="test")
         self.scripter = scripter.Scripter(self.connection)
         self.server = self.scripter.server
         self.service = ScriptingService()

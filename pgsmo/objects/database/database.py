@@ -22,6 +22,7 @@ from pgsmo.objects.extension.extension import Extension
 
 from ossdbtoolsservice.driver import ServerConnection    # noqa
 
+
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')

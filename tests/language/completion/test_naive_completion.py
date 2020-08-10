@@ -82,7 +82,7 @@ class TestNaiveCompletion(unittest.TestCase):
         self.assertTrue(Completion(text="CREATE", display_meta="keyword") not in result)
 
     def test_keyword_lower_casing(self):
-        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'lower'})        
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing': 'lower'})
         text = 'SEL'
         position = len(text)
         result = set(new_completer.get_completions(
@@ -93,7 +93,7 @@ class TestNaiveCompletion(unittest.TestCase):
         self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_upper_casing(self):
-        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'upper'})        
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing': 'upper'})
         text = 'sel'
         position = len(text)
         result = set(new_completer.get_completions(
@@ -104,9 +104,9 @@ class TestNaiveCompletion(unittest.TestCase):
         self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_auto_casing(self):
-        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'auto'})
-        
-        # if text is lower case   
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing': 'auto'})
+
+        # if text is lower case
         text = 'sel'
         position = len(text)
         result = set(new_completer.get_completions(

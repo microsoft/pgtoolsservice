@@ -63,7 +63,7 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
                 row_bytes += self._write_to_file(self._file_stream, bytearray(struct.pack("i", 0)))
                 row_bytes += self._write_null()
             else:
-                bytes_converter: Callable[[str], bytearray] = get_any_to_bytes_converter(type_value, provider = column.provider)
+                bytes_converter: Callable[[str], bytearray] = get_any_to_bytes_converter(type_value, provider=column.provider)
                 value_to_write = bytes_converter(values[index])
 
                 bytes_length_to_write = len(value_to_write)

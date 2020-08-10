@@ -88,7 +88,6 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
     # CONSTRUCTION TESTS ###################################################
     def test_init(self):
         """Overriding to prevent using default init testing"""
-        pass
 
     def test_init_connected(self):
         # If: I create a DB that is connected

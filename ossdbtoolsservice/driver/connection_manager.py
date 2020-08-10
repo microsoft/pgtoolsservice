@@ -3,12 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABC, abstractmethod
 from ossdbtoolsservice.utils.constants import (
     PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME, MARIADB_PROVIDER_NAME
 )
-from ossdbtoolsservice.driver.types import *
+from ossdbtoolsservice.driver.types import ServerConnection, PostgreSQLConnection, MySQLConnection
 from ossdbtoolsservice.workspace.contracts import Configuration
+
 
 class ConnectionManager:
     """Wrapper class that handles different types of drivers and connections """
@@ -34,7 +34,7 @@ class ConnectionManager:
         """
         if self._provider not in self.CONNECTORS.keys():
             raise AssertionError(str(self._provider) + " is not a supported database engine.")
-        
+
         return self.CONNECTORS[self._provider](options, config)
 
     def get_connection(self):

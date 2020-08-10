@@ -234,7 +234,7 @@ class TestLanguageService(unittest.TestCase):
         other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
 
         # create a mock mysql service provider
-        provider = utils.get_mock_service_provider(provider_name = MYSQL_PROVIDER_NAME)
+        provider = utils.get_mock_service_provider(provider_name=MYSQL_PROVIDER_NAME)
         service = LanguageService()
         service._service_provider = provider
 
@@ -426,7 +426,7 @@ class TestLanguageService(unittest.TestCase):
         # add uri to valid uri set ensure request passes uri check
         # normally done in flavor change handler, but we are not testing that here
         service._valid_uri.add(format_params.text_document.uri)
-        
+
         # When: I request format the 2nd line of a document
         format_params.range = Range.from_data(1, 0, 1, len(input_lines[1]))
         service.handle_doc_range_format_request(context, format_params)

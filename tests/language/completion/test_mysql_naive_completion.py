@@ -9,8 +9,6 @@ from unittest.mock import Mock
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
-from ossdbtoolsservice.language.completion.mysql_completion import \
-    MySQLCompletion
 from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
 
 
@@ -60,7 +58,7 @@ class TestNaiveCompletion(unittest.TestCase):
             Completion(text='MASTER_LOG_FILE', start_position=-2),
             Completion(text='MAX', start_position=-2),
             Completion(text='MASTER_TLS_VERSION', start_position=-2),
-            Completion(text='MASTER_COMPRESSION_ALGORITHMS', start_position=-2), 
+            Completion(text='MASTER_COMPRESSION_ALGORITHMS', start_position=-2),
             Completion(text='MASTER_USER', start_position=-2),
             Completion(text='MASTER_AUTO_POSITION', start_position=-2),
             Completion(text='MASTER_SSL_CA', start_position=-2),
@@ -76,7 +74,7 @@ class TestNaiveCompletion(unittest.TestCase):
             Completion(text='MAX_CONNECTIONS_PER_HOUR', start_position=-2),
             Completion(text='MAX_UPDATES_PER_HOUR', start_position=-2),
             Completion(text='MASTER_SSL_CIPHER', start_position=-2),
-            Completion(text='MASTER_SSL_VERIFY_SERVER_CERT', start_position=-2), 
+            Completion(text='MASTER_SSL_VERIFY_SERVER_CERT', start_position=-2),
             Completion(text='MAKE_SET', start_position=-2),
             Completion(text='MASTER_HOST', start_position=-2),
             Completion(text='MASTER_PUBLIC_KEY_PATH', start_position=-2),
@@ -115,7 +113,7 @@ class TestNaiveCompletion(unittest.TestCase):
         self.assertTrue(Completion(text="CREATE", display_meta="keyword") not in result)
 
     def test_keyword_lower_casing(self):
-        new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing':'lower'})        
+        new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing': 'lower'})
         text = 'SEL'
         position = len(text)
         result = set(new_completer.get_completions(
@@ -126,7 +124,7 @@ class TestNaiveCompletion(unittest.TestCase):
         self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_upper_casing(self):
-        new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing':'upper'})        
+        new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing': 'upper'})
         text = 'sel'
         position = len(text)
         result = set(new_completer.get_completions(
@@ -137,9 +135,9 @@ class TestNaiveCompletion(unittest.TestCase):
         self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_auto_casing(self):
-        new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing':'auto'})
-        
-        # if text is lower case   
+        new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing': 'auto'})
+
+        # if text is lower case
         text = 'sel'
         position = len(text)
         result = set(new_completer.get_completions(

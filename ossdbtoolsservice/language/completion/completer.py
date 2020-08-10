@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 import re
-from collections import namedtuple, defaultdict, OrderedDict
+from collections import namedtuple
 
 from .packages.parseutils.utils import last_word
 from .packages.prioritization import PrevalenceCounter
@@ -13,6 +13,7 @@ _Candidate = namedtuple(
 )
 
 Match = namedtuple('Match', ['completion', 'priority'])
+
 
 class MyCompleter:
     def __init__(self, completion):
@@ -129,7 +130,7 @@ class MyCompleter:
                 # We also use the unescape_name to make sure quoted names have
                 # the same priority as unquoted names.
                 lexical_priority = (tuple(0 if c in (' _') else -ord(c)
-                                            for c in self.unescape_name(item.lower())) + (1,)
+                                          for c in self.unescape_name(item.lower())) + (1,)
                                     + tuple(c for c in item))
 
                 item = self.case(item)

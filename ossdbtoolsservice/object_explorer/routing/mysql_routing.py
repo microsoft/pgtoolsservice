@@ -4,18 +4,25 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-from urllib.parse import urljoin, urlparse
-from typing import Callable, Dict, List, Optional
+from typing import List, Optional
+from urllib.parse import urljoin
 
-from smo.common.node_object import NodeObject
-from mysqlsmo import *
+from mysqlsmo import (CharacterSet, CheckConstraint, Collation, Column,
+                      Database, Event, ForeignKeyConstraint, Function, Index,
+                      PrimaryKeyConstraint, Procedure, Table, Tablespace,
+                      Trigger, UniqueConstraint, User)
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
-from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession, Folder, RoutingTarget
 from ossdbtoolsservice.object_explorer.contracts import NodeInfo
+from ossdbtoolsservice.object_explorer.session import (Folder,
+                                                       ObjectExplorerSession,
+                                                       RoutingTarget)
+from smo.common.node_object import NodeObject
 
 MYSQL_SYSTEM_DATABASES = {"information_schema", "mysql", "performance_schema", "sys"}
 
 # NODE GENERATOR HELPERS ###################################################
+
+
 def _get_node_info(
         node: NodeObject,
         current_path: str,
@@ -59,7 +66,7 @@ def _columns(is_refresh: bool, current_path: str, session: ObjectExplorerSession
       obj str: Type of the object to get columns from
       tid int: table or view OID
     """
-    root_server=session.server
+    root_server = session.server
     nodes = Column.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Column', label=f'{node.name}')
@@ -76,38 +83,42 @@ def _constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSes
     # Get all the types of constraints
     primary: List[NodeInfo] = _primary_keys(is_refresh, current_path, session, match_params)
     foreign: List[NodeInfo] = _foreign_keys(is_refresh, current_path, session, match_params)
-    #check: List[NodeInfo] = _check_constraints(is_refresh, current_path, session, match_params)
+    # check: List[NodeInfo] = _check_constraints(is_refresh, current_path, session, match_params)
     unique: List[NodeInfo] = _unique_constraints(is_refresh, current_path, session, match_params)
 
-    all_constraints: List[NodeInfo] = primary + foreign + unique #+ check
+    all_constraints: List[NodeInfo] = primary + foreign + unique  # + check
     return all_constraints
 
+
 def _primary_keys(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    root_server=session.server
+    root_server = session.server
     nodes = PrimaryKeyConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'ColumnMasterKey', label='(Primary Key) {}'.format(node.name))
         for node in nodes
     ]
 
+
 def _foreign_keys(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    root_server=session.server
+    root_server = session.server
     nodes = ForeignKeyConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'ColumnEncryptionKey', label='(Foreign Key) {}'.format(node.name))
         for node in nodes
     ]
 
+
 def _check_constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    root_server=session.server
+    root_server = session.server
     nodes = CheckConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Constraint', label=f'{node.name}')
         for node in nodes
     ]
 
+
 def _unique_constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    root_server=session.server
+    root_server = session.server
     nodes = UniqueConstraint.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'AsymmetricKey', label='(Unique) {}'.format(node.name))
@@ -121,12 +132,13 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     Expected match_params:
       dbid int: Database OID
     """
-    root_server=session.server
+    root_server = session.server
     nodes = Function.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'AggregateFunction', label=f'{node.name}')
         for node in nodes
     ]
+
 
 def _procedures(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
@@ -134,12 +146,13 @@ def _procedures(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     Expected match_params:
       dbid int: Database OID
     """
-    root_server=session.server
+    root_server = session.server
     nodes = Procedure.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'StoredProcedure', label=f'{node.name}')
         for node in nodes
     ]
+
 
 def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
@@ -147,12 +160,13 @@ def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     Expected match_params:
       dbid int: Database OID
     """
-    root_server=session.server
+    root_server = session.server
     nodes = Collation.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'SystemOtherDataType', label=f'{node.name}')
         for node in nodes
     ]
+
 
 def _charsets(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
@@ -160,7 +174,7 @@ def _charsets(is_refresh: bool, current_path: str, session: ObjectExplorerSessio
     Expected match_params:
       dbid int: Database OID
     """
-    root_server=session.server
+    root_server = session.server
     nodes = CharacterSet.get_nodes_for_parent(root_server, parent_obj=None, context_args=None)
     return [
         _get_node_info(node, current_path, 'HistoryTable', label=f'{node.name}', is_leaf=False)
@@ -175,7 +189,7 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
       dbid int: Database OID
       tid int: table OID
     """
-    root_server=session.server
+    root_server = session.server
     nodes = Index.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Index', label=f'{node.name}')
@@ -189,7 +203,7 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
     Expected match_params:
       dbid int: Database OID
     """
-    root_server=session.server
+    root_server = session.server
     nodes = Table.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Table', label=f'{node.name}', is_leaf=False)
@@ -199,25 +213,27 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
 
 def _users(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of users for a server"""
-    root_server=session.server
+    root_server = session.server
     nodes = User.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'User', label=f'{node.name}')
         for node in nodes
     ]
 
+
 def _sysdatabases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of databases"""
-    root_server=session.server
+    root_server = session.server
     nodes = Database.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Database', label=f'{node.name}', is_leaf=False)
         for node in nodes if node.name in MYSQL_SYSTEM_DATABASES
     ]
 
+
 def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of databases"""
-    root_server=session.server
+    root_server = session.server
     nodes = Database.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Database', label=f'{node.name}', is_leaf=False)
@@ -227,7 +243,7 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
 
 def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of tablespaces for a server"""
-    root_server=session.server
+    root_server = session.server
     nodes = Tablespace.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Queue', label=f'{node.name}')
@@ -237,7 +253,7 @@ def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSes
 
 def _triggers(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of triggers for a table or view"""
-    root_server=session.server
+    root_server = session.server
     nodes = Trigger.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Trigger', label=f'{node.name}')
@@ -258,13 +274,15 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
         for node in nodes
     ]
 
+
 def _events(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict):
-    root_server=session.server
+    root_server = session.server
     nodes = Event.get_nodes_for_parent(root_server, parent_obj=None, context_args=match_params)
     return [
         _get_node_info(node, current_path, 'Statistic', label=f'{node.name}')
         for node in nodes
     ]
+
 
 def _default_node_generator(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> None:
     """
@@ -296,7 +314,7 @@ MYSQL_ROUTING_TABLE = {
     ),
     # Clicked on Databases folder, should list databases underneath
     re.compile(r'^/(?P<db>databases)/$'): RoutingTarget(
-        None, 
+        None,
         _databases
     ),
     # Clicked on Sytem Databases folder, should list system databases underneath
@@ -317,12 +335,12 @@ MYSQL_ROUTING_TABLE = {
     ),
     # Clicked on the Tables folder, should list table nodes
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/$'): RoutingTarget(
-        None, 
+        None,
         _tables
     ),
     # Clicked on the Views folder, should list System View Folder and view nodes
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/views/$'): RoutingTarget(
-       None,
+        None,
         _views
     ),
     # Clicked on the Stored Procedures folder, should list procedure nodes
@@ -359,12 +377,12 @@ MYSQL_ROUTING_TABLE = {
     ),
     # Clicked on the Constraints folder inside one table
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/constraints/$'): RoutingTarget(
-        None, 
+        None,
         _constraints
     ),
     # Clicked on the Indexes folder inside one table
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/indexes/$'): RoutingTarget(
-        None, 
+        None,
         _indexes
     ),
     # Clicked on on the Triggers Folder inside of one particular table or view node
@@ -379,12 +397,12 @@ MYSQL_ROUTING_TABLE = {
     ),
     # Clicked on the Character Sets folder
     re.compile(r'^/charsets/$'): RoutingTarget(
-       None,
+        None,
         _charsets
     ),
     # Clicked on one particular charset node, should show the Collations folder
     re.compile(r'^/charsets/(?P<char_name>\w+)/$'): RoutingTarget(
-         [
+        [
             Folder('Collations', 'collations')
         ],
         _default_node_generator
@@ -401,7 +419,7 @@ MYSQL_ROUTING_TABLE = {
     ),
     # Clicked on the Tablespaces folder
     re.compile(r'^/tablespaces/$'): RoutingTarget(
-        None, 
+        None,
         _tablespaces
     )
 }

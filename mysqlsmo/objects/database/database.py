@@ -10,6 +10,7 @@ from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from smo.utils import templating
 from ossdbtoolsservice.driver import ServerConnection    # noqa
 
+
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
@@ -43,15 +44,14 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         ScriptableCreate.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
         ScriptableDelete.__init__(self, self._template_root(self.server), self._macro_root(), self.server.version)
 
-
     # IMPLEMENTATION DETAILS ###############################################
+
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
         """ Return the data input for create query """
-        pass
 
     def _delete_query_data(self) -> dict:
         """ Return the data input for delete query """

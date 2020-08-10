@@ -13,7 +13,6 @@ from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, Selectio
 from ossdbtoolsservice.query.data_storage import FileStreamFactory
 
 
-
 class QueryEvents:
     def __init__(self, on_query_started=None, on_query_completed=None, batch_events: BatchEvents = None) -> None:
         self.on_query_started = on_query_started

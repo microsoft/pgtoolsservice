@@ -140,7 +140,7 @@ class Batch:
                 cursor.close()
             self._has_executed = True
             self._execution_end_time = datetime.now()
-            
+
             # TODO: PyMySQL doesn't support notices from a connection
             if conn._provider_name == PG_PROVIDER_NAME:
                 self._notices = cursor.connection.notices

@@ -30,7 +30,7 @@ pg_conn_provider_opts = ConnectionProviderOptions([
         is_identity=True,
         is_required=False,
         group_name='Source',
-        default_value= constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
+        default_value=constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
     ),
     ConnectionOption(
         name='user',

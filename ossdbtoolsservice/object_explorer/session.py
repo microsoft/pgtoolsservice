@@ -4,12 +4,13 @@
 # --------------------------------------------------------------------------------------------
 
 import threading                    # noqa
-from typing import Callable, Dict, List, Optional, TypeVar, Union
+from typing import Callable, Dict, List, Optional, TypeVar
 from urllib.parse import urljoin
 
 from pgsmo import Server            # noqa
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.object_explorer.contracts import NodeInfo
+
 
 class ObjectExplorerSession:
     def __init__(self, session_id: str, params: ConnectionDetails):
@@ -22,6 +23,7 @@ class ObjectExplorerSession:
         self.expand_tasks: Dict[str, threading.Thread] = {}
         self.refresh_tasks: Dict[str, threading.Thread] = {}
         self.cache: Dict[str, List[NodeInfo]] = {}
+
 
 class Folder:
     """Defines a folder that should be added to the top of a list of nodes"""

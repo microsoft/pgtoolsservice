@@ -7,24 +7,17 @@
 
 import unittest
 from unittest import mock
-from unittest.mock import MagicMock, Mock
 
-import pymysql
-
-import ossdbtoolsservice.connection.connection_service
 import tests.utils as utils
-from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
-from ossdbtoolsservice.connection.contracts import (
-    CONNECTION_COMPLETE_METHOD, CancelConnectParams,
-    ChangeDatabaseRequestParams, ConnectionCompleteParams, ConnectionDetails,
-    ConnectionType, ConnectRequestParams, DisconnectRequestParams,
-    ListDatabasesParams)
-from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME, DEFAULT_PORT, WORKSPACE_SERVICE_NAME
-from ossdbtoolsservice.utils.cancellation import CancellationToken
+from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.connection.contracts import (ConnectionType,
+                                                    ConnectRequestParams)
+from ossdbtoolsservice.utils.constants import (DEFAULT_PORT,
+                                               MYSQL_PROVIDER_NAME,
+                                               WORKSPACE_SERVICE_NAME)
 from ossdbtoolsservice.workspace import WorkspaceService
-from tests.integration import get_connection_details, integration_test
 from tests.mysqlsmo_tests.utils import MockCursor
-from tests.utils import MockPyMySQLConnection, MockRequestContext
+from tests.utils import MockPyMySQLConnection
 
 
 class TestMySQLConnectionService(unittest.TestCase):
@@ -34,7 +27,7 @@ class TestMySQLConnectionService(unittest.TestCase):
         """Set up the tests with a connection service"""
         self.connection_service = ConnectionService()
         self.connection_service._service_provider = utils.get_mock_service_provider({WORKSPACE_SERVICE_NAME: WorkspaceService()},
-                                                            provider_name=MYSQL_PROVIDER_NAME)
+                                                                                    provider_name=MYSQL_PROVIDER_NAME)
         mock_cursor = MockCursor(results=[['5.7.29-log']])
         # Set up the mock connection for pymysql's connect method to return
         self.mock_pymysql_connection = MockPyMySQLConnection(parameters={
@@ -69,7 +62,7 @@ class TestMySQLConnectionService(unittest.TestCase):
         self.assertIsNotNone(response.connection_id)
         self.assertIsNotNone(response.server_info.server_version)
         self.assertFalse(response.server_info.is_cloud)
-    
+
     def test_connect_with_access_token(self):
         """Test that the service connects to a MySQL server using an access token as a password"""
         # Set up the parameters for the connection
@@ -94,7 +87,7 @@ class TestMySQLConnectionService(unittest.TestCase):
             response = self.connection_service.connect(params)
 
         # Verify that pymysql's connection method was called with password set to account token.
-        mock_connect_method.assert_called_once_with(user='mysql', password='exampleToken', host='myserver', 
+        mock_connect_method.assert_called_once_with(user='mysql', password='exampleToken', host='myserver',
                                                     port=DEFAULT_PORT[MYSQL_PROVIDER_NAME], database='mysql')
 
         # Verify that pymysql's connection method was called and that the

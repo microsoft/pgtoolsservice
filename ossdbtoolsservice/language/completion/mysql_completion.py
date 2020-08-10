@@ -5,6 +5,7 @@
 
 from prompt_toolkit.completion import Completion    # noqa
 
+
 class MySQLCompletion(Completion):
     """
     This class extends prompt_toolkit.completion class to include specific fields (eg. schema)
@@ -15,5 +16,4 @@ class MySQLCompletion(Completion):
                  style='', schema=None):
         self.schema = schema
         super(MySQLCompletion, self).__init__(text, start_position, display, display_meta,
-                                           style)
-                                           
+                                              style)

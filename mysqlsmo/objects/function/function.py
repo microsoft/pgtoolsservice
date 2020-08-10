@@ -3,10 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from smo.utils import templating
+
 
 class Function(NodeObject, ScriptableCreate, ScriptableDelete):
 
@@ -75,4 +75,3 @@ class Function(NodeObject, ScriptableCreate, ScriptableDelete):
         cols, rows = self._server.connection.execute_dict(sql)
         script = rows[0]["Create Function"]
         return script
-    

@@ -117,7 +117,6 @@ class Server:
         The search_path for the current role. Defined at the server level as it's a global property,
         and as a collection as it is a list of schema names
         """
-        pass
 
     def refresh(self) -> None:
         # Reset child objects
@@ -132,4 +131,3 @@ class Server:
             "Function": lambda met: Function(self, met.name, met.schema)
         }
         return object_map[object_type.capitalize()](metadata)
-    
