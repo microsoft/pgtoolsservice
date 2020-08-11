@@ -9,7 +9,7 @@ from unittest.mock import Mock
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
-from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
+from ossdbtoolsservice.language.completion.mysql_completer import MySQLCompleter
 
 
 class TestNaiveCompletion(unittest.TestCase):
