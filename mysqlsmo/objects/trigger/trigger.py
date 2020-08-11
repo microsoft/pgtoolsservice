@@ -3,10 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 from smo.utils import templating
+
 
 class Trigger(NodeObject, ScriptableCreate, ScriptableDelete):
 
@@ -42,7 +42,6 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete):
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         self._dbname = dbname
-
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:

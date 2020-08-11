@@ -18,6 +18,7 @@ from ossdbtoolsservice.hosting.json_message import JSONRPCMessageType
 import ossdbtoolsservice.ossdbtoolsservice_main as ossdbtoolsservice_main
 from ossdbtoolsservice.utils import constants
 
+
 class RPCTestMessage:
     """
     Class representing an individual JSON RPC message sent as part of an end-to-end integration test

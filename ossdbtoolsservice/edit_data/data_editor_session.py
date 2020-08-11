@@ -16,7 +16,8 @@ from ossdbtoolsservice.edit_data.contracts import (
 from ossdbtoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
 from ossdbtoolsservice.query.contracts import DbColumn, ResultSetSubset
 import ossdbtoolsservice.utils as utils
-from ossdbtoolsservice.driver import ServerConnection    
+from ossdbtoolsservice.driver import ServerConnection
+
 
 class DataEditSessionExecutionState:
 

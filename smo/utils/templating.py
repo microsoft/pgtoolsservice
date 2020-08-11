@@ -35,7 +35,7 @@ def get_template_path(template_root: str, template_name: str, server_version: Tu
     containing_folders: List[str] = [x for x in all_folders if template_name in next(os.walk(x))[2]]
 
     def sortlist(item):
-        number = item[item.rfind('\\') + 1: len(item)].partition('_')[0]
+        number = os.path.basename(item).partition('_')[0]
         try:
             number = float(number)
         except ValueError:
@@ -117,6 +117,7 @@ def render_template(template_path: str, macro_roots: Optional[List[str]] = None,
     to_render = env.get_template(filename)
     return to_render.render(**context)
 
+
 def render_template_string(source, **context):
     """
     Renders a template from the given template source string with the given context. Template variables will be
@@ -134,11 +135,12 @@ def string_convert(value):
     Quotes variables embedded within templates
     :param - value to be quoted
 
-    E.g: 
+    E.g:
         6 -> '6'
         "mysql" -> "'mysql'"
     """
     return "'{}'".format(str(value))
+
 
 def _hash_source_list(sources: list) -> int:
     return hash(frozenset(sources))

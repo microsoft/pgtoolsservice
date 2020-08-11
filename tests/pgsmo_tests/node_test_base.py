@@ -181,7 +181,6 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         Can be overridden in child classes to add custom validation to _from_node_query tests after
         the standard validation is performed.
         """
-        pass
 
     @staticmethod
     def _custom_validate_init(obj, mock_server: Server):
@@ -189,7 +188,6 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         Can be overridden in child classes to add custom validation to __init__ tests after the
         standard validation is performed.
         """
-        pass
 
     # PROTECTED HELPERS ####################################################
     def _init_validation(self, obj: NodeObject, mock_server: Server, mock_parent: NodeObject, name: str):

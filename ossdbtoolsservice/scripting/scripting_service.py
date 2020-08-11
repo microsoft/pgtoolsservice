@@ -14,6 +14,7 @@ from ossdbtoolsservice.scripting.contracts import (
 from ossdbtoolsservice.connection.contracts import ConnectionType
 import ossdbtoolsservice.utils as utils
 
+
 class ScriptingService(object):
     """Service for scripting database objects"""
 

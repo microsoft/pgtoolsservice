@@ -74,7 +74,7 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
                     current_file_offset += read_bytes_length
 
                     # convert data_bytes to data_obj
-                    object_converter: Callable[[bytes], Any] = get_bytes_to_any_converter(type_value, provider = column.provider)
+                    object_converter: Callable[[bytes], Any] = get_bytes_to_any_converter(type_value, provider=column.provider)
                     result_object = object_converter(read_bytes_result)
 
                     # wrap the result_object as a DbCellValue

@@ -9,9 +9,7 @@ from unittest.mock import Mock
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
-from ossdbtoolsservice.language.completion.mysql_completion import \
-    MySQLCompletion
-from ossdbtoolsservice.language.completion.mysql_completer import MySQLCompleter
+from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
 
 
 class TestNaiveCompletion(unittest.TestCase):
@@ -60,7 +58,7 @@ class TestNaiveCompletion(unittest.TestCase):
             Completion(text='MASTER_LOG_FILE', start_position=-2),
             Completion(text='MAX', start_position=-2),
             Completion(text='MASTER_TLS_VERSION', start_position=-2),
-            Completion(text='MASTER_COMPRESSION_ALGORITHMS', start_position=-2), 
+            Completion(text='MASTER_COMPRESSION_ALGORITHMS', start_position=-2),
             Completion(text='MASTER_USER', start_position=-2),
             Completion(text='MASTER_AUTO_POSITION', start_position=-2),
             Completion(text='MASTER_SSL_CA', start_position=-2),
@@ -76,7 +74,7 @@ class TestNaiveCompletion(unittest.TestCase):
             Completion(text='MAX_CONNECTIONS_PER_HOUR', start_position=-2),
             Completion(text='MAX_UPDATES_PER_HOUR', start_position=-2),
             Completion(text='MASTER_SSL_CIPHER', start_position=-2),
-            Completion(text='MASTER_SSL_VERIFY_SERVER_CERT', start_position=-2), 
+            Completion(text='MASTER_SSL_VERIFY_SERVER_CERT', start_position=-2),
             Completion(text='MAKE_SET', start_position=-2),
             Completion(text='MASTER_HOST', start_position=-2),
             Completion(text='MASTER_PUBLIC_KEY_PATH', start_position=-2),

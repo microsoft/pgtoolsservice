@@ -11,7 +11,6 @@ from psycopg2 import DatabaseError
 from psycopg2.extensions import Column
 
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from pgsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
 from tests.utils import MockPsycopgConnection
@@ -111,15 +110,16 @@ class MockCursor:
 
 class MockPGServerConnection(PostgreSQLConnection):
     '''Class used to mock PGSQL ServerConnection objects for testing'''
+
     def __init__(
-        self,
-        cur: Optional[MockCursor] = None,
-        connection: Optional[MockPsycopgConnection] = None,
-        version: str = '90602',
-        name: str = 'postgres',
-        host: str = 'localhost',
-        port: str = '25565',
-        user: str = 'postgres'):
+            self,
+            cur: Optional[MockCursor] = None,
+            connection: Optional[MockPsycopgConnection] = None,
+            version: str = '90602',
+            name: str = 'postgres',
+            host: str = 'localhost',
+            port: str = '25565',
+            user: str = 'postgres'):
 
         # Setup mocks for the connection
         self.close = mock.MagicMock()
@@ -135,6 +135,8 @@ class MockPGServerConnection(PostgreSQLConnection):
             super().__init__({"host_name": host, "user_name": user, "port": port, "database_name": name})
 
 # OBJECT TEST HELPERS ######################################################
+
+
 def assert_node_collection(prop: any, attrib: any):
     test_case = unittest.TestCase('__init__')
     test_case.assertIsInstance(attrib, NodeCollection)

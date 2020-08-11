@@ -5,22 +5,22 @@
 
 from typing import Optional
 
+from ossdbtoolsservice.capabilities.connection_options.mysql_connection_options import \
+    capabilities as MySQLServerCapabilities
+from ossdbtoolsservice.capabilities.connection_options.pg_connection_options import \
+    capabilities as PGServerCapabilities
 from ossdbtoolsservice.capabilities.contracts import (
-    CAPABILITIES_REQUEST, CapabilitiesRequestParams, CompletionOptions, CapabilitiesResult, DMPServerCapabilities, ConnectionProviderOptions, CategoryValue,
-    ConnectionOption, INITIALIZE_REQUEST, InitializeRequestParams, InitializeResult, ServerCapabilities, TextDocumentSyncKind
-)
-from ossdbtoolsservice.disaster_recovery.contracts import BACKUP_OPTIONS, RESTORE_OPTIONS
-from ossdbtoolsservice.query_execution.contracts import SERIALIZATION_OPTIONS
+    CAPABILITIES_REQUEST, INITIALIZE_REQUEST, CapabilitiesRequestParams,
+    CapabilitiesResult, CompletionOptions, InitializeRequestParams,
+    InitializeResult, ServerCapabilities, TextDocumentSyncKind)
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.utils import constants
 
-from ossdbtoolsservice.capabilities.connection_options.mysql_connection_options import capabilities as MySQLServerCapabilities
-from ossdbtoolsservice.capabilities.connection_options.pg_connection_options import capabilities as PGServerCapabilities
-
 SERVER_CAPABILITIES_MAP = {
-    constants.PG_PROVIDER_NAME : PGServerCapabilities,
-    constants.MYSQL_PROVIDER_NAME : MySQLServerCapabilities
+    constants.PG_PROVIDER_NAME: PGServerCapabilities,
+    constants.MYSQL_PROVIDER_NAME: MySQLServerCapabilities
 }
+
 
 class CapabilitiesService:
     """Defines the capabilities supported by PG Tools including language service and DMP support"""
@@ -46,7 +46,7 @@ class CapabilitiesService:
         """
         provider: str = self._service_provider.provider
         capabilities = SERVER_CAPABILITIES_MAP[provider]
-        
+
         result = CapabilitiesResult(capabilities)
 
         # Send the response

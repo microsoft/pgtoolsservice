@@ -8,6 +8,7 @@ import pymysql
 
 from ossdbtoolsservice.driver import ServerConnection
 
+
 class MySQLLightweightMetadata:
 
     databases_query = '''SHOW DATABASES'''

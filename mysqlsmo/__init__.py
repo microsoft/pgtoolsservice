@@ -13,7 +13,7 @@ from mysqlsmo.objects.function.function import Function
 from mysqlsmo.objects.index.index import Index
 from mysqlsmo.objects.procedure.procedure import Procedure
 from mysqlsmo.objects.table.table import Table
-from mysqlsmo.objects.table_constraints import * 
+from mysqlsmo.objects.table_constraints import *
 from mysqlsmo.objects.tablespace.tablespace import Tablespace
 from mysqlsmo.objects.trigger.trigger import Trigger
 from mysqlsmo.objects.user.user import User

@@ -19,6 +19,7 @@ from ossdbtoolsservice.driver import ServerConnection
 
 INTELLISENSE_URI = 'intellisense://'
 
+
 class ConnectionContext:
     """Context information needed to look up connections"""
 

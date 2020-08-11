@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.connection.contracts.common import ConnectionSummary, ConnectionType     # noqa
-from typing import Tuple
+
 
 class ConnectionCompleteParams:
     """Parameters to be sent back with a connection complete event"""
@@ -27,5 +27,6 @@ class ServerInfo(object):
         self.server = server
         self.server_version = str(server_version[0]) + "." + str(server_version[1]) + "." + str(server_version[2])
         self.is_cloud: bool = is_cloud
+
 
 CONNECTION_COMPLETE_METHOD = 'connection/complete'

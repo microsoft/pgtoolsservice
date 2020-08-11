@@ -70,7 +70,7 @@ if __name__ == '__main__':
                     pass
                 try:
                     ptvsd.enable_attach(address=('0.0.0.0', port))
-                except:
+                except BaseException:
                     # If port 3000 is used, try another debug port
                     port += 1
                     ptvsd.enable_attach(address=('0.0.0.0', port))

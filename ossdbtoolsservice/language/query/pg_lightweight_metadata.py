@@ -10,6 +10,7 @@ from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.meta imp
     ForeignKey, FunctionMetadata)
 
 
+
 class PGLightweightMetadata:
 
     # The boolean argument to the current_schemas function indicates whether

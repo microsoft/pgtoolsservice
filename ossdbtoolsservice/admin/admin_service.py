@@ -8,7 +8,8 @@ from ossdbtoolsservice.admin.contracts import (
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.driver import *
+from ossdbtoolsservice.driver import ServerConnection
+
 
 class AdminService(object):
     """Service for general database administration support"""

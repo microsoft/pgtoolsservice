@@ -27,6 +27,7 @@ SERVER_MAP = {
     MYSQL_PROVIDER_NAME: MySQLServer
 }
 
+
 class CompletionRefresher:
     """
     Handles creating a PGCompleter object and populates it with the relevant
@@ -41,7 +42,7 @@ class CompletionRefresher:
     def __init__(self, connection: ServerConnection, logger: Logger = None):
         self.connection = connection
         self.logger: Logger = logger
-        self.server: 'Server' = None
+        self.server: PGServer or MySQLServer = None
         self._completer_thread: threading.Thread = None
         self._restart_refresh: threading.Event = threading.Event()
 
@@ -76,7 +77,7 @@ class CompletionRefresher:
 
     def _bg_refresh(self, callbacks, history=None, settings=None):
         settings = settings or {}
-        completer: 'Completer' = COMPLETER_MAP[self.connection._provider_name](smart_completion=True, settings=settings)
+        completer: PGCompleter or MySQLCompleter = COMPLETER_MAP[self.connection._provider_name](smart_completion=True, settings=settings)
 
         self.server.refresh()
         metadata_executor = MetadataExecutor(self.server)
@@ -138,37 +139,37 @@ def mysql_refresher(name, refreshers=CompletionRefresher.refreshers):
 
 
 @pg_refresher('schemata')
-def refresh_schemata(completer: 'Completer', metadata_executor: MetadataExecutor):
+def refresh_schemata(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.set_search_path(metadata_executor.search_path())
     completer.extend_schemata(metadata_executor.schemata())
 
 
 @pg_refresher('tables')
-def refresh_tables(completer: 'Completer', metadata_executor: MetadataExecutor):
+def refresh_tables(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_relations(metadata_executor.tables(), kind='tables')
     completer.extend_columns(metadata_executor.table_columns(), kind='tables')
     completer.extend_foreignkeys(metadata_executor.foreignkeys())
 
 
 @pg_refresher('views')
-def refresh_views(completer: 'Completer', metadata_executor: MetadataExecutor):
+def refresh_views(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_relations(metadata_executor.views(), kind='views')
     completer.extend_columns(metadata_executor.view_columns(), kind='views')
 
 
 @pg_refresher('types')
-def refresh_types(completer: 'Completer', metadata_executor: MetadataExecutor):
+def refresh_types(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_datatypes(metadata_executor.datatypes())
 
 
 @pg_refresher('databases')
 @mysql_refresher('databases')
-def refresh_databases(completer: 'Completer', metadata_executor: MetadataExecutor):
+def refresh_databases(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_database_names(metadata_executor.databases())
 
 
 @pg_refresher('casing')
-def refresh_casing(completer: 'Completer', metadata_executor: MetadataExecutor):
+def refresh_casing(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     casing_file = completer.casing_file
     if not casing_file:
         return
@@ -184,7 +185,7 @@ def refresh_casing(completer: 'Completer', metadata_executor: MetadataExecutor):
 
 @mysql_refresher('functions')
 @pg_refresher('functions')
-def refresh_functions(completer: 'Completer', metadata_executor: MetadataExecutor):
+def refresh_functions(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_functions(metadata_executor.functions())
 
 
