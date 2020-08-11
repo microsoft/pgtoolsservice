@@ -5,36 +5,44 @@
 
 import struct
 from pymysql.constants import FIELD_TYPE
-from pymysql.converters import encoders
 
 ENCODING_TYPE = "utf-8"
+
 
 def convert_bytes_to_float(value) -> float:
     """ The result is a tuple even if it contains exactly one item """
     return struct.unpack('d', value)[0]
+
 
 def convert_bytes_to_int(value) -> int:
     """ Range of integer in pg is the same with int or long in c,
     we unpack the value in int format """
     return struct.unpack('i', value)[0]
 
+
 def convert_bytes_to_long_long(value) -> int:
     return struct.unpack('q', value)[0]
+
 
 def convert_bytes_to_str(value) -> str:
     return value.decode(ENCODING_TYPE)
 
+
 def convert_bytes_to_decimal(value) -> str:
     return convert_bytes_to_str(value)
+
 
 def convert_bytes_to_date(value) -> str:
     return convert_bytes_to_str(value)
 
+
 def convert_bytes_to_time(value) -> str:
     return convert_bytes_to_str(value)
 
+
 def convert_bytes_to_datetime(value) -> str:
     return convert_bytes_to_str(value)
+
 
 def convert_bytes_to_timedelta(value) -> str:
     return convert_bytes_to_str(value)

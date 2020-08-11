@@ -44,6 +44,7 @@ from ossdbtoolsservice.query.data_storage import (
 
 NO_QUERY_MESSAGE = 'QueryServiceRequestsNoQuery'
 
+
 class ExecuteRequestWorkerArgs():
 
     def __init__(self, owner_uri: str, connection: ServerConnection, request_context: RequestContext, result_set_storage_type,

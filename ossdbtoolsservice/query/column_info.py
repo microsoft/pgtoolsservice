@@ -4,10 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import List
+
 from psycopg2 import sql
-from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.utils import constants
+
 from ossdbtoolsservice.query.contracts import DbColumn
+from ossdbtoolsservice.utils import constants
+
 
 def get_columns_info(cursor) -> List[DbColumn]:
 

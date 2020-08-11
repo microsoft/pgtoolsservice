@@ -17,7 +17,7 @@ from ossdbtoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.pgsmo_tests.utils import MockPGServerConnection
 from tests.utils import (
-    MockCursor, MockPsycopgConnection, MockRequestContext, MockThread)
+    MockCursor, MockRequestContext, MockThread)
 
 
 class TestMetadataService(unittest.TestCase):

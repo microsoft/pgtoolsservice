@@ -29,14 +29,15 @@ from mysqlsmo import Server as MySQLServer
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE, MYSQL_ROUTING_TABLE
 
 ROUTING_TABLES = {
-    utils.constants.MYSQL_PROVIDER_NAME : MYSQL_ROUTING_TABLE,
-    utils.constants.PG_PROVIDER_NAME : PG_ROUTING_TABLE
+    utils.constants.MYSQL_PROVIDER_NAME: MYSQL_ROUTING_TABLE,
+    utils.constants.PG_PROVIDER_NAME: PG_ROUTING_TABLE
 }
 
 SERVER_TYPES = {
-    utils.constants.MYSQL_PROVIDER_NAME : MySQLServer,
-    utils.constants.PG_PROVIDER_NAME : PGServer
+    utils.constants.MYSQL_PROVIDER_NAME: MySQLServer,
+    utils.constants.PG_PROVIDER_NAME: PGServer
 }
+
 
 class ObjectExplorerService(object):
     """Service for browsing database objects"""
@@ -346,7 +347,7 @@ class ObjectExplorerService(object):
         host = quote(params.options['host'])
         user = quote(params.options['user'])
         db = quote(params.options['dbname'])
-        # Port number distinguishes between connections to different server 
+        # Port number distinguishes between connections to different server
         # instances with the same username, dbname running on same host
         port = quote(str(params.options['port']))
 
@@ -382,4 +383,3 @@ class ObjectExplorerService(object):
         else:
             # Return the results of a previous request for the same path
             return session.cache[path]
-        

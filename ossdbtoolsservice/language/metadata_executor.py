@@ -3,14 +3,22 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, List, Tuple   # noqa
-from ossdbtoolsservice.language.query import PGLightweightMetadata, MySQLLightweightMetadata
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
+from typing import Dict, List, Tuple  # noqa
+
+from mysqlsmo import Database as MySQLDatabase
+from mysqlsmo import Server as MySQLServer
+from ossdbtoolsservice.language.query import (MySQLLightweightMetadata,
+                                              PGLightweightMetadata)
+from ossdbtoolsservice.utils.constants import (MYSQL_PROVIDER_NAME,
+                                               PG_PROVIDER_NAME)
+from pgsmo import Database as PGDatabase
+from pgsmo import Server as PGServer
 
 METADATA_MAP = {
     PG_PROVIDER_NAME: PGLightweightMetadata,
     MYSQL_PROVIDER_NAME: MySQLLightweightMetadata
 }
+
 
 class MetadataExecutor:
     """
@@ -18,7 +26,7 @@ class MetadataExecutor:
     autocomplete code
     """
 
-    def __init__(self, server: 'Server'):
+    def __init__(self, server: PGServer or MySQLServer):
         self.server = server
         self.lightweight_metadata = METADATA_MAP[server.connection._provider_name](
             self.server.connection)
@@ -26,7 +34,7 @@ class MetadataExecutor:
         self.schemas_loaded = False
 
     def _load_schemas(self):
-        database: 'Database' = self.server.maintenance_db
+        database: PGDatabase or MySQLDatabase = self.server.maintenance_db
         if database:
             for schema in database.schemas:
                 self.schemas[schema.name] = schema

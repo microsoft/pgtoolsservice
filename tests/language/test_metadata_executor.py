@@ -13,7 +13,6 @@ import tests.pgsmo_tests.utils as utils
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
 from pgsmo import Database, Schema, Server
 from smo.common.node_object import NodeCollection
-from tests.utils import MockPsycopgConnection
 
 MYSCHEMA = 'myschema'
 MYSCHEMA2 = 'myschema2'

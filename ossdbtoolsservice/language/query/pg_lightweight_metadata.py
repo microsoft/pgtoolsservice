@@ -8,6 +8,7 @@ from logging import Logger  # noqa
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.language.completion.packages.parseutils.meta import ForeignKey, FunctionMetadata     # noqa
 
+
 class PGLightweightMetadata:
 
     # The boolean argument to the current_schemas function indicates whether

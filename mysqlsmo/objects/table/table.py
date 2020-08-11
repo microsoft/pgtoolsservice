@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from smo.common.node_object import NodeCollection, NodeObject
 import smo.utils.templating as templating
@@ -37,8 +36,8 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
         self._server = server
         self._server_version = server.version
 
-
     # PROPERTIES ###########################################################
+
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
         return cls.TEMPLATE_ROOT

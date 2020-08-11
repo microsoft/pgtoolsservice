@@ -7,23 +7,27 @@ import struct
 import datetime
 import decimal
 from pymysql.constants import FIELD_TYPE
-from pymysql.converters import decoders
 
 ENCODING_TYPE = "utf-8"
+
 
 def convert_float_to_bytes(value: object):
     return bytearray(struct.pack("d", value))
 
+
 def convert_int_to_bytes(value: object):
     return bytearray(struct.pack("i", value))
+
 
 def convert_long_long(value: int):
     """ Range of bigint in Pg is the same with long long in c,
     although python type is int, but need to pack the value in long long format """
     return bytearray(struct.pack("q", value))
 
+
 def convert_str(value: str):
     return bytearray(str(value).encode(ENCODING_TYPE))
+
 
 def bytes_to_bytearray(value):
     """
@@ -31,10 +35,12 @@ def bytes_to_bytearray(value):
     """
     return bytearray(list(value))
 
+
 def convert_decimal(value: decimal.Decimal):
     """ We convert the decimal to string representation,
     it will hold all the data before and after the decimal point """
     return bytearray(str(decimal.Decimal(value)).encode(ENCODING_TYPE))
+
 
 def to_bytes(value: object, field_type: int):
     """
@@ -42,20 +48,24 @@ def to_bytes(value: object, field_type: int):
     """
     return bytearray(repr(value).encode(ENCODING_TYPE))
 
+
 def convert_date(value: datetime.date):
     # Separate date and time
     date_val = value.isoformat().replace("T", " ")
     return bytearray(date_val.encode(ENCODING_TYPE))
+
 
 def convert_time(value: datetime.time):
     # Separate date and time
     time_val = value.isoformat().replace("T", " ")
     return bytearray(time_val.encode(ENCODING_TYPE))
 
+
 def convert_datetime(value: datetime.datetime):
     # Separate date and time
     datetime_val = value.isoformat().replace("T", " ")
     return bytearray(datetime_val.encode(ENCODING_TYPE))
+
 
 MYSQL_DATATYPE_WRITER_MAP = {
     FIELD_TYPE.BIT: lambda value: to_bytes(value, FIELD_TYPE.BIT),
@@ -85,4 +95,3 @@ MYSQL_DATATYPE_WRITER_MAP = {
     FIELD_TYPE.GEOMETRY: convert_str,
     FIELD_TYPE.ENUM: convert_str
 }
-

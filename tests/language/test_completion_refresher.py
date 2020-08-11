@@ -76,7 +76,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
             self.refresher.refresh(callbacks)
             self.refresher._completer_thread.join()
             self.assertEqual(callbacks[0].call_count, 1)
-            
+
     def test_refresh_selects_pg_completer(self):
         """
         The correct completer (pg vs mysql) should be selected.
@@ -94,7 +94,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
             self.refresher.refreshers = {}
             self.refresher.refresh(callbacks)
 
-            # PGCompleter, not MySQLCompleter, should be called because 
+            # PGCompleter, not MySQLCompleter, should be called because
             # self.refresher is using a MockPGServerConnection
             pg_completer.assert_called_once()
             mysql_completer.assert_not_called()
@@ -103,8 +103,8 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         mysql_refresher: CompletionRefresher = CompletionRefresher(MockMySQLServerConnection())
         callbacks = Mock()
         pg_completer = Mock()
-        mysql_completer = Mock()       
-         
+        mysql_completer = Mock()
+
         mock_completer_map = {
             PG_PROVIDER_NAME: pg_completer,
             MYSQL_PROVIDER_NAME: mysql_completer
@@ -114,7 +114,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
             mysql_refresher.refreshers = {}
             mysql_refresher.refresh(callbacks)
 
-            # MySQLCompleter, not PGCompleter, should be called because 
+            # MySQLCompleter, not PGCompleter, should be called because
             # mysql_refresher is using a MockMySQLServerConnection
             mysql_completer.assert_called_once()
             pg_completer.assert_not_called()

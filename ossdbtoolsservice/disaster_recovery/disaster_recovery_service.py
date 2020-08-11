@@ -48,7 +48,7 @@ class DisasterRecoveryService:
         provider: str = self._service_provider.provider
         host = connection_info.details.options['host']
         database = connection_info.details.options['dbname']
-        
+
         task = Task('Backup', f'Host: {host}, Database: {database}', provider, host, database, request_context,  # TODO: Localize
                     functools.partial(_perform_backup, connection_info, params))
         self._service_provider[constants.TASK_SERVICE_NAME].start_task(task)

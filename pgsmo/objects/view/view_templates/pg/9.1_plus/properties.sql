@@ -26,7 +26,7 @@ SELECT
         pg_seclabels sl1
      WHERE
         sl1.objoid=c.oid AND sl1.objsubid=0
-    ) AS seclabels,
+    ) AS seclabels
 FROM pg_class c
     LEFT OUTER JOIN pg_namespace nsp on nsp.oid = c.relnamespace
     LEFT OUTER JOIN pg_tablespace spc on spc.oid=c.reltablespace

@@ -25,7 +25,6 @@ from .packages.parseutils.meta import ColumnMetadata, ForeignKey
 from .packages.parseutils.utils import last_word
 from .packages.parseutils.tables import TableReference
 from .packages.pgliterals.main import get_literals
-from .packages.prioritization import PrevalenceCounter
 from .completer import MyCompleter, _Candidate, Match
 # {{ PGToolsService EDIT }}
 # from .config import load_config, config_location
@@ -311,7 +310,6 @@ class PGCompleter(Completer, MyCompleter):
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {},
                            'datatypes': {}}
         self.all_completions = set(self.keywords + self.functions)
-
 
     def get_completions(self, document, complete_event, smart_completion=None) -> List[Completion]:
         word_before_cursor = document.get_word_before_cursor(WORD=True)

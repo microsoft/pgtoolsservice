@@ -37,6 +37,7 @@ TEST_USER = 'testuser'
 TEST_PASSWORD = 'testpassword'
 TEST_PORT = 5432
 
+
 def _connection_details() -> Tuple[ConnectionDetails, str]:
     param = ConnectionDetails()
     param.options = {
@@ -212,7 +213,7 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_successful(self):
         # Setup:
         # ... Create OE service with mock connection service that returns a successful connection response
-        mock_connection = MockPGServerConnection(cur=None, host= 'myserver', name= 'postgres',  user= 'postgres', port= 123)
+        mock_connection = MockPGServerConnection(cur=None, host='myserver', name='postgres', user='postgres', port=123)
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
@@ -634,7 +635,7 @@ class SessionTestCase(unittest.TestCase):
         name = 'dbname'
         self.mock_server = Server(MockPGServerConnection())
         self.session.server = self.mock_server
-        self.db = Database(self.mock_server, name)        
+        self.db = Database(self.mock_server, name)
         self.db._connection = self.mock_server._conn
         self.session.server._child_objects[Database.__name__] = [self.db]
         self.cs.get_connection = mock.MagicMock(return_value=self.mock_connection)

@@ -10,7 +10,6 @@ import urllib.parse as parse
 
 import inflection
 
-from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server

@@ -15,6 +15,7 @@ from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRa
 
 DECODING_METHOD = 'utf-8'
 
+
 def _get_range_data_type_bound(value):
     lower_bound = "[" if value.lower_inc else "("
     upper_bound = "]" if value.upper_inc else ")"

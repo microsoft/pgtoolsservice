@@ -100,7 +100,7 @@ class Server:
     def wal_paused(self) -> Optional[bool]:
         """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
         return self._recovery_props.get('isreplaypaused')
-    
+
     # -CHILD OBJECTS #######################################################
     @property
     def databases(self) -> NodeCollection[Database]:
@@ -161,7 +161,7 @@ class Server:
 
         # Reset property collections
         self._recovery_props.reset()
-    
+
     def find_schema(self, metadata):
         """ Find the schema in the server to script as """
         schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
@@ -172,21 +172,18 @@ class Server:
                 parent_schema = database.schemas[schema_name]
                 if parent_schema is not None:
                     return parent_schema
-            
+
             return None
         except Exception:
             return None
-
 
     def find_table(self, metadata):
         """ Find the table in the server to script as """
         return self.find_schema_child_object('tables', metadata)
 
-
     def find_function(self, metadata):
         """ Find the function in the server to script as """
         return self.find_schema_child_object('functions', metadata)
-
 
     def find_database(self, metadata):
         """ Find a database in the server """
@@ -197,16 +194,13 @@ class Server:
         except Exception:
             return None
 
-
     def find_view(self, metadata):
         """ Find a view in the server """
         return self.find_schema_child_object('views', metadata)
 
-
     def find_materialized_view(self, metadata):
         """ Find a view in the server """
         return self.find_schema_child_object('materialized_views', metadata)
-
 
     def find_role(self, metadata):
         """ Find a role in the server """
@@ -217,16 +211,13 @@ class Server:
         except Exception:
             return None
 
-
     def find_sequence(self, metadata):
         """ Find a sequence in the server """
         return self.find_schema_child_object('sequences', metadata)
 
-
     def find_datatype(self, metadata):
         """ Find a datatype in the server """
         return self.find_schema_child_object('datatypes', metadata)
-
 
     def find_schema_child_object(self, prop_name: str, metadata):
         """
@@ -248,7 +239,6 @@ class Server:
         except Exception:
             return None
 
-
     def get_object(self, object_type: str, metadata):
         """ Retrieve a given object """
         object_map = {
@@ -264,8 +254,8 @@ class Server:
         }
         return object_map[object_type.capitalize()](metadata)
 
-
     # IMPLEMENTATION DETAILS ###############################################
+
     def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:
         recovery_check_sql = utils.templating.render_template(
             utils.templating.get_template_path(self.TEMPLATE_ROOT, 'check_recovery.sql', self.version)
@@ -274,11 +264,11 @@ class Server:
         cols, rows = self._conn.execute_dict(recovery_check_sql)
         if len(rows) > 0:
             return rows[0]
-    
+
     def _fetch_search_path(self) -> List[str]:
         try:
             query_results = self._conn.execute_query(SEARCH_PATH_QUERY)
             return [x[0] for x in query_results]
-        except:
+        except BaseException:
             query_result = self._conn.execute_query(SEARCH_PATH_QUERY_FALLBACK, all=False)
             return query_result[0]

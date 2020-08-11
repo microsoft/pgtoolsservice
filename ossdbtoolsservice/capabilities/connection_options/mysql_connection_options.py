@@ -6,7 +6,6 @@
 from ossdbtoolsservice.capabilities.contracts import (
     DMPServerCapabilities, ConnectionProviderOptions, CategoryValue, ConnectionOption
 )
-from ossdbtoolsservice.disaster_recovery.contracts import BACKUP_OPTIONS, RESTORE_OPTIONS
 from ossdbtoolsservice.query_execution.contracts import SERIALIZATION_OPTIONS
 from ossdbtoolsservice.utils import constants
 

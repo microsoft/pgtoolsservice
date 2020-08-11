@@ -13,7 +13,6 @@ from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, Selectio
 from ossdbtoolsservice.query.data_storage import FileStreamFactory
 
 
-
 class QueryEvents:
     def __init__(self, on_query_started=None, on_query_completed=None, batch_events: BatchEvents = None) -> None:
         self.on_query_started = on_query_started
@@ -141,7 +140,9 @@ class Query:
 
                 batch.execute(connection)
         finally:
-            connection.autocommit = current_auto_commit_status
+            # We can only set autocommit when the connection is open.
+            if connection.open:
+                connection.autocommit = current_auto_commit_status
             self._execution_state = ExecutionState.EXECUTED
 
     def get_subset(self, batch_index: int, start_index: int, end_index: int):

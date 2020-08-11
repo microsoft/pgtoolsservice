@@ -15,13 +15,14 @@ from ossdbtoolsservice.utils import constants
 
 # This query collects all the tables, views, and functions in all the schemas in the database(s)?
 PG_METADATA_QUERY = """
-SELECT s.nspname AS schema_name, p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), '') || ')' AS object_name, 'f' as type FROM pg_proc p
+SELECT s.nspname AS schema_name, p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), '') || ')' AS object_name, \
+    'f' as type FROM pg_proc p
     INNER JOIN pg_namespace s ON s.oid = p.pronamespace
     WHERE s.nspname NOT ILIKE 'pg_%' AND s.nspname != 'information_schema'
-UNION 
+UNION
 SELECT schemaname AS schema_name, tablename AS object_name, 't' as type FROM pg_tables
     WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
-UNION 
+UNION
 SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_views
     WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
 """
@@ -30,20 +31,20 @@ SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_v
 MYSQL_METADATA_QUERY = """
 SELECT OBJECT_SCHEMA, OBJECT_NAME, OBJECT_TYPE
 FROM (
-	SELECT TABLE_NAME AS OBJECT_NAME, 't' AS OBJECT_TYPE, TABLE_SCHEMA AS OBJECT_SCHEMA
-	FROM information_schema.TABLES AS tbl
-	UNION
-	SELECT TABLE_NAME AS OBJECT_NAME, 'v' AS OBJECT_TYPE,  TABLE_SCHEMA AS OBJECT_SCHEMA
-	FROM information_schema.VIEWS as v
-	UNION
-	SELECT ROUTINE_NAME AS OBJECT_NAME, 'f' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
-	FROM information_schema.ROUTINES as r
-	WHERE r.ROUTINE_TYPE = 'FUNCTION'
-	UNION
-	SELECT ROUTINE_NAME AS OBJECT_NAME, 's' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
-	FROM information_schema.ROUTINES as s
-	WHERE s.ROUTINE_TYPE = 'PROCEDURE'
-	) as objects
+    SELECT TABLE_NAME AS OBJECT_NAME, 't' AS OBJECT_TYPE, TABLE_SCHEMA AS OBJECT_SCHEMA
+    FROM information_schema.TABLES AS tbl
+    UNION
+    SELECT TABLE_NAME AS OBJECT_NAME, 'v' AS OBJECT_TYPE,  TABLE_SCHEMA AS OBJECT_SCHEMA
+    FROM information_schema.VIEWS as v
+    UNION
+    SELECT ROUTINE_NAME AS OBJECT_NAME, 'f' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
+    FROM information_schema.ROUTINES as r
+    WHERE r.ROUTINE_TYPE = 'FUNCTION'
+    UNION
+    SELECT ROUTINE_NAME AS OBJECT_NAME, 's' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
+    FROM information_schema.ROUTINES as s
+    WHERE s.ROUTINE_TYPE = 'PROCEDURE'
+    ) as objects
 WHERE OBJECT_SCHEMA = '{}';
 """
 
@@ -51,6 +52,7 @@ QUERY_MAP = {
     constants.MYSQL_PROVIDER_NAME: MYSQL_METADATA_QUERY,
     constants.PG_PROVIDER_NAME: PG_METADATA_QUERY
 }
+
 
 class MetadataService:
     """Service for database metadata support"""
@@ -72,11 +74,11 @@ class MetadataService:
     # REQUEST HANDLERS #####################################################
 
     def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
-        # psycopg is thread safe while PyMYSQL is not 
+        # psycopg is thread safe while PyMYSQL is not
         if self._service_provider.provider == constants.PG_PROVIDER_NAME:
             thread = threading.Thread(
-            target=self._metadata_list_worker,
-            args=(request_context, params)
+                target=self._metadata_list_worker,
+                args=(request_context, params)
             )
             thread.daemon = True
             thread.start()
@@ -113,6 +115,7 @@ class MetadataService:
                 object_type = _METADATA_TYPE_MAP[row[2]]
                 metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
         return metadata_list
+
 
 _METADATA_TYPE_MAP = {
     'f': MetadataType.FUNCTION,

@@ -16,9 +16,9 @@ class ServiceProvider:
         self._server = json_rpc_server
         self._provider_name = provider
         self._services = {service_name: service_class() for (service_name, service_class) in services.items()}
-        
 
     # PROPERTIES ###########################################################
+
     @property
     def logger(self) -> Optional[Logger]:
         return self._logger
@@ -26,7 +26,7 @@ class ServiceProvider:
     @property
     def server(self) -> JSONRPCServer:
         return self._server
-    
+
     @property
     def provider(self) -> str:
         return self._provider_name

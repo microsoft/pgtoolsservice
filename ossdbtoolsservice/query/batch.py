@@ -119,9 +119,10 @@ class Batch:
         if self._batch_events and self._batch_events._on_execution_started:
             self._batch_events._on_execution_started(self)
 
+        cursor = self.get_cursor(conn)
         try:
-            cursor = self.get_cursor(conn)
             cursor.execute(self.batch_text)
+
             # Commit the transaction if autocommit is True
             if conn.autocommit:
                 conn.commit()
@@ -138,7 +139,7 @@ class Batch:
                 cursor.close()
             self._has_executed = True
             self._execution_end_time = datetime.now()
-            
+
             # TODO: PyMySQL doesn't support notices from a connection
             if conn._provider_name == PG_PROVIDER_NAME:
                 self._notices = cursor.connection.notices

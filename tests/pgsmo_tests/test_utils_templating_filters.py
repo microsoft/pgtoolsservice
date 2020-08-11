@@ -7,6 +7,7 @@ import unittest
 
 import smo.utils.templating as templating
 
+
 class TestTemplatingFilters(unittest.TestCase):
     # SCAN KEYWORD EXTRA LOOKUP TESTS ######################################
     def test_scan_keyword_extra_lookup_extra(self):
