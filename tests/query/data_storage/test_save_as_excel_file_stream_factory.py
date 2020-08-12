@@ -6,9 +6,9 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.query.data_storage import SaveAsExcelFileStreamFactory
-from pgsqltoolsservice.query.contracts import SaveResultsRequestParams
-from pgsqltoolsservice.query.data_storage import SaveAsExcelWriter, ServiceBufferFileStreamReader
+from ossdbtoolsservice.query.data_storage import SaveAsExcelFileStreamFactory
+from ossdbtoolsservice.query.contracts import SaveResultsRequestParams
+from ossdbtoolsservice.query.data_storage import SaveAsExcelWriter, ServiceBufferFileStreamReader
 
 
 class TestSaveAsExcelFileStreamFactory(unittest.TestCase):

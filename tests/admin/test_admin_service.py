@@ -6,15 +6,17 @@
 import unittest
 import unittest.mock as mock
 
-import psycopg2
-
-from pgsqltoolsservice.admin import AdminService
-from pgsqltoolsservice.admin.contracts import GET_DATABASE_INFO_REQUEST, GetDatabaseInfoParameters, GetDatabaseInfoResponse
-from pgsqltoolsservice.connection import ConnectionService
-from pgsqltoolsservice.utils import constants
+from ossdbtoolsservice.admin import AdminService
+from ossdbtoolsservice.admin.contracts import (GET_DATABASE_INFO_REQUEST,
+                                               GetDatabaseInfoParameters,
+                                               GetDatabaseInfoResponse)
+from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from tests.utils import MockConnection, MockCursor, MockRequestContext
+from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.utils import MockCursor, MockRequestContext
 
 
 class TestAdminService(unittest.TestCase):
@@ -47,7 +49,7 @@ class TestAdminService(unittest.TestCase):
         # Set up a mock connection and cursor for the test
         mock_query_results = [(user_name,)]
         mock_cursor = MockCursor(mock_query_results)
-        mock_connection = MockConnection({'dbname': db_name}, mock_cursor)
+        mock_connection = MockPGServerConnection(mock_cursor, name=db_name)
         self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
 
         # If I send a get_database_info request
@@ -56,11 +58,12 @@ class TestAdminService(unittest.TestCase):
         # Then the service responded with the expected information
         response = request_context.last_response_params
         self.assertIsInstance(response, GetDatabaseInfoResponse)
-        expected_info = {'owner': user_name}
+        expected_info = {'dbname': db_name, 'owner': user_name, 'size': None}
         self.assertEqual(response.database_info.options, expected_info)
 
         # And the service retrieved the owner name using a query with the database name as a parameter
-        mock_cursor.execute.assert_called_once_with(mock.ANY, (db_name,))
+        owner_query = "SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{}'".format(db_name)
+        mock_cursor.execute.assert_called_once_with(owner_query)
 
     @integration_test
     def test_get_database_info_request_integration(self):
@@ -70,7 +73,7 @@ class TestAdminService(unittest.TestCase):
         request_context = MockRequestContext()
 
         # Set up the connection service to return our connection
-        connection = psycopg2.connect(**get_connection_details())
+        connection = PostgreSQLConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
 
         # If I send a get_database_info request

@@ -3,15 +3,20 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import unittest
-import json
 import functools
+import json
+import unittest
+from urllib.parse import quote
+
 import psycopg2
 
-from pgsqltoolsservice.hosting.json_message import JSONRPCMessageType
-from tests.integration import get_connection_details, create_extra_test_database, integration_test
-from tests.json_rpc_tests import JSONRPCTestCase, DefaultRPCTestMessages, RPCTestMessage
-from tests.json_rpc_tests.object_explorer_test_metadata import META_DATA, CREATE_SCRIPTS, GET_OID_SCRIPTS
+from ossdbtoolsservice.hosting.json_message import JSONRPCMessageType
+from tests.integration import (create_extra_test_database,
+                               get_connection_details, integration_test)
+from tests.json_rpc_tests import (DefaultRPCTestMessages, JSONRPCTestCase,
+                                  RPCTestMessage)
+from tests.json_rpc_tests.object_explorer_test_metadata import (
+    CREATE_SCRIPTS, GET_OID_SCRIPTS, META_DATA)
 
 
 class ObjectExplorerJSONRPCTests(unittest.TestCase):
@@ -29,7 +34,8 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
         connection_messages = DefaultRPCTestMessages.connection_request(owner_uri, connection_details)
         test_messages = [connection_messages[0], connection_messages[1]]
 
-        expected_session_id = f'objectexplorer://{connection_details["user"]}@{connection_details["host"]}:{self.args["Databases_Name"]}/'
+        expected_session_id = f'objectexplorer://{quote(connection_details["user"])}' + \
+            f'@{quote(connection_details["host"])}:{connection_details["port"]}:{quote(connection_details["dbname"])}/'
 
         def session_created_verifier(notification):
             params = notification['params']

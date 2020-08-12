@@ -3,15 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional, Tuple
 import unittest
 import unittest.mock as mock
+from typing import List, Optional, Tuple
 
 from psycopg2 import DatabaseError
-from psycopg2.extensions import Column, connection
+from psycopg2.extensions import Column
 
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from pgsmo import Server
-from pgsmo.objects.node_object import NodeCollection, NodeObject
+from smo.common.node_object import NodeCollection, NodeObject
+from tests.utils import MockPsycopgConnection
 
 
 # MOCK NODE OBJECT #########################################################
@@ -106,31 +108,35 @@ class MockCursor:
         self._has_been_read = True
 
 
-class MockConnection(connection):
+class MockPGServerConnection(PostgreSQLConnection):
+    '''Class used to mock PGSQL ServerConnection objects for testing'''
+
     def __init__(
             self,
-            cur: Optional[MockCursor],
+            cur: Optional[MockCursor] = None,
+            connection: Optional[MockPsycopgConnection] = None,
             version: str = '90602',
             name: str = 'postgres',
             host: str = 'localhost',
             port: str = '25565',
             user: str = 'postgres'):
-        # Setup the properties
-        self._server_version = version
 
         # Setup mocks for the connection
         self.close = mock.MagicMock()
         self.cursor = mock.MagicMock(return_value=cur)
 
-        dsn_params = {'dbname': name, 'host': host, 'port': port, 'user': user}
-        self.get_dsn_parameters = mock.MagicMock(return_value=dsn_params)
+        # if no mock pyscopg connection passed, create default one
+        if not connection:
+            connection = MockPsycopgConnection(cursor=cur, dsn_parameters={
+                'dbname': name, 'host': host, 'port': port, 'user': user})
 
-    @property
-    def server_version(self):
-        return self._server_version
-
+        # mock psycopg2.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
+        with mock.patch('psycopg2.connect', mock.Mock(return_value=connection)):
+            super().__init__({"host_name": host, "user_name": user, "port": port, "database_name": name})
 
 # OBJECT TEST HELPERS ######################################################
+
+
 def assert_node_collection(prop: any, attrib: any):
     test_case = unittest.TestCase('__init__')
     test_case.assertIsInstance(attrib, NodeCollection)

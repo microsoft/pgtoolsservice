@@ -7,16 +7,16 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.edit_data import SmoEditTableMetadataFactory
-from tests.utils import MockConnection
-from pgsmo import Server, Table, View, Column
+from ossdbtoolsservice.edit_data import SmoEditTableMetadataFactory
+from pgsmo import Column, Server, Table, View
+from tests.pgsmo_tests.utils import MockPGServerConnection
 
 
 class TestSmoEditTableMetadataFactory(unittest.TestCase):
 
     def setUp(self):
         self._smo_metadata_factory = SmoEditTableMetadataFactory()
-        self._connection = MockConnection({"port": "8080", "host": "test", "dbname": "test", "user": "test"})
+        self._connection = MockPGServerConnection(cur=None, port="8080", host="test", name="test", user="test")
         self._server = Server(self._connection)
         self._schema_name = 'public'
         self._table_name = 'Employee'
@@ -29,7 +29,7 @@ class TestSmoEditTableMetadataFactory(unittest.TestCase):
         table = Table(self._server, None, self._table_name)
         table._columns = self._columns
 
-        with mock.patch('pgsqltoolsservice.utils.object_finder.find_table', new=mock.Mock(return_value=table)):
+        with mock.patch('pgsmo.objects.server.server.Server.find_table', new=mock.Mock(return_value=table)):
             metadata = self._smo_metadata_factory.get(self._connection, self._schema_name, self._table_name, self._table_object_type)
             self.assertEqual(len(metadata.columns_metadata), len(table.columns))
 
@@ -37,7 +37,7 @@ class TestSmoEditTableMetadataFactory(unittest.TestCase):
         view = View(self._server, None, self._view_name)
         view._columns = self._columns
 
-        with mock.patch('pgsqltoolsservice.utils.object_finder.find_view', new=mock.Mock(return_value=view)):
+        with mock.patch('pgsmo.objects.server.server.Server.find_view', new=mock.Mock(return_value=view)):
             metadata = self._smo_metadata_factory.get(self._connection, self._schema_name, self._view_name, self._view_object_type)
             self.assertEqual(len(metadata.columns_metadata), len(view.columns))
 

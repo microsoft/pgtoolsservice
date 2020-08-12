@@ -6,17 +6,18 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.connection import ConnectionService
-from pgsqltoolsservice.connection.contracts import ConnectionCompleteParams
-from pgsqltoolsservice.utils.constants import CONNECTION_SERVICE_NAME
-from pgsqltoolsservice.hosting import JSONRPCServer, ServiceProvider
-from pgsqltoolsservice.scripting.scripter import Scripter
-from pgsqltoolsservice.scripting.scripting_service import ScriptingService
-from pgsqltoolsservice.scripting.contracts.scriptas_request import ScriptOperation, ScriptAsParameters, ScriptAsResponse
-from tests.mock_request_validation import RequestFlowValidator
-from tests.pgsmo_tests.utils import MockConnection      # TODO: Replace with global
 import tests.utils as utils
-
+from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.connection.contracts import ConnectionCompleteParams
+from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
+from ossdbtoolsservice.scripting.contracts.scriptas_request import (
+    ScriptAsParameters, ScriptAsResponse, ScriptOperation)
+from ossdbtoolsservice.scripting.scripter import Scripter
+from ossdbtoolsservice.scripting.scripting_service import ScriptingService
+from ossdbtoolsservice.utils.constants import (CONNECTION_SERVICE_NAME,
+                                               PG_PROVIDER_NAME)
+from tests.mock_request_validation import RequestFlowValidator
+from tests.pgsmo_tests.utils import MockPGServerConnection
 
 """Module for testing the scripting service"""
 
@@ -40,7 +41,7 @@ class TestScriptingService(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
+        sp: ServiceProvider = ServiceProvider(server, {}, PG_PROVIDER_NAME, utils.get_mock_logger())
 
         # If: I register a scripting service
         ss: ScriptingService = ScriptingService()
@@ -91,7 +92,7 @@ class TestScriptingService(unittest.TestCase):
 
         # Setup:
         # ... Create a scripting service
-        mock_connection = MockConnection(None)
+        mock_connection = MockPGServerConnection()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
@@ -104,7 +105,7 @@ class TestScriptingService(unittest.TestCase):
             self.assertEqual(response.script, TestScriptingService.MOCK_SCRIPT)
 
         # ... Create a scripter with mocked out calls
-        patch_path = 'pgsqltoolsservice.scripting.scripting_service.Scripter'
+        patch_path = 'ossdbtoolsservice.scripting.scripting_service.Scripter'
         with mock.patch(patch_path) as scripter_patch:
             mock_scripter: Scripter = Scripter(mock_connection)
             mock_scripter.script = mock.MagicMock(return_value=TestScriptingService.MOCK_SCRIPT)
