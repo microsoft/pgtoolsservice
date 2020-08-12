@@ -257,6 +257,12 @@ class PostgreSQLConnection(ServerConnection):
         Gets the size of a particular database in MB
         """
 
+    def get_error_message(self, error) -> str:
+        """
+        Get the message from DatabaseError instance
+        """
+        return error.diag.message_primary
+
     def close(self):
         """
         Closes this current connection.
