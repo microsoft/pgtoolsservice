@@ -438,7 +438,7 @@ class TestLanguageService(unittest.TestCase):
         self.assertTrue(len(edits) > 0)
         self.assert_range_equals(edits[0].range, format_params.range)
         self.assertEqual(edits[0].new_text, expected_output)
-        
+
     def test_format_mysql_doc(self):
         """
         Test that the format document codepath works as expected with a mysql doc
@@ -531,7 +531,7 @@ class TestLanguageService(unittest.TestCase):
         # add uri to valid uri set ensure request passes uri check
         # normally done in flavor change handler, but we are not testing that here
         service._valid_uri.add(format_params.text_document.uri)
-        
+
         # When: I request format the 2nd line of a document
         format_params.range = Range.from_data(1, 0, 1, len(input_lines[1]))
         service.handle_doc_range_format_request(context, format_params)
