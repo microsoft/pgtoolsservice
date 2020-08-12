@@ -298,7 +298,8 @@ class LanguageService:
             sqlparse_options['indent_width'] = options.tab_size
         try:
             # Look up workspace config in a try block in case it's not defined / set
-            format_options = self._workspace_service.configuration.pgsql.format
+            config = self._workspace_service.configuration
+            format_options = config.get_configuration(self._service_provider._provider_name).format
             if format_options:
                 sqlparse_options = {**sqlparse_options, **format_options.__dict__}
         except AttributeError:

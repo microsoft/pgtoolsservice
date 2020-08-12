@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.workspace.contracts import (
-    Configuration, PGSQLConfiguration, SQLConfiguration, IntellisenseConfiguration,
+    Configuration, MySQLConfiguration, PGSQLConfiguration, SQLConfiguration, IntellisenseConfiguration,
     FormatterConfiguration, TextDocumentIdentifier
 )
 from ossdbtoolsservice.workspace.script_file import ScriptFile
@@ -12,6 +12,6 @@ from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
 from ossdbtoolsservice.workspace.workspace import Workspace
 
 __all__ = [
-    'Configuration', 'PGSQLConfiguration', 'SQLConfiguration', 'IntellisenseConfiguration', 'FormatterConfiguration',
-    'ScriptFile', 'WorkspaceService', 'Workspace', 'TextDocumentIdentifier'
+    'Configuration', 'MySQLConfiguration,', 'PGSQLConfiguration', 'SQLConfiguration', 'IntellisenseConfiguration',
+    'FormatterConfiguration', 'ScriptFile', 'WorkspaceService', 'Workspace', 'TextDocumentIdentifier'
 ]
