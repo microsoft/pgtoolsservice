@@ -418,15 +418,15 @@ class QueryExecutionService(object):
 
     def _resolve_query_exception(self, e: Exception, query: Query, worker_args: ExecuteRequestWorkerArgs, is_rollback_error=False):
         utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query.query_text}\n {e}')
-        
+
         # If the error relates to the database, display the appropriate error message based on the provider
         if isinstance(e, worker_args.connection.database_error) or isinstance(e, worker_args.connection.query_canceled_error):
             # get_error_message may return None so ensure error_message is str type
             error_message = str(worker_args.connection.get_error_message(e))
-        
+
         elif isinstance(e, RuntimeError):
             error_message = str(e)
-        
+
         else:
             error_message = 'Unhandled exception while executing query: {}'.format(str(e))  # TODO: Localize
             if self._service_provider.logger is not None:

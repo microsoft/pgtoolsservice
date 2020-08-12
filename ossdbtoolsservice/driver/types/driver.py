@@ -154,10 +154,10 @@ class ServerConnection(ABC):
     @abstractmethod
     def get_error_message(self, error) -> str:
         """
-        Get the message from database error instance 
+        Get the message from database error instance
         """
         pass
-    
+
     @abstractmethod
     def close(self):
         """

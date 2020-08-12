@@ -259,7 +259,7 @@ class PostgreSQLConnection(ServerConnection):
 
     def get_error_message(self, error) -> str:
         """
-        Get the message from DatabaseError instance 
+        Get the message from DatabaseError instance
         """
         return error.diag.message_primary
 

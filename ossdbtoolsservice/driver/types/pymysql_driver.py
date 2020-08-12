@@ -308,10 +308,10 @@ class MySQLConnection(ServerConnection):
             size_query = MYSQL_SIZE_QUERY.format(dbname)
             result = self.execute_query(size_query, all=True)
             return str(result[0][1])
-    
+
     def get_error_message(self, error) -> str:
         """
-        Get the message from DatabaseError instance 
+        Get the message from DatabaseError instance
         """
         return str(error)
 

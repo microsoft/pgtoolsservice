@@ -1,34 +1,19 @@
-import os
 import unittest
-import uuid
-from os import listdir
-from os.path import isfile, join
 from unittest import mock
 
 import pymysql
 
 import tests.utils as utils
-from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
-from ossdbtoolsservice.connection.contracts import (ConnectionDetails,
-                                                    ConnectionType)
+from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.hosting import (IncomingMessageConfiguration,
                                        JSONRPCServer, ServiceProvider)
-from ossdbtoolsservice.query import (
-    Batch, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
-    ResultSetStorageType, create_result_set)
 from ossdbtoolsservice.query_execution.contracts import (
     BATCH_COMPLETE_NOTIFICATION, BATCH_START_NOTIFICATION,
-    DEPLOY_BATCH_COMPLETE_NOTIFICATION, DEPLOY_BATCH_START_NOTIFICATION,
-    DEPLOY_COMPLETE_NOTIFICATION, DEPLOY_MESSAGE_NOTIFICATION,
     MESSAGE_NOTIFICATION, QUERY_COMPLETE_NOTIFICATION,
-    RESULT_SET_COMPLETE_NOTIFICATION, ExecuteDocumentSelectionParams,
-    ExecuteDocumentStatementParams, ExecuteRequestParamsBase,
-    ExecuteStringParams, ExecutionPlanOptions, QueryCancelResult,
-    QueryDisposeParams, SaveResultRequestResult, SaveResultsAsCsvRequestParams,
-    SaveResultsAsExcelRequestParams, SaveResultsAsJsonRequestParams,
-    SimpleExecuteRequest, SubsetParams)
-from ossdbtoolsservice.query_execution.query_execution_service import (
-    NO_QUERY_MESSAGE, ExecuteRequestWorkerArgs, QueryExecutionService)
+    RESULT_SET_COMPLETE_NOTIFICATION)
+from ossdbtoolsservice.query_execution.query_execution_service import \
+    QueryExecutionService
 from ossdbtoolsservice.utils import constants
 from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 
@@ -61,7 +46,6 @@ class TestQueryService(unittest.TestCase):
         self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: self.connection_service}
         self.service_provider._is_initialized = True
         self.query_execution_service._service_provider = self.service_provider
-
 
         def connection_side_effect(owner_uri: str, connection_type: ConnectionType):
             return self.connection
