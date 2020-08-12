@@ -1,5 +1,5 @@
-# PostgreSQL Tools Service 
-The PostgreSQL Tools Service is an application that provides core functionality for various PostgreSQL Server tools.  These features include the following:
+# Open Source Databases Tools Service 
+The Open Source Databases Tools Service is an application that provides core functionality for various PostgreSQL and MySQL Server tools.  These features include the following:
 * Connection management
 * Language Service support using VS Code protocol
 * Query execution and resultset management

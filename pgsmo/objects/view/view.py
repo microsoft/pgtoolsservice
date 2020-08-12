@@ -5,12 +5,12 @@
 
 import os.path
 
-from pgsmo.objects.node_object import NodeCollection, NodeObject
+from smo.common.node_object import NodeCollection, NodeObject
 from pgsmo.objects.view.view_base import ViewBase
 from pgsmo.objects.table_objects.rule import Rule
 from pgsmo.objects.table_objects.trigger import Trigger
 from pgsmo.objects.server import server as s    # noqa
-import pgsmo.utils.templating as templating
+import smo.utils.templating as templating
 
 
 class View(ViewBase):

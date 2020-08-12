@@ -7,19 +7,22 @@ import unittest
 from unittest import mock
 
 import tests.utils as utils
-from pgsqltoolsservice.query.batch import (
-    Batch, BatchEvents, create_batch, create_result_set, ResultSetStorageType, SelectBatch
-)
-from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
-from pgsqltoolsservice.query.in_memory_result_set import InMemoryResultSet
-from pgsqltoolsservice.query.file_storage_result_set import FileStorageResultSet
+from ossdbtoolsservice.query.batch import (Batch, BatchEvents,
+                                           ResultSetStorageType, SelectBatch,
+                                           create_batch, create_result_set)
+from ossdbtoolsservice.query.contracts import (SaveResultsRequestParams,
+                                               SelectionData)
+from ossdbtoolsservice.query.file_storage_result_set import \
+    FileStorageResultSet
+from ossdbtoolsservice.query.in_memory_result_set import InMemoryResultSet
+from tests.pgsmo_tests.utils import MockPGServerConnection
 
 
 class TestBatch(unittest.TestCase):
 
     def setUp(self):
         self._cursor = utils.MockCursor(None)
-        self._connection = utils.MockConnection(cursor=self._cursor)
+        self._connection = MockPGServerConnection(cur=self._cursor)
         self._batch_text = 'Select * from t1'
         self._batch_id = 1
         self._batch_events = BatchEvents()
@@ -30,7 +33,7 @@ class TestBatch(unittest.TestCase):
         return batch(self._batch_text, self._batch_id, self._selection_data, self._batch_events, storage_type)
 
     def create_and_execute_batch(self, batch):
-        with mock.patch('pgsqltoolsservice.query.batch.create_result_set', new=mock.Mock(return_value=self._result_set)):
+        with mock.patch('ossdbtoolsservice.query.batch.create_result_set', new=mock.Mock(return_value=self._result_set)):
             batch = self.create_batch_with(batch, ResultSetStorageType.IN_MEMORY)
             batch.execute(self._connection)
             return batch
@@ -65,7 +68,7 @@ class TestBatch(unittest.TestCase):
     def test_prop_batch_summary(self):
         batch_summary = mock.MagicMock()
 
-        with mock.patch('pgsqltoolsservice.query.contracts.BatchSummary.from_batch', new=mock.Mock(return_value=batch_summary)):
+        with mock.patch('ossdbtoolsservice.query.contracts.BatchSummary.from_batch', new=mock.Mock(return_value=batch_summary)):
             self.assert_properties('batch_summary', batch_summary)
 
     def test_prop_has_error(self):

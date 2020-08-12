@@ -8,10 +8,16 @@ from unittest import mock
 
 import psycopg2
 
-from pgsqltoolsservice.query import ExecutionState, Query, QueryExecutionSettings, QueryEvents, ResultSetStorageType
-from pgsqltoolsservice.query.contracts import SaveResultsRequestParams, SelectionData, DbColumn
-from pgsqltoolsservice.query_execution.contracts import ExecutionPlanOptions
-import tests.utils as utils
+from ossdbtoolsservice.query import (ExecutionState, Query, QueryEvents,
+                                     QueryExecutionSettings,
+                                     ResultSetStorageType)
+from ossdbtoolsservice.query.contracts import (DbColumn,
+                                               SaveResultsRequestParams,
+                                               SelectionData)
+from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.utils import MockCursor
 
 
 class TestQuery(unittest.TestCase):
@@ -25,16 +31,18 @@ class TestQuery(unittest.TestCase):
         self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions(), ResultSetStorageType.FILE_STORAGE), QueryEvents())
 
         self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
-        self.cursor = utils.MockCursor(self.mock_query_results)
-        self.connection = utils.MockConnection(cursor=self.cursor)
+        self.cursor = MockCursor(self.mock_query_results)
+        self.connection = MockPGServerConnection(cur=self.cursor)
 
         self.columns_info = []
         db_column_id = DbColumn()
         db_column_id.data_type = 'text'
         db_column_id.column_name = 'Id'
+        db_column_id.provider = PG_PROVIDER_NAME
         db_column_value = DbColumn()
         db_column_value.data_type = 'text'
         db_column_value.column_name = 'Value'
+        db_column_value.provider = PG_PROVIDER_NAME
         self.columns_info = [db_column_id, db_column_value]
         self.get_columns_info_mock = mock.Mock(return_value=self.columns_info)
 
@@ -48,7 +56,7 @@ class TestQuery(unittest.TestCase):
         """Test that executing a query also executes all of the query's batches in order"""
 
         # If I call query.execute
-        with mock.patch('pgsqltoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=self.get_columns_info_mock):
+        with mock.patch('ossdbtoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=self.get_columns_info_mock):
             self.query.execute(self.connection)
 
         # Then each of the batches executed in order

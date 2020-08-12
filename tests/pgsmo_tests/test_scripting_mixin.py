@@ -8,7 +8,7 @@ from typing import Callable, Type
 import unittest
 import unittest.mock as mock
 
-from pgsmo.objects.scripting_mixins import ScriptableBase, ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from smo.common.scripting_mixins import ScriptableBase, ScriptableCreate, ScriptableDelete, ScriptableUpdate
 
 
 TEMPLATE_ROOT = 'template_root'
@@ -55,9 +55,9 @@ class ScriptableTestBase(metaclass=ABCMeta):
         # ... Patch out the templating code
         mock_path = 'path.sql'
         mock_output = 'sql'
-        template_path_path = "pgsmo.objects.scripting_mixins.templating.get_template_path"
+        template_path_path = "smo.common.scripting_mixins.templating.get_template_path"
         template_path_mock = mock.MagicMock(return_value=mock_path)
-        template_render_path = "pgsmo.objects.scripting_mixins.templating.render_template"
+        template_render_path = "smo.common.scripting_mixins.templating.render_template"
         template_render_mock = mock.MagicMock(return_value=mock_output)
 
         with(mock.patch(template_path_path, template_path_mock, create=True)):

@@ -1,7 +1,8 @@
 # Shared Requirements
 psycopg2==2.7.5
+PyMySQL==0.9.3
 
-# PGToolsService Requirements
+# ossdbtoolsservice Requirements
 inflection
 sqlparse>=0.2.2,<0.3.0
 prompt_toolkit==2.0.7
@@ -17,5 +18,6 @@ parameterized
 coverage
 autopep8
 flake8==3.7.0
+pydevd==1.9.2
 ptvsd==4.3.2
 python-dateutil

@@ -10,11 +10,12 @@ import urllib.parse as parse
 
 import inflection
 
-from pgsmo.objects.node_object import NodeCollection, NodeLazyPropertyCollection
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
-from pgsmo.utils.querying import ServerConnection
-import tests.pgsmo_tests.utils as utils
+from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection
+from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.utils import MockPsycopgConnection
 
 
 class TestServer(unittest.TestCase):
@@ -28,21 +29,21 @@ class TestServer(unittest.TestCase):
         host = 'host'
         port = '1234'
         dbname = 'dbname'
-        mock_conn = utils.MockConnection(None, name=dbname, host=host, port=port)
+        mock_conn = MockPGServerConnection(None, name=dbname, host=host, port=port)
         server = Server(mock_conn)
 
         # Then:
         # ... The assigned properties should be assigned
-        self.assertIsInstance(server._conn, ServerConnection)
-        self.assertIsInstance(server.connection, ServerConnection)
-        self.assertIs(server.connection.connection, mock_conn)
+        self.assertIsInstance(server._conn, MockPGServerConnection)
+        self.assertIsInstance(server.connection, MockPGServerConnection)
+        self.assertIs(server.connection, mock_conn)
         self.assertEqual(server._host, host)
         self.assertEqual(server.host, host)
-        self.assertEqual(server._port, int(port))
-        self.assertEqual(server.port, int(port))
+        self.assertEqual(server._port, port)
+        self.assertEqual(server.port, port)
         self.assertEqual(server._maintenance_db_name, dbname)
         self.assertEqual(server.maintenance_db_name, dbname)
-        self.assertTupleEqual(server.version, server._conn.version)
+        self.assertTupleEqual(server.version, server._conn.server_version)
 
         # ... Recovery options should be a lazily loaded thing
         self.assertIsInstance(server._recovery_props, NodeLazyPropertyCollection)
@@ -62,10 +63,11 @@ class TestServer(unittest.TestCase):
         mock_exec_dict = mock.MagicMock(return_value=([], [TestServer.CHECK_RECOVERY_ROW]))
 
         # ... Create an instance of the class and override the connection
-        mock_conn = ServerConnection(utils.MockConnection(None))
-        mock_conn.execute_dict = mock_exec_dict
-        obj = Server(utils.MockConnection(None))
-        obj._conn = mock_conn
+        mock_connection = MockPsycopgConnection({'host': 'host', 'dbname': 'dbname'})
+        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+            pg_connection = PostgreSQLConnection({})
+        pg_connection.execute_dict = mock_exec_dict
+        obj = Server(pg_connection)
 
         # If: I retrieve all the values in the recovery properties
         # Then:
@@ -76,7 +78,7 @@ class TestServer(unittest.TestCase):
     def test_maintenance_db(self):
         # Setup:
         # ... Create a server object that has a connection
-        obj = Server(utils.MockConnection(None, name='dbname'))
+        obj = Server(MockPGServerConnection(None, name='dbname'))
 
         # ... Mock out the database lazy loader's indexer
         mock_db = {}
@@ -95,7 +97,7 @@ class TestServer(unittest.TestCase):
     def test_refresh(self):
         # Setup:
         # ... Create a server object that has a connection
-        obj = Server(utils.MockConnection(None))
+        obj = Server(MockPGServerConnection())
 
         # ... Mock out the reset methods on the various collections
         obj.databases.reset = mock.MagicMock()
@@ -115,7 +117,7 @@ class TestServer(unittest.TestCase):
     def test_urn_base(self):
         # Setup:
         # ... Create a server object that has a connection
-        server = Server(utils.MockConnection(None))
+        server = Server(MockPGServerConnection())
 
         # If: I get the URN base for the server
         urn_base = server.urn_base
@@ -124,13 +126,13 @@ class TestServer(unittest.TestCase):
         urn_base_regex = re.compile(r'//(?P<user>.+)@(?P<host>.+):(?P<port>\d+)')
         urn_base_match = urn_base_regex.match(urn_base)
         self.assertIsNotNone(urn_base_match)
-        self.assertEqual(urn_base_match.groupdict()['user'], server.connection.dsn_parameters['user'])
+        self.assertEqual(urn_base_match.groupdict()['user'], server.connection.user_name)
         self.assertEqual(urn_base_match.groupdict()['host'], server.host)
-        self.assertEqual(int(urn_base_match.groupdict()['port']), server.port)
+        self.assertEqual(urn_base_match.groupdict()['port'], server.port)
 
     def test_get_obj_by_urn_empty(self):
         # Setup: Create a server object
-        server = Server(utils.MockConnection(None))
+        server = Server(MockPGServerConnection())
 
         test_cases = [None, '', '\t \n\r']
         for test_case in test_cases:
@@ -141,7 +143,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_wrong_server(self):
         # Setup: Create a server object
-        server = Server(utils.MockConnection(None))
+        server = Server(MockPGServerConnection())
 
         with self.assertRaises(ValueError):
             # If: I get an object by its URN with a URN that is invalid for the server
@@ -151,7 +153,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_wrong_collection(self):
         # Setup: Create a server object
-        server = Server(utils.MockConnection(None))
+        server = Server(MockPGServerConnection())
 
         with self.assertRaises(ValueError):
             # If: I get an object by its URN with a URN that points to an invalid path off the server
@@ -161,7 +163,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_obj_by_urn_success(self):
         # Setup: Create a server with a database under it
-        server = Server(utils.MockConnection(None))
+        server = Server(MockPGServerConnection())
         mock_db = Database(server, 'test_db')
         mock_db._oid = 123
         server._child_objects[Database.__name__] = {123: mock_db}

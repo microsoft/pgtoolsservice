@@ -8,19 +8,29 @@ import unittest
 import unittest.mock as mock
 from urllib.parse import urlparse
 
-from pgsqltoolsservice.connection.contracts import ConnectionDetails
-from pgsqltoolsservice.object_explorer.contracts import NodeInfo
-import pgsqltoolsservice.object_explorer.routing as routing
-from pgsqltoolsservice.object_explorer.session import ObjectExplorerSession
+import ossdbtoolsservice.object_explorer.session as session
+from ossdbtoolsservice.connection.contracts import ConnectionDetails
+from ossdbtoolsservice.hosting import ServiceProvider
+from ossdbtoolsservice.object_explorer.routing.pg_routing import PG_ROUTING_TABLE
+from ossdbtoolsservice.object_explorer.contracts import NodeInfo
+from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 
 class TestObjectExplorerRouting(unittest.TestCase):
+
+    def setUp(self):
+        service_provider = ServiceProvider(None, {}, PG_PROVIDER_NAME)
+        self.object_explorer_service = ObjectExplorerService()
+        self.object_explorer_service.service_provider = service_provider
+        self.object_explorer_service._routing_table = PG_ROUTING_TABLE
+
     # FOLDER TESTING #######################################################
     def test_folder_init(self):
         # If: I create a folder
         label = 'FolderName'
         path = 'folder_path'
-        folder = routing.Folder(label, path)
+        folder = session.Folder(label, path)
 
         # Then: The internal state of the folder should be set up properly
         self.assertEqual(folder.path, path + '/')
@@ -31,7 +41,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
         label = 'FolderName'
         path = 'folder_path'
         current_path = '/'
-        node = routing.Folder(label, path).as_node(current_path)
+        node = session.Folder(label, path).as_node(current_path)
 
         # Then: The node state should be setup properly
         self.assertIsInstance(node, NodeInfo)
@@ -45,7 +55,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
     def test_routing_target_init_no_folders(self):
         # If: I create a routing target without any folders defined
         node_generator = mock.MagicMock()
-        rt = routing.RoutingTarget(None, node_generator)
+        rt = session.RoutingTarget(None, node_generator)
 
         # Then: The internal state should show an empty array of folders
         self.assertListEqual(rt.folders, [])
@@ -54,8 +64,8 @@ class TestObjectExplorerRouting(unittest.TestCase):
     def test_routing_target_init_with_folders(self):
         # If: I create a routing target with folders defined
         node_generator = mock.MagicMock()
-        folder_list = [routing.Folder('FolderName', 'folder_path')]
-        rt = routing.RoutingTarget(folder_list, node_generator)
+        folder_list = [session.Folder('FolderName', 'folder_path')]
+        rt = session.RoutingTarget(folder_list, node_generator)
 
         # Then: The internal state should reflect a list of folders being provided
         self.assertIs(rt.folders, folder_list)
@@ -63,7 +73,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
 
     def test_routing_target_get_nodes_empty(self):
         # If: I ask for nodes for an empty routing target
-        rt = routing.RoutingTarget(None, None)
+        rt = session.RoutingTarget(None, None)
         output = rt.get_nodes(False, '/', ObjectExplorerSession('session_id', ConnectionDetails()), {})
 
         # Then: The results should be empty
@@ -74,14 +84,14 @@ class TestObjectExplorerRouting(unittest.TestCase):
         node1 = NodeInfo()
         node2 = NodeInfo()
         node_generator = mock.MagicMock(return_value=[node1, node2])
-        folder_list = [routing.Folder('Folder1', 'fp1'), routing.Folder('Folder2', 'fp2')]
+        folder_list = [session.Folder('Folder1', 'fp1'), session.Folder('Folder2', 'fp2')]
 
         # If: I ask for nodes for a routing target
-        rt = routing.RoutingTarget(folder_list, node_generator)
+        rt = session.RoutingTarget(folder_list, node_generator)
         current_path = '/'
         match_params = {}
-        session = ObjectExplorerSession('session_id', ConnectionDetails())
-        output = rt.get_nodes(False, current_path, session, match_params)
+        object_explorer_session = ObjectExplorerSession('session_id', ConnectionDetails())
+        output = rt.get_nodes(False, current_path, object_explorer_session, match_params)
 
         # Then:
         # ... I should get back a list of nodes
@@ -95,26 +105,28 @@ class TestObjectExplorerRouting(unittest.TestCase):
         self.assertIs(output[3], node2)
 
         # ... The node generator should have been called
-        node_generator.assert_called_once_with(False, current_path, session, match_params)
+        node_generator.assert_called_once_with(False, current_path, object_explorer_session, match_params)
 
     # ROUTING TABLE TESTS ##################################################
     def test_routing_table(self):
         # Make sure that all keys in the routing table are regular expressions
         # Make sure that all items in the routing table are RoutingTargets
         re_class = re.compile('^/$').__class__
-        for key, item in routing.ROUTING_TABLE.items():
+        for key, item in PG_ROUTING_TABLE.items():
             self.assertIsInstance(key, re_class)
-            self.assertIsInstance(item, routing.RoutingTarget)
+            self.assertIsInstance(item, session.RoutingTarget)
 
     def test_routing_invalid_path(self):
         # If: Ask to route a path without a route
+
         # Then: I should get an exception
         with self.assertRaises(ValueError):
-            routing.route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '!/invalid!')
+            self.object_explorer_service._route_request(False,
+                                                        ObjectExplorerSession('session_id', ConnectionDetails()), '!/invalid!/')
 
     def test_routing_match(self):
         # If: Ask to route a request that is valid
-        output = routing.route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '/')
+        output = self.object_explorer_service._route_request(False, ObjectExplorerSession('session_id', ConnectionDetails()), '/')
 
         # Then: The output should be a list of nodes
         self.assertIsInstance(output, list)

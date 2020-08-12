@@ -6,9 +6,13 @@
 import logging
 import unittest
 import unittest.mock as mock
+from typing import Optional
+
 import psycopg2
 
-from pgsqltoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
+                                       ServiceProvider)
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 
 def assert_not_none_or_empty(value: str):
@@ -59,13 +63,13 @@ def get_mock_logger() -> logging.Logger:
 
 # PLEASE USE SERVICEPROVIDERMOCK from tests/mocks/service_provider_mock. #
 # This mock will be deprecated #
-def get_mock_service_provider(service_map: dict = None) -> ServiceProvider:
+def get_mock_service_provider(service_map: dict = None, provider_name: Optional[str] = PG_PROVIDER_NAME) -> ServiceProvider:
     """
     Generates a ServiceProvider with the given services
 
     :param service_map: A dictionary mapping service names to services
     """
-    provider = ServiceProvider(None, {}, get_mock_logger())
+    provider = ServiceProvider(None, {}, provider_name, get_mock_logger())
     if service_map is not None:
         provider._services = service_map
     provider._is_initialized = True
@@ -100,7 +104,7 @@ class MockRequestContext(RequestContext):
         self.last_error_message = str(ex)
 
 
-class MockConnection(object):
+class MockPsycopgConnection(object):
     """Class used to mock psycopg2 connection objects for testing"""
 
     def __init__(self, dsn_parameters=None, cursor=None):
@@ -112,6 +116,7 @@ class MockConnection(object):
         self.notices = []
         self.autocommit = True
         self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+        self.commit = mock.Mock()
 
     @property
     def closed(self):
@@ -128,6 +133,16 @@ class MockConnection(object):
             return self.server_version
         else:
             raise NotImplementedError()
+
+
+class MockPyMySQLConnection(object):
+    """Class used to mock pymysql connection objects for testing"""
+
+    def __init__(self, parameters=None, cursor=None):
+        self.close = mock.Mock()
+        self.cursor = mock.Mock(return_value=cursor)
+        self.commit = mock.Mock()
+        self.ping = mock.Mock()
 
 
 class MockCursor:
@@ -160,7 +175,6 @@ class MockCursor:
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        self.description = []
         self.rowcount = len(self._query_results) if self._query_results is not None else 0
 
     def execute_failure_side_effects(self, *args):

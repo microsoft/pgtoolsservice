@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-from pgsqltoolsservice.language.completion.packages.prioritization import PrevalenceCounter
+from ossdbtoolsservice.language.completion.packages.prioritization import PrevalenceCounter
 
 
 class TestPrioritization(unittest.TestCase):

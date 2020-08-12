@@ -1,4 +1,4 @@
-from pgsqltoolsservice.scripting.contracts import ScriptOperation
+from ossdbtoolsservice.scripting.contracts import ScriptOperation
 
 
 SCRIPT_META_DATA: dict = {

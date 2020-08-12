@@ -10,10 +10,10 @@ from typing import Tuple
 import unittest
 from unittest.mock import MagicMock
 
-from pgsqltoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
-from pgsqltoolsservice.workspace import WorkspaceService, IntellisenseConfiguration    # noqa
-from pgsqltoolsservice.workspace.workspace import Workspace, ScriptFile
-from pgsqltoolsservice.workspace.contracts import (
+from ossdbtoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
+from ossdbtoolsservice.workspace import WorkspaceService, IntellisenseConfiguration    # noqa
+from ossdbtoolsservice.workspace.workspace import Workspace, ScriptFile
+from ossdbtoolsservice.workspace.contracts import (
     Configuration,
     DidChangeConfigurationParams,
     DidCloseTextDocumentParams,
@@ -22,6 +22,7 @@ from pgsqltoolsservice.workspace.contracts import (
     Position,
     Range
 )
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 import tests.utils as utils
 
 
@@ -52,7 +53,7 @@ class TestWorkspaceService(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = MagicMock()
         server.set_request_handler = MagicMock()
-        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
+        sp: ServiceProvider = ServiceProvider(server, {}, PG_PROVIDER_NAME, utils.get_mock_logger())
 
         # If: I register a workspace service
         ws: WorkspaceService = WorkspaceService()

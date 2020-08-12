@@ -8,8 +8,8 @@
 import unittest
 from unittest import mock
 
-from pgsqltoolsservice.tasks import Task, TaskResult, TaskStatus
-from pgsqltoolsservice.utils import constants
+from ossdbtoolsservice.tasks import Task, TaskResult, TaskStatus
+from ossdbtoolsservice.utils import constants
 from tests import utils
 
 
@@ -21,7 +21,7 @@ class TestTasks(unittest.TestCase):
         self.mock_action = mock.Mock(return_value=TaskResult(TaskStatus.SUCCEEDED))
         self.task_name = 'test_name'
         self.task_description = 'test_description'
-        self.task_provider = constants.PROVIDER_NAME
+        self.task_provider = constants.PG_PROVIDER_NAME
         self.server_name = 'test_server'
         self.database_name = 'test_db'
         self.request_context = utils.MockRequestContext()
