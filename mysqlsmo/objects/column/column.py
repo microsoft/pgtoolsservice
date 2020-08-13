@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import Optional 
+
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.utils import templating
 
@@ -30,7 +32,7 @@ class Column(NodeObject):
         :return: Instance of the Database
         """
         col = cls(server, kwargs['name'], kwargs['type'])
-        col._column_ordinal = kwargs['ordinal']
+        col._column_ordinal = kwargs['ordinal'] - 1
         col._is_key = kwargs['column_key'] == 'PRI'
         col._is_unique = kwargs['column_key'] == 'UNI'
         col._is_nullable = kwargs['is_nullable'] == 'YES'

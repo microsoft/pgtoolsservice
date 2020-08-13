@@ -6,12 +6,15 @@
 
 from typing import Dict, List  # noqa
 
-from ossdbtoolsservice.edit_data.update_management import RowEdit, CellUpdate, EditScript
-from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.edit_data import EditTableMetadata
-from ossdbtoolsservice.edit_data.contracts import EditCellResponse, EditCell, RevertCellResponse, EditRow, EditRowState
+from ossdbtoolsservice.edit_data.contracts import (EditCell, EditCellResponse,
+                                                   EditRow, EditRowState,
+                                                   RevertCellResponse)
+from ossdbtoolsservice.edit_data.update_management import (CellUpdate,
+                                                           EditScript, RowEdit)
+from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.query.contracts import DbCellValue
-
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 
 class RowUpdate(RowEdit):
 
@@ -19,6 +22,8 @@ class RowUpdate(RowEdit):
         super(RowUpdate, self).__init__(row_id, result_set, table_metadata)
         self.row = result_set.get_row(row_id)
         self._cell_updates: Dict[int, CellUpdate] = {}
+        if table_metadata._provider_name == MYSQL_PROVIDER_NAME:
+            self.supports_returning = False
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
         self.validate_column_is_updatable(column_index)
@@ -51,8 +56,9 @@ class RowUpdate(RowEdit):
 
     def get_script(self) -> EditScript:
 
-        query = 'UPDATE {0} SET {1} {2} RETURNING *'
-        set_template = '"{0}" = %s'
+        query = self.templater.update_template
+        set_template = self.templater.set_template
+
         set_query = []
         cell_values = []
         for cell in self._cell_updates.values():
@@ -63,9 +69,18 @@ class RowUpdate(RowEdit):
 
         where_script = self.build_where_clause()
         query_template = query.format(self.table_metadata.multipart_name, set_join, where_script.query_template)
-        cell_values.extend(where_script.query_paramters)
+        cell_values.extend(where_script.query_parameters)
 
         return EditScript(query_template, cell_values)
+
+    def get_returning_script(self) -> EditScript:
+
+        query = self.templater.select_template
+
+        where_script = self.build_where_clause()
+        query_template = query.format(self.table_metadata.multipart_name, where_script.query_template)
+
+        return EditScript(query_template, where_script.query_parameters)
 
     def apply_changes(self, cursor):
         self.result_set.update_row(self.row_id, cursor)

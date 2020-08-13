@@ -199,7 +199,14 @@ class DataEditorSession():
                             pass
                         else:
                             script: EditScript = operation.get_script()
-                            cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
+                            cursor.execute(cursor.mogrify(script.query_template, (script.query_parameters)))
+                            
+                            # MySQL does not support UPDATE/CREATE ... RETURNING * syntax
+                            # Run a SELECT query after update or create to mimic behavior
+                            if not operation.supports_returning:
+                                returning: EditScript = operation.get_returning_script()
+                                cursor.execute(cursor.mogrify(returning.query_template, (returning.query_parameters)))
+
                             operation.apply_changes(cursor)
 
                     self._session_cache.clear()
