@@ -22,14 +22,12 @@ class RowCreate(RowEdit):
     def __init__(self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata):
         super(RowCreate, self).__init__(row_id, result_set, table_metadata)
         self.new_cells: List[CellUpdate] = [None] * len(result_set.columns_info)
-        if table_metadata._provider_name == MYSQL_PROVIDER_NAME:
-            self.supports_returning = False
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
 
         self.validate_column_is_updatable(column_index)
 
-        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value)
+        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value, self.table_metadata._provider_name)
         self.new_cells[column_index] = cell_update
 
         return EditCellResponse(cell_update.as_edit_cell, True)
@@ -76,14 +74,32 @@ class RowCreate(RowEdit):
                 insert_values.append('%s')
 
         query_template = str.format(insert_template, self.table_metadata.multipart_name, ', '.join(column_names), ', '.join(insert_values))
+        
+        # if MySQL connection, then will need to run a SELECT statement after INSERT
+        # in order to grab data for in-memory table
+        if self.table_metadata._provider_name == MYSQL_PROVIDER_NAME:
+            # Add SELECT statement and use same query_parameters for WHERE clause
+            query_template += self._generate_select_script()
+            query_parameters += query_parameters
 
         return EditScript(query_template, query_parameters)
 
-    def get_returning_script(self) -> EditScript:
+    def _generate_select_script(self):
 
-        query = self.templater.select_template
+        select_template = self.templater.select_template
+        object_name_template = self.templater.object_template
+        column_name_template = self.templater.column_name_template
+        where_start = self.templater.where_template
 
-        where_script = self.build_where_clause()
-        query_template = query.format(self.table_metadata.multipart_name, where_script.query_template)
+        column_names: List[str] = []
+        where_clauses: List[str] = []
 
-        return EditScript(query_template, where_script.query_parameters)
+        for column in self.result_set.columns_info:
+            if column.is_updatable is True:
+                column_names.append(str.format(object_name_template, column.column_name))
+                where_clauses.append(column_name_template.format( column.column_name, '= %s'))
+
+        where_template = where_start.format(' AND '.join(where_clauses))
+        query_template = str.format(select_template, self.table_metadata.multipart_name, where_template)
+
+        return query_template

@@ -27,7 +27,6 @@ class RowEdit:
         self.result_set = result_set
         self.table_metadata = table_metadata
         self.templater = table_metadata._templater
-        self.supports_returning = True
 
     @abstractmethod
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:

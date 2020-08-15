@@ -22,12 +22,10 @@ class RowUpdate(RowEdit):
         super(RowUpdate, self).__init__(row_id, result_set, table_metadata)
         self.row = result_set.get_row(row_id)
         self._cell_updates: Dict[int, CellUpdate] = {}
-        if table_metadata._provider_name == MYSQL_PROVIDER_NAME:
-            self.supports_returning = False
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
         self.validate_column_is_updatable(column_index)
-        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value)
+        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value, self.table_metadata._provider_name)
 
         if cell_update.value is self.row[column_index].raw_object:
             existing_cell_update = self._cell_updates.get(column_index)
@@ -71,16 +69,13 @@ class RowUpdate(RowEdit):
         query_template = query.format(self.table_metadata.multipart_name, set_join, where_script.query_template)
         cell_values.extend(where_script.query_parameters)
 
+        # if MySQL connection, then will need to run a SELECT statement after UPDATE
+        # in order to grab data for in-memory table
+        if self.table_metadata._provider_name == MYSQL_PROVIDER_NAME:
+            query_template += self.templater.select_template.format(self.table_metadata.multipart_name, where_script.query_template)
+            cell_values.extend(where_script.query_parameters)
+
         return EditScript(query_template, cell_values)
-
-    def get_returning_script(self) -> EditScript:
-
-        query = self.templater.select_template
-
-        where_script = self.build_where_clause()
-        query_template = query.format(self.table_metadata.multipart_name, where_script.query_template)
-
-        return EditScript(query_template, where_script.query_parameters)
 
     def apply_changes(self, cursor):
         self.result_set.update_row(self.row_id, cursor)
