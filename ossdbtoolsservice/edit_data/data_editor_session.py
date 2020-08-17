@@ -230,9 +230,9 @@ class DataEditorSession():
                 sql.SQL(limit_clause)
             )
             query_string = query.as_string(connection.connection)
-        else:
+        elif connection._provider_name == MYSQL_PROVIDER_NAME:
             query_string = 'SELECT {0} FROM {1}.{2} {3}'.format(
-                ', '.join([name.string for name in column_names]),
+                ', '.join([f'`{name.string}`' for name in column_names]),
                 metadata.schema_name,
                 metadata.table_name,
                 limit_clause
