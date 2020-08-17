@@ -3,12 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import ossdbtoolsservice.parsers.datatypes
 import ossdbtoolsservice.parsers.datatype_parsers  # noqa
 import ossdbtoolsservice.parsers.owner_uri_parser  # noqa
+from ossdbtoolsservice.parsers import mysql_datatypes, pg_datatypes
 
 __all__ = [
-    'datatypes',
     'datatype_parsers',
-    'owner_uri_parser'
+    'mysql_datatypes',
+    'owner_uri_parser',
+    'pg_datatypes'
 ]

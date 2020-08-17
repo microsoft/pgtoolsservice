@@ -13,8 +13,8 @@ from ossdbtoolsservice.edit_data.contracts import EditCell  # noqa
 
 class CellUpdate():
 
-    def __init__(self, column: DbColumn, new_value: str) -> None:
-        parser: Callable[[str], object] = get_parser(column.data_type)
+    def __init__(self, column: DbColumn, new_value: str, provider_name: str) -> None:
+        parser: Callable[[str], object] = get_parser(column.data_type, provider_name)
 
         if parser is None:
             raise AttributeError('Updates to column with type "{}" is not supported'.format(column.data_type))

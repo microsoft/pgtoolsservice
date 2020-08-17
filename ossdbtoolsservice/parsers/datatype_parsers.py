@@ -4,13 +4,16 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Callable
-import decimal
 import datetime
+import decimal
 import uuid
+from typing import Callable
+
 from dateutil import parser as date_parser  # noqa
 
-from ossdbtoolsservice.parsers import datatypes
+from ossdbtoolsservice.parsers import mysql_datatypes, pg_datatypes
+from ossdbtoolsservice.utils.constants import (MYSQL_PROVIDER_NAME,
+                                               PG_PROVIDER_NAME)
 
 VALID_TRUE_VALUES = ['true', 't', 'y', 'yes', '1']
 VALID_FALSE_VALUES = ['false', 'f', 'n', 'no', '0']
@@ -78,30 +81,51 @@ def parse_uuid(value: str) -> uuid.UUID:
     return uuid.UUID(value)
 
 
-DATATYPE_PARSER_MAP = {
-    datatypes.DATATYPE_BOOL: parse_bool,
-    datatypes.DATATYPE_REAL: parse_float,
-    datatypes.DATATYPE_DOUBLE: parse_float,
-    datatypes.DATATYPE_SMALLINT: parse_int,
-    datatypes.DATATYPE_INTEGER: parse_int,
-    datatypes.DATATYPE_BIGINT: parse_int,
-    datatypes.DATATYPE_NUMERIC: parse_decimal,
-    datatypes.DATATYPE_CHAR: parse_char,
-    datatypes.DATATYPE_VARCHAR: parse_str,
-    datatypes.DATATYPE_TEXT: parse_str,
-    datatypes.DATATYPE_DATE: parse_date,
-    datatypes.DATATYPE_TIME: parse_time,
-    datatypes.DATATYPE_TIME_WITH_TIMEZONE: parse_time_with_timezone,
-    datatypes.DATATYPE_TIMESTAMP: parse_datetime,
-    datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: parse_datetime,
-    datatypes.DATATYPE_INTERVAL: parse_timedelta,
-    datatypes.DATATYPE_UUID: parse_uuid,
-    datatypes.DATATYPE_NAME: parse_str
+PG_DATATYPE_PARSER_MAP = {
+    pg_datatypes.DATATYPE_BOOL: parse_bool,
+    pg_datatypes.DATATYPE_REAL: parse_float,
+    pg_datatypes.DATATYPE_DOUBLE: parse_float,
+    pg_datatypes.DATATYPE_SMALLINT: parse_int,
+    pg_datatypes.DATATYPE_INTEGER: parse_int,
+    pg_datatypes.DATATYPE_BIGINT: parse_int,
+    pg_datatypes.DATATYPE_NUMERIC: parse_decimal,
+    pg_datatypes.DATATYPE_CHAR: parse_char,
+    pg_datatypes.DATATYPE_VARCHAR: parse_str,
+    pg_datatypes.DATATYPE_TEXT: parse_str,
+    pg_datatypes.DATATYPE_DATE: parse_date,
+    pg_datatypes.DATATYPE_TIME: parse_time,
+    pg_datatypes.DATATYPE_TIME_WITH_TIMEZONE: parse_time_with_timezone,
+    pg_datatypes.DATATYPE_TIMESTAMP: parse_datetime,
+    pg_datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: parse_datetime,
+    pg_datatypes.DATATYPE_INTERVAL: parse_timedelta,
+    pg_datatypes.DATATYPE_UUID: parse_uuid,
+    pg_datatypes.DATATYPE_NAME: parse_str
 }
 
+MYSQL_DATATYPE_PARSER_MAP = {
+    mysql_datatypes.DATATYPE_FLOAT: parse_float,
+    mysql_datatypes.DATATYPE_DOUBLE: parse_float,
+    mysql_datatypes.DATATYPE_TINYINT: parse_int,
+    mysql_datatypes.DATATYPE_SMALLINT: parse_int,
+    mysql_datatypes.DATATYPE_MEDIUMINT: parse_int,
+    mysql_datatypes.DATATYPE_INTEGER: parse_int,
+    mysql_datatypes.DATATYPE_BIGINT: parse_int,
+    mysql_datatypes.DATATYPE_DECIMAL: parse_decimal,
+    mysql_datatypes.DATATYPE_NUMERIC: parse_decimal,
+    mysql_datatypes.DATATYPE_CHAR: parse_char,
+    mysql_datatypes.DATATYPE_VARCHAR: parse_str,
+    mysql_datatypes.DATATYPE_TEXT: parse_str,
+    mysql_datatypes.DATATYPE_DATE: parse_date,
+    mysql_datatypes.DATATYPE_TIME: parse_time,
+    mysql_datatypes.DATATYPE_TIMESTAMP: parse_datetime,
+    mysql_datatypes.DATATYPE_DATETIME: parse_datetime
+}
 
-def get_parser(column_data_type: str) -> Callable[[str], object]:
+def get_parser(column_data_type: str, provider_name: str) -> Callable[[str], object]:
     '''
     Returns a parser for the column_data_type provided. If not found returns None
     '''
-    return DATATYPE_PARSER_MAP.get(column_data_type.lower())
+    if provider_name == PG_PROVIDER_NAME:
+        return PG_DATATYPE_PARSER_MAP.get(column_data_type.lower())
+    elif provider_name == MYSQL_PROVIDER_NAME:
+        return MYSQL_DATATYPE_PARSER_MAP.get(column_data_type.lower())

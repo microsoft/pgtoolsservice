@@ -10,7 +10,7 @@ import struct
 import json
 import datetime
 
-from ossdbtoolsservice.parsers import datatypes
+from ossdbtoolsservice.parsers import pg_datatypes as datatypes
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 DECODING_METHOD = 'utf-8'

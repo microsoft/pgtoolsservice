@@ -15,7 +15,7 @@ from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRa
 
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
 from ossdbtoolsservice.query.contracts import DbColumn
-from ossdbtoolsservice.parsers import datatypes
+from ossdbtoolsservice.parsers import pg_datatypes as datatypes
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 import tests.utils as utils
 

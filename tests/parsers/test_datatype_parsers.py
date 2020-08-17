@@ -11,6 +11,7 @@ import uuid
 import datetime  # noqa
 
 from ossdbtoolsservice.parsers.datatype_parsers import get_parser
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 
 class TestDataTypeParsers(unittest.TestCase):
@@ -88,7 +89,7 @@ class TestDataTypeParsers(unittest.TestCase):
         self.assertEqual(parsed_value, expected_parsed_value)
 
     def _get_parsed_value(self, datatype_to_test: str, value_to_parse: str):
-        parser = get_parser(datatype_to_test)
+        parser = get_parser(datatype_to_test, PG_PROVIDER_NAME)
 
         return parser(value_to_parse)
 

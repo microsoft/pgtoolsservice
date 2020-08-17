@@ -5,7 +5,7 @@
 
 import unittest
 
-import ossdbtoolsservice.parsers.datatypes as datatypes
+import ossdbtoolsservice.parsers.pg_datatypes as datatypes
 from ossdbtoolsservice.query.contracts import DbColumn
 
 
