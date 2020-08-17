@@ -17,6 +17,7 @@ from ossdbtoolsservice.query import (
 from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.edit_data.update_management.row_edit import EditScript
 from ossdbtoolsservice.edit_data.update_management import RowDelete
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 
 class TestDataEditorSession(unittest.TestCase):
@@ -38,7 +39,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._columns_metadata = [column]
         self._schema_name = 'public'
         self._table_name = 'table'
-        self._edit_table_metadata = EditTableMetadata(self._schema_name, self._table_name, self._columns_metadata)
+        self._edit_table_metadata = EditTableMetadata(self._schema_name, self._table_name, self._columns_metadata, PG_PROVIDER_NAME)
 
         self._query_executer = mock.MagicMock()
         self._on_success = mock.MagicMock()
@@ -154,7 +155,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         columns_metadata = [calculated_column_metadata, default_value_column_metadata]
 
-        self._data_editor_session.table_metadata = EditTableMetadata(self._schema_name, self._table_name, columns_metadata)
+        self._data_editor_session.table_metadata = EditTableMetadata(self._schema_name, self._table_name, columns_metadata, PG_PROVIDER_NAME)
 
         result_set = self.get_result_set([(1, False)])
 
@@ -184,15 +185,14 @@ class TestDataEditorSession(unittest.TestCase):
         '''
         row_id = 1
         self._data_editor_session._is_initialized = True
+        self._data_editor_session.table_metadata = self._edit_table_metadata
         self._data_editor_session._last_row_id = 3
-
         self._data_editor_session.delete_row(row_id)
 
         delete_row = self._data_editor_session._session_cache.get(row_id)
 
         self.assertEqual(row_id, delete_row.row_id)
         self.assertEqual(None, self._data_editor_session._result_set)
-        self.assertEqual(None, self._data_editor_session.table_metadata)
 
     def test_delete_row_not_initialized(self):
         with self.assertRaises(RuntimeError) as context_manager:

@@ -12,6 +12,7 @@ from ossdbtoolsservice.query import create_result_set, ResultSetStorageType
 from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.edit_data.contracts import EditRowState
 from ossdbtoolsservice.edit_data import EditTableMetadata
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.utils import MockCursor
 
 
@@ -32,7 +33,7 @@ class TestRowCreate(unittest.TestCase):
         db_column.is_updatable = True
 
         self._result_set.columns_info = [db_column]
-        self._table_metadata = EditTableMetadata('public', 'TestTable', [])
+        self._table_metadata = EditTableMetadata('public', 'TestTable', [], PG_PROVIDER_NAME)
 
         self._row_create = RowCreate(self._row_id, self._result_set, self._table_metadata)
 
@@ -73,7 +74,7 @@ class TestRowCreate(unittest.TestCase):
         db_column.data_type = 'bool'
         new_cell_value = '0'
 
-        self._row_create.new_cells[column_index] = CellUpdate(db_column, new_cell_value)
+        self._row_create.new_cells[column_index] = CellUpdate(db_column, new_cell_value, PG_PROVIDER_NAME)
 
         script = self._row_create.get_script()
 

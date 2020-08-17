@@ -12,6 +12,7 @@ from ossdbtoolsservice.query import create_result_set, ResultSetStorageType
 from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
 from ossdbtoolsservice.edit_data.contracts import EditRowState
 from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.utils import MockCursor
 
 
@@ -37,7 +38,7 @@ class TestRowDelete(unittest.TestCase):
 
         self._columns_metadata = [EditColumnMetadata(db_column, 'Default Value')]
 
-        self._table_metadata = EditTableMetadata('public', 'TestTable', self._columns_metadata)
+        self._table_metadata = EditTableMetadata('public', 'TestTable', self._columns_metadata, PG_PROVIDER_NAME)
 
         self._row_delete = RowDelete(self._row_id, self._result_set, self._table_metadata)
 

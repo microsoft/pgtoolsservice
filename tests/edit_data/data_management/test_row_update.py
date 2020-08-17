@@ -8,8 +8,10 @@ import unittest
 from unittest import mock
 
 from ossdbtoolsservice.edit_data.update_management import RowUpdate
+from ossdbtoolsservice.edit_data.templates import PGTemplater
 from ossdbtoolsservice.query import create_result_set, ResultSetStorageType
 from ossdbtoolsservice.query.contracts import DbColumn
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.utils import MockCursor
 
 
@@ -31,7 +33,10 @@ class TestRowUpdate(unittest.TestCase):
 
         self._result_set.columns_info = [db_column]
 
-        self._table_metadata = None
+        self._table_metadata = mock.Mock()
+        self._table_metadata._templater = PGTemplater()
+        self._table_metadata._provider_name = PG_PROVIDER_NAME
+
         self._column_index = 0
         self._new_value = 'Updated'
 
