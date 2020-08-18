@@ -8,6 +8,8 @@
 import unittest
 from unittest import mock
 
+from pymysql.constants import CLIENT
+
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import (ConnectionType,
@@ -87,8 +89,8 @@ class TestMySQLConnectionService(unittest.TestCase):
             response = self.connection_service.connect(params)
 
         # Verify that pymysql's connection method was called with password set to account token.
-        mock_connect_method.assert_called_once_with(user='mysql', password='exampleToken', host='myserver',
-                                                    port=DEFAULT_PORT[MYSQL_PROVIDER_NAME], database='mysql')
+        mock_connect_method.assert_called_once_with(client_flag=CLIENT.MULTI_STATEMENTS, user='mysql', password='exampleToken',
+                                                    host='myserver', port=DEFAULT_PORT[MYSQL_PROVIDER_NAME], database='mysql')
 
         # Verify that pymysql's connection method was called and that the
         # response has a connection id, indicating success.

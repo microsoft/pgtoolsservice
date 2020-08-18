@@ -22,6 +22,10 @@ class RowUpdate(RowEdit):
         super(RowUpdate, self).__init__(row_id, result_set, table_metadata)
         self.row = result_set.get_row(row_id)
         self._cell_updates: Dict[int, CellUpdate] = {}
+        # if MySQL connection, then will need to run a SELECT statement after UPDATE
+        # in order to grab data for in-memory table
+        if table_metadata._provider_name == MYSQL_PROVIDER_NAME:
+            self.supports_returning = False
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
         self.validate_column_is_updatable(column_index)
@@ -69,12 +73,23 @@ class RowUpdate(RowEdit):
         query_template = query.format(self.table_metadata.multipart_name, set_join, where_script.query_template)
         cell_values.extend(where_script.query_parameters)
 
-        # if MySQL connection, then will need to run a SELECT statement after UPDATE
-        # in order to grab data for in-memory table
-        if self.table_metadata._provider_name == MYSQL_PROVIDER_NAME:
-            query_template += self.templater.select_template.format(self.table_metadata.multipart_name, where_script.query_template)
-            cell_values.extend(where_script.query_parameters)
+        return EditScript(query_template, cell_values)
 
+    def get_returning_script(self) -> EditScript:
+        cell_values = []
+        where_script = self.build_where_clause()
+
+        # if any of the key columns were changed, add the new value 
+        # instead of the where script parameter, because we just updated a key
+        key_columns = [column.db_column for column in self.table_metadata.key_columns]
+        updated_columns = [value.column for value in self._cell_updates.values()]
+        for i, column in enumerate(key_columns):
+            if column in updated_columns:
+                cell_values.append(self._cell_updates[column.column_ordinal].value)
+            else:
+                cell_values.append(where_script.query_parameters[i])
+                
+        query_template = self.templater.select_template.format(self.table_metadata.multipart_name, where_script.query_template)
         return EditScript(query_template, cell_values)
 
     def apply_changes(self, cursor):

@@ -22,6 +22,8 @@ class RowCreate(RowEdit):
     def __init__(self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata):
         super(RowCreate, self).__init__(row_id, result_set, table_metadata)
         self.new_cells: List[CellUpdate] = [None] * len(result_set.columns_info)
+        if table_metadata._provider_name == MYSQL_PROVIDER_NAME:
+            self.supports_returning = False
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
 
@@ -74,18 +76,13 @@ class RowCreate(RowEdit):
                 insert_values.append('%s')
 
         query_template = str.format(insert_template, self.table_metadata.multipart_name, ', '.join(column_names), ', '.join(insert_values))
-        
-        # if MySQL connection, then will need to run a SELECT statement after INSERT
-        # in order to grab data for in-memory table
-        if self.table_metadata._provider_name == MYSQL_PROVIDER_NAME:
-            # Add SELECT statement and use same query_parameters for WHERE clause
-            query_template += self._generate_select_script()
-            query_parameters += query_parameters
-
+    
         return EditScript(query_template, query_parameters)
 
-    def _generate_select_script(self):
+    def get_returning_script(self) -> EditScript:
+        return self._generate_select_script()
 
+    def _generate_select_script(self):
         select_template = self.templater.select_template
         object_name_template = self.templater.object_template
         column_name_template = self.templater.column_name_template
@@ -93,13 +90,20 @@ class RowCreate(RowEdit):
 
         column_names: List[str] = []
         where_clauses: List[str] = []
+        query_parameters: List[object] = []
 
-        for column in self.result_set.columns_info:
+        for index, column in enumerate(self.result_set.columns_info):
             if column.is_updatable is True:
                 column_names.append(str.format(object_name_template, column.column_name))
                 where_clauses.append(column_name_template.format( column.column_name, '= %s'))
 
+                cell_update = self.new_cells[index]
+                if cell_update is None:  # It is none when a column is not updated
+                    query_parameters.append(None)
+                else:
+                    query_parameters.append(cell_update.value)
+
         where_template = where_start.format(' AND '.join(where_clauses))
         query_template = str.format(select_template, self.table_metadata.multipart_name, where_template)
 
-        return query_template
+        return EditScript(query_template, query_parameters)
