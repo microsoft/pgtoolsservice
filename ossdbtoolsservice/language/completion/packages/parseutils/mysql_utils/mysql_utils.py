@@ -1,5 +1,3 @@
-import re
-
 import sqlparse
 from sqlparse.sql import Function, Identifier, IdentifierList
 from sqlparse.tokens import DML, Keyword, Punctuation
@@ -12,7 +10,7 @@ def is_subselect(parsed):
         return False
     for item in parsed.tokens:
         if item.ttype is DML and item.value.upper() in ('SELECT', 'INSERT',
-                'UPDATE', 'CREATE', 'DELETE'):
+                                                        'UPDATE', 'CREATE', 'DELETE'):
             return True
     return False
 
@@ -101,7 +99,6 @@ def extract_tables(sql):
     return list(extract_table_identifiers(stream))
 
 
-
 if __name__ == '__main__':
     sql = 'select * from (select t. from tabl t'
-    print (extract_tables(sql))
+    print(extract_tables(sql))

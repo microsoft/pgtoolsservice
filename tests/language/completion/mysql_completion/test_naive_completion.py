@@ -23,7 +23,7 @@ class TestNaiveCompletion(unittest.TestCase):
         text = ''
         # start_position is the position relative to the cursor_position where the new text will start
         position = 0
-        
+
         # When I request completions for an empty string
         result = set(self.completer.get_completions(
             Document(text=text, cursor_position=position),
@@ -129,4 +129,3 @@ class TestNaiveCompletion(unittest.TestCase):
             Completion(text="LOGFILE GROUP", display_meta='keyword'),
         ]))
         self.assertTrue(Completion(text="CREATE", display_meta="keyword") not in result)
-

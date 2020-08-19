@@ -8,6 +8,7 @@ import unittest
 
 from ossdbtoolsservice.language.completion.packages.parseutils.utils import find_prev_keyword
 
+
 class TestParseUtils(unittest.TestCase):
     """Methods for testing ParseUtils"""
 

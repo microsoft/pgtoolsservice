@@ -1,4 +1,3 @@
-import logging
 from collections import Counter
 from itertools import chain
 from logging import Logger
@@ -53,9 +52,9 @@ class MySQLCompleter(Completer):
 
     def escape_name(self, name):
         if name and ((not self.name_pattern.match(name))
-                or (name.upper() in self.reserved_words)
-                or (name.upper() in self.functions)):
-                    name = '`%s`' % name
+                     or (name.upper() in self.reserved_words)
+                     or (name.upper() in self.functions)):
+            name = '`%s`' % name
 
         return name
 
@@ -116,7 +115,7 @@ class MySQLCompleter(Completer):
                 metadata[self.dbname][relname[0]] = ['*']
             except KeyError:
                 self._log(True, '%r %r listed in unrecognized schema %r',
-                              kind, relname[0], self.dbname)
+                          kind, relname[0], self.dbname)
             self.all_completions.add(relname[0])
 
     def extend_columns(self, column_data, kind):
@@ -202,8 +201,8 @@ class MySQLCompleter(Completer):
                 if match_point >= 0:
                     completions.append((len(text), match_point, item))
 
-        return [MySQLCompletion(z, -len(text), 
-                display_meta=meta, schema=self.dbname)
+        return [MySQLCompletion(z, -len(text),
+                                display_meta=meta, schema=self.dbname)
                 for x, y, z in sorted(completions)]
 
     def get_completions(self, document, complete_event, smart_completion=None):
@@ -231,7 +230,7 @@ class MySQLCompleter(Completer):
                 words = [k.upper() for k in words]
             else:
                 words = [k.lower() for k in words]
-                
+
             return words
 
         completions = []
@@ -299,15 +298,15 @@ class MySQLCompleter(Completer):
 
             elif suggestion['type'] == 'keyword':
                 keywords_suggestions = self.keywords_tree.keys()
-                # Get well known following keywords for the last token. If any, narrow      
+                # Get well known following keywords for the last token. If any, narrow
                 # candidates to this list.
                 next_keywords = self.keywords_tree.get(find_prev_keyword(document.text_before_cursor)[1], [])
                 if next_keywords:
                     keywords_suggestions = next_keywords
                 keywords = self.find_matches(word_before_cursor, apply_case(keywords_suggestions),
-                                            start_only=True,
-                                            fuzzy=False,
-                                            meta='keyword')
+                                             start_only=True,
+                                             fuzzy=False,
+                                             meta='keyword')
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'show':
@@ -315,7 +314,7 @@ class MySQLCompleter(Completer):
                                                apply_case(self.show_items),
                                                start_only=False,
                                                fuzzy=True,
-                                                meta='show')
+                                               meta='show')
                 completions.extend(show_items)
 
             elif suggestion['type'] == 'change':
@@ -331,7 +330,6 @@ class MySQLCompleter(Completer):
                 completions.extend(users)
 
         return completions
-
 
     def populate_scoped_cols(self, scoped_tbls):
         """Find all columns in a set of scoped_tables

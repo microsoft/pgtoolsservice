@@ -42,6 +42,7 @@ Match = namedtuple('Match', ['completion', 'priority'])
 
 _SchemaObject = namedtuple('SchemaObject', 'name schema meta schema_name')
 
+
 def SchemaObject(name, schema=None, meta=None, schema_name=None):
     """
     schema and schema_name mean to same. However, schema holds a value only if completion/intellisense
@@ -49,9 +50,11 @@ def SchemaObject(name, schema=None, meta=None, schema_name=None):
     """
     return _SchemaObject(name, schema, meta, schema_name)
 
+
 _Candidate = namedtuple(
     'Candidate', 'completion prio meta synonyms prio2 display schema'
 )
+
 
 def Candidate(
         completion, prio=None, meta=None, synonyms=None, prio2=None, display=None, schema=None
@@ -420,7 +423,7 @@ class PGCompleter(Completer):
                 # We also use the unescape_name to make sure quoted names have
                 # the same priority as unquoted names.
                 lexical_priority = (tuple(0 if c in (' _') else -ord(c)
-                                            for c in self.unescape_name(item.lower())) + (1,)
+                                          for c in self.unescape_name(item.lower())) + (1,)
                                     + tuple(c for c in item))
 
                 item = self.case(item)

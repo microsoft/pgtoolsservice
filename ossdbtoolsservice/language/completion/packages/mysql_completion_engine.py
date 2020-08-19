@@ -1,6 +1,3 @@
-import os
-import sys
-
 import sqlparse
 from sqlparse.compat import text_type
 from sqlparse.sql import Comparison, Identifier, Where
@@ -18,7 +15,7 @@ def suggest_type(full_text, text_before_cursor):
     """
 
     word_before_cursor = last_word(text_before_cursor,
-            include='many_punctuations')
+                                   include='many_punctuations')
 
     identifier = None
 
@@ -100,7 +97,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
     else:
         token_v = token.value.lower()
 
-    is_operand = lambda x: x and any([x.endswith(op) for op in ['+', '-', '*', '/']])
+    def is_operand(x):
+        return x and any([x.endswith(op) for op in ['+', '-', '*', '/']])
 
     if not token:
         return [{'type': 'keyword'}]
@@ -120,7 +118,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             #        really fancy, we could suggest only array-typed columns)
 
             column_suggestions = suggest_based_on_last_token('where',
-                                    text_before_cursor, full_text, identifier)
+                                                             text_before_cursor, full_text, identifier)
 
             # Check for a subquery expression (cases 3 & 4)
             where = p.tokens[-1]
@@ -148,7 +146,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
             # If the lparen is preceeded by a space chances are we're about to
             # do a sub-select.
             if last_word(text_before_cursor,
-                    'all_punctuations').startswith('('):
+                         'all_punctuations').startswith('('):
                 return [{'type': 'keyword'}]
         elif p.token_first().value.lower() == 'show':
             return [{'type': 'show'}]
@@ -188,8 +186,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
                     {'type': 'alias', 'aliases': aliases},
                     {'type': 'keyword'}]
     elif (token_v.endswith('join') and token.is_keyword) or (token_v in
-            ('copy', 'from', 'update', 'into', 'describe', 'truncate',
-                'desc', 'explain')):
+                                                             ('copy', 'from', 'update', 'into', 'describe', 'truncate',
+                                                              'desc', 'explain')):
         schema = (identifier and identifier.get_parent_name()) or []
 
         # Suggest tables from either the currently-selected schema or the

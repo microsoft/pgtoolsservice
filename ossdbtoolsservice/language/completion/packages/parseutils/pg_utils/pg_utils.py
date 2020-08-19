@@ -4,8 +4,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import re
-
 import sqlparse
 from sqlparse.sql import Identifier
 from sqlparse.tokens import Error, Token

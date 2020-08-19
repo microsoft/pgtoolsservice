@@ -865,7 +865,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_keyword_lower_casing(self, ):
-        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'lower'})
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing': 'lower'})
         text = 'SEL'
         position = len(text)
 
@@ -878,7 +878,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_upper_casing(self, ):
-        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'upper'})
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing': 'upper'})
         text = 'sel'
         position = len(text)
 
@@ -890,8 +890,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         # Then completions should now be lower case
         self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3, display_meta="keyword")]))
 
-    def test_keyword_auto_casing(self, ):        
-        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'auto'})   
+    def test_keyword_auto_casing(self, ):
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing': 'auto'})
         text = 'sel'
         position = len(text)
 

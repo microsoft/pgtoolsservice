@@ -35,9 +35,9 @@ class CompletionRefresher:
     """
 
     refreshers = {
-            PG_PROVIDER_NAME: OrderedDict(),
-            MYSQL_PROVIDER_NAME: OrderedDict()
-        }
+        PG_PROVIDER_NAME: OrderedDict(),
+        MYSQL_PROVIDER_NAME: OrderedDict()
+    }
 
     def __init__(self, connection: ServerConnection, logger: Logger = None):
         self.connection = connection
@@ -128,6 +128,7 @@ def pg_refresher(name, refreshers=CompletionRefresher.refreshers):
         return wrapped
     return wrapper
 
+
 def mysql_refresher(name, refreshers=CompletionRefresher.refreshers):
     """Decorator to populate the dictionary of refreshers with the current
     function.
@@ -195,6 +196,7 @@ def mysql_refresh_schemata(completer, metadata_executor):
     # schemata will be the name of the current database.
     completer.extend_schemata(metadata_executor.server._maintenance_db_name)
     completer.set_dbname(metadata_executor.server._maintenance_db_name)
+
 
 @mysql_refresher('tables')
 def mysql_refresh_tables(completer, metadata_executor):
