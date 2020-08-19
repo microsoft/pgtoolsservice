@@ -35,9 +35,10 @@ class MockCursor:
 class MockMySQLServerConnection(MySQLConnection):
     '''Class used to mock MySQL ServerConnection object for testing'''
 
+    # does not take a cursor here because constructor requires
+    # a cursor that returns version string
     def __init__(
             self,
-            cur: Optional[MockCursor] = None,
             connection: Optional[MockPyMySQLConnection] = None,
             version: str = '5.7.29-log',
             name: str = 'mysql',
@@ -45,19 +46,17 @@ class MockMySQLServerConnection(MySQLConnection):
             port: str = '25565',
             user: str = 'mysql'):
 
-        # Setup mocks for the connection
-        self.close = mock.MagicMock()
-        self.cursor = mock.MagicMock(return_value=cur)
-
-        # if no cursor is passed, create default one
-        if not cur:
-            # MySQLConnection constructor executes a query to find server version
-            cur = MockCursor(results=[[version]])
+        # MySQLConnection constructor executes a query to find server version
+        cur = MockCursor(results=[[version]])
 
         # if no mock mysql connection passed, create default one
         if not connection:
             connection = MockPyMySQLConnection(cursor=cur, parameters={
                 'database': name, 'host': host, 'port': port, 'user': user})
+
+        # Setup mocks for the connection
+        self.close = mock.MagicMock()
+        self.cursor = mock.MagicMock(return_value=cur)
 
         # mock pymysql.connect call in MySQLConnection.__init__ to return mock pymysql connection
         with mock.patch('pymysql.connect', mock.Mock(return_value=connection)):
