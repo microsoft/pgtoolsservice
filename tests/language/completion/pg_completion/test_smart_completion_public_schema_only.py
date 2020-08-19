@@ -866,37 +866,39 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
     def test_keyword_lower_casing(self, ):
         new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'lower'})
-
         text = 'SEL'
         position = len(text)
+
+        # When I request completions from SEL with keyword_casing as 'upper'
         result = set(new_completer.get_completions(
             Document(text=text, cursor_position=position),
             Mock()))
 
-        # then completions should now be lower case
+        # Then completions should now be upper case
         self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_upper_casing(self, ):
         new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'upper'})
-
         text = 'sel'
         position = len(text)
+
+        # When I request completions from sel with keyword_casing as 'lower'
         result = set(new_completer.get_completions(
             Document(text=text, cursor_position=position),
             Mock()))
 
-        # then completions should now be lower case
+        # Then completions should now be lower case
         self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_auto_casing(self, ):        
-        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'auto'})
-
-        # if text is lower case   
+        new_completer = PGCompleter(smart_completion=True, settings={'keyword_casing':'auto'})   
         text = 'sel'
         position = len(text)
+
+        # When I request completions from sel with keyword_casing as 'auto'
         result = set(new_completer.get_completions(
             Document(text=text, cursor_position=position),
             Mock()))
 
-        # then completions should be lower case as well
+        # Then completions should be lower case as well
         self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))

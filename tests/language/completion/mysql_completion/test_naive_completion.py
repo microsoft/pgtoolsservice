@@ -21,31 +21,41 @@ class TestNaiveCompletion(unittest.TestCase):
 
     def test_empty_string_completion(self):
         text = ''
+        # start_position is the position relative to the cursor_position where the new text will start
         position = 0
+        
+        # When I request completions for an empty string
         result = set(self.completer.get_completions(
             Document(text=text, cursor_position=position),
             self.complete_event))
+
+        # Then results should return all_completions, which is set of keywords + functions
         self.assertSetEqual(result, set(map(Completion, self.completer.all_completions)))
 
     def test_select_keyword_completion(self):
         text = 'SEL'
         position = len(text)
+
+        # When I request comlpetions for 'SEL'
         result = set(self.completer.get_completions(
             Document(text=text, cursor_position=position),
             self.complete_event))
+
+        # Then results should include SELECT
         self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3)]))
 
     def test_function_name_completion(self):
         text = 'SELECT MA'
         position = len(text)
+
+        # When I request completions for 'SELECT MA'
         result = set(self.completer.get_completions(
             Document(text=text, cursor_position=position),
             self.complete_event))
 
-        # grabbed these completions from mysqlliterals.json
+        # Then results should include keywords and functions that start with MA
+        # copied these completions from result
         self.assertSetEqual(result, set([
-            # start_position is the position relative to the cursor_position where the new text will start.
-            # in this example, start_position refers to start of MA, 2 before cursor_position
             Completion(text='MANAGED', start_position=-2),
             Completion(text='MASTER_DELAY', start_position=-2),
             Completion(text='MASTER_SSL_CERT', start_position=-2),
@@ -92,18 +102,26 @@ class TestNaiveCompletion(unittest.TestCase):
     def test_column_name_completion(self):
         text = 'SELECT  FROM users'
         position = len('SELECT ')
+
+        # When I request completions with cursor after SELECT
         result = set(self.completer.get_completions(
             Document(text=text, cursor_position=position),
             self.complete_event))
+
+        # Then results should include all_completions, which is set of keywords + functions
         self.assertSetEqual(result, set(map(Completion, self.completer.all_completions)))
 
     def test_alter_well_known_keywords_completion(self):
         text = 'ALTER '
         position = len(text)
+
+        # When I request completions with text 'ALTER '
         result = set(self.completer.get_completions(
             Document(text=text, cursor_position=position),
             self.complete_event,
             smart_completion=True))
+
+        # Then results should include keywords that are known to follow
         # Set comparison: > means "is superset"
         self.assertTrue(result > set([
             Completion(text="DATABASE", display_meta='keyword'),

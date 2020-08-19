@@ -20,16 +20,16 @@ class MySQLLightweightMetadata:
     version_comment_query = '''SELECT @@VERSION_COMMENT'''
     version_comment_query_mysql4 = '''SHOW VARIABLES LIKE "version_comment"'''
 
-    show_candidates_query = '''SELECT name from mysql.help_topic WHERE name like "SHOW %"'''
+    show_candidates_query = '''SELECT name FROM mysql.help_topic WHERE name LIKE "SHOW %"'''
 
     users_query = '''SELECT CONCAT("'", user, "'@'",host,"'") FROM mysql.user'''
 
-    functions_query = '''SELECT ROUTINE_NAME FROM INFORMATION_SCHEMA.ROUTINES
-    WHERE ROUTINE_TYPE="FUNCTION" AND ROUTINE_SCHEMA = "%s"'''
+    functions_query = '''SELECT routine_name FROM information_schema.routines
+                            WHERE routine_type="FUNCTION" AND routine_schema = "%s"'''
 
-    table_columns_query = '''select TABLE_NAME, COLUMN_NAME from information_schema.columns
-                                    where table_schema = '%s'
-                                    order by table_name,ordinal_position'''
+    table_columns_query = '''SELECT table_name, column_name FROM information_schema.columns
+                                WHERE table_schema = '%s'
+                                ORDER BY table_name, ordinal_position'''
 
     def __init__(self, conn: ServerConnection, logger: Logger = None):
         self.conn = conn
