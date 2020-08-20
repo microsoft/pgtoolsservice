@@ -395,5 +395,5 @@ class TestSmartCompletion(unittest.TestCase):
             Document(text=text, cursor_position=position),
             self.complete_event))
 
-        # Then completions should be lower case as well
+        # Then completions should match the casing of the text, which is lower
         self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))

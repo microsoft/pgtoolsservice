@@ -869,12 +869,12 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         text = 'SEL'
         position = len(text)
 
-        # When I request completions from SEL with keyword_casing as 'upper'
+        # When I request completions from SEL with keyword_casing as 'lower'
         result = set(new_completer.get_completions(
             Document(text=text, cursor_position=position),
             Mock()))
 
-        # Then completions should now be upper case
+        # Then completions should now be lower case
         self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_upper_casing(self, ):
@@ -882,12 +882,12 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         text = 'sel'
         position = len(text)
 
-        # When I request completions from sel with keyword_casing as 'lower'
+        # When I request completions from sel with keyword_casing as 'upper'
         result = set(new_completer.get_completions(
             Document(text=text, cursor_position=position),
             Mock()))
 
-        # Then completions should now be lower case
+        # Then completions should now be upper case
         self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3, display_meta="keyword")]))
 
     def test_keyword_auto_casing(self, ):
@@ -900,5 +900,5 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
             Document(text=text, cursor_position=position),
             Mock()))
 
-        # Then completions should be lower case as well
+        # Then completions should match the casing of the text, which is lower
         self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
