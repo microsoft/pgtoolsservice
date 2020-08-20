@@ -3,18 +3,20 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
-from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
+from typing import Callable, Dict, List, Mapping, Optional, Tuple  # noqa
+from urllib.parse import ParseResult, quote_plus, urlparse  # noqa
 
-from ossdbtoolsservice.driver import ServerConnection
-from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 import smo.utils as utils
+from mysqlsmo.objects.column.column import Column
 from mysqlsmo.objects.database.database import Database
+from mysqlsmo.objects.function.function import Function
+from mysqlsmo.objects.procedure.procedure import Procedure
 from mysqlsmo.objects.table.table import Table
 from mysqlsmo.objects.view.view import View
-from mysqlsmo.objects.procedure.procedure import Procedure
-from mysqlsmo.objects.function.function import Function
-from mysqlsmo.objects.column.column import Column
+from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+from smo.common.node_object import (
+    NodeCollection, NodeLazyPropertyCollection, NodeObject)
 
 
 class Server:
@@ -111,7 +113,7 @@ class Server:
         }
         return object_map[object_type.capitalize()](metadata)
 
-    def find_table(self, metadata):
+    def find_table(self, metadata: ObjectMetadata):
         """ Find the table in the server to script as """
         try:
             obj_collection = Table.get_nodes_for_parent(self, parent_obj=None, context_args={'dbname': metadata.schema})
@@ -120,5 +122,17 @@ class Server:
             obj = next((object for object in obj_collection if object.name == metadata.name), None)
             obj._columns = Column.get_nodes_for_parent(self, parent_obj=None, context_args={'dbname': metadata.schema, 'tbl_name': metadata.name})
             return obj
-        except Exception as e:
+        except Exception:
+            return None
+
+    def find_view(self, metadata: ObjectMetadata):
+        """ Find the view in the server to script as """
+        try:
+            obj_collection = View.get_nodes_for_parent(self, parent_obj=None, context_args={'dbname': metadata.schema})
+            if not obj_collection:
+                return None
+            obj = next((object for object in obj_collection if object.name == metadata.name), None)
+            obj._columns = Column.get_nodes_for_parent(self, parent_obj=None, context_args={'dbname': metadata.schema, 'tbl_name': metadata.name})
+            return obj
+        except Exception:
             return None
