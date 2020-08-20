@@ -9,10 +9,13 @@ import unittest.mock as mock
 from typing import Optional
 
 import psycopg2
+import pymysql
 
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from pgsmo import Server
+from smo.common.node_object import NodeCollection, NodeObject
 
 
 def assert_not_none_or_empty(value: str):
@@ -135,17 +138,7 @@ class MockPsycopgConnection(object):
             raise NotImplementedError()
 
 
-class MockPyMySQLConnection(object):
-    """Class used to mock pymysql connection objects for testing"""
-
-    def __init__(self, parameters=None, cursor=None):
-        self.close = mock.Mock()
-        self.cursor = mock.Mock(return_value=cursor)
-        self.commit = mock.Mock()
-        self.ping = mock.Mock()
-
-
-class MockCursor:
+class MockPsycopgCursor:
     """Class used to mock psycopg2 cursor objects for testing"""
 
     def __init__(self, query_results, columns_names=[], connection=mock.Mock()):
@@ -212,6 +205,68 @@ class MockCursor:
         return self._mogrified_value
 
 
+class MockPyMySQLCursor:
+    """Class used to mock pymysql cursor objects for testing"""
+
+    def __init__(self, query_results, columns_names=[], connection=mock.Mock()):
+        self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
+        self.fetchall = mock.Mock(return_value=query_results)
+        self.fetchone = mock.Mock(side_effect=self.execute_fetch_one_side_effects)
+        self.close = mock.Mock()
+        self.connection = connection
+        self.rowcount = -1
+        self._mogrified_value = b'Some query'
+        self.mogrify = mock.Mock(return_value=self._mogrified_value)
+        self._query_results = query_results
+        self._fetched_count = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        next_row = self.execute_fetch_one_side_effects()
+
+        if next_row is None:
+            raise StopIteration
+
+        return next_row
+
+    def execute_success_side_effects(self, *args):
+        """Set up dummy results for query execution success"""
+        self.rowcount = len(self._query_results) if self._query_results is not None else 0
+
+    def execute_failure_side_effects(self, *args):
+        """Set up dummy results and raise error for query execution failure"""
+        self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
+        raise pymysql.DatabaseError()
+
+    def execute_fetch_one_side_effects(self, *args):
+        if self._fetched_count < len(self._query_results):
+            row = self._query_results[self._fetched_count]
+            self._fetched_count += 1
+            return row
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    @property
+    def mogrified_value(self):
+        return self._mogrified_value
+
+
+class MockPyMySQLConnection(object):
+    """Class used to mock pymysql connection objects for testing"""
+
+    def __init__(self, parameters=None, cursor=None):
+        self.close = mock.Mock()
+        self.cursor = mock.Mock(return_value=cursor)
+        self.commit = mock.Mock()
+        self.ping = mock.Mock()
+
+
 class MockThread():
     """Mock thread class that mocks the thread's start method to run target code without actually starting a thread"""
 
@@ -225,3 +280,45 @@ class MockThread():
         self.args = args
         self.start = mock.Mock(side_effect=lambda: self.target(*self.args))
         return self
+
+
+# OBJECT TEST HELPERS ######################################################
+
+def assert_node_collection(prop: any, attrib: any):
+    test_case = unittest.TestCase('__init__')
+    test_case.assertIsInstance(attrib, NodeCollection)
+    test_case.assertIs(prop, attrib)
+
+
+def assert_threeway_equals(target: any, attrib: any, prop: any):
+    test_case = unittest.TestCase('__init__')
+    test_case.assertEqual(attrib, target)
+    test_case.assertEqual(prop, target)
+
+
+def assert_is_not_none_or_whitespace(target: str):
+    test_case = unittest.TestCase('__init__')
+    test_case.assertIsNotNone(target)
+    test_case.assertIsInstance(target, str)
+    test_case.assertNotEqual(target.strip(), '')
+
+
+# MOCK NODE OBJECT #########################################################
+class MockNodeObject(NodeObject):
+    @classmethod
+    def _from_node_query(cls, root_server: Server, parent: Optional[NodeObject], **kwargs):
+        pass
+
+    def __init__(self, root_server: Server, parent: Optional[NodeObject], name: str):
+        super(MockNodeObject, self).__init__(root_server, parent, name)
+
+    @classmethod
+    def _template_root(cls, root_server: Server):
+        return 'template_root'
+
+    @property
+    def template_vars(self) -> str:
+        pass
+
+    def get_database_node(self):
+        return mock.MagicMock(datlastsysoid=None)

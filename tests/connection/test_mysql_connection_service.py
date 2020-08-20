@@ -8,8 +8,6 @@
 import unittest
 from unittest import mock
 
-from pymysql.constants import CLIENT
-
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import (ConnectionType,
@@ -18,8 +16,7 @@ from ossdbtoolsservice.utils.constants import (DEFAULT_PORT,
                                                MYSQL_PROVIDER_NAME,
                                                WORKSPACE_SERVICE_NAME)
 from ossdbtoolsservice.workspace import WorkspaceService
-from tests.mysqlsmo_tests.utils import MockCursor
-from tests.utils import MockPyMySQLConnection
+from tests.utils import MockPyMySQLCursor, MockPyMySQLConnection
 
 
 class TestMySQLConnectionService(unittest.TestCase):
@@ -30,7 +27,8 @@ class TestMySQLConnectionService(unittest.TestCase):
         self.connection_service = ConnectionService()
         self.connection_service._service_provider = utils.get_mock_service_provider({WORKSPACE_SERVICE_NAME: WorkspaceService()},
                                                                                     provider_name=MYSQL_PROVIDER_NAME)
-        mock_cursor = MockCursor(results=[['5.7.29-log']])
+        # MySQLConnection runs a version query on connect
+        mock_cursor = MockPyMySQLCursor([['5.7.29-log']])
         # Set up the mock connection for pymysql's connect method to return
         self.mock_pymysql_connection = MockPyMySQLConnection(parameters={
             'host': 'myserver',
@@ -89,7 +87,7 @@ class TestMySQLConnectionService(unittest.TestCase):
             response = self.connection_service.connect(params)
 
         # Verify that pymysql's connection method was called with password set to account token.
-        mock_connect_method.assert_called_once_with(client_flag=CLIENT.MULTI_STATEMENTS, user='mysql', password='exampleToken',
+        mock_connect_method.assert_called_once_with(user='mysql', password='exampleToken',
                                                     host='myserver', port=DEFAULT_PORT[MYSQL_PROVIDER_NAME], database='mysql')
 
         # Verify that pymysql's connection method was called and that the

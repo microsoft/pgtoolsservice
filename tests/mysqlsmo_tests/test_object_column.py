@@ -5,10 +5,10 @@
 
 import unittest
 
-from pgsmo.objects.server.server import Server
-from pgsmo.objects.table_objects.column import Column
-from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 import tests.utils as utils
+from mysqlsmo.objects.server.server import Server
+from mysqlsmo.objects.column.column import Column
+from tests.mysqlsmo_tests.node_test_base import NodeObjectTestBase
 
 
 class TestColumn(NodeObjectTestBase, unittest.TestCase):
@@ -107,7 +107,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def init_lambda(self):
-        return lambda server, parent, name: Column(server, parent, name, 'character')
+        return lambda server, parent, name: Column(server, name, 'character')
 
     @property
     def node_query(self):

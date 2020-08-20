@@ -7,7 +7,6 @@ import re
 from typing import List, Optional, Tuple
 
 import pymysql
-from pymysql.constants import CLIENT
 
 from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.utils import constants
@@ -95,9 +94,6 @@ class MySQLConnection(ServerConnection):
 
         # Setting autocommit to True initally
         self._autocommit_status = True
-
-        # allow multi statement queries
-        self._connection_options["client_flag"] = CLIENT.MULTI_STATEMENTS
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = pymysql.connect(**self._connection_options)
