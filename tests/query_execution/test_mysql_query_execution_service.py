@@ -34,8 +34,7 @@ class TestQueryService(unittest.TestCase):
             'host': 'test',
             'dbname': 'test',
         })
-        self.connection = MockMySQLServerConnection()
-        self.connection.cursor.return_value = self.cursor
+        self.connection = MockMySQLServerConnection(self.cursor)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.request_context = utils.MockRequestContext()
