@@ -14,87 +14,33 @@ from tests.mysqlsmo_tests.node_test_base import NodeObjectTestBase
 class TestColumn(NodeObjectTestBase, unittest.TestCase):
     NODE_QUERY = {
         'name': 'abc',
-        'datatype': 'character',
-        'oid': 123,
-        'has_default_val': True,
-        'not_null': True,
-        'isprimarykey': True,
-        'is_updatable': False,
-        'isunique': True,
-        'typoid': 18,
-        'default': 'nextval('
+        'type': 'character',
+        'ordinal': 1,
+        'column_key': 'PRI',
+        'is_nullable': 'YES',
+        'column_default': None,
+        'auto_increment': '',
+        'is_updatable': 1,
+        'extra': ''
     }
 
     @property
     def basic_properties(self):
         return {
-            'has_default_value': self.node_query['has_default_val'],
-            '_has_default_value': self.node_query['has_default_val'],
-            'not_null': self.node_query['not_null'],
-            '_not_null': self.node_query['not_null'],
-            '_column_ordinal': self.node_query['oid'] - 1,
-            'column_ordinal': self.node_query['oid'] - 1,
-            '_is_key': self.node_query['isprimarykey'],
-            'is_key': self.node_query['isprimarykey'],
-            '_is_readonly': self.node_query['is_updatable'] is False,
-            'is_readonly': self.node_query['is_updatable'] is False,
-            '_is_unique': self.node_query['isunique'],
-            'is_unique': self.node_query['isunique'],
-            '_type_oid': self.node_query['typoid'],
-            'type_oid': self.node_query['typoid'],
-            '_default_value': self.node_query['default'],
-            'default_value': self.node_query['default'],
-            '_is_auto_increment': True,
-            'is_auto_increment': True,
-
-        }
-
-    @property
-    def full_properties(self):
-        return {
-            "name": "name",
-            "cltype": "cltype",
-            "schema": "schema",
-            "table": "table",
-            "displaytypname": "displaytypname",
-            "attlen": "attlen",
-            "attprecision": "attprecision",
-            "hasSqrBracket": "hasSqrBracket",
-            "collspcname": "collspcname",
-            "attnotnull": "attnotnull",
-            "defval": "defval",
-            "description": "description",
-            "attoptions": "attoptions",
-            "attacl": "attacl",
-            "seclabels": "seclabels",
-            "attstattarget": "attstattarget",
-            "attstorage": "attstorage",
-            "is_sql": "is_sql",
-            "elemoid": "elemoid"
-        }
-
-    @property
-    def property_query(self):
-        return {
-            "name": "test",
-            "cltype": "test",
-            "schema": "test_schema",
-            "table": "test_table",
-            "displaytypname": "test_displaytypname",
-            "attlen": None,
-            "attprecision": False,
-            "hasSqrBracket": False,
-            "collspcname": "test",
-            "attnotnull": "test",
-            "defval": "test",
-            "description": "test_description",
-            "attoptions": "test",
-            "attacl": "test",
-            "seclabels": "test",
-            "attstattarget": "test",
-            "attstorage": "test",
-            "is_sql": True,
-            "elemoid": 18
+            '_column_ordinal': self.node_query['ordinal'] - 1,
+            'column_ordinal': self.node_query['ordinal'] - 1,
+            '_is_key': self.node_query['column_key'] == 'PRI',
+            'is_key': self.node_query['column_key'] == 'PRI',
+            '_is_unique': self.node_query['column_key'] == 'UNI',
+            'is_unique': self.node_query['column_key'] == 'UNI',
+            '_is_nullable': self.node_query['is_nullable'] == 'YES',
+            'not_null': self.node_query['is_nullable'] == 'YES',
+            '_default_value': self.node_query['column_default'],
+            'default_value': self.node_query['column_default'],
+            '_is_read_only': not self.node_query['is_updatable'],
+            'is_readonly': not self.node_query['is_updatable'],
+            '_is_auto_increment': 'auto_increment' in self.node_query['extra'],
+            'is_auto_increment': 'auto_increment' in self.node_query['extra'],
         }
 
     @property
@@ -107,7 +53,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def init_lambda(self):
-        return lambda server, parent, name: Column(server, name, 'character')
+        return lambda server, parent, name: Column(server, parent, name, 'character')
 
     @property
     def node_query(self):

@@ -14,7 +14,7 @@ class Column(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Column':
+    def _from_node_query(cls, server: 's.Server', parent = None, **kwargs) -> 'Column':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -31,23 +31,30 @@ class Column(NodeObject):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        col = cls(server, kwargs['name'], kwargs['type'])
+        col = cls(server, parent, kwargs['name'], kwargs['type'])
         col._column_ordinal = kwargs['ordinal'] - 1
         col._is_key = kwargs['column_key'] == 'PRI'
         col._is_unique = kwargs['column_key'] == 'UNI'
         col._is_nullable = kwargs['is_nullable'] == 'YES'
-        col._default = kwargs['column_default']
+        col._default_value = kwargs['column_default']
         col._is_auto_increment = 'auto_increment' in kwargs['extra']
         col._is_read_only = not kwargs['is_updatable']
         return col
 
-    def __init__(self, server: 's.Server', name: str, datatype: str):
+    def __init__(self, server: 's.Server', parent: NodeObject, name: str, datatype: str):
         """
         Initializes a new instance of a database
         """
-        NodeObject.__init__(self, server, None, name)
+        NodeObject.__init__(self, server, parent, name)
         self._datatype: str = datatype
         self._default_value: Optional[str] = None
+        self._is_nullable: bool = None
+        self._column_ordinal: int = None
+        self._is_read_only: bool = None
+        self._is_auto_increment: bool = None
+        self._is_key: bool = None
+        self._is_unique: bool = None
+        self._default_value: str = None
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:

@@ -9,13 +9,14 @@ import unittest.mock as mock
 from abc import ABCMeta, abstractmethod
 from typing import Callable, List, Mapping, Type
 
-import tests.utils as utils
-from pgsmo.objects.server.server import Server
+import tests.mysqlsmo_tests.utils as utils
+from mysqlsmo.objects.server.server import Server
 from smo.common.node_object import (
     NodeCollection, NodeLazyPropertyCollection, NodeObject)
 from smo.common.scripting_mixins import (ScriptableCreate, ScriptableDelete,
                                          ScriptableSelect, ScriptableUpdate)
-from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.utils import (MockNodeObject, assert_is_not_none_or_whitespace,
+                         assert_threeway_equals)
 
 
 class NodeObjectTestBase(metaclass=ABCMeta):
@@ -37,10 +38,6 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         pass
 
     @property
-    def full_properties(self) -> Mapping[str, str]:
-        return {}
-
-    @property
     def init_lambda(self) -> Callable[[Server, NodeObject, str], NodeObject]:
         class_ = self.class_for_test
         return lambda server, parent, name: class_(server, parent, name)
@@ -51,18 +48,14 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         pass
 
     @property
-    def property_query(self) -> dict:
-        return {}
-
-    @property
     def parent_expected_to_be_none(self) -> bool:
         return False
 
     # TEST METHODS #########################################################
     def test_from_node_query(self):
         # If: I create a new object from a node row with the expected parent type
-        mock_server = Server(MockPGServerConnection())
-        mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
+        mock_server = Server(utils.MockMySQLServerConnection())
+        mock_parent = MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
 
         obj = self.class_for_test._from_node_query(mock_server, mock_parent, **self.node_query)
 
@@ -72,9 +65,8 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         NodeObjectTestBase.unittest.assertIsInstance(obj, self.class_for_test)
 
         # ... Validate the node object properties
-        utils.assert_threeway_equals(mock_server, obj._server, obj.server)
-        utils.assert_threeway_equals(self.node_query['oid'], obj._oid, obj.oid)
-        utils.assert_threeway_equals(self.node_query['name'], obj._name, obj.name)
+        assert_threeway_equals(mock_server, obj._server, obj.server)
+        assert_threeway_equals(self.node_query['name'], obj._name, obj.name)
 
         # ... Validate the basic properties
         for attr, value in self.basic_properties.items():
@@ -87,28 +79,10 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # ... Call the validation function
         self._custom_validate_from_node(obj, mock_server)
 
-    def test_full_properties(self):
-        # Setup:
-        # NOTE: We're *not* mocking out the template rendering b/c this will verify that there's a template
-        # ... Create a mock query execution that will return the properties
-        mock_exec_dict = mock.MagicMock(return_value=([], [self.property_query]))
-
-        # ... Create an instance of the class
-        mock_server = Server(MockPGServerConnection())
-        mock_server.connection.execute_dict = mock_exec_dict
-
-        mock_grand_grand_parent = utils.MockNodeObject(mock_server, None, 'grandgrandparent') if not self.parent_expected_to_be_none else None
-        mock_grand_parent = utils.MockNodeObject(mock_server, mock_grand_grand_parent, 'grandparent') if not self.parent_expected_to_be_none else None
-        mock_parent = utils.MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
-        name = 'test'
-        obj = self.init_lambda(mock_server, mock_parent, name)
-
-        self._full_properties_helper(obj, mock_server)
-
     def test_init(self):
         # If: I create an instance of the provided class
-        mock_server = Server(MockPGServerConnection())
-        mock_parent = utils.MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
+        mock_server = Server(utils.MockMySQLServerConnection())
+        mock_parent = MockNodeObject(mock_server, None, 'parent') if not self.parent_expected_to_be_none else None
 
         name = 'test'
         obj = self.init_lambda(mock_server, mock_parent, name)
@@ -121,10 +95,10 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # ... Call the custom validation function
         self._custom_validate_init(obj, mock_server)
 
-    def test_template_path_pg(self):
-        # Setup: Create a mock connection that has PG as the server type
-        mock_server = Server(MockPGServerConnection())
-        mock_server._ServerConnection__server_type = mock.MagicMock(return_value='pg')
+    def test_template_path_mysql(self):
+        # Setup: Create a mock connection that has MySQL as the server type
+        mock_server = Server(utils.MockMySQLServerConnection())
+        mock_server._ServerConnection__server_type = mock.MagicMock(return_value='mysql')
 
         # If: I ask for the template path of the class
         path = self.class_for_test._template_root(mock_server)
@@ -133,47 +107,43 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         NodeObjectTestBase.unittest.assertIsInstance(path, str)
         NodeObjectTestBase.unittest.assertTrue(os.path.exists(path))
 
-    # TODO: Disabled 08/23/2017 beruss -- reenable once properties are fixed, tracked by https://github.com/Microsoft/carbon/issues/1734
-    def _test_scripting_mixins(self):
+    def test_scripting_mixins(self):
         # Setup: Create an instance of the object
-        mock_server = Server(MockPGServerConnection())
+        mock_server = Server(utils.MockMySQLServerConnection())
 
-        mock_grand_parent = utils.MockNodeObject(mock_server, None, 'grandparent') if not self.parent_expected_to_be_none else None
-        mock_parent = utils.MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
+        mock_grand_parent = MockNodeObject(mock_server, None, 'grandparent') if not self.parent_expected_to_be_none else None
+        mock_parent = MockNodeObject(mock_server, mock_grand_parent, 'parent') if not self.parent_expected_to_be_none else None
 
         name = 'test'
         obj = self.init_lambda(mock_server, mock_parent, name)
-        obj._full_properties = self.property_query
 
         if isinstance(obj, ScriptableCreate):
             # If: I script for create
             script = obj.create_script()
 
             # Then: The script should successfully return
-            utils.assert_is_not_none_or_whitespace(script)
+            assert_is_not_none_or_whitespace(script)
 
         if isinstance(obj, ScriptableDelete):
             # If: I script for delete
             script = obj.delete_script()
 
             # Then: The script should successfully return
-            utils.assert_is_not_none_or_whitespace(script)
+            assert_is_not_none_or_whitespace(script)
 
         if isinstance(obj, ScriptableUpdate):
             # If: I script for update
             script = obj.update_script()
 
             # Then: The script should successfully return
-            utils.assert_is_not_none_or_whitespace(script)
+            assert_is_not_none_or_whitespace(script)
 
         if isinstance(obj, ScriptableSelect):
             # If: I script for select
             script = obj.select_script()
 
             # Then: The script should successfully return
-            utils.assert_is_not_none_or_whitespace(script)
-
-    # TODO: Add test for PPAS server type when we support it
+            assert_is_not_none_or_whitespace(script)
 
     # CUSTOM TEST LOGIC ####################################################
     @staticmethod
@@ -201,17 +171,14 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         test_case.assertIsInstance(obj, self.class_for_test)
 
         # ... The NodeObject basic properties should be set up appropriately
-        utils.assert_threeway_equals(mock_server, obj._server, obj.server)
-        utils.assert_threeway_equals(None, obj._oid, obj.oid)
-        utils.assert_threeway_equals(name, obj._name, obj.name)
-        utils.assert_threeway_equals(mock_parent, obj._parent, obj.parent)
+        assert_threeway_equals(mock_server, obj._server, obj.server)
+        assert_threeway_equals(None, obj._oid, obj.oid)
+        assert_threeway_equals(name, obj._name, obj.name)
+        assert_threeway_equals(mock_parent, obj._parent, obj.parent)
 
         # ... The rest of the properties should be none
         for prop in self.basic_properties.keys():
             test_case.assertIsNone(getattr(obj, prop))
-
-        # ... The full properties collection should be a lazy property collection
-        test_case.assertIsInstance(obj._full_properties, NodeLazyPropertyCollection)
 
         # ... The child node collections should be assigned to node collections
         for coll in self.collections:
@@ -220,13 +187,3 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         # We won't test the full properties here because it'll run the generator
         # and setting up the mocking is annoying in this case
 
-    def _full_properties_helper(self, obj, mock_server: Server):
-        # If: I retrieve all the values in the full properties
-        # Then:
-        # ... The properties based on the properties query should be available
-        for prop, key in self.full_properties.items():
-            NodeObjectTestBase.unittest.assertEqual(getattr(obj, prop), self.property_query[key])
-
-        # ... The generator should have been called once
-        if len(self.full_properties) > 1:
-            mock_server.connection.execute_dict.assert_called_once()
