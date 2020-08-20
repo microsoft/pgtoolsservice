@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.language.completion.pgcompleter import PGCompleter
-from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
+from ossdbtoolsservice.language.completion.pg_completer import PGCompleter
+from ossdbtoolsservice.language.completion.mysql_completer import MySQLCompleter
 
 __all__ = ['PGCompleter', 'MySQLCompleter']

@@ -6,7 +6,7 @@
 from parameterized import parameterized, param
 import unittest
 
-from ossdbtoolsservice.language.completion.pgcompleter import PGCompleter
+from ossdbtoolsservice.language.completion.pg_completer import PGCompleter
 
 
 class TestFuzzyCompletion(unittest.TestCase):

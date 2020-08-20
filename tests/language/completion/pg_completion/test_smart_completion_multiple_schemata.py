@@ -4,12 +4,14 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from parameterized import parameterized, param
-import unittest
 import itertools
-from tests.language.completion.metadata import (MetaData, alias, name_join, fk_join, join,
-                                                schema, table, function, wildcard_expansion, column,
-                                                get_result, result_set, qual, no_qual)
+import unittest
+
+from parameterized import param, parameterized
+
+from .metadata import (MetaData, alias, column, fk_join, function, get_result,
+                       join, name_join, no_qual, qual, result_set, schema,
+                       table, wildcard_expansion)
 
 METADATA = {
     'tables': {

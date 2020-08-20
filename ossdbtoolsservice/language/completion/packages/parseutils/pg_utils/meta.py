@@ -106,7 +106,7 @@ class FunctionMetadata(object):
                 '%s(schema_name=%r, func_name=%r, arg_names=%r, '
                 'arg_types=%r, arg_modes=%r, return_type=%r, is_aggregate=%r, '
                 'is_window=%r, is_set_returning=%r, arg_defaults=%r)'
-            ) % (self.__class__.__name__,) + self._signature()
+            ) % ((self.__class__.__name__,) + self._signature())
         )
 
     def has_variadic(self):

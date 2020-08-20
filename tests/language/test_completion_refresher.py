@@ -24,14 +24,24 @@ class TestSqlCompletionRefresher(unittest.TestCase):
     def setUp(self):
         self.refresher: CompletionRefresher = CompletionRefresher(utils.MockPGServerConnection())
 
-    def test_ctor(self):
+    def test_pg_refreshers(self):
         """
         Refresher object should contain a few handlers
         """
-        self.assertGreater(len(self.refresher.refreshers), 0)
-        actual_handlers = list(self.refresher.refreshers.keys())
+        self.assertGreater(len(self.refresher.refreshers[PG_PROVIDER_NAME]), 0)
+        actual_handlers = list(self.refresher.refreshers[PG_PROVIDER_NAME].keys())
         expected_handlers = ['schemata', 'tables', 'views',
                              'types', 'databases', 'casing', 'functions']
+        self.assertListEqual(expected_handlers, actual_handlers)
+
+    def test_mysql_refreshers(self):
+        """
+        Refresher object should contain a few handlers
+        """
+        self.assertGreater(len(self.refresher.refreshers[MYSQL_PROVIDER_NAME]), 0)
+        actual_handlers = list(self.refresher.refreshers[MYSQL_PROVIDER_NAME].keys())
+        expected_handlers = ['databases', 'functions', 'schemata',
+                             'tables', 'users', 'show_commands']
         self.assertListEqual(expected_handlers, actual_handlers)
 
     def test_refresh_called_once(self):

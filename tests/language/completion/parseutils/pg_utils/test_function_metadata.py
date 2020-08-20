@@ -5,7 +5,8 @@
 
 import unittest
 
-from ossdbtoolsservice.language.completion.packages.parseutils.meta import FunctionMetadata
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.meta import \
+    FunctionMetadata
 
 
 class TestFunctionMetadata(unittest.TestCase):
