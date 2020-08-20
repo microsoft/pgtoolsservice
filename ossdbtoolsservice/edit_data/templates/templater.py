@@ -12,6 +12,7 @@ WHERE_TEMPLATE = 'WHERE {0}'
 
 SELECT_TEMPLATE = 'SELECT * FROM {0} {1}'
 
+
 class Templater():
     """Abstract class that outlines SQL statement templates required for edit data."""
 
@@ -19,7 +20,7 @@ class Templater():
     @property
     def select_template(self) -> str:
         return SELECT_TEMPLATE
-        
+
     @property
     def delete_template(self) -> str:
         return DELETE_TEMPLATE

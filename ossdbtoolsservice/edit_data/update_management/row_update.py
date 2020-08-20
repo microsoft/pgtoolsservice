@@ -16,6 +16,7 @@ from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.query.contracts import DbCellValue
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 
+
 class RowUpdate(RowEdit):
 
     def __init__(self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata):
@@ -79,7 +80,7 @@ class RowUpdate(RowEdit):
         cell_values = []
         where_script = self.build_where_clause()
 
-        # if any of the key columns were changed, add the new value 
+        # if any of the key columns were changed, add the new value
         # instead of the where script parameter, because we just updated a key
         key_columns = [column.db_column for column in self.table_metadata.key_columns]
         updated_columns = [value.column for value in self._cell_updates.values()]
@@ -88,7 +89,7 @@ class RowUpdate(RowEdit):
                 cell_values.append(self._cell_updates[column.column_ordinal].value)
             else:
                 cell_values.append(where_script.query_parameters[i])
-                
+
         query_template = self.templater.select_template.format(self.table_metadata.multipart_name, where_script.query_template)
         return EditScript(query_template, cell_values)
 

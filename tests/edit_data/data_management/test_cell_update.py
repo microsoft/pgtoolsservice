@@ -56,6 +56,7 @@ class TestPGCellUpdate(unittest.TestCase):
         self.assertTrue(db_cell_value.raw_object is self._cell_update.value)
         self.assertTrue(isinstance(db_cell_value, DbCellValue))
 
+
 class TestMySQLCellUpdate(TestPGCellUpdate):
 
     def setUp(self):
@@ -63,6 +64,7 @@ class TestMySQLCellUpdate(TestPGCellUpdate):
         self._db_column.data_type = 'varchar'
         self._new_cell_value = 'New Value'
         self._cell_update = CellUpdate(self._db_column, self._new_cell_value, MYSQL_PROVIDER_NAME)
+
 
 if __name__ == '__main__':
     unittest.main()

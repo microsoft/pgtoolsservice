@@ -92,6 +92,7 @@ class TestPGRowCreate(unittest.TestCase):
         self.assertTrue(len(self._result_set.rows) == 3)
         self.assertTrue(self._result_set.rows[2][0] == 'True')
 
+
 class TestMySQLRowCreate(unittest.TestCase):
 
     def setUp(self):
@@ -179,6 +180,7 @@ class TestMySQLRowCreate(unittest.TestCase):
 
         self.assertTrue(len(self._result_set.rows) == 3)
         self.assertTrue(self._result_set.rows[2][0] == 'True')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -12,7 +12,7 @@ from typing import Callable, List, Mapping, Type
 import tests.mysqlsmo_tests.utils as utils
 from mysqlsmo.objects.server.server import Server
 from smo.common.node_object import (
-    NodeCollection, NodeLazyPropertyCollection, NodeObject)
+    NodeCollection, NodeObject)
 from smo.common.scripting_mixins import (ScriptableCreate, ScriptableDelete,
                                          ScriptableSelect, ScriptableUpdate)
 from tests.utils import (MockNodeObject, assert_is_not_none_or_whitespace,
@@ -186,4 +186,3 @@ class NodeObjectTestBase(metaclass=ABCMeta):
 
         # We won't test the full properties here because it'll run the generator
         # and setting up the mocking is annoying in this case
-

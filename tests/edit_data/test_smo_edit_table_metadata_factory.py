@@ -47,6 +47,7 @@ class TestPGSmoEditTableMetadataFactory(unittest.TestCase):
         with self.assertRaises(Exception):
             self._smo_metadata_factory.get(self._connection, self._schema_name, self._view_name, 'Other')
 
+
 class TestMySQLSmoEditTableMetadataFactory(unittest.TestCase):
 
     def setUp(self):
@@ -80,6 +81,7 @@ class TestMySQLSmoEditTableMetadataFactory(unittest.TestCase):
 
         with self.assertRaises(Exception):
             self._smo_metadata_factory.get(self._connection, self._schema_name, self._view_name, 'Other')
+
 
 if __name__ == '__main__':
     unittest.main()

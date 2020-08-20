@@ -30,7 +30,7 @@ class TestPGDataEditorSession(unittest.TestCase):
     def setUp(self):
         self._metadata_factory = mock.MagicMock()
         self._mock_cursor = MockPsycopgCursor(None)
-        self._connection = MockPGServerConnection(cur = self._mock_cursor, port = "8080", host = "test", name= "test")
+        self._connection = MockPGServerConnection(cur=self._mock_cursor, port="8080", host="test", name="test")
         self._initialize_edit_request = InitializeEditParams()
 
         self._initialize_edit_request.schema_name = 'public'
@@ -406,6 +406,7 @@ class TestPGDataEditorSession(unittest.TestCase):
         row_delete.get_script.assert_called_once()
         self.assertFalse(bool(self._data_editor_session._session_cache))
 
+
 class TestMySQLDataEditorSession(TestPGDataEditorSession):
 
     def setUp(self):
@@ -449,6 +450,7 @@ class TestMySQLDataEditorSession(TestPGDataEditorSession):
             result_set.read_result_to_end(cursor)
 
         return result_set
+
 
 if __name__ == '__main__':
     unittest.main()

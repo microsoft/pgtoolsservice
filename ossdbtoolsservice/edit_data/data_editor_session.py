@@ -200,7 +200,7 @@ class DataEditorSession():
                         else:
                             script: EditScript = operation.get_script()
                             cursor.execute(cursor.mogrify(script.query_template, (script.query_parameters)))
-                            
+
                             # MySQL does not support RETURNING * from UPDATE or CREATE
                             # So run a SELECT query after to return new row for in-memory table
                             if not operation.supports_returning:

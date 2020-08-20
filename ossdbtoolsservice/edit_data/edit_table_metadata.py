@@ -16,6 +16,7 @@ TEMPLATERS = {
     PG_PROVIDER_NAME: PGTemplater
 }
 
+
 class EditTableMetadata():
     def __init__(self, schema_name: str, table_name, columns_metadata: List[EditColumnMetadata], provider_name: str) -> None:
         self.columns_metadata = columns_metadata

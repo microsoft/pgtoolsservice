@@ -82,6 +82,7 @@ class TestPGRowDelete(unittest.TestCase):
         self.assertTrue(len(self._result_set.rows) == 1)
         self.assertTrue(self._result_set.rows[0][0], "False")
 
+
 class TestMySQLRowDelete(TestPGRowDelete):
 
     def setUp(self):
@@ -107,7 +108,7 @@ class TestMySQLRowDelete(TestPGRowDelete):
         self._table_metadata = EditTableMetadata('public', 'TestTable', self._columns_metadata, MYSQL_PROVIDER_NAME)
 
         self._row_delete = RowDelete(self._row_id, self._result_set, self._table_metadata)
-    
+
     def test_get_script(self):
 
         script = self._row_delete.get_script()
@@ -116,6 +117,7 @@ class TestMySQLRowDelete(TestPGRowDelete):
 
         self.assertEqual(script.query_template, expected_query_template)
         self.assertEquals(script.query_parameters[0], 'True')
+
 
 if __name__ == '__main__':
     unittest.main()

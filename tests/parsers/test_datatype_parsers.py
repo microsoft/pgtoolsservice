@@ -94,6 +94,7 @@ class TestPGDataTypeParsers(unittest.TestCase):
 
         return parser(value_to_parse)
 
+
 class TestMySQLDataTypeParsers(unittest.TestCase):
 
     def test_float_parser(self):
@@ -144,7 +145,7 @@ class TestMySQLDataTypeParsers(unittest.TestCase):
         self.assertEqual(12, parsed_value.hour)
         self.assertEqual(30, parsed_value.minute)
         self.assertEqual(42, parsed_value.second)
-    
+
     def test_datetime(self):
         time = '2017-12-12 12:30:42'
         parsed_value: datetime.time = self._get_parsed_value('datetime', time)
@@ -167,6 +168,7 @@ class TestMySQLDataTypeParsers(unittest.TestCase):
         parser = get_parser(datatype_to_test, MYSQL_PROVIDER_NAME)
 
         return parser(value_to_parse)
+
 
 if __name__ == '__main__':
     unittest.main()

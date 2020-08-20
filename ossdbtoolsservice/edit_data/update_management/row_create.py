@@ -76,7 +76,7 @@ class RowCreate(RowEdit):
                 insert_values.append('%s')
 
         query_template = str.format(insert_template, self.table_metadata.multipart_name, ', '.join(column_names), ', '.join(insert_values))
-    
+
         return EditScript(query_template, query_parameters)
 
     def get_returning_script(self) -> EditScript:
@@ -95,7 +95,7 @@ class RowCreate(RowEdit):
         for index, column in enumerate(self.result_set.columns_info):
             if column.is_updatable is True:
                 column_names.append(str.format(object_name_template, column.column_name))
-                where_clauses.append(column_name_template.format( column.column_name, '= %s'))
+                where_clauses.append(column_name_template.format(column.column_name, '= %s'))
 
                 cell_update = self.new_cells[index]
                 if cell_update is None:  # It is none when a column is not updated

@@ -233,6 +233,7 @@ class TestEditDataService(unittest.TestCase):
         edit_session._edit_initialize(request_context, params)
         edit_session._edit_initialize.assert_called()
 
+
 class TestMySQLEditDataService(TestEditDataService):
 
     def setUp(self):
@@ -259,6 +260,7 @@ class TestMySQLEditDataService(TestEditDataService):
         self._initialize_edit_request.object_name = 'Employee'
         self._initialize_edit_request.object_type = 'Table'
         self._initialize_edit_request.owner_uri = 'testuri'
+
 
 if __name__ == '__main__':
     unittest.main()

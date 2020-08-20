@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 from .templater import Templater
-    
-    
+
+
 PG_OBJECT_TEMPLATE = '"{0}"'
 
 PG_COLUMN_NAME_TEMPLATE = '"{0}" {1}'
@@ -14,6 +14,7 @@ PG_UPDATE_TEMPLATE = 'UPDATE {0} SET {1} {2} RETURNING *'
 PG_SET_TEMPLATE = '"{0}" = %s'
 
 PG_INSERT_TEMPLATE = 'INSERT INTO {0}({1}) VALUES({2}) RETURNING *'
+
 
 class PGTemplater(Templater):
     def __init__(self):
@@ -31,7 +32,7 @@ class PGTemplater(Templater):
     @property
     def column_name_template(self) -> str:
         return self._column_name_template
-    
+
     @property
     def update_template(self) -> str:
         return self._update_template
