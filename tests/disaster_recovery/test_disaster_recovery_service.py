@@ -133,7 +133,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
-            
+
     def test_get_pg_exe_path_local_win(self):
         """Test the get_pg_exe_path function for windows when the service is running from source code"""
         # Back up these values so that the test can overwrite them
@@ -348,7 +348,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         self._test_perform_backup_restore_no_exe_internal(disaster_recovery_service._perform_restore, self.restore_params)
 
     def _test_perform_backup_restore_no_exe_internal(self, test_method: Callable, test_params):
-        mockConnection = pg_utils.MockPGServerConnection(None)  
+        mockConnection = pg_utils.MockPGServerConnection(None)
         with mock.patch('os.path.exists', new=mock.Mock(return_value=False)), mock.patch('subprocess.Popen') as mock_popen:
             with mock.patch('ossdbtoolsservice.connection.ConnectionInfo.get_connection', new=mock.Mock(return_value=mockConnection)):
                 # If I perform a restore when the pg_restore executable cannot be found
@@ -411,7 +411,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         """Test that the pg_dump/pg_restore process is not created if the task has been canceled"""
         # Set up the task to be canceled
         self.mock_task.canceled = True
-        mockConnection = pg_utils.MockPGServerConnection(None)  
+        mockConnection = pg_utils.MockPGServerConnection(None)
         with mock.patch('subprocess.Popen', new=mock.Mock()) as mock_popen:
             with mock.patch('ossdbtoolsservice.connection.ConnectionInfo.get_connection', new=mock.Mock(return_value=mockConnection)):
                 # If I try to perform a backup/restore for a canceled task

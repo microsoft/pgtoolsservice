@@ -195,6 +195,7 @@ def _get_pg_exe_path(exe_name: str, server_version: Tuple[int, int, int]) -> str
 
     raise ValueError(f'Exe folder {os_root} does not contain {exe_name}')
 
+
 # Map from backup types to the corresponding pg_dump format option value
 _BACKUP_FORMAT_MAP = {
     BackupType.DIRECTORY: 'd',
