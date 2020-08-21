@@ -9,15 +9,20 @@ import functools
 import os
 import subprocess
 import sys
-from typing import Any, List, Dict
+from typing import Any, Dict, List, Tuple
 
 import inflection
 
 from ossdbtoolsservice.connection import ConnectionInfo
-from ossdbtoolsservice.disaster_recovery.contracts import BACKUP_REQUEST, BackupParams, BackupType, RESTORE_REQUEST, RestoreParams
+from ossdbtoolsservice.connection.contracts import ConnectionType
+from ossdbtoolsservice.disaster_recovery.contracts import (BACKUP_REQUEST,
+                                                           RESTORE_REQUEST,
+                                                           BackupParams,
+                                                           BackupType,
+                                                           RestoreParams)
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
-from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.tasks import Task, TaskResult, TaskStatus
+from ossdbtoolsservice.utils import constants
 
 
 class DisasterRecoveryService:
@@ -104,7 +109,8 @@ def _perform_backup_restore(connection_info: ConnectionInfo, process_args: List[
 def _perform_backup(connection_info: ConnectionInfo, params: BackupParams, task: Task) -> TaskResult:
     """Call out to pg_dump to do a backup"""
     try:
-        pg_dump_location = _get_pg_exe_path('pg_dump')
+        connection = connection_info.get_connection(ConnectionType.DEFAULT)
+        pg_dump_location = _get_pg_exe_path('pg_dump', connection.server_version)
     except ValueError as e:
         return TaskResult(TaskStatus.FAILED, str(e))
     pg_dump_args = [pg_dump_location,
@@ -121,7 +127,8 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams, task:
 def _perform_restore(connection_info: ConnectionInfo, params: RestoreParams, task: Task) -> TaskResult:
     """Call out to pg_restore to restore from a backup"""
     try:
-        pg_restore_location = _get_pg_exe_path('pg_restore')
+        connection = connection_info.get_connection(ConnectionType.DEFAULT)
+        pg_restore_location = _get_pg_exe_path('pg_restore', connection.server_version)
     except ValueError as e:
         return TaskResult(TaskStatus.FAILED, str(e))
     pg_restore_args = [pg_restore_location]
@@ -143,28 +150,50 @@ def _get_backup_restore_connection_params(connection_options: dict) -> List[str]
     return params
 
 
-def _get_pg_exe_path(exe_name: str) -> str:
+def _get_pg_exe_path(exe_name: str, server_version: Tuple[int, int, int]) -> str:
     """
-    Find the path to the given PostgreSQL utility executable for the current operating system
+    Find the path to the given PostgreSQL utility executable for the current operating system in a server specific version folder
 
     :param exe_name: The name of the program to find (without .exe). e.g. 'pg_dump'
+    :param server_version: Tuple of the connected server version components (major, minor, ignored)
     :returns: The path to the requested executable
     :raises ValueError: if there is no file corresponding to the given exe_name
     """
+
     base_location = os.path.join(os.path.dirname(sys.argv[0]), 'pg_exes')
     platform = sys.platform
     if platform == 'win32':
-        path = os.path.join(base_location, 'win', exe_name + '.exe')
+        os_root = os.path.join(base_location, 'win')
+        path_suffix = exe_name + '.exe'
     elif platform == 'darwin':
-        path = os.path.join(base_location, 'mac', 'bin', exe_name)
+        os_root = os.path.join(base_location, 'mac')
+        path_suffix = os.path.join('bin', exe_name)
     else:
-        path = os.path.join(base_location, 'linux', 'bin', exe_name)
+        os_root = os.path.join(base_location, 'linux')
+        path_suffix = os.path.join('bin', exe_name)
 
-    # Verify that the file exists
-    if not os.path.exists(path):
-        raise ValueError(f'Could not find executable file {path}')  # TODO: Localize
-    return path
+    # Get the list of folders in the os specific root folder
+    all_folders: List[str] = [os.path.normpath(x[0]) for x in os.walk(os_root)]
+    for folder in all_folders:
+        folderName = os.path.basename(folder)
+        version = folderName.split('.')
+        # Get the major version value
+        try:
+            major = int(version[0])
+        except ValueError:
+            major = 0
+        minor = 0
+        # Set minor version if version length is more than 1 (ex 9.5, 9.6)
+        if (len(version) > 1):
+            minor = int(version[1])
 
+        if major == int(server_version[0]) and minor == server_version[1]:
+            exe_path = os.path.join(folder, path_suffix)
+            if not os.path.exists(exe_path):
+                raise ValueError(f'Could not find executable file {exe_path}')
+            return exe_path
+
+    raise ValueError(f'Exe folder {os_root} does not contain {exe_name}')
 
 # Map from backup types to the corresponding pg_dump format option value
 _BACKUP_FORMAT_MAP = {
