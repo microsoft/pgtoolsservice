@@ -13,7 +13,7 @@ PYTHONPATH=
 pip3 install -r requirements.txt
 python3 setup.py bdist_mac
 cd build/*.app/Contents
-cp -r MacOS/ ../../pgtoolsservice
+cp -r MacOS/ ../../ossdbtoolsservice
 
 # Restore the old PYTHONPATH and move back to the original directory
 cd $pwd
