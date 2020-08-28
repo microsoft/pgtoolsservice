@@ -16,7 +16,8 @@ cx_freeze==6.1.0
 nose
 parameterized
 coverage
-autopep8
+autopep8==1.5.2
+pycodestyle==2.5.0
 flake8==3.7.0
 pydevd==1.9.2
 ptvsd==4.3.2
