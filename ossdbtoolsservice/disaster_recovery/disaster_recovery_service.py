@@ -185,7 +185,10 @@ def _get_pg_exe_path(exe_name: str, server_version: Tuple[int, int, int]) -> str
         minor = 0
         # Set minor version if version length is more than 1 (ex 9.5, 9.6)
         if (len(version) > 1):
-            minor = int(version[1])
+            try:
+                minor = int(version[1])
+            except ValueError:
+                minor = 0
 
         if major == int(server_version[0]) and minor == server_version[1]:
             exe_path = os.path.join(folder, path_suffix)
@@ -193,7 +196,7 @@ def _get_pg_exe_path(exe_name: str, server_version: Tuple[int, int, int]) -> str
                 raise ValueError(f'Could not find executable file {exe_path}')
             return exe_path
 
-    raise ValueError(f'Exe folder {os_root} does not contain {exe_name}')
+    raise ValueError(f'Exe folder {os_root} does not contain {exe_name} for version {'.'.join(server_version)}')
 
 
 # Map from backup types to the corresponding pg_dump format option value
