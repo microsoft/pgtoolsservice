@@ -196,7 +196,7 @@ def _get_pg_exe_path(exe_name: str, server_version: Tuple[int, int, int]) -> str
                 raise ValueError(f'Could not find executable file {exe_path}')
             return exe_path
 
-    version_string = '.'.join(server_version)
+    version_string = '.'.join(str(ver) for ver in server_version)
     raise ValueError(f'Exe folder {os_root} does not contain {exe_name} for version {version_string}')
 
 
