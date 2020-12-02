@@ -8,7 +8,7 @@ from typing import Callable, Any  # noqa
 import struct
 import json
 
-from ossdbtoolsservice.parsers import datatypes
+from ossdbtoolsservice.parsers import pg_datatypes as datatypes
 
 
 DECODING_METHOD = 'utf-8'

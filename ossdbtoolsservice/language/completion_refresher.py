@@ -30,7 +30,7 @@ SERVER_MAP = {
 
 class CompletionRefresher:
     """
-    Handles creating a PGCompleter object and populates it with the relevant
+    Handles creating a MySQL/PGCompleter object and populates it with the relevant
     completion suggestions in a background thread.
     """
 
@@ -45,7 +45,7 @@ class CompletionRefresher:
 
     def refresh(self, callbacks, history=None, settings=None) -> str:
         """
-        Creates a PGCompleter object and populates it with the relevant
+        Creates a MySQL/PGCompleter object and populates it with the relevant
         completion suggestions in a background thread.
 
         settings - dict of settings for completer object

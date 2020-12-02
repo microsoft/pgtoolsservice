@@ -7,6 +7,7 @@ from typing import Callable, Dict, List, Optional, Tuple  # noqa
 from psycopg2 import sql
 import threading
 
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
 from ossdbtoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete  # noqa
 from ossdbtoolsservice.query import ExecutionState, ResultSet, Query  # noqa
 from ossdbtoolsservice.edit_data.contracts import (
@@ -198,7 +199,14 @@ class DataEditorSession():
                             pass
                         else:
                             script: EditScript = operation.get_script()
-                            cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
+                            cursor.execute(cursor.mogrify(script.query_template, (script.query_parameters)))
+
+                            # MySQL does not support RETURNING * from UPDATE or CREATE
+                            # So run a SELECT query after to return new row for in-memory table
+                            if not operation.supports_returning:
+                                returning_script: EditScript = operation.get_returning_script()
+                                cursor.execute(cursor.mogrify(returning_script.query_template, (returning_script.query_parameters)))
+
                             operation.apply_changes(cursor)
 
                     self._session_cache.clear()
@@ -221,10 +229,20 @@ class DataEditorSession():
         if filters.limit_results is not None and filters.limit_results > 0:
             limit_clause = ' '.join([' LIMIT', str(filters.limit_results)])
 
-        query = sql.SQL('SELECT {0} FROM {1}.{2} {3}').format(
-            sql.SQL(', ').join(column_names),
-            sql.Identifier(metadata.schema_name),
-            sql.Identifier(metadata.table_name),
-            sql.SQL(limit_clause)
-        )
-        return query.as_string(connection.connection)
+        if connection._provider_name == PG_PROVIDER_NAME:
+            query = sql.SQL('SELECT {0} FROM {1}.{2} {3}').format(
+                sql.SQL(', ').join(column_names),
+                sql.Identifier(metadata.schema_name),
+                sql.Identifier(metadata.table_name),
+                sql.SQL(limit_clause)
+            )
+            query_string = query.as_string(connection.connection)
+        elif connection._provider_name == MYSQL_PROVIDER_NAME:
+            query_string = 'SELECT {0} FROM {1}.{2} {3}'.format(
+                ', '.join([f'`{name.string}`' for name in column_names]),
+                metadata.schema_name,
+                metadata.table_name,
+                limit_clause
+            )
+
+        return query_string

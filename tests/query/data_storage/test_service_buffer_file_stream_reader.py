@@ -10,7 +10,7 @@ import json
 
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_reader import ServiceBufferFileStreamReader
 from ossdbtoolsservice.query.contracts.column import DbColumn
-from ossdbtoolsservice.parsers import datatypes
+from ossdbtoolsservice.parsers import pg_datatypes as datatypes
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 DECODING_METHOD = 'utf-8'

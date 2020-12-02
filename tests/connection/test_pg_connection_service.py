@@ -25,7 +25,7 @@ from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.workspace import WorkspaceService
 from tests.integration import get_connection_details, integration_test
 from tests.pgsmo_tests.utils import MockPGServerConnection
-from tests.utils import MockCursor, MockPsycopgConnection, MockRequestContext
+from tests.utils import MockPsycopgCursor, MockPsycopgConnection, MockRequestContext
 
 
 class TestPGConnectionService(unittest.TestCase):
@@ -428,7 +428,7 @@ class TestPGConnectionService(unittest.TestCase):
                 'dbname': 'postgres',
                 'user': 'postgres'
             },
-            cursor=MockCursor(mock_query_results))
+            cursor=MockPsycopgCursor(mock_query_results))
         mock_request_context = utils.MockRequestContext()
 
         # Insert a ConnectionInfo object into the connection service's map
@@ -512,7 +512,7 @@ class TestPGConnectionService(unittest.TestCase):
         # Set up the test with mock data
         mock_query_results = [('database1',), ('database2',)]
         connection_uri = 'someuri'
-        mock_cursor = MockCursor(mock_query_results)
+        mock_cursor = MockPsycopgCursor(mock_query_results)
         mock_cursor.fetchall.side_effect = psycopg2.ProgrammingError('')
         mock_connection = MockPGServerConnection(cur=mock_cursor, host='myserver', name='postgres', user='postgres')
         mock_request_context = utils.MockRequestContext()

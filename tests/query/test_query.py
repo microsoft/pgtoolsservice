@@ -17,7 +17,7 @@ from ossdbtoolsservice.query.contracts import (DbColumn,
 from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.pgsmo_tests.utils import MockPGServerConnection
-from tests.utils import MockCursor
+from tests.utils import MockPsycopgCursor
 
 
 class TestQuery(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestQuery(unittest.TestCase):
         self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions(), ResultSetStorageType.FILE_STORAGE), QueryEvents())
 
         self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
-        self.cursor = MockCursor(self.mock_query_results)
+        self.cursor = MockPsycopgCursor(self.mock_query_results)
         self.connection = MockPGServerConnection(cur=self.cursor)
 
         self.columns_info = []

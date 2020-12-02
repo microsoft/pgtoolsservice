@@ -8,7 +8,7 @@ import unittest
 from pgsmo.objects.server.server import Server
 from pgsmo.objects.table_objects.column import Column
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
-import tests.pgsmo_tests.utils as utils
+import tests.utils as utils
 
 
 class TestColumn(NodeObjectTestBase, unittest.TestCase):

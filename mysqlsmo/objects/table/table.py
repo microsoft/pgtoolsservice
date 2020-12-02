@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import List
+from mysqlsmo.objects.column.column import Column
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
 from smo.common.node_object import NodeCollection, NodeObject
 import smo.utils.templating as templating
@@ -35,8 +37,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
         self._dbname = dbname
         self._server = server
         self._server_version = server.version
-
-    # PROPERTIES ###########################################################
+        self._columns: List[Column] = []
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
@@ -79,3 +80,8 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
         except Exception:
             script = rows[0]["Create View"]
         return script
+
+    # PROPERTIES ###########################################################
+    @property
+    def columns(self) -> NodeCollection:
+        return self._columns

@@ -87,7 +87,7 @@ class PostgreSQLConnection(ServerConnection):
         self._provider_name = constants.PG_PROVIDER_NAME
         self._server_type = "PostgreSQL"
 
-    # METHODS ##############################################################
+    # PROPERTIES ###########################################################
     @property
     def autocommit(self) -> bool:
         """Returns the current autocommit status for this connection"""
