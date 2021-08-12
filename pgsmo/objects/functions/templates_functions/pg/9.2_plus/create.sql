@@ -58,7 +58,7 @@ ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name)|replace('"', '') }}
 {% endif -%}
 {% if data.description %}
 
-COMMENT ON FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
+COMMENT ON FUNCTION {{ conn|qtIdent(data.pronamespace, data.name)|replace('"', '') }}({{data.func_args_without}})
     IS {{ data.description|qtLiteral  }};
 {% endif -%}
 {% if data.seclabels %}
