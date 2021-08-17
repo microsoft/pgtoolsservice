@@ -13,7 +13,6 @@ from ossdbtoolsservice.converters import get_bytes_to_any_converter
 
 from ossdbtoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
 
-
 class ServiceBufferFileStreamReader(ServiceBufferFileStream):
     """ Reader for service buffer formatted file streams """
 
@@ -58,13 +57,14 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
                 # wrap the NULL value as a DbCellValue
                 value = DbCellValue(display_value=None, is_null=True, raw_object=None, row_id=row_id)
             else:
-                # read the length of data, then update the offset by plus 4, since the int holds 4 bytes
-                raw_bytes_length_to_read = self._read_bytes_from_file(self._file_stream, current_file_offset, 4)
-                if raw_bytes_length_to_read == b'\x00\x00\x00\x00':
+                # null value check
+                null_value_checker = self._read_bytes_from_file(self._file_stream, current_file_offset, 1)
+                current_file_offset += 1
+                if null_value_checker == b'\x01':
                     # if byte length to read is 0, then it's a NULL value.
-                    current_file_offset += 4
                     value = DbCellValue(display_value=str("NULL"), is_null=True, raw_object=None, row_id=row_id)
                 else:
+                    raw_bytes_length_to_read = self._read_bytes_from_file(self._file_stream, current_file_offset, 4)
                     bytes_length_to_read = struct.unpack('i', raw_bytes_length_to_read)[0]
                     current_file_offset += 4
 
