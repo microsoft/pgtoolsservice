@@ -12,7 +12,7 @@
 {% if query_for == 'sql_panel' and func_def is defined %}
 CREATE{% if query_type is defined %}{{' OR REPLACE'}}{% endif %} FUNCTION {{func_def}}
 {% else %}
-CREATE{% if query_type is defined %}{{' OR REPLACE'}}{% endif %} FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({% if data.arguments %}
+CREATE{% if query_type is defined %}{{' OR REPLACE'}}{% endif %} FUNCTION {{ conn|qtIdent(data.pronamespace, data.name)|replace('"', '') }}({% if data.arguments %}
 {% for p in data.arguments %}{% if p.argmode %}{{p.argmode}} {% endif %}{% if p.argname %}{{ conn|qtIdent(p.argname) }} {% endif %}{% if p.argtype %}{{ p.argtype }}{% endif %}{% if p.argdefval %} DEFAULT {{p.argdefval}}{% endif %}
 {% if not loop.last %}, {% endif %}
 {% endfor %}
@@ -45,7 +45,7 @@ AS {% if data.lanname == 'c' %}
 $BODY${{ data.prosrc }}$BODY${% endif -%};
 {% if data.funcowner %}
 
-ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
+ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name|replace('"', '')) }}({{data.func_args_without}})
     OWNER TO {{ conn|qtIdent(data.funcowner) }};
 {% endif -%}
 {% if data.acl %}
@@ -59,7 +59,7 @@ ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args
 {% endif %}
 {% if data.description %}
 
-COMMENT ON FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
+COMMENT ON FUNCTION {{ conn|qtIdent(data.pronamespace, data.name)|replace('"', '') }}({{data.func_args_without}})
     IS {{ data.description|qtLiteral  }};
 {% endif -%}
 {% if data.seclabels %}
