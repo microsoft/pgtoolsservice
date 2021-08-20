@@ -10,6 +10,7 @@ from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
 from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
+from tests.language.completion.metadata import compare_result_and_correct_result
 
 
 class TestNaiveCompletion(unittest.TestCase):
@@ -22,28 +23,30 @@ class TestNaiveCompletion(unittest.TestCase):
     def test_empty_string_completion(self):
         text = ''
         position = 0
-        result = set(self.completer.get_completions(
+        result = self.completer.get_completions(
             Document(text=text, cursor_position=position),
-            self.complete_event))
-        self.assertSetEqual(result, set(map(Completion, self.completer.all_completions)))
+            self.complete_event)
+        correct_result = list(map(Completion, self.completer.all_completions))
+        compare_result_and_correct_result(self, result, correct_result)
 
     def test_select_keyword_completion(self):
         text = 'SEL'
         position = len(text)
-        result = set(self.completer.get_completions(
+        result = self.completer.get_completions(
             Document(text=text, cursor_position=position),
-            self.complete_event))
-        self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3)]))
+            self.complete_event)
+        correct_result = [Completion(text='SELECT', start_position=-3)]
+        compare_result_and_correct_result(self, result, correct_result)
 
     def test_function_name_completion(self):
         text = 'SELECT MA'
         position = len(text)
-        result = set(self.completer.get_completions(
+        result = self.completer.get_completions(
             Document(text=text, cursor_position=position),
-            self.complete_event))
+            self.complete_event)
 
         # grabbed these completions from mysqlliterals.json
-        self.assertSetEqual(result, set([
+        correct_result = [
             # start_position is the position relative to the cursor_position where the new text will start.
             # in this example, start_position refers to start of MA, 2 before cursor_position
             Completion(text='MANAGED', start_position=-2),
@@ -87,52 +90,51 @@ class TestNaiveCompletion(unittest.TestCase):
             Completion(text='MASTER_BIND', start_position=-2),
             Completion(text='MASTER_SSL_CRLPATH', start_position=-2),
             Completion(text='MAX_SIZE', start_position=-2),
-            Completion(text='MASTER_SERVER_ID', start_position=-2)]))
+            Completion(text='MASTER_SERVER_ID', start_position=-2)]
+        compare_result_and_correct_result(self, result, correct_result)
 
     def test_column_name_completion(self):
         text = 'SELECT  FROM users'
         position = len('SELECT ')
-        result = set(self.completer.get_completions(
+        result = self.completer.get_completions(
             Document(text=text, cursor_position=position),
-            self.complete_event))
-        self.assertSetEqual(result, set(map(Completion, self.completer.all_completions)))
+            self.complete_event)
+        correct_result = list(map(Completion, self.completer.all_completions))
+        compare_result_and_correct_result(self, result, correct_result)
 
     def test_alter_well_known_keywords_completion(self):
         text = 'ALTER '
         position = len(text)
-        result = set(self.completer.get_completions(
+        result = self.completer.get_completions(
             Document(text=text, cursor_position=position),
             self.complete_event,
-            smart_completion=True))
-        # Set comparison: > means "is superset"
-        self.assertTrue(result > set([
-            Completion(text="DATABASE", display_meta='keyword'),
-            Completion(text="TABLE", display_meta='keyword'),
-            Completion(text="LOGFILE GROUP", display_meta='keyword'),
-        ]))
+            smart_completion=True)
+        self.assertIn(Completion(text="DATABASE", display_meta='keyword'), result)
+        self.assertIn(Completion(text="TABLE", display_meta='keyword'), result)
+        self.assertIn(Completion(text="LOGFILE GROUP", display_meta='keyword'), result)
         self.assertTrue(Completion(text="CREATE", display_meta="keyword") not in result)
 
     def test_keyword_lower_casing(self):
         new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing': 'lower'})
         text = 'SEL'
         position = len(text)
-        result = set(new_completer.get_completions(
+        result = new_completer.get_completions(
             Document(text=text, cursor_position=position),
-            self.complete_event))
-
+            self.complete_event)
+        correct_result = [Completion(text='select', start_position=-3, display_meta="keyword")]
         # then completions should now be lower case
-        self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
+        compare_result_and_correct_result(self, result, correct_result)
 
     def test_keyword_upper_casing(self):
         new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing': 'upper'})
         text = 'sel'
         position = len(text)
-        result = set(new_completer.get_completions(
+        result = new_completer.get_completions(
             Document(text=text, cursor_position=position),
-            self.complete_event))
-
+            self.complete_event)
+        correct_result = [Completion(text='SELECT', start_position=-3, display_meta="keyword")]
         # then completions should now be lower case
-        self.assertSetEqual(result, set([Completion(text='SELECT', start_position=-3, display_meta="keyword")]))
+        compare_result_and_correct_result(self, result, correct_result)
 
     def test_keyword_auto_casing(self):
         new_completer = MySQLCompleter(smart_completion=True, settings={'keyword_casing': 'auto'})
@@ -140,9 +142,9 @@ class TestNaiveCompletion(unittest.TestCase):
         # if text is lower case
         text = 'sel'
         position = len(text)
-        result = set(new_completer.get_completions(
+        result = new_completer.get_completions(
             Document(text=text, cursor_position=position),
-            self.complete_event))
-
+            self.complete_event)
+        correct_result = [Completion(text='select', start_position=-3, display_meta="keyword")]
         # then completions should be lower case as well
-        self.assertSetEqual(result, set([Completion(text='select', start_position=-3, display_meta="keyword")]))
+        compare_result_and_correct_result(self, result, correct_result)

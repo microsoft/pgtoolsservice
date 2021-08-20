@@ -5,11 +5,14 @@
 # --------------------------------------------------------------------------------------------
 
 from parameterized import parameterized, param
-import unittest
 import itertools
+import operator
+import unittest
+
+from prompt_toolkit.formatted_text import to_formatted_text
 from tests.language.completion.metadata import (MetaData, alias, name_join, fk_join, join,
                                                 schema, table, function, wildcard_expansion, column,
-                                                get_result, result_set, qual, no_qual)
+                                                get_result, get_result, qual, no_qual, compare_result_and_correct_result)
 
 METADATA = {
     'tables': {
@@ -94,32 +97,33 @@ def to_params(completer):
     return result
 
 
-class TestSmartCompletionMultipleSchemata(unittest.TestCase):
+class TestSmartCompletionMultipleSchema(unittest.TestCase):
     """Methods for testing smart completion with multiple schemas"""
 
     @parameterized.expand(itertools.product(filteredCompleters, ['users', '"users"']))
     def test_suggested_column_names_from_shadowed_visible_table(self, completer, table_name):
-        result = result_set(completer,
+        result = get_result(completer,
                             'SELECT  FROM ' + table_name, len('SELECT '))
-        self.assertSetEqual(result, set(
-            TESTDATA.columns_functions_and_keywords('users')))
+        correct_result = TESTDATA.columns_functions_and_keywords('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(filteredCompleters, [
         'SELECT  from custom.users',
         'WITH users as (SELECT 1 AS foo) SELECT  from custom.users',
     ]))
     def test_suggested_column_names_from_qualified_shadowed_table(self, completer, text):
-        result = result_set(completer, text,
+        result = get_result(completer, text,
                             position=text.find('  ') + 1)
-        self.assertSetEqual(result, set(TESTDATA.columns_functions_and_keywords(
+        correct_result = TESTDATA.columns_functions_and_keywords(
             'users', 'custom'
-        )))
+        )
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(filteredCompleters, ['WITH users as (SELECT 1 AS foo) SELECT  from users', ]))
     def test_suggested_column_names_from_cte(self, completer, text):
-        result = result_set(completer, text, text.find('  ') + 1)
-        self.assertSetEqual(result, set(
-            [column('foo')] + TESTDATA.functions_and_keywords()))
+        result = get_result(completer, text, text.find('  ') + 1)
+        correct_result = [column('foo')] + TESTDATA.functions_and_keywords()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         'SELECT * FROM users JOIN custom.shipments ON ',
@@ -128,12 +132,13 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
         JOIN custom.shipments ON '''
     ]))
     def test_suggested_join_conditions(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([
+        result = get_result(completer, text)
+        correct_result = [
             alias('users'),
             alias('shipments'),
             name_join('shipments.id = users.id'),
-            fk_join('shipments.user_id = users.id')]))
+            fk_join('shipments.user_id = users.id')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(filtr=True, casing=False, aliasing=False), (
         'SELECT * FROM public.{0} RIGHT OUTER JOIN ',
@@ -142,20 +147,16 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
         JOIN '''
     ), ('users', '"users"', 'Users')))
     def test_suggested_joins(self, completer, query, tbl):
-        result = result_set(completer, query.format(tbl))
-        self.assertSetEqual(result, set(
-            TESTDATA.schemas_and_from_clause_items() +
-            [join(
-                'custom.shipments ON shipments.user_id = {0}.id'.format(tbl))]
-        ))
+        result = get_result(completer, query.format(tbl))
+        correct_result = TESTDATA.schemas_and_from_clause_items() + [join('custom.shipments ON shipments.user_id = {0}.id'.format(tbl))]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(filteredCompleters))
     def test_suggested_column_names_from_schema_qualifed_table(self, completer):
-        result = result_set(completer,
+        result = get_result(completer,
                             'SELECT  from custom.products', len('SELECT '))
-        self.assertSetEqual(result, set(TESTDATA.columns_functions_and_keywords(
-            'products', 'custom'
-        )))
+        correct_result = TESTDATA.columns_functions_and_keywords('products', 'custom')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(filtr=True, casing=False), [
         'INSERT INTO orders(',
@@ -164,17 +165,18 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
         'INSERT INTO public.orders ('
     ]))
     def test_suggested_columns_with_insert(self, completer, text):
-        self.assertSetEqual(result_set(completer, text),
-                            set(TESTDATA.columns('orders')))
+        result = get_result(completer, text)
+        correct_result = TESTDATA.columns('orders')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(filteredCompleters))
     def test_suggested_column_names_in_function(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT MAX( from custom.products', len(
                 'SELECT MAX(')
         )
-        self.assertSetEqual(result, set(
-            TESTDATA.columns('products', 'custom')))
+        correct_result = TESTDATA.columns('products', 'custom')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=False), [
         'SELECT * FROM Custom.',
@@ -189,9 +191,9 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
             else:
                 start_position = 0
 
-            result = result_set(completer, text)
-            self.assertSetEqual(result, set(
-                TESTDATA.from_clause_items('custom', start_position)))
+            result = get_result(completer, text)
+            correct_result = TESTDATA.from_clause_items('custom', start_position)
+            compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=False), [
         'SELECT * FROM "Custom".',
@@ -205,37 +207,38 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
         else:
             start_position = 0
 
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            TESTDATA.from_clause_items('Custom', start_position)))
-
+        result = get_result(completer, text)
+        correct_result = TESTDATA.from_clause_items('Custom', start_position)
+        compare_result_and_correct_result(self, result, correct_result)
+        
     @parameterized.expand(to_params(completers(filtr=True, casing=False)))
     def test_suggested_column_names_with_qualified_alias(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT p. from custom.products p', len('SELECT p.')
         )
-        self.assertSetEqual(result, set(
-            TESTDATA.columns('products', 'custom')))
-
+        correct_result = TESTDATA.columns('products', 'custom')
+        compare_result_and_correct_result(self, result, correct_result)
+        
     @parameterized.expand(to_params(filteredCompleters))
     def test_suggested_multiple_column_names(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT id,  from custom.products', len(
                 'SELECT id, ')
         )
-        self.assertSetEqual(result, set(TESTDATA.columns_functions_and_keywords(
+        correct_result = TESTDATA.columns_functions_and_keywords(
             'products', 'custom'
-        )))
-
+        )
+        compare_result_and_correct_result(self, result, correct_result)
+        
     @parameterized.expand(to_params(completers(filtr=True, casing=False)))
     def test_suggested_multiple_column_names_with_alias(self, completer):
-        result = result_set(
+        result = get_result(
             completer,
             'SELECT p.id, p. from custom.products p',
             len('SELECT u.id, u.')
         )
-        self.assertSetEqual(result, set(
-            TESTDATA.columns('products', 'custom')))
+        correct_result = TESTDATA.columns('products', 'custom')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(filtr=True, casing=False), [
         'SELECT x.id, y.product_name FROM custom.products x JOIN custom.products y ON ',
@@ -244,33 +247,36 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
     def test_suggestions_after_on(self, completer, text):
         position = len(
             'SELECT x.id, y.product_name FROM custom.products x JOIN custom.products y ON ')
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set([
+        result = get_result(completer, text, position)
+        correct_result = [
             alias('x'),
             alias('y'),
             name_join('y.price = x.price'),
             name_join('y.product_name = x.product_name'),
-            name_join('y.id = x.id')]))
+            name_join('y.id = x.id')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers()))
     def test_suggested_aliases_after_on_right_side(self, completer):
         text = 'SELECT x.id, y.product_name FROM custom.products x JOIN custom.products y ON x.id = '
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([alias('x'), alias('y')]))
+        result = get_result(completer, text)
+        correct_result = [alias('x'), alias('y')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(filtr=True, casing=False, aliasing=False)))
     def test_table_names_after_from(self, completer):
         text = 'SELECT * FROM '
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(TESTDATA.schemas_and_from_clause_items()))
+        result = get_result(completer, text)
+        correct_result = TESTDATA.schemas_and_from_clause_items()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(filtr=True, casing=False)))
     def test_schema_qualified_function_name(self, completer):
         text = 'SELECT custom.func'
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([
+        result = get_result(completer, text)
+        self.assertListEqual(result, [
             function('func3()', -len('func')),
-            function('set_returning_func()', -len('func'))]))
+            function('set_returning_func()', -len('func'))])
 
     @parameterized.expand(itertools.product(completers(filtr=True, casing=False), [
         'SELECT 1::custom.',
@@ -279,18 +285,19 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
         'ALTER TABLE foo ALTER COLUMN bar TYPE custom.',
     ]))
     def test_schema_qualified_type_name(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(TESTDATA.types('custom')))
+        result = get_result(completer, text)
+        correct_result = TESTDATA.types('custom')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(filtr=True, casing=False)))
     def test_suggest_columns_from_aliased_set_returning_function(self, completer):
-        result = result_set(
+        result = get_result(
             completer,
             'select f. from custom.set_returning_func() f',
             len('select f.')
         )
-        self.assertSetEqual(result, set(
-            TESTDATA.columns('set_returning_func', 'custom', 'functions')))
+        self.assertListEqual(result, 
+            TESTDATA.columns('set_returning_func', 'custom', 'functions'))
 
     @parameterized.expand(itertools.product(filteredCompleters, [
         'SELECT * FROM custom.set_returning_func()',
@@ -401,8 +408,8 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
     ]))
     def test_suggest_columns_from_unquoted_table(self, completer, text):
         position = len('SELECT U.')
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set(TESTDATA.columns('users', 'custom')))
+        result = get_result(completer, text, position)
+        self.assertEqual(result, TESTDATA.columns('users', 'custom'))
 
     @parameterized.expand(itertools.product(completers(filtr=True, casing=False), [
         'SELECT U. FROM custom."Users" U',
@@ -410,46 +417,50 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
     ]))
     def test_suggest_columns_from_quoted_table(self, completer, text):
         position = len('SELECT U.')
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set(TESTDATA.columns('Users', 'custom')))
+        result = get_result(completer, text, position)
+        self.assertEqual(result, TESTDATA.columns('Users', 'custom'))
 
     texts = ['SELECT * FROM ', 'SELECT * FROM public.Orders O CROSS JOIN ']
 
     @parameterized.expand(itertools.product(completers(filtr=True, casing=False, aliasing=False), texts))
     def test_schema_or_visible_table_completion(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            TESTDATA.schemas_and_from_clause_items()))
+        result = get_result(completer, text)
+        correct_result = TESTDATA.schemas_and_from_clause_items()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(aliasing=True, casing=False, filtr=True), texts))
     def test_table_aliases(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(TESTDATA.schemas() + [
+        result = get_result(completer, text)
+        correct_result = TESTDATA.schemas() + [
             table('users u'),
             table('orders o' if text == 'SELECT * FROM ' else 'orders o2'),
             table('"select" s'),
             function('func1() f'),
-            function('func2() f')]))
+            function('func2() f')]
+        compare_result_and_correct_result(self, result, correct_result)
+
 
     @parameterized.expand(itertools.product(completers(aliasing=True, casing=True, filtr=True), texts))
     def test_aliases_with_casing(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(CASED_SCHEMAS + [
+        result = get_result(completer, text)
+        correct_result = CASED_SCHEMAS + [
             table('users u'),
             table('Orders O' if text == 'SELECT * FROM ' else 'Orders O2'),
             table('"select" s'),
             function('Func1() F'),
-            function('func2() f')]))
+            function('func2() f')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(aliasing=False, casing=True, filtr=True), texts))
     def test_table_casing(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(CASED_SCHEMAS + [
+        result = get_result(completer, text)
+        correct_result = CASED_SCHEMAS + [
             table('users'),
             table('Orders'),
             table('"select"'),
             function('Func1()'),
-            function('func2()')]))
+            function('func2()')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(aliasing=False, casing=True)))
     def test_alias_search_without_aliases2(self, completer):
@@ -510,7 +521,7 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
         first = result[0]
         self.assertEqual(first.start_position, -3)
         self.assertEqual(first.text, 'extract_entry_symbols()')
-        self.assertEqual(first.display, 'extract_entry_symbols(_entryid)')
+        self.assertEqual(first.display, to_formatted_text('extract_entry_symbols(_entryid)'))
 
     @parameterized.expand(to_params(completers()))
     def test_function_alias_search_with_aliases(self, completer):
@@ -519,7 +530,7 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
         first = result[0]
         self.assertEqual(first.start_position, -2)
         self.assertEqual(first.text, 'enter_entry(_title := , _text := )')
-        self.assertEqual(first.display, 'enter_entry(_title, _text)')
+        self.assertEqual(first.display, to_formatted_text('enter_entry(_title, _text)'))
 
     @parameterized.expand(to_params(completers(filtr=True, casing=True, qualify=no_qual)))
     def test_column_alias_search(self, completer):
@@ -547,38 +558,36 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
     @parameterized.expand(to_params(completers(casing=False, filtr=False, aliasing=False)))
     def test_all_schema_objects(self, completer):
         text = ('SELECT * FROM ')
-        result = result_set(completer, text)
-        # Note: set comparison >= means is superset
-        self.assertTrue(result >= set(
-            [table(x) for x in ('orders', '"select"', 'custom.shipments')]
-            + [function(x + '()') for x in ('func2', 'custom.func3')]
-        ))
+        result = get_result(completer, text)
+        for x in ('orders', '"select"', 'custom.shipments'):
+            self.assertIn(table(x), result)
+        for x in ('func2', 'custom.func3'):
+            self.assertIn(function(x + '()'), result)
 
     @parameterized.expand(to_params(completers(filtr=False, aliasing=False, casing=True)))
     def test_all_schema_objects_with_casing(self, completer):
         text = 'SELECT * FROM '
-        result = result_set(completer, text)
-        self.assertTrue(result >= set(
-            [table(x) for x in ('Orders', '"select"', 'CUSTOM.shipments')]
-            + [function(x + '()') for x in ('func2', 'CUSTOM.func3')]
-        ))
+        result = get_result(completer, text)
+        for x in ('Orders', '"select"', 'CUSTOM.shipments'):
+            self.assertIn(table(x), result)
+        for x in ('func2', 'CUSTOM.func3'):
+            self.assertIn(function(x + '()'), result)
 
     @parameterized.expand(to_params(completers(casing=False, filtr=False, aliasing=True)))
     def test_all_schema_objects_with_aliases(self, completer):
         text = ('SELECT * FROM ')
-        result = result_set(completer, text)
-        self.assertTrue(result >= set(
-            [table(x)
-             for x in ('orders o', '"select" s', 'custom.shipments s')]
-            + [function(x) for x in ('func2() f', 'custom.func3() f')]
-        ))
+        result = get_result(completer, text)
+        for x in ('orders o', '"select" s', 'custom.shipments s'):
+            self.assertIn(table(x), result)
+        for x in ('func2() f', 'custom.func3() f'):
+            self.assertIn(function(x), result)
 
     @parameterized.expand(to_params(completers(casing=False, filtr=False, aliasing=True)))
     def test_set_schema(self, completer):
         text = ('SET SCHEMA ')
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([
+        result = get_result(completer, text)
+        self.assertEqual(result, [
             schema(u"'blog'"),
-            schema(u"'Custom'"),
             schema(u"'custom'"),
-            schema(u"'public'")]))
+            schema(u"'Custom'"),
+            schema(u"'public'")])

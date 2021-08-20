@@ -5,6 +5,7 @@
 
 from functools import partial
 from itertools import product
+import operator
 from unittest.mock import Mock
 from prompt_toolkit.document import Document
 
@@ -45,6 +46,9 @@ def get_result(completer, text, position=None):
 def result_set(completer, text, position=None):
     return set(get_result(completer, text, position))
 
+
+def compare_result_and_correct_result(test, result, correct_result):
+    test.assertListEqual(sorted(result, key=operator.attrgetter("display")), sorted(correct_result, key=operator.attrgetter("display")))
 
 # The code below is quivalent to
 # def schema(text, pos=0):
