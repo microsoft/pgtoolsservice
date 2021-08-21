@@ -12,4 +12,4 @@ then
   exit
 fi
 
-nosetests --processes=-1 "$@"
+nosetests --processes=-1 --process-timeout 60 "$@"

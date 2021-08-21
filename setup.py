@@ -13,8 +13,8 @@ executables = [
     Executable('ossdbtoolsservice/ossdbtoolsservice_main.py', base=base)
 ]
 
-setup(name='PostgreSQL Tools Service',
-      version='0.1.0',
+setup(name='OSS Databases Tools Service',
+      version='1.6.0',
       description='Carbon data protocol server implementation for PostgreSQL',
       options=dict(build_exe=buildOptions),
       executables=executables)
