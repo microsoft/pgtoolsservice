@@ -6,13 +6,12 @@
 
 from parameterized import parameterized, param
 import itertools
-import operator
 import unittest
 
 from prompt_toolkit.formatted_text import to_formatted_text
 from tests.language.completion.metadata import (MetaData, alias, name_join, fk_join, join,
                                                 schema, table, function, wildcard_expansion, column,
-                                                get_result, get_result, qual, no_qual, compare_result_and_correct_result)
+                                                get_result, qual, no_qual, compare_result_and_correct_result)
 
 METADATA = {
     'tables': {
@@ -210,7 +209,7 @@ class TestSmartCompletionMultipleSchema(unittest.TestCase):
         result = get_result(completer, text)
         correct_result = TESTDATA.from_clause_items('Custom', start_position)
         compare_result_and_correct_result(self, result, correct_result)
-        
+
     @parameterized.expand(to_params(completers(filtr=True, casing=False)))
     def test_suggested_column_names_with_qualified_alias(self, completer):
         result = get_result(
@@ -218,7 +217,7 @@ class TestSmartCompletionMultipleSchema(unittest.TestCase):
         )
         correct_result = TESTDATA.columns('products', 'custom')
         compare_result_and_correct_result(self, result, correct_result)
-        
+
     @parameterized.expand(to_params(filteredCompleters))
     def test_suggested_multiple_column_names(self, completer):
         result = get_result(
@@ -229,7 +228,7 @@ class TestSmartCompletionMultipleSchema(unittest.TestCase):
             'products', 'custom'
         )
         compare_result_and_correct_result(self, result, correct_result)
-        
+
     @parameterized.expand(to_params(completers(filtr=True, casing=False)))
     def test_suggested_multiple_column_names_with_alias(self, completer):
         result = get_result(
@@ -296,8 +295,7 @@ class TestSmartCompletionMultipleSchema(unittest.TestCase):
             'select f. from custom.set_returning_func() f',
             len('select f.')
         )
-        self.assertListEqual(result, 
-            TESTDATA.columns('set_returning_func', 'custom', 'functions'))
+        self.assertListEqual(result, TESTDATA.columns('set_returning_func', 'custom', 'functions'))
 
     @parameterized.expand(itertools.product(filteredCompleters, [
         'SELECT * FROM custom.set_returning_func()',
@@ -438,7 +436,6 @@ class TestSmartCompletionMultipleSchema(unittest.TestCase):
             function('func1() f'),
             function('func2() f')]
         compare_result_and_correct_result(self, result, correct_result)
-
 
     @parameterized.expand(itertools.product(completers(aliasing=True, casing=True, filtr=True), texts))
     def test_aliases_with_casing(self, completer, text):

@@ -8,7 +8,7 @@ import unittest
 import itertools
 from tests.language.completion.metadata import (MetaData, alias, name_join, fk_join, join, keyword,
                                                 schema, table, view, function, column, wildcard_expansion,
-                                                get_result, get_result, qual, no_qual, compare_result_and_correct_result)
+                                                get_result, qual, no_qual, compare_result_and_correct_result)
 from ossdbtoolsservice.language.completion.pg_completion import PGCompletion
 
 METADATA = {
@@ -393,10 +393,9 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     def test_suggested_joins(self, completer, text):
         result = get_result(completer, text)
         correct_result = testdata.schemas_and_from_clause_items() + [
-                join('"Users" ON "Users".userid = Users.id'),
-                join('users users2 ON users2.id = Users.parentid'),
-                join('users users2 ON users2.parentid = Users.id'),
-            ]
+            join('"Users" ON "Users".userid = Users.id'),
+            join('users users2 ON users2.id = Users.parentid'),
+            join('users users2 ON users2.parentid = Users.id')]
         compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=True, aliasing=False), join_texts))
@@ -723,7 +722,6 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         result = get_result(completer, text, position)
         correct_result = testdata.columns('users')
         compare_result_and_correct_result(self, result, correct_result)
-        
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggest_columns_from_quoted_table(self, completer):

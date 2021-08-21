@@ -100,7 +100,7 @@ class JSONRPCTestCase:
             input_stream.flush()
             if message.method == 'shutdown':
                 continue
-            output_info[1].wait_for(lambda: output_info[0] >= expected_write_calls, 5)
+            output_info[1].wait_for(lambda: output_info[0] >= expected_write_calls, 10)
             if output_info[0] < expected_write_calls:
                 raise RuntimeError(f'Timed out waiting for response or notification for method {message.method}')
 

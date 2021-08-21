@@ -6,13 +6,12 @@
 import unittest
 from unittest.mock import Mock
 
-import operator
-
 from prompt_toolkit.completion import Completion
 from prompt_toolkit.document import Document
 
 from ossdbtoolsservice.language.completion.pgcompleter import PGCompleter
 from tests.language.completion.metadata import compare_result_and_correct_result
+
 
 class TestNaiveCompletion(unittest.TestCase):
     """Methods for testing non-smart completion"""

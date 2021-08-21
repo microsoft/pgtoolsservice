@@ -54,6 +54,8 @@ def compare_result_and_correct_result(test, result, correct_result):
 # def schema(text, pos=0):
 #   return completion('schema', text, pos)
 # and so on
+
+
 schema = partial(completion, 'schema')
 table = partial(completion, 'table')
 view = partial(completion, 'view')
