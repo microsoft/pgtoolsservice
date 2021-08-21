@@ -43,6 +43,9 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         bool_len_to_write = bytearray(struct.pack("i", bool_len))
         self._bool_file_stream.write(bool_len_to_write)
         self._bool_file_stream.write(bool_val)
+        self._bool_file_stream.write(b'\xff\xff\xff\xff')
+        self._bool_file_stream.write(bool_len_to_write)
+        self._bool_file_stream.write(bool_val)
 
         self._float_file_stream1 = io.BytesIO()
         float_val1 = bytearray(struct.pack("d", self._float_test_value1))
@@ -179,6 +182,16 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
+        res = self._bool_reader.read_row(test_file_offset, test_row_id, test_columns_info)
+        self.assertEqual(self._bool_test_value, res[0].raw_object)
+
+        test_file_offset += 5
+        test_row_id += 1
+        res = self._bool_reader.read_row(test_file_offset, test_row_id, test_columns_info)
+        self.assertEqual(None, res[0].raw_object)
+
+        test_file_offset += 4
+        test_row_id += 1
         res = self._bool_reader.read_row(test_file_offset, test_row_id, test_columns_info)
         self.assertEqual(self._bool_test_value, res[0].raw_object)
 

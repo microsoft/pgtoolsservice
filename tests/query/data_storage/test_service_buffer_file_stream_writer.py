@@ -11,6 +11,7 @@ import struct
 import io
 import datetime
 import psycopg2
+import psycopg2.tz
 from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
@@ -41,7 +42,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
 
     def test_write_null(self):
         res = self._writer._write_null()
-        self.assertEqual(res, 0)
+        self.assertEqual(res, 4)
 
     def test_write_bool(self):
         test_value = True

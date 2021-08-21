@@ -8,7 +8,7 @@ import unittest
 import itertools
 from tests.language.completion.metadata import (MetaData, alias, name_join, fk_join, join, keyword,
                                                 schema, table, view, function, column, wildcard_expansion,
-                                                get_result, result_set, qual, no_qual)
+                                                get_result, qual, no_qual, compare_result_and_correct_result)
 from ossdbtoolsservice.language.completion.pg_completion import PGCompletion
 
 METADATA = {
@@ -113,21 +113,24 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
     @parameterized.expand(to_params(completers()))
     def test_empty_string_completion(self, completer):
-        result = result_set(completer, '')
-        self.assertSetEqual(set(testdata.keywords()), result)
+        result = get_result(completer, '')
+        correct_result = testdata.keywords()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers()))
     def test_select_keyword_completion(self, completer):
-        result = result_set(completer, 'SEL')
-        self.assertSetEqual(result, set([keyword('SELECT', -3)]))
+        result = get_result(completer, 'SEL')
+        correct_result = [keyword('SELECT', -3)]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers()))
     def test_builtin_function_name_completion(self, completer):
-        result = result_set(completer, 'SELECT MA')
-        self.assertSetEqual(result, set([
+        result = get_result(completer, 'SELECT MA')
+        correct_result = [
             function('MAX', -2),
             keyword('MAXEXTENTS', -2), keyword('MATERIALIZED VIEW', -2)
-        ]))
+        ]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers()))
     def test_builtin_function_matches_only_at_start(self, completer):
@@ -139,44 +142,45 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
     @parameterized.expand(to_params(completers(casing=False, aliasing=False)))
     def test_user_function_name_completion(self, completer):
-        result = result_set(completer, 'SELECT cu')
-        self.assertSetEqual(result, set([
+        result = get_result(completer, 'SELECT cu')
+        correct_result = [
             function('custom_fun()', -2),
             function('_custom_fun()', -2),
             function('custom_func1()', -2),
             function('custom_func2()', -2),
             keyword('CURRENT', -2),
-        ]))
+        ]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False, aliasing=False)))
     def test_user_function_name_completion_matches_anywhere(self, completer):
-        result = result_set(completer, 'SELECT om')
-        self.assertSetEqual(result, set([
+        result = get_result(completer, 'SELECT om')
+        correct_result = [
             function('custom_fun()', -2),
             function('_custom_fun()', -2),
             function('custom_func1()', -2),
-
-            function('custom_func2()', -2)]))
+            function('custom_func2()', -2)]
+        compare_result_and_correct_result(self, result, correct_result)
 
     # Note: not handling Special CLI params at present
     # @parameterized.expand(to_params(completers(casing=True)))
     # def test_list_functions_for_special(self, completer):
-    #     result = result_set(completer, r'\df ')
+    #     result = get_result(completer, r'\df ')
     #     self.assertSetEqual(result, set(
     #         [schema('PUBLIC')] + [function(f) for f in cased_func_names])
     #     )
 
     @parameterized.expand(to_params(completers(casing=False, qualify=no_qual)))
     def test_suggested_column_names_from_visible_table(self, completer):
-        result = result_set(completer, 'SELECT  from users', len('SELECT '))
-        self.assertSetEqual(result, set(
-            testdata.columns_functions_and_keywords('users')))
+        result = get_result(completer, 'SELECT  from users', len('SELECT '))
+        correct_result = testdata.columns_functions_and_keywords('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=True, qualify=no_qual)))
     def test_suggested_cased_column_names(self, completer):
-        result = result_set(completer, 'SELECT  from users', len('SELECT '))
-        self.assertSetEqual(result, set(cased_funcs + cased_users_cols
-                                        + testdata.builtin_functions() + testdata.keywords()))
+        result = get_result(completer, 'SELECT  from users', len('SELECT '))
+        correct_result = cased_funcs + cased_users_cols + testdata.builtin_functions() + testdata.keywords()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, qualify=no_qual), [
         'SELECT  from users',
@@ -185,9 +189,9 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     def test_suggested_auto_qualified_column_names(self, completer, text):
         position = text.index('  ') + 1
         cols = [column(c.lower()) for c in cased_users_col_names]
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set(
-            cols + testdata.functions_and_keywords()))
+        result = get_result(completer, text, position)
+        correct_result = cols + testdata.functions_and_keywords()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, qualify=qual), [
         'SELECT  from users U NATURAL JOIN "Users"',
@@ -198,9 +202,9 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         cols = [column('U.' + c.lower()) for c in cased_users_col_names]
         cols += [column('"Users".' + c.lower())
                  for c in cased_users2_col_names]
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set(
-            cols + testdata.functions_and_keywords()))
+        result = get_result(completer, text, position)
+        correct_result = cols + testdata.functions_and_keywords()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=True, qualify=['always']), [
         'UPDATE users SET ',
@@ -208,75 +212,82 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     ]))
     def test_no_column_qualification(self, completer, text):
         cols = [column(c) for c in cased_users_col_names]
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(cols))
+        result = get_result(completer, text)
+        correct_result = cols
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=True, qualify=['always'])))
     def test_suggested_cased_always_qualified_column_names(self, completer):
         text = 'SELECT  from users'
         position = len('SELECT ')
         cols = [column('users.' + c) for c in cased_users_col_names]
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set(cased_funcs + cols
-                                        + testdata.builtin_functions() + testdata.keywords()))
+        result = get_result(completer, text, position)
+        correct_result = cased_funcs + cols + testdata.builtin_functions() + testdata.keywords()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False, qualify=no_qual)))
     def test_suggested_column_names_in_function(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT MAX( from users', len('SELECT MAX(')
         )
-        self.assertSetEqual(result, set(testdata.columns('users')))
+        correct_result = testdata.columns('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggested_column_names_with_table_dot(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT users. from users', len('SELECT users.')
         )
-        self.assertSetEqual(result, set(testdata.columns('users')))
+        correct_result = testdata.columns('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggested_column_names_with_alias(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT u. from users u', len('SELECT u.'))
-        self.assertSetEqual(result, set(testdata.columns('users')))
+        correct_result = testdata.columns('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False, qualify=no_qual)))
     def test_suggested_multiple_column_names(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT id,  from users u', len('SELECT id, ')
         )
-        self.assertSetEqual(result, set(
-            testdata.columns_functions_and_keywords('users')))
+        correct_result = testdata.columns_functions_and_keywords('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggested_multiple_column_names_with_alias(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT u.id, u. from users u', len('SELECT u.id, u.')
         )
-        self.assertSetEqual(result, set(testdata.columns('users')))
+        correct_result = testdata.columns('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=True)))
     def test_suggested_cased_column_names_with_alias(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT u.id, u. from users u', len('SELECT u.id, u.')
         )
-        self.assertSetEqual(result, set(cased_users_cols))
+        correct_result = cased_users_cols
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggested_multiple_column_names_with_dot(self, completer):
-        result = result_set(
+        result = get_result(
             completer,
             'SELECT users.id, users. from users u',
             len('SELECT users.id, users.')
         )
-        self.assertSetEqual(result, set(testdata.columns('users')))
+        correct_result = testdata.columns('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggest_columns_after_three_way_join(self, completer):
         text = '''SELECT * FROM users u1
                 INNER JOIN users u2 ON u1.id = u2.id
                 INNER JOIN users u3 ON u2.id = u3.'''
-        result = result_set(completer, text)
+        result = get_result(completer, text)
         self.assertTrue(column('id') in result)
 
     join_condition_texts = [
@@ -299,17 +310,17 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
     @parameterized.expand(itertools.product(completers(casing=False), join_condition_texts))
     def test_suggested_join_conditions(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([
+        result = get_result(completer, text)
+        correct_result = [
             alias('U'), alias('U2'), fk_join('U2.userid = U.id')
-        ]))
+        ]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=True), join_condition_texts))
     def test_cased_join_conditions(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            [alias('U'), alias('U2'), fk_join('U2.UserID = U.ID')]
-        ))
+        result = get_result(completer, text)
+        correct_result = [alias('U'), alias('U2'), fk_join('U2.UserID = U.ID')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         '''SELECT *
@@ -336,8 +347,9 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         'SELECT * FROM users JOIN users u2 on foo.'
     ]))
     def test_suggested_join_conditions_with_invalid_qualifier(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set())
+        result = get_result(completer, text)
+        correct_result = []
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         ['SELECT * FROM users JOIN NonTable on ', 'NonTable'],
@@ -346,8 +358,9 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     def test_suggested_join_conditions_with_invalid_table(self, completer, text_and_ref):
         text = text_and_ref[0]
         ref = text_and_ref[1]
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([alias('users'), alias(ref)]))
+        result = get_result(completer, text)
+        correct_result = [alias('users'), alias(ref)]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=False), [
         'SELECT * FROM "Users" u JOIN u',
@@ -356,7 +369,7 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         'SELECT * FROM "Users" u JOIN id',
     ]))
     def test_suggested_joins_fuzzy(self, completer, text):
-        result = result_set(completer, text)
+        result = get_result(completer, text)
         last_word = text.split()[-1]
         expected = join('users ON users.id = u.userid', -len(last_word))
         self.assertTrue(expected in result)
@@ -378,32 +391,32 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=False), join_texts))
     def test_suggested_joins(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            testdata.schemas_and_from_clause_items() + [
-                join('"Users" ON "Users".userid = Users.id'),
-                join('users users2 ON users2.id = Users.parentid'),
-                join('users users2 ON users2.parentid = Users.id'),
-            ]
-        ))
+        result = get_result(completer, text)
+        correct_result = testdata.schemas_and_from_clause_items() + [
+            join('"Users" ON "Users".userid = Users.id'),
+            join('users users2 ON users2.id = Users.parentid'),
+            join('users users2 ON users2.parentid = Users.id')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=True, aliasing=False), join_texts))
     def test_cased_joins(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([schema('PUBLIC')] + cased_rels + [
+        result = get_result(completer, text)
+        correct_result = [schema('PUBLIC')] + cased_rels + [
             join('"Users" ON "Users".UserID = Users.ID'),
             join('Users Users2 ON Users2.ID = Users.PARENTID'),
             join('Users Users2 ON Users2.PARENTID = Users.ID'),
-        ]))
+        ]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=True), join_texts))
     def test_aliased_joins(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(testdata.schemas() + aliased_rels + [
+        result = get_result(completer, text)
+        correct_result = testdata.schemas() + aliased_rels + [
             join('"Users" U ON U.userid = Users.id'),
             join('users u ON u.id = Users.parentid'),
             join('users u ON u.parentid = Users.id'),
-        ]))
+        ]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=False), [
         'SELECT * FROM public."Users" JOIN ',
@@ -413,11 +426,9 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         LEFT JOIN '''
     ]))
     def test_suggested_joins_quoted_schema_qualified_table(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            testdata.schemas_and_from_clause_items() +
-            [join('public.users ON users.id = "Users".userid')]
-        ))
+        result = get_result(completer, text)
+        correct_result = testdata.schemas_and_from_clause_items() + [join('public.users ON users.id = "Users".userid')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         'SELECT u.name, o.id FROM users u JOIN orders o ON ',
@@ -425,12 +436,13 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     ]))
     def test_suggested_aliases_after_on(self, completer, text):
         position = len('SELECT u.name, o.id FROM users u JOIN orders o ON ')
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set([
+        result = get_result(completer, text, position)
+        correct_result = [
             alias('u'),
             name_join('o.id = u.id'),
             name_join('o.email = u.email'),
-            alias('o')]))
+            alias('o')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(), [
         'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = ',
@@ -440,8 +452,9 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         position = len(
             'SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = '
         )
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set([alias('u'), alias('o')]))
+        result = get_result(completer, text, position)
+        correct_result = [alias('u'), alias('o')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         'SELECT users.name, orders.id FROM users JOIN orders ON ',
@@ -450,13 +463,14 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     def test_suggested_tables_after_on(self, completer, text):
         position = len(
             'SELECT users.name, orders.id FROM users JOIN orders ON ')
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set([
+        result = get_result(completer, text, position)
+        correct_result = [
             name_join('orders.id = users.id'),
             name_join('orders.email = users.email'),
             alias('users'),
             alias('orders')
-        ]))
+        ]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         'SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = JOIN orders orders2 ON',
@@ -465,16 +479,18 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     def test_suggested_tables_after_on_right_side(self, completer, text):
         position = len(
             'SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = ')
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set([alias('users'), alias('orders')]))
+        result = get_result(completer, text, position)
+        correct_result = [alias('users'), alias('orders')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         'SELECT * FROM users INNER JOIN orders USING (',
         'SELECT * FROM users INNER JOIN orders USING(',
     ]))
     def test_join_using_suggests_common_columns(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([column('id'), column('email')]))
+        result = get_result(completer, text)
+        correct_result = [column('id'), column('email')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         'SELECT * FROM users u1 JOIN users u2 USING (email) JOIN user_emails ue USING()',
@@ -484,16 +500,18 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     ]))
     def test_join_using_suggests_from_last_table(self, completer, text):
         position = text.index('()') + 1
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set([column('id'), column('email')]))
+        result = get_result(completer, text, position)
+        correct_result = [column('id'), column('email')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         'SELECT * FROM users INNER JOIN orders USING (id,',
         'SELECT * FROM users INNER JOIN orders USING(id,',
     ]))
     def test_join_using_suggests_columns_after_first_column(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([column('id'), column('email')]))
+        result = get_result(completer, text)
+        correct_result = [column('id'), column('email')]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=False), [
         'SELECT * FROM ',
@@ -502,8 +520,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     ]))
     def test_table_names_after_from(self, completer, text):
         result = get_result(completer, text)
-        self.assertSetEqual(set(result), set(
-            testdata.schemas_and_from_clause_items()))
+        correct_result = testdata.schemas_and_from_clause_items()
+        compare_result_and_correct_result(self, result, correct_result)
         self.assertTrue([c.text for c in result] == [
             'public',
             'orders',
@@ -521,13 +539,13 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
 
     @parameterized.expand(to_params(completers(casing=False, qualify=no_qual)))
     def test_auto_escaped_col_names(self, completer):
-        result = result_set(completer, 'SELECT  from "select"', len('SELECT '))
-        self.assertSetEqual(result, set(
-            testdata.columns_functions_and_keywords('select')))
+        result = get_result(completer, 'SELECT  from "select"', len('SELECT '))
+        correct_result = testdata.columns_functions_and_keywords('select')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(aliasing=False)))
     def test_allow_leading_double_quote_in_last_word(self, completer):
-        result = result_set(completer, 'SELECT * from "sele')
+        result = get_result(completer, 'SELECT * from "sele')
 
         expected = table('"select"', -5)
 
@@ -540,52 +558,49 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         'ALTER TABLE foo ALTER COLUMN bar TYPE ',
     ]))
     def test_suggest_datatype(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            testdata.schemas() + testdata.types() + testdata.builtin_datatypes()
-        ))
+        result = get_result(completer, text)
+        correct_result = testdata.schemas() + testdata.types() + testdata.builtin_datatypes()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggest_columns_from_escaped_table_alias(self, completer):
-        result = result_set(completer, 'select * from "select" s where s.')
-        self.assertSetEqual(result, set(testdata.columns('select')))
+        result = get_result(completer, 'select * from "select" s where s.')
+        correct_result = testdata.columns('select')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False, qualify=no_qual)))
     def test_suggest_columns_from_set_returning_function(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'select  from set_returning_func()', len('select ')
         )
-        self.assertSetEqual(result, set(testdata.columns_functions_and_keywords(
+        correct_result = testdata.columns_functions_and_keywords(
             'set_returning_func', typ='functions'
-        )))
+        )
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggest_columns_from_aliased_set_returning_function(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'select f. from set_returning_func() f', len('select f.')
         )
-        self.assertSetEqual(result, set(
-            testdata.columns('set_returning_func', typ='functions')
-        ))
+        correct_result = testdata.columns('set_returning_func', typ='functions')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_join_functions_using_suggests_common_columns(self, completer):
         text = '''SELECT * FROM set_returning_func() f1
                 INNER JOIN set_returning_func() f2 USING ('''
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            testdata.columns('set_returning_func', typ='functions'))
-        )
+        result = get_result(completer, text)
+        correct_result = testdata.columns('set_returning_func', typ='functions')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_join_functions_on_suggests_columns_and_join_conditions(self, completer):
         text = '''SELECT * FROM set_returning_func() f1
                 INNER JOIN set_returning_func() f2 ON f1.'''
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            [name_join('y = f2.y'), name_join('x = f2.x')] +
-            testdata.columns('set_returning_func', typ='functions')
-        ))
+        result = get_result(completer, text)
+        correct_result = [name_join('y = f2.y'), name_join('x = f2.x')] + testdata.columns('set_returning_func', typ='functions')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers()))
     def test_learn_keywords(self, completer):
@@ -704,34 +719,37 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     ]))
     def test_suggest_columns_from_unquoted_table(self, completer, text):
         position = len('SELECT U.')
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set(testdata.columns('users')))
+        result = get_result(completer, text, position)
+        correct_result = testdata.columns('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False)))
     def test_suggest_columns_from_quoted_table(self, completer):
-        result = result_set(
+        result = get_result(
             completer, 'SELECT U. FROM "Users" U', len('SELECT U.')
         )
-        self.assertSetEqual(result, set(testdata.columns('Users')))
+        correct_result = testdata.columns('Users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=False), [
         'SELECT * FROM ',
         'SELECT * FROM Orders o CROSS JOIN '
     ]))
     def test_schema_or_visible_table_completion(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            testdata.schemas_and_from_clause_items()))
+        result = get_result(completer, text)
+        correct_result = testdata.schemas_and_from_clause_items()
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=True), ['SELECT * FROM ']))
     def test_table_aliases(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(testdata.schemas() + aliased_rels))
+        result = get_result(completer, text)
+        correct_result = testdata.schemas() + aliased_rels
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False, aliasing=True), ['SELECT * FROM Orders o CROSS JOIN ']))
     def test_duplicate_table_aliases(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(testdata.schemas() + [
+        result = get_result(completer, text)
+        correct_result = testdata.schemas() + [
             table('orders o2'),
             table('users u'),
             table('"Users" U'),
@@ -746,12 +764,13 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
                 'set_returning_func(x := , y := ) srf',
                 display='set_returning_func(x, y) srf'
             ),
-        ]))
+        ]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=True, aliasing=True), ['SELECT * FROM Orders o CROSS JOIN ']))
     def test_duplicate_aliases_with_casing(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([
+        result = get_result(completer, text)
+        correct_result = [
             schema('PUBLIC'),
             table('Orders O2'),
             table('Users U'),
@@ -767,18 +786,20 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
                 'set_returning_func(x := , y := ) srf',
                 display='set_returning_func(x, y) srf'
             ),
-        ]))
+        ]
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=True, aliasing=True), ['SELECT * FROM ']))
     def test_aliases_with_casing(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set(
-            [schema('PUBLIC')] + cased_aliased_rels))
+        result = get_result(completer, text)
+        correct_result = [schema('PUBLIC')] + cased_aliased_rels
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=True, aliasing=False), ['SELECT * FROM ']))
     def test_table_casing(self, completer, text):
-        result = result_set(completer, text)
-        self.assertSetEqual(result, set([schema('PUBLIC')] + cased_rels))
+        result = get_result(completer, text)
+        correct_result = [schema('PUBLIC')] + cased_rels
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(itertools.product(completers(casing=False), [
         'INSERT INTO users ()',
@@ -788,8 +809,9 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     ]))
     def test_insert(self, completer, text):
         position = text.find('(') + 1
-        result = result_set(completer, text, position)
-        self.assertSetEqual(result, set(testdata.columns('users')))
+        result = get_result(completer, text, position)
+        correct_result = testdata.columns('users')
+        compare_result_and_correct_result(self, result, correct_result)
 
     @parameterized.expand(to_params(completers(casing=False, aliasing=False)))
     def test_suggest_cte_names(self, completer):
@@ -798,16 +820,17 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
                 cte2 AS (SELECT d, e, f FROM bar)
             SELECT * FROM
         '''
-        result = result_set(completer, text)
-        expected = set([
+        result = get_result(completer, text)
+        expected = [
             PGCompletion('cte1', 0, display_meta='table'),
             PGCompletion('cte2', 0, display_meta='table'),
-        ])
-        self.assertTrue(expected <= result)
+        ]
+        for c in expected:
+            self.assertIn(c, result)
 
     @parameterized.expand(to_params(completers(casing=False, qualify=no_qual)))
     def test_suggest_columns_from_cte(self, completer):
-        result = result_set(
+        result = get_result(
             completer,
             'WITH cte AS (SELECT foo, bar FROM baz) SELECT  FROM cte',
             len('WITH cte AS (SELECT foo, bar FROM baz) SELECT ')
@@ -818,17 +841,16 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
                 PGCompletion('bar', 0, display_meta='column'),
             ] + testdata.functions_and_keywords()
         )
-
-        self.assertSetEqual(result, set(expected))
+        compare_result_and_correct_result(self, result, expected)
 
     @parameterized.expand(itertools.product(completers(casing=False, qualify=no_qual), [
         'WITH cte AS (SELECT foo FROM bar) SELECT * FROM cte WHERE cte.',
         'WITH cte AS (SELECT foo FROM bar) SELECT * FROM cte c WHERE c.',
     ]))
     def test_cte_qualified_columns(self, completer, text):
-        result = result_set(completer, text)
+        result = get_result(completer, text)
         expected = [PGCompletion('foo', 0, display_meta='column')]
-        self.assertSetEqual(result, set(expected))
+        compare_result_and_correct_result(self, result, expected)
 
     @parameterized.expand([
         ('upper', 'SELECT', ('', 's', 'S', 'Sel')),
@@ -847,12 +869,12 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
     def test_keyword_after_alter(self, completer):
         text = 'ALTER TABLE users ALTER '
         expected = PGCompletion('COLUMN', start_position=0, display_meta='keyword')
-        completions = result_set(completer, text)
-        self.assertTrue(expected in set(completions))
+        completions = get_result(completer, text)
+        self.assertTrue(expected in completions)
 
     @parameterized.expand(to_params(completers()))
     def test_set_schema(self, completer):
         text = ('SET SCHEMA ')
-        result = result_set(completer, text)
-        expected = set([schema(u"'public'")])
-        self.assertEqual(result, expected)
+        result = get_result(completer, text)
+        expected = [schema(u"'public'")]
+        compare_result_and_correct_result(self, result, expected)

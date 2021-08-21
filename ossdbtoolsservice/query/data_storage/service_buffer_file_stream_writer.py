@@ -31,7 +31,7 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
         ServiceBufferFileStream.__init__(self, stream)
 
     def _write_null(self):
-        val_byte_array = bytearray([])
+        val_byte_array = bytearray(b'\xff\xff\xff\xff')
         return self._write_to_file(self._file_stream, val_byte_array)
 
     def _write_to_file(self, stream, byte_array):
@@ -59,14 +59,13 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
 
             # Write the object into the temp file
             if reader.is_none(index):
-                row_bytes += self._write_to_file(self._file_stream, bytearray(struct.pack("?", True))) # Null value
+                row_bytes += self._write_null()
             else:
                 bytes_converter: Callable[[str], bytearray] = get_any_to_bytes_converter(type_value, provider=column.provider)
                 value_to_write = bytes_converter(values[index])
 
                 bytes_length_to_write = len(value_to_write)
 
-                row_bytes += self._write_to_file(self._file_stream, bytearray(struct.pack("?", False))) # Not Null
                 row_bytes += self._write_to_file(self._file_stream, bytearray(struct.pack("i", bytes_length_to_write)))
                 row_bytes += self._write_to_file(self._file_stream, value_to_write)
 

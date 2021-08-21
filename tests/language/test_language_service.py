@@ -12,6 +12,7 @@ from unittest import mock
 
 from parameterized import parameterized
 from prompt_toolkit.completion import Completion
+from prompt_toolkit.formatted_text import to_formatted_text
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
@@ -564,7 +565,7 @@ class TestLanguageService(unittest.TestCase):
         self.assertEqual(completion_item.text_edit.range.start.character, expected_start_char)
         self.assertEqual(completion_item.text_edit.range.end.line, text_pos.line)
         self.assertEqual(completion_item.text_edit.range.end.character, text_pos.character)
-        self.assertEqual(completion_item.detail, display)
+        self.assertEqual(completion_item.detail, to_formatted_text(display))
         self.assertEqual(completion_item.label, text)
 
     def test_handle_definition_request_should_return_empty_if_query_file_do_not_exist(self):
