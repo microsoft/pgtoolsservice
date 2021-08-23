@@ -175,7 +175,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = self.service.script_as_create()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" "TestDatatype";' in result)
+        self.assertIn('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" TestDatatype;', result)
 
     def test_check_constraint_scripting(self):
         """ Helper function to test create script for check_constraint """

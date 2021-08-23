@@ -393,7 +393,7 @@ class LanguageService:
         key = completion.text
         start_position = LanguageService._get_start_position(params.position, completion.start_position)
         text_range = Range(start=start_position, end=params.position)
-        kind = DISPLAY_META_MAP.get(completion.display_meta, CompletionItemKind.Unit)
+        kind = DISPLAY_META_MAP.get(completion._display_meta, CompletionItemKind.Unit)
         completion_item = CompletionItem()
         completion_item.label = key
         completion_item.detail = completion.display
