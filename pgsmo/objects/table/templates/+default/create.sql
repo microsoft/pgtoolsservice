@@ -9,7 +9,7 @@
 {% import 'variable.macros' as VARIABLE %}
 {% import 'column_security.macros' as COLUMN_SECLABEL %}
 {% import 'column_privilege.macros' as COLUMN_PRIVILEGE %}
-{% import 'constraints.macro' as CONSTRAINTS %}
+{% import 'constraints.macros' as CONSTRAINTS %}
 {% import 'get_full_type_sql_format.macros' as GET_TYPE %}
 {#===========================================#}
 {#====== MAIN TABLE TEMPLATE STARTS HERE ======#}

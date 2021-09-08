@@ -14,6 +14,12 @@ from pgsmo.objects.table_objects.constraints import (
     ForeignKeyConstraint,
     IndexConstraint
 )
+from pgsmo.objects.table_objects.constraints_utils import (
+    get_index_constraints,
+    get_foreign_keys,
+    get_check_constraints,
+    get_exclusion_constraints
+)
 from pgsmo.objects.table_objects.index import Index
 from pgsmo.objects.table_objects.rule import Rule
 from pgsmo.objects.table_objects.trigger import Trigger
@@ -371,16 +377,11 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
-        return {"data": {
+        res = {"data": {
             "name": self.name,
             "coll_inherits": self.coll_inherits,
             "columns": self.columns,
             "typname": self.typname,
-            "primary_key": self.primary_key,
-            "unique_constraint": self.unique_constraint,
-            "foreign_key": self.foreign_key,
-            "check_constraint": self.check_constraint,
-            "exclude_constraint": self.exclude_constraint,
             "relpersistence": self.relpersistence,
             "relhasoids": self.relhasoids,
             "fillfactor": self.fillfactor,
@@ -401,6 +402,9 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
             "relowner": self.relowner,
             "schema": self.schema
         }}
+        self._add_constraints(res['data'])
+
+        return res
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
@@ -441,3 +445,35 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
             "schema": self.schema,
             "columns": self.columns
         }}
+
+    def _add_constraints(self, data) -> dict:
+
+        index_constraints = {
+            'p': 'primary_key', 'u': 'unique_constraint'
+        }
+        
+        for ctype in index_constraints.keys():
+            data[index_constraints[ctype]] = []
+            constraints = get_index_constraints(self.server, self.extended_vars['did'], self.oid, ctype)
+
+            ## TODO: Add partition condition _is_partition_and_constraint_inherited
+            for cons in constraints:
+                data.setdefault(
+                    index_constraints[ctype], []).append(cons)
+
+        # Add Foreign Keys
+        foreign_keys = get_foreign_keys(self.server, self.oid)
+        for fk in foreign_keys:
+            ## TODO: Add partition condition _is_partition_and_constraint_inherited
+            data.setdefault('foreign_key', []).append(fk)
+
+        # Add Check Constraints
+        check_constraints = get_check_constraints(self.server, self.oid)
+        for cc in check_constraints:
+            ## TODO: Add partition condition _is_partition_and_constraint_inherited
+            data.setdefault('check_constraint', []).append(cc)
+
+        # Add Exclusion Constraint
+        exclusion_constraints = get_exclusion_constraints(self.server, self.extended_vars['did'], self.oid)
+        for ex in exclusion_constraints:
+            data.setdefault('exclude_constraint', []).append(ex)

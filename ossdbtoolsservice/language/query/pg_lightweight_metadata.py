@@ -87,8 +87,27 @@ class PGLightweightMetadata:
                 'm' - materialized view
         :return: list of (schema_name, relation_name, column_name, column_type) tuples
         """
-
-        if self.conn.connection.server_version >= 80400:
+        if self.conn.connection.server_version >= 120000:
+            columns_query = '''
+                SELECT  nsp.nspname schema_name,
+                        cls.relname table_name,
+                        att.attname column_name,
+                        att.atttypid::regtype::text type_name,
+                        att.atthasdef AS has_default,
+                        pg_get_expr(def.adbin, def.adrelid) as default
+                FROM    pg_catalog.pg_attribute att
+                        INNER JOIN pg_catalog.pg_class cls
+                            ON att.attrelid = cls.oid
+                        INNER JOIN pg_catalog.pg_namespace nsp
+                            ON cls.relnamespace = nsp.oid
+                        LEFT OUTER JOIN pg_attrdef def
+                            ON def.adrelid = att.attrelid
+                            AND def.adnum = att.attnum
+                WHERE   cls.relkind = ANY(%s)
+                        AND NOT att.attisdropped
+                        AND att.attnum  > 0
+                ORDER BY 1, 2, att.attnum'''
+        elif self.conn.connection.server_version >= 80400:
             columns_query = '''
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
@@ -192,7 +211,25 @@ class PGLightweightMetadata:
     def functions(self):
         """Yields FunctionMetadata named tuples"""
 
-        if self.conn.connection.server_version > 90000:
+        if self.conn.connection.server_version >= 110000:
+            query = '''
+                SELECT n.nspname schema_name,
+                        p.proname func_name,
+                        p.proargnames,
+                        COALESCE(proallargtypes::regtype[], proargtypes::regtype[])::text[],
+                        p.proargmodes,
+                        prorettype::regtype::text return_type,
+                        p.prokind is_aggregate,
+                        p.prokind is_window,
+                        p.proretset is_set_returning,
+                        pg_get_expr(proargdefaults, 0) AS arg_defaults
+                FROM pg_catalog.pg_proc p
+                        INNER JOIN pg_catalog.pg_namespace n
+                            ON n.oid = p.pronamespace
+                WHERE p.prorettype::regtype != 'trigger'::regtype
+                ORDER BY 1, 2
+                '''
+        elif self.conn.connection.server_version > 90000:
             query = '''
                 SELECT n.nspname schema_name,
                         p.proname func_name,

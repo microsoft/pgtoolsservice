@@ -4,7 +4,7 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'table/sql/macros/db_catalogs.macro' as CATALOG %}
+{% import 'table/sql/macros/db_catalogs.macros' as CATALOG %}
 SELECT c.oid,
   quote_ident(n.nspname)||'.'||quote_ident(c.relname) AS typname
   FROM pg_namespace n, pg_class c

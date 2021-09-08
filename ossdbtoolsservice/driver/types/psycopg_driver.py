@@ -238,6 +238,25 @@ class PostgreSQLConnection(ServerConnection):
         finally:
             cur.close()
 
+    def execute_2darray(self, query: str, params=None):
+        cur: cursor = self._conn.cursor()
+
+        try:
+            cur.execute(query, params)
+
+            # Get Resultset Column Name, Type and size
+            columns = cur.description
+
+            rows = []
+            self.row_count = cur.rowcount
+            if cur.rowcount > 0:
+                for row in cur:
+                    rows.append(row)
+        finally:
+            cur.close()
+
+        return {'columns': columns, 'rows': rows}
+
     def list_databases(self):
         """
         List the databases accessible by the current PostgreSQL connection.
