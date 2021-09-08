@@ -396,7 +396,7 @@ class LanguageService:
         kind = DISPLAY_META_MAP.get(completion._display_meta, CompletionItemKind.Unit)
         completion_item = CompletionItem()
         completion_item.label = key
-        completion_item.detail = completion.display
+        completion_item.detail = key
         completion_item.insert_text = key
         completion_item.kind = kind
         completion_item.text_edit = TextEdit.from_data(text_range, key)
