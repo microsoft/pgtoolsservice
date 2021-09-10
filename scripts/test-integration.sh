@@ -12,4 +12,4 @@ then
   exit
 fi
 
-nosetests -a is_integration_test=True --processes=-1 --process-timeout 60 "$@"
+nosetests -a is_integration_test=True --with-xunit --process-timeout 60 "$@"

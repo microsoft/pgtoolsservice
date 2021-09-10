@@ -12,7 +12,6 @@ from unittest import mock
 
 from parameterized import parameterized
 from prompt_toolkit.completion import Completion
-from prompt_toolkit.formatted_text import to_formatted_text
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
