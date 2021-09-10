@@ -565,7 +565,7 @@ class TestLanguageService(unittest.TestCase):
         self.assertEqual(completion_item.text_edit.range.start.character, expected_start_char)
         self.assertEqual(completion_item.text_edit.range.end.line, text_pos.line)
         self.assertEqual(completion_item.text_edit.range.end.character, text_pos.character)
-        self.assertEqual(completion_item.detail, to_formatted_text(display))
+        self.assertEqual(completion_item.detail, display)
         self.assertEqual(completion_item.label, text)
 
     def test_handle_definition_request_should_return_empty_if_query_file_do_not_exist(self):
