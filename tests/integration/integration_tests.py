@@ -130,7 +130,10 @@ class _ConnectionManager:
         if not os.path.exists(config_path):
             raise RuntimeError(f'No test config file found at {config_path}')
 
-        config_list = json.load(open(config_path))
+        with open(config_path) as config_file:
+            config = config_file.read()
+            config_list = json.load(config)
+
         if not isinstance(config_list, list):
             config_list = [config_list]
         return config_list
