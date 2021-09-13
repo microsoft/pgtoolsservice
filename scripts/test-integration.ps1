@@ -4,7 +4,7 @@ $scriptloc = $PSScriptRoot
 Set-Location $scriptloc/..
 
 # Display an error if the integration test config file does not exist
-if (!(Test-Path 'tests\integration\config.json'))
+if (!(Test-Path 'tests\integration\config.json.txt'))
 {
   Write-Output "Error: No integration test config file found at tests\integration\config.json. Copy config.json.txt at that location to config.json, then edit the settings as needed. See the 'Configuring Integration Tests' section in README.md for more details."
   return
