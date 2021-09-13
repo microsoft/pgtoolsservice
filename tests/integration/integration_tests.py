@@ -114,6 +114,7 @@ class _ConnectionManager:
         cls._maintenance_connections = []
         cls._current_test_connection_detail_list = []
         for config_dict in config_list:
+            print(config_dict)
             connection = psycopg2.connect(**config_dict)
             cls._maintenance_connections.append(connection)
             connection.autocommit = True
@@ -130,7 +131,7 @@ class _ConnectionManager:
         if not os.path.exists(config_path):
             raise RuntimeError(f'No test config file found at {config_path}')
 
-        with open(config_path,'rb') as config_file:
+        with open(config_path, 'rb') as config_file:
             config_list = json.load(config_file)
   
         if not isinstance(config_list, list):
