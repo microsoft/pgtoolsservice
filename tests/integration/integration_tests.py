@@ -133,7 +133,7 @@ class _ConnectionManager:
 
         with open(config_path, 'rb') as config_file:
             config_list = json.load(config_file)
-  
+
         if not isinstance(config_list, list):
             config_list = [config_list]
         return config_list
