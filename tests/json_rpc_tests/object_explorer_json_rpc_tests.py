@@ -93,6 +93,7 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
         # Delete the created test role
         role_name = self.args['Roles_Name']
         self.delete_role(connection, role_name)
+        connection.close()
 
     def create_database_objects(self, meta_data: dict, connection: 'psycopg2.connection', **kwargs):
 

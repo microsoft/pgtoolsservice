@@ -1165,6 +1165,7 @@ class TestQueryService(unittest.TestCase):
                 actual_cell = query_results.rows[row_index][cell_index]
                 self.assertEqual(actual_cell.raw_object, expected_value)
                 self.assertEqual(actual_cell.display_value, str(expected_value))
+        connection.close()
 
 
 class SubsetMock:
