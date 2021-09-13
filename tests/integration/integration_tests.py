@@ -122,13 +122,14 @@ class _ConnectionManager:
 
     @staticmethod
     def _get_connection_configurations() -> dict:
-        config_file_name = 'config.json'
+        config_file_name = 'config.json.txt'
         current_folder = os.path.dirname(os.path.realpath(__file__))
         config_path = os.path.join(current_folder, config_file_name)
         if not os.path.exists(config_path):
             config_path += '.txt'
         if not os.path.exists(config_path):
             raise RuntimeError(f'No test config file found at {config_path}')
+
         config_list = json.load(open(config_path))
         if not isinstance(config_list, list):
             config_list = [config_list]
