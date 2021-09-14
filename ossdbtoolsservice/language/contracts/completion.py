@@ -54,7 +54,7 @@ class CompletionItem(Serializable):
         self.documentation: str = None
         self.sort_text: str = None
         self.filter_text: str = None
-        self.insert_text: str = None
+        self.insert_text_format: str = None
         self.text_edit: TextEdit = None
         self.data: any = None
 

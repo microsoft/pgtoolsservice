@@ -6,6 +6,7 @@ GET_FOREIGN_CONSTRAINT_TEMPLATE_ROOT = templating.get_template_root(__file__, 'c
 GET_CHECK_CONSTRAINT_TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_check')
 GET_EXCLUSION_CONSTRAINT_TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_exclusion')
 
+
 def get_index_constraints(server, did, tid, ctype, cid=None) -> (dict):
     server_version = server.connection.server_version
 
@@ -14,18 +15,19 @@ def get_index_constraints(server, did, tid, ctype, cid=None) -> (dict):
         macro_roots=None,
         did=did, tid=tid, cid=cid, constraint_type=ctype
     )
-    
+
     result = server.connection.execute_dict(sql)
-    
+
     for idx_cons in result[1]:
-        sql = templating.render_template(templating.get_template_path(
-                                            GET_INDEX_CONSTRAINT_TEMPLATE_ROOT,
-                                            'get_constraint_cols.sql',
-                                            server_version),
-                                         macro_roots=None,
-                                         cid=idx_cons['oid'],
-                                         colcnt=idx_cons['col_count'])
-                                         
+        sql = templating.render_template(
+            templating.get_template_path(
+                GET_INDEX_CONSTRAINT_TEMPLATE_ROOT,
+                'get_constraint_cols.sql',
+                server_version),
+            macro_roots=None,
+            cid=idx_cons['oid'],
+            colcnt=idx_cons['col_count'])
+
         constraint_cols = server.connection.execute_dict(sql)
 
         columns = []
@@ -36,12 +38,13 @@ def get_index_constraints(server, did, tid, ctype, cid=None) -> (dict):
 
         # INCLUDE clause in index is supported from PG-11+
         if server_version[0] >= 11:
-            sql = templating.render_template(templating.get_template_path(
-                                                GET_INDEX_CONSTRAINT_TEMPLATE_ROOT,
-                                                'get_constraint_include.sql',
-                                                server_version),
-                                             macro_roots=None,
-                                             cid=idx_cons['oid'])
+            sql = templating.render_template(
+                templating.get_template_path(
+                    GET_INDEX_CONSTRAINT_TEMPLATE_ROOT,
+                    'get_constraint_include.sql',
+                    server_version),
+                macro_roots=None,
+                cid=idx_cons['oid'])
             constraint_cols = server.connection.execute_dict(sql)
 
             idx_cons['include'] = [col['colname'] for col in constraint_cols[1]]
@@ -50,7 +53,7 @@ def get_index_constraints(server, did, tid, ctype, cid=None) -> (dict):
 
 
 def get_foreign_keys(server, tid, fkid=None):
-    
+
     server_version = server.connection.server_version
 
     sql = templating.render_template(
@@ -61,15 +64,16 @@ def get_foreign_keys(server, tid, fkid=None):
 
     result = server.connection.execute_dict(sql)
 
-    for fk in result[1]:        
+    for fk in result[1]:
         sql = templating.render_template(
-                            templating.get_template_path(GET_FOREIGN_CONSTRAINT_TEMPLATE_ROOT, 
-                                                         'get_constraint_cols.sql',
-                                                         server_version),
-                            macro_roots=None,
-                            tid=tid,
-                            keys=zip(fk['confkey'], fk['conkey']),
-                            confrelid=fk['confrelid'])
+            templating.get_template_path(
+                GET_FOREIGN_CONSTRAINT_TEMPLATE_ROOT,
+                'get_constraint_cols.sql',
+                server_version),
+            macro_roots=None,
+            tid=tid,
+            keys=zip(fk['confkey'], fk['conkey']),
+            confrelid=fk['confrelid'])
 
         res = server.connection.execute_dict(sql)
 
@@ -103,7 +107,7 @@ def get_foreign_keys(server, tid, fkid=None):
 
 
 def get_check_constraints(server, tid):
-    
+
     server_version = server.connection.server_version
 
     sql = templating.render_template(
@@ -160,11 +164,12 @@ def get_parent(server, tid, template_path=None):
     server_version = server.connection.server_version
 
     sql = templating.render_template(
-                            templating.get_template_path(GET_FOREIGN_CONSTRAINT_TEMPLATE_ROOT, 
-                                                         'get_parent.sql',
-                                                         server_version),
-                            macro_roots=None,
-                            tid=tid)
+        templating.get_template_path(
+            GET_FOREIGN_CONSTRAINT_TEMPLATE_ROOT,
+            'get_parent.sql',
+            server_version),
+        macro_roots=None,
+        tid=tid)
 
     rset = server.connection.execute_2darray(sql)
 
@@ -183,23 +188,24 @@ def search_coveringindex(server, tid, cols):
     server_version = server.connection.server_version
 
     sql = templating.render_template(
-                            templating.get_template_path(GET_FOREIGN_CONSTRAINT_TEMPLATE_ROOT, 
-                                                         'get_constraints.sql',
-                                                         server_version),
-                            macro_roots=None,
-                            tid=tid)
+        templating.get_template_path(
+            GET_FOREIGN_CONSTRAINT_TEMPLATE_ROOT,
+            'get_constraints.sql',
+            server_version),
+        macro_roots=None,
+        tid=tid)
 
     constraints = server.connection.execute_dict(sql)
 
-
     for constraint in constraints[1]:
         sql = templating.render_template(
-                            templating.get_template_path(GET_FOREIGN_CONSTRAINT_TEMPLATE_ROOT, 
-                                                         'get_cols.sql',
-                                                         server_version),
-                            macro_roots=None,
-                            cid=constraint['oid'],
-                            colcnt=constraint['col_count'])
+            templating.get_template_path(
+                GET_FOREIGN_CONSTRAINT_TEMPLATE_ROOT,
+                'get_cols.sql',
+                server_version),
+            macro_roots=None,
+            cid=constraint['oid'],
+            colcnt=constraint['col_count'])
         rest = server.connection.execute_dict(sql)
 
         index_cols = set()
@@ -212,14 +218,13 @@ def search_coveringindex(server, tid, cols):
     return None
 
 
- #
- # pgAdmin 4 - PostgreSQL Tools
- #
- # Copyright (C) 2013 - 2017, The pgAdmin Development Team
- # This software is released under the PostgreSQL Licence
- #
-
 def _get_columns(res):
+    #
+    # pgAdmin 4 - PostgreSQL Tools
+    #
+    # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+    # This software is released under the PostgreSQL Licence
+    #
     """
     Get columns form response and return in required format.
     :param res: response form constraints.

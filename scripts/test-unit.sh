@@ -5,4 +5,4 @@ then
   exit 1
 fi
 
-nosetests -a '!is_integration_test' --processes=-1 "$@"
+nosetests -a '!is_integration_test' --with-xunit "$@"
