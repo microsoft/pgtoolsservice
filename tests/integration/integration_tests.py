@@ -114,7 +114,6 @@ class _ConnectionManager:
         cls._maintenance_connections = []
         cls._current_test_connection_detail_list = []
         for config_dict in config_list:
-            print(config_dict)
             connection = psycopg2.connect(**config_dict)
             cls._maintenance_connections.append(connection)
             connection.autocommit = True
