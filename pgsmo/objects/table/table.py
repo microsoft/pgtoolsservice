@@ -451,12 +451,12 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         index_constraints = {
             'p': 'primary_key', 'u': 'unique_constraint'
         }
-        
+
         for ctype in index_constraints.keys():
             data[index_constraints[ctype]] = []
             constraints = get_index_constraints(self.server, self.extended_vars['did'], self.oid, ctype)
 
-            ## TODO: Add partition condition _is_partition_and_constraint_inherited
+            # TODO: Add partition condition _is_partition_and_constraint_inherited
             for cons in constraints:
                 data.setdefault(
                     index_constraints[ctype], []).append(cons)
@@ -464,13 +464,13 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         # Add Foreign Keys
         foreign_keys = get_foreign_keys(self.server, self.oid)
         for fk in foreign_keys:
-            ## TODO: Add partition condition _is_partition_and_constraint_inherited
+            # TODO: Add partition condition _is_partition_and_constraint_inherited
             data.setdefault('foreign_key', []).append(fk)
 
         # Add Check Constraints
         check_constraints = get_check_constraints(self.server, self.oid)
         for cc in check_constraints:
-            ## TODO: Add partition condition _is_partition_and_constraint_inherited
+            # TODO: Add partition condition _is_partition_and_constraint_inherited
             data.setdefault('check_constraint', []).append(cc)
 
         # Add Exclusion Constraint

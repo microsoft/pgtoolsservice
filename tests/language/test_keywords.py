@@ -87,7 +87,7 @@ class TestCompletionHelper(unittest.TestCase):
         self.assertIsNotNone(match)
         self.assertEqual(word, match.label)
         self.assertEqual(CompletionItemKind.Keyword, match.kind)
-        self.assertEqual(word, match.insert_text)
+        self.assertEqual(word, match.insert_text_format)
         self.assertEqual(text_range, match.text_edit.range)
         self.assertEqual(word, match.text_edit.new_text)
 

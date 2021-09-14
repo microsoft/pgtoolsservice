@@ -4,5 +4,5 @@ $scriptloc = $PSScriptRoot
 Set-Location $scriptloc/..
 
 # Run the tests
-nosetests -a '!is_integration_test' --processes=-1 @args
+nosetests -a '!is_integration_test' --with-xunit @args
 Set-Location $curloc

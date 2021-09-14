@@ -8,8 +8,8 @@ fi
 # Display an error if the integration test config file does not exist
 if [ ! -f 'tests/integration/config.json' ]
 then
-  echo "Error: No integration test config file found at tests/integration/config.json. Copy config.json.txt at that location to config.json, then edit the settings as needed. See the 'Configuring Integration Tests' section in README.md for more details."
+  echo "Error: No integration test config file found at tests\integration\config.json. Copy config.json.txt at that location to config.json, then edit the settings as needed. See the 'Configuring Integration Tests' section in README.md for more details."
   exit
 fi
 
-nosetests -a is_integration_test=True --processes=-1 --process-timeout 60 "$@"
+nosetests -a is_integration_test=True --with-xunit --process-timeout 60 "$@"

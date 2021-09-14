@@ -108,7 +108,7 @@ class DefaultCompletionHelper():
         completion = CompletionItem()
         completion.label = key
         completion.detail = key + ' keyword'
-        completion.insert_text = key
+        completion.insert_text_format = key
         completion.kind = CompletionItemKind.Keyword
         completion.text_edit = TextEdit.from_data(text_range, key)
         return completion

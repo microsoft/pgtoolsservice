@@ -11,5 +11,5 @@ if (!(Test-Path 'tests\integration\config.json'))
 }
 
 # Run the tests
-nosetests -a is_integration_test=True --processes=-1 @args
+nosetests -a is_integration_test=True --with-xunit @args
 Set-Location $curloc
