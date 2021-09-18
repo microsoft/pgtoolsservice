@@ -80,10 +80,7 @@ class _ConnectionManager:
 
     @classmethod
     def create_extra_database(cls) -> str:
-        maintenance_connection = cls._maintenance_connections[cls._in_progress_test_index]
-        db_name = 'test' + uuid.uuid4().hex
-        with maintenance_connection.cursor() as cursor:
-            cursor.execute('CREATE DATABASE ' + db_name)
+        db_name = 'flexibleserverdb'
         cls._extra_databases.append(db_name)
         return db_name
 
@@ -138,10 +135,7 @@ class _ConnectionManager:
 
     @classmethod
     def _create_test_databases(cls) -> None:
-        # db_name = 'test' + uuid.uuid4().hex
         if not cls._maintenance_connections:
             cls._open_maintenance_connections()
         for index, connection in enumerate(cls._maintenance_connections):
-            # with connection.cursor() as cursor:
-            #     cursor.execute('CREATE DATABASE ' + db_name)
             cls._current_test_connection_detail_list[index]['dbname'] = 'flexibleserverdb'
