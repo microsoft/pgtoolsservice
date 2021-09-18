@@ -10,6 +10,7 @@ import tempfile
 import threading
 from logging import Logger  # noqa
 from typing import Any, Dict, List, Set  # noqa
+from urllib.parse import unquote
 
 import sqlparse
 from prompt_toolkit.completion import Completer, Completion  # noqa
@@ -195,6 +196,7 @@ class LanguageService:
         def do_send_default_empty_response():
             request_context.send_response(response)
 
+        params.text_document.uri = unquote(params.text_document.uri)
         if self.should_skip_formatting(params.text_document.uri):
             do_send_default_empty_response()
             return
