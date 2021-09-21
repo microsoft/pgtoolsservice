@@ -6,7 +6,7 @@
 import re
 from typing import Optional, List
 
-from smo.common.node_object import NodeObject
+from smo.common.node_object import NodeObject, NodeLazyPropertyCollection
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s    # noqa
 import smo.utils.templating as templating
@@ -36,14 +36,6 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         col._has_default_value = kwargs['has_default_val']
         col._not_null = kwargs['not_null']
 
-        col._column_ordinal = kwargs['oid'] - 1
-        col._is_key = kwargs['isprimarykey']
-        col._is_readonly = kwargs['is_updatable'] is False
-        col._is_unique = kwargs['isunique']
-        col._type_oid = kwargs['typoid']
-        col._default_value = kwargs['default'] if col._has_default_value is True else None
-        col._is_auto_increment = col._default_value is not None and col._default_value.startswith('nextval(')
-
         return col
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str, datatype: str):
@@ -55,22 +47,39 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param datatype: Type of the column
         """
         NodeObject.__init__(self, server, parent, name)
+        self._server: 'Server' = server
+        self._parent: Optional['NodeObject'] = parent
+        # Declare node basic properties
+        self._name: str = name
+        self._oid: Optional[int] = None
+        self._is_system: bool = False
+
+        self._full_properties: NodeLazyPropertyCollection = self._register_property_collection(self._column_property_generator)
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         self._datatype: str = datatype
-
         self._has_default_value: Optional[bool] = None
         self._not_null: Optional[bool] = None
+    
+    def _column_property_generator(self):
+        template_root = self._template_root(self._server)
 
-        self._column_ordinal: int = None
-        self._is_key: bool = None
-        self._is_readonly: bool = None
-        self._is_unique: bool = None
-        self._type_oid: int = None
-        self._default_value: Optional[str] = None
-        self._is_auto_increment = None
+        # Setup the parameters for the query
+        template_vars = self.template_vars
+
+        # Render and execute the template
+        sql = templating.render_template(
+            templating.get_template_path(template_root, 'properties.sql', self._server.version),
+            self._macro_root(),
+            **template_vars
+        )
+        cols, rows = self._server.connection.execute_dict(sql)
+        
+        for row in rows:
+            if row['name'] == self._name:
+                return row
 
     # PROPERTIES ###########################################################
     @property
@@ -88,30 +97,6 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def column_ordinal(self) -> int:
         return self._column_ordinal
-
-    @property
-    def is_key(self) -> bool:
-        return self._is_key
-
-    @property
-    def is_readonly(self) -> bool:
-        return self._is_readonly
-
-    @property
-    def is_unique(self) -> bool:
-        return self._is_unique
-
-    @property
-    def type_oid(self) -> int:
-        return self._type_oid
-
-    @property
-    def default_value(self) -> Optional[str]:
-        return self._default_value
-
-    @property
-    def is_auto_increment(self) -> bool:
-        return self._is_auto_increment
 
     @property
     def cltype(self):
@@ -200,6 +185,14 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def attstorage(self):
         return self._full_properties["attstorage"]
+    
+    @property
+    def attidentity(self):
+        return self._full_properties["attidentity"]
+
+    @property
+    def colconstype(self):
+        return self._full_properties["colconstype"]
 
     @property
     def is_sql(self):
