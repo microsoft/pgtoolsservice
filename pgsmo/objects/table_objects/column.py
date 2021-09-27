@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from smo.common.node_object import NodeObject, NodeLazyPropertyCollection
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
@@ -46,15 +46,17 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param name: Name of the column
         :param datatype: Type of the column
         """
-        NodeObject.__init__(self, server, parent, name)
         self._server: 'Server' = server
         self._parent: Optional['NodeObject'] = parent
-        # Declare node basic properties
         self._name: str = name
         self._oid: Optional[int] = None
         self._is_system: bool = False
-
+        
+        self._child_collections: Dict[str, NodeCollection] = {}
+        self._property_collections: List[NodeLazyPropertyCollection] = []
+        # Use _column_property_generator instead of _property_generator
         self._full_properties: NodeLazyPropertyCollection = self._register_property_collection(self._column_property_generator)
+
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
@@ -193,6 +195,30 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def colconstype(self):
         return self._full_properties["colconstype"]
+    
+    @property
+    def seqcache(self):
+        return self._full_properties["seqcache"]
+    
+    @property
+    def seqcycle(self):
+        return self._full_properties["seqcycle"]
+    
+    @property
+    def seqincrement(self):
+        return self._full_properties["seqincrement"]
+    
+    @property
+    def seqmax(self):
+        return self._full_properties["seqmax"]
+    
+    @property
+    def seqmin(self):
+        return self._full_properties["seqmin"]
+    
+    @property
+    def seqrelid(self):
+        return self._full_properties["seqrelid"]
 
     @property
     def is_sql(self):
