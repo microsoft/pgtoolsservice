@@ -4,9 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-
+import unittest.mock as mock
 from pgsmo import Sequence
+import tests.pgsmo_tests.utils as utils
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
+
+from pgsmo.objects.server.server import Server
 
 
 class TestSequence(NodeObjectTestBase, unittest.TestCase):
@@ -38,6 +41,27 @@ class TestSequence(NodeObjectTestBase, unittest.TestCase):
     @property
     def full_properties(self):
         return {
+            "name": "name",
+            "seqowner": "seqowner",
+            "comment": "comment",
+            "acl": "acl",
+            "securities": "securities"
+        }
+
+    @property
+    def property_query(self) -> dict:
+        return {
+            "name": "test",
+            "schema": "public",
+            "seqowner": None,
+            "comment": None,
+            "acl": None,
+            "securities": None
+        }
+    
+    @property
+    def full_properties(self):
+        return {
             "cycled": "cycled",
             "increment": "increment",
             "start": "start",
@@ -61,3 +85,4 @@ class TestSequence(NodeObjectTestBase, unittest.TestCase):
             "cache": 1,
             "cascade": None
         }
+

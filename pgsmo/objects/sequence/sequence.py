@@ -55,7 +55,6 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         self._schema: str = None
         self._scid: int = None
         self._def: dict = None
-        self._definition: NodeLazyPropertyCollection = self._register_property_collection(self._get_definition)
 
 
     def _sequence_property_generator(self):
@@ -72,28 +71,8 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         )
         cols, rows = self._server.connection.execute_dict(sql)
         
-        for row in rows:
-            if row['name'] == self._name:
-                return row
-    
-
-    def _get_definition(self):
-        data = self._full_properties
-        sql = templating.render_template(
-            templating.get_template_path(self._template_root(self._server), 'get_def.sql', self._server.version),
-            self._macro_root(),
-            **data
-        )
-
-        cols, rows = self._server.connection.execute_dict(sql)
-        
-        return {'current_value': rows[0]['last_value'],
-                'minimum': rows[0]['min_value'],
-                'maximum': rows[0]['max_value'],
-                'increment': rows[0]['increment_by'],
-                'start': rows[0]['start_value'],
-                'cache': rows[0]['cache_value'],
-                'cycled': rows[0]['is_cycled']}
+        if len(rows) > 0:
+            return rows[0]
 
 
     # PROPERTIES ###########################################################
@@ -147,33 +126,6 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
     def comment(self):
         return self._full_properties.get("comment", "")
 
-    @property
-    def current_value(self):
-        return self._definition.get('current_value')
-
-    @property
-    def minimum(self):
-        return self._definition.get('minimum')
-    
-    @property
-    def maximum(self):
-        return self._definition.get('maximum')
-    
-    @property
-    def increment(self):
-        return self._definition.get('increment')
-    
-    @property
-    def start(self):
-        return self._definition.get('start')
-    
-    @property
-    def cache(self):
-        return self._definition.get('cache')
-    
-    @property
-    def cycled(self):
-        return self._definition.get('cycled')
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod

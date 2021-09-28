@@ -29,12 +29,24 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             oid int: Object ID of the column
             not_null bool: Whether or not null is allowed for the column
             has_default_value bool: Whether or not the column has a default value constraint
+            isprimarykey bool: Whether or not the column is primary key
+            is_updatable bool: Whether or not the column is updatable or read only
+            isunique bool: Whether or not the column only accepts unique value or not
+            default: default value for the column
         :return: Instance of the Column
         """
+        
         col = cls(server, parent, kwargs['name'], kwargs['datatype'])
         col._oid = kwargs['oid']
         col._has_default_value = kwargs['has_default_val']
         col._not_null = kwargs['not_null']
+        col._column_ordinal = kwargs['oid'] - 1
+        col._is_key = kwargs['isprimarykey']
+        col._is_readonly = kwargs['is_updatable'] is False
+        col._is_unique = kwargs['isunique']
+        col._type_oid = kwargs['typoid']
+        col._default_value = kwargs['default'] if col._has_default_value is True else None
+        col._is_auto_increment = col._default_value is not None and col._default_value.startswith('nextval(')
 
         return col
 
@@ -61,10 +73,18 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
-        self._datatype: str = datatype
+        self._datatype: str = datatype        
         self._has_default_value: Optional[bool] = None
         self._not_null: Optional[bool] = None
-    
+
+        self._column_ordinal: int = None
+        self._is_key: bool = None
+        self._is_readonly: bool = None
+        self._is_unique: bool = None
+        self._type_oid: int = None
+        self._default_value: Optional[str] = None
+        self._is_auto_increment = None
+
     def _column_property_generator(self):
         template_root = self._template_root(self._server)
 
@@ -99,6 +119,30 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def column_ordinal(self) -> int:
         return self._column_ordinal
+    
+    @property
+    def is_key(self) -> bool:
+        return self._is_key
+
+    @property
+    def is_readonly(self) -> bool:
+        return self._is_readonly
+
+    @property
+    def is_unique(self) -> bool:
+        return self._is_unique
+
+    @property
+    def type_oid(self) -> int:
+        return self._type_oid
+
+    @property
+    def default_value(self) -> Optional[str]:
+        return self._default_value
+
+    @property
+    def is_auto_increment(self) -> bool:
+        return self._is_auto_increment
 
     @property
     def cltype(self):
