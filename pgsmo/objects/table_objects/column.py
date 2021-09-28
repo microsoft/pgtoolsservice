@@ -6,7 +6,7 @@
 import re
 from typing import Optional, List, Dict
 
-from smo.common.node_object import NodeObject, NodeLazyPropertyCollection
+from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s    # noqa
 import smo.utils.templating as templating
@@ -35,7 +35,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             default: default value for the column
         :return: Instance of the Column
         """
-        
+
         col = cls(server, parent, kwargs['name'], kwargs['datatype'])
         col._oid = kwargs['oid']
         col._has_default_value = kwargs['has_default_val']
@@ -58,12 +58,12 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param name: Name of the column
         :param datatype: Type of the column
         """
-        self._server: 'Server' = server
+        self._server = server
         self._parent: Optional['NodeObject'] = parent
         self._name: str = name
         self._oid: Optional[int] = None
         self._is_system: bool = False
-        
+
         self._child_collections: Dict[str, NodeCollection] = {}
         self._property_collections: List[NodeLazyPropertyCollection] = []
         # Use _column_property_generator instead of _property_generator
@@ -73,7 +73,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
-        self._datatype: str = datatype        
+        self._datatype: str = datatype
         self._has_default_value: Optional[bool] = None
         self._not_null: Optional[bool] = None
 
@@ -98,7 +98,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             **template_vars
         )
         cols, rows = self._server.connection.execute_dict(sql)
-        
+
         for row in rows:
             if row['name'] == self._name:
                 return row
@@ -119,7 +119,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def column_ordinal(self) -> int:
         return self._column_ordinal
-    
+
     @property
     def is_key(self) -> bool:
         return self._is_key
@@ -231,7 +231,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def attstorage(self):
         return self._full_properties["attstorage"]
-    
+
     @property
     def attidentity(self):
         return self._full_properties["attidentity"]
@@ -239,27 +239,27 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def colconstype(self):
         return self._full_properties["colconstype"]
-    
+
     @property
     def seqcache(self):
         return self._full_properties["seqcache"]
-    
+
     @property
     def seqcycle(self):
         return self._full_properties["seqcycle"]
-    
+
     @property
     def seqincrement(self):
         return self._full_properties["seqincrement"]
-    
+
     @property
     def seqmax(self):
         return self._full_properties["seqmax"]
-    
+
     @property
     def seqmin(self):
         return self._full_properties["seqmin"]
-    
+
     @property
     def seqrelid(self):
         return self._full_properties["seqrelid"]

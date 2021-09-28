@@ -36,14 +36,13 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
 
         return seq
 
-
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
-        self._server: 'Server' = server
+        self._server = server
         self._parent: Optional['NodeObject'] = parent
         self._name: str = name
         self._oid: Optional[int] = None
         self._is_system: bool = False
-        
+
         self._child_collections: Dict[str, NodeCollection] = {}
         self._property_collections: List[NodeLazyPropertyCollection] = []
         # Use _column_property_generator instead of _property_generator
@@ -55,7 +54,6 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         self._schema: str = None
         self._scid: int = None
         self._def: dict = None
-
 
     def _sequence_property_generator(self):
         template_root = self._template_root(self._server)
@@ -70,10 +68,9 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
             **template_vars
         )
         cols, rows = self._server.connection.execute_dict(sql)
-        
+
         if len(rows) > 0:
             return rows[0]
-
 
     # PROPERTIES ###########################################################
     @property
@@ -85,7 +82,6 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         return self._scid
 
     # -FULL OBJECT PROPERTIES ##############################################
-
     @property
     def cycled(self):
         return self._full_properties.get("cycled", "")
@@ -125,7 +121,6 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
     @property
     def comment(self):
         return self._full_properties.get("comment", "")
-
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
