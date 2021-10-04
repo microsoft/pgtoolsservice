@@ -67,6 +67,7 @@ pg_conn_provider_opts = ConnectionProviderOptions([
         display_name='Host IP address',
         description='IP address of the server',
         value_type=ConnectionOption.VALUE_TYPE_STRING,
+        is_identity=True,
         group_name='Server'
     ),
     ConnectionOption(
@@ -74,6 +75,7 @@ pg_conn_provider_opts = ConnectionProviderOptions([
         display_name='Port',
         description='Port number for the server',
         value_type=ConnectionOption.VALUE_TYPE_STRING,
+        is_identity=True,
         group_name='Server'
     ),
     ConnectionOption(
