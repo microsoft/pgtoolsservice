@@ -21,6 +21,7 @@ class InitializeRequestParams(Serializable):
         # Note: If both root_path and root_uri are available, root_uri is preferred
         self.root_path: str = None      # Note: Deprecated in favor of root_uri
         self.root_uri: str = None
+        self.workspace_folders: str = None
 
 
 class CompletionOptions:
