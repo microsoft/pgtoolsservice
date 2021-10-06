@@ -4,9 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-from typing import Optional, List
+from typing import Optional, List, Dict
 
-from smo.common.node_object import NodeObject
+from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s    # noqa
 import smo.utils.templating as templating
@@ -29,13 +29,17 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             oid int: Object ID of the column
             not_null bool: Whether or not null is allowed for the column
             has_default_value bool: Whether or not the column has a default value constraint
+            isprimarykey bool: Whether or not the column is primary key
+            is_updatable bool: Whether or not the column is updatable or read only
+            isunique bool: Whether or not the column only accepts unique value or not
+            default: default value for the column
         :return: Instance of the Column
         """
+
         col = cls(server, parent, kwargs['name'], kwargs['datatype'])
         col._oid = kwargs['oid']
         col._has_default_value = kwargs['has_default_val']
         col._not_null = kwargs['not_null']
-
         col._column_ordinal = kwargs['oid'] - 1
         col._is_key = kwargs['isprimarykey']
         col._is_readonly = kwargs['is_updatable'] is False
@@ -54,13 +58,22 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param name: Name of the column
         :param datatype: Type of the column
         """
-        NodeObject.__init__(self, server, parent, name)
+        self._server = server
+        self._parent: Optional['NodeObject'] = parent
+        self._name: str = name
+        self._oid: Optional[int] = None
+        self._is_system: bool = False
+
+        self._child_collections: Dict[str, NodeCollection] = {}
+        self._property_collections: List[NodeLazyPropertyCollection] = []
+        # Use _column_property_generator instead of _property_generator
+        self._full_properties: NodeLazyPropertyCollection = self._register_property_collection(self._column_property_generator)
+
         ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
         ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
 
         self._datatype: str = datatype
-
         self._has_default_value: Optional[bool] = None
         self._not_null: Optional[bool] = None
 
@@ -71,6 +84,24 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         self._type_oid: int = None
         self._default_value: Optional[str] = None
         self._is_auto_increment = None
+
+    def _column_property_generator(self):
+        template_root = self._template_root(self._server)
+
+        # Setup the parameters for the query
+        template_vars = self.template_vars
+
+        # Render and execute the template
+        sql = templating.render_template(
+            templating.get_template_path(template_root, 'properties.sql', self._server.version),
+            self._macro_root(),
+            **template_vars
+        )
+        cols, rows = self._server.connection.execute_dict(sql)
+
+        for row in rows:
+            if row['name'] == self._name:
+                return row
 
     # PROPERTIES ###########################################################
     @property
@@ -200,6 +231,38 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def attstorage(self):
         return self._full_properties["attstorage"]
+
+    @property
+    def attidentity(self):
+        return self._full_properties["attidentity"]
+
+    @property
+    def colconstype(self):
+        return self._full_properties["colconstype"]
+
+    @property
+    def seqcache(self):
+        return self._full_properties["seqcache"]
+
+    @property
+    def seqcycle(self):
+        return self._full_properties["seqcycle"]
+
+    @property
+    def seqincrement(self):
+        return self._full_properties["seqincrement"]
+
+    @property
+    def seqmax(self):
+        return self._full_properties["seqmax"]
+
+    @property
+    def seqmin(self):
+        return self._full_properties["seqmin"]
+
+    @property
+    def seqrelid(self):
+        return self._full_properties["seqrelid"]
 
     @property
     def is_sql(self):

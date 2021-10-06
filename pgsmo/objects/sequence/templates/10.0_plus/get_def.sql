@@ -13,5 +13,5 @@ SELECT
     seqcycle AS is_cycled,
     seqincrement AS increment_by,
     is_called
-FROM pg_sequence, {{ conn|qtIdent(data.schema) }}.{{ conn|qtIdent(data.name) }}
-WHERE seqrelid = '{{ conn|qtIdent(data.schema) }}.{{ conn|qtIdent(data.name) }}'::regclass
+FROM pg_catalog.pg_sequence, {{ conn|qtIdent(data.schema) }}.{{ conn|qtIdent(data.name) }}
+WHERE seqrelid = {{data.oid}}

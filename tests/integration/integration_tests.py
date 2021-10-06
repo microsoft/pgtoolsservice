@@ -9,8 +9,6 @@ import functools
 import json
 import os
 from typing import List
-import uuid
-
 import psycopg2
 
 
