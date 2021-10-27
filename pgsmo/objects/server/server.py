@@ -165,7 +165,6 @@ class Server:
     def find_schema(self, metadata):
         """ Find the schema in the server to script as """
         schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
-        schema_name = 'public'
         database = self.maintenance_db
         parent_schema = None
         try:
