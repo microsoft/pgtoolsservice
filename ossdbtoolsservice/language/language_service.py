@@ -365,7 +365,16 @@ class LanguageService:
 
         if completions:
             word_under_cursor = scriptparseinfo.document.get_word_under_cursor()
-            matching_completion = next(completion for completion in completions if completion.display == word_under_cursor)
+            matching_completion = None
+
+            for completion in completions:
+                completion_text = completion.display
+                if completion.display_meta == 'function':
+                    completion_text = completion.display[:-2]
+
+                if completion_text == word_under_cursor:
+                    matching_completion = completion
+
             if matching_completion:
                 connection = self._connection_service.get_connection(params.text_document.uri,
                                                                      ConnectionType.QUERY)
