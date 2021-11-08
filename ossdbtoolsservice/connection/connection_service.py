@@ -320,8 +320,19 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
     response: ConnectionCompleteParams = ConnectionCompleteParams()
     response.owner_uri = connection_info.owner_uri
     response.type = connection_type
-    response.messages = str(err)
-    response.error_message = str(err)
+
+    errorMessage = str(err)
+    if "could not translate host name" in errorMessage:
+        errorMessage += """\nCauses:
+    Using the wrong hostname or problems with DNS resolution.\nSuggestions:
+    Check that the server address or hostname is the full address."""
+
+    if "could not connect to server: Connection timed out" in errorMessage:
+        errorMessage += """\nSuggestions:
+        Check that the firewall settings allow connections from the user's address."""
+
+    response.messages = errorMessage
+    response.error_message = errorMessage
 
     return response
 
