@@ -321,6 +321,7 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
     response.owner_uri = connection_info.owner_uri
     response.type = connection_type
 
+    """Add suggestions to error message. Will want to check for error code in the future."""
     errorMessage = str(err)
     if "could not translate host name" in errorMessage:
         errorMessage += """\nCauses:
@@ -330,6 +331,9 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
     if "could not connect to server: Connection timed out" in errorMessage:
         errorMessage += """\nSuggestions:
         Check that the firewall settings allow connections from the user's address."""
+    elif "could not connect to server: Operation timed out" in errorMessage:
+        errorMessage += """\nSuggestions:
+        Check that the firewall settings allow connections from the user's address.""" 
 
     response.messages = errorMessage
     response.error_message = errorMessage
