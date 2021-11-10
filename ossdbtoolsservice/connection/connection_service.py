@@ -333,7 +333,7 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
         Check that the firewall settings allow connections from the user's address."""
     elif "could not connect to server: Operation timed out" in errorMessage:
         errorMessage += """\nSuggestions:
-        Check that the firewall settings allow connections from the user's address.""" 
+        Check that the firewall settings allow connections from the user's address."""
 
     response.messages = errorMessage
     response.error_message = errorMessage
