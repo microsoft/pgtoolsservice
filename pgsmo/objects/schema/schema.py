@@ -9,6 +9,15 @@ from typing import List, Optional
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.collation.collation import Collation
+from pgsmo.objects.datatype.datatype import DataType
+from pgsmo.objects.functions.function import Function
+from pgsmo.objects.functions.trigger_function import TriggerFunction
+from pgsmo.objects.sequence.sequence import Sequence
+from pgsmo.objects.table.table import Table
+from pgsmo.objects.view.view import View
+from pgsmo.objects.view.materialized_view import MaterializedView
+from pgsmo.objects.extension.extension import Extension
 import smo.utils.templating as templating
 
 
@@ -48,6 +57,17 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         # Declare the optional parameters
         self._can_create: Optional[bool] = None
         self._has_usage: Optional[bool] = None
+
+        # Declare the child items
+        self._tables: NodeCollection = self._register_child_collection(Table)
+        self._views: NodeCollection = self._register_child_collection(View)
+        self._collations: NodeCollection = self._register_child_collection(Collation)
+        self._datatypes: NodeCollection = self._register_child_collection(DataType)
+        self._functions: NodeCollection = self._register_child_collection(Function)
+        self._sequences: NodeCollection = self._register_child_collection(Sequence)
+        self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
+        self._extensions: NodeCollection = self._register_child_collection(Extension)
+        self._materialized_views: NodeCollection = self._register_child_collection(MaterializedView)
 
     # PROPERTIES ###########################################################
     @property
@@ -89,39 +109,39 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     # -CHILD OBJECTS #######################################################
     @property
     def collations(self) -> NodeCollection:
-        return [collation for collation in self.parent.collations if collation.scid == self.oid]
+        return self._collations
 
     @property
     def datatypes(self) -> NodeCollection:
-        return [datatype for datatype in self.parent.datatypes if datatype.scid == self.oid]
+        return self._datatypes
 
     @property
     def functions(self) -> NodeCollection:
-        return [function for function in self.parent.functions if function.scid == self.oid]
+        return self._functions
 
     @property
     def sequences(self) -> NodeCollection:
-        return [sequence for sequence in self.parent.sequences if sequence.scid == self.oid]
+        return self._sequences
 
     @property
     def tables(self) -> NodeCollection:
-        return [table for table in self.parent.tables if table.scid == self.oid]
+        return self._tables
 
     @property
     def trigger_functions(self) -> NodeCollection:
-        return [trigger for trigger in self.parent.trigger_functions if trigger.scid == self.oid]
+        return self._trigger_functions
 
     @property
     def views(self) -> NodeCollection:
-        return [view for view in self.parent.views if view.scid == self.oid]
+        return self._views
 
     @property
     def materialized_views(self) -> NodeCollection:
-        return [view for view in self.parent.materialized_views if view.scid == self.oid]
+        return self._materialized_views
 
     @property
     def extensions(self) -> NodeCollection:
-        return [extension for extension in self.parent.extensions if extension.scid == extension.oid]
+        return self._extensions
 
     @property
     def namespaceowner(self):
