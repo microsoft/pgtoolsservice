@@ -199,7 +199,8 @@ def create_batch(batch_text: str, ordinal: int, selection: SelectionData, batch_
     if statement.get_type().lower() == 'select':
         into_checker = [True for token in statement.tokens if token.normalized == 'INTO']
         cte_checker = [True for token in statement.tokens if token.ttype == sqlparse.tokens.Keyword.CTE]
-        if len(into_checker) == 0 and len(cte_checker) == 0:  # SELECT INTO and CTE keywords can't be used in named cursor
+        update_share_checker = [True for token in statement.tokens if 'FOR UPDATE' in token.normalized or 'FOR SHARE' in token.normalized]
+        if len(into_checker) == 0 and len(cte_checker) == 0 and len(update_share_checker) == 0:  # SELECT INTO and CTE keywords can't be used in named cursor
             return SelectBatch(batch_text, ordinal, selection, batch_events, storage_type)
 
     return Batch(batch_text, ordinal, selection, batch_events, storage_type)
