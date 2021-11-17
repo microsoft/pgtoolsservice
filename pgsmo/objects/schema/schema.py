@@ -109,39 +109,39 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     # -CHILD OBJECTS #######################################################
     @property
     def collations(self) -> NodeCollection:
-        return [collation for collation in self.parent.collations if collation.scid == self.oid]
+        return self._collations
 
     @property
     def datatypes(self) -> NodeCollection:
-        return [datatype for datatype in self.parent.datatypes if datatype.scid == self.oid]
+        return self._datatypes
 
     @property
     def functions(self) -> NodeCollection:
-        return [function for function in self.parent.functions if function.scid == self.oid]
+        return self._functions
 
     @property
     def sequences(self) -> NodeCollection:
-        return [sequence for sequence in self.parent.sequences if sequence.scid == self.oid]
+        return self._sequences
 
     @property
     def tables(self) -> NodeCollection:
-        return [table for table in self.parent.tables if table.scid == self.oid]
+        return self._tables
 
     @property
     def trigger_functions(self) -> NodeCollection:
-        return [trigger for trigger in self.parent.trigger_functions if trigger.scid == self.oid]
+        return self._trigger_functions
 
     @property
     def views(self) -> NodeCollection:
-        return [view for view in self.parent.views if view.scid == self.oid]
+        return self._views
 
     @property
     def materialized_views(self) -> NodeCollection:
-        return [view for view in self.parent.materialized_views if view.scid == self.oid]
+        return self._materialized_views
 
     @property
     def extensions(self) -> NodeCollection:
-        return [extension for extension in self.parent.extensions if extension.scid == extension.oid]
+        return self._extensions
 
     @property
     def namespaceowner(self):
