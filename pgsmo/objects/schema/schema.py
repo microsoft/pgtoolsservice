@@ -10,6 +10,15 @@ from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 from pgsmo.objects.server import server as s    # noqa
 import smo.utils.templating as templating
+from pgsmo.objects.collation.collation import Collation
+from pgsmo.objects.datatype.datatype import DataType
+from pgsmo.objects.functions.function import Function
+from pgsmo.objects.functions.trigger_function import TriggerFunction
+from pgsmo.objects.sequence.sequence import Sequence
+from pgsmo.objects.table.table import Table
+from pgsmo.objects.view.view import View
+from pgsmo.objects.view.materialized_view import MaterializedView
+from pgsmo.objects.extension.extension import Extension
 
 
 class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
@@ -48,6 +57,17 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         # Declare the optional parameters
         self._can_create: Optional[bool] = None
         self._has_usage: Optional[bool] = None
+
+        # Declare the child items
+        self._tables: NodeCollection = self._register_child_collection(Table)
+        self._views: NodeCollection = self._register_child_collection(View)
+        self._collations: NodeCollection = self._register_child_collection(Collation)
+        self._datatypes: NodeCollection = self._register_child_collection(DataType)
+        self._functions: NodeCollection = self._register_child_collection(Function)
+        self._sequences: NodeCollection = self._register_child_collection(Sequence)
+        self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
+        self._extensions: NodeCollection = self._register_child_collection(Extension)
+        self._materialized_views: NodeCollection = self._register_child_collection(MaterializedView)
 
     # PROPERTIES ###########################################################
     @property
