@@ -252,7 +252,8 @@ def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession
     """Function to generate a list of NodeInfo for tables in a schema"""
     is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
-    return [_get_node_info(node, current_path, 'Schema', is_leaf=True) for node in parent_obj.schemas if node.is_system == is_system]
+    return [_get_node_info(node, current_path, 'Schema', is_leaf=False) 
+            for node in parent_obj.schemas if node.is_system == is_system]
 
 
 def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
