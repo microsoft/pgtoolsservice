@@ -221,9 +221,10 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
     """
     is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
+    schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     return [
         _get_node_info(node, current_path, 'Table', is_leaf=False, label=f'{node.name}')
-        for node in parent_obj.tables if node.is_system == is_system
+        for node in parent_obj.tables if node.is_system == is_system and schema.name ==  node.schema
     ]
 
 
