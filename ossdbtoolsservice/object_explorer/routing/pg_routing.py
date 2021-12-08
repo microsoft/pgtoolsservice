@@ -121,7 +121,7 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     return [
         _get_node_info(node, current_path, 'ScalarValuedFunction', label=f'{node.name}')
-        for node in parent_obj.functions if node.is_system == is_system 
+        for node in parent_obj.functions if schema.name ==  node.schema
     ]
 
 
@@ -136,7 +136,7 @@ def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     return [
         _get_node_info(node, current_path, 'collations', label=f'{node.name}')
-        for node in parent_obj.collations if node.is_system == is_system 
+        for node in parent_obj.collations if schema.name ==  node.schema
     ]
 
 
@@ -148,9 +148,10 @@ def _datatypes(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     """
     is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
+    schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     return [
         _get_node_info(node, current_path, 'Datatypes', label=f'{node.name}')
-        for node in parent_obj.datatypes if node.is_system == is_system
+        for node in parent_obj.datatypes if schema.name ==  node.schema
     ]
 
 
@@ -165,7 +166,7 @@ def _sequences(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     return [
         _get_node_info(node, current_path, 'Sequence', label=f'{node.name}')
-        for node in parent_obj.sequences if node.is_system == is_system 
+        for node in parent_obj.sequences if schema.name ==  node.schema
     ]
 
 
@@ -227,7 +228,7 @@ def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
     schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     return [
         _get_node_info(node, current_path, 'Table', is_leaf=False, label=f'{node.name}')
-        for node in parent_obj.tables if node.is_system == is_system 
+        for node in parent_obj.tables if schema.name ==  node.schema
     ]
 
 
@@ -257,7 +258,7 @@ def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession
     is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     return [_get_node_info(node, current_path, 'Schema', is_leaf=False) 
-            for node in parent_obj.schemas if node.is_system == is_system]
+            for node in parent_obj.schemas]
 
 
 def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -265,7 +266,7 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     _default_node_generator(is_refresh, current_path, session, match_params)
     is_system = 'systemdatabase' in current_path
     return [_get_node_info(node, current_path, 'Database', is_leaf=False)
-            for node in session.server.databases if node.can_connect and node.is_system == is_system]
+            for node in session.server.databases if node.can_connect]
 
 
 def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -291,7 +292,7 @@ def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     return [_get_node_info(node, current_path, 'View', label=f'{node.name}', is_leaf=False)
-            for node in parent_obj.views if node.is_system == is_system ]
+            for node in parent_obj.views if schema.name ==  node.schema]
 
 
 def _materialized_views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -304,7 +305,7 @@ def _materialized_views(is_refresh: bool, current_path: str, session: ObjectExpl
     parent_obj = _get_obj_with_refresh(session.server.databases[int(match_params['dbid'])], is_refresh)
     schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     return [_get_node_info(node, current_path, 'View', label=f'{node.name}', is_leaf=False)
-            for node in parent_obj.materialized_views if node.is_system == is_system ]
+            for node in parent_obj.materialized_views if schema.name ==  node.schema]
 
 
 def _extensions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -318,7 +319,7 @@ def _extensions(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     schema = _get_obj_with_refresh(_get_schema(session, match_params['dbid'], match_params['scid']), is_refresh)
     return [
         _get_node_info(node, current_path, 'extension', label=f'{node.name}')
-        for node in parent_obj.extensions if node.is_system == is_system 
+        for node in parent_obj.extensions if schema.name ==  node.schema
     ]
 
 
