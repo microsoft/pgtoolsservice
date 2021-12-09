@@ -291,7 +291,7 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     _default_node_generator(is_refresh, current_path, session, match_params)
     is_system = 'systemdatabase' in current_path
     return [_get_node_info(node, current_path, 'Database', is_leaf=False)
-            for node in session.server.databases if node.can_connect and node.is_system == is_system]
+            for node in session.server.databases if node.can_connect]
 
 
 def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
