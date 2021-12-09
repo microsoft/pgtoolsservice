@@ -69,6 +69,17 @@ def _get_schema(session: ObjectExplorerSession, dbid: any, scid: any) -> Schema:
     return session.server.databases[int(dbid)].schemas[int(scid)]
 
 
+def _get_schema_child_object(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
+                             match_params: dict, node_type: str, schema_propname: str) -> List[NodeInfo]:
+    schema = _get_obj_with_refresh(_get_schema(
+        session, match_params['dbid'], match_params['scid']), is_refresh)
+    child_objects = getattr(schema, schema_propname)
+    return [
+        _get_node_info(node, current_path, node_type)
+        for node in child_objects
+    ]
+
+
 def _get_table_or_view(is_refresh: bool, session: ObjectExplorerSession, dbid: any, parent_type: str, tid: any) -> Union[Table, View]:
     tid = int(tid)
     if parent_type == 'tables':
@@ -82,19 +93,41 @@ def _get_table_or_view(is_refresh: bool, session: ObjectExplorerSession, dbid: a
         raise ValueError('Object type to retrieve nodes is invalid')
 
 
+def is_system_request(route_path: str):
+    return '/system/' in route_path
+
+
 # NODE GENERATORS ##########################################################
-def _columns(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """
-    Function to generate column NodeInfo for tables/views
-      dbid int: Database OID
-      obj str: Type of the object to get columns from
-      tid int: table or view OID
-    """
-    obj = _get_table_or_view(
-        is_refresh, session, match_params['dbid'], match_params['obj'], match_params['tid'])
-    for column in obj.columns:
-        label = f'{column.name} ({column.datatype})'
-        yield _get_node_info(column, current_path, 'Column', label=label)
+def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """Function to generate a list of databases"""
+    _default_node_generator(is_refresh, current_path, session, match_params)
+    is_system = 'systemdatabase' in current_path
+    return [_get_node_info(node, current_path, 'Database', is_leaf=False)
+            for node in session.server.databases if node.is_system == is_system and node.can_connect]
+
+
+def _roles(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """Function to generate a list of roles for a server"""
+    _default_node_generator(is_refresh, current_path, session, match_params)
+    for role in session.server.roles:
+        node_type = "ServerLevelLogin" if role.can_login else "ServerLevelLogin_Disabled"
+        yield _get_node_info(role, current_path, node_type)
+
+
+def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """Function to generate a list of tablespaces for a server"""
+    _default_node_generator(is_refresh, current_path, session, match_params)
+    tablespaces = session.server.tablespaces
+    return [_get_node_info(node, current_path, 'Queue') for node in tablespaces]
+
+
+def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """Function to generate a list of NodeInfo for tables in a schema"""
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(
+        session.server.databases[int(match_params['dbid'])], is_refresh)
+    return [_get_node_info(node, current_path, 'Schema', is_leaf=False)
+            for node in parent_obj.schemas if node.is_system == is_system]
 
 
 def _constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -187,15 +220,69 @@ def _sequences(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     ]
 
 
-def _get_schema_child_object(is_refresh: bool, current_path: str, session: ObjectExplorerSession,
-                             match_params: dict, node_type: str, schema_propname: str) -> List[NodeInfo]:
+def _extensions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for extensions in a schema
+    Expected match_params:
+      dbid int: Database OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(
+        session.server.databases[int(match_params['dbid'])], is_refresh)
     schema = _get_obj_with_refresh(_get_schema(
         session, match_params['dbid'], match_params['scid']), is_refresh)
-    child_objects = getattr(schema, schema_propname)
     return [
-        _get_node_info(node, current_path, node_type)
-        for node in child_objects
+        _get_node_info(node, current_path, 'extension', label=f'{node.name}')
+        for node in parent_obj.extensions if node.is_system == is_system and schema.name == node.schema
     ]
+
+
+def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for tables in a schema
+    Expected match_params:
+      dbid int: Database OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(
+        session.server.databases[int(match_params['dbid'])], is_refresh)
+    schema = _get_obj_with_refresh(_get_schema(
+        session, match_params['dbid'], match_params['scid']), is_refresh)
+    return [
+        _get_node_info(node, current_path, 'Table',
+                       is_leaf=False, label=f'{node.name}')
+        for node in parent_obj.tables if node.is_system == is_system and schema.name == node.schema
+    ]
+
+
+def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for views in a schema
+    Expected match_params:
+      scid int: schema OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(
+        session.server.databases[int(match_params['dbid'])], is_refresh)
+    schema = _get_obj_with_refresh(_get_schema(
+        session, match_params['dbid'], match_params['scid']), is_refresh)
+    return [_get_node_info(node, current_path, 'View', label=f'{node.name}', is_leaf=False)
+            for node in parent_obj.views if node.is_system == is_system and schema.name == node.schema]
+
+
+def _materialized_views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for materialized views in a schema
+    Expected match_params:
+      scid int: schema OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(
+        session.server.databases[int(match_params['dbid'])], is_refresh)
+    schema = _get_obj_with_refresh(_get_schema(
+        session, match_params['dbid'], match_params['scid']), is_refresh)
+    return [_get_node_info(node, current_path, 'View', label=f'{node.name}', is_leaf=False)
+            for node in parent_obj.materialized_views if node.is_system == is_system and schema.name == node.schema]
 
 
 def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -233,34 +320,18 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
         yield _get_node_info(index, current_path, node_type, label=f'{index.name} {attrib_str}')
 
 
-def is_system_request(route_path: str):
-    return '/system/' in route_path
-
-
-def _tables(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+def _columns(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
-    Function to generate a list of NodeInfo for tables in a schema
-    Expected match_params:
+    Function to generate column NodeInfo for tables/views
       dbid int: Database OID
+      obj str: Type of the object to get columns from
+      tid int: table or view OID
     """
-    is_system = is_system_request(current_path)
-    parent_obj = _get_obj_with_refresh(
-        session.server.databases[int(match_params['dbid'])], is_refresh)
-    schema = _get_obj_with_refresh(_get_schema(
-        session, match_params['dbid'], match_params['scid']), is_refresh)
-    return [
-        _get_node_info(node, current_path, 'Table',
-                       is_leaf=False, label=f'{node.name}')
-        for node in parent_obj.tables if node.is_system == is_system and schema.name == node.schema
-    ]
-
-
-def _roles(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """Function to generate a list of roles for a server"""
-    _default_node_generator(is_refresh, current_path, session, match_params)
-    for role in session.server.roles:
-        node_type = "ServerLevelLogin" if role.can_login else "ServerLevelLogin_Disabled"
-        yield _get_node_info(role, current_path, node_type)
+    obj = _get_table_or_view(
+        is_refresh, session, match_params['dbid'], match_params['obj'], match_params['tid'])
+    for column in obj.columns:
+        label = f'{column.name} ({column.datatype})'
+        yield _get_node_info(column, current_path, 'Column', label=label)
 
 
 def _rules(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -277,30 +348,6 @@ def _rules(is_refresh: bool, current_path: str, session: ObjectExplorerSession, 
     return [_get_node_info(rule, current_path, 'Constraint') for rule in obj.rules]
 
 
-def _schemas(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """Function to generate a list of NodeInfo for tables in a schema"""
-    is_system = is_system_request(current_path)
-    parent_obj = _get_obj_with_refresh(
-        session.server.databases[int(match_params['dbid'])], is_refresh)
-    return [_get_node_info(node, current_path, 'Schema', is_leaf=False)
-            for node in parent_obj.schemas if node.is_system == is_system]
-
-
-def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """Function to generate a list of databases"""
-    _default_node_generator(is_refresh, current_path, session, match_params)
-    is_system = 'systemdatabase' in current_path
-    return [_get_node_info(node, current_path, 'Database', is_leaf=False)
-            for node in session.server.databases if node.is_system == is_system and node.can_connect]
-
-
-def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """Function to generate a list of tablespaces for a server"""
-    _default_node_generator(is_refresh, current_path, session, match_params)
-    tablespaces = session.server.tablespaces
-    return [_get_node_info(node, current_path, 'Queue') for node in tablespaces]
-
-
 def _triggers(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of triggers for a table or view"""
     is_system = is_system_request(current_path)
@@ -310,53 +357,6 @@ def _triggers(is_refresh: bool, current_path: str, session: ObjectExplorerSessio
         session, match_params['dbid'], match_params['scid']), is_refresh)
     return [_get_node_info(node, current_path, 'Trigger') 
             for node in parent_obj.triggers if node.is_system == is_system and schema.name == node.schema]
-
-
-def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """
-    Function to generate a list of NodeInfo for views in a schema
-    Expected match_params:
-      scid int: schema OID
-    """
-    is_system = is_system_request(current_path)
-    parent_obj = _get_obj_with_refresh(
-        session.server.databases[int(match_params['dbid'])], is_refresh)
-    schema = _get_obj_with_refresh(_get_schema(
-        session, match_params['dbid'], match_params['scid']), is_refresh)
-    return [_get_node_info(node, current_path, 'View', label=f'{node.name}', is_leaf=False)
-            for node in parent_obj.views if node.is_system == is_system and schema.name == node.schema]
-
-
-def _materialized_views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """
-    Function to generate a list of NodeInfo for materialized views in a schema
-    Expected match_params:
-      scid int: schema OID
-    """
-    is_system = is_system_request(current_path)
-    parent_obj = _get_obj_with_refresh(
-        session.server.databases[int(match_params['dbid'])], is_refresh)
-    schema = _get_obj_with_refresh(_get_schema(
-        session, match_params['dbid'], match_params['scid']), is_refresh)
-    return [_get_node_info(node, current_path, 'View', label=f'{node.name}', is_leaf=False)
-            for node in parent_obj.materialized_views if node.is_system == is_system and schema.name == node.schema]
-
-
-def _extensions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
-    """
-    Function to generate a list of NodeInfo for extensions in a schema
-    Expected match_params:
-      dbid int: Database OID
-    """
-    is_system = is_system_request(current_path)
-    parent_obj = _get_obj_with_refresh(
-        session.server.databases[int(match_params['dbid'])], is_refresh)
-    schema = _get_obj_with_refresh(_get_schema(
-        session, match_params['dbid'], match_params['scid']), is_refresh)
-    return [
-        _get_node_info(node, current_path, 'extension', label=f'{node.name}')
-        for node in parent_obj.extensions if node.is_system == is_system and schema.name == node.schema
-    ]
 
 
 def _default_node_generator(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> None:
