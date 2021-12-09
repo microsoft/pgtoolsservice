@@ -291,7 +291,7 @@ def _databases(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     _default_node_generator(is_refresh, current_path, session, match_params)
     is_system = 'systemdatabase' in current_path
     return [_get_node_info(node, current_path, 'Database', is_leaf=False)
-            for node in session.server.databases if node.can_connect]
+            for node in session.server.databases if node.is_system == is_system and node.can_connect]
 
 
 def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
@@ -303,9 +303,13 @@ def _tablespaces(is_refresh: bool, current_path: str, session: ObjectExplorerSes
 
 def _triggers(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """Function to generate a list of triggers for a table or view"""
+    is_system = is_system_request(current_path)
     parent_obj = _get_table_or_view(
         is_refresh, session, match_params['dbid'], match_params['obj'], match_params['tid'])
-    return [_get_node_info(node, current_path, 'Trigger') for node in parent_obj.triggers]
+    schema = _get_obj_with_refresh(_get_schema(
+        session, match_params['dbid'], match_params['scid']), is_refresh)
+    return [_get_node_info(node, current_path, 'Trigger') 
+            for node in parent_obj.triggers if node.is_system == is_system and schema.name == node.schema]
 
 
 def _views(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
