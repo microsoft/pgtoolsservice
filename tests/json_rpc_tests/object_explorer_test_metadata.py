@@ -33,16 +33,19 @@ TABLE_METADATA: dict = {
     'Triggers': {'Name': _name()}
 }
 
-DATABASE_METADATA: dict = {
+SCHEMA_METADATA: dict = {
     'Tables': {'Children': TABLE_METADATA, 'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
     'Views': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
     'Functions': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
     'Collations': {},
     'Data Types': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
     'Sequences': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
-    'Schemas': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()},
     'Extensions': {},
     'Materialized Views': {'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()}
+}
+
+DATABASE_METADATA: dict = {
+    'Schemas': {'Children': SCHEMA_METADATA, 'Name': uuid.uuid4().hex, 'DisplayName': _display_name_template_for_database_objects()}
 }
 
 META_DATA: dict = {
