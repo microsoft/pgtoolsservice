@@ -81,6 +81,8 @@ class MySQLConnection(ServerConnection):
         if 'port' not in self._connection_options or not self._connection_options['port']:
             self._connection_options['port'] = constants.DEFAULT_PORT[constants.MYSQL_PROVIDER_NAME]
 
+        ssl_dict = {}
+        
         # If SSL is enabled or allowed
         if "ssl" in conn_params.keys() and self._connection_options["ssl"] != "disable":
             # Find all the ssl options (key, ca, cipher)
@@ -88,9 +90,9 @@ class MySQLConnection(ServerConnection):
 
             # Map the ssl option names to their values
             ssl_dict = {param.strip("ssl."): conn_params[param] for param in ssl_params}
-
-            # Assign the ssl options to the dict
-            self._connection_options["ssl"] = ssl_dict
+        
+        # Assign the ssl options to the dict
+        self._connection_options["ssl"] = ssl_dict
 
         # Setting autocommit to True initally
         self._autocommit_status = True
