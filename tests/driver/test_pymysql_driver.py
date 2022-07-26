@@ -82,7 +82,35 @@ class TestMySQLConnection(unittest.TestCase):
          self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
          self.assertTrue(mysqlConnection.autocommit)
          self.assertEqual(mysqlConnection.default_database, constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME])
+
+     def test_mysql_connection_port_provided(self):
+         """Test creating mysql connection with dbname provided"""
          
+         mysql_connection_params = {
+            'connectTimeout': '30', 
+            'dbname': '', 
+            'groupId': 'C777F06B-202E-4480-B475-FA416154D458', 
+            'host': 'mysql-test.mysql.database.azure.com', 
+            'password': 'samplePass123', 
+            'user': 'sampleUser',
+            'port': 3307}
+         
+         with mock.patch('pymysql.connect', new=mock.Mock(return_value=self.mock_pymysql_connection)):
+            mysqlConnection = MySQLConnection(mysql_connection_params)
+         
+         expected_connection_options = {
+             'connect_timeout': 30, 
+             'database': '', 
+             'host': 'mysql-test.mysql.database.azure.com', 
+             'password': 'samplePass123', 
+             'port': 3307, 
+             'user': 'sampleUser'}   
+         print(mysqlConnection.connection_options)
+         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
+         self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
+         self.assertTrue(mysqlConnection.autocommit)
+         self.assertEqual(mysqlConnection.default_database, constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME])
+                  
      def test_mysql_connection_dbname_provided(self):
          """Test creating mysql connection with dbname provided"""
          
