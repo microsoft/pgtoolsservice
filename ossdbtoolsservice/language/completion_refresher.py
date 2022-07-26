@@ -34,7 +34,10 @@ class CompletionRefresher:
     completion suggestions in a background thread.
     """
 
-    refreshers = OrderedDict()
+    refreshers = {
+            PG_PROVIDER_NAME: OrderedDict(),
+            MYSQL_PROVIDER_NAME: OrderedDict()
+        }
 
     def __init__(self, connection: ServerConnection, logger: Logger = None):
         self.connection = connection
@@ -85,7 +88,7 @@ class CompletionRefresher:
 
         try:
             while True:
-                for do_refresh in self.refreshers.values():
+                for do_refresh in self.refreshers[self.connection._provider_name].values():
                     do_refresh(completer, metadata_executor)
                     if self._restart_refresh.is_set():
                         self._restart_refresh.clear()
@@ -116,46 +119,56 @@ class CompletionRefresher:
             self._restart_refresh.clear()
 
 
-def refresher(name, refreshers=CompletionRefresher.refreshers):
+def pg_refresher(name, refreshers=CompletionRefresher.refreshers):
     """Decorator to populate the dictionary of refreshers with the current
     function.
     """
     def wrapper(wrapped):
-        refreshers[name] = wrapped
+        refreshers[PG_PROVIDER_NAME][name] = wrapped
+        return wrapped
+    return wrapper
+
+def mysql_refresher(name, refreshers=CompletionRefresher.refreshers):
+    """Decorator to populate the dictionary of refreshers with the current
+    function.
+    """
+    def wrapper(wrapped):
+        refreshers[MYSQL_PROVIDER_NAME][name] = wrapped
         return wrapped
     return wrapper
 
 
-@refresher('schemata')
+@pg_refresher('schemata')
 def refresh_schemata(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.set_search_path(metadata_executor.search_path())
     completer.extend_schemata(metadata_executor.schemata())
 
 
-@refresher('tables')
+@pg_refresher('tables')
 def refresh_tables(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_relations(metadata_executor.tables(), kind='tables')
     completer.extend_columns(metadata_executor.table_columns(), kind='tables')
     completer.extend_foreignkeys(metadata_executor.foreignkeys())
 
 
-@refresher('views')
+@pg_refresher('views')
 def refresh_views(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_relations(metadata_executor.views(), kind='views')
     completer.extend_columns(metadata_executor.view_columns(), kind='views')
 
 
-@refresher('types')
+@pg_refresher('types')
 def refresh_types(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_datatypes(metadata_executor.datatypes())
 
 
-@refresher('databases')
+@pg_refresher('databases')
+@mysql_refresher('databases')
 def refresh_databases(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_database_names(metadata_executor.databases())
 
 
-@refresher('casing')
+@pg_refresher('casing')
 def refresh_casing(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     casing_file = completer.casing_file
     if not casing_file:
@@ -170,6 +183,31 @@ def refresh_casing(completer: PGCompleter or MySQLCompleter, metadata_executor: 
             completer.extend_casing([line.strip() for line in f])
 
 
-@refresher('functions')
+@pg_refresher('functions')
+@mysql_refresher('functions')
 def refresh_functions(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
     completer.extend_functions(metadata_executor.functions())
+
+
+@mysql_refresher('schemata')
+def mysql_refresh_schemata(completer, metadata_executor):
+    # schemata - In MySQL Schema is the same as database. But for mycli
+    # schemata will be the name of the current database.
+    completer.extend_schemata(metadata_executor.server._maintenance_db_name)
+    completer.set_dbname(metadata_executor.server._maintenance_db_name)
+
+@mysql_refresher('tables')
+def mysql_refresh_tables(completer, metadata_executor):
+    if metadata_executor.server._maintenance_db_name:
+        completer.extend_relations(metadata_executor.tables(), kind='tables')
+        completer.extend_columns(metadata_executor.table_columns(), kind='tables')
+
+
+@mysql_refresher('users')
+def refresh_users(completer, metadata_executor):
+    completer.extend_users(metadata_executor.users())
+
+
+@mysql_refresher('show_commands')
+def refresh_show_commands(completer, metadata_executor):
+    completer.extend_show_items(metadata_executor.show_candidates()) 

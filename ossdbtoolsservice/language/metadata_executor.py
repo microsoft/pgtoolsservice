@@ -90,3 +90,11 @@ class MetadataExecutor:
         use the lightweight metadata query as it'll have N queries for N functions otherwise
         """
         return [f for f in self.lightweight_metadata.functions()]
+
+    def users(self) -> List[tuple]:
+        """return list of users, used for MySQLCompleter"""
+        return [u for u in self.lightweight_metadata.users()]
+
+    def show_candidates(self) -> List[tuple]:
+        """return list of show command candidates, used for MySQLCompleter"""
+        return [s for s in self.lightweight_metadata.show_candidates()] 
