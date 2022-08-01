@@ -9,16 +9,31 @@ import functools
 import json
 import os
 from typing import List
-import psycopg2
+from ossdbtoolsservice.utils.constants import MARIADB_PROVIDER_NAME, MYSQL_PROVIDER_NAME, PG_PROVIDER_NAME
+
+from tests.integration.connections_for_integration_tests import PostgreSQLConnection
+
+INTEGRATION_TEST_SUPPORTED_PROVIDERS = [PG_PROVIDER_NAME]
+
+CONNECTORS = {
+    PG_PROVIDER_NAME: PostgreSQLConnection,
+    MYSQL_PROVIDER_NAME: None,
+    MARIADB_PROVIDER_NAME: None
+}
 
 
-def integration_test(min_version=None, max_version=None):
+def integration_test(min_version=None, max_version=None, provider=PG_PROVIDER_NAME):
     """
     Decorator used to indicate that a test is an integration test, giving it a connection
 
     :param min_version: The minimum server version, as an integer, for running the test (e.g. 90600 for 9.6.0)
     :param max_version: The maximum server version, as an integer, for running the test (e.g. 90600 for 9.6.0)
+    :param provider: connection provider
     """
+    # If the provider is not supported in integration test, raise exception
+    if(provider not in INTEGRATION_TEST_SUPPORTED_PROVIDERS):
+        print("Provider is : " + provider)
+        raise RuntimeError('Provider not supported for integration tests')
 
     # If the decorator is called without parentheses, the first argument will actually be the test function
     test_function = None
@@ -31,7 +46,7 @@ def integration_test(min_version=None, max_version=None):
         def new_test(*args):
             _ConnectionManager.current_test_is_integration_test = True
             try:
-                _ConnectionManager.run_test(test, min_version, max_version, *args)
+                _ConnectionManager.run_test(test, provider, min_version, max_version, *args)
             finally:
                 _ConnectionManager.current_test_is_integration_test = False
         new_test.is_integration_test = True
@@ -64,7 +79,6 @@ create_extra_test_database.__test__ = False
 
 class _ConnectionManager:
     current_test_is_integration_test: bool = False
-    _maintenance_connections: List[psycopg2.extensions.connection] = []
     _current_test_connection_detail_list: List[dict] = None
     _in_progress_test_index: int = None
     _extra_databases: List[str] = []
@@ -83,12 +97,15 @@ class _ConnectionManager:
         return db_name
 
     @classmethod
-    def run_test(cls, test, min_version, max_version, *args):
+    def run_test(cls, test, provider, min_version, max_version, *args):
+        if(cls._current_test_connection_detail_list is None):
+            cls._current_test_connection_detail_list = cls._get_connection_configurations(provider)
+            CONNECTORS[provider].open_connections(cls._current_test_connection_detail_list)
         cls._create_test_databases()
         needs_setup = False
         for index, details in enumerate(cls._current_test_connection_detail_list):
             cls._in_progress_test_index = index
-            server_version = cls._maintenance_connections[index].server_version
+            server_version = CONNECTORS[provider].get_connection_server_version(index)
             if min_version is not None and server_version < min_version or max_version is not None and server_version > max_version:
                 continue
             try:
@@ -99,41 +116,27 @@ class _ConnectionManager:
                 needs_setup = True
             except Exception as e:
                 host = details['host']
-                server_version = cls._maintenance_connections[index].server_version
-                raise RuntimeError(f'Test failed while executing on server {index + 1} (host: {host}, version: {server_version})') from e
-
-    @classmethod
-    def _open_maintenance_connections(cls):
-        config_list = cls._get_connection_configurations()
-        cls._maintenance_connections = []
-        cls._current_test_connection_detail_list = []
-        for config_dict in config_list:
-            connection = psycopg2.connect(**config_dict)
-            cls._maintenance_connections.append(connection)
-            connection.autocommit = True
-            config_dict['dbname'] = None
-            cls._current_test_connection_detail_list.append(config_dict)
+                server_version = CONNECTORS[provider].get_connection_server_version(index)
+                raise RuntimeError(
+                    f'Test failed for provider {provider} while executing on server {index + 1} (host: {host}, version: {server_version})') from e
 
     @staticmethod
-    def _get_connection_configurations() -> dict:
-        config_file_name = 'config.json'
+    def _get_connection_configurations(provider) -> dict:
+        config_file_name = "config.json"
         current_folder = os.path.dirname(os.path.realpath(__file__))
         config_path = os.path.join(current_folder, config_file_name)
         if not os.path.exists(config_path):
             config_path += '.txt'
         if not os.path.exists(config_path):
             raise RuntimeError(f'No test config file found at {config_path}')
-
         with open(config_path, 'rb') as config_file:
-            config_list = json.load(config_file)
-
-        if not isinstance(config_list, list):
-            config_list = [config_list]
-        return config_list
+            config = json.load(config_file)
+        provider_config_list = config[provider]
+        if not provider_config_list:
+            raise RuntimeError(f'No configuration found for provider {provider} in test config file found at {config_path}')
+        return provider_config_list
 
     @classmethod
     def _create_test_databases(cls) -> None:
-        if not cls._maintenance_connections:
-            cls._open_maintenance_connections()
-        for index, connection in enumerate(cls._maintenance_connections):
-            cls._current_test_connection_detail_list[index]['dbname'] = 'flexibleserverdb'
+        for connection_detail in cls._current_test_connection_detail_list:
+            connection_detail['dbname'] = 'flexibleserverdb'
