@@ -5,7 +5,7 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-import sqlparse 
+import sqlparse
 from sqlparse.tokens import Token, Error
 
 cleanup_regex = {

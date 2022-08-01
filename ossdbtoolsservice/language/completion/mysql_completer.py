@@ -1,52 +1,29 @@
 import logging
 from re import compile, escape
 from collections import Counter
+from itertools import chain
 from logging import Logger
 
 from prompt_toolkit.completion import Completer
 
-from .packages.mysql_completion_engine import suggest_type
-from .packages.parseutils.utils import last_word
 from .mysql_completion import MySQLCompletion
+from .packages.mysql_completion_engine import suggest_type
+from .packages.mysqlliterals.main import get_literals
+from .packages.parseutils.utils import find_prev_keyword, last_word
+
 
 class MySQLCompleter(Completer):
-    keywords = ['ACCESS', 'ADD', 'ALL', 'ALTER TABLE', 'AND', 'ANY', 'AS',
-                'ASC', 'AUTO_INCREMENT', 'BEFORE', 'BEGIN', 'BETWEEN',
-                'BIGINT', 'BINARY', 'BY', 'CASE', 'CHANGE MASTER TO', 'CHAR',
-                'CHARACTER SET', 'CHECK', 'COLLATE', 'COLUMN', 'COMMENT',
-                'COMMIT', 'CONSTRAINT', 'CREATE', 'CURRENT',
-                'CURRENT_TIMESTAMP', 'DATABASE', 'DATE', 'DECIMAL', 'DEFAULT',
-                'DELETE FROM', 'DESC', 'DESCRIBE', 'DROP',
-                'ELSE', 'END', 'ENGINE', 'ESCAPE', 'EXISTS', 'FILE', 'FLOAT',
-                'FOR', 'FOREIGN KEY', 'FORMAT', 'FROM', 'FULL', 'FUNCTION',
-                'GRANT', 'GROUP BY', 'HAVING', 'HOST', 'IDENTIFIED', 'IN',
-                'INCREMENT', 'INDEX', 'INSERT INTO', 'INT', 'INTEGER',
-                'INTERVAL', 'INTO', 'IS', 'JOIN', 'KEY', 'LEFT', 'LEVEL',
-                'LIKE', 'LIMIT', 'LOCK', 'LOGS', 'LONG', 'MASTER',
-                'MEDIUMINT', 'MODE', 'MODIFY', 'NOT', 'NULL', 'NUMBER',
-                'OFFSET', 'ON', 'OPTION', 'OR', 'ORDER BY', 'OUTER', 'OWNER',
-                'PASSWORD', 'PORT', 'PRIMARY', 'PRIVILEGES', 'PROCESSLIST',
-                'PURGE', 'REFERENCES', 'REGEXP', 'RENAME', 'REPAIR', 'RESET',
-                'REVOKE', 'RIGHT', 'ROLLBACK', 'ROW', 'ROWS', 'ROW_FORMAT',
-                'SAVEPOINT', 'SELECT', 'SESSION', 'SET', 'SHARE', 'SHOW',
-                'SLAVE', 'SMALLINT', 'SMALLINT', 'START', 'STOP', 'TABLE',
-                'THEN', 'TINYINT', 'TO', 'TRANSACTION', 'TRIGGER', 'TRUNCATE',
-                'UNION', 'UNIQUE', 'UNSIGNED', 'UPDATE', 'USE', 'USER',
-                'USING', 'VALUES', 'VARCHAR', 'VIEW', 'WHEN', 'WHERE', 'WITH']
-
-    functions = ['AVG', 'CONCAT', 'COUNT', 'DISTINCT', 'FIRST', 'FORMAT',
-                 'FROM_UNIXTIME', 'LAST', 'LCASE', 'LEN', 'MAX', 'MID',
-                 'MIN', 'NOW', 'ROUND', 'SUM', 'TOP', 'UCASE', 'UNIX_TIMESTAMP']
+    # keywords_tree: A dict mapping keywords to well known following keywords.
+    # e.g. 'CREATE': ['TABLE', 'USER', ...],
+    keywords_tree = get_literals('keywords', type_=dict)
+    keywords = tuple(set(chain(keywords_tree.keys(), *keywords_tree.values())))
+    functions = get_literals('functions')
+    datatypes = get_literals('datatypes')
+    reserved_words = set(get_literals('reserved'))
 
     show_items = []
 
-    change_items = ['MASTER_BIND', 'MASTER_HOST', 'MASTER_USER',
-                    'MASTER_PASSWORD', 'MASTER_PORT', 'MASTER_CONNECT_RETRY',
-                    'MASTER_HEARTBEAT_PERIOD', 'MASTER_LOG_FILE',
-                    'MASTER_LOG_POS', 'RELAY_LOG_FILE', 'RELAY_LOG_POS',
-                    'MASTER_SSL', 'MASTER_SSL_CA', 'MASTER_SSL_CAPATH',
-                    'MASTER_SSL_CERT', 'MASTER_SSL_KEY', 'MASTER_SSL_CIPHER',
-                    'MASTER_SSL_VERIFY_SERVER_CERT', 'IGNORE_SERVER_IDS']
+    change_items = get_literals('change_items')
 
     users = []
 
@@ -76,16 +53,9 @@ class MySQLCompleter(Completer):
 
     def escape_name(self, name):
         if name and ((not self.name_pattern.match(name))
-                or (name.upper() in self.reserved_words)
-                or (name.upper() in self.functions)):
-                    name = '`%s`' % name
-
-        return name
-
-    def unescape_name(self, name):
-        """Unquote a string."""
-        if name and name[0] == '"' and name[-1] == '"':
-            name = name[1:-1]
+                     or (name.upper() in self.reserved_words)
+                     or (name.upper() in self.functions)):
+            name = '`%s`' % name
 
         return name
 
@@ -96,7 +66,9 @@ class MySQLCompleter(Completer):
         self.databases.extend(databases)
 
     def extend_keywords(self, additional_keywords):
-        self.keywords.extend(additional_keywords)
+        keywords_list = list(self.keywords)
+        keywords_list.extend(additional_keywords)
+        self.keywords = tuple(keywords_list)
         self.all_completions.update(additional_keywords)
 
     def extend_show_items(self, show_items):
@@ -143,7 +115,7 @@ class MySQLCompleter(Completer):
                 metadata[self.dbname][relname[0]] = ['*']
             except KeyError:
                 self._log(True, '%r %r listed in unrecognized schema %r',
-                              kind, relname[0], self.dbname)
+                          kind, relname[0], self.dbname)
             self.all_completions.add(relname[0])
 
     def extend_columns(self, column_data, kind):
@@ -195,8 +167,7 @@ class MySQLCompleter(Completer):
         self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
         self.all_completions = set(self.keywords + self.functions)
 
-    @staticmethod
-    def find_matches(text, collection, start_only=False, fuzzy=True, casing=None):
+    def find_matches(self, text, collection, start_only=False, fuzzy=True, meta=None):
         """Find completion matches for the given text.
         Given the user's input text and a collection of available
         completions, find completions matching the last word of the
@@ -226,16 +197,9 @@ class MySQLCompleter(Completer):
                 if match_point >= 0:
                     completions.append((len(text), match_point, item))
 
-        if casing == 'auto':
-            casing = 'lower' if last and last[-1].islower() else 'upper'
-
-        def apply_case(kw):
-            if casing == 'upper':
-                return kw.upper()
-            return kw.lower()
-
-        return (MySQLCompletion(z if casing is None else apply_case(z), -len(text))
-                for x, y, z in sorted(completions))
+        return [MySQLCompletion(z, -len(text),
+                display_meta=meta, schema=self.dbname)
+                for x, y, z in sorted(completions)]
 
     def get_completions(self, document, complete_event, smart_completion=None):
         word_before_cursor = document.get_word_before_cursor(WORD=True)
@@ -247,6 +211,23 @@ class MySQLCompleter(Completer):
         if not smart_completion:
             return self.find_matches(word_before_cursor, self.all_completions,
                                      start_only=True, fuzzy=False)
+
+        # case should only be applied to function, keyword, and show completions
+        # other types should follow casing returned from executor
+        def apply_case(words):
+            casing = self.keyword_casing
+            if casing == 'auto':
+                if word_before_cursor and word_before_cursor[-1].islower():
+                    casing = 'lower'
+                else:
+                    casing = 'upper'
+
+            if casing == 'upper':
+                words = [k.upper() for k in words]
+            else:
+                words = [k.lower() for k in words]
+
+            return words
 
         completions = []
         suggestions = suggest_type(document.text, document.text_before_cursor)
@@ -268,7 +249,7 @@ class MySQLCompleter(Completer):
                         if count > 1 and col != '*'
                     ]
 
-                cols = self.find_matches(word_before_cursor, scoped_cols)
+                cols = self.find_matches(word_before_cursor, scoped_cols, meta='column')
                 completions.extend(cols)
 
             elif suggestion['type'] == 'function':
@@ -284,62 +265,67 @@ class MySQLCompleter(Completer):
                 # eg: SELECT * FROM users u WHERE u.
                 if not suggestion['schema']:
                     predefined_funcs = self.find_matches(word_before_cursor,
-                                                         self.functions,
+                                                         apply_case(self.functions),
                                                          start_only=True,
                                                          fuzzy=False,
-                                                         casing=self.keyword_casing)
+                                                         meta='function')
                     completions.extend(predefined_funcs)
 
             elif suggestion['type'] == 'table':
                 tables = self.populate_schema_objects(suggestion['schema'],
                                                       'tables')
-                tables = self.find_matches(word_before_cursor, tables)
+                tables = self.find_matches(word_before_cursor, tables, meta='table')
                 completions.extend(tables)
 
             elif suggestion['type'] == 'view':
                 views = self.populate_schema_objects(suggestion['schema'],
                                                      'views')
-                views = self.find_matches(word_before_cursor, views)
+                views = self.find_matches(word_before_cursor, views, meta='view')
                 completions.extend(views)
 
             elif suggestion['type'] == 'alias':
                 aliases = suggestion['aliases']
-                aliases = self.find_matches(word_before_cursor, aliases)
+                aliases = self.find_matches(word_before_cursor, aliases, meta='alias')
                 completions.extend(aliases)
 
             elif suggestion['type'] == 'database':
-                dbs = self.find_matches(word_before_cursor, self.databases)
+                dbs = self.find_matches(word_before_cursor, self.databases, meta='database')
                 completions.extend(dbs)
 
             elif suggestion['type'] == 'keyword':
-                keywords = self.find_matches(word_before_cursor, self.keywords,
+                keywords_suggestions = self.keywords_tree.keys()
+                # Get well known following keywords for the last token. If any, narrow
+                # candidates to this list.
+                next_keywords = self.keywords_tree.get(find_prev_keyword(document.text_before_cursor)[1], [])
+                if next_keywords:
+                    keywords_suggestions = next_keywords
+                keywords = self.find_matches(word_before_cursor, apply_case(keywords_suggestions),
                                              start_only=True,
                                              fuzzy=False,
-                                             casing=self.keyword_casing)
+                                             meta='keyword')
                 completions.extend(keywords)
 
             elif suggestion['type'] == 'show':
                 show_items = self.find_matches(word_before_cursor,
-                                               self.show_items,
+                                               apply_case(self.show_items),
                                                start_only=False,
                                                fuzzy=True,
-                                               casing=self.keyword_casing)
+                                               meta='show')
                 completions.extend(show_items)
 
             elif suggestion['type'] == 'change':
                 change_items = self.find_matches(word_before_cursor,
                                                  self.change_items,
                                                  start_only=False,
-                                                 fuzzy=True)
+                                                 fuzzy=True, meta='change')
                 completions.extend(change_items)
             elif suggestion['type'] == 'user':
                 users = self.find_matches(word_before_cursor, self.users,
                                           start_only=False,
-                                          fuzzy=True)
+                                          fuzzy=True, meta='user')
                 completions.extend(users)
 
         return completions
-
 
     def populate_scoped_cols(self, scoped_tbls):
         """Find all columns in a set of scoped_tables

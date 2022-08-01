@@ -97,4 +97,4 @@ class MetadataExecutor:
 
     def show_candidates(self) -> List[tuple]:
         """return list of show command candidates, used for MySQLCompleter"""
-        return [s for s in self.lightweight_metadata.show_candidates()] 
+        return [s for s in self.lightweight_metadata.show_candidates()]

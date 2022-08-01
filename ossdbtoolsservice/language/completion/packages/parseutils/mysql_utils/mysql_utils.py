@@ -5,12 +5,14 @@ from sqlparse.tokens import Keyword, DML, Punctuation
 
 # This code is borrowed from sqlparse example script.
 # <url>
+
+
 def is_subselect(parsed):
     if not parsed.is_group:
         return False
     for item in parsed.tokens:
         if item.ttype is DML and item.value.upper() in ('SELECT', 'INSERT',
-                'UPDATE', 'CREATE', 'DELETE'):
+                                                        'UPDATE', 'CREATE', 'DELETE'):
             return True
     return False
 
@@ -97,7 +99,6 @@ def extract_tables(sql):
     return list(extract_table_identifiers(stream))
 
 
-
 if __name__ == '__main__':
     sql = 'select * from (select t. from tabl t'
-    print (extract_tables(sql)) 
+    print(extract_tables(sql))

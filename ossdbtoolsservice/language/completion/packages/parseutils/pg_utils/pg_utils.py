@@ -9,6 +9,7 @@ import sqlparse
 from sqlparse.sql import Identifier
 from sqlparse.tokens import Token, Error
 
+
 def is_open_quote(sql):
     """Returns true if the query contains an unclosed quote"""
 
