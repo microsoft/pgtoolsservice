@@ -19,7 +19,7 @@ from tests.json_rpc_tests.object_explorer_test_metadata import (
     CREATE_SCRIPTS, GET_OID_SCRIPTS, META_DATA)
 
 
-class ObjectExplorerJSONRPCTests(unittest.TestCase):
+class ObjectExplorerPgJSONRPCTests(unittest.TestCase):
 
     @integration_test
     def test_object_explorer(self):
