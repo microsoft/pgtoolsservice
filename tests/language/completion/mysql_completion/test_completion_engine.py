@@ -1,7 +1,7 @@
 import itertools
 import unittest
 
-from parameterized import param, parameterized
+from parameterized import parameterized
 
 from ossdbtoolsservice.language.completion.packages.mysql_completion_engine import \
     suggest_type
@@ -453,7 +453,3 @@ class TestMySQLCompletionEngine(unittest.TestCase):
         suggestions = suggest_type(expression, expression)
         self.assertSetEqual(set(suggestions), set())
 
-    def test_order_by(self, ):
-        text = 'select * from foo order by '
-        suggestions = suggest_type(text, text)
-        self.assertEqual(suggestions, [{'tables': [(None, 'foo', None)], 'type': 'column'}])

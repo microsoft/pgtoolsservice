@@ -15,7 +15,7 @@ from ossdbtoolsservice.language.completion.pg_completer import PGCompleter
 from ossdbtoolsservice.language.completion.pg_completion import PGCompletion
 
 from .metadata import (MetaData, alias, column, compare_result_and_correct_result, fk_join, function, get_result,
-                       join, keyword, name_join, no_qual, qual, result_set,
+                       join, keyword, name_join, no_qual, qual,
                        schema, table, view, wildcard_expansion)
 
 METADATA = {

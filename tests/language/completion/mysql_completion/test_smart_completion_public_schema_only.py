@@ -110,24 +110,6 @@ class TestSmartCompletion(unittest.TestCase):
             [Completion(text='users', start_position=0, display_meta='alias')] +
             list(map(lambda completion: Completion(completion, display_meta='keyword'), self.keywords))))
 
-    def test_orderby_suggested_column_names(self):
-        """Suggest column after order statement when selecting from table. """
-        text = 'SELECT * from users ORDER BY '
-        position = len(text)
-
-        # When completions after ORDER BY are requested
-        result = set(self.completer.get_completions(
-            Document(text=text, cursor_position=position),
-            self.complete_event))
-
-        # Then results should only include column names
-        self.assertSetEqual(result, set([
-            Completion(text='*', start_position=0, display_meta='column'),
-            Completion(text='email', start_position=0, display_meta='column'),
-            Completion(text='first_name', start_position=0, display_meta='column'),
-            Completion(text='id', start_position=0, display_meta='column'),
-            Completion(text='last_name', start_position=0, display_meta='column'),
-        ]))
 
     def test_suggested_column_names_in_function(self):
         """Suggest column and function names when selecting multiple columns from

@@ -1,10 +1,9 @@
-import os
-import sys
 import sqlparse
-from sqlparse.sql import Comparison, Identifier, Where
 from sqlparse.compat import text_type
-from .parseutils.utils import last_word, find_prev_keyword
+from sqlparse.sql import Comparison, Identifier, Where
+
 from .parseutils.mysql_utils.mysql_utils import extract_tables
+from .parseutils.utils import find_prev_keyword, last_word
 
 
 def suggest_type(full_text, text_before_cursor):
@@ -97,7 +96,8 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
     else:
         token_v = token.value.lower()
 
-    def is_operand(x): return x and any([x.endswith(op) for op in ['+', '-', '*', '/']])
+    def is_operand(x):
+        return x and any([x.endswith(op) for op in ['+', '-', '*', '/']])
 
     if not token:
         return [{'type': 'keyword'}]

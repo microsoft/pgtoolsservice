@@ -6,7 +6,6 @@
 
 import re
 import sqlparse
-from sqlparse.tokens import Token, Error
 
 cleanup_regex = {
     # This matches only alphanumerics and underscores.

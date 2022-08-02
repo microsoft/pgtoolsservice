@@ -1,8 +1,7 @@
-import logging
-from re import compile, escape
 from collections import Counter
 from itertools import chain
 from logging import Logger
+from re import compile, escape
 
 from prompt_toolkit.completion import Completer
 
@@ -198,7 +197,7 @@ class MySQLCompleter(Completer):
                     completions.append((len(text), match_point, item))
 
         return [MySQLCompletion(z, -len(text),
-                display_meta=meta, schema=self.dbname)
+                                display_meta=meta, schema=self.dbname)
                 for x, y, z in sorted(completions)]
 
     def get_completions(self, document, complete_event, smart_completion=None):
