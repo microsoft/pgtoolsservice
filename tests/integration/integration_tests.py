@@ -8,17 +8,17 @@
 import functools
 import json
 import os
-from typing import List
+from typing import Dict, List
 from ossdbtoolsservice.utils.constants import MARIADB_PROVIDER_NAME, MYSQL_PROVIDER_NAME, PG_PROVIDER_NAME
 
-from tests.integration.connections_for_integration_tests import PostgreSQLConnection
+from tests.integration.connections_for_integration_tests import MySQLConnection, PostgreSQLConnection
 
-INTEGRATION_TEST_SUPPORTED_PROVIDERS = [PG_PROVIDER_NAME]
+INTEGRATION_TEST_SUPPORTED_PROVIDERS = [PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME, MARIADB_PROVIDER_NAME]
 
 CONNECTORS = {
     PG_PROVIDER_NAME: PostgreSQLConnection,
-    MYSQL_PROVIDER_NAME: None,
-    MARIADB_PROVIDER_NAME: None
+    MYSQL_PROVIDER_NAME: MySQLConnection,
+    MARIADB_PROVIDER_NAME: MySQLConnection
 }
 
 
@@ -82,6 +82,7 @@ class _ConnectionManager:
     _current_test_connection_detail_list: List[dict] = None
     _in_progress_test_index: int = None
     _extra_databases: List[str] = []
+    _connections_configurations: Dict[str, List[Dict]] = None
 
     @classmethod
     def get_test_connection_details(cls):
@@ -98,10 +99,9 @@ class _ConnectionManager:
 
     @classmethod
     def run_test(cls, test, provider, min_version, max_version, *args):
-        if(cls._current_test_connection_detail_list is None):
-            cls._current_test_connection_detail_list = cls._get_connection_configurations(provider)
+        cls._current_test_connection_detail_list = cls._get_connection_configurations(provider)
+        if not CONNECTORS[provider].get_connections() :
             CONNECTORS[provider].open_connections(cls._current_test_connection_detail_list)
-        cls._create_test_databases()
         needs_setup = False
         for index, details in enumerate(cls._current_test_connection_detail_list):
             cls._in_progress_test_index = index
@@ -120,23 +120,20 @@ class _ConnectionManager:
                 raise RuntimeError(
                     f'Test failed for provider {provider} while executing on server {index + 1} (host: {host}, version: {server_version})') from e
 
-    @staticmethod
-    def _get_connection_configurations(provider) -> dict:
-        config_file_name = "config.json"
-        current_folder = os.path.dirname(os.path.realpath(__file__))
-        config_path = os.path.join(current_folder, config_file_name)
-        if not os.path.exists(config_path):
-            config_path += '.txt'
-        if not os.path.exists(config_path):
-            raise RuntimeError(f'No test config file found at {config_path}')
-        with open(config_path, 'rb') as config_file:
-            config = json.load(config_file)
-        provider_config_list = config[provider]
+    @classmethod
+    def _get_connection_configurations(cls, provider) -> dict:
+        if(cls._connections_configurations is None) :
+            config_file_name = "config.json"
+            current_folder = os.path.dirname(os.path.realpath(__file__))
+            config_path = os.path.join(current_folder, config_file_name)
+            if not os.path.exists(config_path):
+                config_path += '.txt'
+            if not os.path.exists(config_path):
+                raise RuntimeError(f'No test config file found at {config_path}')
+            with open(config_path, 'rb') as config_file:
+                cls._connections_configurations = json.load(config_file)
+            
+        provider_config_list = cls._connections_configurations[provider]
         if not provider_config_list:
             raise RuntimeError(f'No configuration found for provider {provider} in test config file found at {config_path}')
         return provider_config_list
-
-    @classmethod
-    def _create_test_databases(cls) -> None:
-        for connection_detail in cls._current_test_connection_detail_list:
-            connection_detail['dbname'] = 'flexibleserverdb'
