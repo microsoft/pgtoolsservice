@@ -104,6 +104,7 @@ class MySQLCompleter(Completer):
         try:
             data = [self.escaped_names(d) for d in data]
         except Exception:
+            self.logger.info('data is empty since no database selected')
             data = []
 
         # dbmetadata['tables'][$schema_name][$table_name] should be a list of
@@ -130,6 +131,7 @@ class MySQLCompleter(Completer):
         try:
             column_data = [self.escaped_names(d) for d in column_data]
         except Exception:
+            self.logger.info('column_data is empty since no database selected')
             column_data = []
 
         metadata = self.dbmetadata[kind]
@@ -145,6 +147,7 @@ class MySQLCompleter(Completer):
         try:
             func_data = [self.escaped_names(d) for d in func_data]
         except Exception:
+            self.logger.info('func_data is empty since no database selected')
             func_data = []
 
         # dbmetadata['functions'][$schema_name][$function_name] should return

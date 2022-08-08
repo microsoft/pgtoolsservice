@@ -92,9 +92,9 @@ class MetadataExecutor:
         return [f for f in self.lightweight_metadata.functions()]
 
     def users(self) -> List[tuple]:
-        """return list of users, used for MySQLCompleter"""
+        """return list of users"""
         return [u for u in self.lightweight_metadata.users()]
 
     def show_candidates(self) -> List[tuple]:
-        """return list of show command candidates, used for MySQLCompleter"""
+        """return list of show command candidates"""
         return [s for s in self.lightweight_metadata.show_candidates()]
