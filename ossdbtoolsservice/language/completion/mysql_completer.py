@@ -2,6 +2,7 @@ from collections import Counter
 from itertools import chain
 from logging import Logger
 from re import compile, escape
+import enum
 
 from prompt_toolkit.completion import Completer
 
@@ -9,6 +10,12 @@ from .mysql_completion import MySQLCompletion
 from .packages.mysql_completion_engine import suggest_type
 from .packages.mysqlliterals.main import get_literals
 from .packages.parseutils.utils import find_prev_keyword, last_word
+
+
+class LogType(enum.Enum):
+    INFO = 0
+    ERROR = 1
+    WARNING = 2
 
 
 class MySQLCompleter(Completer):
@@ -43,12 +50,14 @@ class MySQLCompleter(Completer):
         self.keyword_casing = keyword_casing
         self.reset_completions()
 
-    def _log(self, is_error: bool, msg: str, *args) -> None:
+    def _log(self, log_type: LogType, msg: str, *args) -> None:
         if self.logger is not None:
-            if is_error:
+            if log_type is LogType.ERROR:
                 self.logger.error(msg, *args)
+            elif log_type is LogType.WARNING:
+                self.logger.warning(msg, *args)
             else:
-                self.logger.debug(msg, *args)
+                self.logger.info(msg, *args)
 
     def escape_name(self, name):
         if name and ((not self.name_pattern.match(name))
@@ -104,7 +113,7 @@ class MySQLCompleter(Completer):
         try:
             data = [self.escaped_names(d) for d in data]
         except Exception:
-            self.logger.info('data is empty since no database selected')
+            self._log(LogType.WARNING, 'data is empty since no database selected')
             data = []
 
         # dbmetadata['tables'][$schema_name][$table_name] should be a list of
@@ -114,7 +123,7 @@ class MySQLCompleter(Completer):
             try:
                 metadata[self.dbname][relname[0]] = ['*']
             except KeyError:
-                self._log(True, '%r %r listed in unrecognized schema %r',
+                self._log(LogType.ERROR, '%r %r listed in unrecognized schema %r',
                           kind, relname[0], self.dbname)
             self.all_completions.add(relname[0])
 
@@ -131,7 +140,7 @@ class MySQLCompleter(Completer):
         try:
             column_data = [self.escaped_names(d) for d in column_data]
         except Exception:
-            self.logger.info('column_data is empty since no database selected')
+            self._log(LogType.WARNING, 'column_data is empty since no database selected')
             column_data = []
 
         metadata = self.dbmetadata[kind]
@@ -147,7 +156,7 @@ class MySQLCompleter(Completer):
         try:
             func_data = [self.escaped_names(d) for d in func_data]
         except Exception:
-            self.logger.info('func_data is empty since no database selected')
+            self._log(LogType.WARNING, 'func_data is empty since no database selected')
             func_data = []
 
         # dbmetadata['functions'][$schema_name][$function_name] should return
@@ -236,11 +245,11 @@ class MySQLCompleter(Completer):
 
         for suggestion in suggestions:
 
-            self._log(False, 'Suggestion type: %r', suggestion['type'])
+            self._log(LogType.INFO, 'Suggestion type: %r', suggestion['type'])
 
             if suggestion['type'] == 'column':
                 tables = suggestion['tables']
-                self._log(False, "Completion column scope: %r", tables)
+                self._log(LogType.INFO, "Completion column scope: %r", tables)
                 scoped_cols = self.populate_scoped_cols(tables)
                 if suggestion.get('drop_unique'):
                     # drop_unique is used for 'tb11 JOIN tbl2 USING (...'
@@ -358,11 +367,13 @@ class MySQLCompleter(Completer):
                     # Table exists, so don't bother checking for a view
                     continue
                 except KeyError:
+                    self._log(LogType.WARNING, 'populate_scoped_cols: schema.relname is not a table')
                     pass
 
             try:
                 columns.extend(meta['views'][schema][relname])
             except KeyError:
+                self._log(LogType.WARNING, 'populate_scoped_cols: schema.relname is neither a table nor a view')
                 pass
 
         return columns
@@ -376,6 +387,7 @@ class MySQLCompleter(Completer):
             objects = metadata[schema].keys()
         except KeyError:
             # schema doesn't exist
+            self._log(LogType.WARNING, 'populate_schema_objects: Schema does not exist')
             objects = []
 
         return objects
