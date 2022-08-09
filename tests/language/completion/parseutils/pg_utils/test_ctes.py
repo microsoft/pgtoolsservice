@@ -6,9 +6,11 @@
 from parameterized import parameterized
 import unittest
 from sqlparse import parse
-from ossdbtoolsservice.language.completion.packages.parseutils.ctes import (
-    token_start_pos, extract_ctes,
-    extract_column_names as _extract_column_names)
+
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.ctes import \
+    extract_column_names as _extract_column_names
+from ossdbtoolsservice.language.completion.packages.parseutils.pg_utils.ctes import (
+    extract_ctes, token_start_pos)
 
 
 def extract_column_names(sql):

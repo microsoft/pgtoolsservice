@@ -7,10 +7,10 @@ import re
 import sqlparse
 from collections import namedtuple
 from sqlparse.sql import Comparison, Identifier, Where
-from .parseutils.utils import (
-    last_word, find_prev_keyword, parse_partial_identifier)
-from .parseutils.tables import extract_tables
-from .parseutils.ctes import isolate_query_ctes
+from .parseutils.utils import last_word, find_prev_keyword
+from .parseutils.pg_utils.pg_utils import parse_partial_identifier
+from .parseutils.pg_utils.tables import extract_tables
+from .parseutils.pg_utils.ctes import isolate_query_ctes
 # {{ PGToolsService EDIT }}
 # from pgspecial.main import parse_special_command
 
