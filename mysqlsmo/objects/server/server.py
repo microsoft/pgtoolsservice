@@ -14,6 +14,7 @@ from mysqlsmo.objects.table.table import Table
 from mysqlsmo.objects.view.view import View
 from mysqlsmo.objects.procedure.procedure import Procedure
 from mysqlsmo.objects.function.function import Function
+from mysqlsmo.objects.column.column import Column
 
 
 class Server:
@@ -131,3 +132,15 @@ class Server:
             "Function": lambda met: Function(self, met.name, met.schema)
         }
         return object_map[object_type.capitalize()](metadata)
+
+    def find_table(self, metadata):
+        """ Find the table in the server to script as """
+        try:
+            obj_collection = Table.get_nodes_for_parent(self, parent_obj=None, context_args={'dbname': metadata.schema})
+            if not obj_collection:
+                return None
+            obj = next((object for object in obj_collection if object.name == metadata.name), None)
+            obj._columns = Column.get_nodes_for_parent(self, parent_obj=None, context_args={'dbname': metadata.schema, 'tbl_name': metadata.name})
+            return obj
+        except Exception:
+            return None
