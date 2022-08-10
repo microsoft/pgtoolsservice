@@ -10,7 +10,7 @@ from urllib.parse import urljoin
 from mysqlsmo import (CharacterSet, CheckConstraint, Collation, Column,
                       Database, Event, ForeignKeyConstraint, Function, Index,
                       PrimaryKeyConstraint, Procedure, Table, Tablespace,
-                      Trigger, UniqueConstraint, User)
+                      Trigger, UniqueConstraint, User, View)
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
 from ossdbtoolsservice.object_explorer.contracts import NodeInfo
 from ossdbtoolsservice.object_explorer.session import (Folder,
