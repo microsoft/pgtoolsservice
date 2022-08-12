@@ -6,12 +6,15 @@
 
 from typing import List
 
-from ossdbtoolsservice.edit_data.update_management import RowEdit, EditScript
-from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.edit_data import EditTableMetadata
-from ossdbtoolsservice.edit_data.update_management import CellUpdate
-from ossdbtoolsservice.edit_data.contracts import EditCellResponse, RevertCellResponse, EditRow, EditRowState, EditCell
+from ossdbtoolsservice.edit_data.contracts import (EditCell, EditCellResponse,
+                                                   EditRow, EditRowState,
+                                                   RevertCellResponse)
+from ossdbtoolsservice.edit_data.update_management import (CellUpdate,
+                                                           EditScript, RowEdit)
+from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.query.contracts import DbCellValue
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 
 
 class RowCreate(RowEdit):
@@ -19,12 +22,14 @@ class RowCreate(RowEdit):
     def __init__(self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata):
         super(RowCreate, self).__init__(row_id, result_set, table_metadata)
         self.new_cells: List[CellUpdate] = [None] * len(result_set.columns_info)
+        if table_metadata._provider_name == MYSQL_PROVIDER_NAME:
+            self.supports_returning = False
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
 
         self.validate_column_is_updatable(column_index)
 
-        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value)
+        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value, self.table_metadata._provider_name)
         self.new_cells[column_index] = cell_update
 
         return EditCellResponse(cell_update.as_edit_cell, True)
@@ -50,8 +55,8 @@ class RowCreate(RowEdit):
 
     def _generate_insert_script(self):
 
-        insert_template = 'INSERT INTO {0}({1}) VALUES({2}) RETURNING *'
-        colum_name_template = '"{0}"'
+        insert_template = self.templater.insert_template
+        colum_name_template = self.templater.object_template
 
         column_names: List[str] = []
         query_parameters: List[object] = []
@@ -71,5 +76,34 @@ class RowCreate(RowEdit):
                 insert_values.append('%s')
 
         query_template = str.format(insert_template, self.table_metadata.multipart_name, ', '.join(column_names), ', '.join(insert_values))
+
+        return EditScript(query_template, query_parameters)
+
+    def get_returning_script(self) -> EditScript:
+        return self._generate_select_script()
+
+    def _generate_select_script(self):
+        select_template = self.templater.select_template
+        object_name_template = self.templater.object_template
+        column_name_template = self.templater.column_name_template
+        where_start = self.templater.where_template
+
+        column_names: List[str] = []
+        where_clauses: List[str] = []
+        query_parameters: List[object] = []
+
+        for index, column in enumerate(self.result_set.columns_info):
+            if column.is_updatable is True:
+                column_names.append(str.format(object_name_template, column.column_name))
+                where_clauses.append(column_name_template.format( column.column_name, '= %s'))
+
+                cell_update = self.new_cells[index]
+                if cell_update is None:  # It is none when a column is not updated
+                    query_parameters.append(None)
+                else:
+                    query_parameters.append(cell_update.value)
+
+        where_template = where_start.format(' AND '.join(where_clauses))
+        query_template = str.format(select_template, self.table_metadata.multipart_name, where_template)
 
         return EditScript(query_template, query_parameters)

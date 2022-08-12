@@ -12,17 +12,19 @@ from ossdbtoolsservice.query import create_result_set, ResultSetStorageType
 from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
 from ossdbtoolsservice.edit_data.contracts import EditRowState
 from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
-from tests.utils import MockCursor
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
+from tests.utils import MockPsycopgCursor, MockPyMySQLCursor
 
 
-class TestRowDelete(unittest.TestCase):
+class TestPGRowDelete(unittest.TestCase):
 
     def setUp(self):
         self._row_id = 1
         self._rows = [("False",), ("True",)]
 
         self._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
-        cursor = MockCursor(self._rows, ['IsTrue'])
+        cursor = MockPsycopgCursor(self._rows, ['IsTrue'])
 
         with mock.patch('ossdbtoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
             self._result_set.read_result_to_end(cursor)
@@ -37,7 +39,7 @@ class TestRowDelete(unittest.TestCase):
 
         self._columns_metadata = [EditColumnMetadata(db_column, 'Default Value')]
 
-        self._table_metadata = EditTableMetadata('public', 'TestTable', self._columns_metadata)
+        self._table_metadata = EditTableMetadata('public', 'TestTable', self._columns_metadata, PG_PROVIDER_NAME)
 
         self._row_delete = RowDelete(self._row_id, self._result_set, self._table_metadata)
 
@@ -72,7 +74,7 @@ class TestRowDelete(unittest.TestCase):
         expected_query_template = 'DELETE FROM "public"."TestTable" WHERE "IsValid" = %s'
 
         self.assertEqual(script.query_template, expected_query_template)
-        self.assertEquals(script.query_paramters[0], 'True')
+        self.assertEquals(script.query_parameters[0], 'True')
 
     def test_apply_changes(self):
         self.assertTrue(len(self._result_set.rows) == 2)
@@ -80,6 +82,42 @@ class TestRowDelete(unittest.TestCase):
 
         self.assertTrue(len(self._result_set.rows) == 1)
         self.assertTrue(self._result_set.rows[0][0], "False")
+
+class TestMySQLRowDelete(TestPGRowDelete):
+
+    def setUp(self):
+        self._row_id = 1
+        self._rows = [("False",), ("True",)]
+
+        self._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
+        cursor = MockPyMySQLCursor(self._rows, ['IsTrue'])
+
+        with mock.patch('ossdbtoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
+            self._result_set.read_result_to_end(cursor)
+
+        db_column = DbColumn()
+        db_column.data_type = 'bool'
+        db_column.column_name = 'IsValid'
+        db_column.is_key = True
+        db_column.column_ordinal = 0
+
+        self._result_set.columns_info = [db_column]
+
+        self._columns_metadata = [EditColumnMetadata(db_column, 'Default Value')]
+
+        self._table_metadata = EditTableMetadata('public', 'TestTable', self._columns_metadata, MYSQL_PROVIDER_NAME)
+
+        self._row_delete = RowDelete(self._row_id, self._result_set, self._table_metadata)
+
+    def test_get_script(self):
+
+        script = self._row_delete.get_script()
+
+        expected_query_template = 'DELETE FROM `public`.`TestTable` WHERE `IsValid` = %s'
+
+        self.assertEqual(script.query_template, expected_query_template)
+        self.assertEquals(script.query_parameters[0], 'True')
+
 
 
 if __name__ == '__main__':

@@ -199,7 +199,14 @@ class DataEditorSession():
                             pass
                         else:
                             script: EditScript = operation.get_script()
-                            cursor.execute(cursor.mogrify(script.query_template, (script.query_paramters)))
+                            cursor.execute(cursor.mogrify(script.query_template, (script.query_parameters)))
+
+                            # MySQL does not support RETURNING * from UPDATE or CREATE
+                            # So run a SELECT query after to return new row for in-memory table
+                            if not operation.supports_returning:
+                                returning_script: EditScript = operation.get_returning_script()
+                                cursor.execute(cursor.mogrify(returning_script.query_template, (returning_script.query_parameters)))
+                                
                             operation.apply_changes(cursor)
 
                     self._session_cache.clear()
@@ -230,9 +237,9 @@ class DataEditorSession():
                 sql.SQL(limit_clause)
             )
             query_string = query.as_string(connection.connection)
-        else:
+        elif connection._provider_name == MYSQL_PROVIDER_NAME:
             query_string = 'SELECT {0} FROM {1}.{2} {3}'.format(
-                ', '.join([name.string for name in column_names]),
+                ', '.join([f'`{name.string}`' for name in column_names]),
                 metadata.schema_name,
                 metadata.table_name,
                 limit_clause

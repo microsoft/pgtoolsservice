@@ -3,13 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.parsers import pg_datatypes, mysql_datatypes
-import ossdbtoolsservice.parsers.datatype_parsers  # noqa
-import ossdbtoolsservice.parsers.owner_uri_parser  # noqa
+from ossdbtoolsservice.edit_data.templates.templater import Templater
+from ossdbtoolsservice.edit_data.templates.mysql_templater import MySQLTemplater
+from ossdbtoolsservice.edit_data.templates.pg_templater import PGTemplater
 
-__all__ = [
-    'datatype_parsers',
-    'mysql_datatypes',
-    'owner_uri_parser',
-    'pg_datatypes'
-]
+__all__ = ['Templater', 'MySQLTemplater', 'PGTemplater']

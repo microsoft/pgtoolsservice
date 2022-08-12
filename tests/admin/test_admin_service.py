@@ -16,7 +16,7 @@ from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.pgsmo_tests.utils import MockPGServerConnection
-from tests.utils import MockCursor, MockRequestContext
+from tests.utils import MockPsycopgCursor, MockRequestContext
 
 
 class TestAdminService(unittest.TestCase):
@@ -48,7 +48,7 @@ class TestAdminService(unittest.TestCase):
 
         # Set up a mock connection and cursor for the test
         mock_query_results = [(user_name,)]
-        mock_cursor = MockCursor(mock_query_results)
+        mock_cursor = MockPsycopgCursor(mock_query_results)
         mock_connection = MockPGServerConnection(mock_cursor, name=db_name)
         self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
 

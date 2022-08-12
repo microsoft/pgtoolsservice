@@ -7,18 +7,25 @@
 from typing import List  # noqa
 
 from ossdbtoolsservice.edit_data import EditColumnMetadata
+from ossdbtoolsservice.edit_data.templates import Templater, MySQLTemplater, PGTemplater
 from ossdbtoolsservice.query.contracts import DbColumn
+from ossdbtoolsservice.utils.constants import (MYSQL_PROVIDER_NAME,
+                                               PG_PROVIDER_NAME)
+
+TEMPLATERS = {
+    MYSQL_PROVIDER_NAME: MySQLTemplater,
+    PG_PROVIDER_NAME: PGTemplater
+}
 
 
 class EditTableMetadata():
-
-    OBJECT_TEMPLATE = '"{0}"'
-
-    def __init__(self, schema_name: str, table_name, columns_metadata: List[EditColumnMetadata]) -> None:
+    def __init__(self, schema_name: str, table_name, columns_metadata: List[EditColumnMetadata], provider_name: str) -> None:
         self.columns_metadata = columns_metadata
         self.schema_name: str = schema_name
         self.table_name: str = table_name
         self._key_columns = self._get_key_columns()
+        self._provider_name = provider_name
+        self._templater: Templater = TEMPLATERS[provider_name]()
 
     @property
     def multipart_name(self) -> str:
@@ -42,4 +49,4 @@ class EditTableMetadata():
         return key_columns
 
     def _get_formated_entity_name(self, entity_name: str) -> str:
-        return EditTableMetadata.OBJECT_TEMPLATE.format(entity_name)
+        return self._templater.object_template.format(entity_name)

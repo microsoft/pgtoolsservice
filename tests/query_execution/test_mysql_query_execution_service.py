@@ -29,13 +29,12 @@ class TestQueryService(unittest.TestCase):
         """
         # set up mock connection
         self.rows = [(1, 'Text 1'), (2, 'Text 2')]
-        self.cursor = utils.MockCursor(self.rows)
+        self.cursor = utils.MockPyMySQLCursor(self.rows)
         self.mock_pymysql_connection = utils.MockPyMySQLConnection(parameters={
             'host': 'test',
             'dbname': 'test',
         })
-        self.connection = MockMySQLServerConnection()
-        self.connection.cursor.return_value = self.cursor
+        self.connection = MockMySQLServerConnection(self.cursor)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.request_context = utils.MockRequestContext()

@@ -5,10 +5,12 @@
 
 from typing import List
 
-from ossdbtoolsservice.edit_data.update_management import RowEdit, EditScript
-from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.edit_data import EditTableMetadata
-from ossdbtoolsservice.edit_data.contracts import EditCellResponse, EditRow, EditCell, EditRowState, RevertCellResponse
+from ossdbtoolsservice.edit_data.contracts import (EditCell, EditCellResponse,
+                                                   EditRow, EditRowState,
+                                                   RevertCellResponse)
+from ossdbtoolsservice.edit_data.update_management import EditScript, RowEdit
+from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.query.contracts import DbCellValue
 
 
@@ -30,8 +32,9 @@ class RowDelete(RowEdit):
         self.result_set.remove_row(self.row_id)
 
     def get_script(self) -> EditScript:
-        delete_template = 'DELETE FROM {0} {1}'
         where_script = self.build_where_clause()
-        query_template = delete_template.format(self.table_metadata.multipart_name, where_script.query_template)
+        delete_script = self.templater.delete_template
 
-        return EditScript(query_template, where_script.query_paramters)
+        query_template = delete_script.format(self.table_metadata.multipart_name, where_script.query_template)
+
+        return EditScript(query_template, where_script.query_parameters)

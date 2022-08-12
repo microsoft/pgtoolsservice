@@ -6,17 +6,17 @@
 
 from typing import List  # noqa
 
-from pgsmo import Server as PGServer
-from pgsmo.objects.table.table import Table as PGTable  # noqa
-from pgsmo.objects.table_objects.column import Column as PGColumn # noqa
 from mysqlsmo import Server as MySQLServer
-from mysqlsmo.objects.table.table import Table as MySQLTable
 from mysqlsmo.objects.column.column import Column as MySQLColumn
-from ossdbtoolsservice.utils import constants
+from mysqlsmo.objects.table.table import Table as MySQLTable
 from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
+from ossdbtoolsservice.edit_data import EditColumnMetadata, EditTableMetadata
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.query.contracts import DbColumn
+from ossdbtoolsservice.utils import constants
+from pgsmo import Server as PGServer
+from pgsmo.objects.table.table import Table as PGTable  # noqa
+from pgsmo.objects.table_objects.column import Column as PGColumn  # noqa
 
 SERVER_MAP = {
     constants.MYSQL_PROVIDER_NAME : MySQLServer,
@@ -45,7 +45,7 @@ class SmoEditTableMetadataFactory:
             db_column = self.create_db_column(column)
             edit_columns_metadata.append(EditColumnMetadata(db_column, column.default_value))
 
-        return EditTableMetadata(schema_name, object_name, edit_columns_metadata)
+        return EditTableMetadata(schema_name, object_name, edit_columns_metadata, connection._provider_name)
 
     def create_db_column(self, column: PGColumn or MySQLColumn) -> DbColumn:
         db_column = DbColumn()

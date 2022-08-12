@@ -16,7 +16,7 @@ from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRa
 
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
 from ossdbtoolsservice.query.contracts import DbColumn
-from ossdbtoolsservice.parsers import datatypes
+from ossdbtoolsservice.parsers import pg_datatypes as datatypes
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 import tests.utils as utils
 
@@ -29,7 +29,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
 
         self._file_stream = io.BytesIO()
         self._writer = ServiceBufferFileStreamWriter(self._file_stream)
-        self._cursor = utils.MockCursor([tuple([11, 22, 33]), tuple([55, 66, 77])])
+        self._cursor = utils.MockPsycopgCursor([tuple([11, 22, 33]), tuple([55, 66, 77])])
 
     def get_expected_length_with_additional_buffer_for_size(self, test_value_length: int):
         return TestServiceBufferFileStreamWriter.SIZE_BUFFER_LENGTH + test_value_length

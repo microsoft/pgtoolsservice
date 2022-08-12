@@ -8,8 +8,7 @@ from unittest import mock
 from ossdbtoolsservice.driver.types.pymysql_driver import MySQLConnection
 from ossdbtoolsservice.utils import constants
 
-from tests.mysqlsmo_tests.utils import MockCursor
-from tests.utils import MockPyMySQLConnection
+from tests.utils import MockPyMySQLCursor, MockPyMySQLConnection
 
 
 class TestMySQLConnection(unittest.TestCase):
@@ -18,7 +17,7 @@ class TestMySQLConnection(unittest.TestCase):
      def setUp(self):
         """Set up the tests with a mysql connection"""
         
-        mock_cursor = MockCursor(results=[['5.7.29-log']])
+        mock_cursor = MockPyMySQLCursor([['5.7.29-log']])
         # Set up the mock connection for pymysql's connect method to return
         self.mock_pymysql_connection = MockPyMySQLConnection(cursor=mock_cursor)
 
@@ -76,7 +75,8 @@ class TestMySQLConnection(unittest.TestCase):
              'host': 'mysql-test.mysql.database.azure.com', 
              'password': 'samplePass123', 
              'port': 3306, 
-             'user': 'sampleUser'}   
+             'user': 'sampleUser',
+             'ssl': {}}
          print(mysqlConnection.connection_options)
          self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
          self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
@@ -104,7 +104,8 @@ class TestMySQLConnection(unittest.TestCase):
              'host': 'mysql-test.mysql.database.azure.com', 
              'password': 'samplePass123', 
              'port': 3307, 
-             'user': 'sampleUser'}   
+             'user': 'sampleUser',
+             'ssl': {}}   
          print(mysqlConnection.connection_options)
          self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
          self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
@@ -131,7 +132,8 @@ class TestMySQLConnection(unittest.TestCase):
              'host': 'mysql-test.mysql.database.azure.com', 
              'password': 'samplePass123', 
              'port': 3306, 
-             'user': 'sampleUser'}   
+             'user': 'sampleUser',
+             'ssl': {}}   
          print(mysqlConnection.connection_options)
          self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
          self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)

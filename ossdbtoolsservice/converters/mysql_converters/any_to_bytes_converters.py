@@ -50,15 +50,12 @@ def to_bytes(value: object, field_type: int):
 
 
 def convert_date(value: datetime.date):
-    # Separate date and time
-    date_val = value.isoformat().replace("T", " ")
+    date_val = value.isoformat()
     return bytearray(date_val.encode(ENCODING_TYPE))
 
 
-def convert_time(value: datetime.time):
-    # Separate date and time
-    time_val = value.isoformat().replace("T", " ")
-    return bytearray(time_val.encode(ENCODING_TYPE))
+def convert_time(value: datetime.timedelta):
+    return bytearray(str(value).encode(ENCODING_TYPE))
 
 
 def convert_datetime(value: datetime.datetime):
