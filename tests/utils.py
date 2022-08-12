@@ -204,6 +204,7 @@ class MockPsycopgCursor:
     def mogrified_value(self):
         return self._mogrified_value
 
+
 class MockPyMySQLCursor:
     """Class used to mock pymysql cursor objects for testing"""
 

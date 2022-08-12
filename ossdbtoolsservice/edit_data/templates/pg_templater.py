@@ -15,6 +15,7 @@ PG_SET_TEMPLATE = '"{0}" = %s'
 
 PG_INSERT_TEMPLATE = 'INSERT INTO {0}({1}) VALUES({2}) RETURNING *'
 
+
 class PGTemplater(Templater):
     def __init__(self):
         self._object_template = PG_OBJECT_TEMPLATE

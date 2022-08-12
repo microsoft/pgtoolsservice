@@ -19,8 +19,8 @@ from pgsmo.objects.table.table import Table as PGTable  # noqa
 from pgsmo.objects.table_objects.column import Column as PGColumn  # noqa
 
 SERVER_MAP = {
-    constants.MYSQL_PROVIDER_NAME : MySQLServer,
-    constants.PG_PROVIDER_NAME : PGServer
+    constants.MYSQL_PROVIDER_NAME: MySQLServer,
+    constants.PG_PROVIDER_NAME: PGServer
 }
 
 

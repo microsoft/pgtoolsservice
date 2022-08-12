@@ -80,7 +80,7 @@ class RowUpdate(RowEdit):
         cell_values = []
         where_script = self.build_where_clause()
 
-        # if any of the key columns were changed, add the new value 
+        # if any of the key columns were changed, add the new value
         # instead of the where script parameter, because we just updated a key
         key_columns = [column.db_column for column in self.table_metadata.key_columns]
         updated_columns = [value.column for value in self._cell_updates.values()]

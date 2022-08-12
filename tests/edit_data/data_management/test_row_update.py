@@ -8,7 +8,6 @@ import unittest
 from unittest import mock
 
 from ossdbtoolsservice.edit_data import EditColumnMetadata, EditTableMetadata
-from ossdbtoolsservice.edit_data.templates import PGTemplater
 from ossdbtoolsservice.edit_data.update_management import RowUpdate
 from ossdbtoolsservice.query import ResultSetStorageType, create_result_set
 from ossdbtoolsservice.query.contracts import DbColumn
@@ -75,6 +74,7 @@ class TestPGRowUpdate(unittest.TestCase):
 
         self.assertEqual(script.query_template, expected_query_template)
         self.assertEquals(script.query_parameters[0], 'Updated')
+
 
 class TestMySQLRowUpdate(TestPGRowUpdate):
 

@@ -110,7 +110,6 @@ class TestSmartCompletion(unittest.TestCase):
             [Completion(text='users', start_position=0, display_meta='alias')] +
             list(map(lambda completion: Completion(completion, display_meta='keyword'), self.keywords))))
 
-
     def test_suggested_column_names_in_function(self):
         """Suggest column and function names when selecting multiple columns from
         table."""

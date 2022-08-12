@@ -12,7 +12,6 @@ from ossdbtoolsservice.query import create_result_set, ResultSetStorageType
 from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
 from ossdbtoolsservice.edit_data.contracts import EditRowState
 from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
 from tests.utils import MockPsycopgCursor, MockPyMySQLCursor
 
@@ -83,6 +82,7 @@ class TestPGRowDelete(unittest.TestCase):
         self.assertTrue(len(self._result_set.rows) == 1)
         self.assertTrue(self._result_set.rows[0][0], "False")
 
+
 class TestMySQLRowDelete(TestPGRowDelete):
 
     def setUp(self):
@@ -117,7 +117,6 @@ class TestMySQLRowDelete(TestPGRowDelete):
 
         self.assertEqual(script.query_template, expected_query_template)
         self.assertEquals(script.query_parameters[0], 'True')
-
 
 
 if __name__ == '__main__':

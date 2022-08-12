@@ -27,7 +27,7 @@ DATATYPE_VARCHAR = 'varchar'
 DATATYPE_BINARY = 'binary'
 DATATYPE_VARBINARY = 'varbinary'
 DATATYPE_BLOB = 'blob'
-DATATYPE_TEXT= 'text'
+DATATYPE_TEXT = 'text'
 DATATYPE_ENUM = 'enum'
 DATATYPE_SET = 'set'
 

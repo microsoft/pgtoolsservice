@@ -87,7 +87,7 @@ class TestMySQLConnectionService(unittest.TestCase):
             response = self.connection_service.connect(params)
 
         # Verify that pymysql's connection method was called with password set to account token.
-        mock_connect_method.assert_called_once_with(user='mysql', password='exampleToken', ssl = {},
+        mock_connect_method.assert_called_once_with(user='mysql', password='exampleToken', ssl={},
                                                     host='myserver', port=DEFAULT_PORT[MYSQL_PROVIDER_NAME], database='mysql')
 
         # Verify that pymysql's connection method was called and that the

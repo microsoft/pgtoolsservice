@@ -44,7 +44,7 @@ class ScriptingPgJSONRPCTests:
                     scripting_object = {}
                     scripting_object['name'] = created_object_names[key + 's_Name']
                     if key == 'Function':
-                        scripting_object['name'] = created_object_names[key + 's_Name'] + ScriptingJSONRPCTests.CREATED_FUNCTION_PARAMETER_LIST
+                        scripting_object['name'] = created_object_names[key + 's_Name'] + ScriptingPgJSONRPCTests.CREATED_FUNCTION_PARAMETER_LIST
                     scripting_object['schema'] = 'public' if key in ['Table', 'View', 'Function'] else None
                     scripting_object['type'] = key
 

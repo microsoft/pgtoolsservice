@@ -46,7 +46,7 @@ def _get_node_info(
     metadata = ObjectMetadata(node.urn, None, type(node).__name__, node.name, None)
 
     if hasattr(node, '_dbname') and node._dbname:
-            metadata.schema = node._dbname
+        metadata.schema = node._dbname
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf

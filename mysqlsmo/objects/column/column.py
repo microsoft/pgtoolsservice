@@ -14,7 +14,7 @@ class Column(NodeObject):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent = None, **kwargs) -> 'Column':
+    def _from_node_query(cls, server: 's.Server', parent=None, **kwargs) -> 'Column':
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database

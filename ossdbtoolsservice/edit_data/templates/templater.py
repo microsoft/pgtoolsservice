@@ -12,6 +12,7 @@ WHERE_TEMPLATE = 'WHERE {0}'
 
 SELECT_TEMPLATE = 'SELECT * FROM {0} {1}'
 
+
 class Templater():
     """Abstract class that outlines SQL statement templates required for edit data."""
 

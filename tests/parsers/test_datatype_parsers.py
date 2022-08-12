@@ -94,6 +94,7 @@ class TestPGDataTypeParsers(unittest.TestCase):
 
         return parser(value_to_parse)
 
+
 class TestMySQLDataTypeParsers(unittest.TestCase):
 
     def test_float_parser(self):

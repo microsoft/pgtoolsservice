@@ -10,7 +10,6 @@ import json
 import logging
 import os
 import re
-import sys
 import threading
 from typing import Callable, List, Optional, Tuple
 from unittest import mock

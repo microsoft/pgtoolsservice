@@ -206,7 +206,7 @@ class DataEditorSession():
                             if not operation.supports_returning:
                                 returning_script: EditScript = operation.get_returning_script()
                                 cursor.execute(cursor.mogrify(returning_script.query_template, (returning_script.query_parameters)))
-                                
+
                             operation.apply_changes(cursor)
 
                     self._session_cache.clear()

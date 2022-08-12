@@ -59,8 +59,9 @@ class PostgreSQLConnection:
     def get_connection_server_version(cls, index):
         return cls._connections[index].server_version
 
+
 class MySQLConnection:
-    
+
     _connections: List[pymysql.connections.Connection] = []
 
     @classmethod

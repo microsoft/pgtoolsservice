@@ -56,6 +56,7 @@ class TestPGCellUpdate(unittest.TestCase):
         self.assertTrue(db_cell_value.raw_object is self._cell_update.value)
         self.assertTrue(isinstance(db_cell_value, DbCellValue))
 
+
 class TestMySQLCellUpdate(TestPGCellUpdate):
 
     def setUp(self):

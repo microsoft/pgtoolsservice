@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import unittest
 import unittest.mock as mock
 from typing import List, Optional, Tuple
 
@@ -111,4 +110,3 @@ class MockPGServerConnection(PostgreSQLConnection):
         # mock psycopg2.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
         with mock.patch('psycopg2.connect', mock.Mock(return_value=connection)):
             super().__init__({"host_name": host, "user_name": user, "port": port, "database_name": name})
-

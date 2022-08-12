@@ -233,6 +233,7 @@ class TestEditDataService(unittest.TestCase):
         edit_session._edit_initialize(request_context, params)
         edit_session._edit_initialize.assert_called()
 
+
 class TestMySQLEditDataService(TestEditDataService):
 
     def setUp(self):
