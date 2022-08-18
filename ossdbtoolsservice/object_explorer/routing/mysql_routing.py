@@ -45,6 +45,8 @@ def _get_node_info(
     # Generate the object metadata
     metadata = ObjectMetadata(node.urn, None, type(node).__name__, node.name, None)
 
+    # if node has dbname attribute, pass into metadata as schema name
+    # dbname and schema name are the same in MySQL
     if hasattr(node, '_dbname') and node._dbname:
         metadata.schema = node._dbname
 
