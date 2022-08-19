@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
+import json
 from typing import Callable
 import decimal
 import datetime
@@ -79,6 +80,12 @@ def parse_timedelta(value: str) -> datetime.timedelta:
 def parse_uuid(value: str) -> uuid.UUID:
     return uuid.UUID(value)
 
+def parse_json(value: str) -> str:
+    try:
+        json.loads(value)
+    except:
+        raise ValueError('Value provided is not a valid json string')
+    return value
 
 PG_DATATYPE_PARSER_MAP = {
     pg_datatypes.DATATYPE_BOOL: parse_bool,
@@ -117,7 +124,8 @@ MYSQL_DATATYPE_PARSER_MAP = {
     mysql_datatypes.DATATYPE_DATE: parse_date,
     mysql_datatypes.DATATYPE_TIME: parse_time,
     mysql_datatypes.DATATYPE_TIMESTAMP: parse_datetime,
-    mysql_datatypes.DATATYPE_DATETIME: parse_datetime
+    mysql_datatypes.DATATYPE_DATETIME: parse_datetime,
+    mysql_datatypes.DATATYPE_JSON: parse_json
 }
 
 
