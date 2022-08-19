@@ -100,7 +100,7 @@ class _ConnectionManager:
     @classmethod
     def run_test(cls, test, provider, min_version, max_version, *args):
         cls._current_test_connection_detail_list = cls._get_connection_configurations(provider)
-        if not CONNECTORS[provider].get_connections() :
+        if not CONNECTORS[provider].get_connections():
             CONNECTORS[provider].open_connections(cls._current_test_connection_detail_list)
         needs_setup = False
         for index, details in enumerate(cls._current_test_connection_detail_list):
@@ -122,7 +122,7 @@ class _ConnectionManager:
 
     @classmethod
     def _get_connection_configurations(cls, provider) -> dict:
-        if(cls._connections_configurations is None) :
+        if(cls._connections_configurations is None):
             config_file_name = "config.json"
             current_folder = os.path.dirname(os.path.realpath(__file__))
             config_path = os.path.join(current_folder, config_file_name)
@@ -132,7 +132,7 @@ class _ConnectionManager:
                 raise RuntimeError(f'No test config file found at {config_path}')
             with open(config_path, 'rb') as config_file:
                 cls._connections_configurations = json.load(config_file)
-            
+
         provider_config_list = cls._connections_configurations[provider]
         if not provider_config_list:
             raise RuntimeError(f'No configuration found for provider {provider} in test config file found at {config_path}')

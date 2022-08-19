@@ -23,7 +23,7 @@ SERVER_CAPABILITIES_MAP = {
 
 
 class CapabilitiesService:
-    """Defines the capabilities supported by PG Tools including language service and DMP support"""
+    """Defines the capabilities supported by OSS DB Tools including language service and DMP support"""
 
     def __init__(self):
         self._service_provider: ServiceProvider = None

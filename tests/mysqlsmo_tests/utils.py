@@ -7,7 +7,7 @@ from ossdbtoolsservice.driver.types.pymysql_driver import MySQLConnection
 from tests.utils import MockPyMySQLConnection
 
 
-class MockCursor:
+class MockMySQLCursor:
     def __init__(self, results: Optional[Tuple[List, List[dict]]] = None, throw_on_execute=False):
         # Setup the results, that will change value once the cursor is executed
         self._results = results
@@ -35,10 +35,9 @@ class MockCursor:
 class MockMySQLServerConnection(MySQLConnection):
     '''Class used to mock MySQL ServerConnection object for testing'''
 
-    # does not take a cursor here because constructor requires
-    # a cursor that returns version string
     def __init__(
             self,
+            cur: Optional[MockMySQLCursor] = None,
             connection: Optional[MockPyMySQLConnection] = None,
             version: str = '5.7.29-log',
             name: str = 'mysql',
@@ -47,11 +46,11 @@ class MockMySQLServerConnection(MySQLConnection):
             user: str = 'mysql'):
 
         # MySQLConnection constructor executes a query to find server version
-        cur = MockCursor(results=[[version]])
+        version_cur = MockMySQLCursor(results=[[version]])
 
         # if no mock mysql connection passed, create default one
         if not connection:
-            connection = MockPyMySQLConnection(cursor=cur, parameters={
+            connection = MockPyMySQLConnection(cursor=version_cur, parameters={
                 'database': name, 'host': host, 'port': port, 'user': user})
 
         # Setup mocks for the connection

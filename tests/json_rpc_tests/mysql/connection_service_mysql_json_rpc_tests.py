@@ -12,7 +12,7 @@ from tests.json_rpc_tests import DefaultRPCTestMessages, JSONRPCTestCase
 
 
 class ConnectionServiceMySqlJSONRPCTests(unittest.TestCase):
-    
+
     @integration_test(provider=MYSQL_PROVIDER_NAME)
     def test_connection_successful(self):
         # If I set up a connection request with valid connection parameters

@@ -8,15 +8,16 @@ from abc import abstractmethod
 
 from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.edit_data import EditTableMetadata
+from ossdbtoolsservice.edit_data.contracts import (EditCellResponse, EditRow,
+                                                   RevertCellResponse)
 from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn  # noqa
-from ossdbtoolsservice.edit_data.contracts import EditCellResponse, RevertCellResponse, EditRow
 
 
 class EditScript:
 
     def __init__(self, query_template: str, query_parameters: List = []):
         self.query_template = query_template
-        self.query_paramters = query_parameters
+        self.query_parameters = query_parameters
 
 
 class RowEdit:
@@ -25,6 +26,8 @@ class RowEdit:
         self.row_id = row_id
         self.result_set = result_set
         self.table_metadata = table_metadata
+        self.templater = table_metadata._templater
+        self.supports_returning = True
 
     @abstractmethod
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
@@ -61,8 +64,8 @@ class RowEdit:
         if len(self.table_metadata.key_columns) == 0:
             raise TypeError(f'Table {self.table_metadata.table_name} does not have a single column that can be trusted for uniqueness')
 
-        where_start = 'WHERE {0}'
-        column_name_template = '"{0}" {1}'
+        where_start = self.templater.where_template
+        column_name_template = self.templater.column_name_template
         parameters = []
         where_clauses = []
 

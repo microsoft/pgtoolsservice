@@ -59,7 +59,7 @@ class TestQueryService(unittest.TestCase):
         """
 
         self.rows = [(1, 'Text 1'), (2, 'Text 2')]
-        self.cursor = utils.MockCursor(self.rows)
+        self.cursor = utils.MockPsycopgCursor(self.rows)
         self.mock_psycopg_connection = utils.MockPsycopgConnection(dsn_parameters={
             'host': 'test',
             'dbname': 'test',
@@ -74,7 +74,7 @@ class TestQueryService(unittest.TestCase):
         self.query_execution_service._service_provider = self.service_provider
         self.request_context = utils.MockRequestContext()
 
-        self.cursor_cancel = utils.MockCursor(None)
+        self.cursor_cancel = utils.MockPsycopgCursor(None)
         self.connection_cancel = MockPGServerConnection(cur=self.cursor_cancel)
         self.cursor_cancel.connection = self.connection_cancel
 
@@ -259,7 +259,7 @@ class TestQueryService(unittest.TestCase):
         batch_ordinal = 0
         result_ordinal = 0
         rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
-        cursor = utils.MockCursor(rows)
+        cursor = utils.MockPsycopgCursor(rows)
         query_results[owner_uri]._batches.append(Batch('', batch_ordinal, SelectionData()))
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, result_ordinal, batch_ordinal)
@@ -319,7 +319,7 @@ class TestQueryService(unittest.TestCase):
         batch_ordinal = 0
         row_count = 0
 
-        cursor = utils.MockCursor([])
+        cursor = utils.MockPsycopgCursor([])
         cursor.description = description
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, ordinal, batch_ordinal)
@@ -683,7 +683,7 @@ class TestQueryService(unittest.TestCase):
         batch = Batch(2, SelectionData(), False)
         batch_rows = [(1, 2), (3, 4), (5, 6)]
 
-        cursor = utils.MockCursor(batch_rows)
+        cursor = utils.MockPsycopgCursor(batch_rows)
         batch._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
 
         with mock.patch('ossdbtoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
@@ -1007,7 +1007,7 @@ class TestQueryService(unittest.TestCase):
         new_owner_uri = str(uuid.uuid4())
         query = Query(new_owner_uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         batch = Batch('', 0, SelectionData())
-        cursor = utils.MockCursor(mock_rows)
+        cursor = utils.MockPsycopgCursor(mock_rows)
 
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
 

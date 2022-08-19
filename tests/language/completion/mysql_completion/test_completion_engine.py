@@ -452,4 +452,3 @@ class TestMySQLCompletionEngine(unittest.TestCase):
     def test_after_as(self, expression):
         suggestions = suggest_type(expression, expression)
         self.assertSetEqual(set(suggestions), set())
-

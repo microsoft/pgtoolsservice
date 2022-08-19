@@ -31,7 +31,7 @@ class TestServerConnection(unittest.TestCase):
 
     def test_execute_dict_success(self):
         # Setup: Create a mock server connection that will return a result set
-        mock_cursor = utils.MockCursor(utils.get_mock_results())
+        mock_cursor = utils.MockPGCursor(utils.get_mock_results())
         mock_conn = MockPsycopgConnection(cursor=mock_cursor)
 
         # noinspection PyTypeChecker
@@ -62,7 +62,7 @@ class TestServerConnection(unittest.TestCase):
 
     def test_execute_dict_fail(self):
         # Setup: Create a mock psycopg connection that will raise an exception
-        mock_cursor = utils.MockCursor(None, throw_on_execute=True)
+        mock_cursor = utils.MockPGCursor(None, throw_on_execute=True)
         mock_conn = MockPsycopgConnection(cursor=mock_cursor)
         # noinspection PyTypeChecker
         with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_conn)):

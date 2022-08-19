@@ -6,11 +6,15 @@
 
 from typing import Dict, List  # noqa
 
-from ossdbtoolsservice.edit_data.update_management import RowEdit, CellUpdate, EditScript
-from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.edit_data import EditTableMetadata
-from ossdbtoolsservice.edit_data.contracts import EditCellResponse, EditCell, RevertCellResponse, EditRow, EditRowState
+from ossdbtoolsservice.edit_data.contracts import (EditCell, EditCellResponse,
+                                                   EditRow, EditRowState,
+                                                   RevertCellResponse)
+from ossdbtoolsservice.edit_data.update_management import (CellUpdate,
+                                                           EditScript, RowEdit)
+from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.query.contracts import DbCellValue
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 
 
 class RowUpdate(RowEdit):
@@ -19,10 +23,14 @@ class RowUpdate(RowEdit):
         super(RowUpdate, self).__init__(row_id, result_set, table_metadata)
         self.row = result_set.get_row(row_id)
         self._cell_updates: Dict[int, CellUpdate] = {}
+        # if MySQL connection, then will need to run a SELECT statement after UPDATE
+        # in order to grab data for in-memory table
+        if table_metadata._provider_name == MYSQL_PROVIDER_NAME:
+            self.supports_returning = False
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
         self.validate_column_is_updatable(column_index)
-        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value)
+        cell_update = CellUpdate(self.result_set.columns_info[column_index], new_value, self.table_metadata._provider_name)
 
         if cell_update.value is self.row[column_index].raw_object:
             existing_cell_update = self._cell_updates.get(column_index)
@@ -51,8 +59,9 @@ class RowUpdate(RowEdit):
 
     def get_script(self) -> EditScript:
 
-        query = 'UPDATE {0} SET {1} {2} RETURNING *'
-        set_template = '"{0}" = %s'
+        query = self.templater.update_template
+        set_template = self.templater.set_template
+
         set_query = []
         cell_values = []
         for cell in self._cell_updates.values():
@@ -63,7 +72,25 @@ class RowUpdate(RowEdit):
 
         where_script = self.build_where_clause()
         query_template = query.format(self.table_metadata.multipart_name, set_join, where_script.query_template)
-        cell_values.extend(where_script.query_paramters)
+        cell_values.extend(where_script.query_parameters)
+
+        return EditScript(query_template, cell_values)
+
+    def get_returning_script(self) -> EditScript:
+        cell_values = []
+        where_script = self.build_where_clause()
+
+        # if any of the key columns were changed, add the new value
+        # instead of the where script parameter, because we just updated a key
+        key_columns = [column.db_column for column in self.table_metadata.key_columns]
+        updated_columns = [value.column for value in self._cell_updates.values()]
+        for i, column in enumerate(key_columns):
+            if column in updated_columns:
+                cell_values.append(self._cell_updates[column.column_ordinal].value)
+            else:
+                cell_values.append(where_script.query_parameters[i])
+
+        query_template = self.templater.select_template.format(self.table_metadata.multipart_name, where_script.query_template)
 
         return EditScript(query_template, cell_values)
 

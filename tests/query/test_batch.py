@@ -21,7 +21,7 @@ from tests.pgsmo_tests.utils import MockPGServerConnection
 class TestBatch(unittest.TestCase):
 
     def setUp(self):
-        self._cursor = utils.MockCursor(None)
+        self._cursor = utils.MockPsycopgCursor(None)
         self._connection = MockPGServerConnection(cur=self._cursor)
         self._batch_text = 'Select * from t1'
         self._batch_id = 1

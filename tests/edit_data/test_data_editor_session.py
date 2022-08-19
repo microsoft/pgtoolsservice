@@ -7,24 +7,30 @@ from typing import List  # noqa
 import unittest
 from unittest import mock
 
-from ossdbtoolsservice.edit_data import DataEditorSession
-from ossdbtoolsservice.edit_data.contracts import InitializeEditParams, EditInitializerFilter, CreateRowResponse  # noqa
-from tests.utils import MockPsycopgConnection, MockCursor
-from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata, DataEditSessionExecutionState
-from ossdbtoolsservice.query import (
-    Batch, create_result_set, ExecutionState, Query, QueryExecutionSettings, QueryEvents, ResultSet, ResultSetStorageType
-)
-from ossdbtoolsservice.query.contracts import DbColumn
-from ossdbtoolsservice.edit_data.update_management.row_edit import EditScript
+from ossdbtoolsservice.edit_data import (DataEditorSession,
+                                         DataEditSessionExecutionState,
+                                         EditColumnMetadata, EditTableMetadata)
+from ossdbtoolsservice.edit_data.contracts import CreateRowResponse  # noqa
+from ossdbtoolsservice.edit_data.contracts import (EditInitializerFilter,
+                                                   InitializeEditParams)
 from ossdbtoolsservice.edit_data.update_management import RowDelete
+from ossdbtoolsservice.edit_data.update_management.row_edit import EditScript
+from ossdbtoolsservice.query import (
+    Batch, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
+    ResultSet, ResultSetStorageType, create_result_set)
+from ossdbtoolsservice.query.contracts import DbColumn
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
+from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.utils import MockPsycopgCursor, MockPyMySQLCursor
 
 
-class TestDataEditorSession(unittest.TestCase):
+class TestPGDataEditorSession(unittest.TestCase):
 
     def setUp(self):
         self._metadata_factory = mock.MagicMock()
-        self._mock_cursor = MockCursor(None)
-        self._connection = MockPsycopgConnection({"port": "8080", "host": "test", "dbname": "test"}, self._mock_cursor)
+        self._mock_cursor = MockPsycopgCursor(None)
+        self._connection = MockPGServerConnection(cur=self._mock_cursor, port="8080", host="test", name="test")
         self._initialize_edit_request = InitializeEditParams()
 
         self._initialize_edit_request.schema_name = 'public'
@@ -38,7 +44,7 @@ class TestDataEditorSession(unittest.TestCase):
         self._columns_metadata = [column]
         self._schema_name = 'public'
         self._table_name = 'table'
-        self._edit_table_metadata = EditTableMetadata(self._schema_name, self._table_name, self._columns_metadata)
+        self._edit_table_metadata = EditTableMetadata(self._schema_name, self._table_name, self._columns_metadata, PG_PROVIDER_NAME)
 
         self._query_executer = mock.MagicMock()
         self._on_success = mock.MagicMock()
@@ -53,7 +59,7 @@ class TestDataEditorSession(unittest.TestCase):
 
     def get_result_set(self, rows: List[tuple]) -> ResultSet:
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
-        cursor = MockCursor(rows)
+        cursor = MockPsycopgCursor(rows)
 
         columns_info = []
         get_column_info_mock = mock.Mock(return_value=columns_info)
@@ -154,7 +160,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         columns_metadata = [calculated_column_metadata, default_value_column_metadata]
 
-        self._data_editor_session.table_metadata = EditTableMetadata(self._schema_name, self._table_name, columns_metadata)
+        self._data_editor_session.table_metadata = EditTableMetadata(self._schema_name, self._table_name, columns_metadata, PG_PROVIDER_NAME)
 
         result_set = self.get_result_set([(1, False)])
 
@@ -184,6 +190,7 @@ class TestDataEditorSession(unittest.TestCase):
         '''
         row_id = 1
         self._data_editor_session._is_initialized = True
+        self._data_editor_session.table_metadata = self._edit_table_metadata
         self._data_editor_session._last_row_id = 3
 
         self._data_editor_session.delete_row(row_id)
@@ -192,7 +199,6 @@ class TestDataEditorSession(unittest.TestCase):
 
         self.assertEqual(row_id, delete_row.row_id)
         self.assertEqual(None, self._data_editor_session._result_set)
-        self.assertEqual(None, self._data_editor_session.table_metadata)
 
     def test_delete_row_not_initialized(self):
         with self.assertRaises(RuntimeError) as context_manager:
@@ -400,6 +406,51 @@ class TestDataEditorSession(unittest.TestCase):
 
         row_delete.get_script.assert_called_once()
         self.assertFalse(bool(self._data_editor_session._session_cache))
+
+
+class TestMySQLDataEditorSession(TestPGDataEditorSession):
+
+    def setUp(self):
+        self._metadata_factory = mock.MagicMock()
+        self._mock_cursor = MockPyMySQLCursor(None)
+        self._connection = MockMySQLServerConnection(cur=self._mock_cursor)
+        self._initialize_edit_request = InitializeEditParams()
+
+        self._initialize_edit_request.schema_name = 'public'
+        self._initialize_edit_request.object_name = 'Employee'
+        self._initialize_edit_request.object_type = 'Table'
+
+        db_column = DbColumn()
+
+        column = EditColumnMetadata(db_column, None)
+
+        self._columns_metadata = [column]
+        self._schema_name = 'public'
+        self._table_name = 'table'
+        self._edit_table_metadata = EditTableMetadata(self._schema_name, self._table_name, self._columns_metadata, PG_PROVIDER_NAME)
+
+        self._query_executer = mock.MagicMock()
+        self._on_success = mock.MagicMock()
+        self._on_failure = mock.MagicMock()
+        self._data_editor_session = DataEditorSession(self._metadata_factory)
+
+        self._metadata_factory.get = mock.Mock(return_value=self._edit_table_metadata)
+
+        self._query = 'SELECT TESTCOLUMN FROM TESTTABLE LIMIT 100'
+
+        self._data_editor_session._construct_initialize_query = mock.Mock(return_value=self._query)
+
+    def get_result_set(self, rows: List[tuple]) -> ResultSet:
+        result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
+        cursor = MockPyMySQLCursor(rows)
+
+        columns_info = []
+        get_column_info_mock = mock.Mock(return_value=columns_info)
+
+        with mock.patch('ossdbtoolsservice.query.in_memory_result_set.get_columns_info', new=get_column_info_mock):
+            result_set.read_result_to_end(cursor)
+
+        return result_set
 
 
 if __name__ == '__main__':

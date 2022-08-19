@@ -8,12 +8,13 @@ import unittest.mock as mock
 import urllib.parse as parse
 
 import smo.common.node_object as node
-import tests.pgsmo_tests.utils as utils
+import tests.utils as utils
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.schema.schema import Schema
 from pgsmo.objects.server.server import Server
 from pgsmo.objects.table.table import Table
+from tests.pgsmo_tests.utils import MockPGServerConnection
 
 
 class TestNodeCollection(unittest.TestCase):
@@ -325,7 +326,7 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
 class TestNodeObject(unittest.TestCase):
     def test_init(self):
         # If: I create a node object
-        server = Server(utils.MockPGServerConnection())
+        server = Server(MockPGServerConnection())
         parent = utils.MockNodeObject(server, None, 'parent')
         node_obj = utils.MockNodeObject(server, parent, 'abc')
 
@@ -357,7 +358,7 @@ class TestNodeObject(unittest.TestCase):
         # ... Patch the template rendering, and the _from_node_query
         patch_render_template = 'smo.utils.templating.render_template'
         patch_template_path = 'smo.utils.templating.get_template_path'
-        patch_from_node_query = 'tests.pgsmo_tests.utils.MockNodeObject._from_node_query'
+        patch_from_node_query = 'tests.utils.MockNodeObject._from_node_query'
         with mock.patch(patch_render_template, mock_render, create=True):
             with mock.patch(patch_template_path, mock_template_path, create=True):
                 with mock.patch(patch_from_node_query, mock_from_node, create=True):
@@ -397,13 +398,13 @@ class TestNodeObject(unittest.TestCase):
         name = 'postgres'
         parent = Database(mock_server, name)
         parent._oid = 123
-        parent._connection = utils.MockPGServerConnection(None, version="10101")
+        parent._connection = MockPGServerConnection(None, version="10101")
         parent._connection.execute_dict = mock_executor
 
         # ... Patch the template rendering, and the _from_node_query
         patch_render_template = 'smo.utils.templating.render_template'
         patch_template_path = 'smo.utils.templating.get_template_path'
-        patch_from_node_query = 'tests.pgsmo_tests.utils.MockNodeObject._from_node_query'
+        patch_from_node_query = 'tests.utils.MockNodeObject._from_node_query'
 
         with mock.patch(patch_render_template, mock_render, create=True), \
                 mock.patch(patch_template_path, mock_template_path, create=True), \
@@ -429,7 +430,7 @@ class TestNodeObject(unittest.TestCase):
 
     def test_register_child_collection(self):
         # Setup: Create a node object
-        server = Server(utils.MockPGServerConnection())
+        server = Server(MockPGServerConnection())
         node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         # If: I register a child collection
@@ -460,7 +461,7 @@ class TestNodeObject(unittest.TestCase):
 
     def test_register_property_collection(self):
         # Setup: Create a node object
-        server = Server(utils.MockPGServerConnection())
+        server = Server(MockPGServerConnection())
         node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         # If: I register a property collection
@@ -487,7 +488,7 @@ class TestNodeObject(unittest.TestCase):
     def test_refresh(self):
         # Setup:
         # ... Create a node object
-        server = Server(utils.MockPGServerConnection())
+        server = Server(MockPGServerConnection())
         node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         # ... Add a couple child collections
@@ -522,7 +523,7 @@ class TestNodeObject(unittest.TestCase):
     def test_urn_basecase(self):
         # Setup:
         # ... Create a node object
-        server = Server(utils.MockPGServerConnection())
+        server = Server(MockPGServerConnection())
         node_obj = utils.MockNodeObject(server, None, 'obj_name')
         node_obj._oid = 123
 
@@ -543,7 +544,7 @@ class TestNodeObject(unittest.TestCase):
     def test_urn_recursive(self):
         # Setup:
         # ... Create a node object with a parent
-        server = Server(utils.MockPGServerConnection())
+        server = Server(MockPGServerConnection())
         node_obj1 = utils.MockNodeObject(server, None, 'parent_name')
         node_obj1._oid = 123
 
@@ -573,7 +574,7 @@ class TestNodeObject(unittest.TestCase):
 
     def test_get_obj_by_urn_base_case(self):
         # Setup: Create a node object
-        server = Server(utils.MockPGServerConnection())
+        server = Server(MockPGServerConnection())
         node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         # If: I have a URN fragment that returns the object
@@ -585,7 +586,7 @@ class TestNodeObject(unittest.TestCase):
 
     def test_get_obj_by_urn_invalid_collection(self):
         # Setup: Create a node object (without any collections under it)
-        server = Server(utils.MockPGServerConnection())
+        server = Server(MockPGServerConnection())
         node_obj = utils.MockNodeObject(server, None, 'obj_name')
 
         with self.assertRaises(ValueError):
@@ -596,7 +597,7 @@ class TestNodeObject(unittest.TestCase):
 
     def test_get_obj_by_urn_recurses(self):
         # Setup: Create a node object with a collection under it
-        server = Server(utils.MockPGServerConnection())
+        server = Server(MockPGServerConnection())
         db_obj = utils.MockNodeObject(server, None, 'db_name')
         sc_obj = utils.MockNodeObject(server, db_obj, 'schema_name')
         db_obj._child_collections = {'Schema': {123: sc_obj}}
@@ -611,7 +612,7 @@ class TestNodeObject(unittest.TestCase):
     def test_database_get_database_node(self):
         # If: I create a DB that is connected
         name = 'dbname'
-        mock_server = Server(utils.MockPGServerConnection(None, name='not_connected'))
+        mock_server = Server(MockPGServerConnection(None, name='not_connected'))
         db = Database(mock_server, name)
 
         # Then:
@@ -624,7 +625,7 @@ class TestNodeObject(unittest.TestCase):
     def test_role_get_database_node(self):
         # If: I create a DB that is connected
         name = 'dbname'
-        mock_server = Server(utils.MockPGServerConnection(None, name='not_connected'))
+        mock_server = Server(MockPGServerConnection(None, name='not_connected'))
         db = Role(mock_server, name)
 
         # Then:
@@ -635,7 +636,7 @@ class TestNodeObject(unittest.TestCase):
 
     def test_table_get_database_node(self):
         # If: I create a DB that is connected
-        mock_server = Server(utils.MockPGServerConnection(None, name='not_connected'))
+        mock_server = Server(MockPGServerConnection(None, name='not_connected'))
         db = Database(mock_server, 'dbname')
         schema = Schema(mock_server, db, 'schema')
         table = Table(mock_server, schema, 'table')
@@ -660,14 +661,14 @@ def _get_node_for_parents_mock_connection():
     mock_action = mock.Mock()
     mock_objs = [{'name': 'abc', 'oid': 123}, {'name': 'def', 'oid': 456}]
     mock_executor = mock.MagicMock(return_value=([{}, {}], mock_objs))
-    mock_server = Server(utils.MockPGServerConnection(None, version="10101"), mock_action)
+    mock_server = Server(MockPGServerConnection(None, version="10101"), mock_action)
     mock_server.connection.execute_dict = mock_executor
 
     return mock_server, mock_executor, mock_objs
 
 
 def _get_mock_node_generator():
-    server = Server(utils.MockPGServerConnection())
+    server = Server(MockPGServerConnection())
 
     mock_object1 = utils.MockNodeObject(server, None, 'a')
     mock_object1._oid = 123

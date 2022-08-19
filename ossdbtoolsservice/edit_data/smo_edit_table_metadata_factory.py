@@ -6,21 +6,30 @@
 
 from typing import List  # noqa
 
-from pgsmo import Server
-from pgsmo.objects.table.table import Table  # noqa
-from pgsmo.objects.table_objects.column import Column  # noqa
+from mysqlsmo import Server as MySQLServer
+from mysqlsmo.objects.column.column import Column as MySQLColumn
+from mysqlsmo.objects.table.table import Table as MySQLTable
 from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
+from ossdbtoolsservice.edit_data import EditColumnMetadata, EditTableMetadata
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.query.contracts import DbColumn
+from ossdbtoolsservice.utils import constants
+from pgsmo import Server as PGServer
+from pgsmo.objects.table.table import Table as PGTable  # noqa
+from pgsmo.objects.table_objects.column import Column as PGColumn  # noqa
+
+SERVER_MAP = {
+    constants.MYSQL_PROVIDER_NAME: MySQLServer,
+    constants.PG_PROVIDER_NAME: PGServer
+}
 
 
 class SmoEditTableMetadataFactory:
 
     def get(self, connection: ServerConnection, schema_name: str, object_name: str, object_type: str) -> EditTableMetadata:
 
-        server = Server(connection)
-        result_object: Table = None
+        server = SERVER_MAP[connection._provider_name](connection)
+        result_object: PGTable or MySQLTable = None
         object_metadata = ObjectMetadata(server.urn_base, None, object_type, object_name, schema_name)
 
         if object_type.lower() == 'table':
@@ -36,9 +45,9 @@ class SmoEditTableMetadataFactory:
             db_column = self.create_db_column(column)
             edit_columns_metadata.append(EditColumnMetadata(db_column, column.default_value))
 
-        return EditTableMetadata(schema_name, object_name, edit_columns_metadata)
+        return EditTableMetadata(schema_name, object_name, edit_columns_metadata, connection._provider_name)
 
-    def create_db_column(self, column: Column) -> DbColumn:
+    def create_db_column(self, column: PGColumn or MySQLColumn) -> DbColumn:
         db_column = DbColumn()
 
         db_column.allow_db_null = column.not_null is False
