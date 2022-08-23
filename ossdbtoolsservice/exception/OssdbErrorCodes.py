@@ -12,25 +12,28 @@ class OssdbErrorCodes():
     
     """ AZURE MYSQL FLEXIBLE SERVER CONNECTION ERROR CODES """
     
-    def MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED(errmsg: str) :
+    def MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED(errcode:int, errmsg: str) :
         return OssdbErrorResource(
             OssdbErrorConstants.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_CODE,
+            errcode,
             errmsg,
             OssdbErrorConstants.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_CAUSES,
             OssdbErrorConstants.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_SUGGESTIONS
         )
         
-    def MYSQL_FLEX_IP_NOT_WHITELISTED(errmsg: str) :
+    def MYSQL_FLEX_IP_NOT_WHITELISTED(errcode: int, errmsg: str) :
         return OssdbErrorResource(
             OssdbErrorConstants.MYSQL_FLEX_IP_NOT_WHITELISTED_CODE,
+            errcode,
             errmsg,
             None,
             OssdbErrorConstants.MYSQL_FLEX_IP_NOT_WHITELISTED_SUGGESTIONS
         )
     
-    def MYSQL_FLEX_INCORRECT_CREDENTIALS(errmsg: str) :
+    def MYSQL_FLEX_INCORRECT_CREDENTIALS(errcode: int, errmsg: str) :
         return OssdbErrorResource(
             OssdbErrorConstants.MYSQL_FLEX_INCORRECT_CREDENTIALS_CODE,
+            errcode,
             errmsg,
             OssdbErrorConstants.MYSQL_FLEX_INCORRECT_CREDENTIALS_CAUSES,
             OssdbErrorConstants.MYSQL_FLEX_INCORRECT_CREDENTIALS_SUGGESTIONS

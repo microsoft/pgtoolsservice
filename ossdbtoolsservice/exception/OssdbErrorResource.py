@@ -6,9 +6,10 @@
 """This module holds the error resource for ossdb tools service errors"""
 class OssdbErrorResource():
 
-    def __init__(self, code: int, msg: str, causes: str, suggestions: str):
-        self._code = code
-        self._msg = msg
+    def __init__(self, internalErrorCode: int, errcode: int, errmsg: str, causes: str, suggestions: str):
+        self._internalErrorCode = internalErrorCode
+        self._errcode = errcode
+        self._errmsg = errmsg
         self._causes = causes
         self._suggestions = suggestions
         self._userErrMsg = self._buildUserErrMsg()
@@ -17,17 +18,17 @@ class OssdbErrorResource():
         return self._userErrMsg
     
     @property
-    def code(self) -> int:
-        return self._code
+    def internalErrorCode(self) -> int:
+        return self._internalErrorCode
     
     @property    
     def userErrMsg(self) -> str:
         return self._userErrMsg
     
     def _buildUserErrMsg(self) -> str:
-        usermsg = "Error Message : " + self._msg;
-        if self._code:
-            usermsg += "\nInternalErrorCode : " + str(self._code)
+        usermsg = "Error Message : " + self._errmsg;
+        if self._errcode:
+            usermsg += "\nErrorCode : " + str(self._errcode)
         if self._causes:
             usermsg += "\nCauses : " + self._causes
         if self._suggestions:
