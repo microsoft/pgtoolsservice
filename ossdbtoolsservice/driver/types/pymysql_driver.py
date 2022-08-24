@@ -3,12 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from operator import contains
 import re
 from typing import List, Optional, Tuple
 
 import pymysql
 
 from ossdbtoolsservice.driver.types import ServerConnection
+from ...exception.OssdbErrorCodes import OssdbErrorCodes
+from ...exception.OssdbToolsServiceException import OssdbToolsServiceException
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace.contracts import Configuration
 
@@ -96,9 +99,12 @@ class MySQLConnection(ServerConnection):
 
         # Setting autocommit to True initally
         self._autocommit_status = True
-
+        
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
-        self._conn = pymysql.connect(**self._connection_options)
+        try:
+            self._conn = pymysql.connect(**self._connection_options)
+        except pymysql.err.Error as e:
+            self.handle_connection_error(e)
 
         self._connection_closed = False
 
@@ -324,3 +330,19 @@ class MySQLConnection(ServerConnection):
         if not self._connection_closed:
             self._conn.close()
             self._connection_closed = True
+    
+    def handle_connection_error(self, exception: pymysql.err.Error):
+        host = self._connection_options["host"] if 'host' in self._connection_options else ''
+        iscloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
+        if iscloud:
+            code, message = exception.args
+            if code == 3159:
+                if "Connections using insecure transport are prohibited while --require_secure_transport=ON" in message:
+                    raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED(code, message));
+            elif code == 2003: 
+                if "(timed out)" in message or "WinError 10060" in message:
+                    raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_IP_NOT_WHITELISTED(code, message))
+            elif code == 1045:
+                if "Access denied for user" in message:
+                    raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_INCORRECT_CREDENTIALS(code, message))
+        raise exception
