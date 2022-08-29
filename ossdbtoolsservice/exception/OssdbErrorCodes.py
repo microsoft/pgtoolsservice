@@ -38,3 +38,12 @@ class OssdbErrorCodes():
             OssdbErrorConstants.MYSQL_FLEX_INCORRECT_CREDENTIALS_CAUSES,
             OssdbErrorConstants.MYSQL_FLEX_INCORRECT_CREDENTIALS_SUGGESTIONS
         )
+    
+    def MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODE() :
+        return OssdbErrorResource(
+            OssdbErrorConstants.MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_CODE,
+            None,
+            OssdbErrorConstants.MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_ERRMSG,
+            None,
+            OssdbErrorConstants.MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_SUGGESTIONS
+        )
