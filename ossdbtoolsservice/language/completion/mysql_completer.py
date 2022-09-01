@@ -60,7 +60,7 @@ class MySQLCompleter(Completer):
                 self.logger.info(msg, *args)
 
     def escape_name(self, name):
-        if name and ((not self.name_pattern.match(name))
+        if name and ((not self.name_pattern.match(name.lower()))
                      or (name.upper() in self.reserved_words)
                      or (name.upper() in self.functions)):
             name = '`%s`' % name

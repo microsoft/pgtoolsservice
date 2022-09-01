@@ -184,18 +184,18 @@ def refresh_casing(completer: PGCompleter or MySQLCompleter, metadata_executor: 
             completer.extend_casing([line.strip() for line in f])
 
 
-@pg_refresher('functions')
-@mysql_refresher('functions')
-def refresh_functions(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
-    completer.extend_functions(metadata_executor.functions())
-
-
 @mysql_refresher('schemata')
 def mysql_refresh_schemata(completer, metadata_executor):
     # schemata - In MySQL Schema is the same as database. But for mycli
     # schemata will be the name of the current database.
     completer.extend_schemata(metadata_executor.server._maintenance_db_name)
     completer.set_dbname(metadata_executor.server._maintenance_db_name)
+
+
+@pg_refresher('functions')
+@mysql_refresher('functions')
+def refresh_functions(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
+    completer.extend_functions(metadata_executor.functions())
 
 
 @mysql_refresher('tables')
