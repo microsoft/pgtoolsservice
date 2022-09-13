@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from enum import Enum
 from operator import contains
 import re
 from typing import List, Optional, Tuple
@@ -47,6 +48,13 @@ GROUP BY
     table_schema;
 """
 
+class MySQLSSLMode(Enum):
+    disable = 1
+    require = 2
+    verify_ca = 3
+    verify_identity = 4
+
+DEFAULT_SSL_MODE = MySQLSSLMode.require
 
 class MySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
@@ -83,19 +91,8 @@ class MySQLConnection(ServerConnection):
         # Use the default port number if one was not provided
         if 'port' not in self._connection_options or not self._connection_options['port']:
             self._connection_options['port'] = constants.DEFAULT_PORT[constants.MYSQL_PROVIDER_NAME]
-
-        ssl_dict = {}
-
-        # If SSL is enabled or allowed
-        if "ssl" in conn_params.keys() and self._connection_options["ssl"] != "disable":
-            # Find all the ssl options (key, ca, cipher)
-            ssl_params = {param for param in conn_params if param.startswith("ssl.")}
-
-            # Map the ssl option names to their values
-            ssl_dict = {param.strip("ssl."): conn_params[param] for param in ssl_params}
-
-        # Assign the ssl options to the dict
-        self._connection_options["ssl"] = ssl_dict
+            
+        self._set_ssl_options(conn_params)
 
         # Setting autocommit to True initally
         self._autocommit_status = True
@@ -346,3 +343,23 @@ class MySQLConnection(ServerConnection):
                 if "Access denied for user" in message:
                     raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_INCORRECT_CREDENTIALS(code, message))
         raise exception
+    
+    def _set_ssl_options(self, conn_params: dict):
+        ssl_mode = MySQLSSLMode[self._connection_options["ssl"]] if "ssl" in self._connection_options else DEFAULT_SSL_MODE
+        if ssl_mode == MySQLSSLMode.disable:
+            self._connection_options["ssl"] = None
+        else:
+            # Fill up the ssl dict
+            ssl_params = {param for param in conn_params if param.startswith("ssl.")}
+            ssl_dict = {param.strip("ssl."): conn_params[param] for param in ssl_params}
+            
+            if ssl_mode.value <= MySQLSSLMode.require.value:
+                # ca is not required for modes less than equal to require
+                ssl_dict['ca'] = None
+            elif 'ca' not in ssl_dict or ssl_dict['ca'] is None :
+                # Raise error is ca is not provided for verify modes
+                raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODE())
+                  
+            ssl_dict["verify_mode"] = "required" if ssl_mode.value >= MySQLSSLMode.verify_ca.value else "none"
+            ssl_dict["check_hostname"] = True if ssl_mode == MySQLSSLMode.verify_identity else False
+            self._connection_options["ssl"] = ssl_dict

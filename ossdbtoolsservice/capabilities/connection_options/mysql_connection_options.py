@@ -122,13 +122,11 @@ mysql_conn_provider_opts = ConnectionProviderOptions([
         group_name='SSL',
         category_values=[
             CategoryValue('Disable', 'disable'),
-            CategoryValue('Allow', 'allow'),
-            CategoryValue('Prefer', 'prefer'),
             CategoryValue('Require', 'require'),
-            CategoryValue('Verify-CA', 'verify-ca'),
-            CategoryValue('Verify-Full', 'verify-full'),
+            CategoryValue('Verify-CA', 'verify_ca'),
+            CategoryValue('Verify-Identity', 'verify_identity'),
         ],
-        default_value='allow'
+        default_value='require'
     ),
     ConnectionOption(
         name='ssl.cert',
