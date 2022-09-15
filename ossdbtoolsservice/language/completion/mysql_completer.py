@@ -267,7 +267,7 @@ class MySQLCompleter(Completer):
                 # suggest user-defined functions using substring matching
                 funcs = self.populate_schema_objects(suggestion['schema'],
                                                      'functions')
-                user_funcs = self.find_matches(word_before_cursor, funcs)
+                user_funcs = self.find_matches(word_before_cursor, funcs, meta='function')
                 completions.extend(user_funcs)
 
                 # suggest hardcoded functions using startswith matching only if
