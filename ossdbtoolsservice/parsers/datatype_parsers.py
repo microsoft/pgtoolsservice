@@ -84,7 +84,7 @@ def parse_uuid(value: str) -> uuid.UUID:
 def parse_json(value: str) -> str:
     try:
         json.loads(value)
-    except BaseException:
+    except:
         raise ValueError('Value provided is not a valid json string')
     return value
 

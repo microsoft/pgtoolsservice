@@ -169,7 +169,7 @@ class MySQLCompleter(Completer):
             self.all_completions.add(func[0])
 
     def extend_procedures(self, proc_data):
-        # 'func_data' is a generator object. It can throw an exception while
+        # 'proc_data' is a generator object. It can throw an exception while
         # being consumed. This could happen if the user has launched the app
         # without specifying a database name. This exception must be handled to
         # prevent crashing.
