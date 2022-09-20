@@ -8,11 +8,12 @@
 from .OssdbErrorConstants import OssdbErrorConstants
 from .OssdbErrorResource import OssdbErrorResource
 
+
 class OssdbErrorCodes():
-    
+
     """ AZURE MYSQL FLEXIBLE SERVER CONNECTION ERROR CODES """
-    
-    def MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED(errcode:int, errmsg: str) :
+
+    def MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED(errcode: int, errmsg: str):
         return OssdbErrorResource(
             OssdbErrorConstants.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_CODE,
             errcode,
@@ -20,8 +21,8 @@ class OssdbErrorCodes():
             OssdbErrorConstants.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_CAUSES,
             OssdbErrorConstants.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_SUGGESTIONS
         )
-        
-    def MYSQL_FLEX_IP_NOT_WHITELISTED(errcode: int, errmsg: str) :
+
+    def MYSQL_FLEX_IP_NOT_WHITELISTED(errcode: int, errmsg: str):
         return OssdbErrorResource(
             OssdbErrorConstants.MYSQL_FLEX_IP_NOT_WHITELISTED_CODE,
             errcode,
@@ -29,8 +30,8 @@ class OssdbErrorCodes():
             None,
             OssdbErrorConstants.MYSQL_FLEX_IP_NOT_WHITELISTED_SUGGESTIONS
         )
-    
-    def MYSQL_FLEX_INCORRECT_CREDENTIALS(errcode: int, errmsg: str) :
+
+    def MYSQL_FLEX_INCORRECT_CREDENTIALS(errcode: int, errmsg: str):
         return OssdbErrorResource(
             OssdbErrorConstants.MYSQL_FLEX_INCORRECT_CREDENTIALS_CODE,
             errcode,
@@ -38,8 +39,8 @@ class OssdbErrorCodes():
             OssdbErrorConstants.MYSQL_FLEX_INCORRECT_CREDENTIALS_CAUSES,
             OssdbErrorConstants.MYSQL_FLEX_INCORRECT_CREDENTIALS_SUGGESTIONS
         )
-    
-    def MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODE() :
+
+    def MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODE():
         return OssdbErrorResource(
             OssdbErrorConstants.MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_CODE,
             None,

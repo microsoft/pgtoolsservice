@@ -80,12 +80,14 @@ def parse_timedelta(value: str) -> datetime.timedelta:
 def parse_uuid(value: str) -> uuid.UUID:
     return uuid.UUID(value)
 
+
 def parse_json(value: str) -> str:
     try:
         json.loads(value)
-    except:
+    except BaseException:
         raise ValueError('Value provided is not a valid json string')
     return value
+
 
 PG_DATATYPE_PARSER_MAP = {
     pg_datatypes.DATATYPE_BOOL: parse_bool,

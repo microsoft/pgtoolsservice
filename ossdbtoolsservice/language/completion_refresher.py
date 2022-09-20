@@ -198,6 +198,11 @@ def refresh_functions(completer: PGCompleter or MySQLCompleter, metadata_executo
     completer.extend_functions(metadata_executor.functions())
 
 
+@mysql_refresher('procedures')
+def refresh_procedures(completer, metadata_executor):
+    completer.extend_procedures(metadata_executor.procedures())
+
+
 @mysql_refresher('tables')
 def mysql_refresh_tables(completer, metadata_executor):
     if metadata_executor.server._maintenance_db_name:

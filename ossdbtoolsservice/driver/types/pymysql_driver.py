@@ -48,13 +48,16 @@ GROUP BY
     table_schema;
 """
 
+
 class MySQLSSLMode(Enum):
     disable = 1
     require = 2
     verify_ca = 3
     verify_identity = 4
 
+
 DEFAULT_SSL_MODE = MySQLSSLMode.require
+
 
 class MySQLConnection(ServerConnection):
     """Wrapper for a pymysql connection that makes various properties easier to access"""
@@ -91,12 +94,12 @@ class MySQLConnection(ServerConnection):
         # Use the default port number if one was not provided
         if 'port' not in self._connection_options or not self._connection_options['port']:
             self._connection_options['port'] = constants.DEFAULT_PORT[constants.MYSQL_PROVIDER_NAME]
-            
+
         self._set_ssl_options(conn_params)
 
         # Setting autocommit to True initally
         self._autocommit_status = True
-        
+
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         try:
             self._conn = pymysql.connect(**self._connection_options)
@@ -327,7 +330,7 @@ class MySQLConnection(ServerConnection):
         if not self._connection_closed:
             self._conn.close()
             self._connection_closed = True
-    
+
     def handle_connection_error(self, exception: pymysql.err.Error):
         host = self._connection_options["host"] if 'host' in self._connection_options else ''
         iscloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
@@ -335,15 +338,15 @@ class MySQLConnection(ServerConnection):
             code, message = exception.args
             if code == 3159:
                 if "Connections using insecure transport are prohibited while --require_secure_transport=ON" in message:
-                    raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED(code, message));
-            elif code == 2003: 
+                    raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED(code, message))
+            elif code == 2003:
                 if "(timed out)" in message or "WinError 10060" in message:
                     raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_IP_NOT_WHITELISTED(code, message))
             elif code == 1045:
                 if "Access denied for user" in message:
                     raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_INCORRECT_CREDENTIALS(code, message))
         raise exception
-    
+
     def _set_ssl_options(self, conn_params: dict):
         ssl_mode = MySQLSSLMode[self._connection_options["ssl"]] if "ssl" in self._connection_options else DEFAULT_SSL_MODE
         if ssl_mode == MySQLSSLMode.disable:
@@ -352,14 +355,14 @@ class MySQLConnection(ServerConnection):
             # Fill up the ssl dict
             ssl_params = {param for param in conn_params if param.startswith("ssl.")}
             ssl_dict = {param.strip("ssl."): conn_params[param] for param in ssl_params}
-            
+
             if ssl_mode.value <= MySQLSSLMode.require.value:
                 # ca is not required for modes less than equal to require
                 ssl_dict['ca'] = None
-            elif 'ca' not in ssl_dict or ssl_dict['ca'] is None :
+            elif 'ca' not in ssl_dict or ssl_dict['ca'] is None:
                 # Raise error is ca is not provided for verify modes
                 raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODE())
-                  
+
             ssl_dict["verify_mode"] = "required" if ssl_mode.value >= MySQLSSLMode.verify_ca.value else "none"
             ssl_dict["check_hostname"] = True if ssl_mode == MySQLSSLMode.verify_identity else False
             self._connection_options["ssl"] = ssl_dict
