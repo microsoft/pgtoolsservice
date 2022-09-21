@@ -5,16 +5,17 @@
 
 from .OssdbErrorResource import OssdbErrorResource
 
+
 class OssdbToolsServiceException(Exception):
-        
+
     def __init__(self, errorResource: OssdbErrorResource):
         self._errorResource = errorResource
         self._errorCode = self._errorResource.internalErrorCode
         super().__init__(self._errorResource.userErrMsg)
-        
+
     def __str__(self) -> str:
         return super().__str__()
-    
+
     @property
     def errorCode(self) -> int:
         return self._errorCode

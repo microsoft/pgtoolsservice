@@ -325,7 +325,7 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
     response.owner_uri = connection_info.owner_uri
     response.type = connection_type
     errorMessage = str(err)
-    
+
     if isinstance(err, OssdbToolsServiceException):
         response.error_number = err.errorCode
     else:
@@ -334,7 +334,7 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
             errorMessage += """\nCauses:
             Using the wrong hostname or problems with DNS resolution.\nSuggestions:
             Check that the server address or hostname is the full address."""
-        
+
         if "could not connect to server: Connection timed out" in errorMessage:
             errorMessage += """\nSuggestions:
             Check that the firewall settings allow connections from the user's address."""

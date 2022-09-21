@@ -27,6 +27,9 @@ class MySQLLightweightMetadata:
     functions_query = '''SELECT routine_name FROM information_schema.routines
                             WHERE routine_type="FUNCTION" AND routine_schema = "%s"'''
 
+    procedures_query = '''SELECT routine_name FROM information_schema.routines
+                            WHERE routine_type="PROCEDURE" AND routine_schema = "%s"'''
+
     table_columns_query = '''SELECT table_name, column_name FROM information_schema.columns
                                 WHERE table_schema = '%s'
                                 ORDER BY table_name, ordinal_position'''
@@ -76,6 +79,15 @@ class MySQLLightweightMetadata:
         with self.conn.cursor() as cur:
             self._log(False, 'Functions Query. sql: %r', self.functions_query)
             cur.execute(self.functions_query % self.dbname)
+            for row in cur:
+                yield row
+
+    def procedures(self):
+        """Yields tuples of (schema_name, procedure_name)"""
+
+        with self.conn.cursor() as cur:
+            self._log(False, 'Procedures Query. sql: %r', self.procedures_query)
+            cur.execute(self.procedures_query % self.dbname)
             for row in cur:
                 yield row
 

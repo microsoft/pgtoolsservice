@@ -26,6 +26,7 @@ class MySQLCompleter(Completer):
     functions = get_literals('functions')
     datatypes = get_literals('datatypes')
     reserved_words = set(get_literals('reserved'))
+    procedures = []
 
     show_items = []
 
@@ -167,6 +168,25 @@ class MySQLCompleter(Completer):
             metadata[self.dbname][func[0]] = None
             self.all_completions.add(func[0])
 
+    def extend_procedures(self, proc_data):
+        # 'proc_data' is a generator object. It can throw an exception while
+        # being consumed. This could happen if the user has launched the app
+        # without specifying a database name. This exception must be handled to
+        # prevent crashing.
+        try:
+            proc_data = [self.escaped_names(d) for d in proc_data]
+        except Exception:
+            self._log(LogType.WARNING, 'proc_data is empty since no database selected')
+            proc_data = []
+
+        # dbmetadata['procedures'][$schema_name][$function_name] should return
+        # procedure metadata.
+        metadata = self.dbmetadata['procedures']
+
+        for proc in proc_data:
+            metadata[self.dbname][proc[0]] = None
+            self.all_completions.add(proc[0])
+
     def set_dbname(self, dbname):
         self.dbname = dbname
 
@@ -175,7 +195,7 @@ class MySQLCompleter(Completer):
         self.users = []
         self.show_items = []
         self.dbname = ''
-        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}}
+        self.dbmetadata = {'tables': {}, 'views': {}, 'functions': {}, 'procedures': {}}
         self.all_completions = set(self.keywords + self.functions)
 
     def find_matches(self, text, collection, start_only=False, fuzzy=True, meta=None):
@@ -281,6 +301,13 @@ class MySQLCompleter(Completer):
                                                          fuzzy=False,
                                                          meta='function')
                     completions.extend(predefined_funcs)
+
+            elif suggestion['type'] == 'procedure':
+                proc = self.populate_schema_objects(suggestion['schema'],
+                                                    'procedures')
+                # suggest user-defined procedures using substring matching
+                user_procedures = self.find_matches(word_before_cursor, proc, meta='procedure')
+                completions.extend(user_procedures)
 
             elif suggestion['type'] == 'table':
                 tables = self.populate_schema_objects(suggestion['schema'],

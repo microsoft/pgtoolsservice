@@ -184,6 +184,14 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
                     {'type': 'function', 'schema': []},
                     {'type': 'alias', 'aliases': aliases},
                     {'type': 'keyword'}]
+    elif token_v in ('call'):
+        # Check for schema qualification
+        parent = (identifier and identifier.get_parent_name()) or []
+
+        if parent:
+            return [{'type': 'procedure', 'schema': parent}]
+        else:
+            return [{'type': 'procedure', 'schema': []}]
     elif (token_v.endswith('join') and token.is_keyword) or (token_v in
                                                              ('copy', 'from', 'update', 'into', 'describe', 'truncate',
                                                               'desc', 'explain')):
@@ -203,7 +211,7 @@ def suggest_based_on_last_token(token, text_before_cursor, full_text, identifier
 
         return suggest
 
-    elif token_v in ('table', 'view', 'function'):
+    elif token_v in ('table', 'view', 'function', 'procedure'):
         # E.g. 'DROP FUNCTION <funcname>', 'ALTER TABLE <tablname>'
         rel_type = token_v
         schema = (identifier and identifier.get_parent_name()) or []
