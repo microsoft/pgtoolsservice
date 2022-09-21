@@ -93,8 +93,8 @@ class MetadataExecutor:
 
     def procedures(self) -> List[tuple]:
         """
-        In order to avoid iterating over full properties queries for each function, this must always
-        use the lightweight metadata query as it'll have N queries for N functions otherwise
+        In order to avoid iterating over full properties queries for each procedure, this must always
+        use the lightweight metadata query as it'll have N queries for N procedures otherwise
         """
         return [p for p in self.lightweight_metadata.procedures()]
 

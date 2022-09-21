@@ -179,8 +179,8 @@ class MySQLCompleter(Completer):
             self._log(LogType.WARNING, 'proc_data is empty since no database selected')
             proc_data = []
 
-        # dbmetadata['functions'][$schema_name][$function_name] should return
-        # function metadata.
+        # dbmetadata['procedures'][$schema_name][$function_name] should return
+        # procedure metadata.
         metadata = self.dbmetadata['procedures']
 
         for proc in proc_data:
