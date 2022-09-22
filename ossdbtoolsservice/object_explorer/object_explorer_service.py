@@ -371,6 +371,9 @@ class ObjectExplorerService(object):
                 match = route.match(path)
                 if match is not None:
                     # We have a match!
+                    if is_refresh:
+                        # Invalidate cache for all paths with current path as suffix
+                        self._remove_path_from_session_cache(session, path)
                     target_nodes = target.get_nodes(is_refresh, path, session, match.groupdict())
                     session.cache[path] = target_nodes
                     return target_nodes
@@ -383,3 +386,7 @@ class ObjectExplorerService(object):
         else:
             # Return the results of a previous request for the same path
             return session.cache[path]
+    
+    def _remove_path_from_session_cache(self, session: ObjectExplorerSession, path: str) -> None:
+        updated_cache = {key:value for key, value in session.cache.items() if key.startswith(path) == False}
+        session.cache = updated_cache
