@@ -315,7 +315,7 @@ class MySQLConnection(ServerConnection):
         if dbname:
             size_query = MYSQL_SIZE_QUERY.format(dbname)
             result = self.execute_query(size_query, all=True)
-            return str(result[0][1])
+            return str(result[0][1]) if result else '0'
 
     def get_error_message(self, error) -> str:
         """
