@@ -17,7 +17,8 @@ def convert_bytes_to_float(value) -> float:
 def convert_bytes_to_int(value) -> int:
     """ Range of integer in pg is the same with int or long in c,
     we unpack the value in int format """
-    return struct.unpack('i', value)[0]
+    # other solution is to create a seperate function for unsigned int, it takes 'I' while int takes 'i'
+    return struct.unpack('q', value)[0]
 
 
 def convert_bytes_to_long_long(value) -> int:

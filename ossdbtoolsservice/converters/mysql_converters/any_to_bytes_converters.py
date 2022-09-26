@@ -16,7 +16,7 @@ def convert_float_to_bytes(value: object):
 
 
 def convert_int_to_bytes(value: object):
-    return bytearray(struct.pack("i", value))
+    return bytearray(struct.pack("q", value))
 
 
 def convert_long_long(value: int):
@@ -50,7 +50,8 @@ def to_bytes(value: object, field_type: int):
 
 
 def convert_date(value: datetime.date):
-    date_val = value.isoformat()
+    # date_val = value.isoformat()
+    date_val = str(value)
     return bytearray(date_val.encode(ENCODING_TYPE))
 
 
@@ -60,7 +61,8 @@ def convert_time(value: datetime.timedelta):
 
 def convert_datetime(value: datetime.datetime):
     # Separate date and time
-    datetime_val = value.isoformat().replace("T", " ")
+    # datetime_val = value.isoformat().replace("T", " ")
+    datetime_val = str(value).replace("T", " ")
     return bytearray(datetime_val.encode(ENCODING_TYPE))
 
 
