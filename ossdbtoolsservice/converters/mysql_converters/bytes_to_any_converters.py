@@ -17,8 +17,7 @@ def convert_bytes_to_float(value) -> float:
 def convert_bytes_to_int(value) -> int:
     """ Range of integer in pg is the same with int or long in c,
     we unpack the value in int format """
-    # other solution is to create a seperate function for unsigned int, it takes 'I' while int takes 'i'
-    return struct.unpack('q', value)[0]
+    return struct.unpack('i', value)[0]
 
 
 def convert_bytes_to_long_long(value) -> int:
@@ -53,7 +52,7 @@ MYSQL_DATATYPE_READER_MAP = {
     FIELD_TYPE.BIT: convert_bytes_to_int,
     FIELD_TYPE.TINY: convert_bytes_to_int,
     FIELD_TYPE.SHORT: convert_bytes_to_int,
-    FIELD_TYPE.LONG: convert_bytes_to_int,
+    FIELD_TYPE.LONG: convert_bytes_to_long_long,
     FIELD_TYPE.FLOAT: convert_bytes_to_float,
     FIELD_TYPE.DOUBLE: convert_bytes_to_float,
     FIELD_TYPE.LONGLONG: convert_bytes_to_long_long,

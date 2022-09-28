@@ -16,7 +16,7 @@ def convert_float_to_bytes(value: object):
 
 
 def convert_int_to_bytes(value: object):
-    return bytearray(struct.pack("q", value))
+    return bytearray(struct.pack("i", value))
 
 
 def convert_long_long(value: int):
@@ -70,7 +70,7 @@ MYSQL_DATATYPE_WRITER_MAP = {
     FIELD_TYPE.BIT: lambda value: to_bytes(value, FIELD_TYPE.BIT),
     FIELD_TYPE.TINY: convert_int_to_bytes,
     FIELD_TYPE.SHORT: convert_int_to_bytes,
-    FIELD_TYPE.LONG: convert_int_to_bytes,
+    FIELD_TYPE.LONG: convert_long_long,
     FIELD_TYPE.FLOAT: convert_float_to_bytes,
     FIELD_TYPE.DOUBLE: convert_float_to_bytes,
     FIELD_TYPE.LONGLONG: convert_long_long,
