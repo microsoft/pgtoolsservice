@@ -33,6 +33,12 @@ class SaveResultsAsExcelRequestParams(SaveResultsRequestParams):
         super().__init__()
         self.include_headers: bool = None
 
+class SaveResultsAsXmlRequestParams(SaveResultsRequestParams):
+
+    def __init__(self):
+        super().__init__()
+        self.include_headers: bool = None
+
 
 SAVE_AS_CSV_REQUEST = IncomingMessageConfiguration(
     'query/saveCsv',
@@ -47,6 +53,11 @@ SAVE_AS_JSON_REQUEST = IncomingMessageConfiguration(
 SAVE_AS_EXCEL_REQUEST = IncomingMessageConfiguration(
     'query/saveExcel',
     SaveResultsAsExcelRequestParams
+)
+
+SAVE_AS_XML_REQUEST = IncomingMessageConfiguration(
+    'query/saveXml',
+    SaveResultsAsXmlRequestParams
 )
 
 SERIALIZATION_OPTIONS = FeatureMetadataProvider(

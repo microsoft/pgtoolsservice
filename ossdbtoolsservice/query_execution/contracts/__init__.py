@@ -42,9 +42,9 @@ from ossdbtoolsservice.query_execution.contracts.query_execution_plan_request im
     QUERY_EXECUTION_PLAN_REQUEST, QueryExecutionPlanRequest
 )
 from ossdbtoolsservice.query_execution.contracts.save_result_as_request import (
-    SAVE_AS_CSV_REQUEST, SAVE_AS_JSON_REQUEST, SAVE_AS_EXCEL_REQUEST, SERIALIZATION_OPTIONS,
+    SAVE_AS_CSV_REQUEST, SAVE_AS_JSON_REQUEST, SAVE_AS_EXCEL_REQUEST, SAVE_AS_XML_REQUEST, SERIALIZATION_OPTIONS,
     SaveResultsAsJsonRequestParams, SaveResultRequestResult,
-    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
+    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams, SaveResultsAsXmlRequestParams
 )
 
 __all__ = [
@@ -58,7 +58,7 @@ __all__ = [
     'SubsetParams', 'SUBSET_REQUEST', 'CANCEL_REQUEST', 'QueryCancelResult', 'QueryCancelParams',
     'QueryDisposeParams', 'QUERY_EXECUTION_PLAN_REQUEST', 'QueryExecutionPlanRequest', 'DISPOSE_REQUEST',
     'SIMPLE_EXECUTE_REQUEST', 'SimpleExecuteRequest', 'SimpleExecuteResponse', 'EXECUTE_DOCUMENT_STATEMENT_REQUEST',
-    'ExecuteDocumentStatementParams', 'SAVE_AS_CSV_REQUEST', 'SAVE_AS_JSON_REQUEST', 'SERIALIZATION_OPTIONS', 'SAVE_AS_EXCEL_REQUEST',
+    'ExecuteDocumentStatementParams', 'SAVE_AS_CSV_REQUEST', 'SAVE_AS_JSON_REQUEST', 'SERIALIZATION_OPTIONS', 'SAVE_AS_EXCEL_REQUEST', 'SAVE_AS_XML_REQUEST',
     'SaveResultRequestResult', 'SaveResultsAsCsvRequestParams', 'SaveResultsAsExcelRequestParams',
-    'SaveResultsAsJsonRequestParams'
+    'SaveResultsAsJsonRequestParams', 'SaveResultsAsXmlRequestParams'
 ]

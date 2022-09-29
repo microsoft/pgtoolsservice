@@ -13,9 +13,11 @@ from ossdbtoolsservice.query.data_storage.save_as_json_writer import SaveAsJsonW
 from ossdbtoolsservice.query.data_storage.save_as_json_file_stream_factory import SaveAsJsonFileStreamFactory
 from ossdbtoolsservice.query.data_storage.save_as_excel_writer import SaveAsExcelWriter
 from ossdbtoolsservice.query.data_storage.save_as_excel_writer_factory import SaveAsExcelFileStreamFactory
+from ossdbtoolsservice.query.data_storage.save_as_xml_writer import SaveAsXmlWriter
+from ossdbtoolsservice.query.data_storage.save_as_xml_file_stream_factory import SaveAsXmlFileStreamFactory
 
 __all__ = [
     'FileStreamFactory', 'SaveAsCsvWriter', 'SaveAsJsonWriter', 'SaveAsExcelWriter', 'SaveAsExcelFileStreamFactory',
     'SaveAsJsonFileStreamFactory', 'SaveAsCsvFileStreamFactory', 'ServiceBufferFileStreamWriter',
-    'ServiceBufferFileStreamReader', 'StorageDataReader'
+    'ServiceBufferFileStreamReader', 'StorageDataReader', 'SaveAsXmlWriter', 'SaveAsXmlFileStreamFactory'
 ]
