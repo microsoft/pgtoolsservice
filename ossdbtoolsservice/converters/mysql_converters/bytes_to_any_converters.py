@@ -52,7 +52,7 @@ MYSQL_DATATYPE_READER_MAP = {
     FIELD_TYPE.BIT: convert_bytes_to_int,
     FIELD_TYPE.TINY: convert_bytes_to_int,
     FIELD_TYPE.SHORT: convert_bytes_to_int,
-    FIELD_TYPE.LONG: convert_bytes_to_int,
+    FIELD_TYPE.LONG: convert_bytes_to_long_long,
     FIELD_TYPE.FLOAT: convert_bytes_to_float,
     FIELD_TYPE.DOUBLE: convert_bytes_to_float,
     FIELD_TYPE.LONGLONG: convert_bytes_to_long_long,

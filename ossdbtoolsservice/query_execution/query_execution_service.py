@@ -28,9 +28,9 @@ from ossdbtoolsservice.query_execution.contracts import (
     SUBSET_REQUEST, ExecuteDocumentSelectionParams, CANCEL_REQUEST, QueryCancelParams, ResultMessage, SubsetParams,
     BatchNotificationParams, QueryCompleteNotificationParams, QueryDisposeParams,
     DISPOSE_REQUEST, SIMPLE_EXECUTE_REQUEST, SimpleExecuteRequest, ExecuteStringParams,
-    SimpleExecuteResponse, SAVE_AS_CSV_REQUEST, SAVE_AS_JSON_REQUEST, SAVE_AS_EXCEL_REQUEST,
+    SimpleExecuteResponse, SAVE_AS_CSV_REQUEST, SAVE_AS_JSON_REQUEST, SAVE_AS_EXCEL_REQUEST, SAVE_AS_XML_REQUEST, 
     SaveResultsAsJsonRequestParams, SaveResultRequestResult,
-    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams
+    SaveResultsAsCsvRequestParams, SaveResultsAsExcelRequestParams, SaveResultsAsXmlRequestParams
 )
 
 from ossdbtoolsservice.driver import ServerConnection
@@ -38,7 +38,7 @@ from ossdbtoolsservice.connection.contracts import ConnectRequestParams
 from ossdbtoolsservice.connection.contracts import ConnectionType
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.query.data_storage import (
-    FileStreamFactory, SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory
+    FileStreamFactory, SaveAsCsvFileStreamFactory, SaveAsJsonFileStreamFactory, SaveAsExcelFileStreamFactory, SaveAsXmlFileStreamFactory
 )
 
 
@@ -84,7 +84,8 @@ class QueryExecutionService(object):
             QUERY_EXECUTION_PLAN_REQUEST: self._handle_query_execution_plan_request,
             SAVE_AS_CSV_REQUEST: self._handle_save_as_csv_request,
             SAVE_AS_JSON_REQUEST: self._handle_save_as_json_request,
-            SAVE_AS_EXCEL_REQUEST: self._handle_save_as_excel_request
+            SAVE_AS_EXCEL_REQUEST: self._handle_save_as_excel_request,
+            SAVE_AS_XML_REQUEST: self._handle_save_as_xml_request
         }
 
     def register(self, service_provider: ServiceProvider):
@@ -110,6 +111,9 @@ class QueryExecutionService(object):
 
     def _handle_save_as_excel_request(self, request_context: RequestContext, params: SaveResultsAsExcelRequestParams) -> None:
         self._save_result(params, request_context, SaveAsExcelFileStreamFactory(params))
+
+    def _handle_save_as_xml_request(self, request_context: RequestContext, params: SaveResultsAsXmlRequestParams) -> None:
+        self._save_result(params, request_context, SaveAsXmlFileStreamFactory(params))
 
     def _handle_query_execution_plan_request(self, request_context: RequestContext, params: QueryExecutionPlanRequest):
         raise NotImplementedError()
