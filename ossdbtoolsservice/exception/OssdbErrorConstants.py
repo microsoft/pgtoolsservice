@@ -5,11 +5,10 @@
 
 """This module holds the error resource constants for ossdb tools service errors"""
 
-
 class OssdbErrorConstants():
 
     """ ERROR MESSAGES """
-    MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_ERRMSG = "SSL Connection Error : CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY"
+    MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_ERRMSG = "SSL Connection Error: SSL CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY."
 
     """ INTERNAL ERROR CODES """
     MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_CODE = 50001
@@ -18,11 +17,11 @@ class OssdbErrorConstants():
     MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_CODE = 50004
 
     """ ERROR CAUSES """
-    MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_CAUSES = "SSL required by server but not provided by client"
-    MYSQL_FLEX_INCORRECT_CREDENTIALS_CAUSES = "Incorrect credentials provided"
+    MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_CAUSES = "SSL encryption is required by server but is not configured by client."
+    MYSQL_FLEX_INCORRECT_CREDENTIALS_CAUSES = "The credentials provided are invalid."
 
     """ERROR SUGGESTIONS """
-    MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_SUGGESTIONS = "Check that the ssl parameters are configured. \nhttps://docs.microsoft.com/en-us/azure/mysql/flexible-server/how-to-connect-tls-ssl"
-    MYSQL_FLEX_IP_NOT_WHITELISTED_SUGGESTIONS = "Check that the firewall settings allow connections from the user's address."
-    MYSQL_FLEX_INCORRECT_CREDENTIALS_SUGGESTIONS = "Check that the credentials(hostname, password, ssl cert) provided are correct"
-    MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_SUGGESTIONS = "Configure SSL Root Certificate file path if using VERIFY_CA or VERIFY_IDENTITY ssl modes. \nhttps://docs.microsoft.com/en-us/azure/mysql/flexible-server/how-to-connect-tls-ssl"
+    MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_SUGGESTIONS = "Navigate to \'Advanced Properties\' tab and check that the SSL parameters are correctly configured. \nFor more details on connecting to Azure Database for MySQL using SSL encryptions, see https://learn.microsoft.com/azure/mysql/flexible-server/how-to-connect-tls-ssl"
+    MYSQL_FLEX_IP_NOT_WHITELISTED_SUGGESTIONS = "Verify and configure the firewall settings on your Azure Database for MySQL flexible server to allow connections from the your client address. \n For more details, see https://learn.microsoft.com/azure/mysql/flexible-server/how-to-manage-firewall-portal"
+    MYSQL_FLEX_INCORRECT_CREDENTIALS_SUGGESTIONS = "Check that the provided credentials (Server name, User name, Password, SSL cert) are correct."
+    MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_SUGGESTIONS = "To connect using these SSL modes, navigate to \'Advanced Properties\' tab and configure the SSL CA certificate. \nFor more details on SSL modes, see https://dev.mysql.com/doc/refman/8.0/en/using-encrypted-connections.html"
