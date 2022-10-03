@@ -21,4 +21,3 @@ flake8==3.7.0
 debugpy==1.5.1
 python-dateutil
 pydevd
-cryptography
