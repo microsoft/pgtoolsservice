@@ -8,7 +8,7 @@ import logging
 import os
 import sys
 
-import ptvsd
+import debugpy
 
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
@@ -69,11 +69,11 @@ if __name__ == '__main__':
                 except IndexError:
                     pass
                 try:
-                    ptvsd.enable_attach(address=('0.0.0.0', port))
+                    debugpy.listen(('0.0.0.0', port))
                 except BaseException:
                     # If port 3000 is used, try another debug port
                     port += 1
-                    ptvsd.enable_attach(address=('0.0.0.0', port))
+                    debugpy.listen(('0.0.0.0', port))
                 if arg_parts[0] == '--enable-remote-debugging-wait':
                     wait_for_debugger = True
             elif arg_parts[0] == '--log-dir':
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     # Wait for the debugger to attach if needed
     if wait_for_debugger:
         logger.debug('Waiting for a debugger to attach...')
-        ptvsd.wait_for_attach()
+        debugpy.wait_for_client()
 
     # Wrap standard in and out in io streams to add readinto support
     if stdin is None:

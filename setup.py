@@ -4,7 +4,7 @@ from cx_Freeze import setup, Executable
 # fine tuning.
 include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes')]
 buildOptions = dict(packages=['asyncio', 'jinja2', 'psycopg2', 'pymysql', 'inflection', 'sqlparse',
-                              'prompt_toolkit', 'xlsxwriter', 'nose', 'parameterized', 'coverage', 'autopep8', 'flake8', '_pydev_runfiles'],
+                              'prompt_toolkit', 'xlsxwriter', 'nose', 'parameterized', 'coverage', 'autopep8', 'flake8', 'debugpy', '_pydev_runfiles'],
                     excludes=[], include_files=include_files)
 
 base = 'Console'

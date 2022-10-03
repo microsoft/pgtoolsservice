@@ -365,13 +365,13 @@ class LanguageService:
 
         if completions:
             word_under_cursor = scriptparseinfo.document.get_word_under_cursor()
-            matching_completion = next(completion for completion in completions if completion.display == word_under_cursor)
+            matching_completion = next(completion for completion in completions if completion.display_text == word_under_cursor)
             if matching_completion:
                 connection = self._connection_service.get_connection(params.text_document.uri,
                                                                      ConnectionType.QUERY)
                 scripter_instance = scripter.Scripter(connection)
-                object_metadata = ObjectMetadata(None, None, matching_completion.display_meta,
-                                                 matching_completion.display,
+                object_metadata = ObjectMetadata(None, None, matching_completion.display_meta_text,
+                                                 matching_completion.display_text,
                                                  matching_completion.schema)
                 create_script = scripter_instance.script(ScriptOperation.CREATE, object_metadata)
 
@@ -395,10 +395,10 @@ class LanguageService:
         key = completion.text
         start_position = LanguageService._get_start_position(params.position, completion.start_position)
         text_range = Range(start=start_position, end=params.position)
-        kind = DISPLAY_META_MAP.get(completion.display_meta, CompletionItemKind.Unit)
+        kind = DISPLAY_META_MAP.get(completion.display_meta_text, CompletionItemKind.Unit)
         completion_item = CompletionItem()
         completion_item.label = key
-        completion_item.detail = completion.display
+        completion_item.detail = completion.display_text
         completion_item.insert_text_format = key
         completion_item.kind = kind
         completion_item.text_edit = TextEdit.from_data(text_range, key)

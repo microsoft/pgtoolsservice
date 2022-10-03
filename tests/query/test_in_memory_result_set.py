@@ -90,7 +90,7 @@ class TestInMemoryResultSet(unittest.TestCase):
         params.file_path = 'some_file_path'
 
         mock_thread = mock.MagicMock()
-        mock_thread.isAlive = True
+        mock_thread.is_alive = True
         self._result_set._save_as_threads[params.file_path] = mock_thread
 
         with self.assertRaises(RuntimeError) as context_manager:
