@@ -42,12 +42,12 @@ class TestMetadataService(unittest.TestCase):
         """Test that the metadata list handler properly starts a thread to list metadata and responds with the list"""
         # Set up the parameters and mocks for the request
         expected_metadata = [
-            ObjectMetadata(schema='schema1', name='table1', metadata_type=MetadataType.TABLE),
-            ObjectMetadata(schema='schema1', name='view1', metadata_type=MetadataType.VIEW),
-            ObjectMetadata(schema='schema1', name='function1', metadata_type=MetadataType.FUNCTION),
-            ObjectMetadata(schema='schema1', name='table2', metadata_type=MetadataType.TABLE),
-            ObjectMetadata(schema='schema2', name='view1', metadata_type=MetadataType.VIEW),
-            ObjectMetadata(schema='schema2', name='function1', metadata_type=MetadataType.FUNCTION),
+            ObjectMetadata(schema='schema1', name='table1', metadata_type=MetadataType.TABLE, metadata_type_name='Table'),
+            ObjectMetadata(schema='schema1', name='view1', metadata_type=MetadataType.VIEW, metadata_type_name='View'),
+            ObjectMetadata(schema='schema1', name='function1', metadata_type=MetadataType.FUNCTION, metadata_type_name='Function'),
+            ObjectMetadata(schema='schema1', name='table2', metadata_type=MetadataType.TABLE, metadata_type_name='Table'),
+            ObjectMetadata(schema='schema2', name='view1', metadata_type=MetadataType.VIEW, metadata_type_name='View'),
+            ObjectMetadata(schema='schema2', name='function1', metadata_type=MetadataType.FUNCTION, metadata_type_name='Function'),
         ]
 
         metadata_type_to_str_map = {
