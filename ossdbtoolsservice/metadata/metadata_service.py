@@ -113,7 +113,8 @@ class MetadataService:
                 schema_name = row[0]
                 object_name = row[1]
                 object_type = _METADATA_TYPE_MAP[row[2]]
-                metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
+                object_type_name = _METADATA_TYPE_NAME_MAP[row[2]]
+                metadata_list.append(ObjectMetadata(None, object_type, object_type_name, object_name, schema_name))
         return metadata_list
 
 
@@ -122,4 +123,11 @@ _METADATA_TYPE_MAP = {
     't': MetadataType.TABLE,
     'v': MetadataType.VIEW,
     's': MetadataType.SPROC
+}
+
+_METADATA_TYPE_NAME_MAP = {
+    'f': 'Function',
+    't': 'Table',
+    'v': 'View',
+    's': 'Procedure'
 }
