@@ -3,11 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import sys
 import struct
 from pymysql.constants import FIELD_TYPE
 
 ENCODING_TYPE = "utf-8"
-
 
 def convert_bytes_to_float(value) -> float:
     """ The result is a tuple even if it contains exactly one item """
@@ -18,6 +18,10 @@ def convert_bytes_to_int(value) -> int:
     """ Range of integer in pg is the same with int or long in c,
     we unpack the value in int format """
     return struct.unpack('i', value)[0]
+
+
+def convert_binary_bytes_to_python_int(value) -> int:
+    return int.from_bytes(value, sys.byteorder)
 
 
 def convert_bytes_to_long_long(value) -> int:
@@ -49,7 +53,7 @@ def convert_bytes_to_timedelta(value) -> str:
 
 
 MYSQL_DATATYPE_READER_MAP = {
-    FIELD_TYPE.BIT: convert_bytes_to_int,
+    FIELD_TYPE.BIT: convert_binary_bytes_to_python_int,
     FIELD_TYPE.TINY: convert_bytes_to_int,
     FIELD_TYPE.SHORT: convert_bytes_to_int,
     FIELD_TYPE.LONG: convert_bytes_to_long_long,
