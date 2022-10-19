@@ -65,7 +65,7 @@ def convert_datetime(value: datetime.datetime):
 
 
 MYSQL_DATATYPE_WRITER_MAP = {
-    FIELD_TYPE.BIT: lambda value: to_bytes(value, FIELD_TYPE.BIT),
+    FIELD_TYPE.BIT: bytes_to_bytearray,
     FIELD_TYPE.TINY: convert_int_to_bytes,
     FIELD_TYPE.SHORT: convert_int_to_bytes,
     FIELD_TYPE.LONG: convert_long_long,
