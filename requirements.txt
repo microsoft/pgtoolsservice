@@ -3,21 +3,21 @@ psycopg2==2.9.3
 PyMySQL==0.9.3
 
 # PGToolsService Requirements
-inflection
+inflection==0.5.1
 sqlparse==0.4.3
 prompt_toolkit==3.0.31
-xlsxwriter
+xlsxwriter==3.0.3
 
 # PGSMO Requirements
-jinja2
+jinja2==3.1.2
 
 # Build/Test Requirements
 cx_freeze==6.11.1
-nose
-parameterized
-coverage
-autopep8
+nose==1.3.7
+parameterized==0.8.1
+coverage==6.4.4
+autopep8==1.5.2
 flake8==3.7.0
 debugpy==1.5.1
-python-dateutil
-pydevd
+python-dateutil==2.8.2
+pydevd==2.8.0
