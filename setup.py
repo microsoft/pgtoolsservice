@@ -14,7 +14,7 @@ executables = [
 ]
 
 setup(name='OSS Databases Tools Service',
-      version='1.6.0',
+      version='1.6.2',
       description='Carbon data protocol server implementation for PostgreSQL',
       options=dict(build_exe=buildOptions),
       executables=executables)
