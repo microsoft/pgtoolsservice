@@ -60,4 +60,9 @@ class Scripter(object):
             # TODO: Localize
             raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation {operation}')
 
-        return handler[1](obj)
+        script = handler[1](obj)
+        
+        if not script:
+            raise PermissionError(f'User dont have sufficient permissions on object {obj._name} for executing script operation {operation}')
+        
+        return script
