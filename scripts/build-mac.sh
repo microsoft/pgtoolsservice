@@ -7,7 +7,13 @@ dirname=$(dirname $0)
 # Back up the old PYTHONPATH so it can be restored later
 old_pythonpath=$PYTHONPATH
 
+# Download dotnet install script
+wget https://dot.net/v1/dotnet-install.sh -O $dirname/dotnet-install.sh
+
 # Build the program
+chmod +x $dirname/dotnet-install.sh
+$dirname/dotnet-install.sh --install-dir $pwd/ossdbtoolsservice/dotnet-connector-deps/dotnet-deps --runtime dotnet
+
 cd $dirname/..
 PYTHONPATH=
 pip3 install -r requirements.txt

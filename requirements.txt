@@ -1,5 +1,6 @@
 # Shared Requirements
 PyMySQL==0.9.3
+pythonnet==3.0.1
 
 # PGToolsService Requirements
 inflection==0.5.1
@@ -11,7 +12,10 @@ xlsxwriter==3.0.3
 jinja2==3.1.2
 
 # Build/Test Requirements
-cx_freeze==6.11.1
+# cx_freeze==6.13.1 --no-binary=cx_freeze for linux
+# Mac issue with cx_freeze>=6.12
+
+cx_freeze==6.13.1
 nose2==0.12.0
 parameterized==0.8.1
 coverage==6.4.4

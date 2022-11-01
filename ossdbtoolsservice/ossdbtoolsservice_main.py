@@ -7,8 +7,29 @@ import io
 import logging
 import os
 import sys
-
 import debugpy
+
+def get_base_path(filename):
+    if getattr(sys, "frozen", False):
+        # The application is frozen
+        datadir = os.path.abspath(os.path.dirname(sys.executable))
+        return os.path.join(datadir, 'lib', 'ossdbtoolsservice', filename)
+    else:
+        # The application is not frozen
+        # Change this bit to match where you store your data files:
+        datadir = os.path.abspath(os.path.dirname(__file__))
+        return os.path.join(datadir, filename)
+
+
+base_path = get_base_path('dotnet-connector-deps')
+dotnet_path = os.path.join(base_path, 'dotnet-deps')
+os.environ['PYTHONNET_RUNTIME'] = 'coreclr'
+os.environ['DOTNET_ROOT'] = str(dotnet_path)
+
+import clr
+sys.path.append(str(base_path))
+clr.AddReference('MySqlConnector')
+
 
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
@@ -23,6 +44,9 @@ from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace import WorkspaceService
+
+
+
 
 
 def _create_server(input_stream, output_stream, server_logger, provider):
