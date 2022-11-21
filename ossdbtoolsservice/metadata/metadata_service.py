@@ -12,6 +12,7 @@ from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.metadata.contracts import (
     MetadataListParameters, MetadataListResponse, METADATA_LIST_REQUEST, MetadataType, ObjectMetadata)
 from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.exception.OssdbErrorConstants import OssdbErrorConstants
 
 # This query collects all the tables, views, and functions in all the schemas in the database(s)?
 PG_METADATA_QUERY = """
@@ -92,7 +93,7 @@ class MetadataService:
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Unhandled exception while executing the metadata list worker thread')
-            request_context.send_error('Unhandled exception while listing metadata: ' + str(e))  # TODO: Localize
+            request_context.send_error(message='Unhandled exception while listing metadata: ' + str(e), code=OssdbErrorConstants.GET_METADATA_FAILURE)  # TODO: Localize
 
     def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
         # Get current connection
