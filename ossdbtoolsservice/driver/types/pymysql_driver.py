@@ -334,8 +334,8 @@ class MySQLConnection(ServerConnection):
     def handle_connection_error(self, exception: pymysql.err.Error):
         host = self._connection_options["host"] if 'host' in self._connection_options else ''
         iscloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
+        code, message = exception.args
         if iscloud:
-            code, message = exception.args
             if code == 3159:
                 if "Connections using insecure transport are prohibited while --require_secure_transport=ON" in message:
                     raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED(code, message))
@@ -345,7 +345,7 @@ class MySQLConnection(ServerConnection):
             elif code == 1045:
                 if "Access denied for user" in message:
                     raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_INCORRECT_CREDENTIALS(code, message))
-        raise exception
+        raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_DRIVER_UNKNOWN_ERROR(code, message))
 
     def _set_ssl_options(self, conn_params: dict):
         ssl_mode = MySQLSSLMode[self._connection_options["ssl"]] if "ssl" in self._connection_options else DEFAULT_SSL_MODE
