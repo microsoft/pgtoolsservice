@@ -9,7 +9,6 @@ import uuid
 from typing import Callable, Dict, List, Optional  # noqa
 import sqlparse
 import ntpath
-from ossdbtoolsservice.exception.OssdbErrorConstants import OssdbErrorConstants
 
 
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider

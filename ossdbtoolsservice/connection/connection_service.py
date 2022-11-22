@@ -203,7 +203,7 @@ class ConnectionService:
         try:
             connection = self.get_connection(params.owner_uri, ConnectionType.DEFAULT)
         except ValueError as err:
-            request_context.send_error(message=str(err), code=OssdbErrorConstants.LIST_DATABASE_VALUE_ERROR)
+            request_context.send_error(message=str(err), code=OssdbErrorConstants.LIST_DATABASE_GET_CONNECTION_VALUE_ERROR)
             return
         except OssdbToolsServiceException as err:
             request_context.send_error(message=str(err), data=None, code=err.errorCode)

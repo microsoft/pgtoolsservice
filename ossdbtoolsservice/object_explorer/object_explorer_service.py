@@ -250,7 +250,7 @@ class ObjectExplorerService(object):
             message = f'Failed to expand node: {str(e)}'    # TODO: Localize
             if self._service_provider.logger is not None:
                 self._service_provider.logger.error(message)
-            request_context.send_error(message)
+            request_context.send_error(message=message, code=OssdbErrorConstants.OBJECT_EXPLORER_EXPAND_NODE_ERROR)
             return
 
     def _create_connection(self, session: ObjectExplorerSession, database_name: str) -> Optional[ServerConnection]:
