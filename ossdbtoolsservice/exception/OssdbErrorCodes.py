@@ -51,7 +51,7 @@ class OssdbErrorCodes():
     
     def MYSQL_FLEX_DRIVER_UNKNOWN_ERROR(errcode: int, errmsg: str):
         return OssdbErrorResource(
-            OssdbErrorConstants.MYSQL_FLEX_DRIVER_UNKNOWN_ERROR_CODE,
+            errcode if errcode else OssdbErrorConstants.MYSQL_FLEX_DRIVER_UNKNOWN_ERROR_CODE,
             errcode,
             errmsg,
             None,
