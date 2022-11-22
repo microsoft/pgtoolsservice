@@ -22,6 +22,7 @@ from ossdbtoolsservice.object_explorer.contracts import (
 from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
 import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.exception.OssdbErrorConstants import OssdbErrorConstants
 
 from pgsmo import Server as PGServer
 from mysqlsmo import Server as MySQLServer
@@ -112,7 +113,7 @@ class ObjectExplorerService(object):
             message = f'Failed to create OE session: {str(e)}'
             if self._service_provider.logger is not None:
                 self._service_provider.logger.error(message)
-            request_context.send_error(message)
+            request_context.send_error(message=message, code=OssdbErrorConstants.OBJECT_EXPLORER_CREATE_SESSION_ERROR)
             return
 
         # Step 2: Connect the session and lookup the root node asynchronously
@@ -148,7 +149,7 @@ class ObjectExplorerService(object):
             message = f'Failed to close OE session: {str(e)}'   # TODO: Localize
             if self._service_provider.logger is not None:
                 self._service_provider.logger.error(message)
-            request_context.send_error(message)
+            request_context.send_error(message=message, code=OssdbErrorConstants.OBJECT_EXPLORER_CLOSE_SESSION_ERROR)
 
     def _handle_refresh_request(self, request_context: RequestContext, params: ExpandParameters) -> None:
         """Handle refresh Object Explorer create node request"""
@@ -249,7 +250,7 @@ class ObjectExplorerService(object):
             message = f'Failed to expand node: {str(e)}'    # TODO: Localize
             if self._service_provider.logger is not None:
                 self._service_provider.logger.error(message)
-            request_context.send_error(message)
+            request_context.send_error(message=message, code=OssdbErrorConstants.OBJECT_EXPLORER_EXPAND_NODE_ERROR)
             return
 
     def _create_connection(self, session: ObjectExplorerSession, database_name: str) -> Optional[ServerConnection]:

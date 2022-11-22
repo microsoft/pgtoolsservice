@@ -34,6 +34,7 @@ from ossdbtoolsservice.query_execution.contracts import (
 )
 
 from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.exception.OssdbErrorConstants import OssdbErrorConstants
 from ossdbtoolsservice.connection.contracts import ConnectRequestParams
 from ossdbtoolsservice.connection.contracts import ConnectionType
 import ossdbtoolsservice.utils as utils
@@ -184,7 +185,7 @@ class QueryExecutionService(object):
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(
                     'Encountered exception while handling query request')  # TODO: Localize
-            request_context.send_unhandled_error_response(e)
+            request_context.send_unhandled_error_response(e, OssdbErrorConstants.EXECUTE_QUERY_GET_CONNECTION_ERROR)
             return
 
         worker_args = ExecuteRequestWorkerArgs(params.owner_uri, conn, request_context, ResultSetStorageType.FILE_STORAGE, before_query_initialize,
@@ -224,7 +225,7 @@ class QueryExecutionService(object):
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(
                     'Encountered exception while handling query request')  # TODO: Localize
-            request_context.send_unhandled_error_response(e)
+            request_context.send_unhandled_error_response(e, OssdbErrorConstants.EXECUTE_DEPLOY_GET_CONNECTION_ERROR)
             return
 
         worker_args = ExecuteRequestWorkerArgs(params.owner_uri, conn, request_context, ResultSetStorageType.FILE_STORAGE, before_query_initialize,
@@ -271,7 +272,7 @@ class QueryExecutionService(object):
             query_events = QueryEvents(None, None, BatchEvents(_batch_execution_started_callback, _batch_execution_finished_callback))
             self.query_results[params.owner_uri] = Query(params.owner_uri, query_text, execution_settings, query_events)
         elif self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTING:
-            request_context.send_error('Another query is currently executing.')  # TODO: Localize
+            request_context.send_error(message='Another query is currently executing.', code=OssdbErrorConstants.ANOTHER_QUERY_EXECUTING_ERROR)  # TODO: Localize
             return
 
         thread = threading.Thread(
@@ -321,12 +322,12 @@ class QueryExecutionService(object):
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception(str(e))
-            request_context.send_unhandled_error_response(e)
+            request_context.send_unhandled_error_response(e, OssdbErrorConstants.CANCEL_QUERY_ERROR)
 
     def _handle_dispose_request(self, request_context: RequestContext, params: QueryDisposeParams):
         try:
             if params.owner_uri not in self.query_results:
-                request_context.send_error(NO_QUERY_MESSAGE)  # TODO: Localize
+                request_context.send_error(message=NO_QUERY_MESSAGE, code=OssdbErrorConstants.DISPOSE_REQUEST_NO_QUERY_ERROR)  # TODO: Localize
                 return
             # Make sure to cancel the query first if it's not executed.
             # If it's not started, then make sure it never starts. If it's executing, make sure
@@ -336,7 +337,7 @@ class QueryExecutionService(object):
             del self.query_results[params.owner_uri]
             request_context.send_response({})
         except Exception as e:
-            request_context.send_unhandled_error_response(e)
+            request_context.send_unhandled_error_response(e, OssdbErrorConstants.DISPOSE_QUERY_REQUEST_ERROR)
 
     def cancel_query(self, owner_uri: str):
         conn = self._get_connection(owner_uri, ConnectionType.QUERY)
@@ -462,7 +463,7 @@ class QueryExecutionService(object):
 
         def on_error(reason: str):
             message = 'Failed to save {0}: {1}'.format(ntpath.basename(params.file_path), reason)
-            request_context.send_error(message)
+            request_context.send_error(message=message, code=OssdbErrorConstants.SAVE_QUERY_RESULT_ERROR)
 
         try:
             query.save_as(params, file_factory, on_success, on_error)

@@ -5,6 +5,7 @@
 
 from typing import Optional      # noqa
 
+from ossdbtoolsservice.exception.OssdbErrorConstants import OssdbErrorConstants
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.scripting.scripter import Scripter
@@ -59,4 +60,4 @@ class ScriptingService(object):
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Scripting operation failed')
-            request_context.send_error(str(e), params)
+            request_context.send_error(message=str(e), data=params, code=OssdbErrorConstants.SCRIPTAS_REQUEST_ERROR)

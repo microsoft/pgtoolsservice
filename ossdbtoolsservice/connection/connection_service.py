@@ -9,6 +9,7 @@ disconnect and holds the current connection, if one is present"""
 import threading
 from typing import Callable, Dict, List, Optional, Tuple  # noqa
 import uuid
+from ossdbtoolsservice.exception.OssdbErrorConstants import OssdbErrorConstants
 
 
 from ossdbtoolsservice.connection.contracts import (
@@ -202,10 +203,10 @@ class ConnectionService:
         try:
             connection = self.get_connection(params.owner_uri, ConnectionType.DEFAULT)
         except ValueError as err:
-            request_context.send_error(str(err))
+            request_context.send_error(message=str(err), code=OssdbErrorConstants.LIST_DATABASE_GET_CONNECTION_VALUE_ERROR)
             return
         except OssdbToolsServiceException as err:
-            request_context.send_error(str(err), None, err.errorCode)
+            request_context.send_error(message=str(err), data=None, code=err.errorCode)
             return
 
         query_results = None
@@ -215,7 +216,7 @@ class ConnectionService:
         except Exception as err:
             if self._service_provider is not None and self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Error listing databases')
-            request_context.send_error(str(err))
+            request_context.send_error(message=str(err), code=OssdbErrorConstants.LIST_DATABASE_ERROR)
             return
 
         database_names = [result[0] for result in query_results]

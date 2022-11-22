@@ -10,6 +10,7 @@ import uuid
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
 from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
+from ossdbtoolsservice.exception.OssdbErrorConstants import OssdbErrorConstants
 
 
 class JSONRPCServer:
@@ -267,7 +268,7 @@ class JSONRPCServer:
             # Make sure we got a handler for the request
             if handler is None:
                 # TODO: Localize?
-                request_context.send_error(f'Requested method is unsupported: {message.message_method}')
+                request_context.send_error(message=f'Requested method is unsupported: {message.message_method}', code=OssdbErrorConstants.UNSUPPORTED_REQUEST_METHOD)
                 if self._logger is not None:
                     self._logger.warn('Requested method is unsupported: %s', message.message_method)
                 return
@@ -285,7 +286,7 @@ class JSONRPCServer:
                 error_message = f'Unhandled exception while handling request method {message.message_method}: "{e}"'  # TODO: Localize
                 if self._logger is not None:
                     self._logger.exception(error_message)
-                request_context.send_error(error_message, code=-32603)
+                request_context.send_error(message=error_message, code=OssdbErrorConstants.REQUEST_METHOD_PROCESSING_UNHANDLED_EXCEPTION)
         elif message.message_type is JSONRPCMessageType.Notification:
             if self._logger is not None:
                 self._logger.info('Received notification method=%s', message.message_method)
@@ -383,9 +384,9 @@ class RequestContext:
         message = JSONRPCMessage.create_error(self._message.message_id, code, message, data)
         self._queue.put(message)
 
-    def send_unhandled_error_response(self, ex: Exception):
+    def send_unhandled_error_response(self, ex: Exception, code=0):
         """Send response for any unhandled exceptions"""
-        self.send_error('Unhandled exception: {}'.format(str(ex)))  # TODO: Localize
+        self.send_error(message='Unhandled exception: {}'.format(str(ex)), code=code)  # TODO: Localize
 
 
 class NotificationContext:
