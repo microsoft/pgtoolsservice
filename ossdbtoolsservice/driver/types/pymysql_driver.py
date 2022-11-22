@@ -345,6 +345,8 @@ class MySQLConnection(ServerConnection):
             elif code == 1045:
                 if "Access denied for user" in message:
                     raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_INCORRECT_CREDENTIALS(code, message))
+            else:
+                raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_DRIVER_UNKNOWN_ERROR(code, message))
         raise exception
 
     def _set_ssl_options(self, conn_params: dict):

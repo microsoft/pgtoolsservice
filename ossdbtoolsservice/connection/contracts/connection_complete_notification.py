@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.connection.contracts.common import ConnectionSummary, ConnectionType     # noqa
+from ossdbtoolsservice.exception.OssdbErrorConstants import OssdbErrorConstants
 
 
 class ConnectionCompleteParams:
@@ -14,7 +15,7 @@ class ConnectionCompleteParams:
         self.connection_id: str = None
         self.messages: str = None
         self.error_message: str = None
-        self.error_number: int = 0
+        self.error_number: int = OssdbErrorConstants.UNKNOWN_CONNECTION_ERROR
         self.server_info: ServerInfo = None
         self.connection_summary: ConnectionSummary = None
         self.type: ConnectionType = ConnectionType.DEFAULT

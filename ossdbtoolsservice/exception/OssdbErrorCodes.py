@@ -48,3 +48,12 @@ class OssdbErrorCodes():
             None,
             OssdbErrorConstants.MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_SUGGESTIONS
         )
+    
+    def MYSQL_FLEX_DRIVER_UNKNOWN_ERROR(errcode: int, errmsg: str):
+        return OssdbErrorResource(
+            OssdbErrorConstants.MYSQL_FLEX_DRIVER_UNKNOWN_ERROR_CODE,
+            errcode,
+            errmsg,
+            None,
+            None
+        )
