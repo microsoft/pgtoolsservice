@@ -4,9 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.utils.constants import (
-    PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME, MARIADB_PROVIDER_NAME
+    MYSQL_PROVIDER_NAME, MARIADB_PROVIDER_NAME
 )
-from ossdbtoolsservice.driver.types import ServerConnection, PostgreSQLConnection, MySQLConnection
+from ossdbtoolsservice.driver.types import ServerConnection, MySQLConnection
 from ossdbtoolsservice.workspace.contracts import Configuration
 
 
@@ -14,7 +14,6 @@ class ConnectionManager:
     """Wrapper class that handles different types of drivers and connections """
 
     CONNECTORS = {
-        PG_PROVIDER_NAME: PostgreSQLConnection,
         MYSQL_PROVIDER_NAME: MySQLConnection,
         MARIADB_PROVIDER_NAME: MySQLConnection
     }

@@ -9,10 +9,6 @@ from typing import List, Optional, Tuple
 from psycopg2 import DatabaseError
 from psycopg2.extensions import Column
 
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
-from tests.utils import MockPsycopgConnection
-
-
 # MOCK CONNECTION ##########################################################
 
 
@@ -83,30 +79,3 @@ class MockPGCursor:
         self.description = self._results[0]
         self.rowcount = len(self._results[1])
         self._has_been_read = True
-
-
-class MockPGServerConnection(PostgreSQLConnection):
-    '''Class used to mock PGSQL ServerConnection objects for testing'''
-
-    def __init__(
-            self,
-            cur: Optional[MockPGCursor] = None,
-            connection: Optional[MockPsycopgConnection] = None,
-            version: str = '90602',
-            name: str = 'postgres',
-            host: str = 'localhost',
-            port: str = '25565',
-            user: str = 'postgres'):
-
-        # Setup mocks for the connection
-        self.close = mock.MagicMock()
-        self.cursor = mock.MagicMock(return_value=cur)
-
-        # if no mock pyscopg connection passed, create default one
-        if not connection:
-            connection = MockPsycopgConnection(cursor=cur, dsn_parameters={
-                'dbname': name, 'host': host, 'port': port, 'user': user})
-
-        # mock psycopg2.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
-        with mock.patch('psycopg2.connect', mock.Mock(return_value=connection)):
-            super().__init__({"host_name": host, "user_name": user, "port": port, "database_name": name})

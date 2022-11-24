@@ -6,7 +6,7 @@
 import unittest
 from unittest import mock
 
-import psycopg2
+import pymysql
 
 from ossdbtoolsservice.query import (ExecutionState, Query, QueryEvents,
                                      QueryExecutionSettings,
@@ -15,9 +15,9 @@ from ossdbtoolsservice.query.contracts import (DbColumn,
                                                SaveResultsRequestParams,
                                                SelectionData)
 from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
-from tests.pgsmo_tests.utils import MockPGServerConnection
-from tests.utils import MockPsycopgCursor
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
+from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
+from tests.utils import MockPyMySQLCursor
 
 
 class TestQuery(unittest.TestCase):
@@ -31,18 +31,18 @@ class TestQuery(unittest.TestCase):
         self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions(), ResultSetStorageType.FILE_STORAGE), QueryEvents())
 
         self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
-        self.cursor = MockPsycopgCursor(self.mock_query_results)
-        self.connection = MockPGServerConnection(cur=self.cursor)
+        self.cursor = MockPyMySQLCursor(self.mock_query_results)
+        self.connection = MockMySQLServerConnection(cur=self.cursor)
 
         self.columns_info = []
         db_column_id = DbColumn()
         db_column_id.data_type = 'text'
         db_column_id.column_name = 'Id'
-        db_column_id.provider = PG_PROVIDER_NAME
+        db_column_id.provider = MYSQL_PROVIDER_NAME
         db_column_value = DbColumn()
         db_column_value.data_type = 'text'
         db_column_value.column_name = 'Value'
-        db_column_value.provider = PG_PROVIDER_NAME
+        db_column_value.provider = MYSQL_PROVIDER_NAME
         self.columns_info = [db_column_id, db_column_value]
         self.get_columns_info_mock = mock.Mock(return_value=self.columns_info)
 
@@ -83,7 +83,7 @@ class TestQuery(unittest.TestCase):
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
 
         # If I call query.execute then it raises the database error
-        with self.assertRaises(psycopg2.DatabaseError):
+        with self.assertRaises(pymysql.DatabaseError):
             self.query.execute(self.connection)
 
         # And only the first batch was executed

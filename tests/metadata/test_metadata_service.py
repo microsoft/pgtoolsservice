@@ -15,9 +15,9 @@ from ossdbtoolsservice.metadata.contracts import (METADATA_LIST_REQUEST,
                                                   MetadataType, ObjectMetadata)
 from ossdbtoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 from tests.utils import (
-    MockPsycopgCursor, MockRequestContext, MockThread)
+    MockPyMySQLCursor, MockRequestContext, MockThread)
 
 
 class TestMetadataService(unittest.TestCase):
@@ -58,8 +58,8 @@ class TestMetadataService(unittest.TestCase):
 
         # Query results have schema_name, object_name, and object_type columns in that order
         list_query_result = [(metadata.schema, metadata.name, metadata_type_to_str_map[metadata.metadata_type]) for metadata in expected_metadata]
-        mock_cursor = MockPsycopgCursor(list_query_result)
-        mock_connection = MockPGServerConnection(cur=mock_cursor)
+        mock_cursor = MockPyMySQLCursor(list_query_result)
+        mock_connection = MockMySQLServerConnection(cur=mock_cursor)
         self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
         request_context = MockRequestContext()
         params = MetadataListParameters()

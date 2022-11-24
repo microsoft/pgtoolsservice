@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.driver.types.driver import ServerConnection
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from ossdbtoolsservice.driver.types.pymysql_driver import MySQLConnection
 
-__all__ = ['ServerConnection', 'MySQLConnection', 'PostgreSQLConnection']
+__all__ = ['ServerConnection', 'MySQLConnection']

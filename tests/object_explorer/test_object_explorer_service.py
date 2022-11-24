@@ -24,12 +24,12 @@ from ossdbtoolsservice.object_explorer.contracts import (
     NodeInfo, SessionCreatedParameters)
 from ossdbtoolsservice.object_explorer.object_explorer_service import (
     ObjectExplorerService, ObjectExplorerSession)
-from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
+from ossdbtoolsservice.object_explorer.routing import MYSQL_ROUTING_TABLE
 from ossdbtoolsservice.utils import constants
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from tests.mock_request_validation import RequestFlowValidator
-from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 
 TEST_HOST = 'testhost'
 TEST_DBNAME = 'testdb'
@@ -46,7 +46,7 @@ def _connection_details() -> Tuple[ConnectionDetails, str]:
         'user': TEST_USER,
         'port': TEST_PORT
     }
-    session_uri = ObjectExplorerService._generate_session_uri(param, constants.PG_PROVIDER_NAME)
+    session_uri = ObjectExplorerService._generate_session_uri(param, constants.MYSQL_PROVIDER_NAME)
     return param, session_uri
 
 
@@ -76,7 +76,7 @@ class TestObjectExplorer(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        sp: ServiceProvider = ServiceProvider(server, {}, constants.PG_PROVIDER_NAME, utils.get_mock_logger())
+        sp: ServiceProvider = ServiceProvider(server, {}, constants.MYSQL_PROVIDER_NAME, utils.get_mock_logger())
 
         # If: I register a OE service
         oe = ObjectExplorerService()
@@ -103,12 +103,12 @@ class TestObjectExplorer(unittest.TestCase):
             # If: I generate a session URI from params that are missing a value
             # Then: I should get an exception
             with self.assertRaises(Exception):
-                ObjectExplorerService._generate_session_uri(param_set, constants.PG_PROVIDER_NAME)
+                ObjectExplorerService._generate_session_uri(param_set, constants.MYSQL_PROVIDER_NAME)
 
     def test_generate_uri_valid_params(self):
         # If: I generate a session URI from a valid connection details object
         params, session_uri = _connection_details()
-        output = ObjectExplorerService._generate_session_uri(params, constants.PG_PROVIDER_NAME)
+        output = ObjectExplorerService._generate_session_uri(params, constants.MYSQL_PROVIDER_NAME)
 
         # Then: The output should be a properly formed URI
         parse_result = url_parse.urlparse(output)
@@ -165,7 +165,7 @@ class TestObjectExplorer(unittest.TestCase):
         params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
-        oe._provider = constants.PG_PROVIDER_NAME
+        oe._provider = constants.MYSQL_PROVIDER_NAME
 
         # If: I attempt to create an OE session that already exists
         rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
@@ -183,7 +183,7 @@ class TestObjectExplorer(unittest.TestCase):
         # ... Create an OE service
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
-        oe._provider = constants.PG_PROVIDER_NAME
+        oe._provider = constants.MYSQL_PROVIDER_NAME
 
         # ... Patch the threading to throw
         patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
@@ -213,13 +213,13 @@ class TestObjectExplorer(unittest.TestCase):
     def test_handle_create_session_successful(self):
         # Setup:
         # ... Create OE service with mock connection service that returns a successful connection response
-        mock_connection = MockPGServerConnection(cur=None, host='myserver', name='postgres', user='postgres', port=123)
+        mock_connection = MockMySQLServerConnection(cur=None, host='myserver', name='mysql', user='mysql', port=123)
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
-        oe._provider = constants.PG_PROVIDER_NAME
+        oe._provider = constants.MYSQL_PROVIDER_NAME
         oe._server = Server
 
         # ... Create parameters, session, request context validator
@@ -319,7 +319,7 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_create_connection_successful(self):
         # Setup:
-        mock_connection = MockPGServerConnection()
+        mock_connection = MockMySQLServerConnection()
         oe = ObjectExplorerService()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
@@ -594,7 +594,7 @@ class TestObjectExplorer(unittest.TestCase):
     def _preloaded_oe_service(self) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
-        oe._routing_table = PG_ROUTING_TABLE
+        oe._routing_table = MYSQL_ROUTING_TABLE
 
         conn_details, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, conn_details)
@@ -633,7 +633,7 @@ class SessionTestCase(unittest.TestCase):
         self.session = ObjectExplorerSession(session_uri, params)
         self.oe._session_map[session_uri] = self.session
         name = 'dbname'
-        self.mock_server = Server(MockPGServerConnection())
+        self.mock_server = Server(MockMySQLServerConnection())
         self.session.server = self.mock_server
         self.db = Database(self.mock_server, name)
         self.db._connection = self.mock_server._conn

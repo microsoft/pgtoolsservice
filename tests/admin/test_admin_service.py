@@ -11,12 +11,12 @@ from ossdbtoolsservice.admin.contracts import (GET_DATABASE_INFO_REQUEST,
                                                GetDatabaseInfoParameters,
                                                GetDatabaseInfoResponse)
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.driver.types.pymysql_driver import MySQLConnection
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
-from tests.pgsmo_tests.utils import MockPGServerConnection
-from tests.utils import MockPsycopgCursor, MockRequestContext
+from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
+from tests.utils import MockPyMySQLCursor, MockRequestContext
 
 
 class TestAdminService(unittest.TestCase):
@@ -48,8 +48,8 @@ class TestAdminService(unittest.TestCase):
 
         # Set up a mock connection and cursor for the test
         mock_query_results = [(user_name,)]
-        mock_cursor = MockPsycopgCursor(mock_query_results)
-        mock_connection = MockPGServerConnection(mock_cursor, name=db_name)
+        mock_cursor = MockPyMySQLCursor(mock_query_results)
+        mock_connection = MockMySQLServerConnection(mock_cursor, name=db_name)
         self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
 
         # If I send a get_database_info request
@@ -73,7 +73,7 @@ class TestAdminService(unittest.TestCase):
         request_context = MockRequestContext()
 
         # Set up the connection service to return our connection
-        connection = PostgreSQLConnection(get_connection_details())
+        connection = MySQLConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
 
         # If I send a get_database_info request
