@@ -240,8 +240,8 @@ class DataEditorSession():
         elif connection._provider_name == MYSQL_PROVIDER_NAME:
             query_string = 'SELECT {0} FROM {1}.{2} {3}'.format(
                 ', '.join([f'`{name.string}`' for name in column_names]),
-                metadata.schema_name,
-                metadata.table_name,
+                f'`{metadata.schema_name}`',
+                f'`{metadata.table_name}`',
                 limit_clause
             )
 
