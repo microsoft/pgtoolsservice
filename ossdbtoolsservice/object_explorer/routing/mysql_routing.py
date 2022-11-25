@@ -328,7 +328,7 @@ MYSQL_ROUTING_TABLE = {
         _sysdatabases
     ),
     # Clicked on one of the Databases or System Databases nodes, should list the folders within the database
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/$'): RoutingTarget(
         [
             Folder('Tables', 'tables'),
             Folder('Views', 'views'),
@@ -339,32 +339,32 @@ MYSQL_ROUTING_TABLE = {
         _default_node_generator
     ),
     # Clicked on the Tables folder, should list table nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/tables/$'): RoutingTarget(
         None,
         _tables
     ),
     # Clicked on the Views folder, should list System View Folder and view nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/views/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/views/$'): RoutingTarget(
         None,
         _views
     ),
     # Clicked on the Stored Procedures folder, should list procedure nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/procedures/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/procedures/$'): RoutingTarget(
         None,
         _procedures
     ),
     # Clicked on the Functions folder, should list function nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/functions/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/functions/$'): RoutingTarget(
         None,
         _functions
     ),
     # Clicked on the Events folder, should list event nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/events/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/events/$'): RoutingTarget(
         None,
         _events
     ),
     # Clicked on one of the tables, should list folders within the table
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/tables/(?P<tbl_name>[^/]+)/$'): RoutingTarget(
         [
             Folder('Columns', 'columns'),
             Folder('Constraints', 'constraints'),
@@ -374,29 +374,29 @@ MYSQL_ROUTING_TABLE = {
         _default_node_generator
     ),
     # Clicked on one particular view node, should list folders within the view
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/views/(?P<tbl_name>\w+/$)'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/views/(?P<tbl_name>[^/]+/$)'): RoutingTarget(
         [
             Folder('Columns', 'columns')
         ],
         _default_node_generator
     ),
     # Clicked on the Constraints folder inside one table
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/constraints/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/tables/(?P<tbl_name>[^/]+)/constraints/$'): RoutingTarget(
         None,
         _constraints
     ),
     # Clicked on the Indexes folder inside one table
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/indexes/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/tables/(?P<tbl_name>[^/]+)/indexes/$'): RoutingTarget(
         None,
         _indexes
     ),
     # Clicked on on the Triggers Folder inside of one particular table or view node
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/(?P<obj>tables|views)/(?P<tbl_name>\w+)/columns/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/(?P<obj>tables|views)/(?P<tbl_name>[^/]+)/columns/$'): RoutingTarget(
         None,
         _columns
     ),
     # Clicked on on the Triggers Folder inside of one particular table, should list table trigger nodes
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>\w+)/tables/(?P<tbl_name>\w+)/triggers/$'): RoutingTarget(
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbname>[^/]+)/tables/(?P<tbl_name>[^/]+)/triggers/$'): RoutingTarget(
         None,
         _triggers
     ),
@@ -406,14 +406,14 @@ MYSQL_ROUTING_TABLE = {
         _charsets
     ),
     # Clicked on one particular charset node, should show the Collations folder
-    re.compile(r'^/charsets/(?P<char_name>\w+)/$'): RoutingTarget(
+    re.compile(r'^/charsets/(?P<char_name>[^/]+)/$'): RoutingTarget(
         [
             Folder('Collations', 'collations')
         ],
         _default_node_generator
     ),
     # Clicked on Collations folder for one particular charset node
-    re.compile(r'^/charsets/(?P<char_name>\w+)/collations/$'): RoutingTarget(
+    re.compile(r'^/charsets/(?P<char_name>[^/]+)/collations/$'): RoutingTarget(
         None,
         _collations
     ),
