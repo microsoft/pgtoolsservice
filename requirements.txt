@@ -1,5 +1,4 @@
 # Shared Requirements
-psycopg2==2.9.3
 PyMySQL==0.9.3
 
 # PGToolsService Requirements
