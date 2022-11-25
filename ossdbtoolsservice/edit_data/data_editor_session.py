@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import Callable, Dict, List, Optional, Tuple  # noqa
-from psycopg2 import sql
 import threading
 
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
@@ -224,22 +223,14 @@ class DataEditorSession():
 
     def _construct_initialize_query(self, connection: ServerConnection, metadata: EditTableMetadata, filters: EditInitializerFilter):
 
-        column_names = [sql.Identifier(column.name) for column in metadata.columns_metadata]
+        column_names = [column.name for column in metadata.columns_metadata]
 
         if filters.limit_results is not None and filters.limit_results > 0:
             limit_clause = ' '.join([' LIMIT', str(filters.limit_results)])
 
-        if connection._provider_name == PG_PROVIDER_NAME:
-            query = sql.SQL('SELECT {0} FROM {1}.{2} {3}').format(
-                sql.SQL(', ').join(column_names),
-                sql.Identifier(metadata.schema_name),
-                sql.Identifier(metadata.table_name),
-                sql.SQL(limit_clause)
-            )
-            query_string = query.as_string(connection.connection)
-        elif connection._provider_name == MYSQL_PROVIDER_NAME:
+        if connection._provider_name == MYSQL_PROVIDER_NAME:
             query_string = 'SELECT {0} FROM {1}.{2} {3}'.format(
-                ', '.join([f'`{name.string}`' for name in column_names]),
+                ', '.join([f'`{name}`' for name in column_names]),
                 f'`{metadata.schema_name}`',
                 f'`{metadata.table_name}`',
                 limit_clause
