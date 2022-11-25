@@ -7,7 +7,6 @@
 
 from abc import abstractclassmethod
 from typing import List
-import psycopg2
 import pymysql
 
 
@@ -37,27 +36,6 @@ class IConnection():
     @abstractclassmethod
     def get_connection_server_version(cls, index):
         pass
-
-
-class PostgreSQLConnection:
-
-    _connections: List[psycopg2.extensions.connection] = []
-
-    @classmethod
-    def open_connections(cls, connection_details_list):
-        cls._connections = []
-        for config_dict in connection_details_list:
-            connection = psycopg2.connect(**config_dict)
-            cls._connections.append(connection)
-            connection.autocommit = True
-
-    @classmethod
-    def get_connections(cls):
-        return cls._connections
-
-    @classmethod
-    def get_connection_server_version(cls, index):
-        return cls._connections[index].server_version
 
 
 class MySQLConnection:

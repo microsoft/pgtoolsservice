@@ -9,20 +9,19 @@ import functools
 import json
 import os
 from typing import Dict, List
-from ossdbtoolsservice.utils.constants import MARIADB_PROVIDER_NAME, MYSQL_PROVIDER_NAME, PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import MARIADB_PROVIDER_NAME, MYSQL_PROVIDER_NAME
 
-from tests.integration.connections_for_integration_tests import MySQLConnection, PostgreSQLConnection
+from tests.integration.connections_for_integration_tests import MySQLConnection
 
-INTEGRATION_TEST_SUPPORTED_PROVIDERS = [PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME, MARIADB_PROVIDER_NAME]
+INTEGRATION_TEST_SUPPORTED_PROVIDERS = [MYSQL_PROVIDER_NAME, MARIADB_PROVIDER_NAME]
 
 CONNECTORS = {
-    PG_PROVIDER_NAME: PostgreSQLConnection,
     MYSQL_PROVIDER_NAME: MySQLConnection,
     MARIADB_PROVIDER_NAME: MySQLConnection
 }
 
 
-def integration_test(min_version=None, max_version=None, provider=PG_PROVIDER_NAME):
+def integration_test(min_version=None, max_version=None, provider=MYSQL_PROVIDER_NAME):
     """
     Decorator used to indicate that a test is an integration test, giving it a connection
 
@@ -59,7 +58,7 @@ def integration_test(min_version=None, max_version=None, provider=PG_PROVIDER_NA
 def get_connection_details() -> dict:
     """
     Get connection details that can be used in integration tests. These details are formatted as a
-    dictionary of key-value pairs that can be passed directly to psycopg2.connect as parameters.
+    dictionary of key-value pairs that can be passed directly to provider driver connect() function as parameters.
     """
     return _ConnectionManager.get_test_connection_details()
 
