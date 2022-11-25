@@ -23,15 +23,16 @@ from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.query_execution.query_execution_service import QueryExecutionService
 
 
-class TestEditDataService(unittest.TestCase):
-
+class TestMySQLEditDataService(unittest.TestCase):
+    
     def setUp(self):
         self._service_under_test = EditDataService()
         self._mock_connection = mock.MagicMock()
         self._service_provider = ServiceProviderMock({'query_execution': {}, 'connection': self._mock_connection})
 
-        self.cursor = utils.MockPsycopgCursor(None)
-        self.connection = utils.MockPsycopgConnection(cursor=self.cursor)
+        self.cursor = utils.MockPyMySQLConnection(None)
+        self.connection = utils.MockPyMySQLConnection()
+        self.connection.cursor = self.cursor
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
         self.connection_service.get_connection = mock.Mock(return_value=self.connection)
@@ -42,7 +43,6 @@ class TestEditDataService(unittest.TestCase):
 
         self._service_under_test.register(self._service_provider)
 
-        # self._connection = MockConnection({"port": "8080", "host": "test", "dbname": "test"})
         self._initialize_edit_request = InitializeEditParams()
 
         self._initialize_edit_request.schema_name = 'public'
@@ -232,34 +232,6 @@ class TestEditDataService(unittest.TestCase):
         edit_session = mock.MagicMock()
         edit_session._edit_initialize(request_context, params)
         edit_session._edit_initialize.assert_called()
-
-
-class TestMySQLEditDataService(TestEditDataService):
-
-    def setUp(self):
-        self._service_under_test = EditDataService()
-        self._mock_connection = mock.MagicMock()
-        self._service_provider = ServiceProviderMock({'query_execution': {}, 'connection': self._mock_connection})
-
-        self.cursor = utils.MockPsycopgCursor(None)
-        self.connection = utils.MockPyMySQLConnection()
-        self.connection.cursor = self.cursor
-        self.cursor.connection = self.connection
-        self.connection_service = ConnectionService()
-        self.connection_service.get_connection = mock.Mock(return_value=self.connection)
-        self.query_execution_service = QueryExecutionService()
-        self._service_provider._services = {constants.CONNECTION_SERVICE_NAME: self.connection_service,
-                                            constants.QUERY_EXECUTION_SERVICE_NAME: self.query_execution_service}
-        self._service_provider._is_initialized = True
-
-        self._service_under_test.register(self._service_provider)
-
-        self._initialize_edit_request = InitializeEditParams()
-
-        self._initialize_edit_request.schema_name = 'public'
-        self._initialize_edit_request.object_name = 'Employee'
-        self._initialize_edit_request.object_type = 'Table'
-        self._initialize_edit_request.owner_uri = 'testuri'
 
 
 if __name__ == '__main__':

@@ -22,7 +22,7 @@ class TestInMemoryResultSet(unittest.TestCase):
         self._events = ResultSetEvents()
         self._first_row = tuple([1, 2, 3])
         self._second_row = tuple([5, 6, 7])
-        self._cursor = utils.MockPsycopgCursor([self._first_row, self._second_row])
+        self._cursor = utils.MockPyMySQLCursor([self._first_row, self._second_row])
 
         self._result_set = InMemoryResultSet(self._id, self._batch_id, self._events)
 

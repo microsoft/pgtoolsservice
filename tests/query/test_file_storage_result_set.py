@@ -25,7 +25,7 @@ class TestFileStorageResultSet(unittest.TestCase):
         self._row: List[DbCellValue] = ['Column_Val1', 'Column_Val2']
         self._reader = MockReader(self._row)
         self._file = 'TestFile'
-        self._cursor = utils.MockPsycopgCursor([tuple([1, 2, 3]), tuple([5, 6, 7])])
+        self._cursor = utils.MockPyMySQLCursor([tuple([1, 2, 3]), tuple([5, 6, 7])])
 
         self._result_set = None
 

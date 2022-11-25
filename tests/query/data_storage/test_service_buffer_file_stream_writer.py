@@ -6,17 +6,14 @@
 import unittest
 from unittest import mock
 from decimal import Decimal
-import uuid
 import struct
 import io
 import datetime
-import psycopg2
-import psycopg2.tz
 
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
 from ossdbtoolsservice.query.contracts import DbColumn
-from ossdbtoolsservice.parsers import pg_datatypes as datatypes
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.parsers import mysql_datatypes as datatypes
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 import tests.utils as utils
 
 
@@ -28,7 +25,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
 
         self._file_stream = io.BytesIO()
         self._writer = ServiceBufferFileStreamWriter(self._file_stream)
-        self._cursor = utils.MockPsycopgCursor([tuple([11, 22, 33]), tuple([55, 66, 77])])
+        self._cursor = utils.MockPyMySQLCursor([tuple([11, 22, 33]), tuple([55, 66, 77])])
 
     def get_expected_length_with_additional_buffer_for_size(self, test_value_length: int):
         return TestServiceBufferFileStreamWriter.SIZE_BUFFER_LENGTH + test_value_length
@@ -43,25 +40,12 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         res = self._writer._write_null()
         self.assertEqual(res, 4)
 
-    def test_write_bool(self):
-        test_value = True
-        test_columns_info = []
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_BOOL
-        col.provider = PG_PROVIDER_NAME
-        test_columns_info.append(col)
-        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
-
-        res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(1), res)
-
     def test_write_float(self):
         test_value = 123.456
         test_columns_info = []
         col = DbColumn()
-        col.data_type = datatypes.DATATYPE_REAL
-        col.provider = PG_PROVIDER_NAME
+        col.data_type = datatypes.DATATYPE_FLOAT
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -74,7 +58,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_DOUBLE
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -87,7 +71,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_SMALLINT
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -100,7 +84,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_INTEGER
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -113,7 +97,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_BIGINT
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -126,7 +110,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_NUMERIC
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_val)
@@ -138,8 +122,8 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 'a'
         test_columns_info = []
         col = DbColumn()
-        col.data_type = datatypes.DATATYPE_BPCHAR
-        col.provider = PG_PROVIDER_NAME
+        col.data_type = datatypes.DATATYPE_CHAR
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -152,7 +136,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TEXT
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -165,7 +149,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_DATE
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -178,20 +162,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TIME
-        col.provider = PG_PROVIDER_NAME
-        test_columns_info.append(col)
-        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
-
-        res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value.isoformat())), res)
-
-    def test_write_time_with_timezone(self):
-        test_value = datetime.time(10, 23, 54, tzinfo=None)
-        test_columns_info = []
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_TIME_WITH_TIMEZONE
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -204,7 +175,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TIMESTAMP
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -212,51 +183,12 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         res = self._writer.write_row(mock_storage_data_reader)
         self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value.isoformat())), res)
 
-    def test_write_timedelta(self):
-        test_value = datetime.timedelta(days=3, hours=4, minutes=5, seconds=6)
-        test_columns_info = []
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_INTERVAL
-        col.provider = PG_PROVIDER_NAME
-        test_columns_info.append(col)
-        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
-
-        res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
-
-    def test_write_uuid(self):
-        test_value = uuid.uuid4()
-        test_columns_info = []
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_UUID
-        col.provider = PG_PROVIDER_NAME
-        test_columns_info.append(col)
-        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
-
-        res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(36), res)  # UUID standard len is 36
-
-    def test_write_bytea(self):
-        test_value = memoryview(b'TestString')
-        test_columns_info = []
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_BYTEA
-        col.provider = PG_PROVIDER_NAME
-        test_columns_info.append(col)
-        mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
-        mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
-
-        res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value.tobytes())), res)
-
     def test_write_json(self):
         test_value = {"Name": "TestName", "Schema": "TestSchema"}
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_JSON
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
@@ -269,7 +201,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_columns_info = []
         col = DbColumn()
         col.data_type = 'UserDefinedTypes'
-        col.provider = PG_PROVIDER_NAME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
