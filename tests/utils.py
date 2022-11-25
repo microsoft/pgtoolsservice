@@ -8,7 +8,6 @@ import unittest
 import unittest.mock as mock
 from typing import Optional
 
-import psycopg2
 import pymysql
 
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
