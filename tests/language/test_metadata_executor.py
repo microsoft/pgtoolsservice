@@ -16,7 +16,7 @@ from smo.common.node_object import NodeCollection
 
 
 class MockCursor:
-    """Class used to mock psycopg2 cursor objects for testing"""
+    """Class used to mock pymysql cursor objects for testing"""
 
     def __init__(self, query_results):
         self.query_results = query_results
