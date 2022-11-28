@@ -8,7 +8,6 @@ import re
 from typing import Dict, List, Optional, Tuple
 
 from jinja2 import Environment, FileSystemLoader, Template
-from psycopg2.extensions import adapt
 
 TEMPLATE_ENVIRONMENTS: Dict[int, Environment] = {}
 TEMPLATE_FOLDER_REGEX = re.compile(r'(\d+)\.(\d+)(?:_(\w+))?$')
@@ -105,7 +104,6 @@ def render_template(template_path: str, macro_roots: Optional[List[str]] = None,
 
         # Create the environment and add the basic filters
         new_env: Environment = Environment(loader=loader, trim_blocks=True)
-        new_env.filters['qtLiteral'] = qt_literal
         new_env.filters['qtIdent'] = qt_ident
         new_env.filters['qtTypeIdent'] = qt_type_ident
         new_env.filters['hasAny'] = has_any
@@ -153,24 +151,6 @@ def _hash_source_list(sources: list) -> int:
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
-
-
-def qt_literal(value):
-    adapted = adapt(value)
-
-    # Not all adapted objects have encoding
-    # e.g.
-    # psycopg2.extensions.BOOLEAN
-    # psycopg2.extensions.FLOAT
-    # psycopg2.extensions.INTEGER
-    # etc...
-    if hasattr(adapted, 'encoding'):
-        adapted.encoding = 'utf8'
-    res = adapted.getquoted()
-
-    if isinstance(res, bytes):
-        return res.decode('utf-8')
-    return res
 
 
 def qt_type_ident(conn, *args):

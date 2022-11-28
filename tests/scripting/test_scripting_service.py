@@ -15,9 +15,9 @@ from ossdbtoolsservice.scripting.contracts.scriptas_request import (
 from ossdbtoolsservice.scripting.scripter import Scripter
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from ossdbtoolsservice.utils.constants import (CONNECTION_SERVICE_NAME,
-                                               PG_PROVIDER_NAME)
+                                               MYSQL_PROVIDER_NAME)
 from tests.mock_request_validation import RequestFlowValidator
-from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 
 """Module for testing the scripting service"""
 
@@ -41,7 +41,7 @@ class TestScriptingService(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        sp: ServiceProvider = ServiceProvider(server, {}, PG_PROVIDER_NAME, utils.get_mock_logger())
+        sp: ServiceProvider = ServiceProvider(server, {}, MYSQL_PROVIDER_NAME, utils.get_mock_logger())
 
         # If: I register a scripting service
         ss: ScriptingService = ScriptingService()
@@ -92,7 +92,7 @@ class TestScriptingService(unittest.TestCase):
 
         # Setup:
         # ... Create a scripting service
-        mock_connection = MockPGServerConnection()
+        mock_connection = MockMySQLServerConnection()
         cs = ConnectionService()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)

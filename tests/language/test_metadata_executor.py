@@ -7,19 +7,16 @@ import unittest
 from typing import Any, List
 from unittest import mock
 
-import psycopg2
+import pymysql
 
-import tests.pgsmo_tests.utils as utils
+import tests.mysqlsmo_tests.utils as utils
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
-from pgsmo import Database, Schema, Server
+from pgsmo import Database, Server
 from smo.common.node_object import NodeCollection
-
-MYSCHEMA = 'myschema'
-MYSCHEMA2 = 'myschema2'
 
 
 class MockCursor:
-    """Class used to mock psycopg2 cursor objects for testing"""
+    """Class used to mock pymysql cursor objects for testing"""
 
     def __init__(self, query_results):
         self.query_results = query_results
@@ -52,7 +49,7 @@ class MockCursor:
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        raise psycopg2.DatabaseError()
+        raise pymysql.DatabaseError()
 
     def __enter__(self):
         return self
@@ -68,22 +65,11 @@ class TestMetadataExecutor(unittest.TestCase):
     """Methods for testing the MetadataExecutor module"""
 
     def setUp(self):
-        mock_server = Server(utils.MockPGServerConnection())
+        mock_server = Server(utils.MockMySQLServerConnection())
         db = Database(mock_server, mock_server.maintenance_db_name)
         mock_server._child_objects[Database.__name__] = self._as_node_collection([db])
-        mock_server._search_path = self._as_node_collection([MYSCHEMA])
-        self.schema1 = Schema(mock_server, db, MYSCHEMA)
-        self.schema2 = Schema(mock_server, db, MYSCHEMA2)
-        db._schemas = self._as_node_collection([self.schema1, self.schema2])
         self.mock_server = mock_server
         self.executor: MetadataExecutor = MetadataExecutor(mock_server)
-
-    # TODO add integration tests from PGCLI once Matt has the "create new DB and test against it" functionality
-    def test_search_path(self):
-        self.assertListEqual(self.executor.search_path(), [MYSCHEMA])
-
-    def test_schemata(self):
-        self.assertListEqual(self.executor.schemata(), [MYSCHEMA, MYSCHEMA2])
 
     def test_databases(self):
         self.assertListEqual(self.executor.databases(), [self.mock_server.maintenance_db_name])
@@ -94,11 +80,11 @@ class TestMetadataExecutor(unittest.TestCase):
         for x in range(0, 3):
             s1_table_name = 's1_t%s' % x
             s2_table_name = 's2_t%s' % x
-            expected_table_tuples.append(tuple([self.schema1.name, s1_table_name]))
-            expected_table_tuples.append(tuple([self.schema2.name, s2_table_name]))
+            expected_table_tuples.append(tuple([s1_table_name]))
+            expected_table_tuples.append(tuple([s2_table_name]))
 
         cursor = MockCursor(expected_table_tuples)
-        mock_server = Server(utils.MockPGServerConnection(cursor))
+        mock_server = Server(utils.MockMySQLServerConnection(cursor))
         executor: MetadataExecutor = MetadataExecutor(mock_server)
         # When I query tables
         actual_table_tuples = executor.tables()

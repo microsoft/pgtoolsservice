@@ -14,7 +14,7 @@ class TestDataStorageReader(unittest.TestCase):
 
     def setUp(self):
         self._rows = [(1, 'Some text 1', 'Some valid xml', b'Hello bytes1'), (2, 'Some Text 2', 'Some Valid xml', b'Hello bytes2')]
-        self._cursor = utils.MockPsycopgCursor(self._rows)
+        self._cursor = utils.MockPyMySQLCursor(self._rows)
         self._columns_info = []
         self._get_columns_info_mock = mock.Mock(return_value=self._columns_info)
 

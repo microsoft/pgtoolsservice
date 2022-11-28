@@ -6,7 +6,7 @@
 import unittest
 from unittest import mock
 
-import tests.utils as utils
+from tests.utils import MockPyMySQLCursor
 from ossdbtoolsservice.query.batch import (Batch, BatchEvents,
                                            ResultSetStorageType, SelectBatch,
                                            create_batch, create_result_set)
@@ -15,14 +15,14 @@ from ossdbtoolsservice.query.contracts import (SaveResultsRequestParams,
 from ossdbtoolsservice.query.file_storage_result_set import \
     FileStorageResultSet
 from ossdbtoolsservice.query.in_memory_result_set import InMemoryResultSet
-from tests.pgsmo_tests.utils import MockPGServerConnection
+from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 
 
 class TestBatch(unittest.TestCase):
 
     def setUp(self):
-        self._cursor = utils.MockPsycopgCursor(None)
-        self._connection = MockPGServerConnection(cur=self._cursor)
+        self._cursor = MockPyMySQLCursor(None)
+        self._connection = MockMySQLServerConnection(cur=self._cursor)
         self._batch_text = 'Select * from t1'
         self._batch_id = 1
         self._batch_events = BatchEvents()

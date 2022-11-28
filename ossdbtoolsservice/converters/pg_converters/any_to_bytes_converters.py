@@ -11,7 +11,6 @@ import json
 import datetime
 
 from ossdbtoolsservice.parsers import pg_datatypes as datatypes
-from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
 
 DECODING_METHOD = 'utf-8'
 
@@ -94,34 +93,6 @@ def convert_dict(value: dict):
     return bytearray(json.dumps(value).encode())
 
 
-def convert_numericrange(value: NumericRange):
-    """ Serialize NumericRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_to_string(value.lower) + "," + convert_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_datetimerange(value: DateTimeRange):
-    """ Serialize DateTimeRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_datetimetzrange(value: DateTimeTZRange):
-    """ Serialize DateTimeTZRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_daterange(value: DateRange):
-    """ Serialize DateRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
 def convert_list(value: list):
     return bytearray(json.dumps(value).encode())
 
@@ -175,24 +146,6 @@ def convert_timedelta_list(values: list):
     return bytearray(json.dumps(timedelta_list).encode())
 
 
-def convert_numericrange_list(values: list):
-    numericrange_list = []
-    for value in values:
-        bound = _get_range_data_type_bound(value)
-        formatted_value_str = bound[0] + str(int(value.lower)) + "," + str(int(value.upper)) + bound[1]
-        numericrange_list.append(str(formatted_value_str))
-    return bytearray(json.dumps(numericrange_list).encode())
-
-
-def convert_datetimerange_list(values: list):
-    datetimerange_list = []
-    for value in values:
-        bound = _get_range_data_type_bound(value)
-        formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-        datetimerange_list.append(str(formatted_value_str))
-    return bytearray(json.dumps(datetimerange_list).encode())
-
-
 def convert_date_to_string(value):
     if value is None:
         return ''
@@ -224,12 +177,6 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BYTEA: convert_memoryview,
     datatypes.DATATYPE_JSON: convert_dict,
     datatypes.DATATYPE_JSONB: convert_dict,
-    datatypes.DATATYPE_INT4RANGE: convert_numericrange,
-    datatypes.DATATYPE_INT8RANGE: convert_numericrange,
-    datatypes.DATATYPE_NUMRANGE: convert_numericrange,
-    datatypes.DATATYPE_TSRANGE: convert_datetimerange,
-    datatypes.DATATYPE_TSTZRANGE: convert_datetimetzrange,
-    datatypes.DATATYPE_DATERANGE: convert_daterange,
     datatypes.DATATYPE_OID: convert_int,
     datatypes.DATATYPE_SMALLINT_ARRAY: convert_list,
     datatypes.DATATYPE_INTEGER_ARRAY: convert_list,
@@ -268,12 +215,6 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_XML_ARRAY: convert_list,
     datatypes.DATATYPE_JSON_ARRAY: convert_list,
     datatypes.DATATYPE_JSONB_ARRAY: convert_list,
-    datatypes.DATATYPE_INT4RANGE_ARRAY: convert_numericrange_list,
-    datatypes.DATATYPE_INT8RANGE_ARRAY: convert_numericrange_list,
-    datatypes.DATATYPE_NUMRANGE_ARRAY: convert_numericrange_list,
-    datatypes.DATATYPE_TSRANGE_ARRAY: convert_datetimerange_list,
-    datatypes.DATATYPE_TSTZRANGE_ARRAY: convert_datetimerange_list,
-    datatypes.DATATYPE_DATERANGE_ARRAY: convert_datetimerange_list,
     datatypes.DATATYPE_OID_ARRAY: convert_list,
     datatypes.DATATYPE_REGPROC_ARRAY: convert_list,
     datatypes.DATATYPE_REGPROCEDURE_ARRAY: convert_list,
