@@ -11,7 +11,7 @@ import pymysql
 
 import tests.mysqlsmo_tests.utils as utils
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
-from pgsmo import Database, Server
+from mysqlsmo import Database, Server
 from smo.common.node_object import NodeCollection
 
 

@@ -13,7 +13,7 @@ import pymysql
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
-from pgsmo import Server
+from mysqlsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
 
 

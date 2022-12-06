@@ -10,7 +10,7 @@ Set-Location $scriptloc/..
 $Env:PYTHONPATH = ""
 flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins ossdbtoolsservice,View ossdbtoolsservice
 flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins ossdbtoolsservice,View tests
-flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins ossdbtoolsservice,View pgsmo
+flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins ossdbtoolsservice,View mysqlsmo
 
 # Restore the old PYTHONPATH and move back to the original directory
 Set-Location $curloc
