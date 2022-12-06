@@ -17,7 +17,6 @@ from ossdbtoolsservice.query.result_set import ResultSet  # noqa
 from ossdbtoolsservice.query.file_storage_result_set import FileStorageResultSet
 from ossdbtoolsservice.query.in_memory_result_set import InMemoryResultSet
 from ossdbtoolsservice.query.data_storage import FileStreamFactory
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 
 class ResultSetStorageType(Enum):
@@ -139,11 +138,6 @@ class Batch:
                 cursor.close()
             self._has_executed = True
             self._execution_end_time = datetime.now()
-
-            # TODO: PyMySQL doesn't support notices from a connection
-            if conn._provider_name == PG_PROVIDER_NAME:
-                self._notices = cursor.connection.notices
-                cursor.connection.notices = []
 
             if self._batch_events and self._batch_events._on_execution_completed:
                 self._batch_events._on_execution_completed(self)

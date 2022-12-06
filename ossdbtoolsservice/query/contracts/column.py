@@ -77,7 +77,6 @@ class DbColumn:
     def provider(self, name: str) -> str:
         self._provider = name
 
-    # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) containing a 7-item sequence.
     # Each inner sequence item can be referenced by using DESC
     @classmethod
