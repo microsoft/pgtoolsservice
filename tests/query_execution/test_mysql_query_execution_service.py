@@ -2,6 +2,7 @@ import unittest
 from unittest import mock
 
 import pymysql
+from ossdbtoolsservice.query_execution.contracts.execute_request import ExecuteStringParams
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
@@ -16,8 +17,6 @@ from ossdbtoolsservice.query_execution.query_execution_service import \
     QueryExecutionService
 from ossdbtoolsservice.utils import constants
 from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
-
-from .test_pg_query_execution_service import get_execute_string_params
 
 
 class TestQueryService(unittest.TestCase):
@@ -122,3 +121,11 @@ class TestQueryService(unittest.TestCase):
         self.assertGreaterEqual(call_methods_list.count(MESSAGE_NOTIFICATION), 1)
         self.assertEqual(call_methods_list.count(BATCH_COMPLETE_NOTIFICATION), 1)
         self.assertEqual(call_methods_list.count(QUERY_COMPLETE_NOTIFICATION), 1)
+
+
+def get_execute_string_params() -> ExecuteStringParams:
+    """Get a simple ExecutestringParams"""
+    params = ExecuteStringParams()
+    params.query = 'select version()'
+    params.owner_uri = 'test_uri'
+    return params

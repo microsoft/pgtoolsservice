@@ -109,7 +109,7 @@ class TestWorkspaceService(unittest.TestCase):
 
         # Then:
         # ... The config should have sensible default values
-        format_options = ws.configuration.pgsql.format
+        format_options = ws.configuration.my_sql.format
         self.assertIsNotNone(format_options)
         self.assertIsNone(format_options.keyword_case)
         self.assertIsNone(format_options.identifier_case)
@@ -131,7 +131,7 @@ class TestWorkspaceService(unittest.TestCase):
                         'enable_intellisense': False
                     }
                 },
-                'pgsql': {
+                'mysql': {
                     'format': {
                         'keyword_case': 'upper',
                         'identifier_case': 'lower',
@@ -149,10 +149,10 @@ class TestWorkspaceService(unittest.TestCase):
 
         # ... The config should have been updated
         self.assertIs(ws.configuration, params.settings)
-        self.assertEqual(ws.configuration.pgsql.format.keyword_case, 'upper')
-        self.assertEqual(ws.configuration.pgsql.format.identifier_case, 'lower')
-        self.assertTrue(ws.configuration.pgsql.format.strip_comments)
-        self.assertFalse(ws.configuration.pgsql.format.reindent)
+        self.assertEqual(ws.configuration.my_sql.format.keyword_case, 'upper')
+        self.assertEqual(ws.configuration.my_sql.format.identifier_case, 'lower')
+        self.assertTrue(ws.configuration.my_sql.format.strip_comments)
+        self.assertFalse(ws.configuration.my_sql.format.reindent)
         # ... And default values that weren't specified in the notification are preserved
         self.assertTrue(ws.configuration.sql.intellisense.enable_suggestions)
 

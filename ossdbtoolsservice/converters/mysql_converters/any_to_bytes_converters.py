@@ -20,7 +20,7 @@ def convert_int_to_bytes(value: object):
 
 
 def convert_long_long(value: int):
-    """ Range of bigint in Pg is the same with long long in c,
+    """ Range of bigint in mysql is the same with long long in c,
     although python type is int, but need to pack the value in long long format """
     return bytearray(struct.pack("q", value))
 

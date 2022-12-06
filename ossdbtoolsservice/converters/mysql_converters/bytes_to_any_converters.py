@@ -15,7 +15,7 @@ def convert_bytes_to_float(value) -> float:
 
 
 def convert_bytes_to_int(value) -> int:
-    """ Range of integer in pg is the same with int or long in c,
+    """ Range of integer in mysql is the same with int or long in c,
     we unpack the value in int format """
     return struct.unpack('i', value)[0]
 

@@ -143,15 +143,6 @@ def string_convert(value):
 def _hash_source_list(sources: list) -> int:
     return hash(frozenset(sources))
 
-##########################################################################
-#
-# pgAdmin 4 - PostgreSQL Tools
-#
-# Copyright (C) 2013 - 2017, The pgAdmin Development Team
-# This software is released under the PostgreSQL Licence
-#
-##########################################################################
-
 
 def qt_type_ident(conn, *args):
     # We're not using the conn object at the moment, but - we will modify the

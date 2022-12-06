@@ -249,7 +249,7 @@ class TestScriptFile(unittest.TestCase):
                 'start': {'line': 1, 'character': 1},
                 'end': {'line': 3, 'character': 1}
             },
-            'text': '\r\npgsql\r\nis\r\nawesome\r\n'
+            'text': '\r\nmysql\r\nis\r\nawesome\r\n'
         })
         sf.apply_change(params)
 
@@ -258,7 +258,7 @@ class TestScriptFile(unittest.TestCase):
         expected_result = [
             'abc',
             'd',
-            'pgsql',
+            'mysql',
             'is',
             'awesome',
             'lm'

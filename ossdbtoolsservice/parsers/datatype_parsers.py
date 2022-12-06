@@ -67,7 +67,7 @@ def parse_time_with_timezone(value: str) -> datetime.time:
 
 
 def parse_datetime(value: str) -> datetime.datetime:
-    if value == 'now()' or value == 'CURRENT_TIMESTAMP':  # PG or MySQL
+    if value == 'now()' or value == 'CURRENT_TIMESTAMP':
         return datetime.datetime.now()
     return date_parser.parse(value)
 

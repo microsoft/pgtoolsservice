@@ -7,7 +7,7 @@ sqlparse==0.4.3
 prompt_toolkit==3.0.31
 xlsxwriter==3.0.3
 
-# PGSMO Requirements
+# SMO Requirements
 jinja2==3.1.2
 
 # Build/Test Requirements

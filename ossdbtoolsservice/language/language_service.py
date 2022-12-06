@@ -175,12 +175,12 @@ class LanguageService:
                              context: NotificationContext,
                              params: LanguageFlavorChangeParams) -> None:
         """
-        Processes a language flavor change notification, adding non-PGSQL files to a tracking set
+        Processes a language flavor change notification, adding files to a tracking set
         so they can be excluded from intellisense processing
         """
         if params is not None and params.uri is not None:
             if params.language.lower() == 'sql':
-                # provider.flavor can be PGSQL, MySQL
+                # provider.flavor can be MySQL
                 if params.flavor == self._service_provider.provider:
                     self._valid_uri.add(params.uri)
                 else:

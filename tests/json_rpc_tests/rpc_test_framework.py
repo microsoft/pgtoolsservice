@@ -217,7 +217,7 @@ class DefaultRPCTestMessages:
     def change_configuration():
         return RPCTestMessage(
             'workspace/didChangeConfiguration',
-            '{"settings":{"pgsql":{"logDebugInfo":false,"enabled":true,"defaultDatabase":"postgres","format":{"keywordCase":null,"identifierCase":null,"stripComments":false,"reindent":true}},"MySQL":{"logDebugInfo":false,"enabled":true,"defaultDatabase":"","format":{"keywordCase":null,"identifierCase":null,"stripComments":false,"reindent":true}}}}',  # noqa
+            '{"settings":{"MySQL":{"logDebugInfo":false,"enabled":true,"defaultDatabase":"","format":{"keywordCase":null,"identifierCase":null,"stripComments":false,"reindent":true}}}}',  # noqa
             JSONRPCMessageType.Notification
         )
 
