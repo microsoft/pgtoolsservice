@@ -14,20 +14,6 @@ from ossdbtoolsservice.metadata.contracts import (
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.exception.OssdbErrorConstants import OssdbErrorConstants
 
-# This query collects all the tables, views, and functions in all the schemas in the database(s)?
-PG_METADATA_QUERY = """
-SELECT s.nspname AS schema_name, p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), '') || ')' AS object_name, \
-    'f' as type FROM pg_proc p
-    INNER JOIN pg_namespace s ON s.oid = p.pronamespace
-    WHERE s.nspname NOT ILIKE 'pg_%' AND s.nspname != 'information_schema'
-UNION
-SELECT schemaname AS schema_name, tablename AS object_name, 't' as type FROM pg_tables
-    WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
-UNION
-SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_views
-    WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
-"""
-
 # Source: https://gist.githubusercontent.com/rakeshsingh/456724716534610caf83/raw/4f9ffba2a1bc365395a70da4d392dae5fd014e3f/Mysql-Show-All-Schema-Objects.sql
 MYSQL_METADATA_QUERY = """
 SELECT OBJECT_SCHEMA, OBJECT_NAME, OBJECT_TYPE
@@ -50,8 +36,7 @@ WHERE OBJECT_SCHEMA = '{}';
 """
 
 QUERY_MAP = {
-    constants.MYSQL_PROVIDER_NAME: MYSQL_METADATA_QUERY,
-    constants.PG_PROVIDER_NAME: PG_METADATA_QUERY
+    constants.MYSQL_PROVIDER_NAME: MYSQL_METADATA_QUERY
 }
 
 
@@ -75,16 +60,8 @@ class MetadataService:
     # REQUEST HANDLERS #####################################################
 
     def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
-        # psycopg is thread safe while PyMYSQL is not
-        if self._service_provider.provider == constants.PG_PROVIDER_NAME:
-            thread = threading.Thread(
-                target=self._metadata_list_worker,
-                args=(request_context, params)
-            )
-            thread.daemon = True
-            thread.start()
-        else:
-            self._metadata_list_worker(request_context, params)
+        # TODO: Add thread safety. PyMYSQL is not thread-safe
+        self._metadata_list_worker(request_context, params)
 
     def _metadata_list_worker(self, request_context: RequestContext, params: MetadataListParameters) -> None:
         try:
