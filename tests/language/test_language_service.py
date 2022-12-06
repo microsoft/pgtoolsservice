@@ -29,8 +29,7 @@ from ossdbtoolsservice.language.script_parse_info import \
     ScriptParseInfo  # noqa
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.constants import (MSSQL_PROVIDER_NAME,
-                                               MYSQL_PROVIDER_NAME,
-                                               PG_PROVIDER_NAME)
+                                               MYSQL_PROVIDER_NAME)
 from ossdbtoolsservice.workspace import (Configuration,  # noqa
                                          MySQLConfiguration, PGSQLConfiguration, ScriptFile,
                                          TextDocumentIdentifier, Workspace,
@@ -53,7 +52,7 @@ class TestLanguageService(unittest.TestCase):
         self.mock_server.set_request_handler = self.mock_server_set_request
         self.mock_workspace_service = WorkspaceService()
         self.mock_connection_service = ConnectionService()
-        self.mock_service_provider = ServiceProvider(self.mock_server, {}, PG_PROVIDER_NAME, None)
+        self.mock_service_provider = ServiceProvider(self.mock_server, {}, MYSQL_PROVIDER_NAME, None)
         self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
         self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
         self.mock_service_provider._is_initialized = True
@@ -79,7 +78,7 @@ class TestLanguageService(unittest.TestCase):
         server.set_request_handler = mock.MagicMock()
         provider: ServiceProvider = ServiceProvider(server, {
             constants.CONNECTION_SERVICE_NAME: ConnectionService
-        }, PG_PROVIDER_NAME, utils.get_mock_logger())
+        }, MYSQL_PROVIDER_NAME, utils.get_mock_logger())
         provider._is_initialized = True
         conn_service: ConnectionService = provider[constants.CONNECTION_SERVICE_NAME]
         self.assertEqual(0, len(conn_service._on_connect_callbacks))
@@ -180,55 +179,12 @@ class TestLanguageService(unittest.TestCase):
         self.assertTrue(len(completions) > 0)
         self.verify_match('TABLE', completions, Range.from_data(0, 7, 0, 10))
 
-    def test_pg_language_flavor(self):
-        """
-        Test that if provider is PGSQL, the service ignores files registered as being for non-PGSQL flavors
-        """
-        # If: I create a new language service
-        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
-        mysql_params = LanguageFlavorChangeParams.from_data('file://mysqluri.sql', 'sql', MYSQL_PROVIDER_NAME)
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
-        other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
-        provider = utils.get_mock_service_provider()
-        service = LanguageService()
-        service._service_provider = provider
-
-        # When: I notify of language preferences
-        context: NotificationContext = utils.get_mock_notification_context()
-
-        service.handle_flavor_change(context, pgsql_params)
-        service.handle_flavor_change(context, mssql_params)
-        service.handle_flavor_change(context, mysql_params)
-        service.handle_flavor_change(context, other_params)
-
-        # Then:
-        # ... Only non-PGSQL SQL files should be ignored
-        context.send_notification.assert_not_called()
-        self.assertFalse(service.is_valid_uri(mssql_params.uri))
-        self.assertTrue(service.is_valid_uri(pgsql_params.uri))
-        self.assertFalse(service.is_valid_uri(other_params.uri))
-        self.assertFalse(service.is_valid_uri(mysql_params.uri))
-
-        # When: I change from MSSQL to PGSQL
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
-        service.handle_flavor_change(context, mssql_params)
-
-        # Then: the service is updated to allow intellisense
-        self.assertTrue(service.is_valid_uri(mssql_params.uri))
-
-        # When: I change from PGSQL to MYSQL
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
-        service.handle_flavor_change(context, mssql_params)
-
-        # Then: the service is updated to not allow intellisense
-        self.assertFalse(service.is_valid_uri(mssql_params.uri))
 
     def test_mysql_language_flavor(self):
         """
         Test that if provider is MySQL, the service ignores files registered as being for non-MySQL flavors
         """
         # If: I create a new language service
-        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
         mysql_params = LanguageFlavorChangeParams.from_data('file://mysqluri.sql', 'sql', MYSQL_PROVIDER_NAME)
         mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
         other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
@@ -241,7 +197,6 @@ class TestLanguageService(unittest.TestCase):
         # When: I notify of language preferences
         context: NotificationContext = utils.get_mock_notification_context()
 
-        service.handle_flavor_change(context, pgsql_params)
         service.handle_flavor_change(context, mssql_params)
         service.handle_flavor_change(context, mysql_params)
         service.handle_flavor_change(context, other_params)
@@ -250,18 +205,10 @@ class TestLanguageService(unittest.TestCase):
         # ... Only non-MySQL SQL files should be ignored
         context.send_notification.assert_not_called()
         self.assertFalse(service.is_valid_uri(mssql_params.uri))
-        self.assertFalse(service.is_valid_uri(pgsql_params.uri))
         self.assertFalse(service.is_valid_uri(other_params.uri))
         self.assertTrue(service.is_valid_uri(mysql_params.uri))
 
-        # When: I change from MSSQL to PGSQL
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
-        service.handle_flavor_change(context, mssql_params)
-
-        # Then: the service is updated to not allow intellisense
-        self.assertFalse(service.is_valid_uri(mssql_params.uri))
-
-        # When: I change from PGSQL to MYSQL
+        # When: I change from MSSQL to MYSQL
         mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
         service.handle_flavor_change(context, mssql_params)
 
@@ -312,39 +259,6 @@ class TestLanguageService(unittest.TestCase):
         self.assertIsNotNone(info)
         # ... and the info should have the connection key set
         self.assertEqual(info.connection_key, OperationsQueue.create_key(conn_info))
-
-    def test_format_doc_no_pgsql_format(self):
-        """
-        Test that the format codepath succeeds even if the configuration options aren't defined
-        """
-        input_text = 'select * from foo where id in (select id from bar);'
-
-        context: RequestContext = utils.MockRequestContext()
-
-        self.mock_workspace_service._configuration = None
-        workspace, script_file = self._get_test_workspace(True, input_text)
-        self.mock_workspace_service._workspace = workspace
-        service: LanguageService = self._init_service()
-
-        format_options = FormattingOptions()
-        format_options.insert_spaces = False
-        format_params = DocumentFormattingParams()
-        format_params.options = format_options
-        format_params.text_document = self.default_text_document_id
-        # add uri to valid uri set ensure request passes uri check
-        # normally done in flavor change handler, but we are not testing that here
-        service._valid_uri.add(format_params.text_document.uri)
-
-        # When: I have no useful formatting defaults defined
-        service.handle_doc_format_request(context, format_params)
-
-        # Then:
-        # ... There should be no changes to the doc
-        context.send_response.assert_called_once()
-        edits: List[TextEdit] = context.last_response_params
-        self.assertTrue(len(edits) > 0)
-        self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
-        self.assertEqual(edits[0].new_text, input_text)
 
     def test_format_doc(self):
         """
@@ -550,7 +464,7 @@ class TestLanguageService(unittest.TestCase):
     ])
     def test_completion_to_completion_item(self, relative_start_pos, expected_start_char):
         """
-        Tests that PGCompleter's Completion objects get converted to CompletionItems as expected
+        Tests that MYSQLCcompleter's Completion objects get converted to CompletionItems as expected
         """
         text = 'item'
         display = 'item is a table'
