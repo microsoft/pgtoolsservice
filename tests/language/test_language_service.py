@@ -31,7 +31,7 @@ from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.constants import (MSSQL_PROVIDER_NAME,
                                                MYSQL_PROVIDER_NAME)
 from ossdbtoolsservice.workspace import (Configuration,  # noqa
-                                         MySQLConfiguration, PGSQLConfiguration, ScriptFile,
+                                         MySQLConfiguration, ScriptFile,
                                          TextDocumentIdentifier, Workspace,
                                          WorkspaceService)
 from ossdbtoolsservice.workspace.contracts import Range
@@ -278,8 +278,8 @@ class TestLanguageService(unittest.TestCase):
 
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
-        config.pgsql = PGSQLConfiguration()
-        config.pgsql.format.keyword_case = 'upper'
+        config.my_sql = MySQLConfiguration()
+        config.my_sql.format.keyword_case = 'upper'
         self.mock_workspace_service._configuration = config
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
@@ -325,8 +325,8 @@ class TestLanguageService(unittest.TestCase):
 
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
-        config.pgsql = PGSQLConfiguration()
-        config.pgsql.format.keyword_case = 'upper'
+        config.my_sql = MySQLConfiguration()
+        config.my_sql.format.keyword_case = 'upper'
         self.mock_workspace_service._configuration = config
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
