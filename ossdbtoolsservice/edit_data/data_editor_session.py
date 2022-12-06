@@ -6,7 +6,7 @@
 from typing import Callable, Dict, List, Optional, Tuple  # noqa
 import threading
 
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 from ossdbtoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete  # noqa
 from ossdbtoolsservice.query import ExecutionState, ResultSet, Query  # noqa
 from ossdbtoolsservice.edit_data.contracts import (
