@@ -5,6 +5,5 @@
 
 from ossdbtoolsservice.edit_data.templates.templater import Templater
 from ossdbtoolsservice.edit_data.templates.mysql_templater import MySQLTemplater
-from ossdbtoolsservice.edit_data.templates.pg_templater import PGTemplater
 
-__all__ = ['Templater', 'MySQLTemplater', 'PGTemplater']
+__all__ = ['Templater', 'MySQLTemplater']

@@ -9,23 +9,22 @@ import unittest
 from ossdbtoolsservice.edit_data.update_management import CellUpdate
 from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
 from ossdbtoolsservice.edit_data.contracts import EditCell
-from ossdbtoolsservice.utils.constants import (MYSQL_PROVIDER_NAME,
-                                               PG_PROVIDER_NAME)
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 
 
-class TestPGCellUpdate(unittest.TestCase):
-
+class TestMySQLCellUpdate(unittest.TestCase):
+    
     def setUp(self):
         self._db_column = DbColumn()
         self._db_column.data_type = 'varchar'
         self._new_cell_value = 'New Value'
-        self._cell_update = CellUpdate(self._db_column, self._new_cell_value, PG_PROVIDER_NAME)
+        self._cell_update = CellUpdate(self._db_column, self._new_cell_value, MYSQL_PROVIDER_NAME)
 
     def test_create_raises_error_when_parser_not_found(self):
         self._db_column.data_type = 'char[]'
 
         with self.assertRaises(AttributeError) as context_manager:
-            CellUpdate(self._db_column, self._new_cell_value, PG_PROVIDER_NAME)
+            CellUpdate(self._db_column, self._new_cell_value, MYSQL_PROVIDER_NAME)
             self.assertEquals('Updates to column with type "char[]" is not supported', context_manager.exception.args[0])
 
     def test_value_set_to_right_text_with_str_datatype(self):
@@ -55,15 +54,6 @@ class TestPGCellUpdate(unittest.TestCase):
         self.assertTrue(db_cell_value.is_null is False)
         self.assertTrue(db_cell_value.raw_object is self._cell_update.value)
         self.assertTrue(isinstance(db_cell_value, DbCellValue))
-
-
-class TestMySQLCellUpdate(TestPGCellUpdate):
-
-    def setUp(self):
-        self._db_column = DbColumn()
-        self._db_column.data_type = 'varchar'
-        self._new_cell_value = 'New Value'
-        self._cell_update = CellUpdate(self._db_column, self._new_cell_value, MYSQL_PROVIDER_NAME)
 
 
 if __name__ == '__main__':

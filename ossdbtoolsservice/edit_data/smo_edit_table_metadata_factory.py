@@ -14,13 +14,9 @@ from ossdbtoolsservice.edit_data import EditColumnMetadata, EditTableMetadata
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.utils import constants
-from pgsmo import Server as PGServer
-from pgsmo.objects.table.table import Table as PGTable  # noqa
-from pgsmo.objects.table_objects.column import Column as PGColumn  # noqa
 
 SERVER_MAP = {
-    constants.MYSQL_PROVIDER_NAME: MySQLServer,
-    constants.PG_PROVIDER_NAME: PGServer
+    constants.MYSQL_PROVIDER_NAME: MySQLServer
 }
 
 
@@ -29,7 +25,7 @@ class SmoEditTableMetadataFactory:
     def get(self, connection: ServerConnection, schema_name: str, object_name: str, object_type: str) -> EditTableMetadata:
 
         server = SERVER_MAP[connection._provider_name](connection)
-        result_object: PGTable or MySQLTable = None
+        result_object: MySQLTable = None
         object_metadata = ObjectMetadata(server.urn_base, None, object_type, object_name, schema_name)
 
         if object_type.lower() == 'table':
@@ -47,7 +43,7 @@ class SmoEditTableMetadataFactory:
 
         return EditTableMetadata(schema_name, object_name, edit_columns_metadata, connection._provider_name)
 
-    def create_db_column(self, column: PGColumn or MySQLColumn) -> DbColumn:
+    def create_db_column(self, column: MySQLColumn) -> DbColumn:
         db_column = DbColumn()
 
         db_column.allow_db_null = column.not_null is False

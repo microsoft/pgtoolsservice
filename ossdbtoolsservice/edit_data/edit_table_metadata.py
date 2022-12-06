@@ -7,14 +7,12 @@
 from typing import List  # noqa
 
 from ossdbtoolsservice.edit_data import EditColumnMetadata
-from ossdbtoolsservice.edit_data.templates import Templater, MySQLTemplater, PGTemplater
+from ossdbtoolsservice.edit_data.templates import Templater, MySQLTemplater
 from ossdbtoolsservice.query.contracts import DbColumn
-from ossdbtoolsservice.utils.constants import (MYSQL_PROVIDER_NAME,
-                                               PG_PROVIDER_NAME)
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 
 TEMPLATERS = {
-    MYSQL_PROVIDER_NAME: MySQLTemplater,
-    PG_PROVIDER_NAME: PGTemplater
+    MYSQL_PROVIDER_NAME: MySQLTemplater
 }
 
 
