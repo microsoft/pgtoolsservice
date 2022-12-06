@@ -25,7 +25,6 @@ DEFAULT_PORT = {
 ADMIN_SERVICE_NAME = 'admin'
 CAPABILITIES_SERVICE_NAME = 'capabilities'
 CONNECTION_SERVICE_NAME = 'connection'
-DISASTER_RECOVERY_SERVICE_NAME = 'disaster_recovery'
 LANGUAGE_SERVICE_NAME = 'language_service'
 METADATA_SERVICE_NAME = 'metadata'
 OBJECT_EXPLORER_NAME = 'object_explorer'

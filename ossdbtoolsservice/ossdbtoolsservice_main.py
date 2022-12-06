@@ -13,7 +13,6 @@ import debugpy
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import DisasterRecoveryService
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
@@ -35,7 +34,6 @@ def _create_server(input_stream, output_stream, server_logger, provider):
         constants.ADMIN_SERVICE_NAME: AdminService,
         constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
         constants.CONNECTION_SERVICE_NAME: ConnectionService,
-        constants.DISASTER_RECOVERY_SERVICE_NAME: DisasterRecoveryService,
         constants.LANGUAGE_SERVICE_NAME: LanguageService,
         constants.METADATA_SERVICE_NAME: MetadataService,
         constants.OBJECT_EXPLORER_NAME: ObjectExplorerService,
