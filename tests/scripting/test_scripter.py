@@ -90,7 +90,7 @@ class TestScripter(unittest.TestCase):
 
             # Then:
             # ... I should get something back
-            # NOTE: The actual contents of the script is tested in the PGSMO object's unit tests
+            # NOTE: The actual contents of the script is tested in the SMO object's unit tests
             assert_not_none_or_whitespace(result)
 
             # ... The URN should have been used to get the object
@@ -98,7 +98,6 @@ class TestScripter(unittest.TestCase):
 
 
 class TestScripterOld(unittest.TestCase):
-    # TODO: Remove in favor of script tests in the PGSMO objects (see: https://github.com/Microsoft/carbon/issues/1734)
 
     def setUp(self):
         """Set up mock objects for testing the scripting service.
