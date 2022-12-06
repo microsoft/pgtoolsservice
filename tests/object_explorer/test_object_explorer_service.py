@@ -26,8 +26,8 @@ from ossdbtoolsservice.object_explorer.object_explorer_service import (
     ObjectExplorerService, ObjectExplorerSession)
 from ossdbtoolsservice.object_explorer.routing import MYSQL_ROUTING_TABLE
 from ossdbtoolsservice.utils import constants
-from pgsmo.objects.database.database import Database
-from pgsmo.objects.server.server import Server
+from mysqlsmo.objects.database.database import Database
+from mysqlsmo.objects.server.server import Server
 from tests.mock_request_validation import RequestFlowValidator
 from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 
