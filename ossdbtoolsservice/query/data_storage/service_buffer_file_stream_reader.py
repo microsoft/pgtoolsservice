@@ -7,7 +7,7 @@ import io
 from typing import List, Callable, Any  # noqa
 import struct
 
-from ossdbtoolsservice.parsers import pg_datatypes as datatypes
+from ossdbtoolsservice.parsers import mysql_datatypes as datatypes
 from ossdbtoolsservice.query.contracts.column import DbColumn, DbCellValue
 from ossdbtoolsservice.converters import get_bytes_to_any_converter
 
