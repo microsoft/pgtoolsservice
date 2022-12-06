@@ -11,7 +11,7 @@ from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesServ
 from ossdbtoolsservice.capabilities.contracts import InitializeResult, CapabilitiesResult
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
 from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 from ossdbtoolsservice.workspace import WorkspaceService
 
 import tests.utils as utils
@@ -25,7 +25,7 @@ class TestCapabilitiesService(unittest.TestCase):
         mock_server_set_request = mock.MagicMock()
         mock_server = JSONRPCServer(None, None)
         mock_server.set_request_handler = mock_server_set_request
-        mock_service_provider = ServiceProvider(mock_server, {}, PG_PROVIDER_NAME, None)
+        mock_service_provider = ServiceProvider(mock_server, {}, MYSQL_PROVIDER_NAME, None)
         service = CapabilitiesService()
 
         # If: I initialize the service
