@@ -55,8 +55,8 @@ if __name__ == '__main__':
     wait_for_debugger = False
     log_dir = None
     stdin = None
-    # Setting a default provider name to test PG extension
-    provider_name = constants.PG_PROVIDER_NAME
+    # Setting a default provider name to test MySQL extension
+    provider_name = constants.MYSQL_PROVIDER_NAME
     if len(sys.argv) > 1:
         for arg in sys.argv:
             arg_parts = arg.split('=')
