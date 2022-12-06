@@ -8,7 +8,7 @@ import unittest.mock as mock
 
 from ossdbtoolsservice.hosting.json_rpc_server import JSONRPCServer
 from ossdbtoolsservice.hosting.service_provider import ServiceProvider
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 import tests.utils as utils
 
 
@@ -19,7 +19,7 @@ class TestServiceProvider(unittest.TestCase):
         logger = utils.get_mock_logger()
         mock_service = mock.MagicMock(return_value={})
         services = {'service_name': mock_service}
-        sp = ServiceProvider(server, services, PG_PROVIDER_NAME, logger)
+        sp = ServiceProvider(server, services, MYSQL_PROVIDER_NAME, logger)
 
         # Then:
         # ... The properties should return the values I set (server/logger)
@@ -92,6 +92,6 @@ class TestServiceProvider(unittest.TestCase):
         server = JSONRPCServer(None, None)
         logger = utils.get_mock_logger()
         services = {'service_name' + str(x): TestServiceProvider._TestService for x in range(0, services)}
-        sp = ServiceProvider(server, services, PG_PROVIDER_NAME, logger)
+        sp = ServiceProvider(server, services, MYSQL_PROVIDER_NAME, logger)
 
         return sp

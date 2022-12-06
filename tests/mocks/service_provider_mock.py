@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 from tests.mocks.server_mock import ServerMock
 from tests.utils import get_mock_logger
 
@@ -11,7 +11,7 @@ from tests.utils import get_mock_logger
 class ServiceProviderMock:
 
     def __init__(self, services: dict = {}):
-        self._setup_mocks(get_mock_logger(), ServerMock(), services, PG_PROVIDER_NAME)
+        self._setup_mocks(get_mock_logger(), ServerMock(), services, MYSQL_PROVIDER_NAME)
 
     def registerMock(self, server, services: dict, logger=None):
         self._setup_mocks(logger, server, services)

@@ -22,7 +22,7 @@ from ossdbtoolsservice.workspace.contracts import (
     Position,
     Range
 )
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 import tests.utils as utils
 
 
@@ -53,7 +53,7 @@ class TestWorkspaceService(unittest.TestCase):
         server: JSONRPCServer = JSONRPCServer(None, None)
         server.set_notification_handler = MagicMock()
         server.set_request_handler = MagicMock()
-        sp: ServiceProvider = ServiceProvider(server, {}, PG_PROVIDER_NAME, utils.get_mock_logger())
+        sp: ServiceProvider = ServiceProvider(server, {}, MYSQL_PROVIDER_NAME, utils.get_mock_logger())
 
         # If: I register a workspace service
         ws: WorkspaceService = WorkspaceService()
