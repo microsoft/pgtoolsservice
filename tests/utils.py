@@ -12,8 +12,8 @@ import pymysql
 
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
-from pgsmo import Server
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
+from mysqlsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
 
 
@@ -65,7 +65,7 @@ def get_mock_logger() -> logging.Logger:
 
 # PLEASE USE SERVICEPROVIDERMOCK from tests/mocks/service_provider_mock. #
 # This mock will be deprecated #
-def get_mock_service_provider(service_map: dict = None, provider_name: Optional[str] = PG_PROVIDER_NAME) -> ServiceProvider:
+def get_mock_service_provider(service_map: dict = None, provider_name: Optional[str] = MYSQL_PROVIDER_NAME) -> ServiceProvider:
     """
     Generates a ServiceProvider with the given services
 

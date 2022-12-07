@@ -347,8 +347,6 @@ class QueryExecutionService(object):
 
         try:
             cancel_conn.execute_query(conn.cancellation_query)
-        # This exception occurs when we run SELECT pg_cancel_backend on
-        # a query that's currently executing
         except BaseException:
             raise
 

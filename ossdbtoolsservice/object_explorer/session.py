@@ -7,7 +7,7 @@ import threading                    # noqa
 from typing import Callable, Dict, List, Optional, TypeVar
 from urllib.parse import urljoin
 
-from pgsmo import Server            # noqa
+from mysqlsmo import Server as MYSQLServer
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.object_explorer.contracts import NodeInfo
 
@@ -17,7 +17,7 @@ class ObjectExplorerSession:
         self.connection_details: ConnectionDetails = params
         self.id: str = session_id
         self.is_ready: bool = False
-        self.server: Optional[Server] = None
+        self.server: Optional[MYSQLServer] = None
 
         self.init_task: Optional[threading.Thread] = None
         self.expand_tasks: Dict[str, threading.Thread] = {}

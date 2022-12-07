@@ -11,19 +11,19 @@ from urllib.parse import urlparse
 import ossdbtoolsservice.object_explorer.session as session
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.hosting import ServiceProvider
-from ossdbtoolsservice.object_explorer.routing.pg_routing import PG_ROUTING_TABLE
+from ossdbtoolsservice.object_explorer.routing.mysql_routing import MYSQL_ROUTING_TABLE
 from ossdbtoolsservice.object_explorer.contracts import NodeInfo
 from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService, ObjectExplorerSession
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 
 
 class TestObjectExplorerRouting(unittest.TestCase):
 
     def setUp(self):
-        service_provider = ServiceProvider(None, {}, PG_PROVIDER_NAME)
+        service_provider = ServiceProvider(None, {}, MYSQL_PROVIDER_NAME)
         self.object_explorer_service = ObjectExplorerService()
         self.object_explorer_service.service_provider = service_provider
-        self.object_explorer_service._routing_table = PG_ROUTING_TABLE
+        self.object_explorer_service._routing_table = MYSQL_ROUTING_TABLE
 
     # FOLDER TESTING #######################################################
     def test_folder_init(self):
@@ -112,7 +112,7 @@ class TestObjectExplorerRouting(unittest.TestCase):
         # Make sure that all keys in the routing table are regular expressions
         # Make sure that all items in the routing table are RoutingTargets
         re_class = re.compile('^/$').__class__
-        for key, item in PG_ROUTING_TABLE.items():
+        for key, item in MYSQL_ROUTING_TABLE.items():
             self.assertIsInstance(key, re_class)
             self.assertIsInstance(item, session.RoutingTarget)
 

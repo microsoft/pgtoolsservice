@@ -12,12 +12,10 @@ from ossdbtoolsservice.scripting.contracts import ScriptOperation
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import ossdbtoolsservice.utils as utils
 
-from pgsmo import Server as PGServer
 from mysqlsmo import Server as MySQLServer
 
 SERVER_TYPES = {
-    utils.constants.MYSQL_PROVIDER_NAME: MySQLServer,
-    utils.constants.PG_PROVIDER_NAME: PGServer
+    utils.constants.MYSQL_PROVIDER_NAME: MySQLServer
 }
 
 
@@ -32,7 +30,7 @@ class Scripter(object):
     }
 
     def __init__(self, conn: ServerConnection):
-        self.server: PGServer or MySQLServer = SERVER_TYPES[conn._provider_name](conn)
+        self.server: MySQLServer = SERVER_TYPES[conn._provider_name](conn)
 
     # SCRIPTING METHODS ############################
     def script(self, operation: ScriptOperation, metadata: ObjectMetadata) -> str:

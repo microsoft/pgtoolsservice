@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-if [ ! -d 'ossdbtoolsservice' ] || [ ! -d 'tests' ] || [ ! -d 'pgsmo' ]
+if [ ! -d 'ossdbtoolsservice' ] || [ ! -d 'tests' ] || [ ! -d 'mysqlsmo' ]
 then
   echo "Script must be executed from root of repo"
   exit 1

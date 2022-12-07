@@ -26,23 +26,6 @@ class SQLConfiguration(Serializable):
         self.intellisense: IntellisenseConfiguration = IntellisenseConfiguration()
 
 
-class PGSQLConfiguration(Serializable):
-    """
-    Configuration for PGSQL tool service
-    """
-    @classmethod
-    def get_child_serializable_types(cls):
-        return {'format': FormatterConfiguration}
-
-    @classmethod
-    def ignore_extra_attributes(cls):
-        return True
-
-    def __init__(self):
-        self.default_database: str = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
-        self.format: FormatterConfiguration = FormatterConfiguration()
-
-
 class MySQLConfiguration(Serializable):
     """
     Configuration for MySQL tool service
@@ -104,15 +87,14 @@ class Configuration(Serializable):
     """
     @classmethod
     def get_child_serializable_types(cls):
-        return {'sql': SQLConfiguration, 'pgsql': PGSQLConfiguration, 'my_sql': MySQLConfiguration}
+        return {'sql': SQLConfiguration, 'my_sql': MySQLConfiguration}
 
     def __init__(self):
         self.sql = SQLConfiguration()
-        self.pgsql = PGSQLConfiguration()
         self.my_sql = MySQLConfiguration()
 
     def get_configuration(self, provider):
-        return {'MySQL': self.my_sql, 'PGSQL': self.pgsql}[provider]
+        return {'MySQL': self.my_sql}[provider]
 
 
 class DidChangeConfigurationParams(Serializable):

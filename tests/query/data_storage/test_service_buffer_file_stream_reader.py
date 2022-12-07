@@ -10,8 +10,8 @@ import json
 
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_reader import ServiceBufferFileStreamReader
 from ossdbtoolsservice.query.contracts.column import DbColumn
-from ossdbtoolsservice.parsers import pg_datatypes as datatypes
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from ossdbtoolsservice.parsers import mysql_datatypes as datatypes
+from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 
 DECODING_METHOD = 'utf-8'
 
@@ -172,37 +172,14 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._float_file_stream2.close()
         self._multiple_cols_file_stream.close()
 
-    def test_read_bool(self):
-        test_file_offset = 0
-        test_row_id = 1
-        test_columns_info = []
-
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_BOOL
-        col.provider = PG_PROVIDER_NAME
-        test_columns_info.append(col)
-
-        res = self._bool_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._bool_test_value, res[0].raw_object)
-
-        test_file_offset += 5
-        test_row_id += 1
-        res = self._bool_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(None, res[0].raw_object)
-
-        test_file_offset += 4
-        test_row_id += 1
-        res = self._bool_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(self._bool_test_value, res[0].raw_object)
-
     def test_read_float1(self):
         test_file_offset = 0
         test_row_id = 1
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type = datatypes.DATATYPE_REAL
-        col.provider = PG_PROVIDER_NAME
+        col.data_type = datatypes.DATATYPE_FLOAT
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._float_reader1.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -214,37 +191,22 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type = datatypes.DATATYPE_REAL
-        col.provider = PG_PROVIDER_NAME
+        col.data_type = datatypes.DATATYPE_FLOAT
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._float_reader2.read_row(test_file_offset, test_row_id, test_columns_info)
         self.assertEqual(self._float_test_value2, res[0].raw_object)
-
-    def test_read_bytea(self):
-        test_file_offset = 0
-        test_row_id = 1
-        test_columns_info = []
-
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_BYTEA
-        col.provider = PG_PROVIDER_NAME
-        test_columns_info.append(col)
-
-        res = self._bytea_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        expected = self._bytea_test_value.tobytes()
-        actual = str(res[0].raw_object)
-        self.assertEqual(str(expected), actual)
 
     def test_read_json(self):
         """Test json/jsonb string is returned as is"""
         test_file_offset = 0
         test_row_id = 1
 
-        for datatype in [datatypes.DATATYPE_JSON, datatypes.DATATYPE_JSONB]:
+        for datatype in [datatypes.DATATYPE_JSON]:
             col = DbColumn()
             col.data_type = datatype
-            col.provider = PG_PROVIDER_NAME
+            col.provider = MYSQL_PROVIDER_NAME
             test_columns_info = [col]
             reader = ServiceBufferFileStreamReader(self._dict_file_stream)
 
@@ -259,8 +221,8 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type = datatypes.DATATYPE_INT4RANGE
-        col.provider = PG_PROVIDER_NAME
+        col.data_type = datatypes.DATATYPE_INTEGER
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._numericrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
@@ -272,38 +234,12 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type = datatypes.DATATYPE_TSRANGE
-        col.provider = PG_PROVIDER_NAME
+        col.data_type = datatypes.DATATYPE_DATETIME
+        col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
 
         res = self._datetimerange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
         self.assertEqual(str(self._datetimerange_test_value), str(res[0].raw_object))
-
-    def test_read_datetimetzrange(self):
-        test_file_offset = 0
-        test_row_id = 1
-        test_columns_info = []
-
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_TSTZRANGE
-        col.provider = PG_PROVIDER_NAME
-        test_columns_info.append(col)
-
-        res = self._datetimetzrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(str(self._datetimetzrange_test_value), str(res[0].raw_object))
-
-    def test_read_daterange(self):
-        test_file_offset = 0
-        test_row_id = 1
-        test_columns_info = []
-
-        col = DbColumn()
-        col.data_type = datatypes.DATATYPE_DATERANGE
-        col.provider = PG_PROVIDER_NAME
-        test_columns_info.append(col)
-
-        res = self._daterange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        self.assertEqual(str(self._daterange_test_value), str(res[0].raw_object))
 
     def test_read_multiple_cols(self):
         test_file_offset = 0
@@ -311,17 +247,17 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         real_column1 = DbColumn()
-        real_column1.data_type = datatypes.DATATYPE_REAL
-        real_column1.provider = PG_PROVIDER_NAME
+        real_column1.data_type = datatypes.DATATYPE_FLOAT
+        real_column1.provider = MYSQL_PROVIDER_NAME
         integer_column = DbColumn()
         integer_column.data_type = datatypes.DATATYPE_INTEGER
-        integer_column.provider = PG_PROVIDER_NAME
+        integer_column.provider = MYSQL_PROVIDER_NAME
         text_column = DbColumn()
         text_column.data_type = datatypes.DATATYPE_TEXT
-        text_column.provider = PG_PROVIDER_NAME
+        text_column.provider = MYSQL_PROVIDER_NAME
         real_column2 = DbColumn()
-        real_column2.data_type = datatypes.DATATYPE_REAL
-        real_column2.provider = PG_PROVIDER_NAME
+        real_column2.data_type = datatypes.DATATYPE_DOUBLE
+        real_column2.provider = MYSQL_PROVIDER_NAME
 
         test_columns_info.append(real_column1)
         test_columns_info.append(integer_column)

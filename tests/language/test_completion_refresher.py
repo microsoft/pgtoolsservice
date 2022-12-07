@@ -87,6 +87,6 @@ class TestSqlCompletionRefresher(unittest.TestCase):
             self.refresher.refreshers = {}
             self.refresher.refresh(callbacks)
 
-            # MySQLCompleter, not PGCompleter, should be called because
+            # MySQLCompleter should be called because
             # mysql_refresher is using a MockMySQLServerConnection
             mysql_completer.assert_called_once()

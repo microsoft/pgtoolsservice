@@ -85,7 +85,7 @@ class JSONRPCTestCase:
         shutdown_messages = [DefaultRPCTestMessages.shutdown()]
         self.messages = initialization_messages + test_messages + shutdown_messages
 
-    def run(self, provider=constants.PG_PROVIDER_NAME):
+    def run(self, provider=constants.MYSQL_PROVIDER_NAME):
         # Start the server
         input_stream, output_stream, output_info = JSONRPCTestCase.start_service(provider)
         output = ""
@@ -172,7 +172,7 @@ class JSONRPCTestCase:
                 [json.dumps(notifications[index]) for index in notifications_to_verify])))
 
     @staticmethod
-    def start_service(provider=constants.PG_PROVIDER_NAME):
+    def start_service(provider=constants.MYSQL_PROVIDER_NAME):
         # Set up the server's input and output
         input_r, input_w = os.pipe()
         server_input_stream = open(input_r, 'rb', buffering=0, closefd=False)
@@ -217,7 +217,7 @@ class DefaultRPCTestMessages:
     def change_configuration():
         return RPCTestMessage(
             'workspace/didChangeConfiguration',
-            '{"settings":{"pgsql":{"logDebugInfo":false,"enabled":true,"defaultDatabase":"postgres","format":{"keywordCase":null,"identifierCase":null,"stripComments":false,"reindent":true}},"MySQL":{"logDebugInfo":false,"enabled":true,"defaultDatabase":"","format":{"keywordCase":null,"identifierCase":null,"stripComments":false,"reindent":true}}}}',  # noqa
+            '{"settings":{"MySQL":{"logDebugInfo":false,"enabled":true,"defaultDatabase":"","format":{"keywordCase":null,"identifierCase":null,"stripComments":false,"reindent":true}}}}',  # noqa
             JSONRPCMessageType.Notification
         )
 
@@ -230,7 +230,7 @@ class DefaultRPCTestMessages:
         )
 
     @staticmethod
-    def connection_request(owner_uri, connection_options, provider=constants.PG_PROVIDER_NAME):
+    def connection_request(owner_uri, connection_options, provider=constants.MYSQL_PROVIDER_NAME):
         connection_request = RPCTestMessage(
             'connection/connect',
             '{"ownerUri":"%s","connection":{"options":%s}}' % (owner_uri, json.dumps(connection_options)),

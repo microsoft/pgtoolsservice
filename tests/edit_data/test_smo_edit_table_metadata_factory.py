@@ -8,7 +8,7 @@ import unittest
 from unittest import mock
 
 from ossdbtoolsservice.edit_data import SmoEditTableMetadataFactory
-from pgsmo import Column, Server, Table, View
+from mysqlsmo import Column, Server, Table, View
 from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 
 

@@ -79,11 +79,6 @@ class Server:
         """Tuple representing the server version: (major, minor, patch)"""
         return self._conn.server_version
 
-    # @property
-    # def server_type(self) -> str:
-    #     """Server type for distinguishing between standard PG and PG supersets"""
-    #     return 'pg'  # TODO: Determine if a server is PPAS or PG
-
     @property
     def urn_base(self) -> str:
         """Base of a URN for objects in the tree"""
