@@ -4,5 +4,5 @@ $scriptloc = $PSScriptRoot
 Set-Location $scriptloc/..
 
 # Run the tests
-nosetests -a '!is_integration_test' --with-xunit @args
+python -m nose2 -v -A '!is_integration_test' --with-coverage
 Set-Location $curloc

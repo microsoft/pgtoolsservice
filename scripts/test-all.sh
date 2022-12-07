@@ -12,4 +12,4 @@ then
   exit
 fi
 
-nosetests --with-xunit --process-timeout 60 "$@"
+python -m nose2 -v

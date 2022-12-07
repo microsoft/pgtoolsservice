@@ -5,4 +5,4 @@ then
   exit 1
 fi
 
-nosetests -a '!is_integration_test' --with-xunit "$@"
+python3 -m nose2 -v -A '!is_integration_test' --with-coverage

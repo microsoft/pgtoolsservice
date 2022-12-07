@@ -12,4 +12,4 @@ then
   exit
 fi
 
-nosetests -a is_integration_test=True --with-xunit --process-timeout 60 "$@"
+python -m nose2 -v -A is_integration_test=True
