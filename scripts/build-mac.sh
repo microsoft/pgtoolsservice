@@ -15,7 +15,10 @@ python3 setup.py bdist_mac
 
 # Compress mysqltoolsservice folder
 cd $pwd/build
+
+# TODO: Remove this fix done for openssl libraries need to be copied manually in lib folder in mac
 cp mysqltoolsservice/lib* mysqltoolsservice/lib/.
+
 if [ "$1" = arm64 ]
 then
     tar -cvzf mysqltoolsservice-osx-arm64.tar.gz mysqltoolsservice
