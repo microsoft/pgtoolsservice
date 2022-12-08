@@ -131,7 +131,7 @@ class TestWorkspaceService(unittest.TestCase):
                         'enable_intellisense': False
                     }
                 },
-                'mysql': {
+                'MySQL': {
                     'format': {
                         'keyword_case': 'upper',
                         'identifier_case': 'lower',

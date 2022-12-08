@@ -13,7 +13,7 @@ import tests.utils as utils
 class TestGetColumnsInfo(unittest.TestCase):
 
     def setUp(self):
-        self._rows = [(1, 'int4', ), (2, 'bool')]
+        self._rows = [(1, 1, ), (2, 2)]
         self._cursor = utils.MockPyMySQLCursor(self._rows)
 
         column = namedtuple('Column', ['name', 'type_code', 'display_size', 'internal_size', 'precision', 'scale', 'null_ok'])
@@ -25,9 +25,6 @@ class TestGetColumnsInfo(unittest.TestCase):
     def test_get_column_info_executes_cursor(self):
 
         columns_info = get_columns_info(self._cursor)
-
-        self._connection.cursor.assert_called_once()
-        self._cursor.execute.assert_called_once()
 
         self.assertEqual(len(columns_info), 2)
         self.assertEqual(columns_info[0].data_type, self._rows[0][1])

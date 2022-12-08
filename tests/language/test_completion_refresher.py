@@ -28,7 +28,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         """
         self.assertGreater(len(self.refresher.refreshers[MYSQL_PROVIDER_NAME]), 0)
         actual_handlers = list(self.refresher.refreshers[MYSQL_PROVIDER_NAME].keys())
-        expected_handlers = ['databases', 'functions', 'schemata',
+        expected_handlers = ['schemata', 'functions', 'procedures',
                              'tables', 'users', 'show_commands']
         self.assertListEqual(expected_handlers, actual_handlers)
 

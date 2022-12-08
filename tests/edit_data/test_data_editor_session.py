@@ -153,7 +153,7 @@ class TestMySQLDataEditorSession(unittest.TestCase):
         calculated_column_metadata = EditColumnMetadata(calculated_column, None)
 
         default_value_column = DbColumn()
-        default_value_column.data_type = 'bool'
+        default_value_column.data_type = 'float'
         default_value_column.is_updatable = True
         default_value_column_metadata = EditColumnMetadata(default_value_column, '0')
 
@@ -161,7 +161,7 @@ class TestMySQLDataEditorSession(unittest.TestCase):
 
         self._data_editor_session.table_metadata = EditTableMetadata(self._schema_name, self._table_name, columns_metadata, MYSQL_PROVIDER_NAME)
 
-        result_set = self.get_result_set([(1, False)])
+        result_set = self.get_result_set([(1, 2.9)])
 
         result_set.columns_info = [calculated_column, default_value_column]
 
@@ -174,7 +174,7 @@ class TestMySQLDataEditorSession(unittest.TestCase):
         self.assertEqual(len(columns_metadata), len(response.default_values))
 
         self.assertEqual('&lt;TBD&gt;', response.default_values[0])
-        self.assertEqual('False', response.default_values[1])
+        self.assertEqual('0.0', response.default_values[1])
 
     def test_create_row_not_initialized(self):
         with self.assertRaises(RuntimeError) as context_manager:
