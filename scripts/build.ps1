@@ -11,6 +11,11 @@ $Env:PYTHONPATH = ""
 pip3 install -r requirements.txt
 python setup.py build
 
+# Compress mysqltoolsservice folder
+Set-Location $curloc/build
+Compress-Archive -LiteralPath mysqltoolsservice -DestinationPath mysqltoolsservice-win-x64
+
+
 # Restore the old PYTHONPATH and move back to the original directory
 Set-Location $curloc
 $Env:PYTHONPATH = $oldPythonpath
