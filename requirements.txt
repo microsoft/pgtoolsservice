@@ -20,3 +20,4 @@ flake8==3.7.0
 debugpy==1.5.1
 python-dateutil==2.8.2
 pydevd==2.8.0
+diff-cover==7.2.0
