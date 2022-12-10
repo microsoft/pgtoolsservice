@@ -1,0 +1,6 @@
+[run]
+source = .
+omit = *tests*, ./setup.py, *scripts*
+
+[xml] 
+output = coverage_reports/coverage.xml

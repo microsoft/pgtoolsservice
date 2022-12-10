@@ -45,9 +45,7 @@ class TestMySQLConnection(unittest.TestCase):
             'password': 'samplePass123',
             'port': 3306,
             'user': 'sampleUser',
-            'ssl': {
-                'ca': 'path_to_ssl_cert'
-            }
+            'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}
         }
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
@@ -76,7 +74,7 @@ class TestMySQLConnection(unittest.TestCase):
             'password': 'samplePass123',
             'port': 3306,
             'user': 'sampleUser',
-            'ssl': {}}
+            'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}}
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
         self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
@@ -105,7 +103,7 @@ class TestMySQLConnection(unittest.TestCase):
             'password': 'samplePass123',
             'port': 3307,
             'user': 'sampleUser',
-            'ssl': {}}
+            'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}}
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
         self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
@@ -133,7 +131,7 @@ class TestMySQLConnection(unittest.TestCase):
             'password': 'samplePass123',
             'port': 3306,
             'user': 'sampleUser',
-            'ssl': {}}
+            'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}}
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
         self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)

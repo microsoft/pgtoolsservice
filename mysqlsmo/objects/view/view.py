@@ -45,6 +45,7 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
         self._dbname = dbname
         self._server = server
         self._server_version = server.version
+        self._columns: List[Column] = []
 
     @classmethod
     def _template_root(cls, server: 's.Server') -> str:
@@ -87,3 +88,8 @@ class View(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableSelect):
         except Exception:
             script = rows[0]["Create Table"]
         return script
+
+    # PROPERTIES ###########################################################
+    @property
+    def columns(self) -> NodeCollection:
+        return self._columns

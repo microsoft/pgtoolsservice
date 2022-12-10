@@ -115,6 +115,8 @@ class MockPyMySQLCursor:
         self.fetchone = mock.Mock(side_effect=self.execute_fetch_one_side_effects)
         self.close = mock.Mock()
         self.connection = connection
+        self.description = [self.create_column_description(name=name) for name in columns_names]
+        self.provider = MYSQL_PROVIDER_NAME
         self.rowcount = -1
         self._mogrified_value = b'Some query'
         self.mogrify = mock.Mock(return_value=self._mogrified_value)
@@ -146,6 +148,19 @@ class MockPyMySQLCursor:
             row = self._query_results[self._fetched_count]
             self._fetched_count += 1
             return row
+    
+    def create_column_description(self, **kwargs):
+        description = {
+            'name': None,
+            'type_code': None,
+            'display_size': None,
+            'internal_size': None,
+            'precision': None,
+            'scale': None,
+            'null_ok': None
+        }
+        merge = {**description, **dict(kwargs)}
+        return tuple(merge.values())
 
     def __enter__(self):
         return self
@@ -166,6 +181,7 @@ class MockPyMySQLConnection(object):
         self.cursor = mock.Mock(return_value=cursor)
         self.commit = mock.Mock()
         self.ping = mock.Mock()
+        self.open = mock.Mock()
 
 
 class MockThread():

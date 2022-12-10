@@ -40,16 +40,17 @@ class TestAdminService(unittest.TestCase):
         """Test that the database info handler responds with the correct database info"""
         uri = 'test_uri'
         db_name = 'test_db'
-        user_name = 'test_user'
+        owner_name = 'test_user'
+        db_size = 1024
         # Set up the request parameters
         params = GetDatabaseInfoParameters()
         params.owner_uri = uri
         request_context = MockRequestContext()
 
-        # Set up a mock connection and cursor for the test
-        mock_query_results = [(user_name,)]
-        mock_cursor = MockPyMySQLCursor(mock_query_results)
-        mock_connection = MockMySQLServerConnection(mock_cursor, name=db_name)
+        # Set up a mock connection for the test
+        mock_connection = MockMySQLServerConnection(name=db_name)
+        mock_connection.get_database_owner = mock.Mock(return_value=owner_name)
+        mock_connection.get_database_size = mock.Mock(return_value=db_size)
         self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
 
         # If I send a get_database_info request
@@ -58,12 +59,11 @@ class TestAdminService(unittest.TestCase):
         # Then the service responded with the expected information
         response = request_context.last_response_params
         self.assertIsInstance(response, GetDatabaseInfoResponse)
-        expected_info = {'dbname': db_name, 'owner': user_name, 'size': None}
+        expected_info = {'dbname': db_name, 'owner': owner_name, 'size': db_size}
         self.assertEqual(response.database_info.options, expected_info)
 
-        # And the service retrieved the owner name using a query with the database name as a parameter
-        owner_query = "SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{}'".format(db_name)
-        mock_cursor.execute.assert_called_once_with(owner_query)
+        mock_connection.get_database_owner.assert_called_once()
+        mock_connection.get_database_size.assert_called_once_with(db_name)
 
     @integration_test
     def test_get_database_info_request_integration(self):

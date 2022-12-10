@@ -11,5 +11,5 @@ if (!(Test-Path 'tests\integration\config.json'))
 }
 
 # Run the tests
-nosetests --with-xunit @args
+python -m nose2 -v
 Set-Location $curloc

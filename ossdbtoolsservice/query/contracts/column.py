@@ -50,16 +50,8 @@ class DbColumn:
         return self.data_type in CHARS_DATA_TYPES
 
     @property
-    def is_xml(self) -> bool:
-        return self.data_type == datatypes.DATATYPE_XML
-
-    @property
-    def is_bytes(self) -> bool:
-        return self.data_type == datatypes.DATATYPE_BYTEA
-
-    @property
     def is_long(self) -> bool:
-        return self.is_chars or self.is_xml or self.is_bytes or self.is_udt or self.is_json
+        return self.is_chars or self.is_udt or self.is_json
 
     @property
     def is_udt(self) -> bool:
@@ -67,7 +59,7 @@ class DbColumn:
 
     @property
     def is_json(self) -> bool:
-        return self.data_type == datatypes.DATATYPE_JSON or self.data_type == datatypes.DATATYPE_JSONB
+        return self.data_type == datatypes.DATATYPE_JSON
 
     @property
     def provider(self) -> str:

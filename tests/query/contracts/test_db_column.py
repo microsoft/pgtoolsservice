@@ -23,12 +23,6 @@ class TestDbColumn(unittest.TestCase):
     def test_is_chars_with_type_other(self):
         self.validate_evaluated_properties('is_chars', datatypes.DATATYPE_BIGINT, self.assertFalse)
 
-    def test_is_xml_with_type_other(self):
-        self.validate_evaluated_properties('is_xml', datatypes.DATATYPE_BIGINT, self.assertFalse)
-
-    def test_is_bytes_with_type_other(self):
-        self.validate_evaluated_properties('is_bytes', datatypes.DATATYPE_BIGINT, self.assertFalse)
-
     def test_is_json_with_type_other(self):
         self.validate_evaluated_properties('is_json', datatypes.DATATYPE_BIGINT, self.assertFalse)
 

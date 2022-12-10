@@ -3,6 +3,10 @@ $curloc = $pwd
 $scriptloc = $PSScriptRoot
 Set-Location $scriptloc/..
 
-# Run the tests
-nosetests -a '!is_integration_test' --with-xunit @args
+# Run the tests and generate coverage report
+python -m nose2 -v -A '!is_integration_test' --with-coverage
+
+# Get the coverage diff
+diff-cover coverage_reports/coverage.xml --compare-branch=origin/master-mysql-extension --html-report coverage_reports/coverage_diff.html
+
 Set-Location $curloc

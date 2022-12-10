@@ -81,7 +81,7 @@ class ResultSet(metaclass=ABCMeta):
         save_as_thread = self._save_as_threads.get(params.file_path)
 
         if save_as_thread is not None:
-            if save_as_thread.isAlive():
+            if save_as_thread.is_alive():
                 raise RuntimeError('A save request to the same path is in progress')
             else:
                 del self._save_as_threads[params.file_path]

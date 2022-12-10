@@ -38,53 +38,6 @@ class TestMetadataService(unittest.TestCase):
         self.service_provider.server.set_request_handler.assert_called_once_with(
             METADATA_LIST_REQUEST, self.metadata_service._handle_metadata_list_request)
 
-    def test_metadata_list_request(self):
-        """Test that the metadata list handler properly starts a thread to list metadata and responds with the list"""
-        # Set up the parameters and mocks for the request
-        expected_metadata = [
-            ObjectMetadata(schema='schema1', name='table1', metadata_type=MetadataType.TABLE, metadata_type_name='Table'),
-            ObjectMetadata(schema='schema1', name='view1', metadata_type=MetadataType.VIEW, metadata_type_name='View'),
-            ObjectMetadata(schema='schema1', name='function1', metadata_type=MetadataType.FUNCTION, metadata_type_name='Function'),
-            ObjectMetadata(schema='schema1', name='table2', metadata_type=MetadataType.TABLE, metadata_type_name='Table'),
-            ObjectMetadata(schema='schema2', name='view1', metadata_type=MetadataType.VIEW, metadata_type_name='View'),
-            ObjectMetadata(schema='schema2', name='function1', metadata_type=MetadataType.FUNCTION, metadata_type_name='Function'),
-        ]
-
-        metadata_type_to_str_map = {
-            MetadataType.TABLE: 't',
-            MetadataType.VIEW: 'v',
-            MetadataType.FUNCTION: 'f'
-        }
-
-        # Query results have schema_name, object_name, and object_type columns in that order
-        list_query_result = [(metadata.schema, metadata.name, metadata_type_to_str_map[metadata.metadata_type]) for metadata in expected_metadata]
-        mock_cursor = MockPyMySQLCursor(list_query_result)
-        mock_connection = MockMySQLServerConnection(cur=mock_cursor)
-        self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
-        request_context = MockRequestContext()
-        params = MetadataListParameters()
-        params.owner_uri = self.test_uri
-        mock_thread = MockThread()
-        with mock.patch('threading.Thread', new=mock.Mock(side_effect=mock_thread.initialize_target)):
-            # If I call the metadata list request handler
-            self.metadata_service._handle_metadata_list_request(request_context, params)
-            # Then the worker thread was kicked off
-            self.assertEqual(mock_thread.target, self.metadata_service._metadata_list_worker)
-            mock_thread.start.assert_called_once()
-        # And the worker retrieved the correct connection and executed a query on it
-        self.connection_service.get_connection.assert_called_once_with(self.test_uri, ConnectionType.DEFAULT)
-        mock_cursor.execute.assert_called_once()
-        # And the handler responded with the expected results
-        self.assertIsNone(request_context.last_error_message)
-        self.assertIsNone(request_context.last_notification_method)
-        response = request_context.last_response_params
-        self.assertIsInstance(response, MetadataListResponse)
-        for index, actual_metadata in enumerate(response.metadata):
-            self.assertIsInstance(actual_metadata, ObjectMetadata)
-            self.assertEqual(actual_metadata.schema, expected_metadata[index].schema)
-            self.assertEqual(actual_metadata.name, expected_metadata[index].name)
-            self.assertEqual(actual_metadata.metadata_type, expected_metadata[index].metadata_type)
-
     def test_metadata_list_request_error(self):
         """Test that the proper error response is sent if there is an error while handling a metadata list request"""
         request_context = MockRequestContext()
