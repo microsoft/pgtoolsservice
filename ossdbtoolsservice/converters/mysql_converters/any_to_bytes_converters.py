@@ -6,7 +6,7 @@
 import struct
 import datetime
 import decimal
-from pymysql.constants import FIELD_TYPE
+from mysql.connector import FieldType
 
 ENCODING_TYPE = "utf-8"
 
@@ -42,7 +42,7 @@ def convert_decimal(value: decimal.Decimal):
     return bytearray(str(decimal.Decimal(value)).encode(ENCODING_TYPE))
 
 
-def to_bytes(value: object, field_type: int):
+def to_bytes(value: object, FieldType: int):
     """
     Converts the given MySQL object to string and then to bytes
     """
@@ -65,30 +65,30 @@ def convert_datetime(value: datetime.datetime):
 
 
 MYSQL_DATATYPE_WRITER_MAP = {
-    FIELD_TYPE.BIT: bytes_to_bytearray,
-    FIELD_TYPE.TINY: convert_int_to_bytes,
-    FIELD_TYPE.SHORT: convert_int_to_bytes,
-    FIELD_TYPE.LONG: convert_long_long,
-    FIELD_TYPE.FLOAT: convert_float_to_bytes,
-    FIELD_TYPE.DOUBLE: convert_float_to_bytes,
-    FIELD_TYPE.LONGLONG: convert_long_long,
-    FIELD_TYPE.INT24: convert_int_to_bytes,
-    FIELD_TYPE.YEAR: convert_int_to_bytes,
-    FIELD_TYPE.TIMESTAMP: convert_datetime,
-    FIELD_TYPE.DATETIME: convert_datetime,
-    FIELD_TYPE.TIME: convert_time,
-    FIELD_TYPE.DATE: convert_date,
-    FIELD_TYPE.NEWDATE: convert_date,
-    FIELD_TYPE.SET: lambda value: to_bytes(value, FIELD_TYPE.SET),
-    FIELD_TYPE.BLOB: convert_str,
-    FIELD_TYPE.TINY_BLOB: convert_str,
-    FIELD_TYPE.MEDIUM_BLOB: convert_str,
-    FIELD_TYPE.LONG_BLOB: convert_str,
-    FIELD_TYPE.STRING: convert_str,
-    FIELD_TYPE.VAR_STRING: convert_str,
-    FIELD_TYPE.VARCHAR: convert_str,
-    FIELD_TYPE.DECIMAL: convert_decimal,
-    FIELD_TYPE.NEWDECIMAL: convert_decimal,
-    FIELD_TYPE.GEOMETRY: convert_str,
-    FIELD_TYPE.ENUM: convert_str
+    FieldType.BIT: bytes_to_bytearray,
+    FieldType.TINY: convert_int_to_bytes,
+    FieldType.SHORT: convert_int_to_bytes,
+    FieldType.LONG: convert_long_long,
+    FieldType.FLOAT: convert_float_to_bytes,
+    FieldType.DOUBLE: convert_float_to_bytes,
+    FieldType.LONGLONG: convert_long_long,
+    FieldType.INT24: convert_int_to_bytes,
+    FieldType.YEAR: convert_int_to_bytes,
+    FieldType.TIMESTAMP: convert_datetime,
+    FieldType.DATETIME: convert_datetime,
+    FieldType.TIME: convert_time,
+    FieldType.DATE: convert_date,
+    FieldType.NEWDATE: convert_date,
+    FieldType.SET: lambda value: to_bytes(value, FieldType.SET),
+    FieldType.BLOB: convert_str,
+    FieldType.TINY_BLOB: convert_str,
+    FieldType.MEDIUM_BLOB: convert_str,
+    FieldType.LONG_BLOB: convert_str,
+    FieldType.STRING: convert_str,
+    FieldType.VAR_STRING: convert_str,
+    FieldType.VARCHAR: convert_str,
+    FieldType.DECIMAL: convert_decimal,
+    FieldType.NEWDECIMAL: convert_decimal,
+    FieldType.GEOMETRY: convert_str,
+    FieldType.ENUM: convert_str
 }

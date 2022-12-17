@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from logging import Logger  # noqa
-import pymysql
+import mysql.connector
 
 from ossdbtoolsservice.driver import ServerConnection
 
@@ -96,7 +96,7 @@ class MySQLLightweightMetadata:
             self._log('Show Query. sql: %r', self.show_candidates_query)
             try:
                 cur.execute(self.show_candidates_query)
-            except pymysql.DatabaseError as e:
+            except mysql.connector.DatabaseError as e:
                 self._log(True, 'No show completions due to %r', e)
                 yield ''
             else:
@@ -108,7 +108,7 @@ class MySQLLightweightMetadata:
             self._log('Users Query. sql: %r', self.users_query)
             try:
                 cur.execute(self.users_query)
-            except pymysql.DatabaseError as e:
+            except mysql.connector.DatabaseError as e:
                 self._log(True, 'No user completions due to %r', e)
                 yield ''
             else:

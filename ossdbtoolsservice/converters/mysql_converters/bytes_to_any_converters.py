@@ -5,7 +5,7 @@
 
 import sys
 import struct
-from pymysql.constants import FIELD_TYPE
+from mysql.connector import FieldType
 
 ENCODING_TYPE = "utf-8"
 
@@ -53,30 +53,30 @@ def convert_bytes_to_timedelta(value) -> str:
 
 
 MYSQL_DATATYPE_READER_MAP = {
-    FIELD_TYPE.BIT: convert_binary_bytes_to_python_int,
-    FIELD_TYPE.TINY: convert_bytes_to_int,
-    FIELD_TYPE.SHORT: convert_bytes_to_int,
-    FIELD_TYPE.LONG: convert_bytes_to_long_long,
-    FIELD_TYPE.FLOAT: convert_bytes_to_float,
-    FIELD_TYPE.DOUBLE: convert_bytes_to_float,
-    FIELD_TYPE.LONGLONG: convert_bytes_to_long_long,
-    FIELD_TYPE.INT24: convert_bytes_to_int,
-    FIELD_TYPE.YEAR: convert_bytes_to_int,
-    FIELD_TYPE.TIMESTAMP: convert_bytes_to_datetime,
-    FIELD_TYPE.DATETIME: convert_bytes_to_datetime,
-    FIELD_TYPE.TIME: convert_bytes_to_time,
-    FIELD_TYPE.DATE: convert_bytes_to_date,
-    FIELD_TYPE.NEWDATE: convert_bytes_to_date,
-    FIELD_TYPE.SET: convert_bytes_to_str,
-    FIELD_TYPE.BLOB: convert_bytes_to_str,
-    FIELD_TYPE.TINY_BLOB: convert_bytes_to_str,
-    FIELD_TYPE.MEDIUM_BLOB: convert_bytes_to_str,
-    FIELD_TYPE.LONG_BLOB: convert_bytes_to_str,
-    FIELD_TYPE.STRING: convert_bytes_to_str,
-    FIELD_TYPE.VAR_STRING: convert_bytes_to_str,
-    FIELD_TYPE.VARCHAR: convert_bytes_to_str,
-    FIELD_TYPE.DECIMAL: convert_bytes_to_decimal,
-    FIELD_TYPE.NEWDECIMAL: convert_bytes_to_decimal,
-    FIELD_TYPE.ENUM: convert_bytes_to_str,
-    FIELD_TYPE.GEOMETRY: convert_bytes_to_str
+    FieldType.BIT: convert_binary_bytes_to_python_int,
+    FieldType.TINY: convert_bytes_to_int,
+    FieldType.SHORT: convert_bytes_to_int,
+    FieldType.LONG: convert_bytes_to_long_long,
+    FieldType.FLOAT: convert_bytes_to_float,
+    FieldType.DOUBLE: convert_bytes_to_float,
+    FieldType.LONGLONG: convert_bytes_to_long_long,
+    FieldType.INT24: convert_bytes_to_int,
+    FieldType.YEAR: convert_bytes_to_int,
+    FieldType.TIMESTAMP: convert_bytes_to_datetime,
+    FieldType.DATETIME: convert_bytes_to_datetime,
+    FieldType.TIME: convert_bytes_to_time,
+    FieldType.DATE: convert_bytes_to_date,
+    FieldType.NEWDATE: convert_bytes_to_date,
+    FieldType.SET: convert_bytes_to_str,
+    FieldType.BLOB: convert_bytes_to_str,
+    FieldType.TINY_BLOB: convert_bytes_to_str,
+    FieldType.MEDIUM_BLOB: convert_bytes_to_str,
+    FieldType.LONG_BLOB: convert_bytes_to_str,
+    FieldType.STRING: convert_bytes_to_str,
+    FieldType.VAR_STRING: convert_bytes_to_str,
+    FieldType.VARCHAR: convert_bytes_to_str,
+    FieldType.DECIMAL: convert_bytes_to_decimal,
+    FieldType.NEWDECIMAL: convert_bytes_to_decimal,
+    FieldType.ENUM: convert_bytes_to_str,
+    FieldType.GEOMETRY: convert_bytes_to_str
 }
