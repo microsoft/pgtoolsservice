@@ -254,14 +254,13 @@ class MySQLConnection(ServerConnection):
         with self.cursor() as cursor:
             try:
                 cursor.execute(query)
-                if self.autocommit:
-                    self._conn.commit()
-
                 if all:
                     query_results = cursor.fetchall()
                 else:
                     query_results = cursor.fetchone()
                 
+                if self.autocommit:
+                    self._conn.commit()
                 return query_results
             except Exception as e:
                 msg = e.msg
@@ -282,9 +281,6 @@ class MySQLConnection(ServerConnection):
         with self.cursor() as cursor:
             try:
                 cursor.execute(query)
-                if self.autocommit:
-                    self._conn.commit()
-
                 # Get a list of column names
                 col_names: List[str] = [col[0] for col in cursor.description]
 
@@ -294,6 +290,8 @@ class MySQLConnection(ServerConnection):
                         # Map each column name to the corresponding value in each row
                         row_dict = {col_names[index]: row for index, row in enumerate(row)}
                         rows.append(row_dict)
+                if self.autocommit:
+                    self._conn.commit()
                 return col_names, rows
             except Exception:
                 return False
