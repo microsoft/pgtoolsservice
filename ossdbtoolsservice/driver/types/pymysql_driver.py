@@ -69,13 +69,14 @@ class MySQLConnection(ServerConnection):
         :param config: optional Configuration object with mysql connection config
         """
 
+        self._connection_options = {}
         if 'azureAccountToken' in conn_params:
             conn_params['password'] = conn_params['azureAccountToken']
+            self._connection_options['auth_plugin'] = 'mysql_clear_password'
 
         # Map the provided connection parameter names to pymysql param names
         _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param): value for param, value in conn_params.items()}
 
-        self._connection_options = {}
         self._set_ssl_options(_params)
 
         # Filter the parameters to only those accepted by PyMySQL
@@ -253,14 +254,14 @@ class MySQLConnection(ServerConnection):
         with self.cursor() as cursor:
             try:
                 cursor.execute(query)
+                if self.autocommit:
+                    self._conn.commit()
 
                 if all:
                     query_results = cursor.fetchall()
                 else:
                     query_results = cursor.fetchone()
                 
-                if self.autocommit:
-                    self._conn.commit()
                 return query_results
             except Exception as e:
                 msg = e.msg
