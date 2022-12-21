@@ -76,7 +76,6 @@ class MySQLConnection(ServerConnection):
         _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param): value for param, value in conn_params.items()}
 
         self._connection_options = {}
-
         self._set_ssl_options(_params)
 
         # Filter the parameters to only those accepted by PyMySQL
@@ -101,9 +100,11 @@ class MySQLConnection(ServerConnection):
         if 'port' not in self._connection_options or not self._connection_options['port']:
             self._connection_options['port'] = constants.DEFAULT_PORT[constants.MYSQL_PROVIDER_NAME]
 
-
         # Setting autocommit to True initally
         self._autocommit_status = True
+
+        # Setting use_pure=true to use c extension implementation
+        self._connection_options['use_pure'] = False
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         try:
@@ -115,6 +116,7 @@ class MySQLConnection(ServerConnection):
 
         # Find the class of the database error this driver throws
         self._database_error = mysql.connector.DatabaseError
+        self._provider_name = constants.MYSQL_PROVIDER_NAME
 
         # Calculate the server version
         # Source: https://stackoverflow.com/questions/8987679/how-to-retrieve-the-current-version-of-a-mysql-database
@@ -127,7 +129,6 @@ class MySQLConnection(ServerConnection):
             int(version_components[1]),
             int(version_components[2])
         )
-        self._provider_name = constants.MYSQL_PROVIDER_NAME
 
         # Find what type of server we have connected to
         if len(version_components) == 4 and version_components[3] == "MariaDB":
@@ -237,9 +238,9 @@ class MySQLConnection(ServerConnection):
         cursor_instance = self._conn.cursor(buffered=True)
 
         # Store the provider name as an attribute in the cursor object
-        # attr = "provider"
-        # value = self._provider_name
-        # setattr(cursor_instance, attr, value)
+        attr = "provider"
+        value = self._provider_name
+        setattr(cursor_instance, attr, value)
 
         return cursor_instance
 
