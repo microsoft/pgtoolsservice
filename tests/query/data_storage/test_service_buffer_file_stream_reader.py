@@ -12,7 +12,7 @@ from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_reader impo
 from ossdbtoolsservice.query.contracts.column import DbColumn
 from ossdbtoolsservice.parsers import mysql_datatypes as datatypes
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
-from pymysql.constants import FIELD_TYPE
+from mysql.connector import FieldType
 
 DECODING_METHOD = 'utf-8'
 
@@ -179,7 +179,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type = FIELD_TYPE.FLOAT
+        col.data_type = FieldType.FLOAT
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
 
@@ -192,7 +192,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         col = DbColumn()
-        col.data_type = FIELD_TYPE.FLOAT
+        col.data_type = FieldType.FLOAT
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
 
@@ -248,16 +248,16 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info = []
 
         real_column1 = DbColumn()
-        real_column1.data_type = FIELD_TYPE.FLOAT
+        real_column1.data_type = FieldType.FLOAT
         real_column1.provider = MYSQL_PROVIDER_NAME
         integer_column = DbColumn()
-        integer_column.data_type = FIELD_TYPE.INT24
+        integer_column.data_type = FieldType.INT24
         integer_column.provider = MYSQL_PROVIDER_NAME
         text_column = DbColumn()
-        text_column.data_type = FIELD_TYPE.VARCHAR
+        text_column.data_type = FieldType.VARCHAR
         text_column.provider = MYSQL_PROVIDER_NAME
         real_column2 = DbColumn()
-        real_column2.data_type = FIELD_TYPE.DOUBLE
+        real_column2.data_type = FieldType.DOUBLE
         real_column2.provider = MYSQL_PROVIDER_NAME
 
         test_columns_info.append(real_column1)

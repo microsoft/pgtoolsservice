@@ -8,7 +8,7 @@ from unittest import mock
 from ossdbtoolsservice.driver.types.mysql_driver import MySQLConnection
 from ossdbtoolsservice.utils import constants
 
-from tests.utils import MockPyMySQLCursor, MockPyMySQLConnection
+from tests.utils import MockMySQLCursor, MockMySQLConnection
 
 
 class TestMySQLConnection(unittest.TestCase):
@@ -17,9 +17,9 @@ class TestMySQLConnection(unittest.TestCase):
     def setUp(self):
         """Set up the tests with a mysql connection"""
 
-        mock_cursor = MockPyMySQLCursor([['5.7.29-log']])
-        # Set up the mock connection for pymysql's connect method to return
-        self.mock_pymysql_connection = MockPyMySQLConnection(cursor=mock_cursor)
+        mock_cursor = MockMySQLCursor([['5.7.29-log']])
+        # Set up the mock connection for mysql's connect method to return
+        self.mock_mysql_connection = MockMySQLConnection(cursor=mock_cursor)
 
     def test_mysql_connection_ssl_enable(self):
         """Test creating mysql connection with ssl enabled"""
@@ -35,7 +35,7 @@ class TestMySQLConnection(unittest.TestCase):
             'ssl.ca': 'path_to_ssl_cert'
         }
 
-        with mock.patch('pymysql.connect', new=mock.Mock(return_value=self.mock_pymysql_connection)):
+        with mock.patch('mysql.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
             mysqlConnection = MySQLConnection(mysql_connection_params)
 
         expected_connection_options = {
@@ -49,7 +49,7 @@ class TestMySQLConnection(unittest.TestCase):
         }
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
-        self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
+        self.assertIs(mysqlConnection.connection, self.mock_mysql_connection)
         self.assertTrue(mysqlConnection.autocommit)
         self.assertEqual(mysqlConnection.default_database, constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME])
 
@@ -64,7 +64,7 @@ class TestMySQLConnection(unittest.TestCase):
             'password': 'samplePass123',
             'user': 'sampleUser'}
 
-        with mock.patch('pymysql.connect', new=mock.Mock(return_value=self.mock_pymysql_connection)):
+        with mock.patch('mysql.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
             mysqlConnection = MySQLConnection(mysql_connection_params)
 
         expected_connection_options = {
@@ -77,7 +77,7 @@ class TestMySQLConnection(unittest.TestCase):
             'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}}
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
-        self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
+        self.assertIs(mysqlConnection.connection, self.mock_mysql_connection)
         self.assertTrue(mysqlConnection.autocommit)
         self.assertEqual(mysqlConnection.default_database, constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME])
 
@@ -93,7 +93,7 @@ class TestMySQLConnection(unittest.TestCase):
             'user': 'sampleUser',
             'port': 3307}
 
-        with mock.patch('pymysql.connect', new=mock.Mock(return_value=self.mock_pymysql_connection)):
+        with mock.patch('mysql.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
             mysqlConnection = MySQLConnection(mysql_connection_params)
 
         expected_connection_options = {
@@ -106,7 +106,7 @@ class TestMySQLConnection(unittest.TestCase):
             'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}}
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
-        self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
+        self.assertIs(mysqlConnection.connection, self.mock_mysql_connection)
         self.assertTrue(mysqlConnection.autocommit)
         self.assertEqual(mysqlConnection.default_database, constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME])
 
@@ -121,7 +121,7 @@ class TestMySQLConnection(unittest.TestCase):
             'password': 'samplePass123',
             'user': 'sampleUser'}
 
-        with mock.patch('pymysql.connect', new=mock.Mock(return_value=self.mock_pymysql_connection)):
+        with mock.patch('mysql.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
             mysqlConnection = MySQLConnection(mysql_connection_params)
 
         expected_connection_options = {
@@ -134,7 +134,7 @@ class TestMySQLConnection(unittest.TestCase):
             'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}}
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
-        self.assertIs(mysqlConnection.connection, self.mock_pymysql_connection)
+        self.assertIs(mysqlConnection.connection, self.mock_mysql_connection)
         self.assertTrue(mysqlConnection.autocommit)
         self.assertEqual(mysqlConnection.default_database, constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME])
 

@@ -16,7 +16,7 @@ from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
-from tests.utils import MockPyMySQLCursor, MockRequestContext
+from tests.utils import MockMySQLCursor, MockRequestContext
 
 
 class TestAdminService(unittest.TestCase):
