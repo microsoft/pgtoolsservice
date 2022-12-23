@@ -28,38 +28,26 @@ def convert_bytes_to_short(value) -> int:
     we unpack the value in int format """
     return struct.unpack('h', value)[0]
 
-
-def convert_binary_bytes_to_python_int(value) -> int:
-    return int.from_bytes(value, sys.byteorder)
-
-
 def convert_bytes_to_long_long(value) -> int:
     return struct.unpack('q', value)[0]
-
 
 def convert_bytes_to_str(value) -> str:
     return value.decode(ENCODING_TYPE)
 
-
 def convert_bytes_to_decimal(value) -> str:
     return convert_bytes_to_str(value)
-
 
 def convert_bytes_to_date(value) -> str:
     return convert_bytes_to_str(value)
 
-
 def convert_bytes_to_time(value) -> str:
     return convert_bytes_to_str(value)
-
 
 def convert_bytes_to_datetime(value) -> str:
     return convert_bytes_to_str(value)
 
-
 def convert_bytes_to_timedelta(value) -> str:
     return convert_bytes_to_str(value)
-
 
 MYSQL_DATATYPE_READER_MAP = {
     FieldType.BIT: convert_bytes_to_int,
