@@ -11,7 +11,7 @@ from ossdbtoolsservice.admin.contracts import (GET_DATABASE_INFO_REQUEST,
                                                GetDatabaseInfoParameters,
                                                GetDatabaseInfoResponse)
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types.pymysql_driver import MySQLConnection
+from ossdbtoolsservice.driver.types.mysql_driver import MySQLConnection
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock

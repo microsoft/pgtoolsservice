@@ -1,5 +1,4 @@
 # Shared Requirements
-PyMySQL==0.9.3
 mysql-connector-python==8.0.31
 
 # PGToolsService Requirements
