@@ -12,11 +12,16 @@ ENCODING_TYPE = "utf-8"
 
 
 def convert_float_to_bytes(value: object):
-    return bytearray(struct.pack("d", value))
+    return bytearray(struct.pack("f", value))
 
+def convert_double_to_bytes(value: object):
+    return bytearray(struct.pack("d", value))
 
 def convert_int_to_bytes(value: object):
     return bytearray(struct.pack("i", value))
+
+def convert_short_to_bytes(value: object):
+    return bytearray(struct.pack("h", value))
 
 
 def convert_long_long(value: int):
@@ -65,12 +70,12 @@ def convert_datetime(value: datetime.datetime):
 
 
 MYSQL_DATATYPE_WRITER_MAP = {
-    FieldType.BIT: bytes_to_bytearray,
+    FieldType.BIT: convert_int_to_bytes,
     FieldType.TINY: convert_int_to_bytes,
-    FieldType.SHORT: convert_int_to_bytes,
+    FieldType.SHORT: convert_short_to_bytes,
     FieldType.LONG: convert_long_long,
     FieldType.FLOAT: convert_float_to_bytes,
-    FieldType.DOUBLE: convert_float_to_bytes,
+    FieldType.DOUBLE: convert_double_to_bytes,
     FieldType.LONGLONG: convert_long_long,
     FieldType.INT24: convert_int_to_bytes,
     FieldType.YEAR: convert_int_to_bytes,
@@ -90,5 +95,6 @@ MYSQL_DATATYPE_WRITER_MAP = {
     FieldType.DECIMAL: convert_decimal,
     FieldType.NEWDECIMAL: convert_decimal,
     FieldType.GEOMETRY: convert_str,
-    FieldType.ENUM: convert_str
+    FieldType.ENUM: convert_str,
+    FieldType.JSON: convert_str
 }
