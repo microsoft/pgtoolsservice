@@ -32,6 +32,40 @@ class TestMySQLConnection(unittest.TestCase):
             'password': 'test@1234',
             'user': 'nitish',
             'ssl': 'require',
+        }
+
+        with mock.patch('mysql.connector.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
+            mysqlConnection = MySQLConnection(mysql_connection_params)
+
+        expected_connection_options = {
+            'connection_timeout': 30,
+            'database': '',
+            'host': 'nitish-test.mysql.database.azure.com',
+            'password': 'test@1234',
+            'port': 3306,
+            'user': 'nitish',
+            'ssl_disabled': False,
+            'ssl_verify_cert': False,
+            'ssl_verify_identity': False,
+            'use_pure': False
+        }
+        print(mysqlConnection.connection_options)
+        self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
+        self.assertIs(mysqlConnection.connection, self.mock_mysql_connection)
+        self.assertTrue(mysqlConnection.autocommit)
+        self.assertEqual(mysqlConnection.default_database, constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME])
+    
+    def test_mysql_connection_ssl_enable_verify_ca(self):
+        """Test creating mysql connection with ssl enabled and verify ca"""
+
+        mysql_connection_params = {
+            'connectTimeout': '30',
+            'dbname': '',
+            'groupId': 'C777F06B-202E-4480-B475-FA416154D458',
+            'host': 'nitish-test.mysql.database.azure.com',
+            'password': 'test@1234',
+            'user': 'nitish',
+            'ssl': 'verify_ca',
             'ssl.ca': 'path_to_ssl_cert'
         }
 
@@ -39,13 +73,53 @@ class TestMySQLConnection(unittest.TestCase):
             mysqlConnection = MySQLConnection(mysql_connection_params)
 
         expected_connection_options = {
-            'connect_timeout': 30,
+            'connection_timeout': 30,
             'database': '',
             'host': 'nitish-test.mysql.database.azure.com',
             'password': 'test@1234',
             'port': 3306,
             'user': 'nitish',
-            'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}
+            'ssl_ca': 'path_to_ssl_cert',
+            'ssl_disabled': False,
+            'ssl_verify_cert': True,
+            'ssl_verify_identity': False,
+            'use_pure': False
+        }
+        print(mysqlConnection.connection_options)
+        self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
+        self.assertIs(mysqlConnection.connection, self.mock_mysql_connection)
+        self.assertTrue(mysqlConnection.autocommit)
+        self.assertEqual(mysqlConnection.default_database, constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME])
+
+    def test_mysql_connection_ssl_enable_verify_identity(self):
+        """Test creating mysql connection with ssl enabled and verify identity"""
+
+        mysql_connection_params = {
+            'connectTimeout': '30',
+            'dbname': '',
+            'groupId': 'C777F06B-202E-4480-B475-FA416154D458',
+            'host': 'nitish-test.mysql.database.azure.com',
+            'password': 'test@1234',
+            'user': 'nitish',
+            'ssl': 'verify_identity',
+            'ssl.ca': 'path_to_ssl_cert'
+        }
+
+        with mock.patch('mysql.connector.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
+            mysqlConnection = MySQLConnection(mysql_connection_params)
+
+        expected_connection_options = {
+            'connection_timeout': 30,
+            'database': '',
+            'host': 'nitish-test.mysql.database.azure.com',
+            'password': 'test@1234',
+            'port': 3306,
+            'user': 'nitish',
+            'ssl_ca': 'path_to_ssl_cert',
+            'ssl_disabled': False,
+            'ssl_verify_cert': False,
+            'ssl_verify_identity': True,
+            'use_pure': False
         }
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
@@ -62,19 +136,23 @@ class TestMySQLConnection(unittest.TestCase):
             'groupId': 'C777F06B-202E-4480-B475-FA416154D458',
             'host': 'nitish-test.mysql.database.azure.com',
             'password': 'test@1234',
-            'user': 'nitish'}
+            'user': 'nitish',
+            'ssl': 'disable'
+            }
 
         with mock.patch('mysql.connector.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
             mysqlConnection = MySQLConnection(mysql_connection_params)
 
         expected_connection_options = {
-            'connect_timeout': 30,
+            'connection_timeout': 30,
             'database': '',
             'host': 'nitish-test.mysql.database.azure.com',
             'password': 'test@1234',
             'port': 3306,
             'user': 'nitish',
-            'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}}
+            'ssl_disabled': True,
+            'use_pure': False
+            }
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
         self.assertIs(mysqlConnection.connection, self.mock_mysql_connection)
@@ -82,7 +160,7 @@ class TestMySQLConnection(unittest.TestCase):
         self.assertEqual(mysqlConnection.default_database, constants.DEFAULT_DB[constants.MYSQL_PROVIDER_NAME])
 
     def test_mysql_connection_port_provided(self):
-        """Test creating mysql connection with dbname provided"""
+        """Test creating mysql connection with dbname not provided"""
 
         mysql_connection_params = {
             'connectTimeout': '30',
@@ -91,19 +169,23 @@ class TestMySQLConnection(unittest.TestCase):
             'host': 'nitish-test.mysql.database.azure.com',
             'password': 'test@1234',
             'user': 'nitish',
-            'port': 3307}
+            'port': 3307,
+            'ssl': 'disable'
+            }
 
         with mock.patch('mysql.connector.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
             mysqlConnection = MySQLConnection(mysql_connection_params)
 
         expected_connection_options = {
-            'connect_timeout': 30,
+            'connection_timeout': 30,
             'database': '',
             'host': 'nitish-test.mysql.database.azure.com',
             'password': 'test@1234',
             'port': 3307,
             'user': 'nitish',
-            'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}}
+            'ssl_disabled': True,
+            'use_pure': False
+            }
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
         self.assertIs(mysqlConnection.connection, self.mock_mysql_connection)
@@ -119,19 +201,23 @@ class TestMySQLConnection(unittest.TestCase):
             'groupId': 'C777F06B-202E-4480-B475-FA416154D458',
             'host': 'nitish-test.mysql.database.azure.com',
             'password': 'test@1234',
-            'user': 'nitish'}
+            'user': 'nitish',
+            'ssl': 'disable'
+            }
 
         with mock.patch('mysql.connector.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
             mysqlConnection = MySQLConnection(mysql_connection_params)
 
         expected_connection_options = {
-            'connect_timeout': 30,
+            'connection_timeout': 30,
             'database': 'mysql',
             'host': 'nitish-test.mysql.database.azure.com',
             'password': 'test@1234',
             'port': 3306,
             'user': 'nitish',
-            'ssl': {'ca': None, 'check_hostname': False, 'verify_mode': 'none'}}
+            'ssl_disabled': True,
+            'use_pure': False
+            }
         print(mysqlConnection.connection_options)
         self.assertDictEqual(mysqlConnection.connection_options, expected_connection_options)
         self.assertIs(mysqlConnection.connection, self.mock_mysql_connection)
