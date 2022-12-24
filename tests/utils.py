@@ -141,7 +141,7 @@ class MockMySQLCursor:
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        raise mysql.DatabaseError()
+        raise mysql.connector.DatabaseError
 
     def execute_fetch_one_side_effects(self, *args):
         if self._fetched_count < len(self._query_results):

@@ -52,7 +52,7 @@ class TestMySQLConnectionService(unittest.TestCase):
         })
 
         # Set up the connection service and call its connect method with the supported options
-        with mock.patch('mysql.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
+        with mock.patch('mysql.connector.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
             response = self.connection_service.connect(params)
 
         # Verify that mysql's connection method was called and that the
@@ -83,7 +83,7 @@ class TestMySQLConnectionService(unittest.TestCase):
         mock_connect_method = mock.Mock(return_value=self.mock_mysql_connection)
 
         # Set up the connection service and call its connect method with the supported options
-        with mock.patch('mysql.connect', new=mock_connect_method):
+        with mock.patch('mysql.connector.connect', new=mock_connect_method):
             response = self.connection_service.connect(params)
 
         # Verify that mysql's connection method was called with password set to account token.

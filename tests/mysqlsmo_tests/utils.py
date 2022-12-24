@@ -58,5 +58,5 @@ class MockMySQLServerConnection(MySQLConnection):
         self.cursor = mock.MagicMock(return_value=cur)
 
         # mock mysql.connect call in MySQLConnection.__init__ to return mock mysql connection
-        with mock.patch('mysql.connect', mock.Mock(return_value=connection)):
+        with mock.patch('mysql.connector.connect', mock.Mock(return_value=connection)):
             super().__init__({"host": host, "user": user, "port": port, "database": name})
