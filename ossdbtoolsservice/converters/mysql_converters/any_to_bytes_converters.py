@@ -10,17 +10,11 @@ from mysql.connector import FieldType
 
 ENCODING_TYPE = "utf-8"
 
-def convert_float_to_bytes(value: object):
-    return bytearray(struct.pack("f", value))
-
 def convert_double_to_bytes(value: object):
     return bytearray(struct.pack("d", value))
 
 def convert_int_to_bytes(value: object):
     return bytearray(struct.pack("i", value))
-
-def convert_short_to_bytes(value: object):
-    return bytearray(struct.pack("h", value))
 
 def convert_long_long(value: int):
     """ Range of bigint in mysql is the same with long long in c,
@@ -62,9 +56,9 @@ def convert_datetime(value: datetime.datetime):
 MYSQL_DATATYPE_WRITER_MAP = {
     FieldType.BIT: convert_int_to_bytes,
     FieldType.TINY: convert_int_to_bytes,
-    FieldType.SHORT: convert_short_to_bytes,
+    FieldType.SHORT: convert_int_to_bytes,
     FieldType.LONG: convert_long_long,
-    FieldType.FLOAT: convert_float_to_bytes,
+    FieldType.FLOAT: convert_double_to_bytes,
     FieldType.DOUBLE: convert_double_to_bytes,
     FieldType.LONGLONG: convert_long_long,
     FieldType.INT24: convert_int_to_bytes,
