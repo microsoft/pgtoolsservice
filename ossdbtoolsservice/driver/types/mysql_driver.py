@@ -104,9 +104,6 @@ class MySQLConnection(ServerConnection):
         # Setting autocommit to True initally
         self._autocommit_status = True
 
-        # Setting use_pure=true to use c extension implementation
-        self._connection_options['use_pure'] = False
-
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         try:
             self._conn = mysql.connector.connect(**self._connection_options)
