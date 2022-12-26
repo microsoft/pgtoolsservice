@@ -97,7 +97,6 @@ class TestMySQLConnectionService(unittest.TestCase):
             database='mysql',
             ssl_verify_cert=False,
             ssl_verify_identity=False,
-            use_pure=False
             )
 
         # Verify that mysql's connection method was called and that the
