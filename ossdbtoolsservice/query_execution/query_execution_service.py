@@ -121,7 +121,7 @@ class QueryExecutionService(object):
 
     def _handle_simple_execute_request(self, request_context: RequestContext, params: SimpleExecuteRequest):
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        connection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+        connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
 
         execute_params = ExecuteStringParams()
         execute_params.query = params.query_string
