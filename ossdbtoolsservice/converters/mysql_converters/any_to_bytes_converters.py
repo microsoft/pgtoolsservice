@@ -35,12 +35,6 @@ def convert_decimal(value: decimal.Decimal):
     it will hold all the data before and after the decimal point """
     return bytearray(str(decimal.Decimal(value)).encode(ENCODING_TYPE))
 
-def to_bytes(value: object, FieldType: int):
-    """
-    Converts the given MySQL object to string and then to bytes
-    """
-    return bytearray(repr(value).encode(ENCODING_TYPE))
-
 def convert_date(value: datetime.date):
     date_val = str(value)
     return bytearray(date_val.encode(ENCODING_TYPE))
