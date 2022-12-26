@@ -32,7 +32,7 @@ MYSQL_CONNECTION_OPTION_KEY_MAP = {
 # Source:https://pymysql.readthedocs.io/en/latest/modules/connections.html
 MYSQL_CONNECTION_PARAM_KEYWORDS = [
     'host', 'database', 'user', 'password', 'port', 'connection_timeout', 
-    'client_flags', 'sql_mode', 'sslmode', 'ssl_ca', 'ssl_cert', 'ssl_key', 'ssl_disabled', 'ssl_verify_cert', 'ssl_verify_identity'
+    'client_flags', 'sql_mode', 'ssl_ca', 'ssl_cert', 'ssl_key', 'ssl_disabled', 'ssl_verify_cert', 'ssl_verify_identity'
 ]
 
 # Source: https://tableplus.io/blog/2018/08/mysql-how-to-get-the-size-of-mysql-database.html
