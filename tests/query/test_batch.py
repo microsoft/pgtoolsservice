@@ -6,7 +6,7 @@
 import unittest
 from unittest import mock
 
-from tests.utils import MockPyMySQLCursor
+from tests.utils import MockMySQLCursor
 from ossdbtoolsservice.query.batch import (Batch, BatchEvents,
                                            ResultSetStorageType, SelectBatch,
                                            create_batch, create_result_set)
@@ -21,7 +21,7 @@ from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 class TestBatch(unittest.TestCase):
 
     def setUp(self):
-        self._cursor = MockPyMySQLCursor(None)
+        self._cursor = MockMySQLCursor(None)
         self._connection = MockMySQLServerConnection(cur=self._cursor)
         self._batch_text = 'Select * from t1'
         self._batch_id = 1

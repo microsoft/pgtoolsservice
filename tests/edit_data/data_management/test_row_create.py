@@ -13,7 +13,7 @@ from ossdbtoolsservice.edit_data.update_management import CellUpdate, RowCreate
 from ossdbtoolsservice.query import ResultSetStorageType, create_result_set
 from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
-from tests.utils import MockPyMySQLCursor
+from tests.utils import MockMySQLCursor
 
 
 class TestMySQLRowCreate(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestMySQLRowCreate(unittest.TestCase):
         self._row_id = 1
         self._rows = [("1"), ("2")]
         self._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
-        self._cursor = MockPyMySQLCursor(self._rows, ['IsTrue'])
+        self._cursor = MockMySQLCursor(self._rows, ['IsTrue'])
 
         with mock.patch('ossdbtoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
             self._result_set.read_result_to_end(self._cursor)
@@ -97,7 +97,7 @@ class TestMySQLRowCreate(unittest.TestCase):
     def test_apply_changes(self):
         self.assertTrue(len(self._result_set.rows) == 2)
 
-        cursor = MockPyMySQLCursor([('True',)], ['IsTrue'])
+        cursor = MockMySQLCursor([('True',)], ['IsTrue'])
 
         self._row_create.apply_changes(cursor)
 

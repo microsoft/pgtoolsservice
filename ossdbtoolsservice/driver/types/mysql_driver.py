@@ -29,7 +29,6 @@ MYSQL_CONNECTION_OPTION_KEY_MAP = {
     'ssl.cert': 'ssl_cert'
 }
 
-# Source:https://pymysql.readthedocs.io/en/latest/modules/connections.html
 MYSQL_CONNECTION_PARAM_KEYWORDS = [
     'host', 'database', 'user', 'password', 'port', 'connection_timeout', 
     'client_flags', 'sql_mode', 'ssl_ca', 'ssl_cert', 'ssl_key', 'ssl_disabled', 'ssl_verify_cert', 'ssl_verify_identity'
@@ -74,12 +73,12 @@ class MySQLConnection(ServerConnection):
             conn_params['password'] = conn_params['azureAccountToken']
             self._connection_options['auth_plugin'] = 'mysql_clear_password'
 
-        # Map the provided connection parameter names to pymysql param names
+        # Map the provided connection parameter names to mysql param names
         _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param): value for param, value in conn_params.items()}
 
         self._set_ssl_options(_params)
 
-        # Filter the parameters to only those accepted by PyMySQL
+        # Filter the parameters to only those accepted by MySQL
         for param, value in _params.items():
             if param in MYSQL_CONNECTION_PARAM_KEYWORDS:
                 self._connection_options[param] = value

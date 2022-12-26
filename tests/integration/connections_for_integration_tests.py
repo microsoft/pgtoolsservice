@@ -7,7 +7,7 @@
 
 from abc import abstractclassmethod
 from typing import List
-import pymysql
+import mysql
 
 
 class IConnection():
@@ -40,13 +40,13 @@ class IConnection():
 
 class MySQLConnection:
 
-    _connections: List[pymysql.connections.Connection] = []
+    _connections: List[mysql.connections.Connection] = []
 
     @classmethod
     def open_connections(cls, connection_details_list):
         cls._connections = []
         for config_dict in connection_details_list:
-            connection = pymysql.connect(**config_dict)
+            connection = mysql.connector.connect(**config_dict)
             cls._connections.append(connection)
             connection.autocommit = True
 

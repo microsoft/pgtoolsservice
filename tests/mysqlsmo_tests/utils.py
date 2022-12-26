@@ -1,10 +1,10 @@
 import unittest.mock as mock
 from typing import List, Optional, Tuple
 
-from pymysql.err import DatabaseError
+from mysql.connector import DatabaseError
 
 from ossdbtoolsservice.driver.types.mysql_driver import MySQLConnection
-from tests.utils import MockPyMySQLConnection
+from tests.utils import MockMySQLConnection
 
 
 class MockMySQLCursor:
@@ -38,7 +38,7 @@ class MockMySQLServerConnection(MySQLConnection):
     def __init__(
             self,
             cur: Optional[MockMySQLCursor] = None,
-            connection: Optional[MockPyMySQLConnection] = None,
+            connection: Optional[MockMySQLConnection] = None,
             version: str = '5.7.29-log',
             name: str = 'mysql',
             host: str = 'localhost',
@@ -50,13 +50,13 @@ class MockMySQLServerConnection(MySQLConnection):
 
         # if no mock mysql connection passed, create default one
         if not connection:
-            connection = MockPyMySQLConnection(cursor=version_cur, parameters={
+            connection = MockMySQLConnection(cursor=version_cur, parameters={
                 'database': name, 'host': host, 'port': port, 'user': user})
 
         # Setup mocks for the connection
         self.close = mock.MagicMock()
         self.cursor = mock.MagicMock(return_value=cur)
 
-        # mock pymysql.connect call in MySQLConnection.__init__ to return mock pymysql connection
-        with mock.patch('pymysql.connect', mock.Mock(return_value=connection)):
+        # mock mysql.connect call in MySQLConnection.__init__ to return mock mysql connection
+        with mock.patch('mysql.connector.connect', mock.Mock(return_value=connection)):
             super().__init__({"host": host, "user": user, "port": port, "database": name})

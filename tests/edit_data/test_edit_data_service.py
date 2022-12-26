@@ -30,8 +30,8 @@ class TestMySQLEditDataService(unittest.TestCase):
         self._mock_connection = mock.MagicMock()
         self._service_provider = ServiceProviderMock({'query_execution': {}, 'connection': self._mock_connection})
 
-        self.cursor = utils.MockPyMySQLConnection(None)
-        self.connection = utils.MockPyMySQLConnection()
+        self.cursor = utils.MockMySQLConnection(None)
+        self.connection = utils.MockMySQLConnection()
         self.connection.cursor = self.cursor
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()

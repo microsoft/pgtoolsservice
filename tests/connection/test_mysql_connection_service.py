@@ -16,7 +16,7 @@ from ossdbtoolsservice.utils.constants import (DEFAULT_PORT,
                                                MYSQL_PROVIDER_NAME,
                                                WORKSPACE_SERVICE_NAME)
 from ossdbtoolsservice.workspace import WorkspaceService
-from tests.utils import MockPyMySQLCursor, MockPyMySQLConnection
+from tests.utils import MockMySQLCursor, MockMySQLConnection
 
 
 class TestMySQLConnectionService(unittest.TestCase):
@@ -28,9 +28,9 @@ class TestMySQLConnectionService(unittest.TestCase):
         self.connection_service._service_provider = utils.get_mock_service_provider({WORKSPACE_SERVICE_NAME: WorkspaceService()},
                                                                                     provider_name=MYSQL_PROVIDER_NAME)
         # MySQLConnection runs a version query on connect
-        mock_cursor = MockPyMySQLCursor([['5.7.29-log']])
-        # Set up the mock connection for pymysql's connect method to return
-        self.mock_pymysql_connection = MockPyMySQLConnection(parameters={
+        mock_cursor = MockMySQLCursor([['5.7.29-log']])
+        # Set up the mock connection for mysql's connect method to return
+        self.mock_mysql_connection = MockMySQLConnection(parameters={
             'host': 'myserver',
             'dbname': 'postgres',
             'user': 'postgres'}, cursor=mock_cursor)
@@ -52,13 +52,13 @@ class TestMySQLConnectionService(unittest.TestCase):
         })
 
         # Set up the connection service and call its connect method with the supported options
-        with mock.patch('pymysql.connect', new=mock.Mock(return_value=self.mock_pymysql_connection)):
+        with mock.patch('mysql.connector.connect', new=mock.Mock(return_value=self.mock_mysql_connection)):
             response = self.connection_service.connect(params)
 
-        # Verify that pymysql's connection method was called and that the
+        # Verify that mysql's connection method was called and that the
         # response has a connection id, indicating success.
         self.assertIs(self.connection_service.owner_to_connection_map[params.owner_uri].get_connection(params.type)._conn,
-                      self.mock_pymysql_connection)
+                      self.mock_mysql_connection)
         self.assertIsNotNone(response.connection_id)
         self.assertIsNotNone(response.server_info.server_version)
         self.assertFalse(response.server_info.is_cloud)
@@ -79,22 +79,31 @@ class TestMySQLConnectionService(unittest.TestCase):
             }
         })
 
-        # Set up pymysql instance for connection service to call
-        mock_connect_method = mock.Mock(return_value=self.mock_pymysql_connection)
+        # Set up mysql instance for connection service to call
+        mock_connect_method = mock.Mock(return_value=self.mock_mysql_connection)
 
         # Set up the connection service and call its connect method with the supported options
-        with mock.patch('pymysql.connect', new=mock_connect_method):
+        with mock.patch('mysql.connector.connect', new=mock_connect_method):
             response = self.connection_service.connect(params)
 
-        # Verify that pymysql's connection method was called with password set to account token.
-        mock_connect_method.assert_called_once_with(user='mysql', password='exampleToken',
-                                                    host='myserver', port=DEFAULT_PORT[MYSQL_PROVIDER_NAME], database='mysql', 
-                                                    ssl={'ca': None, 'verify_mode': 'none', 'check_hostname': False})
+        # Verify that mysql's connection method was called with password set to account token.
+        mock_connect_method.assert_called_once_with(
+            auth_plugin='mysql_clear_password',
+            ssl_disabled=False,
+            user='mysql', 
+            password='exampleToken',
+            host='myserver',
+            port=DEFAULT_PORT[MYSQL_PROVIDER_NAME],
+            database='mysql',
+            ssl_verify_cert=False,
+            ssl_verify_identity=False,
+            use_pure=False
+            )
 
-        # Verify that pymysql's connection method was called and that the
+        # Verify that mysql's connection method was called and that the
         # response has a connection id, indicating success.
         self.assertIs(self.connection_service.owner_to_connection_map[params.owner_uri].get_connection(params.type)._conn,
-                      self.mock_pymysql_connection)
+                      self.mock_mysql_connection)
         self.assertIsNotNone(response.connection_id)
         self.assertIsNotNone(response.server_info.server_version)
         self.assertFalse(response.server_info.is_cloud)

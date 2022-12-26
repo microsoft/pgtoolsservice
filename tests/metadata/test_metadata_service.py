@@ -17,7 +17,7 @@ from ossdbtoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
 from tests.utils import (
-    MockPyMySQLCursor, MockRequestContext, MockThread)
+    MockMySQLCursor, MockRequestContext, MockThread)
 
 
 class TestMetadataService(unittest.TestCase):
