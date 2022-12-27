@@ -6,6 +6,7 @@
 from enum import Enum
 from operator import contains
 import re
+import logging
 from typing import List, Optional, Tuple
 
 import mysql.connector
@@ -69,6 +70,8 @@ class MySQLConnection(ServerConnection):
         """
 
         self._connection_options = {}
+        self._logger = logging.getLogger('ossdbtoolsservice')
+        
         if 'azureAccountToken' in conn_params:
             conn_params['password'] = conn_params['azureAccountToken']
             self._connection_options['auth_plugin'] = 'mysql_clear_password'
@@ -102,6 +105,12 @@ class MySQLConnection(ServerConnection):
 
         # Setting autocommit to True initally
         self._autocommit_status = True
+
+        # Check for which extension is being used
+        if mysql.connector.__version_info__ > (2, 1) and mysql.connector.HAVE_CEXT:
+            self._logger.info("MySql Connector is using C extension")
+        else:
+            self._logger.info("MySql Connector is using Python extension")
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         try:
