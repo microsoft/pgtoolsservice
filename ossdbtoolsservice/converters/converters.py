@@ -21,7 +21,7 @@ READERS = {
 
 
 def convert_str(value: str):
-    return bytearray(str(value).encode())
+    return bytearray(value.encode())
 
 def convert_bytes_to_str(value) -> str:
     return value.decode(DECODING_METHOD)
