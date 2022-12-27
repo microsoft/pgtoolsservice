@@ -146,9 +146,14 @@ class QueryExecutionService(object):
                 simple_execute_response = SimpleExecuteResponse(None, 0, None)
 
             request_context.send_response(simple_execute_response)
+        
+        def on_message_notification(message_notification_params: MessageNotificationParams):
+            # Send error to client
+            if message_notification_params.message and message_notification_params.message.is_error:
+                request_context.send_error(message=message_notification_params.message.message)
 
         worker_args = ExecuteRequestWorkerArgs(params.owner_uri, connection, request_context, ResultSetStorageType.FILE_STORAGE,
-                                               on_query_complete=on_query_complete)
+                                               on_query_complete=on_query_complete, on_message_notification=on_message_notification)
 
         self._start_query_execution_thread(request_context, execute_params, worker_args)
 
