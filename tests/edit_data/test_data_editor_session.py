@@ -290,10 +290,6 @@ class TestMySQLDataEditorSession(unittest.TestCase):
 
         mock_edit.get_script.assert_called_once()
 
-        self._mock_cursor.mogrify.assert_called_once()
-
-        self._mock_cursor.execute.assert_called_once_with(self._mock_cursor.mogrified_value)
-
         mock_edit.apply_changes.assert_called_once()
 
     def test_commit_edit_not_initialized(self):

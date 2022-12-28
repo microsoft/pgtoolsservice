@@ -118,8 +118,6 @@ class MockMySQLCursor:
         self.description = [self.create_column_description(name=name) for name in columns_names]
         self.provider = MYSQL_PROVIDER_NAME
         self.rowcount = -1
-        self._mogrified_value = b'Some query'
-        self.mogrify = mock.Mock(return_value=self._mogrified_value)
         self._query_results = query_results
         self._fetched_count = 0
 
@@ -168,10 +166,6 @@ class MockMySQLCursor:
     def __exit__(self, *args):
         pass
 
-    @property
-    def mogrified_value(self):
-        return self._mogrified_value
-
 
 class MockMySQLConnection(object):
     """Class used to mock mysql connection objects for testing"""
@@ -182,6 +176,7 @@ class MockMySQLConnection(object):
         self.commit = mock.Mock()
         self.ping = mock.Mock()
         self.open = mock.Mock()
+        self.is_connected = mock.Mock()
 
 
 class MockThread():

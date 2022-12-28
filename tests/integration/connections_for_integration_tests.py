@@ -40,7 +40,7 @@ class IConnection():
 
 class MySQLConnection:
 
-    _connections: List[mysql.connections.Connection] = []
+    _connections: List[mysql.connector.MySQLConnection] = []
 
     @classmethod
     def open_connections(cls, connection_details_list):

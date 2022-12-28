@@ -26,7 +26,6 @@ class MockCursor:
         self.connection = mock.Mock()
         self.description = None
         self.rowcount = -1
-        self.mogrify = mock.Mock(side_effect=self._mogrify)
         # Define iterator state
         self._has_been_read = False
 
@@ -56,9 +55,6 @@ class MockCursor:
 
     def __exit__(self, *args):
         pass
-
-    def _mogrify(self, *args, **kwargs):
-        return args[0].format(args[1:])
 
 
 class TestMetadataExecutor(unittest.TestCase):
