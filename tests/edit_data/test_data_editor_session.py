@@ -21,14 +21,14 @@ from ossdbtoolsservice.query import (
 from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
-from tests.utils import MockPyMySQLCursor
+from tests.utils import MockMySQLCursor
 
 
 class TestMySQLDataEditorSession(unittest.TestCase):
 
     def setUp(self):
         self._metadata_factory = mock.MagicMock()
-        self._mock_cursor = MockPyMySQLCursor(None)
+        self._mock_cursor = MockMySQLCursor(None)
         self._connection = MockMySQLServerConnection(cur=self._mock_cursor)
         self._initialize_edit_request = InitializeEditParams()
 
@@ -58,7 +58,7 @@ class TestMySQLDataEditorSession(unittest.TestCase):
 
     def get_result_set(self, rows: List[tuple]) -> ResultSet:
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
-        cursor = MockPyMySQLCursor(rows)
+        cursor = MockMySQLCursor(rows)
 
         columns_info = []
         get_column_info_mock = mock.Mock(return_value=columns_info)
@@ -289,10 +289,6 @@ class TestMySQLDataEditorSession(unittest.TestCase):
         success_callback.assert_called_once()
 
         mock_edit.get_script.assert_called_once()
-
-        self._mock_cursor.mogrify.assert_called_once()
-
-        self._mock_cursor.execute.assert_called_once_with(self._mock_cursor.mogrified_value)
 
         mock_edit.apply_changes.assert_called_once()
 

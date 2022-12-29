@@ -62,13 +62,6 @@ mysql_conn_provider_opts = ConnectionProviderOptions([
         group_name='Security'
     ),
     ConnectionOption(
-        name='bindAddress',
-        display_name='Host IP address',
-        description='IP address of the server',
-        value_type=ConnectionOption.VALUE_TYPE_STRING,
-        group_name='Server'
-    ),
-    ConnectionOption(
         name='port',
         display_name='Port',
         description='Port number for the server',
@@ -82,22 +75,6 @@ mysql_conn_provider_opts = ConnectionProviderOptions([
         value_type=ConnectionOption.VALUE_TYPE_NUMBER,
         group_name='Client',
         default_value='10'
-    ),
-    ConnectionOption(
-        name='readTimeout',
-        display_name='Read timeout',
-        description='Seconds to wait when reading from the connection',
-        value_type=ConnectionOption.VALUE_TYPE_NUMBER,
-        group_name='Client',
-        default_value=''
-    ),
-    ConnectionOption(
-        name='writeTimeout',
-        display_name='Write timeout',
-        description='Seconds to wait when writing to the connection',
-        value_type=ConnectionOption.VALUE_TYPE_NUMBER,
-        group_name='Client',
-        default_value=''
     ),
     ConnectionOption(
         name='clientFlag',
@@ -146,13 +123,6 @@ mysql_conn_provider_opts = ConnectionProviderOptions([
         name='ssl.ca',
         display_name='SSL root certificate filename',
         description='The path name of the SSL root CA certificate',
-        value_type=ConnectionOption.VALUE_TYPE_STRING,
-        group_name='SSL'
-    ),
-    ConnectionOption(
-        name='ssl.cipher',
-        display_name='SSL cipher',
-        description='Comma-seperated list of allowed ciphers for SSL encryption',
         value_type=ConnectionOption.VALUE_TYPE_STRING,
         group_name='SSL'
     )

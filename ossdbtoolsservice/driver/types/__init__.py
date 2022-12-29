@@ -4,6 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.driver.types.driver import ServerConnection
-from ossdbtoolsservice.driver.types.pymysql_driver import MySQLConnection
+from ossdbtoolsservice.driver.types.mysql_driver import MySQLConnection
 
 __all__ = ['ServerConnection', 'MySQLConnection']

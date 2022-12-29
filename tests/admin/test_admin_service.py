@@ -11,12 +11,12 @@ from ossdbtoolsservice.admin.contracts import (GET_DATABASE_INFO_REQUEST,
                                                GetDatabaseInfoParameters,
                                                GetDatabaseInfoResponse)
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types.pymysql_driver import MySQLConnection
+from ossdbtoolsservice.driver.types.mysql_driver import MySQLConnection
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
-from tests.utils import MockPyMySQLCursor, MockRequestContext
+from tests.utils import MockMySQLCursor, MockRequestContext
 
 
 class TestAdminService(unittest.TestCase):
@@ -83,7 +83,7 @@ class TestAdminService(unittest.TestCase):
         owner = request_context.last_response_params.database_info.options['owner']
 
         cursor = connection.cursor()
-        cursor.execute('select usename from pg_catalog.pg_user')
+        cursor.execute('select user from mysql.user')
         usernames = [row[0] for row in cursor.fetchall()]
         self.assertIn(owner, usernames)
         connection.close()

@@ -14,7 +14,7 @@ from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer impo
 from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 import tests.utils as utils
-from pymysql.constants import FIELD_TYPE
+from mysql.connector import FieldType
 
 
 class TestServiceBufferFileStreamWriter(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
 
         self._file_stream = io.BytesIO()
         self._writer = ServiceBufferFileStreamWriter(self._file_stream)
-        self._cursor = utils.MockPyMySQLCursor([tuple([11, 22, 33]), tuple([55, 66, 77])])
+        self._cursor = utils.MockMySQLCursor([tuple([11, 22, 33]), tuple([55, 66, 77])])
 
     def get_expected_length_with_additional_buffer_for_size(self, test_value_length: int):
         return TestServiceBufferFileStreamWriter.SIZE_BUFFER_LENGTH + test_value_length
@@ -44,7 +44,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 123.456
         test_columns_info = []
         col = DbColumn()
-        col.data_type = FIELD_TYPE.FLOAT
+        col.data_type = FieldType.FLOAT
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
@@ -57,7 +57,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 12345678.90123456
         test_columns_info = []
         col = DbColumn()
-        col.data_type = FIELD_TYPE.DOUBLE
+        col.data_type = FieldType.DOUBLE
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
@@ -70,7 +70,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 1234567890
         test_columns_info = []
         col = DbColumn()
-        col.data_type = FIELD_TYPE.INT24
+        col.data_type = FieldType.INT24
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
@@ -83,7 +83,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 123456789012
         test_columns_info = []
         col = DbColumn()
-        col.data_type = FIELD_TYPE.LONGLONG
+        col.data_type = FieldType.LONGLONG
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
@@ -96,7 +96,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_val = Decimal(123)
         test_columns_info = []
         col = DbColumn()
-        col.data_type = FIELD_TYPE.DECIMAL
+        col.data_type = FieldType.DECIMAL
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
@@ -109,7 +109,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = 'TestString'
         test_columns_info = []
         col = DbColumn()
-        col.data_type = FIELD_TYPE.STRING
+        col.data_type = FieldType.STRING
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
@@ -122,7 +122,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = datetime.date(2004, 10, 19)
         test_columns_info = []
         col = DbColumn()
-        col.data_type = FIELD_TYPE.DATE
+        col.data_type = FieldType.DATE
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
@@ -135,7 +135,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = datetime.time(10, 23, 54)
         test_columns_info = []
         col = DbColumn()
-        col.data_type = FIELD_TYPE.TIME
+        col.data_type = FieldType.TIME
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)
@@ -148,7 +148,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         test_value = datetime.datetime(2004, 10, 19, 10, 23, 54)
         test_columns_info = []
         col = DbColumn()
-        col.data_type = FIELD_TYPE.TIMESTAMP
+        col.data_type = FieldType.TIMESTAMP
         col.provider = MYSQL_PROVIDER_NAME
         test_columns_info.append(col)
         mock_storage_data_reader = MockStorageDataReader(self._cursor, test_columns_info)

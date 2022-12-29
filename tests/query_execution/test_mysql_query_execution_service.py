@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 
-import pymysql
+import mysql
 from ossdbtoolsservice.query_execution.contracts.execute_request import ExecuteStringParams
 
 import tests.utils as utils
@@ -28,8 +28,8 @@ class TestQueryService(unittest.TestCase):
         """
         # set up mock connection
         self.rows = [(1, 'Text 1'), (2, 'Text 2')]
-        self.cursor = utils.MockPyMySQLCursor(self.rows)
-        self.mock_pymysql_connection = utils.MockPyMySQLConnection(parameters={
+        self.cursor = utils.MockMySQLCursor(self.rows)
+        self.mock_mysql_connection = utils.MockMySQLConnection(parameters={
             'host': 'test',
             'dbname': 'test',
         })
@@ -76,7 +76,7 @@ class TestQueryService(unittest.TestCase):
         """Test handling a query request that fails when the query is executed"""
         # Set up the query execution service and a connection service with a mock connection that
         # has a cursor that always throws an error when executing
-        self.cursor.execute = mock.Mock(side_effect=pymysql.err.DatabaseError())
+        self.cursor.execute = mock.Mock(side_effect=mysql.connector.DatabaseError)
         params = get_execute_string_params()
 
         # If I handle a query that raises an error when executed

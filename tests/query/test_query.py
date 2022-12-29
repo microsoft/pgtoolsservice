@@ -6,7 +6,7 @@
 import unittest
 from unittest import mock
 
-import pymysql
+import mysql
 
 from ossdbtoolsservice.query import (ExecutionState, Query, QueryEvents,
                                      QueryExecutionSettings,
@@ -17,7 +17,7 @@ from ossdbtoolsservice.query.contracts import (DbColumn,
 from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
 from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
-from tests.utils import MockPyMySQLCursor
+from tests.utils import MockMySQLCursor
 
 
 class TestQuery(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestQuery(unittest.TestCase):
         self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions(), ResultSetStorageType.FILE_STORAGE), QueryEvents())
 
         self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
-        self.cursor = MockPyMySQLCursor(self.mock_query_results)
+        self.cursor = MockMySQLCursor(self.mock_query_results)
         self.connection = MockMySQLServerConnection(cur=self.cursor)
 
         self.columns_info = []
@@ -83,7 +83,7 @@ class TestQuery(unittest.TestCase):
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
 
         # If I call query.execute then it raises the database error
-        with self.assertRaises(pymysql.DatabaseError):
+        with self.assertRaises(mysql.connector.DatabaseError):
             self.query.execute(self.connection)
 
         # And only the first batch was executed

@@ -23,6 +23,7 @@ from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace import WorkspaceService
+from ossdbtoolsservice.driver.types.mysql_driver import check_if_c_ext_is_used
 
 
 def _create_server(input_stream, output_stream, server_logger, provider):
@@ -115,4 +116,8 @@ if __name__ == '__main__':
 
     # Start the server
     server.start()
+
+    # Check which extension is used by mysql connector
+    check_if_c_ext_is_used()
+
     server.wait_for_exit()

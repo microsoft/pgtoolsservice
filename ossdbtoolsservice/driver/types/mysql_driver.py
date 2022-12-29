@@ -6,9 +6,10 @@
 from enum import Enum
 from operator import contains
 import re
+import logging
 from typing import List, Optional, Tuple
 
-import pymysql
+import mysql.connector
 
 from ossdbtoolsservice.driver.types import ServerConnection
 from ...exception.OssdbErrorCodes import OssdbErrorCodes
@@ -21,18 +22,17 @@ from ossdbtoolsservice.workspace.contracts import Configuration
 
 MYSQL_CONNECTION_OPTION_KEY_MAP = {
     'dbname': 'database',
-    'connectTimeout': 'connect_timeout',
-    'bindAddress': 'bind_address',
-    'readTimeout': 'read_timeout',
-    'writeTimeout': 'write_timeout',
+    'connectTimeout': 'connection_timeout',
     'sqlMode': 'sql_mode',
-    'clientFlag': 'client_flag'
+    'clientFlag': 'client_flags',
+    'ssl.key': 'ssl_key',
+    'ssl.ca': 'ssl_ca',
+    'ssl.cert': 'ssl_cert'
 }
 
-# Source:https://pymysql.readthedocs.io/en/latest/modules/connections.html
 MYSQL_CONNECTION_PARAM_KEYWORDS = [
-    'host', 'database', 'user', 'password', 'bind_address', 'port', 'connect_timeout',
-    'read_timeout', 'write_timeout', 'client_flag', 'sql_mode', 'sslmode', 'ssl'
+    'host', 'database', 'user', 'password', 'port', 'connection_timeout', 
+    'client_flags', 'sql_mode', 'ssl_ca', 'ssl_cert', 'ssl_key', 'ssl_disabled', 'ssl_verify_cert', 'ssl_verify_identity'
 ]
 
 # Source: https://tableplus.io/blog/2018/08/mysql-how-to-get-the-size-of-mysql-database.html
@@ -58,9 +58,16 @@ class MySQLSSLMode(Enum):
 
 DEFAULT_SSL_MODE = MySQLSSLMode.require
 
+# Check whether C or Python extension is used
+def check_if_c_ext_is_used():
+    logger = logging.getLogger('ossdbtoolsservice')
+    if mysql.connector.HAVE_CEXT:
+        logger.info("MySql Connector is using C extension")
+    else:
+        logger.info("MySql Connector is using Python extension")
 
 class MySQLConnection(ServerConnection):
-    """Wrapper for a pymysql connection that makes various properties easier to access"""
+    """Wrapper for a mysql-connector connection that makes various properties easier to access"""
 
     def __init__(self, conn_params: {}, config: Optional[Configuration] = None):
         """
@@ -69,17 +76,23 @@ class MySQLConnection(ServerConnection):
         :param config: optional Configuration object with mysql connection config
         """
 
+        self._connection_options = {}
         if 'azureAccountToken' in conn_params:
             conn_params['password'] = conn_params['azureAccountToken']
+            self._connection_options['auth_plugin'] = 'mysql_clear_password'
 
-        # Map the provided connection parameter names to pymysql param names
+        # Map the provided connection parameter names to mysql param names
         _params = {MYSQL_CONNECTION_OPTION_KEY_MAP.get(param, param): value for param, value in conn_params.items()}
 
-        # Filter the parameters to only those accepted by PyMySQL
-        self._connection_options = {param: value for param, value in _params.items() if param in MYSQL_CONNECTION_PARAM_KEYWORDS}
+        self._set_ssl_options(_params)
+
+        # Filter the parameters to only those accepted by MySQL
+        for param, value in _params.items():
+            if param in MYSQL_CONNECTION_PARAM_KEYWORDS:
+                self._connection_options[param] = value
 
         # Convert the numeric params from strings to integers
-        numeric_params = ["port", "connect_timeout", "read_timeout", "write_timeout"]
+        numeric_params = ["port", "connection_timeout"]
         for param in numeric_params:
             if param in self._connection_options.keys():
                 val = self._connection_options[param]
@@ -95,21 +108,20 @@ class MySQLConnection(ServerConnection):
         if 'port' not in self._connection_options or not self._connection_options['port']:
             self._connection_options['port'] = constants.DEFAULT_PORT[constants.MYSQL_PROVIDER_NAME]
 
-        self._set_ssl_options(conn_params)
-
         # Setting autocommit to True initally
         self._autocommit_status = True
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         try:
-            self._conn = pymysql.connect(**self._connection_options)
-        except pymysql.err.Error as e:
+            self._conn = mysql.connector.connect(**self._connection_options)
+        except mysql.connector.Error as e:
             self.handle_connection_error(e)
 
         self._connection_closed = False
 
         # Find the class of the database error this driver throws
-        self._database_error = pymysql.err.DatabaseError
+        self._database_error = mysql.connector.DatabaseError
+        self._provider_name = constants.MYSQL_PROVIDER_NAME
 
         # Calculate the server version
         # Source: https://stackoverflow.com/questions/8987679/how-to-retrieve-the-current-version-of-a-mysql-database
@@ -122,7 +134,6 @@ class MySQLConnection(ServerConnection):
             int(version_components[1]),
             int(version_components[2])
         )
-        self._provider_name = constants.MYSQL_PROVIDER_NAME
 
         # Find what type of server we have connected to
         if len(version_components) == 4 and version_components[3] == "MariaDB":
@@ -198,14 +209,14 @@ class MySQLConnection(ServerConnection):
         return "-- ;"
 
     @property
-    def connection(self) -> pymysql.connections.Connection:
+    def connection(self) -> mysql.connector.MySQLConnection:
         """Returns the underlying connection"""
         return self._conn
 
     @property
     def open(self) -> bool:
         """Returns bool indicating if connection is open"""
-        return self._conn.open
+        return self._conn.is_connected()
 
     # METHODS ##############################################################
     @autocommit.setter
@@ -229,7 +240,7 @@ class MySQLConnection(ServerConnection):
         """
         self._conn.ping()
         # Create a new cursor from the current connection
-        cursor_instance = self._conn.cursor()
+        cursor_instance = self._conn.cursor(buffered=True)
 
         # Store the provider name as an attribute in the cursor object
         attr = "provider"
@@ -244,19 +255,19 @@ class MySQLConnection(ServerConnection):
         :raises an error: if there was no result set when executing the query
         """
         self._conn.ping()
-        with self._conn.cursor() as cursor:
+        with self._conn.cursor(buffered=True) as cursor:
             try:
                 cursor.execute(query)
-                if self.autocommit:
-                    self._conn.commit()
-
                 if all:
                     query_results = cursor.fetchall()
                 else:
                     query_results = cursor.fetchone()
-
+                
+                if self.autocommit:
+                    self._conn.commit()
                 return query_results
-            except Exception:
+            except Exception as e:
+                msg = e.msg
                 return False
             finally:
                 cursor.close()
@@ -271,12 +282,9 @@ class MySQLConnection(ServerConnection):
         :return: A list of column objects and a list of rows, which are formatted as dicts.
         """
         self._conn.ping()
-        with self._conn.cursor() as cursor:
+        with self._conn.cursor(buffered=True) as cursor:
             try:
                 cursor.execute(query)
-                if self.autocommit:
-                    self._conn.commit()
-
                 # Get a list of column names
                 col_names: List[str] = [col[0] for col in cursor.description]
 
@@ -286,6 +294,8 @@ class MySQLConnection(ServerConnection):
                         # Map each column name to the corresponding value in each row
                         row_dict = {col_names[index]: row for index, row in enumerate(row)}
                         rows.append(row_dict)
+                if self.autocommit:
+                    self._conn.commit()
                 return col_names, rows
             except Exception:
                 return False
@@ -331,10 +341,11 @@ class MySQLConnection(ServerConnection):
             self._conn.close()
             self._connection_closed = True
 
-    def handle_connection_error(self, exception: pymysql.err.Error):
+    def handle_connection_error(self, exception: mysql.connector.Error):
         host = self._connection_options["host"] if 'host' in self._connection_options else ''
         iscloud = host.endswith('database.azure.com') or host.endswith('database.windows.net')
-        code, message = exception.args
+        code = exception.errno
+        message = exception.msg
         if iscloud:
             if code == 3159:
                 if "Connections using insecure transport are prohibited while --require_secure_transport=ON" in message:
@@ -348,21 +359,15 @@ class MySQLConnection(ServerConnection):
         raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_DRIVER_UNKNOWN_ERROR(code, message))
 
     def _set_ssl_options(self, conn_params: dict):
-        ssl_mode = MySQLSSLMode[self._connection_options["ssl"]] if "ssl" in self._connection_options else DEFAULT_SSL_MODE
+        ssl_mode = MySQLSSLMode[conn_params["ssl"]] if "ssl" in conn_params else DEFAULT_SSL_MODE
         if ssl_mode == MySQLSSLMode.disable:
-            self._connection_options["ssl"] = None
+            self._connection_options["ssl_disabled"] = True
         else:
-            # Fill up the ssl dict
-            ssl_params = {param for param in conn_params if param.startswith("ssl.")}
-            ssl_dict = {param.strip("ssl."): conn_params[param] for param in ssl_params}
-
-            if ssl_mode.value <= MySQLSSLMode.require.value:
-                # ca is not required for modes less than equal to require
-                ssl_dict['ca'] = None
-            elif 'ca' not in ssl_dict or ssl_dict['ca'] is None:
+            self._connection_options["ssl_disabled"] = False
+            if ssl_mode.value > MySQLSSLMode.require.value:
+                if 'ssl_ca' not in conn_params or conn_params['ssl_ca'] is None:
                 # Raise error is ca is not provided for verify modes
-                raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODE())
+                    raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODE())
 
-            ssl_dict["verify_mode"] = "required" if ssl_mode.value >= MySQLSSLMode.verify_ca.value else "none"
-            ssl_dict["check_hostname"] = True if ssl_mode == MySQLSSLMode.verify_identity else False
-            self._connection_options["ssl"] = ssl_dict
+            self._connection_options["ssl_verify_cert"] = True if ssl_mode.value == MySQLSSLMode.verify_ca.value else False
+            self._connection_options['ssl_verify_identity'] = True if ssl_mode.value == MySQLSSLMode.verify_identity.value else False

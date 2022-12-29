@@ -8,7 +8,7 @@ import unittest
 import unittest.mock as mock
 from typing import Optional
 
-import pymysql
+import mysql.connector
 
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
@@ -106,8 +106,8 @@ class MockRequestContext(RequestContext):
         self.last_error_message = str(ex)
 
 
-class MockPyMySQLCursor:
-    """Class used to mock pymysql cursor objects for testing"""
+class MockMySQLCursor:
+    """Class used to mock mysql cursor objects for testing"""
 
     def __init__(self, query_results, columns_names=[], connection=mock.Mock()):
         self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
@@ -118,8 +118,6 @@ class MockPyMySQLCursor:
         self.description = [self.create_column_description(name=name) for name in columns_names]
         self.provider = MYSQL_PROVIDER_NAME
         self.rowcount = -1
-        self._mogrified_value = b'Some query'
-        self.mogrify = mock.Mock(return_value=self._mogrified_value)
         self._query_results = query_results
         self._fetched_count = 0
 
@@ -141,7 +139,7 @@ class MockPyMySQLCursor:
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        raise pymysql.DatabaseError()
+        raise mysql.connector.DatabaseError
 
     def execute_fetch_one_side_effects(self, *args):
         if self._fetched_count < len(self._query_results):
@@ -168,13 +166,9 @@ class MockPyMySQLCursor:
     def __exit__(self, *args):
         pass
 
-    @property
-    def mogrified_value(self):
-        return self._mogrified_value
 
-
-class MockPyMySQLConnection(object):
-    """Class used to mock pymysql connection objects for testing"""
+class MockMySQLConnection(object):
+    """Class used to mock mysql connection objects for testing"""
 
     def __init__(self, parameters=None, cursor=None):
         self.close = mock.Mock()
@@ -182,6 +176,7 @@ class MockPyMySQLConnection(object):
         self.commit = mock.Mock()
         self.ping = mock.Mock()
         self.open = mock.Mock()
+        self.is_connected = mock.Mock()
 
 
 class MockThread():

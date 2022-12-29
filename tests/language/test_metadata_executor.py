@@ -7,7 +7,7 @@ import unittest
 from typing import Any, List
 from unittest import mock
 
-import pymysql
+import mysql
 
 import tests.mysqlsmo_tests.utils as utils
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
@@ -16,7 +16,7 @@ from smo.common.node_object import NodeCollection
 
 
 class MockCursor:
-    """Class used to mock pymysql cursor objects for testing"""
+    """Class used to mock mysql cursor objects for testing"""
 
     def __init__(self, query_results):
         self.query_results = query_results
@@ -26,7 +26,6 @@ class MockCursor:
         self.connection = mock.Mock()
         self.description = None
         self.rowcount = -1
-        self.mogrify = mock.Mock(side_effect=self._mogrify)
         # Define iterator state
         self._has_been_read = False
 
@@ -49,16 +48,13 @@ class MockCursor:
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        raise pymysql.DatabaseError()
+        raise mysql.DatabaseError()
 
     def __enter__(self):
         return self
 
     def __exit__(self, *args):
         pass
-
-    def _mogrify(self, *args, **kwargs):
-        return args[0].format(args[1:])
 
 
 class TestMetadataExecutor(unittest.TestCase):

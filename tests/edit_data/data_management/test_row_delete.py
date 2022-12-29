@@ -13,7 +13,7 @@ from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
 from ossdbtoolsservice.edit_data.contracts import EditRowState
 from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
-from tests.utils import MockPyMySQLCursor
+from tests.utils import MockMySQLCursor
 
 
 class TestMySQLRowDelete(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestMySQLRowDelete(unittest.TestCase):
         self._rows = [("False",), ("True",)]
 
         self._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
-        cursor = MockPyMySQLCursor(self._rows, ['IsTrue'])
+        cursor = MockMySQLCursor(self._rows, ['IsTrue'])
 
         with mock.patch('ossdbtoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
             self._result_set.read_result_to_end(cursor)

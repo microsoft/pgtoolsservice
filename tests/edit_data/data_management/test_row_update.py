@@ -12,7 +12,7 @@ from ossdbtoolsservice.edit_data.update_management import RowUpdate
 from ossdbtoolsservice.query import ResultSetStorageType, create_result_set
 from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.utils.constants import MYSQL_PROVIDER_NAME
-from tests.utils import MockPyMySQLCursor
+from tests.utils import MockMySQLCursor
 
 
 class TestMySQLRowUpdate(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestMySQLRowUpdate(unittest.TestCase):
         self._rows = [("Result1",), ("Result2",)]
 
         self._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
-        cursor = MockPyMySQLCursor(self._rows, ['IsTrue'])
+        cursor = MockMySQLCursor(self._rows, ['IsTrue'])
 
         with mock.patch('ossdbtoolsservice.query.in_memory_result_set.get_columns_info', new=mock.Mock()):
             self._result_set.read_result_to_end(cursor)
