@@ -256,7 +256,7 @@ class MySQLConnection(ServerConnection):
         :raises an error: if there was no result set when executing the query
         """
         self._conn.ping()
-        with self.cursor() as cursor:
+        with self._conn.cursor(buffered=True) as cursor:
             try:
                 cursor.execute(query)
                 if all:
@@ -283,7 +283,7 @@ class MySQLConnection(ServerConnection):
         :return: A list of column objects and a list of rows, which are formatted as dicts.
         """
         self._conn.ping()
-        with self.cursor() as cursor:
+        with self._conn.cursor(buffered=True) as cursor:
             try:
                 cursor.execute(query)
                 # Get a list of column names
