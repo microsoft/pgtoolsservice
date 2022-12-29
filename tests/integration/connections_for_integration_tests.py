@@ -56,4 +56,5 @@ class MySQLConnection:
 
     @classmethod
     def get_connection_server_version(cls, index):
-        return cls._connections[index].server_version
+        response = cls._connections[index]._server_version
+        return '.'.join(str(i) for i in response)

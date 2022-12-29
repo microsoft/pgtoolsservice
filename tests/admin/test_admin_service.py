@@ -83,7 +83,7 @@ class TestAdminService(unittest.TestCase):
         owner = request_context.last_response_params.database_info.options['owner']
 
         cursor = connection.cursor()
-        cursor.execute('select usename from pg_catalog.pg_user')
+        cursor.execute('select user from mysql.user')
         usernames = [row[0] for row in cursor.fetchall()]
         self.assertIn(owner, usernames)
         connection.close()
