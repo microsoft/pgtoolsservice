@@ -58,6 +58,13 @@ class MySQLSSLMode(Enum):
 
 DEFAULT_SSL_MODE = MySQLSSLMode.require
 
+# Check whether C or Python extension is used
+def check_if_c_ext_is_used():
+    logger = logging.getLogger('ossdbtoolsservice')
+    if mysql.connector.HAVE_CEXT:
+        logger.info("MySql Connector is using C extension")
+    else:
+        logger.info("MySql Connector is using Python extension")
 
 class MySQLConnection(ServerConnection):
     """Wrapper for a mysql-connector connection that makes various properties easier to access"""
@@ -70,8 +77,6 @@ class MySQLConnection(ServerConnection):
         """
 
         self._connection_options = {}
-        self._logger = logging.getLogger('ossdbtoolsservice')
-        
         if 'azureAccountToken' in conn_params:
             conn_params['password'] = conn_params['azureAccountToken']
             self._connection_options['auth_plugin'] = 'mysql_clear_password'
@@ -105,12 +110,6 @@ class MySQLConnection(ServerConnection):
 
         # Setting autocommit to True initally
         self._autocommit_status = True
-
-        # Check for which extension is being used
-        if mysql.connector.__version_info__ > (2, 1) and mysql.connector.HAVE_CEXT:
-            self._logger.info("MySql Connector is using C extension")
-        else:
-            self._logger.info("MySql Connector is using Python extension")
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         try:
