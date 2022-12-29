@@ -120,36 +120,40 @@ class QueryExecutionService(object):
         raise NotImplementedError()
 
     def _handle_simple_execute_request(self, request_context: RequestContext, params: SimpleExecuteRequest):
-
-        new_owner_uri = str(uuid.uuid4())
-
         connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        connection_info = connection_service.get_connection_info(params.owner_uri)
-        connection_service.connect(ConnectRequestParams(connection_info.details, new_owner_uri, ConnectionType.QUERY))
-        new_connection = self._get_connection(new_owner_uri, ConnectionType.QUERY)
+        connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
 
         execute_params = ExecuteStringParams()
         execute_params.query = params.query_string
-        execute_params.owner_uri = new_owner_uri
+        execute_params.owner_uri = params.owner_uri
 
         def on_query_complete(query_complete_params):
-            subset_params = SubsetParams()
-            subset_params.owner_uri = new_owner_uri
-            subset_params.batch_index = 0
-            subset_params.result_set_index = 0
-            subset_params.rows_start_index = 0
+            
+            if query_complete_params.batch_summaries and query_complete_params.batch_summaries[0].result_set_summaries :
+                resultset_summary = query_complete_params.batch_summaries[0].result_set_summaries[0]
+                if resultset_summary.row_count > 0 :
+                    subset_params = SubsetParams()
+                    subset_params.owner_uri = params.owner_uri
+                    subset_params.batch_index = 0
+                    subset_params.result_set_index = 0
+                    subset_params.rows_start_index = 0
+                    subset_params.rows_count = resultset_summary.row_count
+                    subset = self._get_result_subset(request_context, subset_params)
+                    simple_execute_response = SimpleExecuteResponse(subset.result_subset.rows, subset.result_subset.row_count, resultset_summary.column_info)
+                else :
+                    simple_execute_response = SimpleExecuteResponse(None, 0, resultset_summary.column_info)
+            else:
+                simple_execute_response = SimpleExecuteResponse(None, 0, None)
 
-            resultset_summary = query_complete_params.batch_summaries[0].result_set_summaries[0]
-
-            subset_params.rows_count = resultset_summary.row_count
-
-            subset = self._get_result_subset(request_context, subset_params)
-
-            simple_execute_response = SimpleExecuteResponse(subset.result_subset.rows, subset.result_subset.row_count, resultset_summary.column_info)
             request_context.send_response(simple_execute_response)
+        
+        def on_message_notification(message_notification_params: MessageNotificationParams):
+            # Send error to client
+            if message_notification_params.message and message_notification_params.message.is_error:
+                request_context.send_error(message=message_notification_params.message.message)
 
-        worker_args = ExecuteRequestWorkerArgs(new_owner_uri, new_connection, request_context, ResultSetStorageType.FILE_STORAGE,
-                                               on_query_complete=on_query_complete)
+        worker_args = ExecuteRequestWorkerArgs(params.owner_uri, connection, request_context, ResultSetStorageType.FILE_STORAGE,
+                                               on_query_complete=on_query_complete, on_message_notification=on_message_notification)
 
         self._start_query_execution_thread(request_context, execute_params, worker_args)
 
