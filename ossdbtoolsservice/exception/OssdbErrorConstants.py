@@ -40,10 +40,10 @@ class OssdbErrorConstants():
     
     """ ERROR CAUSES """
     MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_CAUSES = "SSL encryption is required by server but is not configured by client."
-    MYSQL_FLEX_INCORRECT_CREDENTIALS_CAUSES = "The credentials provided are invalid."
+    MYSQL_FLEX_INCORRECT_CREDENTIALS_CAUSES = "The connection details or credentials provided are invalid."
 
     """ERROR SUGGESTIONS """
     MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED_SUGGESTIONS = "Navigate to \'Advanced Properties\' tab and check that the SSL parameters are correctly configured. \nFor more details on connecting to Azure Database for MySQL using SSL encryptions, see https://learn.microsoft.com/azure/mysql/flexible-server/how-to-connect-tls-ssl"
-    MYSQL_FLEX_IP_NOT_WHITELISTED_SUGGESTIONS = "Verify and configure the firewall settings on your Azure Database for MySQL flexible server to allow connections from the your client address. \n For more details, see https://learn.microsoft.com/azure/mysql/flexible-server/how-to-manage-firewall-portal"
-    MYSQL_FLEX_INCORRECT_CREDENTIALS_SUGGESTIONS = "Check that the provided credentials (Server name, User name, Password, SSL cert) are correct."
+    MYSQL_FLEX_IP_NOT_WHITELISTED_SUGGESTIONS = "Verify the firewall settings on your Azure Database for MySQL flexible server to allow connections from your client address are configured correctly. \n For more details on firewall configuration, see https://learn.microsoft.com/azure/mysql/flexible-server/how-to-manage-firewall-portal"
+    MYSQL_FLEX_INCORRECT_CREDENTIALS_SUGGESTIONS = "Check that the provided connection details and credentials (Server name, User name, Password, SSL cert(if provided)) are correct."
     MYSQL_SSL_CA_REQUIRED_FOR_VERIFY_MODES_SUGGESTIONS = "To connect using these SSL modes, navigate to \'Advanced Properties\' tab and configure the SSL CA certificate. \nFor more details on SSL modes, see https://dev.mysql.com/doc/refman/8.0/en/using-encrypted-connections.html"
