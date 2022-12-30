@@ -349,7 +349,7 @@ class MySQLConnection(ServerConnection):
         if iscloud:
             if code == 3159:
                 raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_SSL_REQUIRED_NOT_PROVIDED(code, message))
-            elif code == 2003:
+            elif code == 2003 and "10060" in message:
                 raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_IP_NOT_WHITELISTED(code, message))
             elif code == 1045:
                 raise OssdbToolsServiceException(OssdbErrorCodes.MYSQL_FLEX_INCORRECT_CREDENTIALS(code, message))
