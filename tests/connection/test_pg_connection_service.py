@@ -839,6 +839,7 @@ class ConnectionServiceIntegrationTests(unittest.TestCase):
         database_names = request_context.last_response_params.database_names
         self.assertGreater(len(database_names), 0)
         self.assertIn(connection.database_name, database_names)
+        connection.close()
 
 
 if __name__ == '__main__':

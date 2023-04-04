@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-
 from pgsmo import Sequence
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 

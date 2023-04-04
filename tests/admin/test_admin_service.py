@@ -86,3 +86,4 @@ class TestAdminService(unittest.TestCase):
         cursor.execute('select usename from pg_catalog.pg_user')
         usernames = [row[0] for row in cursor.fetchall()]
         self.assertIn(owner, usernames)
+        connection.close()

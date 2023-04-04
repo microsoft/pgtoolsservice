@@ -10,6 +10,7 @@ import tempfile
 import threading
 from logging import Logger  # noqa
 from typing import Any, Dict, List, Set  # noqa
+from urllib.parse import unquote
 
 import sqlparse
 from prompt_toolkit.completion import Completer, Completion  # noqa
@@ -195,6 +196,7 @@ class LanguageService:
         def do_send_default_empty_response():
             request_context.send_response(response)
 
+        params.text_document.uri = unquote(params.text_document.uri)
         if self.should_skip_formatting(params.text_document.uri):
             do_send_default_empty_response()
             return
@@ -393,11 +395,11 @@ class LanguageService:
         key = completion.text
         start_position = LanguageService._get_start_position(params.position, completion.start_position)
         text_range = Range(start=start_position, end=params.position)
-        kind = DISPLAY_META_MAP.get(completion._display_meta, CompletionItemKind.Unit)
+        kind = DISPLAY_META_MAP.get(completion.display_meta, CompletionItemKind.Unit)
         completion_item = CompletionItem()
         completion_item.label = key
         completion_item.detail = completion.display
-        completion_item.insert_text = key
+        completion_item.insert_text_format = key
         completion_item.kind = kind
         completion_item.text_edit = TextEdit.from_data(text_range, key)
         # Add a sort text to put keywords after all other items
