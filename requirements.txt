@@ -13,7 +13,7 @@ jinja2
 
 # Build/Test Requirements
 cx_freeze==6.1.0
-nose-py3
+nose2
 parameterized
 coverage
 autopep8
