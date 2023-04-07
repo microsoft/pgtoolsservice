@@ -9,7 +9,7 @@ import functools
 import tempfile
 import threading
 from logging import Logger  # noqa
-from typing import Any, Dict, List, Set  # noqa
+from typing import Any, Dict, List, Set, Union  # noqa
 
 import sqlparse
 from prompt_toolkit.completion import Completer, Completion  # noqa

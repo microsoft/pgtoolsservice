@@ -269,7 +269,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             f'--username={self.username}',
             '--no-owner',
             f'--schema={self.schema}',
-            f'--port=5432'
+            '--port=5432'
         ]
         self._test_perform_backup_restore_internal(exe_name, test_method, test_params, expected_args)
 
@@ -285,7 +285,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             f'--username={self.username}',
             '--no-owner',
             f'--schema={self.schema}',
-            f'--port=5432'
+            '--port=5432'
         ]
         self._test_perform_backup_restore_internal(exe_name, test_method, test_params, expected_args)
 
@@ -373,7 +373,10 @@ class TestDisasterRecoveryService(unittest.TestCase):
         self.connection_service.owner_to_connection_map[self.test_uri] = self.connection_info
 
         # Set up a mock task so that the restore code does not actually run in a separate thread
-        with mock.patch('ossdbtoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=self.mock_task)) as mock_task_constructor:
+        with mock.patch(
+            'ossdbtoolsservice.disaster_recovery.disaster_recovery_service.Task',
+            new=mock.Mock(return_value=self.mock_task)
+        ) as mock_task_constructor:
             # When I call the backup/restore request handler
             test_handler(self.request_context, test_params)
 

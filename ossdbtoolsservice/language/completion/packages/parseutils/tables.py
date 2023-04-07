@@ -97,7 +97,7 @@ def extract_table_identifiers(token_stream, allow_functions=True):
         return schema_name, name, alias
 
     results = []
-    
+
     for item in token_stream:
         if isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
@@ -117,12 +117,13 @@ def extract_table_identifiers(token_stream, allow_functions=True):
             schema_name, real_name, alias = parse_identifier(item)
             is_function = allow_functions and _identifier_is_function(item)
             results.append(TableReference(schema_name, real_name, alias, is_function))
-            
+
         elif isinstance(item, Function):
             schema_name, real_name, alias = parse_identifier(item)
             results.append(TableReference(None, real_name, alias, allow_functions))
-    
+
     return results
+
 
 # extract_tables is inspired from examples in the sqlparse lib.
 def extract_tables(sql):

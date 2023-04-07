@@ -9,7 +9,7 @@ import threading
 import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
-from typing import Callable, Tuple, TypeVar
+from typing import Callable, Tuple
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
