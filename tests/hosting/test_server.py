@@ -458,8 +458,8 @@ class JSONRPCServerTests(unittest.TestCase):
         self.assertDictEqual(dispatch_mock.mock_calls[0][1][0].dictionary, expected_output.dictionary)
 
         # Teardown: All background threads should be shut down.
-        self.assertFalse(server._input_consumer.isAlive())
-        self.assertFalse(server._output_consumer.isAlive())
+        self.assertFalse(server._input_consumer.is_alive())
+        self.assertFalse(server._output_consumer.is_alive())
 
     def test_read_multiple_messages(self):
         # Setup:
@@ -488,8 +488,8 @@ class JSONRPCServerTests(unittest.TestCase):
         self.assertDictEqual(dispatch_mock.mock_calls[1][1][0].dictionary, expected_output.dictionary)
 
         # Teardown: All background threads should be shut down.
-        self.assertFalse(server._input_consumer.isAlive())
-        self.assertFalse(server._output_consumer.isAlive())
+        self.assertFalse(server._input_consumer.is_alive())
+        self.assertFalse(server._output_consumer.is_alive())
 
 
 class _TestParams:
