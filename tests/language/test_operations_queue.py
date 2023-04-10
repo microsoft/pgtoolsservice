@@ -56,10 +56,10 @@ class TestOperationsQueue(unittest.TestCase):
     def test_start_process_stop(self):
         operations_queue = OperationsQueue(self.mock_service_provider)
         operations_queue.start()
-        self.assertTrue(operations_queue._operations_consumer.isAlive())
+        self.assertTrue(operations_queue._operations_consumer.is_alive())
         operations_queue.stop()
         operations_queue._operations_consumer.join(2)
-        self.assertFalse(operations_queue._operations_consumer.isAlive())
+        self.assertFalse(operations_queue._operations_consumer.is_alive())
 
     def test_add_context_creates_new_context(self):
         # Given a connection will be created on a connect request

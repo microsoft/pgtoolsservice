@@ -102,11 +102,12 @@ class FunctionMetadata(object):
 
     def __repr__(self):
         return (
-            (
-                '%s(schema_name=%r, func_name=%r, arg_names=%r, '
-                'arg_types=%r, arg_modes=%r, return_type=%r, is_aggregate=%r, '
-                'is_window=%r, is_set_returning=%r, arg_defaults=%r)'
-            ) % (self.__class__.__name__,) + self._signature()
+            f"{self.__class__.__name__}(schema_name={self.schema_name!r}, "
+            f"func_name={self.func_name!r}, arg_names={self.arg_names!r}, "
+            f"arg_types={self.arg_types!r}, arg_modes={self.arg_modes!r}, "
+            f"return_type={self.return_type!r}, is_aggregate={self.is_aggregate!r}, "
+            f"is_window={self.is_window!r}, is_set_returning={self.is_set_returning!r}, "
+            f"arg_defaults={self.arg_defaults!r})"
         )
 
     def has_variadic(self):

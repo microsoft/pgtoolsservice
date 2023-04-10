@@ -8,6 +8,7 @@
 import os.path
 import sys
 import unittest
+import functools
 from typing import Callable, List
 from unittest import mock
 
@@ -268,7 +269,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             f'--username={self.username}',
             '--no-owner',
             f'--schema={self.schema}',
-            f'--port=5432'
+            '--port=5432'
         ]
         self._test_perform_backup_restore_internal(exe_name, test_method, test_params, expected_args)
 
@@ -284,7 +285,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             f'--username={self.username}',
             '--no-owner',
             f'--schema={self.schema}',
-            f'--port=5432'
+            '--port=5432'
         ]
         self._test_perform_backup_restore_internal(exe_name, test_method, test_params, expected_args)
 
@@ -370,21 +371,32 @@ class TestDisasterRecoveryService(unittest.TestCase):
     def _test_handle_backup_restore_internal(self, test_handler: Callable, test_method: Callable, test_params):
         # Set up the connection service to return the test's connection information
         self.connection_service.owner_to_connection_map[self.test_uri] = self.connection_info
+
         # Set up a mock task so that the restore code does not actually run in a separate thread
-        with mock.patch('ossdbtoolsservice.disaster_recovery.disaster_recovery_service.Task', new=mock.Mock(return_value=self.mock_task)) \
-                as mock_task_constructor, mock.patch('functools.partial', new=mock.Mock(return_value=self.mock_action)) as mock_partial:
+        with mock.patch(
+            'ossdbtoolsservice.disaster_recovery.disaster_recovery_service.Task',
+            new=mock.Mock(return_value=self.mock_task)
+        ) as mock_task_constructor:
             # When I call the backup/restore request handler
             test_handler(self.request_context, test_params)
+
             # Then a mock task is created and started
             mock_task_constructor.assert_called_once()
             self.mock_task.start.assert_called_once()
+
             # And the mock task was initialized with the expected parameters
             parameters = mock_task_constructor.call_args[0]
             self.assertEqual(parameters[2], constants.PG_PROVIDER_NAME)
             self.assertEqual(parameters[3], self.host)
             self.assertEqual(parameters[4], self.dbname)
-            self.assertIs(parameters[6], self.mock_action)
-            mock_partial.assert_called_once_with(test_method, self.connection_info, test_params)
+
+            # Check the partial function created with the correct parameters
+            partial_func = parameters[6]
+            self.assertIsInstance(partial_func, functools.partial)
+            self.assertIs(partial_func.func, test_method)
+            self.assertIs(partial_func.args[0], self.connection_info)
+            self.assertIs(partial_func.args[1], test_params)
+
             # And the handler sends an empty response to indicate success
             self.assertEqual(self.request_context.last_response_params, {})
 

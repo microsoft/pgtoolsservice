@@ -9,8 +9,7 @@ import functools
 import tempfile
 import threading
 from logging import Logger  # noqa
-from typing import Any, Dict, List, Set  # noqa
-from urllib.parse import unquote
+from typing import Any, Dict, List, Set, Union  # noqa
 
 import sqlparse
 from prompt_toolkit.completion import Completer, Completion  # noqa
@@ -71,7 +70,7 @@ class LanguageService:
     def __init__(self):
         self._service_provider: ServiceProvider = None
         self._server: JSONRPCServer = None
-        self._logger: [Logger, None] = None
+        self._logger: Union(Logger, None) = None
         self._valid_uri: Set = set()
         self._completion_helper = DefaultCompletionHelper()
         self._script_map: Dict[str, 'ScriptParseInfo'] = {}
@@ -196,7 +195,6 @@ class LanguageService:
         def do_send_default_empty_response():
             request_context.send_response(response)
 
-        params.text_document.uri = unquote(params.text_document.uri)
         if self.should_skip_formatting(params.text_document.uri):
             do_send_default_empty_response()
             return

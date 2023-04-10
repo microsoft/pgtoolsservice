@@ -62,7 +62,7 @@ class Task:
 
     def start(self) -> None:
         """Start the task by running it in a new thread"""
-        self._start_time = time.clock()
+        self._start_time = time.process_time()
         self._thread = threading.Thread(target=self._run)
         self._thread.daemon = True
         self._thread.start()
@@ -106,7 +106,7 @@ class Task:
             'taskId': self.id,
             'status': self.status,
             'message': self.status_message or '',
-            'duration': int((time.clock() - self._start_time) * 1000) if self._is_completed else 0
+            'duration': int((time.process_time() - self._start_time) * 1000) if self._is_completed else 0
         })
 
     @property
