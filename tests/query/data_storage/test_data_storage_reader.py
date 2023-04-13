@@ -60,7 +60,7 @@ class TestDataStorageReader(unittest.TestCase):
 
         result = self._reader.get_bytes_with_max_capacity(3, 2)
 
-        self.assertEquals(bytearray(b'He'), result)
+        self.assertEqual(bytearray(b'He'), result)
 
     def test_get_chars_with_max_capacity(self):
         self.execute_read_row_with_patch()

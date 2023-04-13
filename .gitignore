@@ -13,3 +13,4 @@ nosetests.xml
 .noseids
 *.log
 .mypy_cache/
+*venv/

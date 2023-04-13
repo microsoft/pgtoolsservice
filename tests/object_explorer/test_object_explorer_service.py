@@ -9,7 +9,7 @@ import threading
 import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
-from typing import Callable, Tuple, TypeVar
+from typing import Callable, Tuple
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
@@ -413,8 +413,8 @@ class TestObjectExplorer(unittest.TestCase):
         self._handle_er_node_alivetasksuccessful(TestObjectExplorer.refresh_method, TestObjectExplorer.refresh_tasks)
 
     # EXPAND/REFRESH NODE TEST BASES #######################################
-    TEventHandler = TypeVar(Callable[[ObjectExplorerService, RequestContext, ExpandParameters], None])
-    TGetTask = TypeVar(Callable[[ObjectExplorerSession], threading.Thread])
+    TEventHandler = Callable[[ObjectExplorerService, RequestContext, ExpandParameters], None]
+    TGetTask = Callable[[ObjectExplorerSession], threading.Thread]
 
     @staticmethod
     def _handle_er_incomplete_params(method: TEventHandler):
@@ -568,7 +568,7 @@ class TestObjectExplorer(unittest.TestCase):
                 self.assertIsInstance(node, NodeInfo)
 
         def myfunc(e):
-            while not e.isSet():
+            while not e.is_set():
                 pass
 
         # If: I expand a node

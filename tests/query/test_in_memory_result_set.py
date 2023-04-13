@@ -83,19 +83,19 @@ class TestInMemoryResultSet(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as context_manager:
             self._result_set.save_as(params, None, None, None)
-            self.assertEquals('Result cannot be saved until query execution has completed', context_manager.exception.args[0])
+            self.assertEqual('Result cannot be saved until query execution has completed', context_manager.exception.args[0])
 
     def test_save_as_result_set_when_thread_alive(self):
         params = SaveResultsRequestParams()
         params.file_path = 'some_file_path'
 
         mock_thread = mock.MagicMock()
-        mock_thread.isAlive = True
+        mock_thread.is_alive = True
         self._result_set._save_as_threads[params.file_path] = mock_thread
 
         with self.assertRaises(RuntimeError) as context_manager:
             self._result_set.save_as(params, None, None, None)
-            self.assertEquals('A save request to the same path is in progress', context_manager.exception.args[0])
+            self.assertEqual('A save request to the same path is in progress', context_manager.exception.args[0])
 
     def test_save_as(self):
 

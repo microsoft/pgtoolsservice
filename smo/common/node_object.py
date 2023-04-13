@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta, abstractmethod
-from collections import Iterator
+from collections.abc import Iterator
 from urllib.parse import urljoin
 from typing import Callable, Dict, Generic, List, Optional, Union, Type, TypeVar, KeysView, ItemsView
 import smo.utils as utils

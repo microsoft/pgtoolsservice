@@ -303,7 +303,7 @@ class TestDataEditorSession(unittest.TestCase):
             self._data_editor_session.commit_edit(None, mock.MagicMock(), mock.MagicMock())
 
         if context_manager.exception.args is not None:
-            self.assertEqual(f"connection is None", context_manager.exception.args[0])
+            self.assertEqual("connection is None", context_manager.exception.args[0])
 
     def test_commit_edit_with_none_success_handler(self):
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
@@ -313,7 +313,7 @@ class TestDataEditorSession(unittest.TestCase):
             self._data_editor_session.commit_edit(self._connection, None, mock.MagicMock())
 
         if context_manager.exception.args is not None:
-            self.assertEqual(f"onsuccess is None", context_manager.exception.args[0])
+            self.assertEqual("onsuccess is None", context_manager.exception.args[0])
 
     def test_commit_edit_with_none_failure_handler(self):
         self._data_editor_session.initialize(self._initialize_edit_request, self._connection, self._query_executer, self._on_success, self._on_failure)
@@ -323,7 +323,7 @@ class TestDataEditorSession(unittest.TestCase):
             self._data_editor_session.commit_edit(self._connection, mock.MagicMock(), None)
 
         if context_manager.exception.args is not None:
-            self.assertEqual(f"onfailure is None", context_manager.exception.args[0])
+            self.assertEqual("onfailure is None", context_manager.exception.args[0])
 
     def test_update_cell_not_initialized(self):
         session = DataEditorSession(self._metadata_factory)
