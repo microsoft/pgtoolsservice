@@ -127,18 +127,13 @@ class _ConnectionManager:
         config_path = os.path.join(current_folder, config_file_name)
         if not os.path.exists(config_path):
             config_path += '.txt'
-        print(f"config_path: {config_path}")
-        print(f"config_exists: {os.path.exists(config_path)}")
-        print(f"config_size: {os.path.getsize(config_path)}")
 
         if not os.path.exists(config_path):
             raise RuntimeError(f'No test config file found at {config_path}')
 
         with open(config_path,  encoding='utf-8-sig') as f:
             json_content = f.read()
-            print(json_content)
             config_list = json.loads(json_content)
-            print(config_list)
 
         if not isinstance(config_list, list):
             config_list = [config_list]
