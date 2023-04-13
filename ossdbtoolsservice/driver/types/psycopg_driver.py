@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import psycopg2
 from psycopg2.extensions import (TRANSACTION_STATUS_INERROR, Column,
@@ -37,7 +37,7 @@ PG_CONNECTION_PARAM_KEYWORDS = [
 class PostgreSQLConnection(ServerConnection):
     """Wrapper for a psycopg2 connection that makes various properties easier to access"""
 
-    def __init__(self, conn_params: {}, config: Optional[Configuration] = None):
+    def __init__(self, conn_params: Dict[str, str], config: Optional[Configuration] = None):
         """
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict

@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, Dict, Tuple, TypeVar
+from typing import Callable, Dict, Tuple
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
@@ -23,7 +23,7 @@ SERVER_TYPES = {
 
 class Scripter(object):
     """Service for retrieving operation scripts"""
-    SCRIPT_OPERATION = TypeVar(Callable[[NodeObject], str])
+    SCRIPT_OPERATION = Callable[[NodeObject], str]
     SCRIPT_HANDLERS: Dict[ScriptOperation, Tuple[type, SCRIPT_OPERATION]] = {
         ScriptOperation.CREATE: (ScriptableCreate, lambda obj: obj.create_script()),
         ScriptOperation.DELETE: (ScriptableDelete, lambda obj: obj.delete_script()),

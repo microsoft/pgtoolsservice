@@ -78,7 +78,7 @@ class TestRowCreate(unittest.TestCase):
         script = self._row_create.get_script()
 
         self.assertEqual(script.query_template, 'INSERT INTO "public"."TestTable"("IsValid") VALUES(%s) RETURNING *')
-        self.assertEquals(script.query_paramters[0], False)
+        self.assertEqual(script.query_paramters[0], False)
 
     def test_apply_changes(self):
         self.assertTrue(len(self._result_set.rows) == 2)

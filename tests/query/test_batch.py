@@ -163,7 +163,7 @@ class TestBatch(unittest.TestCase):
 
         with self.assertRaises(IndexError) as context_manager:
             batch.save_as(params, None, None, None)
-            self.assertEquals('Result set index should be always 0', context_manager.exception.args[0])
+            self.assertEqual('Result set index should be always 0', context_manager.exception.args[0])
 
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ def extract_from_part(parsed, stop_at_punctuation=True):
                 for x in extract_from_part(item, stop_at_punctuation):
                     yield x
             elif stop_at_punctuation and item.ttype is Punctuation:
-                raise StopIteration
+                return
             # An incomplete nested select won't be recognized correctly as a
             # sub-select. eg: 'SELECT * FROM (SELECT id FROM user'. This causes
             # the second FROM to trigger this elif condition resulting in a
@@ -96,6 +96,8 @@ def extract_table_identifiers(token_stream, allow_functions=True):
             name = name.lower()
         return schema_name, name, alias
 
+    results = []
+
     for item in token_stream:
         if isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
@@ -109,16 +111,18 @@ def extract_table_identifiers(token_stream, allow_functions=True):
                 except AttributeError:
                     continue
                 if real_name:
-                    yield TableReference(schema_name, real_name,
-                                         identifier.get_alias(), is_function)
+                    results.append(TableReference(schema_name, real_name,
+                                                  identifier.get_alias(), is_function))
         elif isinstance(item, Identifier):
             schema_name, real_name, alias = parse_identifier(item)
             is_function = allow_functions and _identifier_is_function(item)
+            results.append(TableReference(schema_name, real_name, alias, is_function))
 
-            yield TableReference(schema_name, real_name, alias, is_function)
         elif isinstance(item, Function):
             schema_name, real_name, alias = parse_identifier(item)
-            yield TableReference(None, real_name, alias, allow_functions)
+            results.append(TableReference(None, real_name, alias, allow_functions))
+
+    return results
 
 
 # extract_tables is inspired from examples in the sqlparse lib.
