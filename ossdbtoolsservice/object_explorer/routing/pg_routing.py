@@ -54,10 +54,10 @@ def _get_node_info(
     return node_info
 
 
-TRefreshObject = TypeVar('NodeObject')
+NodeObject = TypeVar('NodeObject')
 
 
-def _get_obj_with_refresh(parent_obj: TRefreshObject, is_refresh: bool) -> TRefreshObject:
+def _get_obj_with_refresh(parent_obj: NodeObject, is_refresh: bool) -> NodeObject:
     if is_refresh:
         parent_obj.refresh()
     return parent_obj
