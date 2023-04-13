@@ -133,8 +133,8 @@ class _ConnectionManager:
 
         if not os.path.exists(config_path):
             raise RuntimeError(f'No test config file found at {config_path}')
-        
-        with open(config_path, encoding='utf-8') as f:
+
+        with open(config_path,  encoding='utf-8-sig') as f:
             json_content = f.read()
             print(json_content)
             config_list = json.loads(json_content)
