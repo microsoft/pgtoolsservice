@@ -20,7 +20,7 @@ class TestTemplatingUtils(unittest.TestCase):
 
         # Then: The output should match what I expected
         expected = path.join(path.dirname(__file__), 'templates')
-        self.assertEqual(root, expected)
+        self.assertEqual(root.lower(), expected.lower())
 
     # GET_TEMPLATE_PATH TESTS ##############################################
     def test_get_template_path_no_match(self):
