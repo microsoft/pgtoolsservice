@@ -12,4 +12,4 @@ then
   exit
 fi
 
-nosetests --with-xunit --process-timeout 60 "$@"
+nose2 -v --with-coverage --coverage-report html --plugin=nose2.plugins.junitxml --junit-xml "$@"
