@@ -1,3 +1,7 @@
+####################################################################
+# Currently not being maintained. Please use test-all.ps1 instead. #
+####################################################################
+
 # Save the current directory and the script's directory, since tests must be run from the project root
 $curloc = $pwd
 $scriptloc = $PSScriptRoot
