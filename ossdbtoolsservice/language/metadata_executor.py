@@ -13,6 +13,7 @@ from ossdbtoolsservice.utils.constants import (MYSQL_PROVIDER_NAME,
                                                PG_PROVIDER_NAME)
 from pgsmo import Database as PGDatabase
 from pgsmo import Server as PGServer
+from pgsmo import Schema
 
 METADATA_MAP = {
     PG_PROVIDER_NAME: PGLightweightMetadata,
@@ -30,7 +31,7 @@ class MetadataExecutor:
         self.server = server
         self.lightweight_metadata = METADATA_MAP[server.connection._provider_name](
             self.server.connection)
-        self.schemas: Dict[str, 'Schema'] = {}
+        self.schemas: Dict[str, Schema] = {}
         self.schemas_loaded = False
 
     def _load_schemas(self):

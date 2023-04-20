@@ -197,7 +197,7 @@ class ObjectExplorerService(object):
             else:
                 task = session.expand_tasks.get(key)
 
-            if task is not None and task.isAlive():
+            if task is not None and task.is_alive():
                 return
 
             new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))

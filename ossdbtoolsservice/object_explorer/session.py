@@ -60,7 +60,7 @@ class RoutingTarget:
     """
     # Type alias for an optional callable that takes in a current path, session, and parameters
     # from the regular expression match and returns a list of NodeInfo objects.
-    TNodeGenerator = TypeVar(Optional[Callable[[bool, str, ObjectExplorerSession, dict], List[NodeInfo]]])
+    TNodeGenerator = TypeVar('TNodeGenerator', bound=Optional[Callable[[bool, str, ObjectExplorerSession, dict], List[NodeInfo]]])
 
     def __init__(self, folders: Optional[List[Folder]], node_generator: TNodeGenerator):
         """

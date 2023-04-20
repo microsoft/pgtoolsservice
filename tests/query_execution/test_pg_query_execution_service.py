@@ -276,7 +276,7 @@ class TestQueryService(unittest.TestCase):
         )
 
         row_size = 3
-        self.assertEquals(results_size, result_set_subset.row_count)
+        self.assertEqual(results_size, result_set_subset.row_count)
         db_cell_values = result_set_subset.rows
         values_len = len(db_cell_values)
         self.assertEqual(values_len, results_size)
@@ -941,7 +941,7 @@ class TestQueryService(unittest.TestCase):
 
         final_call = mock_workspace_service.get_text.call_args_list[1][0]
 
-        self.assertEquals(request.owner_uri, final_call[0])
+        self.assertEqual(request.owner_uri, final_call[0])
 
         selection_data = final_call[1]
 

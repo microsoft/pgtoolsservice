@@ -227,13 +227,13 @@ class TestPGConnectionService(unittest.TestCase):
         connection_details.options = {
             'user': 'postgres@myserver',
             'password': 'password',
-            'host': f'myserver',
+            'host': 'myserver',
             'dbname': 'postgres'}
         connection_type = conn_type
 
         # Set up the mock connection for psycopg2's connect method to return
         mock_psycopg_connection = MockPsycopgConnection(dsn_parameters={
-            'host': f'myserver',
+            'host': 'myserver',
             'dbname': 'postgres',
             'user': 'postgres@myserver'
         })
