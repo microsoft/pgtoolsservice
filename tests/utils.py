@@ -134,6 +134,7 @@ class MockPsycopgConnection(object):
         else:
             raise NotImplementedError()
 
+
 class MockCursor:
     """Class used to mock psycopg2 cursor objects for testing"""
 
