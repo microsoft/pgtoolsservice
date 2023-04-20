@@ -4,6 +4,5 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.language.completion.pgcompleter import PGCompleter
-from ossdbtoolsservice.language.completion.mysqlcompleter import MySQLCompleter
 
-__all__ = ['PGCompleter', 'MySQLCompleter']
+__all__ = ['PGCompleter']

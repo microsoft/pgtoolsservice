@@ -179,7 +179,7 @@ class LanguageService:
         """
         if params is not None and params.uri is not None:
             if params.language.lower() == 'sql':
-                # provider.flavor can be PGSQL, MySQL
+                # provider.flavor can be PGSQL
                 if params.flavor == self._service_provider.provider:
                     self._valid_uri.add(params.uri)
                 else:
