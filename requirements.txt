@@ -18,6 +18,5 @@ parameterized
 coverage
 autopep8
 flake8
-debugpy
+debugpy==1.6.0
 python-dateutil
-pydevd
