@@ -24,17 +24,14 @@ from ossdbtoolsservice.metadata.contracts import ObjectMetadata
 import ossdbtoolsservice.utils as utils
 
 from pgsmo import Server as PGServer
-from mysqlsmo import Server as MySQLServer
 
-from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE, MYSQL_ROUTING_TABLE
+from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 
 ROUTING_TABLES = {
-    utils.constants.MYSQL_PROVIDER_NAME: MYSQL_ROUTING_TABLE,
     utils.constants.PG_PROVIDER_NAME: PG_ROUTING_TABLE
 }
 
 SERVER_TYPES = {
-    utils.constants.MYSQL_PROVIDER_NAME: MySQLServer,
     utils.constants.PG_PROVIDER_NAME: PGServer
 }
 
@@ -80,10 +77,7 @@ class ObjectExplorerService(object):
 
             # Use the provider's default db if db name was not specified
             if params.database_name is None or params.database_name == '':
-                if self._provider == utils.constants.MYSQL_PROVIDER_NAME:
-                    params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.my_sql.default_database
-                elif self._provider == utils.constants.PG_PROVIDER_NAME:
-                    params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
+                params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
 
             # Use the provider's default port if port number was not specified
             if not params.port:
@@ -338,7 +332,6 @@ class ObjectExplorerService(object):
         # Make sure the required params are provided
         utils.validate.is_not_none_or_whitespace('params.server_name', params.options.get('host'))
         utils.validate.is_not_none_or_whitespace('params.user_name', params.options.get('user'))
-        # database_name is not required for mysql connection
         if provider_name == utils.constants.PG_PROVIDER_NAME:
             utils.validate.is_not_none_or_whitespace('params.database_name', params.options.get('dbname'))
         utils.validate.is_not_none('params.port', params.options.get('port'))

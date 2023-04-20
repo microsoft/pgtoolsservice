@@ -1,6 +1,5 @@
 # Shared Requirements
 psycopg2
-PyMySQL==0.9.3
 
 # PGToolsService Requirements
 inflection
