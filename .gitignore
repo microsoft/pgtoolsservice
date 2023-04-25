@@ -7,6 +7,8 @@ cover
 .coverage
 .cache
 build/
+dist/
+*.tar.gz
 coverage.xml
 nosetests.xml
 .pylintrc
