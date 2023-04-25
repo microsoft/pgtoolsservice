@@ -1,5 +1,6 @@
 # Shared Requirements
-psycopg2
+psycopg2; platform_system!="Darwin" or platform_machine!="arm64"
+psycopg2-binary; platform_system=="Darwin" and platform_machine=="arm64"
 
 # PGToolsService Requirements
 inflection
@@ -19,3 +20,4 @@ autopep8
 flake8
 debugpy==1.6.0
 python-dateutil
+pyinstaller
