@@ -137,7 +137,7 @@ def string_convert(value):
 
     E.g:
         6 -> '6'
-        "mysql" -> "'mysql'"
+        "sql" -> "'sql'"
     """
     return "'{}'".format(str(value))
 
