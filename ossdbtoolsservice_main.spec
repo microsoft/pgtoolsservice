@@ -14,11 +14,10 @@ def collect_files(src_folder, dest_folder, file_ext=None):
                 rel_path = os.path.relpath(root, src_folder)
                 dest_path = os.path.join(dest_folder, rel_path)
                 collected_files.append((src_path, dest_path))
+
     return collected_files
 
 # Include files and directories
-#include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes'), ('./ossdbtoolsservice/language/completion/packages/pgliterals/pgliterals.json', './ossdbtoolsservice/language/completion/packages/pgliterals/pgliterals.json')]
-#include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes'), ('./ossdbtoolsservice/language/completion/packages/pgliterals/pgliterals.json', 'language/completion/packages/pgliterals/pgliterals.json')]
 include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes')]
 
 # Include psycopg2 dependencies
@@ -29,11 +28,13 @@ datas = collect_data_files('psycopg2')
 datas += collect_data_files('ossdbtoolsservice', include_py_files=False)
 datas += [('./ossdbtoolsservice/language/completion/packages/pgliterals/pgliterals.json', 'language/completion/packages/pgliterals')]
 
-# Include sql files under pgsmo/objects
+# Include sql and macros files under pgsmo/objects
 src_folder = './pgsmo/objects'
 dest_folder = './pgsmo/objects'
 sql_files = collect_files(src_folder, dest_folder, ".sql")
+macro_files = collect_files(src_folder, dest_folder, ".macros")
 datas += sql_files
+datas += macro_files
 
 # Include zlib library
 if platform.system() == 'Darwin' and platform.machine() == 'arm64':
