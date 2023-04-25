@@ -104,7 +104,7 @@ class CompletionRefresher:
 
         except Exception as e:
             if self.logger:
-                self.logger.exception('Error during metadata refresh: {0}', e)
+                self.logger.exception('Error during metadata refresh: %s', e)
 
         for callback in callbacks:
             callback(completer)
