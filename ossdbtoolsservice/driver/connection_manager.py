@@ -3,10 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import Dict
+
 from ossdbtoolsservice.utils.constants import (
-    PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME, MARIADB_PROVIDER_NAME
+    PG_PROVIDER_NAME
 )
-from ossdbtoolsservice.driver.types import ServerConnection, PostgreSQLConnection, MySQLConnection
+from ossdbtoolsservice.driver.types import ServerConnection, PostgreSQLConnection
 from ossdbtoolsservice.workspace.contracts import Configuration
 
 
@@ -14,12 +16,10 @@ class ConnectionManager:
     """Wrapper class that handles different types of drivers and connections """
 
     CONNECTORS = {
-        PG_PROVIDER_NAME: PostgreSQLConnection,
-        MYSQL_PROVIDER_NAME: MySQLConnection,
-        MARIADB_PROVIDER_NAME: MySQLConnection
+        PG_PROVIDER_NAME: PostgreSQLConnection
     }
 
-    def __init__(self, provider: str, config: Configuration, conn_options: {}):
+    def __init__(self, provider: str, config: Configuration, conn_options: Dict[str, str]):
 
         # Get info about this connection's provider
         self._provider = provider

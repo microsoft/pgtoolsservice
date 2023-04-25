@@ -10,9 +10,7 @@ from unittest.mock import Mock, patch
 
 import tests.pgsmo_tests.utils as utils
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
-from ossdbtoolsservice.utils.constants import (MYSQL_PROVIDER_NAME,
-                                               PG_PROVIDER_NAME)
-from tests.mysqlsmo_tests.utils import MockMySQLServerConnection
+from ossdbtoolsservice.utils.constants import (PG_PROVIDER_NAME)
 
 MYSCHEMA = 'myschema'
 MYSCHEMA2 = 'myschema2'
@@ -79,42 +77,19 @@ class TestSqlCompletionRefresher(unittest.TestCase):
 
     def test_refresh_selects_pg_completer(self):
         """
-        The correct completer (pg vs mysql) should be selected.
+        The correct completer (pg) should be selected.
         """
         callbacks = Mock()
         pg_completer = Mock()
-        mysql_completer = Mock()
 
         mock_completer_map = {
-            PG_PROVIDER_NAME: pg_completer,
-            MYSQL_PROVIDER_NAME: mysql_completer
+            PG_PROVIDER_NAME: pg_completer
         }
         with patch('ossdbtoolsservice.language.completion_refresher.COMPLETER_MAP', mock_completer_map):
             # Set refreshers to 0: we're not testing refresh logic here
             self.refresher.refreshers = {}
             self.refresher.refresh(callbacks)
 
-            # PGCompleter, not MySQLCompleter, should be called because
+            # PGCompleter should be called because
             # self.refresher is using a MockPGServerConnection
             pg_completer.assert_called_once()
-            mysql_completer.assert_not_called()
-
-    def test_refresh_selects_mysql_completer(self):
-        mysql_refresher: CompletionRefresher = CompletionRefresher(MockMySQLServerConnection())
-        callbacks = Mock()
-        pg_completer = Mock()
-        mysql_completer = Mock()
-
-        mock_completer_map = {
-            PG_PROVIDER_NAME: pg_completer,
-            MYSQL_PROVIDER_NAME: mysql_completer
-        }
-        with patch('ossdbtoolsservice.language.completion_refresher.COMPLETER_MAP', mock_completer_map):
-            # Set refreshers to 0: we're not testing refresh logic here
-            mysql_refresher.refreshers = {}
-            mysql_refresher.refresh(callbacks)
-
-            # MySQLCompleter, not PGCompleter, should be called because
-            # mysql_refresher is using a MockMySQLServerConnection
-            mysql_completer.assert_called_once()
-            pg_completer.assert_not_called()

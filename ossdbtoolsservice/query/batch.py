@@ -6,7 +6,7 @@
 from enum import Enum
 from typing import List  # noqa
 from datetime import datetime
-
+import psycopg2
 import uuid
 import sqlparse
 
@@ -128,9 +128,9 @@ class Batch:
                 conn.commit()
 
             self.after_execute(cursor)
-        except conn.database_error as error:
+        except psycopg2.DatabaseError:
             self._has_error = True
-            raise error
+            raise conn.database_error
         finally:
             # We are doing this because when the execute fails for named cursors
             # cursor is not activated on the server which results in failure on close
@@ -140,7 +140,6 @@ class Batch:
             self._has_executed = True
             self._execution_end_time = datetime.now()
 
-            # TODO: PyMySQL doesn't support notices from a connection
             if conn._provider_name == PG_PROVIDER_NAME:
                 self._notices = cursor.connection.notices
                 cursor.connection.notices = []
