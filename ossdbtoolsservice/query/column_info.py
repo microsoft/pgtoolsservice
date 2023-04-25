@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import List
-
 from psycopg2 import sql
 
 from ossdbtoolsservice.query.contracts import DbColumn
@@ -21,7 +20,6 @@ def get_columns_info(cursor) -> List[DbColumn]:
         return [DbColumn.from_cursor_description(index, column) for index, column in enumerate(cursor.description)]
 
     if (hasattr(cursor, "provider")):
-        # MySQL or MariaDB connections
         columns_info = []
         for index, column in enumerate(cursor.description):
             db_column = DbColumn.from_cursor_description(index, column)

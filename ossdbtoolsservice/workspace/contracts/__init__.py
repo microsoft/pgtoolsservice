@@ -9,7 +9,7 @@ from ossdbtoolsservice.workspace.contracts.common import (
 from ossdbtoolsservice.workspace.contracts.did_change_config_notification import (
     DID_CHANGE_CONFIG_NOTIFICATION, Configuration,
     DidChangeConfigurationParams, FormatterConfiguration,
-    IntellisenseConfiguration, MySQLConfiguration, PGSQLConfiguration,
+    IntellisenseConfiguration, PGSQLConfiguration,
     SQLConfiguration)
 from ossdbtoolsservice.workspace.contracts.did_change_text_doc_notification import (
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
@@ -21,7 +21,7 @@ from ossdbtoolsservice.workspace.contracts.did_open_text_doc_notification import
 
 __all__ = [
     'DID_CHANGE_CONFIG_NOTIFICATION', 'DidChangeConfigurationParams',
-    'Configuration', 'MySQLConfiguration', 'PGSQLConfiguration', 'SQLConfiguration', 'IntellisenseConfiguration',
+    'Configuration', 'PGSQLConfiguration', 'SQLConfiguration', 'IntellisenseConfiguration',
     'FormatterConfiguration', 'DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION', 'DidChangeTextDocumentParams', 'TextDocumentChangeEvent',
     'DID_OPEN_TEXT_DOCUMENT_NOTIFICATION', 'DidOpenTextDocumentParams',
     'DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION', 'DidCloseTextDocumentParams',

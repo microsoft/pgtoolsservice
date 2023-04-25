@@ -14,3 +14,4 @@ nosetests.xml
 *.log
 .mypy_cache/
 *venv/
+nose2-junit.xml

@@ -58,7 +58,7 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def database_error(self) -> str:
+    def database_error(self) -> Exception:
         """ Returns the type of database error this connection throws"""
 
     @property

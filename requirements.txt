@@ -1,6 +1,5 @@
 # Shared Requirements
 psycopg2
-PyMySQL==0.9.3
 
 # PGToolsService Requirements
 inflection
@@ -18,6 +17,5 @@ parameterized
 coverage
 autopep8
 flake8
-debugpy
+debugpy==1.6.0
 python-dateutil
-pydevd
