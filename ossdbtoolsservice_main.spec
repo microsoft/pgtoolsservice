@@ -14,12 +14,10 @@ def collect_files(src_folder, dest_folder, file_ext=None):
                 rel_path = os.path.relpath(root, src_folder)
                 dest_path = os.path.join(dest_folder, rel_path)
                 collected_files.append((src_path, dest_path))
-                print(src_path, dest_path)
+
     return collected_files
 
 # Include files and directories
-#include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes'), ('./ossdbtoolsservice/language/completion/packages/pgliterals/pgliterals.json', './ossdbtoolsservice/language/completion/packages/pgliterals/pgliterals.json')]
-#include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes'), ('./ossdbtoolsservice/language/completion/packages/pgliterals/pgliterals.json', 'language/completion/packages/pgliterals/pgliterals.json')]
 include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes')]
 
 # Include psycopg2 dependencies
