@@ -95,10 +95,10 @@ def _perform_backup_restore(connection_info: ConnectionInfo, process_args: List[
             return TaskResult(TaskStatus.CANCELED)
         try:
             os.putenv('PGPASSWORD', connection_info.details.options.get('password') or '')
-            
+
             # Set the executable bit on the file
             os.chmod(process_args[0], 0o755)
-            
+
             dump_restore_process = subprocess.Popen(process_args, stderr=subprocess.PIPE)
             task.on_cancel = dump_restore_process.terminate
             _, stderr = dump_restore_process.communicate()
