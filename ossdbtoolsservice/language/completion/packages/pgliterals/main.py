@@ -14,7 +14,7 @@ root = os.path.dirname(__file__)
 
 if is_packaged:
     # In packaged mode, use the path relative to the binary's directory
-    literal_file = os.path.join(sys._MEIPASS, 'language', 'completion', 'packages', 'pgliterals', 'pgliterals.json')
+    literal_file = os.path.join(getattr(sys, '_MEIPASS', '.'), 'language', 'completion', 'packages', 'pgliterals', 'pgliterals.json')
 else:
     # In development mode, use the path relative to this file's directory
     literal_file = os.path.join(root, 'pgliterals.json')
