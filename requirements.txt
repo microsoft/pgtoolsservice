@@ -4,7 +4,7 @@ psycopg2-binary; platform_system=="Darwin"
 
 # PGToolsService Requirements
 inflection
-sqlparse==0.4.3
+sqlparse==0.4.4
 prompt_toolkit==2.0.7
 xlsxwriter
 
