@@ -119,8 +119,12 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams, task:
         return TaskResult(TaskStatus.FAILED, str(e))
     pg_dump_args = [pg_dump_location,
                     f'--file={params.backup_info.path}',
-                    f'--format={_BACKUP_FORMAT_MAP[params.backup_info.type]}',
-                    "--disable-dynamic-loading"]
+                    f'--format={_BACKUP_FORMAT_MAP[params.backup_info.type]}']
+
+    # Add additional options for Mac systems
+    if sys.platform == 'darwin':
+        pg_dump_args.insert(-1, '--disable-dynamic-loading')
+
     pg_dump_args += _get_backup_restore_connection_params(connection_info.details.options)
     # Remove the options that were already used, and pass the rest so that they can be automatically serialized
     options = params.backup_info.__dict__.copy()
