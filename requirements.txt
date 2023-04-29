@@ -1,6 +1,6 @@
 # Shared Requirements
-psycopg2; platform_system!="Darwin" or platform_machine!="arm64"
-psycopg2-binary; platform_system=="Darwin" and platform_machine=="arm64"
+psycopg2; platform_system!="Darwin"
+psycopg2-binary; platform_system=="Darwin"
 
 # PGToolsService Requirements
 inflection
