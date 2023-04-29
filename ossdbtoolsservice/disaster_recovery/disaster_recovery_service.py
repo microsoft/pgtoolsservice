@@ -95,6 +95,10 @@ def _perform_backup_restore(connection_info: ConnectionInfo, process_args: List[
             return TaskResult(TaskStatus.CANCELED)
         try:
             os.putenv('PGPASSWORD', connection_info.details.options.get('password') or '')
+            
+            # Set the executable bit on the file
+            os.chmod(process_args[0], 0o755)
+            
             dump_restore_process = subprocess.Popen(process_args, stderr=subprocess.PIPE)
             task.on_cancel = dump_restore_process.terminate
             _, stderr = dump_restore_process.communicate()
@@ -115,7 +119,8 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams, task:
         return TaskResult(TaskStatus.FAILED, str(e))
     pg_dump_args = [pg_dump_location,
                     f'--file={params.backup_info.path}',
-                    f'--format={_BACKUP_FORMAT_MAP[params.backup_info.type]}']
+                    f'--format={_BACKUP_FORMAT_MAP[params.backup_info.type]}',
+                    "--disable-dynamic-loading"]
     pg_dump_args += _get_backup_restore_connection_params(connection_info.details.options)
     # Remove the options that were already used, and pass the rest so that they can be automatically serialized
     options = params.backup_info.__dict__.copy()
