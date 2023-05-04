@@ -53,8 +53,7 @@ def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwarg
         if pythonic_attr not in instance_attributes:
             if ignore_extra_attributes:
                 continue
-            raise AttributeError('Could not deserialize to class {class_}, {attr} is not defined as an attribute'
-                                 .format(class_, pythonic_attr))
+            raise AttributeError('Could not deserialize to class {0}, {1} is not defined as an attribute'.format(class_, pythonic_attr))
 
         value = dictionary[attr]
 
