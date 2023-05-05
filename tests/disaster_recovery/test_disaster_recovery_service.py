@@ -446,7 +446,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         mock_process.terminate = mock.Mock()
         mock_process.returncode = 0
         with mock.patch('subprocess.Popen', new=mock.Mock(return_value=mock_process)):
-            path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe, (11, 0))
+            path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe, (14, 0))
             process_args = [path]
             # If I perform a backup/restore that kicks off the subprocess and then I cancel the task
             disaster_recovery_service._perform_backup_restore(self.connection_info, process_args, {}, self.mock_task)
