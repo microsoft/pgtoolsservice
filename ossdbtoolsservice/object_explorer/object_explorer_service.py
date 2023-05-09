@@ -210,8 +210,14 @@ class ObjectExplorerService(object):
         try:
             response = ExpandCompletedParameters(session.id, params.node_path)
             response.nodes = self._route_request(is_refresh, session, params.node_path)
-
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
+            
+            # refresh children. 
+            for node in response.nodes:
+                child_response = ExpandCompletedParameters(session.id, node.node_path)
+                child_response.nodes = self._route_request(is_refresh, session, node.node_path)
+                request_context.send_notification(EXPAND_COMPLETED_METHOD, child_response)
+            
         except Exception as e:
             self._expand_node_error(request_context, params, str(e))
 
