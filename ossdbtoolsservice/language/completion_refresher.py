@@ -11,20 +11,17 @@ import os
 from collections import OrderedDict
 
 from pgsmo import Server as PGServer
-from mysqlsmo import Server as MySQLServer
 from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.language.completion import PGCompleter, MySQLCompleter
+from ossdbtoolsservice.language.completion import PGCompleter
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME, MYSQL_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 COMPLETER_MAP = {
-    PG_PROVIDER_NAME: PGCompleter,
-    MYSQL_PROVIDER_NAME: MySQLCompleter
+    PG_PROVIDER_NAME: PGCompleter
 }
 
 SERVER_MAP = {
-    PG_PROVIDER_NAME: PGServer,
-    MYSQL_PROVIDER_NAME: MySQLServer
+    PG_PROVIDER_NAME: PGServer
 }
 
 
@@ -39,7 +36,7 @@ class CompletionRefresher:
     def __init__(self, connection: ServerConnection, logger: Logger = None):
         self.connection = connection
         self.logger: Logger = logger
-        self.server: PGServer or MySQLServer = None
+        self.server: PGServer = None
         self._completer_thread: threading.Thread = None
         self._restart_refresh: threading.Event = threading.Event()
 
@@ -74,7 +71,7 @@ class CompletionRefresher:
 
     def _bg_refresh(self, callbacks, history=None, settings=None):
         settings = settings or {}
-        completer: PGCompleter or MySQLCompleter = COMPLETER_MAP[self.connection._provider_name](smart_completion=True, settings=settings)
+        completer: PGCompleter = COMPLETER_MAP[self.connection._provider_name](smart_completion=True, settings=settings)
 
         self.server.refresh()
         metadata_executor = MetadataExecutor(self.server)
@@ -107,7 +104,7 @@ class CompletionRefresher:
 
         except Exception as e:
             if self.logger:
-                self.logger.exception('Error during metadata refresh: {0}', e)
+                self.logger.exception('Error during metadata refresh: %s', e)
 
         for callback in callbacks:
             callback(completer)
@@ -127,36 +124,36 @@ def refresher(name, refreshers=CompletionRefresher.refreshers):
 
 
 @refresher('schemata')
-def refresh_schemata(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
+def refresh_schemata(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.set_search_path(metadata_executor.search_path())
     completer.extend_schemata(metadata_executor.schemata())
 
 
 @refresher('tables')
-def refresh_tables(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
+def refresh_tables(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.extend_relations(metadata_executor.tables(), kind='tables')
     completer.extend_columns(metadata_executor.table_columns(), kind='tables')
     completer.extend_foreignkeys(metadata_executor.foreignkeys())
 
 
 @refresher('views')
-def refresh_views(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
+def refresh_views(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.extend_relations(metadata_executor.views(), kind='views')
     completer.extend_columns(metadata_executor.view_columns(), kind='views')
 
 
 @refresher('types')
-def refresh_types(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
+def refresh_types(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.extend_datatypes(metadata_executor.datatypes())
 
 
 @refresher('databases')
-def refresh_databases(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
+def refresh_databases(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.extend_database_names(metadata_executor.databases())
 
 
 @refresher('casing')
-def refresh_casing(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
+def refresh_casing(completer: PGCompleter, metadata_executor: MetadataExecutor):
     casing_file = completer.casing_file
     if not casing_file:
         return
@@ -171,5 +168,5 @@ def refresh_casing(completer: PGCompleter or MySQLCompleter, metadata_executor: 
 
 
 @refresher('functions')
-def refresh_functions(completer: PGCompleter or MySQLCompleter, metadata_executor: MetadataExecutor):
+def refresh_functions(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.extend_functions(metadata_executor.functions())

@@ -1,0 +1,5 @@
+/ossdbtoolsservice/** @microsoft/azurepostgresql
+/pgsmo/** @microsoft/azurepostgresql
+/scripts/** @microsoft/azurepostgresql
+/smo/** @microsoft/azurepostgresql
+/tests/** @microsoft/azurepostgresql

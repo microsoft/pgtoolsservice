@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, Dict, Tuple, TypeVar
+from typing import Callable, Dict, Tuple
 
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
@@ -13,17 +13,15 @@ from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import ossdbtoolsservice.utils as utils
 
 from pgsmo import Server as PGServer
-from mysqlsmo import Server as MySQLServer
 
 SERVER_TYPES = {
-    utils.constants.MYSQL_PROVIDER_NAME: MySQLServer,
     utils.constants.PG_PROVIDER_NAME: PGServer
 }
 
 
 class Scripter(object):
     """Service for retrieving operation scripts"""
-    SCRIPT_OPERATION = TypeVar(Callable[[NodeObject], str])
+    SCRIPT_OPERATION = Callable[[NodeObject], str]
     SCRIPT_HANDLERS: Dict[ScriptOperation, Tuple[type, SCRIPT_OPERATION]] = {
         ScriptOperation.CREATE: (ScriptableCreate, lambda obj: obj.create_script()),
         ScriptOperation.DELETE: (ScriptableDelete, lambda obj: obj.delete_script()),
@@ -32,7 +30,7 @@ class Scripter(object):
     }
 
     def __init__(self, conn: ServerConnection):
-        self.server: PGServer or MySQLServer = SERVER_TYPES[conn._provider_name](conn)
+        self.server: PGServer = SERVER_TYPES[conn._provider_name](conn)
 
     # SCRIPTING METHODS ############################
     def script(self, operation: ScriptOperation, metadata: ObjectMetadata) -> str:

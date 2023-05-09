@@ -3,8 +3,9 @@ from cx_Freeze import setup, Executable
 # Dependencies are automatically detected, but it might need
 # fine tuning.
 include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes')]
-buildOptions = dict(packages=['asyncio', 'jinja2', 'psycopg2', 'pymysql', 'inflection', 'sqlparse',
-                              'prompt_toolkit', 'xlsxwriter', 'nose', 'parameterized', 'coverage', 'autopep8', 'flake8', '_pydev_runfiles'],
+
+buildOptions = dict(packages=['asyncio', 'jinja2', 'psycopg2', 'inflection', 'sqlparse',
+                              'prompt_toolkit', 'xlsxwriter', 'nose2', 'parameterized', 'coverage', 'autopep8', 'flake8'],
                     excludes=[], include_files=include_files)
 
 base = 'Console'

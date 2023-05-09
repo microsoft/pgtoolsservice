@@ -5,8 +5,6 @@
 
 from typing import Optional
 
-from ossdbtoolsservice.capabilities.connection_options.mysql_connection_options import \
-    capabilities as MySQLServerCapabilities
 from ossdbtoolsservice.capabilities.connection_options.pg_connection_options import \
     capabilities as PGServerCapabilities
 from ossdbtoolsservice.capabilities.contracts import (
@@ -17,8 +15,7 @@ from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.utils import constants
 
 SERVER_CAPABILITIES_MAP = {
-    constants.PG_PROVIDER_NAME: PGServerCapabilities,
-    constants.MYSQL_PROVIDER_NAME: MySQLServerCapabilities
+    constants.PG_PROVIDER_NAME: PGServerCapabilities
 }
 
 

@@ -180,7 +180,7 @@ select * from t1;'''
 
         with self.assertRaises(IndexError) as context_manager:
             query.get_subset(batch_index, 0, 10)
-            self.assertEquals('Batch index cannot be less than 0 or greater than the number of batches', context_manager.exception.args[0])
+            self.assertEqual('Batch index cannot be less than 0 or greater than the number of batches', context_manager.exception.args[0])
 
     def test_get_subset_raises_error_when_index_is_negetive(self):
         self.execute_get_subset_raises_error_when_index_not_in_range(-1)
@@ -211,7 +211,7 @@ select * from t1;'''
 
             with self.assertRaises(IndexError) as context_manager:
                 self.query.save_as(params, None, None, None)
-                self.assertEquals('Batch index cannot be less than 0 or greater than the number of batches', context_manager.exception.args[0])
+                self.assertEqual('Batch index cannot be less than 0 or greater than the number of batches', context_manager.exception.args[0])
 
         execute_with_batch_index(-1)
 

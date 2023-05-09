@@ -29,10 +29,9 @@ from ossdbtoolsservice.language.script_parse_info import \
     ScriptParseInfo  # noqa
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.constants import (MSSQL_PROVIDER_NAME,
-                                               MYSQL_PROVIDER_NAME,
                                                PG_PROVIDER_NAME)
 from ossdbtoolsservice.workspace import (Configuration,  # noqa
-                                         MySQLConfiguration, PGSQLConfiguration, ScriptFile,
+                                         PGSQLConfiguration, ScriptFile,
                                          TextDocumentIdentifier, Workspace,
                                          WorkspaceService)
 from ossdbtoolsservice.workspace.contracts import Range
@@ -186,7 +185,6 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: I create a new language service
         pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
-        mysql_params = LanguageFlavorChangeParams.from_data('file://mysqluri.sql', 'sql', MYSQL_PROVIDER_NAME)
         mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
         other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
         provider = utils.get_mock_service_provider()
@@ -198,7 +196,6 @@ class TestLanguageService(unittest.TestCase):
 
         service.handle_flavor_change(context, pgsql_params)
         service.handle_flavor_change(context, mssql_params)
-        service.handle_flavor_change(context, mysql_params)
         service.handle_flavor_change(context, other_params)
 
         # Then:
@@ -207,62 +204,9 @@ class TestLanguageService(unittest.TestCase):
         self.assertFalse(service.is_valid_uri(mssql_params.uri))
         self.assertTrue(service.is_valid_uri(pgsql_params.uri))
         self.assertFalse(service.is_valid_uri(other_params.uri))
-        self.assertFalse(service.is_valid_uri(mysql_params.uri))
 
         # When: I change from MSSQL to PGSQL
         mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
-        service.handle_flavor_change(context, mssql_params)
-
-        # Then: the service is updated to allow intellisense
-        self.assertTrue(service.is_valid_uri(mssql_params.uri))
-
-        # When: I change from PGSQL to MYSQL
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
-        service.handle_flavor_change(context, mssql_params)
-
-        # Then: the service is updated to not allow intellisense
-        self.assertFalse(service.is_valid_uri(mssql_params.uri))
-
-    def test_mysql_language_flavor(self):
-        """
-        Test that if provider is MySQL, the service ignores files registered as being for non-MySQL flavors
-        """
-        # If: I create a new language service
-        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
-        mysql_params = LanguageFlavorChangeParams.from_data('file://mysqluri.sql', 'sql', MYSQL_PROVIDER_NAME)
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
-        other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
-
-        # create a mock mysql service provider
-        provider = utils.get_mock_service_provider(provider_name=MYSQL_PROVIDER_NAME)
-        service = LanguageService()
-        service._service_provider = provider
-
-        # When: I notify of language preferences
-        context: NotificationContext = utils.get_mock_notification_context()
-
-        service.handle_flavor_change(context, pgsql_params)
-        service.handle_flavor_change(context, mssql_params)
-        service.handle_flavor_change(context, mysql_params)
-        service.handle_flavor_change(context, other_params)
-
-        # Then:
-        # ... Only non-MySQL SQL files should be ignored
-        context.send_notification.assert_not_called()
-        self.assertFalse(service.is_valid_uri(mssql_params.uri))
-        self.assertFalse(service.is_valid_uri(pgsql_params.uri))
-        self.assertFalse(service.is_valid_uri(other_params.uri))
-        self.assertTrue(service.is_valid_uri(mysql_params.uri))
-
-        # When: I change from MSSQL to PGSQL
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
-        service.handle_flavor_change(context, mssql_params)
-
-        # Then: the service is updated to not allow intellisense
-        self.assertFalse(service.is_valid_uri(mssql_params.uri))
-
-        # When: I change from PGSQL to MYSQL
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MYSQL_PROVIDER_NAME)
         service.handle_flavor_change(context, mssql_params)
 
         # Then: the service is updated to allow intellisense
@@ -357,7 +301,7 @@ class TestLanguageService(unittest.TestCase):
         expected_output = '\n'.join([
             'SELECT *',
             'FROM foo',
-            'WHERE id IN',
+            'WHERE id in',
             '\t\t\t\t(SELECT id',
             '\t\t\t\t\tFROM bar);'
         ])
@@ -404,7 +348,7 @@ class TestLanguageService(unittest.TestCase):
         expected_output = '\n'.join([
             'SELECT *',
             'FROM foo',
-            'WHERE id IN',
+            'WHERE id in',
             '\t\t\t\t(SELECT id',
             '\t\t\t\t\tFROM bar);'
         ])
@@ -413,111 +357,6 @@ class TestLanguageService(unittest.TestCase):
         config = Configuration()
         config.pgsql = PGSQLConfiguration()
         config.pgsql.format.keyword_case = 'upper'
-        self.mock_workspace_service._configuration = config
-        workspace, script_file = self._get_test_workspace(True, input_text)
-        self.mock_workspace_service._workspace = workspace
-        service: LanguageService = self._init_service()
-
-        format_options = FormattingOptions()
-        format_options.insert_spaces = False
-        format_params = DocumentRangeFormattingParams()
-        format_params.options = format_options
-        format_params.text_document = self.default_text_document_id
-        # add uri to valid uri set ensure request passes uri check
-        # normally done in flavor change handler, but we are not testing that here
-        service._valid_uri.add(format_params.text_document.uri)
-
-        # When: I request format the 2nd line of a document
-        format_params.range = Range.from_data(1, 0, 1, len(input_lines[1]))
-        service.handle_doc_range_format_request(context, format_params)
-
-        # Then:
-        # ... only the 2nd line should be formatted
-        context.send_response.assert_called_once()
-        edits: List[TextEdit] = context.last_response_params
-        self.assertTrue(len(edits) > 0)
-        self.assert_range_equals(edits[0].range, format_params.range)
-        self.assertEqual(edits[0].new_text, expected_output)
-
-    def test_format_mysql_doc(self):
-        """
-        Test that the format document codepath works as expected with a mysql doc
-        """
-        # set up service provider with mysql connection
-        self.mock_service_provider = ServiceProvider(self.mock_server, {}, MYSQL_PROVIDER_NAME, None)
-        self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
-        self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
-        self.mock_service_provider._is_initialized = True
-
-        # If: We have a basic string to be formatted
-        input_text = 'select * from foo where id in (select id from bar);'
-        # Note: sqlparse always uses '\n\ for line separator even on windows.
-        # For now, respecting this behavior and leaving as-is
-        expected_output = '\n'.join([
-            'SELECT *',
-            'FROM foo',
-            'WHERE id IN',
-            '\t\t\t\t(SELECT id',
-            '\t\t\t\t\tFROM bar);'
-        ])
-
-        context: RequestContext = utils.MockRequestContext()
-        config = Configuration()
-        config.my_sql = MySQLConfiguration()
-        config.my_sql.format.keyword_case = 'upper'
-        self.mock_workspace_service._configuration = config
-        workspace, script_file = self._get_test_workspace(True, input_text)
-        self.mock_workspace_service._workspace = workspace
-        service: LanguageService = self._init_service()
-
-        format_options = FormattingOptions()
-        format_options.insert_spaces = False
-        format_params = DocumentFormattingParams()
-        format_params.options = format_options
-        format_params.text_document = self.default_text_document_id
-        # add uri to valid uri set ensure request passes uri check
-        # normally done in flavor change handler, but we are not testing that here
-        service._valid_uri.add(format_params.text_document.uri)
-
-        # When: I request document formatting
-        service.handle_doc_format_request(context, format_params)
-
-        # Then:
-        # ... The entire document text should be formatted
-        context.send_response.assert_called_once()
-        edits: List[TextEdit] = context.last_response_params
-        self.assertTrue(len(edits) > 0)
-        self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
-        self.assertEqual(edits[0].new_text, expected_output)
-
-    def test_format_mysql_doc_range(self):
-        """
-        Test that the format document range codepath works as expected with a mysql doc
-        """
-        # set up service provider with mysql connection
-        self.mock_service_provider = ServiceProvider(self.mock_server, {}, MYSQL_PROVIDER_NAME, None)
-        self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
-        self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
-        self.mock_service_provider._is_initialized = True
-
-        # If: The script file doesn't exist (there is an empty workspace)
-        input_lines: List[str] = [
-            'select * from t1',
-            'select * from foo where id in (select id from bar);'
-        ]
-        input_text = '\n'.join(input_lines)
-        expected_output = '\n'.join([
-            'SELECT *',
-            'FROM foo',
-            'WHERE id IN',
-            '\t\t\t\t(SELECT id',
-            '\t\t\t\t\tFROM bar);'
-        ])
-
-        context: RequestContext = utils.MockRequestContext()
-        config = Configuration()
-        config.my_sql = MySQLConfiguration()
-        config.my_sql.format.keyword_case = 'upper'
         self.mock_workspace_service._configuration = config
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace

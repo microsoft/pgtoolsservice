@@ -1,10 +1,10 @@
 # Shared Requirements
-psycopg2==2.7.5
-PyMySQL==0.9.3
+psycopg2; platform_system!="Darwin"
+psycopg2-binary; platform_system=="Darwin"
 
 # PGToolsService Requirements
 inflection
-sqlparse==0.3.0
+sqlparse==0.4.3
 prompt_toolkit==2.0.7
 xlsxwriter
 
@@ -12,12 +12,12 @@ xlsxwriter
 jinja2
 
 # Build/Test Requirements
-cx_freeze==6.1.0
-nose
+cx_freeze
+nose2
 parameterized
 coverage
 autopep8
-flake8==3.7.0
-ptvsd==4.3.2
+flake8
+debugpy==1.6.0
 python-dateutil
-pydevd
+pyinstaller

@@ -24,7 +24,7 @@ class TestCellUpdate(unittest.TestCase):
 
         with self.assertRaises(AttributeError) as context_manager:
             CellUpdate(self._db_column, self._new_cell_value)
-            self.assertEquals('Updates to column with type "char[]" is not supported', context_manager.exception.args[0])
+            self.assertEqual('Updates to column with type "char[]" is not supported', context_manager.exception.args[0])
 
     def test_value_set_to_right_text_with_str_datatype(self):
         self.assertEqual(self._new_cell_value, self._cell_update.value)

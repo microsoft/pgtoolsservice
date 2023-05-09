@@ -27,29 +27,7 @@ SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_v
     WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
 """
 
-# Source: https://gist.githubusercontent.com/rakeshsingh/456724716534610caf83/raw/4f9ffba2a1bc365395a70da4d392dae5fd014e3f/Mysql-Show-All-Schema-Objects.sql
-MYSQL_METADATA_QUERY = """
-SELECT OBJECT_SCHEMA, OBJECT_NAME, OBJECT_TYPE
-FROM (
-    SELECT TABLE_NAME AS OBJECT_NAME, 't' AS OBJECT_TYPE, TABLE_SCHEMA AS OBJECT_SCHEMA
-    FROM information_schema.TABLES AS tbl
-    UNION
-    SELECT TABLE_NAME AS OBJECT_NAME, 'v' AS OBJECT_TYPE,  TABLE_SCHEMA AS OBJECT_SCHEMA
-    FROM information_schema.VIEWS as v
-    UNION
-    SELECT ROUTINE_NAME AS OBJECT_NAME, 'f' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
-    FROM information_schema.ROUTINES as r
-    WHERE r.ROUTINE_TYPE = 'FUNCTION'
-    UNION
-    SELECT ROUTINE_NAME AS OBJECT_NAME, 's' AS OBJECT_TYPE, ROUTINE_SCHEMA AS OBJECT_SCHEMA
-    FROM information_schema.ROUTINES as s
-    WHERE s.ROUTINE_TYPE = 'PROCEDURE'
-    ) as objects
-WHERE OBJECT_SCHEMA = '{}';
-"""
-
 QUERY_MAP = {
-    constants.MYSQL_PROVIDER_NAME: MYSQL_METADATA_QUERY,
     constants.PG_PROVIDER_NAME: PG_METADATA_QUERY
 }
 
@@ -74,16 +52,12 @@ class MetadataService:
     # REQUEST HANDLERS #####################################################
 
     def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
-        # psycopg is thread safe while PyMYSQL is not
-        if self._service_provider.provider == constants.PG_PROVIDER_NAME:
-            thread = threading.Thread(
-                target=self._metadata_list_worker,
-                args=(request_context, params)
-            )
-            thread.daemon = True
-            thread.start()
-        else:
-            self._metadata_list_worker(request_context, params)
+        thread = threading.Thread(
+            target=self._metadata_list_worker,
+            args=(request_context, params)
+        )
+        thread.daemon = True
+        thread.start()
 
     def _metadata_list_worker(self, request_context: RequestContext, params: MetadataListParameters) -> None:
         try:

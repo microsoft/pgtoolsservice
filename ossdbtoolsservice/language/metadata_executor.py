@@ -5,36 +5,32 @@
 
 from typing import Dict, List, Tuple  # noqa
 
-from mysqlsmo import Database as MySQLDatabase
-from mysqlsmo import Server as MySQLServer
-from ossdbtoolsservice.language.query import (MySQLLightweightMetadata,
-                                              PGLightweightMetadata)
-from ossdbtoolsservice.utils.constants import (MYSQL_PROVIDER_NAME,
-                                               PG_PROVIDER_NAME)
+from ossdbtoolsservice.language.query import (PGLightweightMetadata)
+from ossdbtoolsservice.utils.constants import (PG_PROVIDER_NAME)
 from pgsmo import Database as PGDatabase
 from pgsmo import Server as PGServer
+from pgsmo import Schema
 
 METADATA_MAP = {
-    PG_PROVIDER_NAME: PGLightweightMetadata,
-    MYSQL_PROVIDER_NAME: MySQLLightweightMetadata
+    PG_PROVIDER_NAME: PGLightweightMetadata
 }
 
 
 class MetadataExecutor:
     """
-    Handles querying metadata from PGSMO or MYSQLSMO and returning it in a form usable by the
+    Handles querying metadata from PGSMO and returning it in a form usable by the
     autocomplete code
     """
 
-    def __init__(self, server: PGServer or MySQLServer):
+    def __init__(self, server: PGServer):
         self.server = server
         self.lightweight_metadata = METADATA_MAP[server.connection._provider_name](
             self.server.connection)
-        self.schemas: Dict[str, 'Schema'] = {}
+        self.schemas: Dict[str, Schema] = {}
         self.schemas_loaded = False
 
     def _load_schemas(self):
-        database: PGDatabase or MySQLDatabase = self.server.maintenance_db
+        database: PGDatabase = self.server.maintenance_db
         if database:
             for schema in database.schemas:
                 self.schemas[schema.name] = schema
