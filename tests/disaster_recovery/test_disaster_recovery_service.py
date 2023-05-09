@@ -85,6 +85,13 @@ class TestDisasterRecoveryService(unittest.TestCase):
         self.mock_task = Task(None, None, None, None, None, self.request_context, self.mock_action)
         self.mock_task.start = mock.Mock()
 
+        # Calculate the path to the 'pg_exes' folder
+        current_file_directory = os.path.dirname(os.path.abspath(__file__))
+        root_directory = os.path.abspath(os.path.join(current_file_directory, '..', '..'))
+        pg_exes_directory = os.path.join(root_directory, 'ossdbtoolsservice', 'pg_exes')
+        # Set sys.argv[0] to the calculated path
+        sys.argv[0] = pg_exes_directory
+
     def test_get_pg_exe_path_local_linux(self):
         """Test the get_pg_exe_path function for linux when the service is running from source code"""
         # Back up these values so that the test can overwrite them
