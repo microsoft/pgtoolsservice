@@ -1,0 +1,73 @@
+steps:
+- task: EsrpCodeSigning@2
+  displayName: 'Code Signing for windows'
+  condition: eq(variables['platform'], 'windows')
+  inputs:
+    ConnectedServiceName: 'Database System ESRP Connector'
+    FolderPath: '$(Build.SourcesDirectory)/build/pgsqltoolsservice'
+    Pattern: |
+      *.exe
+      *.dll
+    useMinimatch: true
+    signConfigType: inlineSignParams
+    inlineOperation: |
+      [
+        {
+          "KeyCode" : "CP-230012",
+          "OperationCode" : "SigntoolSign",
+          "Parameters" : {
+              "OpusName" : "Microsoft",
+              "OpusInfo" : "http://www.microsoft.com",
+              "FileDigest" : "/fd \"SHA256\"",
+              "PageHash" : "/NPH",
+              "TimeStamp" : "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+            },
+          "ToolName" : "sign",
+          "ToolVersion" : "1.0"
+        },
+        {
+          "KeyCode" : "CP-230012",
+          "OperationCode" : "SigntoolVerify",
+          "Parameters" : {},
+          "ToolName" : "sign",
+          "ToolVersion" : "1.0"
+        }
+      ]
+    SessionTimeout: '60'
+    MaxConcurrency: '50'
+    MaxRetryAttempts: '5'
+- task: CmdLine@2
+  displayName: 'Pre-sign steps for non-windows platform'
+  condition: ne(variables['platform'], 'windows')
+  inputs:
+    script: |
+      cp $(Build.SourcesDirectory)/build/pgsqltoolsservice/ossdbtoolsservice_main $(Build.SourcesDirectory)/build
+      mv $(Build.SourcesDirectory)/build/pgsqltoolsservice/ossdbtoolsservice_main $(Build.SourcesDirectory)/build/pgsqltoolsservice/ossdbtoolsservice_main_sig
+- task: EsrpCodeSigning@2
+  displayName: 'Code Signing for linux and mac'
+  condition: ne(variables['platform'], 'windows')
+  inputs:
+    ConnectedServiceName: 'Database System ESRP Connector'
+    FolderPath: '$(Build.SourcesDirectory)/build/pgsqltoolsservice'
+    Pattern: 'ossdbtoolsservice_main*'
+    useMinimatch: true
+    signConfigType: inlineSignParams
+    inlineOperation: |
+      [
+        {
+          "KeyCode" : "CP-450779-Pgp",
+          "OperationCode" : "LinuxSign",
+          "Parameters" : {},
+          "ToolName" : "sign",
+          "ToolVersion" : "1.0"
+        }
+      ]
+    SessionTimeout: '60'
+    MaxConcurrency: '50'
+    MaxRetryAttempts: '5'
+- task: CmdLine@2
+  displayName: 'Post-sign steps for non-windows platforms'
+  condition: ne(variables['platform'], 'windows')
+  inputs:
+    script: |
+      mv $(Build.SourcesDirectory)/build/ossdbtoolsservice_main $(Build.SourcesDirectory)/build/pgsqltoolsservice
