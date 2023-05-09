@@ -36,8 +36,10 @@ class DisasterRecoveryService:
         self._service_provider = service_provider
 
         # Register the handlers for the service
-        self._service_provider.server.set_request_handler(BACKUP_REQUEST, self.handle_backup_request)
-        self._service_provider.server.set_request_handler(RESTORE_REQUEST, self.handle_restore_request)
+        self._service_provider.server.set_request_handler(
+            BACKUP_REQUEST, self.handle_backup_request)
+        self._service_provider.server.set_request_handler(
+            RESTORE_REQUEST, self.handle_restore_request)
 
     def handle_backup_request(self, request_context: RequestContext, params: BackupParams) -> None:
         """
@@ -46,9 +48,11 @@ class DisasterRecoveryService:
         :param request_context: The request context
         :param params: The BackupParams object for this request
         """
-        connection_info: ConnectionInfo = self._service_provider[constants.CONNECTION_SERVICE_NAME].get_connection_info(params.owner_uri)
+        connection_info: ConnectionInfo = self._service_provider[constants.CONNECTION_SERVICE_NAME].get_connection_info(
+            params.owner_uri)
         if connection_info is None:
-            request_context.send_error('No connection corresponding to the given owner URI')  # TODO: Localize
+            request_context.send_error(
+                'No connection corresponding to the given owner URI')  # TODO: Localize
             return
         provider: str = self._service_provider.provider
         host = connection_info.details.options['host']
@@ -63,9 +67,11 @@ class DisasterRecoveryService:
         """
         Respond to restore/restore requests by performing a restore
         """
-        connection_info: ConnectionInfo = self._service_provider[constants.CONNECTION_SERVICE_NAME].get_connection_info(params.owner_uri)
+        connection_info: ConnectionInfo = self._service_provider[constants.CONNECTION_SERVICE_NAME].get_connection_info(
+            params.owner_uri)
         if connection_info is None:
-            request_context.send_error('No connection corresponding to the given owner URI')  # TODO: Localize
+            request_context.send_error(
+                'No connection corresponding to the given owner URI')  # TODO: Localize
             return
         provider: str = self._service_provider.provider
         host = connection_info.details.options['host']
@@ -116,7 +122,8 @@ def _perform_backup(connection_info: ConnectionInfo, params: BackupParams, task:
     """Call out to pg_dump to do a backup"""
     try:
         connection = connection_info.get_connection(ConnectionType.DEFAULT)
-        pg_dump_location = _get_pg_exe_path('pg_dump', connection.server_version)
+        pg_dump_location = _get_pg_exe_path(
+            'pg_dump', connection.server_version)
     except ValueError as e:
         return TaskResult(TaskStatus.FAILED, str(e))
     pg_dump_args = [pg_dump_location,
@@ -139,11 +146,13 @@ def _perform_restore(connection_info: ConnectionInfo, params: RestoreParams, tas
     """Call out to pg_restore to restore from a backup"""
     try:
         connection = connection_info.get_connection(ConnectionType.DEFAULT)
-        pg_restore_location = _get_pg_exe_path('pg_restore', connection.server_version)
+        pg_restore_location = _get_pg_exe_path(
+            'pg_restore', connection.server_version)
     except ValueError as e:
         return TaskResult(TaskStatus.FAILED, str(e))
     pg_restore_args = [pg_restore_location]
-    pg_restore_args += _get_backup_restore_connection_params(connection_info.details.options)
+    pg_restore_args += _get_backup_restore_connection_params(
+        connection_info.details.options)
     pg_restore_args.append(params.options.path)
     # Remove the options that were already used, and pass the rest so that they can be automatically serialized
     options = params.options.__dict__.copy()
@@ -208,7 +217,8 @@ def _get_pg_exe_path(exe_name: str, server_version: Tuple[int, int, int]) -> str
             return exe_path
 
     version_string = '.'.join(str(ver) for ver in server_version)
-    raise ValueError(f'Exe folder {os_root} does not contain {exe_name} for version {version_string}')
+    raise ValueError(
+        f'Exe folder {os_root} does not contain {exe_name} for version {version_string}')
 
 
 # Map from backup types to the corresponding pg_dump format option value
