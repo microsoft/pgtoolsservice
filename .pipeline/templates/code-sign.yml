@@ -51,7 +51,6 @@ steps:
         }
      ]
   enabled: true
-  condition: and(succeeded(), eq(variables['signed'], true))
 - task: CmdLine@2
   displayName: 'Pre-sign steps for non-windows platform'
   condition: ne(variables['platform'], 'windows')
