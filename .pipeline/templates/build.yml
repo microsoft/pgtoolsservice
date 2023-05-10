@@ -13,7 +13,7 @@ steps:
   condition: eq(variables['platform'], 'mac-arm64')
   inputs:
     command: download
-    vstsFeed: 'Database Systems/azuredatastudio-postgresql'
+    vstsFeed: 'CrossPlatBuildScripts/azuredatastudio-postgresql'
     vstsFeedPackage: 'pgsqltoolsservice-osx-arm64'
     vstsPackageVersion: 'latest'
     downloadDirectory: '$(Build.SourcesDirectory)'
@@ -21,4 +21,4 @@ steps:
   condition: eq(variables['platform'], 'mac-arm64')
   inputs:
     archiveFilePatterns: '**/*.tar.gz'
-    destinationFolder: $(Build.SourcesDirectory)/dist
+    destinationFolder: $(Build.SourcesDirectory)/build
