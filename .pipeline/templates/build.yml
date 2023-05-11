@@ -11,14 +11,12 @@ steps:
 - task: UniversalPackages@0
   displayName: 'Download osx-arm64 package'
   condition: eq(variables['platform'], 'mac-arm64')
-    inputs:
-      command: 'download'
-      downloadDirectory: '$(Build.SourcesDirectory)'
-      feedsToUse: 'internal'
-      vstsFeed: '5603b9e3-ece0-4518-b9c8-1a36054d9970/fd6a76bf-beba-4e63-9ae3-dc8b313595ba'
-      vstsFeedPackage: '2947fd46-68d7-44d8-8439-fb1ef4d69a65'
-      vstsPackageVersion: '1.6.0'
-      replaceExistingArchive: true
+  inputs:
+    command: download
+    vstsFeed: 'Database Systems/azuredatastudio-pgsqltoolsservice'
+    vstsFeedPackage: 'pgsqltoolsservice-osx-arm64'
+    vstsPackageVersion: '1.6.0'
+    downloadDirectory: '$(Build.SourcesDirectory)'
 - task: ExtractFiles@1
   condition: eq(variables['platform'], 'mac-arm64')
   inputs:
