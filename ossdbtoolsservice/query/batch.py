@@ -128,9 +128,9 @@ class Batch:
                 conn.commit()
 
             self.after_execute(cursor)
-        except psycopg2.DatabaseError:
+        except psycopg2.DatabaseError as e:
             self._has_error = True
-            raise conn.database_error
+            raise e
         finally:
             # We are doing this because when the execute fails for named cursors
             # cursor is not activated on the server which results in failure on close
