@@ -33,7 +33,7 @@ steps:
     scriptName: 'scripts/test-all.psh'
 - task: PublishTestResults@1
   displayName: 'Publish test results mac-x64'
-  condition: eq(variables.platform, ''mac-x64')
+  condition: eq(variables.platform, 'mac-x64')
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/nose2-junit.xml'
@@ -52,7 +52,7 @@ steps:
     scriptName: 'scripts/test-all.psh'
 - task: PublishTestResults@2
   displayName: 'Publish test results mac-arm64'
-  condition: eq(variables.platform, ''mac-arm64')
+  condition: eq(variables.platform, 'mac-arm64')
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/nose2-junit.xml'
