@@ -6,24 +6,81 @@ strategy:
       platform: 'mac-x64'
       imageName: 'macOS-latest'
       buildScript: 'scripts/build-mac.sh'
-      archiveFileName: 'pgsqltoolsservice-osx.tar.gz'
+      archiveFileName: 'pgsqltoolsservice-osx-insiders.tar.gz'
       archiveType: 'tar'
     mac-arm64:
       platform: 'mac-arm64'
       imageName: 'macOS-latest'
-      archiveFileName: 'pgsqltoolsservice-osx-arm64.tar.gz'
+      archiveFileName: 'pgsqltoolsservice-osx-arm64-insiders.tar.gz'
       archiveType: 'tar'
     windows:
       platform: 'windows'
       imageName: 'windows-latest'
       buildScript: 'scripts/build.sh'
-      archiveFileName: 'pgsqltoolsservice-win-x64.zip'
+      archiveFileName: 'pgsqltoolsservice-win-x64-insiders.zip'
       archiveType: 'zip'
 pool:
   vmImage: $(imageName)
 steps:
 - template: templates/build.yml
 - template: templates/code-sign.yml
+- task: ShellScript@1
+  displayName: 'Run Tests mac-x64'
+  condition: eq(variables.platform, 'mac-x64')
+  inputs:
+    scriptType: 'filePath'
+    scriptName: 'scripts/test-all.psh'
+- task: PublishTestResults@1
+  displayName: 'Publish test results mac-x64'
+  condition: eq(variables.platform, ''mac-x64')
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/nose2-junit.xml'
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish code coverage mac-x64'
+  condition: eq(variables.platform, 'mac-x64')
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '**/cchtml'
+    reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
+- task: ShellScript@2
+  displayName: 'Run Tests mac-arm64'
+  condition: eq(variables.platform, 'mac-arm64')
+  inputs:
+    scriptType: 'filePath'
+    scriptName: 'scripts/test-all.psh'
+- task: PublishTestResults@2
+  displayName: 'Publish test results mac-arm64'
+  condition: eq(variables.platform, ''mac-arm64')
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/nose2-junit.xml'
+- task: PublishCodeCoverageResults@2
+  displayName: 'Publish code coverage mac-arm64'
+  condition: eq(variables.platform, 'mac-arm64')
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '**/cchtml'
+    reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
+- task: PowerShell@1
+  displayName: 'Run Tests windows'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    scriptType: 'filePath'
+    scriptName: 'scripts/test-all.ps1'
+- task: PublishTestResults@3
+  displayName: 'Publish test results windows'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/nose2-junit.xml'
+- task: PublishCodeCoverageResults@3
+  displayName: 'Publish code coverage windows'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '**/cchtml'
+    reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
 - task: DeleteFiles@1
   inputs:
     SourceFolder: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
