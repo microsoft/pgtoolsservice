@@ -69,13 +69,13 @@ steps:
   inputs:
     scriptType: 'filePath'
     scriptName: 'scripts/test-all.ps1'
-- task: PublishTestResults@3
+- task: PublishTestResults@1
   displayName: 'Publish test results windows'
   condition: eq(variables.platform, 'windows')
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/nose2-junit.xml'
-- task: PublishCodeCoverageResults@3
+- task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage windows'
   condition: eq(variables.platform, 'windows')
   inputs:
