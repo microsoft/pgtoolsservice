@@ -24,6 +24,25 @@ pool:
   vmImage: $(imageName)
 steps:
 - template: templates/build.yml
+- task: PowerShell@1
+  displayName: 'Run Tests'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    scriptType: 'filePath'
+    scriptName: 'scripts/test-all.ps1'
+- task: PublishTestResults@2
+  displayName: 'Publish test results'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/nose2-junit.xml'
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish code coverage'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '**/cchtml'
+    reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
 - task: DeleteFiles@1
   inputs:
     SourceFolder: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
