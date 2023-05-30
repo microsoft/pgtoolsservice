@@ -1,0 +1,65 @@
+trigger: none
+pr: 
+  - master
+strategy:
+  matrix:
+    mac-x64:
+      platform: 'mac-x64'
+      imageName: 'macOS-latest'
+      buildScript: 'scripts/build-mac.sh'
+      archiveFileName: 'pgsqltoolsservice-osx.tar.gz'
+      archiveType: 'tar'
+    mac-arm64:
+      platform: 'mac-arm64'
+      imageName: 'macOS-latest'
+      archiveFileName: 'pgsqltoolsservice-osx-arm64.tar.gz'
+      archiveType: 'tar'
+    windows:
+      platform: 'windows'
+      imageName: 'windows-latest'
+      buildScript: 'scripts/build.sh'
+      archiveFileName: 'pgsqltoolsservice-win-x64.zip'
+      archiveType: 'zip'
+pool:
+  vmImage: $(imageName)
+steps:
+- template: templates/build.yml
+- task: PowerShell@1
+  displayName: 'Run Tests'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    scriptType: 'filePath'
+    scriptName: 'scripts/test-all.ps1'
+- task: PublishTestResults@2
+  displayName: 'Publish test results'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/nose2-junit.xml'
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish code coverage'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '**/cchtml'
+    reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
+- task: DeleteFiles@1
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
+    Contents: 'CodeSignSummary*.md'
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
+    includeRootFolder: true
+    archiveType: '$(archiveType)'
+    archiveFile: '$(Build.SourcesDirectory)/dist/$(archiveFileName)'
+    replaceExistingArchive: true
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '$(Build.SourcesDirectory)'
+    contents: 'dist/$(archiveFileName)'
+    targetFolder: '$(Build.ArtifactStagingDirectory)'
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: dist
