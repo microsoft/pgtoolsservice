@@ -47,7 +47,7 @@ steps:
            host = "localhost"
            port = 5432
            user = "postgres"
-           password = "${env:POSTGRESPASSWORD}"
+           password = "$(PostgresPassword)"
            dbname = "postgres"
        }
 
@@ -57,7 +57,7 @@ steps:
 
    Get-Content "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Raw
 
-   $pw = ConvertTo-SecureString "${env:POSTGRESPASSWORD}" -AsPlainText -Force
+   $pw = ConvertTo-SecureString "$(PostgresPassword)" -AsPlainText -Force
    New-LocalUser -Name "postgres" -Password $pw
    icacls "$env:BUILD_BINARIESDIRECTORY" /grant:r "users:(F)" /T /C
    $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "postgres",$pw
@@ -65,7 +65,7 @@ steps:
 
    mkdir ..\db1\pg_log
    Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
-  displayName: 'Start Postgres winsows'
+  displayName: 'Start Postgres windows'
   condition: eq(variables.platform, 'windows')
 - task: PowerShell@2
   displayName: 'Style Check windows'
