@@ -80,7 +80,7 @@ steps:
   condition: eq(variables.platform, 'windows')
   inputs:
     scriptType: 'filePath'
-    scriptName: 'scripts/test-all.ps1'
+    scriptName: './scripts/test-all.ps1'
 - task: PublishTestResults@2
   displayName: 'Publish test results windows'
   condition: eq(variables.platform, 'windows')
