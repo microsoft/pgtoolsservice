@@ -25,14 +25,16 @@ pool:
 steps:
 - template: templates/build.yml
 - task: PowerShell@1
-  displayName: 'Download Postgres'
+  displayName: 'Download Postgres windows'
+  condition: eq(variables.platform, 'windows')
   inputs:
     scriptType: inlineScript
     inlineScript: |
      cd $env:BUILD_BINARIESDIRECTORY
      (New-Object System.Net.WebClient).DownloadFile('https://get.enterprisedb.com/postgresql/postgresql-14.1-1-windows-x64-binaries.zip', $env:BUILD_BINARIESDIRECTORY + '\postgres.zip')
 - task: ExtractFiles@1
-  displayName: 'Extract Postgres '
+  displayName: 'Extract Postgres windows'
+  condition: eq(variables.platform, 'windows')
   inputs:
     archiveFilePatterns: '$(Build.BinariesDirectory)/*.zip'
     destinationFolder: '$(Build.BinariesDirectory)/postgres'
@@ -63,9 +65,11 @@ steps:
 
    mkdir ..\db1\pg_log
    Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
-  displayName: 'Start Postgres'
+  displayName: 'Start Postgres windows'
+  condition: eq(variables.platform, 'windows')
 - task: PowerShell@2
-  displayName: 'Style Check'
+  displayName: 'Style Check windows'
+  condition: eq(variables.platform, 'windows')
   inputs:
     targetType: filePath
     filePath: ./scripts/flake8.ps1
