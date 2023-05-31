@@ -24,51 +24,60 @@ pool:
   vmImage: $(imageName)
 steps:
 - template: templates/build.yml
-- task: ShellScript@1
-  displayName: 'Run Tests mac-x64'
-  condition: eq(variables.platform, 'mac-x64')
-  inputs:
-    scriptType: 'filePath'
-    scriptName: 'scripts/test-all.psh'
-- task: PublishTestResults@1
-  displayName: 'Publish test results mac-x64'
-  condition: eq(variables.platform, 'mac-x64')
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: '**/nose2-junit.xml'
-- task: PublishCodeCoverageResults@1
-  displayName: 'Publish code coverage mac-x64'
-  condition: eq(variables.platform, 'mac-x64')
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: '**/cchtml'
-    reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
-- task: ShellScript@2
-  displayName: 'Run Tests mac-arm64'
-  condition: eq(variables.platform, 'mac-arm64')
-  inputs:
-    scriptType: 'filePath'
-    scriptName: 'scripts/test-all.psh'
-- task: PublishTestResults@2
-  displayName: 'Publish test results mac-arm64'
-  condition: eq(variables.platform, 'mac-arm64')
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: '**/nose2-junit.xml'
-- task: PublishCodeCoverageResults@2
-  displayName: 'Publish code coverage mac-arm64'
-  condition: eq(variables.platform, 'mac-arm64')
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: '**/cchtml'
-    reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
 - task: PowerShell@1
+  displayName: 'Download Postgres'
+  inputs:
+    scriptType: inlineScript
+    inlineScript: |
+     cd $env:BUILD_BINARIESDIRECTORY
+     (New-Object System.Net.WebClient).DownloadFile('https://get.enterprisedb.com/postgresql/postgresql-14.1-1-windows-x64-binaries.zip', $env:BUILD_BINARIESDIRECTORY + '\postgres.zip')
+- task: ExtractFiles@1
+  displayName: 'Extract Postgres '
+  inputs:
+    archiveFilePatterns: '$(Build.BinariesDirectory)/*.zip'
+    destinationFolder: '$(Build.BinariesDirectory)/postgres'
+- powershell: |
+   Remove-Item -path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\pgAdmin 4\*" -Recurse -Force -EA SilentlyContinue
+
+   cd "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\bin"
+
+   $config = @{
+           host = "localhost"
+           port = 5432
+           user = "postgres"
+           password = "${env:POSTGRESPASSWORD}"
+           dbname = "postgres"
+       }
+
+   New-Item -ItemType File -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Force | Out-Null
+
+   $config | ConvertTo-Json -Depth 4 | Set-Content -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Encoding utf8
+
+   Get-Content "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Raw
+
+   $pw = ConvertTo-SecureString "${env:POSTGRESPASSWORD}" -AsPlainText -Force
+   New-LocalUser -Name "postgres" -Password $pw
+   icacls "$env:BUILD_BINARIESDIRECTORY" /grant:r "users:(F)" /T /C
+   $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "postgres",$pw
+   Start-Process ".\initdb.exe" -ArgumentList "-U postgres -D ..\db1" -NoNewWindow -Wait -Credential $cred
+
+   mkdir ..\db1\pg_log
+   Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
+  displayName: 'Start Postgres'
+- task: PowerShell@2
+  displayName: 'Style Check'
+  inputs:
+    targetType: filePath
+    filePath: ./scripts/flake8.ps1
+    warningPreference: stop
+    failOnStderr: true
+- task: PowerShell@3
   displayName: 'Run Tests windows'
   condition: eq(variables.platform, 'windows')
   inputs:
     scriptType: 'filePath'
     scriptName: 'scripts/test-all.ps1'
-- task: PublishTestResults@1
+- task: PublishTestResults@2
   displayName: 'Publish test results windows'
   condition: eq(variables.platform, 'windows')
   inputs:
