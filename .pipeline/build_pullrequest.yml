@@ -71,7 +71,7 @@ steps:
     filePath: ./scripts/flake8.ps1
     warningPreference: stop
     failOnStderr: true
-- task: PowerShell@3
+- task: PowerShell@2
   displayName: 'Run Tests windows'
   condition: eq(variables.platform, 'windows')
   inputs:
