@@ -1,6 +1,7 @@
 trigger: none
 
-pr: none
+pr: 
+  - release
 
 strategy:
   matrix:
@@ -8,18 +9,18 @@ strategy:
       platform: 'mac-x64'
       imageName: 'macOS-latest'
       buildScript: 'scripts/build-mac.sh'
-      archiveFileName: 'pgsqltoolsservice-osx-insiders.tar.gz'
+      archiveFileName: 'pgsqltoolsservice-osx.tar.gz'
       archiveType: 'tar'
     mac-arm64:
       platform: 'mac-arm64'
       imageName: 'macOS-latest'
-      archiveFileName: 'pgsqltoolsservice-osx-arm64-insiders.tar.gz'
+      archiveFileName: 'pgsqltoolsservice-osx-arm64.tar.gz'
       archiveType: 'tar'
     windows:
       platform: 'windows'
       imageName: 'windows-latest'
       buildScript: 'scripts/build.sh'
-      archiveFileName: 'pgsqltoolsservice-win-x64-insiders.zip'
+      archiveFileName: 'pgsqltoolsservice-win-x64.zip'
       archiveType: 'zip'
 
 pool:
