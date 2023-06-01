@@ -19,7 +19,7 @@ strategy:
     windows:
       platform: 'windows'
       imageName: 'windows-latest'
-      buildScript: 'scripts/build.ps1'
+      buildScript: 'scripts/build.sh'
       archiveFileName: 'pgsqltoolsservice-win-x64.zip'
       archiveType: 'zip'
 
