@@ -4,6 +4,7 @@ steps:
   inputs:
     versionSpec: '3.10'
 - task: Bash@3
+  displayName: 'Run build'
   condition: ne(variables['platform'], 'mac-arm64')
   inputs:
     filePath: $(buildScript)
