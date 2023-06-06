@@ -5,6 +5,12 @@ pr:
 
 strategy:
   matrix:
+    linux:
+      platform: 'ubuntu'
+      imageName: 'ubuntu-latest'
+      buildScript: 'scripts/build-linux.sh'
+      archiveFileName: 'pgsqltoolsservice-linux-x64.tar.gz'
+      archiveType: 'tar'
     mac-x64:
       platform: 'mac-x64'
       imageName: 'macOS-latest'
