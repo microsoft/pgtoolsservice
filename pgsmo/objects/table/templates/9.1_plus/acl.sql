@@ -32,7 +32,7 @@ FROM
           LEFT OUTER JOIN pg_constraint con ON con.conrelid=rel.oid AND con.contype='p'
           LEFT OUTER JOIN pg_class tst ON tst.oid = rel.reltoastrelid
           LEFT JOIN pg_type typ ON rel.reloftype=typ.oid
-        WHERE rel.relkind IN ('r','s','t') AND rel.relnamespace = {{ scid }}::oid
+        WHERE rel.relkind IN ('r','s','t','p') AND rel.relnamespace = {{ scid }}::oid
             AND rel.oid = {{ tid }}::oid
     ) acl,
     (SELECT (d).grantee AS grantee, (d).grantor AS grantor, (d).is_grantable
@@ -43,7 +43,7 @@ FROM
           LEFT OUTER JOIN pg_constraint con ON con.conrelid=rel.oid AND con.contype='p'
           LEFT OUTER JOIN pg_class tst ON tst.oid = rel.reltoastrelid
           LEFT JOIN pg_type typ ON rel.reloftype=typ.oid
-        WHERE rel.relkind IN ('r','s','t') AND rel.relnamespace = {{ scid }}::oid
+        WHERE rel.relkind IN ('r','s','t','p') AND rel.relnamespace = {{ scid }}::oid
             AND rel.oid = {{ tid }}::oid
         ) a) d
     ) d

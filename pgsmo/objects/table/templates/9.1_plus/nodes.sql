@@ -14,6 +14,6 @@ SELECT  rel.oid,
         {{ SYSOBJECTS.IS_SYSTEMSCHEMA('nsp') }} as is_system
 FROM    pg_class rel
 INNER JOIN pg_namespace nsp ON rel.relnamespace= nsp.oid
-    WHERE rel.relkind IN ('r','t','f')
+    WHERE rel.relkind IN ('r','t','f','p')
     {% if tid %} AND rel.oid = {{tid}}::OID {% endif %}
     ORDER BY nsp.nspname, rel.relname;
