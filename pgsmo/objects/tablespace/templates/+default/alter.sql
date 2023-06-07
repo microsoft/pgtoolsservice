@@ -18,7 +18,7 @@ ALTER TABLESPACE {{ conn|qtIdent(data.name) }}
 {### Comments on tablespace ###}
 {% if data.description %}
 COMMENT ON TABLESPACE {{ conn|qtIdent(data.name) }}
-  IS {{ data.description|qtLiteral }};
+  IS {{ data.description }};
 
 {% endif %}
 {### Security Labels on tablespace ###}
@@ -43,5 +43,5 @@ COMMENT ON TABLESPACE {{ conn|qtIdent(data.name) }}
 {% endif %}
 {# ======== The SQl Below will fetch id for given dataspace ======== #}
 {% if tablespace %}
-SELECT ts.oid FROM pg_tablespace ts WHERE spcname = {{tablespace|qtLiteral}};
+SELECT ts.oid FROM pg_tablespace ts WHERE spcname = {{tablespace}};
 {% endif %}

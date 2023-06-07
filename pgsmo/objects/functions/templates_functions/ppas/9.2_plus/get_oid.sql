@@ -16,8 +16,8 @@ JOIN
     pg_language lng ON lng.oid=prolang
 JOIN
     pg_namespace nsp ON nsp.oid=pr.pronamespace
-    AND nsp.nspname={{ nspname|qtLiteral }}
+    AND nsp.nspname={{ nspname }}
 WHERE
     proisagg = FALSE
     AND typname NOT IN ('trigger', 'event_trigger')
-    AND pr.proname = {{ name|qtLiteral }};
+    AND pr.proname = {{ name }};

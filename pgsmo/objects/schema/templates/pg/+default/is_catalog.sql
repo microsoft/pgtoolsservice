@@ -12,4 +12,4 @@ SELECT
 FROM
     pg_catalog.pg_namespace nsp
 WHERE
-    nsp.oid = {{ scid|qtLiteral }}::OID;
+    nsp.oid = {{ scid }}::OID;

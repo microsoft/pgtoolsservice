@@ -20,9 +20,9 @@ LEFT OUTER JOIN information_schema.columns AS col ON col.table_schema = nspname 
      col.table_name = relname AND
      col.column_name = attname
 WHERE
-    attr.attrelid = {{ parent_id|qtLiteral }}::oid
+    attr.attrelid = {{ parent_id }}::oid
     {% if clid %}
-        AND attr.attnum = {{ clid|qtLiteral }}
+        AND attr.attnum = {{ clid }}
     {% endif %}
     {### To show system objects ###}
     {% if not show_sys_objects %}
