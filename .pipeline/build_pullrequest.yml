@@ -8,13 +8,13 @@ strategy:
     linux:
       platform: 'ubuntu'
       imageName: 'ubuntu-latest'
-      buildScript: 'scripts/build-linux.sh'
+      buildScript: 'scripts/build.sh'
       archiveFileName: 'pgsqltoolsservice-linux-x64.tar.gz'
       archiveType: 'tar'
     mac-x64:
       platform: 'mac-x64'
       imageName: 'macOS-latest'
-      buildScript: 'scripts/build-mac.sh'
+      buildScript: 'scripts/build.sh'
       archiveFileName: 'pgsqltoolsservice-osx.tar.gz'
       archiveType: 'tar'
     mac-arm64:
@@ -25,7 +25,7 @@ strategy:
     windows:
       platform: 'windows'
       imageName: 'windows-latest'
-      buildScript: 'scripts/build.sh'
+      buildScript: 'scripts/build-ps1.sh'
       archiveFileName: 'pgsqltoolsservice-win-x64.zip'
       archiveType: 'zip'
 
