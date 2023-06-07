@@ -30,6 +30,6 @@ FROM pg_operator op,
     {% endif %}
       UNION SELECT 'bigserial', 0
       UNION SELECT 'serial', 0) t1
-      WHERE typname = {{type|qtLiteral}}) AS types
+      WHERE typname = {{type}}) AS types
 WHERE oprcom > 0 AND
       (op.oprleft=types.oid OR op.oprright=types.oid)

@@ -15,6 +15,6 @@ SELECT
 FROM
     pg_stats
 WHERE
-    schemaname = {{schema|qtLiteral}}
-    AND tablename = {{table|qtLiteral}}
-    AND attname = {{column|qtLiteral}};
+    schemaname = {{schema}}
+    AND tablename = {{table}}
+    AND attname = {{column}};

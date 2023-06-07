@@ -8,7 +8,6 @@ import re
 from typing import Dict, List, Optional, Tuple
 
 from jinja2 import Environment, FileSystemLoader, Template
-from psycopg2.extensions import adapt
 
 TEMPLATE_ENVIRONMENTS: Dict[int, Environment] = {}
 TEMPLATE_FOLDER_REGEX = re.compile(r'(\d+)\.(\d+)(?:_(\w+))?$')
@@ -156,21 +155,7 @@ def _hash_source_list(sources: list) -> int:
 
 
 def qt_literal(value):
-    adapted = adapt(value)
-
-    # Not all adapted objects have encoding
-    # e.g.
-    # psycopg2.extensions.BOOLEAN
-    # psycopg2.extensions.FLOAT
-    # psycopg2.extensions.INTEGER
-    # etc...
-    if hasattr(adapted, 'encoding'):
-        adapted.encoding = 'utf8'
-    res = adapted.getquoted()
-
-    if isinstance(res, bytes):
-        return res.decode('utf-8')
-    return res
+    return value
 
 
 def qt_type_ident(conn, *args):

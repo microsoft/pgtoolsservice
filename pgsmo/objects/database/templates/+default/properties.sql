@@ -36,9 +36,9 @@ FROM pg_database db
         db.oid=descr.objoid AND descr.classoid='pg_database'::regclass
     )
 WHERE {% if oid %}
-db.oid = {{ oid|qtLiteral }}::OID{% else %}{% if name %}
-db.datname = {{ name|qtLiteral }}::text{% else %}
-db.oid > {{ last_system_oid|qtLiteral }}::OID
+db.oid = {{ oid }}::OID{% else %}{% if name %}
+db.datname = {{ name }}::text{% else %}
+db.oid > {{ last_system_oid }}::OID
 {% endif %}{% endif %}
 
 ORDER BY datname;

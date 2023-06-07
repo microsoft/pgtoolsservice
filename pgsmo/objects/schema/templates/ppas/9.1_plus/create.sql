@@ -15,7 +15,7 @@ CREATE SCHEMA {{ conn|qtIdent(data.name) }}{% if data.namespaceowner %}
 {% if data.description %}
 
 COMMENT ON SCHEMA {{ conn|qtIdent(data.name) }}
-    IS {{ data.description|qtLiteral }};
+    IS {{ data.description }};
 {% endif %}
 {# ACL for the schema #}
 {% if data.nspacl %}

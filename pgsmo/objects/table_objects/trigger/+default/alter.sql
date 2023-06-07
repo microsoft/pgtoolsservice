@@ -12,4 +12,4 @@ ALTER TABLE {{conn|qtIdent(data.schema, data.table)}}
 {## Changes description ##}
 {% if data.description %}
 COMMENT ON INDEX {{conn|qtIdent(data.name)}}
-    IS {{data.description|qtLiteral}};{% endif %}
+    IS {{data.description}};{% endif %}

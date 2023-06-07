@@ -44,10 +44,10 @@ ALTER {% if rolCanLogin %}USER{% else %}ROLE{% endif %} {{ conn|qtIdent(rolname)
 	CONNECTION LIMIT {{ data.rolconnlimit }}
 {% endif %}{% if 'rolvaliduntil' in data %}
 
-	VALID UNTIL {% if data.rolvaliduntil %}{{ data.rolvaliduntil|qtLiteral }}{% else %}'infinity'
+	VALID UNTIL {% if data.rolvaliduntil %}{{ data.rolvaliduntil }}{% else %}'infinity'
 {% endif %}{% endif %}{% if 'rolpassword' in data %}
 
-	PASSWORD{% if data.rolpassword is none %} NULL{% else %}{% if dummy %} 'xxxxxx'{% else %} {{ data.rolpassword|qtLiteral }}{% endif %}{% endif %}{% endif %};{% endif %}
+	PASSWORD{% if data.rolpassword is none %} NULL{% else %}{% if dummy %} 'xxxxxx'{% else %} {{ data.rolpassword }}{% endif %}{% endif %}{% endif %};{% endif %}
 
 {% if
 	not rolSuper and
@@ -56,7 +56,7 @@ ALTER {% if rolCanLogin %}USER{% else %}ROLE{% endif %} {{ conn|qtIdent(rolname)
 	data.rolsuper %}
 
 
-UPDATE pg_authid SET rolcatupdate=false WHERE rolname = {{ rolname|qtLiteral }};
+UPDATE pg_authid SET rolcatupdate=false WHERE rolname = {{ rolname }};
 
 {% elif
 	rolSuper and
@@ -65,12 +65,12 @@ UPDATE pg_authid SET rolcatupdate=false WHERE rolname = {{ rolname|qtLiteral }};
 {% if data.rolcatupdate %}
 
 
-UPDATE pg_authid SET rolcatupdate=true WHERE rolname = {{ rolname|qtLiteral }};
+UPDATE pg_authid SET rolcatupdate=true WHERE rolname = {{ rolname }};
 
 {% else %}
 
 
-UPDATE pg_authid SET rolcatupdate=false WHERE rolname = {{ rolname|qtLiteral }};
+UPDATE pg_authid SET rolcatupdate=false WHERE rolname = {{ rolname }};
 
 {% endif %}
 {% endif %}
@@ -128,5 +128,5 @@ GRANT {{ conn|qtIdent(data.members)|join(', ') }} TO {{ conn|qtIdent(rolname) }}
 {% if 'description' in data %}
 
 
-COMMENT ON ROLE {{ conn|qtIdent(rolname) }} IS {{ data.description|qtLiteral }};
+COMMENT ON ROLE {{ conn|qtIdent(rolname) }} IS {{ data.description }};
 {% endif %}
