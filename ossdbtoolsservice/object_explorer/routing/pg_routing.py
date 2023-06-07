@@ -380,33 +380,46 @@ def _triggers(is_refresh: bool, current_path: str, session: ObjectExplorerSessio
 
 PG_ROUTING_TABLE = {
     re.compile(r'^/$'): RoutingTarget([Folder('Databases', 'databases'),
-                                       Folder('System Databases','systemdatabases'),
+                                       Folder('System Databases',
+                                              'systemdatabases'),
                                        Folder('Roles', 'roles'),
                                        Folder('Tablespaces', 'tablespaces')],
                                       _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/$'): RoutingTarget(None, _databases),
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget([Folder('Schemas','schemas')],
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/$'): RoutingTarget([Folder('Schemas', 'schemas')],
                                                                                       _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/$'): RoutingTarget([Folder('System', 'system')],
                                                                                               _schemas),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/$'): RoutingTarget(None,
                                                                                                      _schemas),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/$'): RoutingTarget([Folder('Tables', 'tables'),
-                                                                                                             Folder('Views', 'views'),
-                                                                                                             Folder('Materialized Views', 'materializedviews'),
-                                                                                                             Folder('Functions', 'functions'),
-                                                                                                             Folder('Collations', 'collations'),
-                                                                                                             Folder('Data Types', 'datatypes'),
-                                                                                                             Folder('Sequences', 'sequences'),
+                                                                                                             Folder(
+                                                                                                                 'Views', 'views'),
+                                                                                                             Folder(
+                                                                                                                 'Materialized Views', 'materializedviews'),
+                                                                                                             Folder(
+                                                                                                                 'Functions', 'functions'),
+                                                                                                             Folder(
+                                                                                                                 'Collations', 'collations'),
+                                                                                                             Folder(
+                                                                                                                 'Data Types', 'datatypes'),
+                                                                                                             Folder(
+                                                                                                                 'Sequences', 'sequences'),
                                                                                                              Folder('Extensions', 'extensions')],
                                                                                                             _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/$'): RoutingTarget([Folder('Tables', 'tables'),
-                                                                                                                    Folder('Views', 'views'),
-                                                                                                                    Folder('Materialized Views', 'materializedviews'),
-                                                                                                                    Folder('Functions', 'functions'),
-                                                                                                                    Folder('Collations', 'collations'),
-                                                                                                                    Folder('Data Types', 'datatypes'),
-                                                                                                                    Folder('Sequences', 'sequences'),
+                                                                                                                    Folder(
+                                                                                                                        'Views', 'views'),
+                                                                                                                    Folder(
+                                                                                                                        'Materialized Views', 'materializedviews'),
+                                                                                                                    Folder(
+                                                                                                                        'Functions', 'functions'),
+                                                                                                                    Folder(
+                                                                                                                        'Collations', 'collations'),
+                                                                                                                    Folder(
+                                                                                                                        'Data Types', 'datatypes'),
+                                                                                                                    Folder(
+                                                                                                                        'Sequences', 'sequences'),
                                                                                                                     Folder('Extensions', 'extensions')],
                                                                                                                    _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/tables/$'): RoutingTarget(None,
@@ -442,23 +455,31 @@ PG_ROUTING_TABLE = {
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/extensions/$'): RoutingTarget(None,
                                                                                                                               _extensions),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget([Folder('Columns', 'columns'),
-                                                                                                                                 Folder('Constraints', 'constraints'),
-                                                                                                                                 Folder('Indexes', 'indexes'),
-                                                                                                                                 Folder('Rules', 'rules'),
+                                                                                                                                 Folder(
+                                                                                                                                     'Constraints', 'constraints'),
+                                                                                                                                 Folder(
+                                                                                                                                     'Indexes', 'indexes'),
+                                                                                                                                 Folder(
+                                                                                                                                     'Rules', 'rules'),
                                                                                                                                  Folder('Triggers', 'triggers')],
                                                                                                                                 _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget([Folder('Columns', 'columns'),
-                                                                                                                                        Folder('Constraints', 'constraints'),
-                                                                                                                                        Folder('Indexes', 'indexes'),
-                                                                                                                                        Folder('Rules', 'rules'),
+                                                                                                                                        Folder(
+                                                                                                                                            'Constraints', 'constraints'),
+                                                                                                                                        Folder(
+                                                                                                                                            'Indexes', 'indexes'),
+                                                                                                                                        Folder(
+                                                                                                                                            'Rules', 'rules'),
                                                                                                                                         Folder('Triggers', 'triggers')],
                                                                                                                                        _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget([Folder('Columns', 'columns'),
-                                                                                                                                Folder('Rules', 'rules'),
+                                                                                                                                Folder(
+                                                                                                                                    'Rules', 'rules'),
                                                                                                                                 Folder('Triggers', 'triggers')],
                                                                                                                                _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/views/(?P<vid>\d+/$)'): RoutingTarget([Folder('Columns', 'columns'),
-                                                                                                                                       Folder('Rules', 'rules'),
+                                                                                                                                       Folder(
+                                                                                                                                           'Rules', 'rules'),
                                                                                                                                        Folder('Triggers', 'triggers')],
                                                                                                                                       _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/materializedviews/(?P<vid>\d+/$)'): RoutingTarget([Folder('Columns', 'columns'),
@@ -470,7 +491,7 @@ PG_ROUTING_TABLE = {
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/(?P<obj>tables|views|materializedviews)/(?P<tid>\d+)/columns/$'): RoutingTarget(None,
                                                                                                                                                                          _columns),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/(?P<obj>tables|views|materializedviews)/(?P<tid>\d+)/columns/$'): RoutingTarget(None,
-                                                                                                                                                                         _columns),
+                                                                                                                                                                                _columns),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None,
                                                                                                                                             _constraints),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None,
