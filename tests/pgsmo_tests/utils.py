@@ -7,8 +7,8 @@ import unittest
 import unittest.mock as mock
 from typing import List, Optional, Tuple
 
-from psycopg2 import DatabaseError
-from psycopg2.extensions import Column
+from psycopg import DatabaseError
+from psycopg import Column
 
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from pgsmo import Server
@@ -127,11 +127,11 @@ class MockPGServerConnection(PostgreSQLConnection):
 
         # if no mock pyscopg connection passed, create default one
         if not connection:
-            connection = MockPsycopgConnection(cursor=cur, dsn_parameters={
-                'dbname': name, 'host': host, 'port': port, 'user': user})
+            connection = MockPsycopgConnection(cursor=cur, dsn_parameters=
+                f'host={host} dbname={name} user={user} port={port}')
 
-        # mock psycopg2.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
-        with mock.patch('psycopg2.connect', mock.Mock(return_value=connection)):
+        # mock psycopg.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
+        with mock.patch('psycopg.connect', mock.Mock(return_value=connection)):
             super().__init__({"host_name": host, "user_name": user, "port": port, "database_name": name})
 
 # OBJECT TEST HELPERS ######################################################

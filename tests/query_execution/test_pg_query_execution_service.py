@@ -13,7 +13,7 @@ from os.path import isfile, join
 from typing import Dict, List  # noqa
 from unittest import mock
 
-import psycopg2
+import psycopg
 from dateutil import parser
 
 import tests.utils as utils
@@ -60,10 +60,7 @@ class TestQueryService(unittest.TestCase):
 
         self.rows = [(1, 'Text 1'), (2, 'Text 2')]
         self.cursor = utils.MockCursor(self.rows)
-        self.mock_psycopg_connection = utils.MockPsycopgConnection(dsn_parameters={
-            'host': 'test',
-            'dbname': 'test',
-        })
+        self.mock_psycopg_connection = utils.MockPsycopgConnection(dsn_parameters='host=test dbname=test')
         self.connection = MockPGServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
         self.cursor.connection = self.connection
         self.connection_service = ConnectionService()
@@ -199,7 +196,7 @@ class TestQueryService(unittest.TestCase):
         """Test handling a query request that fails when the query is executed"""
         # Set up the query execution service and a connection service with a mock connection that
         # has a cursor that always throws an error when executing
-        self.cursor.execute = mock.Mock(side_effect=psycopg2.DatabaseError())
+        self.cursor.execute = mock.Mock(side_effect=psycopg.DatabaseError())
         params = get_execute_string_params()
 
         # If I handle a query that raises an error when executed
@@ -971,7 +968,7 @@ class TestQueryService(unittest.TestCase):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
-        self.mock_psycopg_connection.get_transaction_status = mock.MagicMock(return_value=psycopg2.extensions.TRANSACTION_STATUS_INERROR)
+        self.mock_psycopg_connection.get_transaction_status = mock.MagicMock(return_value=psycopg.pq.TransactionStatus.INERROR)
         query_params = get_execute_string_params()
         query = Query(query_params.owner_uri, query_params.query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         self.query_execution_service.query_results[query_params.owner_uri] = query

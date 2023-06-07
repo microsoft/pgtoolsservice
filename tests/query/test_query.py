@@ -6,7 +6,7 @@
 import unittest
 from unittest import mock
 
-import psycopg2
+import psycopg
 
 from ossdbtoolsservice.query import (ExecutionState, Query, QueryEvents,
                                      QueryExecutionSettings,
@@ -83,7 +83,7 @@ class TestQuery(unittest.TestCase):
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
 
         # If I call query.execute then it raises the database error
-        with self.assertRaises(psycopg2.DatabaseError):
+        with self.assertRaises(psycopg.DatabaseError):
             self.query.execute(self.connection)
 
         # And only the first batch was executed

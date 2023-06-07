@@ -5,14 +5,14 @@
 
 import unittest
 from unittest import mock
+from dateutil.tz import FixedOffset
 from decimal import Decimal
 import uuid
 import struct
 import io
 import datetime
-import psycopg2
-import psycopg2.tz
-from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
+import psycopg
+from psycopg.types.range import NumericRange, TimestampRange, TimestamptzRange, DateRange
 
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
 from ossdbtoolsservice.query.contracts import DbColumn
@@ -279,7 +279,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[10,20)")), res)
 
     def test_write_tsrange(self):
-        test_value = DateTimeRange(datetime.datetime(2014, 6, 8, 12, 12, 45), datetime.datetime(2016, 7, 6, 14, 12, 8))
+        test_value = TimestampRange(datetime.datetime(2014, 6, 8, 12, 12, 45), datetime.datetime(2016, 7, 6, 14, 12, 8))
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TSRANGE
@@ -292,8 +292,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[2014-06-08T12:12:45,2016-07-06T14:12:08)")), res)
 
     def test_write_tstzrange(self):
-        test_value = DateTimeTZRange(datetime.datetime(2014, 6, 8, 12, 12, 45, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=720, name=None)),
-                                     datetime.datetime(2016, 7, 6, 14, 12, 8, tzinfo=psycopg2.tz.FixedOffsetTimezone(offset=720, name=None)))
+        test_value = TimestamptzRange(
+            datetime.datetime(2014, 6, 8, 12, 12, 45, tzinfo=FixedOffset(offset=720)),
+            datetime.datetime(2016, 7, 6, 14, 12, 8, tzinfo=FixedOffset(offset=720)),
+        )
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TSTZRANGE
