@@ -380,7 +380,7 @@ def _triggers(is_refresh: bool, current_path: str, session: ObjectExplorerSessio
 
 PG_ROUTING_TABLE = {
     re.compile(r'^/$'): RoutingTarget([Folder('Databases', 'databases'),
-                                       Folder('System Databases','systemdatabases'),
+                                       Folder('System Databases', 'systemdatabases'),
                                        Folder('Roles', 'roles'),
                                        Folder('Tablespaces', 'tablespaces')],
                                       _default_node_generator),
@@ -392,25 +392,25 @@ PG_ROUTING_TABLE = {
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/$'): RoutingTarget(None,
                                                                                                      _schemas),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/$'): RoutingTarget([
-                                                                                                        Folder('Tables', 'tables'),
-                                                                                                        Folder('Views', 'views'),
-                                                                                                        Folder('Materialized Views', 'materializedviews'),
-                                                                                                        Folder('Functions', 'functions'),
-                                                                                                        Folder('Collations', 'collations'),
-                                                                                                        Folder('Data Types', 'datatypes'),
-                                                                                                        Folder('Sequences', 'sequences'),
-                                                                                                        Folder('Extensions', 'extensions')],
-                                                                                                        _default_node_generator),
+        Folder('Tables', 'tables'),
+        Folder('Views', 'views'),
+        Folder('Materialized Views', 'materializedviews'),
+        Folder('Functions', 'functions'),
+        Folder('Collations', 'collations'),
+        Folder('Data Types', 'datatypes'),
+        Folder('Sequences', 'sequences'),
+        Folder('Extensions', 'extensions')],
+        _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/$'): RoutingTarget([
-                                                                                                            Folder('Tables', 'tables'),
-                                                                                                            Folder('Views', 'views'),
-                                                                                                            Folder('Materialized Views', 'materializedviews'),
-                                                                                                            Folder('Functions', 'functions'),
-                                                                                                            Folder('Collations', 'collations'),
-                                                                                                            Folder('Data Types', 'datatypes'),
-                                                                                                            Folder('Sequences', 'sequences'),
-                                                                                                            Folder('Extensions', 'extensions')],
-                                                                                                            _default_node_generator),
+        Folder('Tables', 'tables'),
+        Folder('Views', 'views'),
+        Folder('Materialized Views', 'materializedviews'),
+        Folder('Functions', 'functions'),
+        Folder('Collations', 'collations'),
+        Folder('Data Types', 'datatypes'),
+        Folder('Sequences', 'sequences'),
+        Folder('Extensions', 'extensions')],
+        _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/tables/$'): RoutingTarget(None,
                                                                                                                    _tables),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/tables/$'): RoutingTarget(None,
@@ -444,70 +444,63 @@ PG_ROUTING_TABLE = {
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/extensions/$'): RoutingTarget(None,
                                                                                                                               _extensions),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/$'): RoutingTarget([
-                                                                                                                        Folder('Columns', 'columns'),
-                                                                                                                        Folder('Constraints', 'constraints'),
-                                                                                                                        Folder('Indexes', 'indexes'),
-                                                                                                                        Folder('Rules', 'rules'),
-                                                                                                                        Folder('Triggers', 'triggers')],
-                                                                                                                        _default_node_generator),
+        Folder('Columns', 'columns'),
+        Folder('Constraints', 'constraints'),
+        Folder('Indexes', 'indexes'),
+        Folder('Rules', 'rules'),
+        Folder('Triggers', 'triggers')],
+        _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/tables/(?P<tid>\d+)/$'):
-                                                                                                            RoutingTarget([
-                                                                                                                    Folder('Columns', 'columns'),
-                                                                                                                    Folder('Constraints', 'constraints'),
-                                                                                                                    Folder('Indexes', 'indexes'),
-                                                                                                                    Folder('Rules', 'rules'),
-                                                                                                                    Folder('Triggers', 'triggers')],
-                                                                                                                    _default_node_generator),
+    RoutingTarget([
+        Folder('Columns', 'columns'),
+        Folder('Constraints', 'constraints'),
+        Folder('Indexes', 'indexes'),
+        Folder('Rules', 'rules'),
+        Folder('Triggers', 'triggers')],
+        _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/views/(?P<vid>\d+/$)'):
-                                                                                                        RoutingTarget([
-                                                                                                                    Folder('Columns', 'columns'),
-                                                                                                                    Folder('Rules', 'rules'),
-                                                                                                                    Folder('Triggers', 'triggers')],
-                                                                                                                    _default_node_generator),
+    RoutingTarget([
+        Folder('Columns', 'columns'),
+        Folder('Rules', 'rules'),
+        Folder('Triggers', 'triggers')],
+        _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/views/(?P<vid>\d+/$)'):
-                                                                                                            RoutingTarget([
-                                                                                                                    Folder('Columns', 'columns'),
-                                                                                                                    Folder('Rules', 'rules'),
-                                                                                                                    Folder('Triggers', 'triggers')],
-                                                                                                                    _default_node_generator),
+    RoutingTarget([
+        Folder('Columns', 'columns'),
+        Folder('Rules', 'rules'),
+        Folder('Triggers', 'triggers')],
+        _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/materializedviews/(?P<vid>\d+/$)'):
-                                                                                                                    RoutingTarget([
-                                                                                                                            Folder('Columns', 'columns'),
-                                                                                                                            Folder('Indexes', 'indexes')],
-                                                                                                                            _default_node_generator),
+    RoutingTarget([
+        Folder('Columns', 'columns'),
+        Folder('Indexes', 'indexes')],
+        _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/materializedviews/(?P<vid>\d+/$)'):
-                                                                                                                        RoutingTarget([
-                                                                                                                            Folder('Columns', 'columns'),
-                                                                                                                            Folder('Indexes', 'indexes')],
-                                                                                                                            _default_node_generator),
+    RoutingTarget([
+        Folder('Columns', 'columns'),
+        Folder('Indexes', 'indexes')],
+        _default_node_generator),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/(?P<obj>tables|views|materializedviews)/(?P<tid>\d+)/columns/$'):
-                                                                                                                                        RoutingTarget(None,
-                                                                                                                                                    _columns),
+    RoutingTarget(None, _columns),
     re.compile(
         r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/(?P<obj>tables|views|materializedviews)/(?P<tid>\d+)/columns/$'):
-                                                                                                                                            RoutingTarget(None,
-                                                                                                                                                    _columns),
+    RoutingTarget(None, _columns),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None,
                                                                                                                                             _constraints),
-    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/tables/(?P<tid>\d+)/constraints/$'): RoutingTarget(None,
-                                                                                                                                                _constraints),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/tables/(?P<tid>\d+)/constraints/$'):
+    RoutingTarget(None, _constraints),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/(?P<obj>tables|materializedviews)/(?P<tid>\d+)/indexes/$'):
-                                                                                                                                        RoutingTarget(None,
-                                                                                                                                                    _indexes),
+    RoutingTarget(None, _indexes),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/(?P<obj>tables|materializedviews)/(?P<tid>\d+)/indexes/$'):
-                                                                                                                                        RoutingTarget(None,
-                                                                                                                                                     _indexes),
+    RoutingTarget(None, _indexes),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/rules/$'): RoutingTarget(None,
                                                                                                                                                      _rules),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/rules/$'):
-                                                                                                                                        RoutingTarget(None,
-                                                                                                                                                    _rules),
+    RoutingTarget(None, _rules),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'):
-                                                                                                                                    RoutingTarget(None,
-                                                                                                                                                _triggers),
+    RoutingTarget(None, _triggers),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/(?P<obj>tables|views)/(?P<tid>\d+)/triggers/$'):
-                                                                                                                                        RoutingTarget(None,
-                                                                                                                                                    _triggers),
+    RoutingTarget(None, _triggers),
     re.compile(r'^/roles/$'): RoutingTarget(None, _roles),
     re.compile(r'^/tablespaces/$'): RoutingTarget(None, _tablespaces)
 }
