@@ -100,6 +100,10 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return [function for function in self.parent.functions if function.scid == self.oid]
 
     @property
+    def procedures(self) -> NodeCollection:
+        return [procedure for procedure in self.parent.procedures if procedure.scid == self.oid]
+
+    @property
     def sequences(self) -> NodeCollection:
         return [sequence for sequence in self.parent.sequences if sequence.scid == self.oid]
 

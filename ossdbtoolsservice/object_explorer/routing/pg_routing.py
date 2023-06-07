@@ -179,6 +179,24 @@ def _functions(is_refresh: bool, current_path: str, session: ObjectExplorerSessi
     ]
 
 
+def _procedures(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for functions in a schema
+    Expected match_params:
+      dbid int: Database OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(
+        session.server.databases[int(match_params['dbid'])], is_refresh)
+    schema = _get_obj_with_refresh(_get_schema(
+        session, match_params['dbid'], match_params['scid']), is_refresh)
+    return [
+        _get_node_info(node, current_path, 'procedures',
+                       label=f'{node.name}')
+        for node in parent_obj.procedures if node.is_system == is_system and schema.name == node.schema
+    ]
+
+
 def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for collations in a schema
@@ -396,6 +414,7 @@ PG_ROUTING_TABLE = {
         Folder('Views', 'views'),
         Folder('Materialized Views', 'materializedviews'),
         Folder('Functions', 'functions'),
+        Folder('Procedures', 'procedures'),
         Folder('Collations', 'collations'),
         Folder('Data Types', 'datatypes'),
         Folder('Sequences', 'sequences'),
@@ -406,6 +425,7 @@ PG_ROUTING_TABLE = {
         Folder('Views', 'views'),
         Folder('Materialized Views', 'materializedviews'),
         Folder('Functions', 'functions'),
+        Folder('Procedures', 'procedures'),
         Folder('Collations', 'collations'),
         Folder('Data Types', 'datatypes'),
         Folder('Sequences', 'sequences'),
@@ -427,6 +447,10 @@ PG_ROUTING_TABLE = {
                                                                                                                       _functions),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/functions/$'): RoutingTarget(None,
                                                                                                                              _functions),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/procedures/$'): RoutingTarget(None,
+                                                                                                                      _procedures),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/procedures/$'): RoutingTarget(None,
+                                                                                                                             _procedures),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/collations/$'): RoutingTarget(None,
                                                                                                                        _collations),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/collations/$'): RoutingTarget(None,
