@@ -8,7 +8,7 @@ import unittest
 import unittest.mock as mock
 from typing import Optional
 
-import psycopg2
+import psycopg
 
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
@@ -105,7 +105,7 @@ class MockRequestContext(RequestContext):
 
 
 class MockPsycopgConnection(object):
-    """Class used to mock psycopg2 connection objects for testing"""
+    """Class used to mock psycopg connection objects for testing"""
 
     def __init__(self, dsn_parameters=None, cursor=None):
         self.close = mock.Mock()
@@ -115,8 +115,9 @@ class MockPsycopgConnection(object):
         self.get_backend_pid = mock.Mock(return_value=0)
         self.notices = []
         self.autocommit = True
-        self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
+        self.get_transaction_status = mock.Mock(return_value=psycopg.pq.TransactionStatus.IDLE)
         self.commit = mock.Mock()
+        self.info = MockConnectionInfo(dsn_parameters, self.server_version)
 
     @property
     def closed(self):
@@ -135,8 +136,15 @@ class MockPsycopgConnection(object):
             raise NotImplementedError()
 
 
+class MockConnectionInfo():
+
+    def __init__(self, dsn_parameters, server_version) -> None:
+        self.dsn = dsn_parameters
+        self.server_version = server_version
+
+
 class MockCursor:
-    """Class used to mock psycopg2 cursor objects for testing"""
+    """Class used to mock psycopg cursor objects for testing"""
 
     def __init__(self, query_results, columns_names=[], connection=mock.Mock()):
         self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
@@ -170,7 +178,7 @@ class MockCursor:
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        raise psycopg2.DatabaseError()
+        raise psycopg.DatabaseError()
 
     def execute_fetch_one_side_effects(self, *args):
         if self._fetched_count < len(self._query_results):

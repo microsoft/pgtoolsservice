@@ -14,19 +14,19 @@ from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 class TestServerConnection(unittest.TestCase):
     def test_server_conn_init(self):
         # Setup: Create a mock connection with an 'interesting' version
-        dsn_parameters = {'dbname': 'postgres', 'host': 'localhost', 'port': '25565', 'user': 'postgres'}
+        dsn_parameters = 'host=localhost dbname=postgres user=postgres port=25565'
         mock_conn = MockPsycopgConnection(dsn_parameters=dsn_parameters)
         mock_conn.server_version = '100216'
 
         # If: I initialize a server connection
         # noinspection PyTypeChecker
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_conn)):
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_conn)):
             server_conn = PostgreSQLConnection({})
 
         # Then: The properties should be properly set
         self.assertEqual(server_conn._conn, mock_conn)
         self.assertEqual(server_conn.connection, mock_conn)
-        self.assertDictEqual(server_conn._dsn_parameters, dsn_parameters)
+        self.assertDictEqual(server_conn.info.dsn, dsn_parameters)
         self.assertTupleEqual((10, 2, 16), server_conn.server_version)
 
     def test_execute_dict_success(self):
@@ -35,7 +35,7 @@ class TestServerConnection(unittest.TestCase):
         mock_conn = MockPsycopgConnection(cursor=mock_cursor)
 
         # noinspection PyTypeChecker
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_conn)):
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_conn)):
             server_conn = PostgreSQLConnection({})
 
         # If: I execute a query as a dictionary
@@ -65,7 +65,7 @@ class TestServerConnection(unittest.TestCase):
         mock_cursor = utils.MockCursor(None, throw_on_execute=True)
         mock_conn = MockPsycopgConnection(cursor=mock_cursor)
         # noinspection PyTypeChecker
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_conn)):
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_conn)):
             server_conn = PostgreSQLConnection({})
 
         # If: I execute a query as a dictionary

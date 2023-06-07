@@ -308,7 +308,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             with mock.patch('ossdbtoolsservice.connection.ConnectionInfo.get_connection', new=mock.Mock(return_value=mockConnection)):
                 task_result = test_method(self.connection_info, test_params, self.mock_task)
             # Then the code got the path of the executable
-            mock_get_path.assert_called_once_with(exe_name, mockConnection.server_version)
+            mock_get_path.assert_called_once_with(exe_name, mockconnection.info.server_version)
             # And ran the executable as a subprocess
             mock_popen.assert_called_once()
             # And then called communicate on the process

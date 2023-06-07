@@ -63,8 +63,8 @@ class TestServer(unittest.TestCase):
         mock_exec_dict = mock.MagicMock(return_value=([], [TestServer.CHECK_RECOVERY_ROW]))
 
         # ... Create an instance of the class and override the connection
-        mock_connection = MockPsycopgConnection({'host': 'host', 'dbname': 'dbname'})
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+        mock_connection = MockPsycopgConnection('host=host dbname=dbname')
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_connection)):
             pg_connection = PostgreSQLConnection({})
         pg_connection.execute_dict = mock_exec_dict
         obj = Server(pg_connection)
@@ -78,7 +78,7 @@ class TestServer(unittest.TestCase):
     def test_maintenance_db(self):
         # Setup:
         # ... Create a server object that has a connection
-        obj = Server(MockPGServerConnection(None, name='dbname'))
+        obj = Server(MockPGServerConnection(None, name='test_db'))
 
         # ... Mock out the database lazy loader's indexer
         mock_db = {}
