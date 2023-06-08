@@ -4,9 +4,9 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-{% import 'macros/functions/security.macros' as SECLABEL %}
-{% import 'macros/functions/privilege.macros' as PRIVILEGE %}
-{% import 'macros/functions/variable.macros' as VARIABLE %}
+{% import 'security.macros' as SECLABEL %}
+{% import 'privilege.macros' as PRIVILEGE %}
+{% import 'variable.macros' as VARIABLE %}
 {% set is_columns = [] %}
 {% set exclude_quoting = ['search_path'] %}
 {% if data %}
@@ -20,18 +20,18 @@ CREATE{% if add_replace_clause %} OR REPLACE{% endif %} PROCEDURE {{ conn|qtIden
 {% endif %}
 )
 {% endif %}
-LANGUAGE {{ data.lanname|qtLiteral(conn) }}{% if data.prosecdef %}
+LANGUAGE {{ data.lanname|qtLiteral }}{% if data.prosecdef %}
 
     SECURITY DEFINER {% endif %}
 {% if data.variables %}{% for v in data.variables %}
 
-    SET {{ conn|qtIdent(v.name) }}={% if v.name in exclude_quoting %}{{ v.value }}{% else %}{{ v.value|qtLiteral(conn) }}{% endif %}{% endfor -%}
+    SET {{ conn|qtIdent(v.name) }}={% if v.name in exclude_quoting %}{{ v.value }}{% else %}{{ v.value|qtLiteral }}{% endif %}{% endfor -%}
 {% endif %}
 
 {% if data.is_pure_sql %}{{ data.prosrc }}
 {% else %}
 AS {% if data.lanname == 'c' %}
-{{ data.probin|qtLiteral(conn) }}, {{ data.prosrc_c|qtLiteral(conn) }}
+{{ data.probin|qtLiteral }}, {{ data.prosrc_c|qtLiteral }}
 {% else %}
 $BODY${{ data.prosrc }}$BODY${% endif -%};
 {% endif -%}
@@ -53,7 +53,7 @@ ALTER PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_arg
 {% if data.description %}
 
 COMMENT ON PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
-    IS {{ data.description|qtLiteral(conn)  }};
+    IS {{ data.description|qtLiteral  }};
 {% endif -%}
 {% if data.seclabels %}
 {% for r in data.seclabels %}

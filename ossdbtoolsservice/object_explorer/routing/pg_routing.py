@@ -191,7 +191,7 @@ def _procedures(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     schema = _get_obj_with_refresh(_get_schema(
         session, match_params['dbid'], match_params['scid']), is_refresh)
     return [
-        _get_node_info(node, current_path, 'procedures',
+        _get_node_info(node, current_path, 'StoredProcedure',
                        label=f'{node.name}')
         for node in parent_obj.procedures if node.is_system == is_system and schema.name == node.schema
     ]

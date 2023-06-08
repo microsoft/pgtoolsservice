@@ -31,7 +31,7 @@ LEFT OUTER JOIN
 WHERE
     pr.prokind = 'p'::char
 {% if fnid %}
-    AND pr.oid = {{ fnid|qtLiteral(conn) }}
+    AND pr.oid = {{ fnid|qtLiteral }}
 {% endif %}
 {% if scid %}
     AND pr.pronamespace = {{scid}}::oid
