@@ -29,6 +29,6 @@ WHERE
         AND attr.attnum > 0
     {% endif %}
     AND atttypid <> 0 AND
-    relkind IN ('r', 'v', 'm') AND
+    relkind IN ('r', 'v', 'm', 'p') AND
     NOT attisdropped 
 ORDER BY attnum
