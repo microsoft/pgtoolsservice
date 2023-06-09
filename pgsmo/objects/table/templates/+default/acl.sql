@@ -30,7 +30,7 @@ from (
             LEFT OUTER JOIN pg_tablespace spc on spc.oid=rel.reltablespace
             LEFT OUTER JOIN pg_constraint con ON con.conrelid=rel.oid AND con.contype='p'
             LEFT OUTER JOIN pg_class tst ON tst.oid = rel.reltoastrelid
-          WHERE rel.relkind IN ('r','s','t') AND rel.relnamespace = {{ scid }}::oid
+          WHERE rel.relkind IN ('r','s','t','p') AND rel.relnamespace = {{ scid }}::oid
                 AND rel.oid = {{ tid }}::OID
       ) rel
     LEFT JOIN information_schema.table_privileges acls ON (table_name = rel.relname)
