@@ -158,11 +158,11 @@ steps:
 - task: GithubRelease@1 
   displayName: 'Create GitHub Release'
   inputs:
-    gitHubConnection: $(GitHubConnection)
-    repositoryName: microsoft/pgtoolsservice
-    tag: v1.8.0-alpha
-    title: v1.8.0-alpha
+    gitHubConnection: '$(GitHubConnection)'
+    repositoryName: 'microsoft/pgtoolsservice'
+    tag: 'v1.8.0-alpha'
+    title: 'v1.8.0-alpha'
     isPreRelease: true
     assets: |
-      $(Build.ArtifactStagingDirectory)/*.gz
-      $(Build.ArtifactStagingDirectory)/*.zip
+      $(Build.ArtifactStagingDirectory)/**/*.gz
+      $(Build.ArtifactStagingDirectory)/**/*.zip
