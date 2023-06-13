@@ -160,6 +160,7 @@ steps:
   inputs:
     gitHubConnection: nasc17_test2
     repositoryName: 'microsoft/pgtoolsservice'
+    tagSource: 'userSpecifiedTag'
     tag: 'v1.8.0-alpha'
     title: 'v1.8.0-alpha'
     isPreRelease: true
