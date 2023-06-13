@@ -5,7 +5,7 @@
 
 import unittest
 from unittest import mock
-from dateutil.tz import FixedOffset
+from dateutil.tz import tzoffset
 from decimal import Decimal
 import uuid
 import struct
@@ -293,8 +293,8 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
 
     def test_write_tstzrange(self):
         test_value = TimestamptzRange(
-            datetime.datetime(2014, 6, 8, 12, 12, 45, tzinfo=FixedOffset(offset=720)),
-            datetime.datetime(2016, 7, 6, 14, 12, 8, tzinfo=FixedOffset(offset=720)),
+            datetime.datetime(2014, 6, 8, 12, 12, 45, tzinfo=tzoffset(None, 720 * 60)),
+            datetime.datetime(2016, 7, 6, 14, 12, 8, tzinfo=tzoffset(None, 720 * 60)),
         )
         test_columns_info = []
         col = DbColumn()

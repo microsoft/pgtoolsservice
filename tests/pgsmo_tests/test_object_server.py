@@ -78,7 +78,7 @@ class TestServer(unittest.TestCase):
     def test_maintenance_db(self):
         # Setup:
         # ... Create a server object that has a connection
-        obj = Server(MockPGServerConnection(None, name='test_db'))
+        obj = Server(MockPGServerConnection(None, name='dbname'))
 
         # ... Mock out the database lazy loader's indexer
         mock_db = {}

@@ -104,7 +104,6 @@ def render_template(template_path: str, macro_roots: Optional[List[str]] = None,
 
         # Create the environment and add the basic filters
         new_env: Environment = Environment(loader=loader, trim_blocks=True)
-        new_env.filters['qtLiteral'] = qt_literal
         new_env.filters['qtIdent'] = qt_ident
         new_env.filters['qtTypeIdent'] = qt_type_ident
         new_env.filters['hasAny'] = has_any
@@ -152,11 +151,6 @@ def _hash_source_list(sources: list) -> int:
 # This software is released under the PostgreSQL Licence
 #
 ##########################################################################
-
-
-def qt_literal(value):
-    return value
-
 
 def qt_type_ident(conn, *args):
     # We're not using the conn object at the moment, but - we will modify the

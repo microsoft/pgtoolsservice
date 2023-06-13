@@ -406,9 +406,11 @@ class TestPGConnectionService(unittest.TestCase):
         # Set up the test with mock data
         mock_query_results = [('database1',), ('database2',)]
         connection_uri = 'someuri'
+        mock_cursor = MockCursor(mock_query_results)
         mock_psycopg_connection = MockPsycopgConnection(
             dsn_parameters='host=myserver dbname=postgres user=postgres',
-            cursor=MockCursor(mock_query_results))
+            cursor=mock_cursor)
+        mock_cursor.connection = mock_psycopg_connection
         mock_request_context = utils.MockRequestContext()
 
         # Insert a ConnectionInfo object into the connection service's map
@@ -530,7 +532,7 @@ class TestPGConnectionService(unittest.TestCase):
         # Then the response should have accurate information about the connection
         self.assertEqual(response.owner_uri, owner_uri)
         self.assertEqual(response.server_info.server_version,
-                         str(mock_connection.info.server_version[0]) + "." + str(mock_connection.info.server_version[1]) + "." + str(mock_connection.info.server_version[2]))
+                         str(mock_connection.server_version[0]) + "." + str(mock_connection.server_version[1]) + "." + str(mock_connection.server_version[2]))
         self.assertEqual(response.server_info.is_cloud, False)
         self.assertEqual(response.connection_summary.server_name, server_name)
         self.assertEqual(response.connection_summary.database_name, db_name)
