@@ -158,7 +158,7 @@ steps:
 - task: GithubRelease@1 
   displayName: 'Create GitHub Release'
   inputs:
-    gitHubConnection: azuredatastudio-postgresqlext
+    gitHubConnection: azuredatastudio-postgresqlext2
     repositoryName: 'microsoft/pgtoolsservice'
     tagSource: 'userSpecifiedTag'
     tag: 'v1.8.0-alpha'
