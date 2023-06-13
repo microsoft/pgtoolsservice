@@ -179,7 +179,6 @@ class PostgreSQLConnection(ServerConnection):
         """
         self._conn.commit()
 
-
     def cursor(self, **kwargs):
         """
         Returns a client cursor for the current connection.
@@ -187,7 +186,6 @@ class PostgreSQLConnection(ServerConnection):
         :param kwargs (optional) to create a named cursor
         """
         return psycopg.ClientCursor(self._conn)
-
 
     def execute_query(self, query, all=True):
         """

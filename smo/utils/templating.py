@@ -152,6 +152,7 @@ def _hash_source_list(sources: list) -> int:
 #
 ##########################################################################
 
+
 def qt_type_ident(conn, *args):
     # We're not using the conn object at the moment, but - we will modify the
     # logic to use the server version specific keywords later.

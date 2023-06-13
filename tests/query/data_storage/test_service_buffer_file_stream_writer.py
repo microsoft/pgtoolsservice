@@ -11,7 +11,6 @@ import uuid
 import struct
 import io
 import datetime
-import psycopg
 from psycopg.types.range import NumericRange, TimestampRange, TimestamptzRange, DateRange
 
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter

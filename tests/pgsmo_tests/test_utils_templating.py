@@ -95,7 +95,6 @@ class TestTemplatingUtils(unittest.TestCase):
         self.assertEqual(env.filters['qtTypeIdent'], templating.qt_type_ident)
         self.assertEqual(env.filters['hasAny'], templating.has_any)
 
-
     def test_render_template_with_macros(self):
         # NOTE: This test has an external dependency on dummy_template.txt
         # If: I render a string
