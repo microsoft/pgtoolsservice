@@ -20,16 +20,16 @@ CREATE{% if add_replace_clause %} OR REPLACE{% endif %} PROCEDURE {{ conn|qtIden
 {% endif %}
 )
 {% endif %}
-LANGUAGE {{ data.lanname|qtLiteral }}{% if data.prosecdef %}
+LANGUAGE {{ data.lanname }}{% if data.prosecdef %}
 
     SECURITY DEFINER {% endif %}
 {% if data.variables %}{% for v in data.variables %}
 
-    SET {{ conn|qtIdent(v.name) }}={% if v.name in exclude_quoting %}{{ v.value }}{% else %}{{ v.value|qtLiteral }}{% endif %}{% endfor -%}
+    SET {{ conn|qtIdent(v.name) }}={% if v.name in exclude_quoting %}{{ v.value }}{% else %}{{ v.value }}{% endif %}{% endfor -%}
 {% endif %}
 
 AS {% if data.lanname == 'c' %}
-{{ data.probin|qtLiteral }}, {{ data.prosrc_c|qtLiteral }}
+{{ data.probin }}, {{ data.prosrc_c }}
 {% else %}
 $BODY${{ data.prosrc }}$BODY${% endif -%};
 
@@ -50,7 +50,7 @@ ALTER PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_arg
 {% if data.description %}
 
 COMMENT ON PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
-    IS {{ data.description|qtLiteral  }};
+    IS {{ data.description  }};
 {% endif -%}
 {% if data.seclabels %}
 {% for r in data.seclabels %}
