@@ -33,7 +33,7 @@ class TestQuery(unittest.TestCase):
         self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
         self.cursor = MockCursor(self.mock_query_results)
         self.mock_psycopg_connection = MockPsycopgConnection(dsn_parameters='host=test dbname=test')
-        self.connection = MockPGServerConnection(cur=self.cursor,  connection=self.mock_psycopg_connection)
+        self.connection = MockPGServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
         self.cursor.connection = self.mock_psycopg_connection
 
         self.columns_info = []

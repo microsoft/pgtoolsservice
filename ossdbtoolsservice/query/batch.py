@@ -17,7 +17,6 @@ from ossdbtoolsservice.query.result_set import ResultSet  # noqa
 from ossdbtoolsservice.query.file_storage_result_set import FileStorageResultSet
 from ossdbtoolsservice.query.in_memory_result_set import InMemoryResultSet
 from ossdbtoolsservice.query.data_storage import FileStreamFactory
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 
 class ResultSetStorageType(Enum):

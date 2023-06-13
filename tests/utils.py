@@ -2,11 +2,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-from typing import Callable, List, Optional
+from typing import List, Optional
 import logging
 import unittest
 import unittest.mock as mock
-from psycopg.pq.abc import PGresult
 
 import psycopg
 from psycopg.connection import NoticeHandler, AdaptersMap
@@ -119,7 +118,7 @@ class MockPsycopgConnection(object):
         self.commit = mock.Mock()
         self.pgconn = mock.Mock()
         self.info = MockConnectionInfo(dsn_parameters, self.server_version)
-        
+
         self._adapters: Optional[AdaptersMap] = None
         self.notice_handlers: List[NoticeHandler] = []
 
@@ -138,7 +137,7 @@ class MockPsycopgConnection(object):
             return self.server_version
         else:
             raise NotImplementedError()
-    
+
     def add_notice_handler(self, callback: NoticeHandler) -> None:
         """
         Register a callable to be invoked when a notice message is received.
@@ -172,7 +171,6 @@ class MockCursor:
         self.mogrify = mock.Mock(return_value=self._mogrified_value)
         self._query_results = query_results
         self._fetched_count = 0
-
 
     def __iter__(self):
         return self
@@ -245,6 +243,6 @@ class MockThread():
 
 
 class MockNotice():
-    
+
     def __init__(self, message_primary):
         self.message_primary = message_primary

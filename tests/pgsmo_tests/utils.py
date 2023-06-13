@@ -126,8 +126,7 @@ class MockPGServerConnection(PostgreSQLConnection):
 
         # if no mock pyscopg connection passed, create default one
         if not connection:
-            connection = MockPsycopgConnection(cursor=cur, dsn_parameters=
-                f'host={host} dbname={name} user={user} port={port}')
+            connection = MockPsycopgConnection(cursor=cur, dsn_parameters=f'host={host} dbname={name} user={user} port={port}')
 
         # mock psycopg.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
         with mock.patch('psycopg.connect', mock.Mock(return_value=connection)):
@@ -143,7 +142,7 @@ class MockPGServerConnection(PostgreSQLConnection):
         """Returns a SQL command to end the current query execution process"""
         return PG_CANCELLATION_QUERY.format(0)
 
-    
+
 # OBJECT TEST HELPERS ######################################################
 
 
