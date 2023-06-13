@@ -2,6 +2,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Test Debugger",
+            "type": "python",
+            "request": "launch",
+            "module": "nose2",
+            "args": [
+                "-v",
+                "<full_test_name>"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python",
             "type": "python",
             "request": "launch",
