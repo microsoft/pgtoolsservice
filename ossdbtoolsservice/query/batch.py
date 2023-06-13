@@ -6,7 +6,7 @@
 from enum import Enum
 from typing import List  # noqa
 from datetime import datetime
-import psycopg2
+import psycopg
 import uuid
 import sqlparse
 
@@ -120,6 +120,8 @@ class Batch:
             self._batch_events._on_execution_started(self)
 
         cursor = self.get_cursor(conn)
+        conn.connection.add_notice_handler(lambda msg: self._notices.append(msg.message_primary))
+
         try:
             cursor.execute(self.batch_text)
 
@@ -128,7 +130,7 @@ class Batch:
                 conn.commit()
 
             self.after_execute(cursor)
-        except psycopg2.DatabaseError as e:
+        except psycopg.DatabaseError as e:
             self._has_error = True
             raise e
         finally:
@@ -139,10 +141,6 @@ class Batch:
                 cursor.close()
             self._has_executed = True
             self._execution_end_time = datetime.now()
-
-            if conn._provider_name == PG_PROVIDER_NAME:
-                self._notices = cursor.connection.notices
-                cursor.connection.notices = []
 
             if self._batch_events and self._batch_events._on_execution_completed:
                 self._batch_events._on_execution_completed(self)
