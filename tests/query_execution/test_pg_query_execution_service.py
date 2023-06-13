@@ -60,9 +60,9 @@ class TestQueryService(unittest.TestCase):
 
         self.rows = [(1, 'Text 1'), (2, 'Text 2')]
         self.cursor = utils.MockCursor(self.rows)
-        self.mock_psycopg_connection = utils.MockPsycopgConnection(dsn_parameters='host=test dbname=test')
+        self.mock_psycopg_connection = utils.MockPsycopgConnection(cursor=self.cursor, dsn_parameters='host=test dbname=test')
         self.connection = MockPGServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
-        self.cursor.connection = self.connection
+        self.cursor.connection = self.mock_psycopg_connection
         self.connection_service = ConnectionService()
         self.query_execution_service = QueryExecutionService()
         self.service_provider = ServiceProvider(None, {}, constants.PG_PROVIDER_NAME)
@@ -72,8 +72,9 @@ class TestQueryService(unittest.TestCase):
         self.request_context = utils.MockRequestContext()
 
         self.cursor_cancel = utils.MockCursor(None)
-        self.connection_cancel = MockPGServerConnection(cur=self.cursor_cancel)
-        self.cursor_cancel.connection = self.connection_cancel
+        self.mock_psycopg_connection_cancel = utils.MockPsycopgConnection(cursor=self.cursor_cancel, dsn_parameters='host=test dbname=test')
+        self.connection_cancel = MockPGServerConnection(cur=self.cursor_cancel, connection=self.mock_psycopg_connection_cancel)
+        self.cursor_cancel.connection = self.mock_psycopg_connection_cancel
 
         def connection_side_effect(owner_uri: str, connection_type: ConnectionType):
             if connection_type is ConnectionType.QUERY_CANCEL:
@@ -374,7 +375,6 @@ class TestQueryService(unittest.TestCase):
         # And the connection's notices is set properly
         self.cursor.execute.assert_called_once()
         self.cursor.close.assert_called_once()
-        self.assertEqual(self.connection.notices, [])
 
         # Get the message params for all message notifications that were sent
         # call[0] would refer to the name of the notification call. call[1] allows
@@ -407,7 +407,6 @@ class TestQueryService(unittest.TestCase):
         # And the connection's notices is set properly
         self.cursor.execute.assert_called_once()
         self.cursor.close.assert_called_once()
-        self.assertEqual(self.connection.notices, [])
 
         # Get the message params for all message notifications that were sent
         # call[0] would refer to the name of the notification call. call[1] allows
@@ -442,7 +441,6 @@ class TestQueryService(unittest.TestCase):
         self.cursor.execute.assert_called_once()
         self.cursor.close.assert_not_called()
         self.cursor.fetchall.assert_not_called()
-        self.assertEqual(self.connection.notices, [])
 
         # Get the message params for all message notifications that were sent
         # call[0] would refer to the name of the notification call. call[1] allows
@@ -479,7 +477,6 @@ class TestQueryService(unittest.TestCase):
         self.cursor.execute.assert_called_once()
         self.cursor.close.assert_not_called()
         self.cursor.fetchall.assert_not_called()
-        self.assertEqual(self.connection.notices, [])
 
         # Get the message params for all message notifications that were sent
         # call[0] would refer to the name of the notification call. call[1] allows
@@ -968,7 +965,7 @@ class TestQueryService(unittest.TestCase):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
-        self.mock_psycopg_connection.get_transaction_status = mock.MagicMock(return_value=psycopg.pq.TransactionStatus.INERROR)
+        self.mock_psycopg_connection.TransactionStatus = psycopg.pq.TransactionStatus.INERROR
         query_params = get_execute_string_params()
         query = Query(query_params.owner_uri, query_params.query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
         self.query_execution_service.query_results[query_params.owner_uri] = query

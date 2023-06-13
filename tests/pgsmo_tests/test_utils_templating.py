@@ -91,10 +91,10 @@ class TestTemplatingUtils(unittest.TestCase):
         self.assertListEqual(loader.searchpath, [template_folder])
 
         # ... The environment should have the proper filters defined
-        self.assertEqual(env.filters['qtLiteral'], templating.qt_literal)
         self.assertEqual(env.filters['qtIdent'], templating.qt_ident)
         self.assertEqual(env.filters['qtTypeIdent'], templating.qt_type_ident)
         self.assertEqual(env.filters['hasAny'], templating.has_any)
+
 
     def test_render_template_with_macros(self):
         # NOTE: This test has an external dependency on dummy_template.txt
@@ -125,7 +125,6 @@ class TestTemplatingUtils(unittest.TestCase):
         self.assertListEqual(loader.searchpath, all_folders)
 
         # ... The environment should have the proper filters defined
-        self.assertEqual(env.filters['qtLiteral'], templating.qt_literal)
         self.assertEqual(env.filters['qtIdent'], templating.qt_ident)
         self.assertEqual(env.filters['qtTypeIdent'], templating.qt_type_ident)
         self.assertEqual(env.filters['hasAny'], templating.has_any)

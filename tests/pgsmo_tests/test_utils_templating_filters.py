@@ -31,28 +31,6 @@ class TestTemplatingFilters(unittest.TestCase):
         # Then: I should get back None
         self.assertIsNone(output)
 
-    # QTLITERAL TESTS ######################################################
-    def test_qtliteral_no_encoding(self):
-        # If: I provide a value that doesn't have an encoding
-        output = templating.qt_literal(4)
-
-        # Then: I should get a quoted literal back
-        self.assertEqual(output, '4')
-
-    def test_qtliteral_bytes(self):
-        # If: I provide a byte array
-        output = templating.qt_literal(b'123')
-
-        # Then: I should get the byte array decoded as UTF-8 back
-        self.assertEqual(output, "'123'::bytea")
-
-    def test_qtliteral_string(self):
-        # If: I provide a string
-        output = templating.qt_literal("123")
-
-        # Then: I should get the quoted string back
-        self.assertEqual(output, "'123'")
-
     # NEEDS QUOTING TESTS ##################################################
     # TODO: Add tests that are more based on scenarios and less on code paths
     def test_needs_quoting_int(self):

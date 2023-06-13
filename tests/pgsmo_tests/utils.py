@@ -7,10 +7,9 @@ import unittest
 import unittest.mock as mock
 from typing import List, Optional, Tuple
 
-from psycopg import DatabaseError
-from psycopg import Column
+from psycopg import DatabaseError, Column, connection
 
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection, PG_CANCELLATION_QUERY
 from pgsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
 from tests.utils import MockPsycopgConnection
@@ -115,7 +114,7 @@ class MockPGServerConnection(PostgreSQLConnection):
             self,
             cur: Optional[MockCursor] = None,
             connection: Optional[MockPsycopgConnection] = None,
-            version: str = '90602',
+            version: str = '131001',
             name: str = 'postgres',
             host: str = 'localhost',
             port: str = '25565',
@@ -134,6 +133,17 @@ class MockPGServerConnection(PostgreSQLConnection):
         with mock.patch('psycopg.connect', mock.Mock(return_value=connection)):
             super().__init__({"host_name": host, "user_name": user, "port": port, "database_name": name})
 
+    @property
+    def connection(self) -> connection:
+        """Returns the underlying connection"""
+        return self._conn
+
+    @property
+    def cancellation_query(self) -> str:
+        """Returns a SQL command to end the current query execution process"""
+        return PG_CANCELLATION_QUERY.format(0)
+
+    
 # OBJECT TEST HELPERS ######################################################
 
 
