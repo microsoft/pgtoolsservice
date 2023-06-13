@@ -74,7 +74,7 @@ FROM (
 		LEFT OUTER JOIN pg_constraint con ON con.conrelid=rel.oid AND con.contype='p'
 		LEFT OUTER JOIN pg_class tst ON tst.oid = rel.reltoastrelid
 
-	 WHERE rel.relkind IN ('r','s','t') AND rel.relnamespace = {{ scid }}
+	 WHERE rel.relkind IN ('r','s','t','p') AND rel.relnamespace = {{ scid }}
 	{% if oid %}  AND rel.oid = {{ oid }}::oid {% endif %}
 ) AS TableInformation
  ORDER BY name
