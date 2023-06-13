@@ -3,7 +3,8 @@ trigger: none
 pr: none
 
 jobs:
-  platform_matrix:
+  - job: platform_matrix
+    displayName: Build and Publish Artifacts
     strategy:
       matrix:
         linux:
@@ -157,7 +158,8 @@ jobs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: dist
 
-  -github_release:
+  - job: github_release
+    displayName: Manage GitHub Release
     dependsOn:
       - platform_matrix
 
