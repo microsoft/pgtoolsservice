@@ -2,168 +2,183 @@ trigger: none
 
 pr: none
 
-strategy:
-  matrix:
-    linux:
-      platform: 'ubuntu'
-      imageName: 'ubuntu-latest'
-      buildScript: 'scripts/build.sh'
-      archiveFileName: 'pgsqltoolsservice-linux-x64-insiders.tar.gz'
-      archiveType: 'tar'
-    mac-x64:
-      platform: 'mac-x64'
-      imageName: 'macOS-latest'
-      buildScript: 'scripts/build.sh'
-      archiveFileName: 'pgsqltoolsservice-osx-insiders.tar.gz'
-      archiveType: 'tar'
-    mac-arm64:
-      platform: 'mac-arm64'
-      imageName: 'macOS-latest'
-      archiveFileName: 'pgsqltoolsservice-osx-arm64-insiders.tar.gz'
-      archiveType: 'tar'
-    windows:
-      platform: 'windows'
-      imageName: 'windows-latest'
-      buildScript: 'scripts/build-ps1.sh'
-      archiveFileName: 'pgsqltoolsservice-win-x64-insiders.zip'
-      archiveType: 'zip'
+jobs:
+  platform_matrix:
+    strategy:
+      matrix:
+        linux:
+          platform: 'ubuntu'
+          imageName: 'ubuntu-latest'
+          buildScript: 'scripts/build.sh'
+          archiveFileName: 'pgsqltoolsservice-linux-x64-insiders.tar.gz'
+          archiveType: 'tar'
+        mac-x64:
+          platform: 'mac-x64'
+          imageName: 'macOS-latest'
+          buildScript: 'scripts/build.sh'
+          archiveFileName: 'pgsqltoolsservice-osx-insiders.tar.gz'
+          archiveType: 'tar'
+        mac-arm64:
+          platform: 'mac-arm64'
+          imageName: 'macOS-latest'
+          archiveFileName: 'pgsqltoolsservice-osx-arm64-insiders.tar.gz'
+          archiveType: 'tar'
+        windows:
+          platform: 'windows'
+          imageName: 'windows-latest'
+          buildScript: 'scripts/build-ps1.sh'
+          archiveFileName: 'pgsqltoolsservice-win-x64-insiders.zip'
+          archiveType: 'zip'
 
-pool:
-  vmImage: $(imageName)
+    pool:
+      vmImage: $(imageName)
 
-steps:
-- template: templates/build.yml
+    steps:
+    - template: templates/build.yml
 
-- template: templates/code-sign.yml
+    - template: templates/code-sign.yml
 
-- task: PowerShell@1
-  displayName: 'Download Postgres windows'
-  condition: eq(variables.platform, 'windows')
-  inputs:
-    scriptType: inlineScript
-    inlineScript: |
-     cd $env:BUILD_BINARIESDIRECTORY
-     (New-Object System.Net.WebClient).DownloadFile('https://get.enterprisedb.com/postgresql/postgresql-14.1-1-windows-x64-binaries.zip', $env:BUILD_BINARIESDIRECTORY + '\postgres.zip')
+    - task: PowerShell@1
+      displayName: 'Download Postgres windows'
+      condition: eq(variables.platform, 'windows')
+      inputs:
+        scriptType: inlineScript
+        inlineScript: |
+        cd $env:BUILD_BINARIESDIRECTORY
+        (New-Object System.Net.WebClient).DownloadFile('https://get.enterprisedb.com/postgresql/postgresql-14.1-1-windows-x64-binaries.zip', $env:BUILD_BINARIESDIRECTORY + '\postgres.zip')
 
-- task: ExtractFiles@1
-  displayName: 'Extract Postgres windows'
-  condition: eq(variables.platform, 'windows')
-  inputs:
-    archiveFilePatterns: '$(Build.BinariesDirectory)/*.zip'
-    destinationFolder: '$(Build.BinariesDirectory)/postgres'
+    - task: ExtractFiles@1
+      displayName: 'Extract Postgres windows'
+      condition: eq(variables.platform, 'windows')
+      inputs:
+        archiveFilePatterns: '$(Build.BinariesDirectory)/*.zip'
+        destinationFolder: '$(Build.BinariesDirectory)/postgres'
 
-- powershell: |
-   Remove-Item -path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\pgAdmin 4\*" -Recurse -Force -EA SilentlyContinue
+    - powershell: |
+      Remove-Item -path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\pgAdmin 4\*" -Recurse -Force -EA SilentlyContinue
 
-   cd "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\bin"
+      cd "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\bin"
 
-   $config = @{
-           host = "localhost"
-           port = 5432
-           user = "postgres"
-           password = "$(PostgresPassword)"
-           dbname = "postgres"
-       }
+      $config = @{
+              host = "localhost"
+              port = 5432
+              user = "postgres"
+              password = "$(PostgresPassword)"
+              dbname = "postgres"
+          }
 
-   New-Item -ItemType File -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Force | Out-Null
+      New-Item -ItemType File -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Force | Out-Null
 
-   $config | ConvertTo-Json -Depth 4 | Set-Content -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Encoding utf8
+      $config | ConvertTo-Json -Depth 4 | Set-Content -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Encoding utf8
 
-   Get-Content "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Raw
+      Get-Content "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Raw
 
-   $pw = ConvertTo-SecureString "$(PostgresPassword)" -AsPlainText -Force
-   New-LocalUser -Name "postgres" -Password $pw
-   icacls "$env:BUILD_BINARIESDIRECTORY" /grant:r "users:(F)" /T /C
-   $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "postgres",$pw
-   Start-Process ".\initdb.exe" -ArgumentList "-U postgres -D ..\db1" -NoNewWindow -Wait -Credential $cred
+      $pw = ConvertTo-SecureString "$(PostgresPassword)" -AsPlainText -Force
+      New-LocalUser -Name "postgres" -Password $pw
+      icacls "$env:BUILD_BINARIESDIRECTORY" /grant:r "users:(F)" /T /C
+      $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "postgres",$pw
+      Start-Process ".\initdb.exe" -ArgumentList "-U postgres -D ..\db1" -NoNewWindow -Wait -Credential $cred
 
-   mkdir ..\db1\pg_log
-   Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
-  displayName: 'Start Postgres windows'
-  condition: eq(variables.platform, 'windows')
+      mkdir ..\db1\pg_log
+      Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
+      displayName: 'Start Postgres windows'
+      condition: eq(variables.platform, 'windows')
 
-- task: PowerShell@2
-  displayName: 'Style Check windows'
-  condition: eq(variables.platform, 'windows')
-  inputs:
-    filePath: scripts/flake8.ps1
-    script: >-
-      Get-ChildItem -Path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql"
-
-
-      & "$env:BUILD_SOURCESDIRECTORY\scripts\flake8.ps1"
-    warningPreference: stop
-    failOnStderr: true
+    - task: PowerShell@2
+      displayName: 'Style Check windows'
+      condition: eq(variables.platform, 'windows')
+      inputs:
+        filePath: scripts/flake8.ps1
+        script: >-
+          Get-ChildItem -Path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql"
 
 
-- task: PowerShell@2
-  displayName: 'Run Tests windows'
-  condition: eq(variables.platform, 'windows')
-  inputs:
-    targetType: filePath
-    filePath: './scripts/test-all.ps1'
-    errorActionPreference: default
-  continueOnError: true
+          & "$env:BUILD_SOURCESDIRECTORY\scripts\flake8.ps1"
+        warningPreference: stop
+        failOnStderr: true
 
-- task: PublishTestResults@2
-  displayName: 'Publish test results windows **/nose2-junit.xml'
-  condition: eq(variables.platform, 'windows')
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: '**/nose2-junit.xml'
 
-- task: PublishCodeCoverageResults@1
-  displayName: 'Publish code coverage from **/htmlcov windows'
-  condition: eq(variables.platform, 'windows')
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: '**/cchtml'
-    reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
+    - task: PowerShell@2
+      displayName: 'Run Tests windows'
+      condition: eq(variables.platform, 'windows')
+      inputs:
+        targetType: filePath
+        filePath: './scripts/test-all.ps1'
+        errorActionPreference: default
+      continueOnError: true
 
-- task: DeleteFiles@1
-  inputs:
-    SourceFolder: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
-    Contents: 'CodeSignSummary*.md'
+    - task: PublishTestResults@2
+      displayName: 'Publish test results windows **/nose2-junit.xml'
+      condition: eq(variables.platform, 'windows')
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/nose2-junit.xml'
 
-- task: ArchiveFiles@2
-  displayName: 'Archive files'
-  inputs:
-    rootFolderOrFile: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
-    includeRootFolder: true
-    archiveType: '$(archiveType)'
-    archiveFile: '$(Build.SourcesDirectory)/dist/$(archiveFileName)'
-    replaceExistingArchive: true
+    - task: PublishCodeCoverageResults@1
+      displayName: 'Publish code coverage from **/htmlcov windows'
+      condition: eq(variables.platform, 'windows')
+      inputs:
+        codeCoverageTool: Cobertura
+        summaryFileLocation: '**/cchtml'
+        reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
 
-- task: ArchiveFiles@1
-  displayName: 'Archive files - coverage'
-  inputs:
-    rootFolder: '$(Build.SourcesDirectory)/cover'
-    includeRootFolder: false
-    archiveType: tar
-    archiveFile: '$(Build.ArtifactStagingDirectory)/coverage.tar.gz'
-  enabled: false
+    - task: DeleteFiles@1
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
+        Contents: 'CodeSignSummary*.md'
 
-- task: CopyFiles@2
-  displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
-  inputs:
-    sourceFolder: '$(Build.SourcesDirectory)'
-    contents: 'dist/$(archiveFileName)'
-    targetFolder: '$(Build.ArtifactStagingDirectory)'
+    - task: ArchiveFiles@2
+      displayName: 'Archive files'
+      inputs:
+        rootFolderOrFile: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
+        includeRootFolder: true
+        archiveType: '$(archiveType)'
+        archiveFile: '$(Build.SourcesDirectory)/dist/$(archiveFileName)'
+        replaceExistingArchive: true
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: dist
+    - task: ArchiveFiles@1
+      displayName: 'Archive files - coverage'
+      inputs:
+        rootFolder: '$(Build.SourcesDirectory)/cover'
+        includeRootFolder: false
+        archiveType: tar
+        archiveFile: '$(Build.ArtifactStagingDirectory)/coverage.tar.gz'
+      enabled: false
 
-- task: GithubRelease@1 
-  displayName: 'Create GitHub Release'
-  inputs:
-    gitHubConnection: azuredatastudio-postgresqlext2
-    repositoryName: 'microsoft/pgtoolsservice'
-    tagSource: 'userSpecifiedTag'
-    tag: 'v1.8.0-alpha'
-    title: 'v1.8.0-alpha'
-    isPreRelease: true
-    assets: |
-      $(Build.ArtifactStagingDirectory)/**/*.gz
-      $(Build.ArtifactStagingDirectory)/**/*.zip
+    - task: CopyFiles@2
+      displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
+      inputs:
+        sourceFolder: '$(Build.SourcesDirectory)'
+        contents: 'dist/$(archiveFileName)'
+        targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: dist
+
+  -github_release:
+    dependsOn:
+      - platform_matrix
+
+    steps:
+      - task: GithubRelease@1
+        displayName: 'Delete GitHub Release'
+        inputs:
+          gitHubConnection: azuredatastudio-postgresqlext2
+          repositoryName: 'microsoft/pgtoolsservice'
+          action: delete
+          tag: '$(ReleaseVersion)-insiders'
+
+      - task: GithubRelease@2
+        displayName: 'Create GitHub Release'
+        inputs:
+          gitHubConnection: azuredatastudio-postgresqlext2
+          repositoryName: 'microsoft/pgtoolsservice'
+          tagSource: 'userSpecifiedTag'
+          tag: '$(ReleaseVersion)-insiders'
+          title: '$(ReleaseVersion)-insiders'
+          isPreRelease: true
+          assets: |
+            $(Build.ArtifactStagingDirectory)/**/*.gz
+            $(Build.ArtifactStagingDirectory)/**/*.zip
