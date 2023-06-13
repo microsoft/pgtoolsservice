@@ -172,7 +172,7 @@ jobs:
           action: delete
           tag: '$(ReleaseVersion)-insiders'
 
-      - task: GithubRelease@2
+      - task: GithubRelease@1
         displayName: 'Create GitHub Release'
         inputs:
           gitHubConnection: azuredatastudio-postgresqlext2
