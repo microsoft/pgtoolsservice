@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import List
-from psycopg2 import sql
+from psycopg import sql
 
 from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.utils import constants

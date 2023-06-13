@@ -11,7 +11,7 @@ import json
 import datetime
 
 from ossdbtoolsservice.parsers import datatypes
-from psycopg2.extras import NumericRange, DateTimeRange, DateTimeTZRange, DateRange
+from psycopg.types.range import NumericRange, TimestampRange, TimestamptzRange, DateRange
 
 DECODING_METHOD = 'utf-8'
 
@@ -101,15 +101,15 @@ def convert_numericrange(value: NumericRange):
     return bytearray(formatted_value_str.encode())
 
 
-def convert_datetimerange(value: DateTimeRange):
-    """ Serialize DateTimeRange object in "[lower,upper)" format before convert to bytearray """
+def convert_timestamprange(value: TimestampRange):
+    """ Serialize TimestampRange object in "[lower,upper)" format before convert to bytearray """
     bound = _get_range_data_type_bound(value)
     formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
     return bytearray(formatted_value_str.encode())
 
 
-def convert_datetimetzrange(value: DateTimeTZRange):
-    """ Serialize DateTimeTZRange object in "[lower,upper)" format before convert to bytearray """
+def convert_timestamptzrange(value: TimestamptzRange):
+    """ Serialize TimestamptzRange object in "[lower,upper)" format before convert to bytearray """
     bound = _get_range_data_type_bound(value)
     formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
     return bytearray(formatted_value_str.encode())
@@ -184,13 +184,13 @@ def convert_numericrange_list(values: list):
     return bytearray(json.dumps(numericrange_list).encode())
 
 
-def convert_datetimerange_list(values: list):
-    datetimerange_list = []
+def convert_timestamprange_list(values: list):
+    timestamprange_list = []
     for value in values:
         bound = _get_range_data_type_bound(value)
         formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-        datetimerange_list.append(str(formatted_value_str))
-    return bytearray(json.dumps(datetimerange_list).encode())
+        timestamprange_list.append(str(formatted_value_str))
+    return bytearray(json.dumps(timestamprange_list).encode())
 
 
 def convert_date_to_string(value):
@@ -227,8 +227,8 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_INT4RANGE: convert_numericrange,
     datatypes.DATATYPE_INT8RANGE: convert_numericrange,
     datatypes.DATATYPE_NUMRANGE: convert_numericrange,
-    datatypes.DATATYPE_TSRANGE: convert_datetimerange,
-    datatypes.DATATYPE_TSTZRANGE: convert_datetimetzrange,
+    datatypes.DATATYPE_TSRANGE: convert_timestamprange,
+    datatypes.DATATYPE_TSTZRANGE: convert_timestamptzrange,
     datatypes.DATATYPE_DATERANGE: convert_daterange,
     datatypes.DATATYPE_OID: convert_int,
     datatypes.DATATYPE_SMALLINT_ARRAY: convert_list,
@@ -271,9 +271,9 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_INT4RANGE_ARRAY: convert_numericrange_list,
     datatypes.DATATYPE_INT8RANGE_ARRAY: convert_numericrange_list,
     datatypes.DATATYPE_NUMRANGE_ARRAY: convert_numericrange_list,
-    datatypes.DATATYPE_TSRANGE_ARRAY: convert_datetimerange_list,
-    datatypes.DATATYPE_TSTZRANGE_ARRAY: convert_datetimerange_list,
-    datatypes.DATATYPE_DATERANGE_ARRAY: convert_datetimerange_list,
+    datatypes.DATATYPE_TSRANGE_ARRAY: convert_timestamprange_list,
+    datatypes.DATATYPE_TSTZRANGE_ARRAY: convert_timestamprange_list,
+    datatypes.DATATYPE_DATERANGE_ARRAY: convert_timestamprange_list,
     datatypes.DATATYPE_OID_ARRAY: convert_list,
     datatypes.DATATYPE_REGPROC_ARRAY: convert_list,
     datatypes.DATATYPE_REGPROCEDURE_ARRAY: convert_list,
