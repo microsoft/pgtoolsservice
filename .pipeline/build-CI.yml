@@ -158,7 +158,7 @@ steps:
 - task: GithubRelease@1 
   displayName: 'Create GitHub Release'
   inputs:
-    gitHubConnection: '$(GitHubConnection)'
+    gitHubConnection: nasc17_test2
     repositoryName: 'microsoft/pgtoolsservice'
     tag: 'v1.8.0-alpha'
     title: 'v1.8.0-alpha'
