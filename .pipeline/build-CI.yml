@@ -4,10 +4,16 @@ pr: none
 
 strategy:
   matrix:
+    linux:
+      platform: 'ubuntu'
+      imageName: 'ubuntu-latest'
+      buildScript: 'scripts/build.sh'
+      archiveFileName: 'pgsqltoolsservice-linux-x64-insiders.tar.gz'
+      archiveType: 'tar'
     mac-x64:
       platform: 'mac-x64'
       imageName: 'macOS-latest'
-      buildScript: 'scripts/build-mac.sh'
+      buildScript: 'scripts/build.sh'
       archiveFileName: 'pgsqltoolsservice-osx-insiders.tar.gz'
       archiveType: 'tar'
     mac-arm64:
@@ -18,7 +24,7 @@ strategy:
     windows:
       platform: 'windows'
       imageName: 'windows-latest'
-      buildScript: 'scripts/build.sh'
+      buildScript: 'scripts/build-ps1.sh'
       archiveFileName: 'pgsqltoolsservice-win-x64-insiders.zip'
       archiveType: 'zip'
 
@@ -75,6 +81,20 @@ steps:
    Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
   displayName: 'Start Postgres windows'
   condition: eq(variables.platform, 'windows')
+
+- task: PowerShell@2
+  displayName: 'Style Check windows'
+  condition: eq(variables.platform, 'windows')
+  inputs:
+    filePath: scripts/flake8.ps1
+    script: >-
+      Get-ChildItem -Path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql"
+
+
+      & "$env:BUILD_SOURCESDIRECTORY\scripts\flake8.ps1"
+    warningPreference: stop
+    failOnStderr: true
+
 
 - task: PowerShell@2
   displayName: 'Run Tests windows'
@@ -134,3 +154,15 @@ steps:
   inputs:
     pathToPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: dist
+
+- task: GithubRelease@1 
+  displayName: 'Create GitHub Release'
+  inputs:
+    gitHubConnection: '$(GitHubConnection)'
+    repositoryName: 'microsoft/pgtoolsservice'
+    tag: 'v1.8.0-alpha'
+    title: 'v1.8.0-alpha'
+    isPreRelease: true
+    assets: |
+      $(Build.ArtifactStagingDirectory)/**/*.gz
+      $(Build.ArtifactStagingDirectory)/**/*.zip
