@@ -55,38 +55,35 @@ jobs:
         archiveFilePatterns: '$(Build.BinariesDirectory)/*.zip'
         destinationFolder: '$(Build.BinariesDirectory)/postgres'
 
-    - task: PowerShell@1
+    - powershell: |
+        Remove-Item -path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\pgAdmin 4\*" -Recurse -Force -EA SilentlyContinue
+
+        cd "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\bin"
+
+        $config = @{
+                host = "localhost"
+                port = 5432
+                user = "postgres"
+                password = "$(PostgresPassword)"
+                dbname = "postgres"
+            }
+
+        New-Item -ItemType File -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Force | Out-Null
+
+        $config | ConvertTo-Json -Depth 4 | Set-Content -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Encoding utf8
+
+        Get-Content "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Raw
+
+        $pw = ConvertTo-SecureString "$(PostgresPassword)" -AsPlainText -Force
+        New-LocalUser -Name "postgres" -Password $pw
+        icacls "$env:BUILD_BINARIESDIRECTORY" /grant:r "users:(F)" /T /C
+        $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "postgres",$pw
+        Start-Process ".\initdb.exe" -ArgumentList "-U postgres -D ..\db1" -NoNewWindow -Wait -Credential $cred
+
+        mkdir ..\db1\pg_log
+        Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
       displayName: 'Start Postgres windows'
       condition: eq(variables.platform, 'windows')
-      inputs:
-        scriptType: inlineScript
-        inlineScript: |
-          Remove-Item -path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\pgAdmin 4\*" -Recurse -Force -EA SilentlyContinue
-
-          cd "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql\bin"
-
-          $config = @{
-                  host = "localhost"
-                  port = 5432
-                  user = "postgres"
-                  password = "$(PostgresPassword)"
-                  dbname = "postgres"
-              }
-
-          New-Item -ItemType File -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Force | Out-Null
-
-          $config | ConvertTo-Json -Depth 4 | Set-Content -Path "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Encoding utf8
-
-          Get-Content "$env:BUILD_SOURCESDIRECTORY\tests\integration\config.json" -Raw
-
-          $pw = ConvertTo-SecureString "$(PostgresPassword)" -AsPlainText -Force
-          New-LocalUser -Name "postgres" -Password $pw
-          icacls "$env:BUILD_BINARIESDIRECTORY" /grant:r "users:(F)" /T /C
-          $cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "postgres",$pw
-          Start-Process ".\initdb.exe" -ArgumentList "-U postgres -D ..\db1" -NoNewWindow -Wait -Credential $cred
-
-          mkdir ..\db1\pg_log
-          Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
 
     - task: PowerShell@2
       displayName: 'Style Check windows'
