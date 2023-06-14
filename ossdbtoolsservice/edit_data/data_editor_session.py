@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import Callable, Dict, List, Optional, Tuple  # noqa
-from psycopg2 import sql
+from psycopg import sql
 import threading
 
 from ossdbtoolsservice.edit_data.update_management import RowEdit, RowUpdate, EditScript, RowCreate, RowDelete  # noqa

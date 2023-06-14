@@ -17,6 +17,6 @@ SELECT
 FROM
     pg_tablespace ts
 {% if tsid %}
-WHERE ts.oid={{ tsid|qtLiteral }}::OID
+WHERE ts.oid={{ tsid }}::OID
 {% endif %}
 ORDER BY name

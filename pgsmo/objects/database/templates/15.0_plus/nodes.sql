@@ -20,7 +20,7 @@
        pg_database db
        LEFT OUTER JOIN pg_tablespace ta ON db.dattablespace = ta.oid
    {% if did %}
-   WHERE db.oid = {{ did|qtLiteral }}::OID
+   WHERE db.oid = {{ did }}::OID
    {% elif last_system_oid %}
    WHERE db.oid > {{ last_system_oid }}::OID
    {% endif %}

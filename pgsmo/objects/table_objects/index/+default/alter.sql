@@ -14,4 +14,4 @@ ALTER TABLE {{conn|qtIdent(data.schema, data.table)}}
 {% if data.description is defined and data.description %}
 
 COMMENT ON INDEX {{conn|qtIdent(data.schema, data.name)}}
-    IS {{data.description|qtLiteral}};{% endif %}
+    IS {{data.description}};{% endif %}

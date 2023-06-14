@@ -28,7 +28,7 @@ WHERE
     proisagg = FALSE
     AND pr.protype = '0'::char
 {% if fnid %}
-    AND pr.oid = {{ fnid|qtLiteral }}
+    AND pr.oid = {{ fnid }}
 {% endif %}
     AND typname NOT IN ('trigger', 'event_trigger')
 ORDER BY

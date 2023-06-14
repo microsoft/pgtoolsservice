@@ -8,6 +8,6 @@ SELECT opcname
 FROM pg_opclass opc,
 pg_am am
 WHERE opcmethod=am.oid AND
-      am.amname ={{indextype|qtLiteral}} AND
+      am.amname ={{indextype}} AND
       NOT opcdefault
 ORDER BY 1

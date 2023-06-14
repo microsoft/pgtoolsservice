@@ -27,8 +27,8 @@ FROM
     pg_stat_database db
     LEFT JOIN pg_stat_database_conflicts slave ON db.datid=slave.datid
 WHERE {% if did %}
-db.datid = {{ did|qtLiteral }}::OID{% else %}
-db.datid > {{ last_system_oid|qtLiteral }}::OID
+db.datid = {{ did }}::OID{% else %}
+db.datid > {{ last_system_oid }}::OID
 {% endif %}
 
 ORDER BY db.datname;

@@ -9,8 +9,8 @@
 SELECT c.oid
 FROM pg_collation c, pg_namespace n
 WHERE c.collnamespace=n.oid AND
-    n.nspname = {{ data.schema|qtLiteral }} AND
-    c.collname = {{ data.name|qtLiteral }}
+    n.nspname = {{ data.schema }} AND
+    c.collname = {{ data.name }}
 {% elif coid  %}
 SELECT
     c.collnamespace as scid

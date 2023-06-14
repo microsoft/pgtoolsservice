@@ -11,5 +11,5 @@ SELECT
 FROM
     pg_rewrite rw
 WHERE
-    rw.rulename={{ rule_name|qtLiteral }}
+    rw.rulename={{ rule_name }}
 {% endif %}

@@ -21,7 +21,7 @@ CREATE{% if query_type is defined %}{{' OR REPLACE'}}{% endif %} FUNCTION {{ con
 
     RETURNS{% if data.proretset and (data.prorettypename.startswith('SETOF ') or data.prorettypename.startswith('TABLE')) %} {{ data.prorettypename }} {% elif data.proretset %} SETOF {{ conn|qtTypeIdent(data.prorettypename) }}{% else %} {{ conn|qtTypeIdent(data.prorettypename) }}{% endif %}
 
-    LANGUAGE {{ data.lanname|qtLiteral }}
+    LANGUAGE {{ data.lanname }}
     {% if data.provolatile %}{% if data.provolatile == 'i' %}IMMUTABLE{% elif data.provolatile == 's' %}STABLE{% else %}VOLATILE{% endif %} {% endif %}{% if data.proleakproof %}LEAKPROOF {% endif %}
 {% if data.proisstrict %}STRICT {% endif %}
 {% if data.prosecdef %}SECURITY DEFINER {% endif %}
@@ -31,11 +31,11 @@ CREATE{% if query_type is defined %}{{' OR REPLACE'}}{% endif %} FUNCTION {{ con
 {% if data.procost %}
     COST {{data.procost}}{% endif %}{% if data.prorows %}
     ROWS {{data.prorows}}{% endif -%}{% if data.variables %}{% for v in data.variables %}
-    SET {{ conn|qtIdent(v.name) }}={{ v.value|qtLiteral }}{% endfor %}
+    SET {{ conn|qtIdent(v.name) }}={{ v.value }}{% endfor %}
 {% endif %}
 
 AS {% if data.lanname == 'c' %}
-{{ data.probin|qtLiteral }}, {{ data.prosrc_c|qtLiteral }}
+{{ data.probin }}, {{ data.prosrc_c }}
 {% else %}
 {% if data.prosrc.startswith('range_constructor') %} 
 {{"\'"}}{{ data.prosrc }}{{"\'"}}
@@ -56,7 +56,7 @@ ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name)|replace('"', '') }}
 {% if data.description %}
 
 COMMENT ON FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
-    IS {{ data.description|qtLiteral  }};
+    IS {{ data.description  }};
 {% endif -%}
 {% if data.seclabels %}
 {% for r in data.seclabels %}
