@@ -169,6 +169,9 @@ jobs:
     dependsOn:
       - platform_matrix
 
+    pool:
+      vmImage: $(imageName)
+
     steps:
       - task: GithubRelease@1
         displayName: 'Create GitHub Release'
