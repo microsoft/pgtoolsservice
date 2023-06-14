@@ -173,6 +173,7 @@ jobs:
           tagSource: userSpecifiedTag
           tag: $(ReleaseVersion)-insiders-$(Build.BuildNumber)
           title: $(ReleaseVersion)-insiders-$(Build.BuildNumber)
+          changeLogType: issueBased
           isPreRelease: true
           assets: |
             $(System.ArtifactsDirectory)/**/*.gz
