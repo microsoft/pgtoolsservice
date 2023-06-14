@@ -165,22 +165,13 @@ jobs:
 
     steps:
       - task: GithubRelease@1
-        displayName: 'Delete GitHub Release'
-        continueOnError: true
-        inputs:
-          gitHubConnection: azuredatastudio-postgresqlext2
-          repositoryName: 'microsoft/pgtoolsservice'
-          action: delete
-          tag: '$(ReleaseVersion)-insiders'
-
-      - task: GithubRelease@1
         displayName: 'Create GitHub Release'
         inputs:
           gitHubConnection: azuredatastudio-postgresqlext2
           repositoryName: 'microsoft/pgtoolsservice'
           tagSource: 'userSpecifiedTag'
-          tag: '$(ReleaseVersion)-insiders'
-          title: '$(ReleaseVersion)-insiders'
+          tag: '$(ReleaseVersion)-insiders-$(Build.BuildNumber)'
+          title: '$(ReleaseVersion)-insiders-$(Build.BuildNumber)'
           isPreRelease: true
           assets: |
             $(Build.ArtifactStagingDirectory)/**/*.gz
