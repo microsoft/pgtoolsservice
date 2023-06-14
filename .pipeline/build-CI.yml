@@ -166,6 +166,7 @@ jobs:
     steps:
       - task: GithubRelease@1
         displayName: 'Delete GitHub Release'
+        continueOnError: true
         inputs:
           gitHubConnection: azuredatastudio-postgresqlext2
           repositoryName: 'microsoft/pgtoolsservice'
