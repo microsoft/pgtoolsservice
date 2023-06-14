@@ -20,7 +20,7 @@ ALTER TABLE {{conn|qtIdent(data.schema, data.table)}}
 {###  Add comments ###}
 {% if data and data.description %}
 COMMENT ON COLUMN {{conn|qtIdent(data.schema, data.table, data.name)}}
-    IS {{data.description|qtLiteral}};
+    IS {{data.description}};
 
 {% endif %}
 {###  Add variables to column ###}

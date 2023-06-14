@@ -43,12 +43,12 @@ CREATE OR REPLACE TRIGGER {{ conn|qtIdent(data.name) }}
 
 {% if data.description is not defined and o_data.description %}
 COMMENT ON TRIGGER {{ conn|qtIdent(data.name) }} ON {{ conn|qtIdent(o_data.nspname, o_data.relname) }}
-    IS {{o_data.description|qtLiteral}};
+    IS {{o_data.description}};
 {% endif %}
 {% endif %}
 {% if data.description is defined  and o_data.description != data.description %}
 COMMENT ON TRIGGER {{ conn|qtIdent(data.name) }} ON {{ conn|qtIdent(o_data.nspname, o_data.relname) }}
-    IS {{data.description|qtLiteral}};
+    IS {{data.description}};
 {% endif %}
 {% if data.is_enable_trigger is defined  and o_data.is_enable_trigger != data.is_enable_trigger %}
 ALTER TABLE {{ conn|qtIdent(o_data.nspname, o_data.relname) }}

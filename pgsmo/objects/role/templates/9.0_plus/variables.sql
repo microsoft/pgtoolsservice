@@ -12,7 +12,7 @@ FROM
     FROM
         pg_catalog.pg_roles
     WHERE
-        oid={{ rid|qtLiteral }}::OID
+        oid={{ rid }}::OID
     ) r
 
 UNION ALL
@@ -25,7 +25,7 @@ FROM
         (SELECT *
         FROM pg_catalog.pg_db_role_setting dr
         WHERE
-            dr.setrole={{ rid|qtLiteral }}::OID AND dr.setdatabase!=0
+            dr.setrole={{ rid }}::OID AND dr.setdatabase!=0
         ) c
         LEFT JOIN pg_catalog.pg_database d ON (d.oid = c.setdatabase)
     ) a;

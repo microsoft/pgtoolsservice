@@ -29,5 +29,5 @@ CREATE OR REPLACE RULE {{ conn|qtIdent(data.name) }} AS
 {% endif %}
 {% if data.comment %}
 
-COMMENT ON RULE {{ conn|qtIdent(data.name) }} ON {{ conn|qtIdent(data.schema, data.view) }} IS {{ data.comment|qtLiteral }};{% endif %}
+COMMENT ON RULE {{ conn|qtIdent(data.name) }} ON {{ conn|qtIdent(data.schema, data.view) }} IS {{ data.comment }};{% endif %}
 {% endif %}

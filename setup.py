@@ -4,7 +4,7 @@ from cx_Freeze import setup, Executable
 # fine tuning.
 include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes')]
 
-buildOptions = dict(packages=['asyncio', 'jinja2', 'psycopg2', 'inflection', 'sqlparse',
+buildOptions = dict(packages=['asyncio', 'jinja2', 'psycopg', 'inflection', 'sqlparse',
                               'prompt_toolkit', 'xlsxwriter', 'nose2', 'parameterized', 'coverage', 'autopep8', 'flake8'],
                     excludes=[], include_files=include_files)
 
