@@ -157,6 +157,12 @@ jobs:
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: dist
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'specific'
+        artifactName: dist
+        downloadPath: '$(System.ArtifactsDirectory)'
 
   - job: github_release
     displayName: Manage GitHub Release
