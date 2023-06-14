@@ -174,5 +174,5 @@ jobs:
           title: '$(ReleaseVersion)-insiders-$(Build.BuildNumber)'
           isPreRelease: true
           assets: |
-            $(Build.ArtifactStagingDirectory)/**/*.gz
-            $(Build.ArtifactStagingDirectory)/**/*.zip
+            $(Pipeline.Workspace)/**/*.gz
+            $(Pipeline.Workspace)/**/*.zip
