@@ -16,7 +16,7 @@ steps:
     command: download
     vstsFeed: 'Database Systems/azuredatastudio-pgsqltoolsservice'
     vstsFeedPackage: 'pgsqltoolsservice-osx-arm64'
-    vstsPackageVersion: '1.8.0'
+    vstsPackageVersion: '$(VstsPackageVersion)'
     downloadDirectory: '$(Build.SourcesDirectory)'
 - task: ExtractFiles@1
   condition: eq(variables['platform'], 'mac-arm64')
