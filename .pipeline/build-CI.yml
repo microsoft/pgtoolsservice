@@ -157,12 +157,6 @@ jobs:
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: dist
-    - task: DownloadBuildArtifacts@0
-      inputs:
-        buildType: 'current'
-        downloadType: 'specific'
-        artifactName: dist
-        downloadPath: '$(System.ArtifactsDirectory)'
 
   - job: github_release
     displayName: Manage GitHub Release
@@ -170,9 +164,16 @@ jobs:
       - platform_matrix
 
     pool:
-      vmImage: $(imageName)
+      vmImage: windows-latest
 
     steps:
+      - task: DownloadBuildArtifacts@0
+        inputs:
+          buildType: 'current'
+          downloadType: 'specific'
+          artifactName: dist
+          downloadPath: '$(System.ArtifactsDirectory)'
+
       - task: GithubRelease@1
         displayName: 'Create GitHub Release'
         inputs:
