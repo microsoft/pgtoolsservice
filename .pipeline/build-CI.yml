@@ -41,7 +41,7 @@ jobs:
 
     - task: PowerShell@1
       displayName: 'Download Postgres windows'
-      condition: eq(variables.platform, 'windows')
+      condition: eq(jobs.platform_matrix.strategy.matrix, 'windows')
       inputs:
         scriptType: inlineScript
         inlineScript: |
@@ -50,7 +50,7 @@ jobs:
 
     - task: ExtractFiles@1
       displayName: 'Extract Postgres windows'
-      condition: eq(variables.platform, 'windows')
+      condition: eq(jobs.platform_matrix.strategy.matrix, 'windows')
       inputs:
         archiveFilePatterns: '$(Build.BinariesDirectory)/*.zip'
         destinationFolder: '$(Build.BinariesDirectory)/postgres'
@@ -83,11 +83,11 @@ jobs:
         mkdir ..\db1\pg_log
         Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
         displayName: 'Start Postgres windows'
-        condition: eq(variables.platform, 'windows')
+        condition: eq(jobs.platform_matrix.strategy.matrix, 'windows')
 
     - task: PowerShell@2
       displayName: 'Style Check windows'
-      condition: eq(variables.platform, 'windows')
+      condition: eq(jobs.platform_matrix.strategy.matrix, 'windows')
       inputs:
         filePath: scripts/flake8.ps1
         script: >-
@@ -101,7 +101,7 @@ jobs:
 
     - task: PowerShell@2
       displayName: 'Run Tests windows'
-      condition: eq(variables.platform, 'windows')
+      condition: eq(jobs.platform_matrix.strategy.matrix, 'windows')
       inputs:
         targetType: filePath
         filePath: './scripts/test-all.ps1'
@@ -110,14 +110,14 @@ jobs:
 
     - task: PublishTestResults@2
       displayName: 'Publish test results windows **/nose2-junit.xml'
-      condition: eq(variables.platform, 'windows')
+      condition: eq(jobs.platform_matrix.strategy.matrix, 'windows')
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/nose2-junit.xml'
 
     - task: PublishCodeCoverageResults@1
       displayName: 'Publish code coverage from **/htmlcov windows'
-      condition: eq(variables.platform, 'windows')
+      condition: eq(jobs.platform_matrix.strategy.matrix, 'windows')
       inputs:
         codeCoverageTool: Cobertura
         summaryFileLocation: '**/cchtml'
