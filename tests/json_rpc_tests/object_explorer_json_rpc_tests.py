@@ -8,7 +8,7 @@ import json
 import unittest
 from urllib.parse import quote
 
-import psycopg2
+import psycopg
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessageType
 from tests.integration import (create_extra_test_database,
@@ -24,7 +24,7 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
     @integration_test
     def test_object_explorer(self):
         connection_details = get_connection_details()
-        connection = psycopg2.connect(**connection_details)
+        connection = psycopg.connect(**connection_details)
         connection.autocommit = True
 
         self.args = self.create_database_objects(META_DATA, connection)
@@ -95,7 +95,7 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
         self.delete_role(connection, role_name)
         connection.close()
 
-    def create_database_objects(self, meta_data: dict, connection: 'psycopg2.connection', **kwargs):
+    def create_database_objects(self, meta_data: dict, connection: 'psycopg.Connection', **kwargs):
 
         for key, metadata_value in meta_data.items():
             create_script: str = CREATE_SCRIPTS.get(key)
@@ -108,7 +108,7 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
                     kwargs[key + '_Name'] = dbname
                     connection_details = get_connection_details()
                     connection_details['dbname'] = dbname
-                    connection = psycopg2.connect(**connection_details)
+                    connection = psycopg.connect(**connection_details)
                     connection.autocommit = True
                 else:
                     self.execute_script(create_script.format(**kwargs), connection)
@@ -141,7 +141,7 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
                     messages.append(create_expand_test_message(next_node, set(children.keys()), False))
                     self.create_expand_messages(children, next_node + '{0}/', create_expand_test_message, messages, **kwargs)
 
-    def execute_script(self, script: str, connection: 'psycopg2.connection'):
+    def execute_script(self, script: str, connection: 'psycopg.Connection'):
         cursor = connection.cursor()
         cursor.execute(script)
         return cursor
@@ -154,7 +154,7 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
 
         return name
 
-    def delete_role(self, connection: 'psycopg2.connection', role_name):
+    def delete_role(self, connection: 'psycopg.Connection', role_name):
         cursor = connection.cursor()
         drop_role_script = 'DROP ROLE "' + role_name + '"'
         cursor.execute(drop_role_script)

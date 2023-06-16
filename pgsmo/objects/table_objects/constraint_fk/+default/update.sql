@@ -19,6 +19,6 @@ ALTER TABLE {{ conn|qtIdent(data.schema, data.table) }}
 {# ==== To update foreign key comments ==== #}
 {% if data.comment is defined and data.comment != o_data.comment %}
 COMMENT ON CONSTRAINT {{ conn|qtIdent(data.name) }} ON {{ conn|qtIdent(data.schema, data.table) }}
-    IS {{ data.comment|qtLiteral }};
+    IS {{ data.comment }};
 {% endif %}
 {% endif %}

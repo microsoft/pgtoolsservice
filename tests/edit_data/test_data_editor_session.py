@@ -24,7 +24,8 @@ class TestDataEditorSession(unittest.TestCase):
     def setUp(self):
         self._metadata_factory = mock.MagicMock()
         self._mock_cursor = MockCursor(None)
-        self._connection = MockPsycopgConnection({"port": "8080", "host": "test", "dbname": "test"}, self._mock_cursor)
+        self._connection = MockPsycopgConnection(cursor=self._mock_cursor, dsn_parameters='port=8080 host=test dbname=test')
+        self._mock_cursor.connection = self._connection
         self._initialize_edit_request = InitializeEditParams()
 
         self._initialize_edit_request.schema_name = 'public'

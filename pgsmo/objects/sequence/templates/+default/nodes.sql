@@ -16,6 +16,6 @@ INNER JOIN
 WHERE
     relkind = 'S'
 {% if seid %}
-    AND rel.oid = {{seid|qtLiteral}}::oid
+    AND rel.oid = {{seid}}::oid
 {% endif %}
 ORDER BY relname

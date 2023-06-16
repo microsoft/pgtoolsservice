@@ -10,6 +10,6 @@ CREATE TABLESPACE {{ conn|qtIdent(data.name) }}
 {% if data.spcuser %}
   OWNER {{ conn|qtIdent(data.spcuser) }}
 {% endif %}
-  LOCATION {{ data.spclocation|qtLiteral }};
+  LOCATION {{ data.spclocation }};
 
 {% endif %}

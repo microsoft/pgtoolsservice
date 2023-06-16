@@ -344,7 +344,7 @@ class NodeCollection(Generic[TNC]):
     def reset(self) -> None:
         # Empty the items so that next iteration will reload the collection
         self._items_impl = None
-    
+
     def refresh(self) -> None:
         """Refreshes and lazily loaded data"""
         self.reset()

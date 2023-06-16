@@ -11,5 +11,5 @@ SELECT
 FROM
     pg_statio_all_sequences
 WHERE
-    schemaname = {{ schema_name|qtLiteral }}
+    schemaname = {{ schema_name }}
 ORDER BY relname;

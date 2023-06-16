@@ -31,5 +31,5 @@ FROM
 JOIN
     pg_class cl on cl.oid=st.relid
 WHERE
-    schemaname = {{schema_name|qtLiteral}}
+    schemaname = {{schema_name}}
 ORDER BY st.relname;

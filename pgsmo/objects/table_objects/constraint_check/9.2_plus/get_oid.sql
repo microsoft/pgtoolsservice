@@ -11,4 +11,4 @@ FROM
     pg_constraint
 WHERE
     conrelid = {{tid}}::oid
-    AND conname={{ name|qtLiteral }};
+    AND conname={{ name }};

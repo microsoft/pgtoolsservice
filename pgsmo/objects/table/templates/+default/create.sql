@@ -114,7 +114,7 @@ ALTER TABLE {{conn|qtIdent(data.schema, data.name)}}
 {### SQL for COMMENT ###}
 {% if data.description %}
 COMMENT ON TABLE {{conn|qtIdent(data.schema, data.name)}}
-    IS {{data.description|qtLiteral}};
+    IS {{data.description}};
 {% endif %}
 {#===========================================#}
 {#====== MAIN TABLE TEMPLATE ENDS HERE ======#}
@@ -127,7 +127,7 @@ COMMENT ON TABLE {{conn|qtIdent(data.schema, data.name)}}
 {% if c.description %}
 
 COMMENT ON COLUMN {{conn|qtIdent(data.schema, data.name, c.name)}}
-    IS {{c.description|qtLiteral}};
+    IS {{c.description}};
 {% endif %}
 {###  Add variables to column ###}
 {% if c.attoptions and c.attoptions|length > 0 %}

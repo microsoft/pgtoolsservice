@@ -7,7 +7,7 @@ import unittest
 from typing import Any, List
 from unittest import mock
 
-import psycopg2
+import psycopg
 
 import tests.pgsmo_tests.utils as utils
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
@@ -19,7 +19,7 @@ MYSCHEMA2 = 'myschema2'
 
 
 class MockCursor:
-    """Class used to mock psycopg2 cursor objects for testing"""
+    """Class used to mock psycopg cursor objects for testing"""
 
     def __init__(self, query_results):
         self.query_results = query_results
@@ -52,7 +52,7 @@ class MockCursor:
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        raise psycopg2.DatabaseError()
+        raise psycopg.DatabaseError()
 
     def __enter__(self):
         return self

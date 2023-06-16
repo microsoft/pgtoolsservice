@@ -11,7 +11,7 @@
 {% if data %}
 CREATE FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}()
     RETURNS{% if data.proretset %} SETOF{% endif %} {{ conn|qtTypeIdent(data.prorettypename) }}
-    LANGUAGE {{ data.lanname|qtLiteral }}
+    LANGUAGE {{ data.lanname }}
 {% if data.procost %}
     COST {{data.procost}}
 {% endif %}
@@ -24,11 +24,11 @@ CREATE FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}()
 
     ROWS {{data.prorows}}{% endif -%}{% if data.variables %}{% for v in data.variables %}
 
-    SET {{ conn|qtIdent(v.name) }}={{ v.value|qtLiteral }}{% endfor %}
+    SET {{ conn|qtIdent(v.name) }}={{ v.value }}{% endfor %}
 {% endif %}
 
 AS {% if data.lanname == 'c' %}
-{{ data.probin|qtLiteral }}, {{ data.prosrc_c|qtLiteral }}
+{{ data.probin }}, {{ data.prosrc_c }}
 {% else %}
 $BODY$
 {{ data.prosrc }}
@@ -47,7 +47,7 @@ ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args
 {% if data.description %}
 
 COMMENT ON FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args}})
-    IS {{ data.description|qtLiteral  }};
+    IS {{ data.description  }};
 {% endif -%}
 {% if data.seclabels %}
 {% for r in data.seclabels %}

@@ -22,7 +22,9 @@ class TestBatch(unittest.TestCase):
 
     def setUp(self):
         self._cursor = utils.MockCursor(None)
-        self._connection = MockPGServerConnection(cur=self._cursor)
+        self._mock_psycopg_connection = utils.MockPsycopgConnection(dsn_parameters='host=test dbname=test')
+        self._connection = MockPGServerConnection(cur=self._cursor, connection=self._mock_psycopg_connection)
+        self._cursor.connection = self._mock_psycopg_connection
         self._batch_text = 'Select * from t1'
         self._batch_id = 1
         self._batch_events = BatchEvents()
