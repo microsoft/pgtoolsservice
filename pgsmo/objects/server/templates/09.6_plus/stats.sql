@@ -45,7 +45,7 @@ SELECT
     ELSE
         'localhost:' || client_port
     END AS {{ conn|qtIdent(_('Client')) }},
-    {{ _('Streaming Replication')|qtLiteral }} AS {{ conn|qtIdent(_('Application')) }},
+    {{ _('Streaming Replication') }} AS {{ conn|qtIdent(_('Application')) }},
     null AS {{ conn|qtIdent(_('Wait event type')) }},
     null AS {{ conn|qtIdent(_('Wait event name')) }},
     state || ' [sync (state: ' || COALESCE(sync_state, '') || ', priority: ' || sync_priority::text || ')] (' || sent_location || ' sent, ' || write_location || ' written, ' || flush_location || ' flushed, ' || replay_location || ' applied)' AS {{ conn|qtIdent(_('Query')) }},

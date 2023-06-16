@@ -9,7 +9,7 @@ import unittest
 from unittest import mock
 from unittest.mock import MagicMock, Mock
 
-import psycopg2
+import psycopg
 
 import ossdbtoolsservice.connection.connection_service
 import tests.utils as utils
@@ -52,18 +52,14 @@ class TestPGConnectionService(unittest.TestCase):
             }
         })
 
-        # Set up the mock connection for psycopg2's connect method to return
-        mock_connection = MockPsycopgConnection(dsn_parameters={
-            'host': 'myserver',
-            'dbname': 'postgres',
-            'user': 'postgres'
-        })
+        # Set up the mock connection for psycopg's connect method to return
+        mock_connection = MockPsycopgConnection(dsn_parameters='host=myserver dbname=postgres user=postgres')
 
         # Set up the connection service and call its connect method with the supported options
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_connection)):
             response = self.connection_service.connect(params)
 
-        # Verify that psycopg2's connection method was called and that the
+        # Verify that psycopg's connection method was called and that the
         # response has a connection id, indicating success.
         self.assertIs(self.connection_service.owner_to_connection_map[params.owner_uri].get_connection(params.type)._conn,
                       mock_connection)
@@ -89,16 +85,12 @@ class TestPGConnectionService(unittest.TestCase):
             'dbname': 'postgres'}
         connection_type = ConnectionType.DEFAULT
 
-        # Set up the mock connection for psycopg2's connect method to return
-        mock_connection = MockPsycopgConnection(dsn_parameters={
-            'host': f'myserver{host_suffix}',
-            'dbname': 'postgres',
-            'user': 'postgres@myserver'
-        })
+        # Set up the mock connection for psycopg's connect method to return
+        mock_connection = MockPsycopgConnection(dsn_parameters=f'host=myserver{host_suffix} dbname=postgres user=postgres@myserver')
 
         # Set up the connection service and call its connect method with the
         # supported options
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_connection)):
             response = self.connection_service.connect(
                 ConnectRequestParams(connection_details, connection_uri, connection_type))
 
@@ -143,7 +135,7 @@ class TestPGConnectionService(unittest.TestCase):
         })
 
         # Connect with different options, and verify that disconnect was called
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_connection)):
             self.connection_service.connect(params)
         mock_connection.close.assert_called_once()
 
@@ -152,11 +144,7 @@ class TestPGConnectionService(unittest.TestCase):
         # Set up the test with mock data
         connection_uri = 'someuri'
         connection_type = ConnectionType.DEFAULT
-        mock_psycopg_connection = MockPsycopgConnection(dsn_parameters={
-            'host': 'myserver',
-            'dbname': 'postgres',
-            'user': 'postgres'
-        })
+        mock_psycopg_connection = MockPsycopgConnection(dsn_parameters='host=myserver dbname=postgres user=postgres')
         mock_server_connection = MockPGServerConnection(cur=None, host='myserver',
                                                         name='postgres', user='postgres')
 
@@ -179,9 +167,9 @@ class TestPGConnectionService(unittest.TestCase):
                 'options': old_connection_details.options
             }
         })
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_psycopg_connection)) as mock_psycopg2_connect:
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_psycopg_connection)) as mock_psycopg_connect:
             response = self.connection_service.connect(params)
-            mock_psycopg2_connect.assert_not_called()
+            mock_psycopg_connect.assert_not_called()
         mock_psycopg_connection.close.assert_not_called()
         self.assertIsNotNone(response.connection_id)
 
@@ -197,7 +185,7 @@ class TestPGConnectionService(unittest.TestCase):
                 }
             }
         })
-        with mock.patch('psycopg2.connect', new=mock.Mock(side_effect=Exception(error_message))):
+        with mock.patch('psycopg.connect', new=mock.Mock(side_effect=Exception(error_message))):
             response = self.connection_service.connect(params)
         # The response should not have a connection ID and should contain the error message
         self.assertIsNone(response.connection_id)
@@ -231,16 +219,12 @@ class TestPGConnectionService(unittest.TestCase):
             'dbname': 'postgres'}
         connection_type = conn_type
 
-        # Set up the mock connection for psycopg2's connect method to return
-        mock_psycopg_connection = MockPsycopgConnection(dsn_parameters={
-            'host': 'myserver',
-            'dbname': 'postgres',
-            'user': 'postgres@myserver'
-        })
+        # Set up the mock connection for psycopg's connect method to return
+        mock_psycopg_connection = MockPsycopgConnection(dsn_parameters='host=myserver dbname=postgres user=postgres')
 
         # Set up the connection service and call its connect method with the
         # supported options
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_psycopg_connection)):
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_psycopg_connection)):
             self.connection_service.connect(
                 ConnectRequestParams(connection_details, connection_uri, connection_type))
         self.connection_service.get_connection(connection_uri, conn_type)
@@ -422,13 +406,11 @@ class TestPGConnectionService(unittest.TestCase):
         # Set up the test with mock data
         mock_query_results = [('database1',), ('database2',)]
         connection_uri = 'someuri'
+        mock_cursor = MockCursor(mock_query_results)
         mock_psycopg_connection = MockPsycopgConnection(
-            dsn_parameters={
-                'host': 'myserver',
-                'dbname': 'postgres',
-                'user': 'postgres'
-            },
-            cursor=MockCursor(mock_query_results))
+            dsn_parameters='host=myserver dbname=postgres user=postgres',
+            cursor=mock_cursor)
+        mock_cursor.connection = mock_psycopg_connection
         mock_request_context = utils.MockRequestContext()
 
         # Insert a ConnectionInfo object into the connection service's map
@@ -440,7 +422,7 @@ class TestPGConnectionService(unittest.TestCase):
         params = ListDatabasesParams()
         params.owner_uri = connection_uri
 
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_psycopg_connection)):
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_psycopg_connection)):
             self.connection_service.handle_list_databases(mock_request_context, params)
         expected_databases = [result[0] for result in mock_query_results]
         self.assertEqual(mock_request_context.last_response_params.database_names, expected_databases)
@@ -451,11 +433,7 @@ class TestPGConnectionService(unittest.TestCase):
         connection_uri = 'someuri'
         connection_type = ConnectionType.EDIT
         mock_connection = MockPsycopgConnection(
-            dsn_parameters={
-                'host': 'myserver',
-                'dbname': 'postgres',
-                'user': 'postgres'
-            })
+            dsn_parameters='host=myserver dbname=postgres user=postgres')
 
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
@@ -463,9 +441,9 @@ class TestPGConnectionService(unittest.TestCase):
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         # Get the connection without first creating it
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)) as mock_psycopg2_connect:
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_connection)) as mock_psycopg_connect:
             connection = self.connection_service.get_connection(connection_uri, connection_type)
-            mock_psycopg2_connect.assert_called_once()
+            mock_psycopg_connect.assert_called_once()
         self.assertEqual(connection._conn, mock_connection)
 
     def test_get_connection_creates_connection(self):
@@ -481,14 +459,14 @@ class TestPGConnectionService(unittest.TestCase):
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         with mock.patch('ossdbtoolsservice.driver.connection_manager.ConnectionManager._create_connection',
-                        new=mock.Mock(return_value=mock_connection)) as mock_psycopg2_connect:
+                        new=mock.Mock(return_value=mock_connection)) as mock_psycopg_connect:
             # Open the connection
             self.connection_service.connect(ConnectRequestParams(connection_details, connection_uri, connection_type))
 
             # Get the connection
             connection = self.connection_service.get_connection(connection_uri, connection_type)
             self.assertEqual(connection, mock_connection)
-            mock_psycopg2_connect.assert_called_once()
+            mock_psycopg_connect.assert_called_once()
 
     def test_get_connection_for_invalid_uri(self):
         """Test that get_connection raises an error if the given URI is unknown"""
@@ -513,7 +491,7 @@ class TestPGConnectionService(unittest.TestCase):
         mock_query_results = [('database1',), ('database2',)]
         connection_uri = 'someuri'
         mock_cursor = MockCursor(mock_query_results)
-        mock_cursor.fetchall.side_effect = psycopg2.ProgrammingError('')
+        mock_cursor.fetchall.side_effect = psycopg.ProgrammingError('')
         mock_connection = MockPGServerConnection(cur=mock_cursor, host='myserver', name='postgres', user='postgres')
         mock_request_context = utils.MockRequestContext()
 
@@ -527,7 +505,7 @@ class TestPGConnectionService(unittest.TestCase):
         params = ListDatabasesParams()
         params.owner_uri = connection_uri
 
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_connection)):
             self.connection_service.handle_list_databases(mock_request_context, params)
         self.assertIsNone(mock_request_context.last_notification_method)
         self.assertIsNone(mock_request_context.last_notification_params)
@@ -581,11 +559,11 @@ class TestPGConnectionService(unittest.TestCase):
 
         # If I connect with an empty database name
         with mock.patch('ossdbtoolsservice.connection.connection_service._build_connection_response'), \
-                mock.patch('psycopg2.connect', return_value=MockPsycopgConnection()) as mock_psycopg2_connect:
+                mock.patch('psycopg.connect', return_value=MockPsycopgConnection()) as mock_psycopg_connect:
             self.connection_service.connect(params)
 
-            # Then psycopg2's connect method was called with the default database
-            calls = mock_psycopg2_connect.mock_calls
+            # Then psycopg's connect method was called with the default database
+            calls = mock_psycopg_connect.mock_calls
             self.assertEqual(len(calls), 1)
             self.assertEqual(calls[0][2]['dbname'], default_db)
 
@@ -610,11 +588,11 @@ class TestPGConnectionService(unittest.TestCase):
 
         # If I connect with an empty database name
         with mock.patch('ossdbtoolsservice.connection.connection_service._build_connection_response'), \
-                mock.patch('psycopg2.connect', return_value=MockPsycopgConnection()) as mock_psycopg2_connect:
+                mock.patch('psycopg.connect', return_value=MockPsycopgConnection()) as mock_psycopg_connect:
             self.connection_service.connect(params)
 
-            # Then psycopg2's connect method was called with the default database
-            calls = mock_psycopg2_connect.mock_calls
+            # Then psycopg's connect method was called with the default database
+            calls = mock_psycopg_connect.mock_calls
             self.assertEqual(len(calls), 1)
             self.assertNotEqual(calls[0][2]['dbname'], default_db)
             self.assertEqual(calls[0][2]['dbname'], actual_db)
@@ -661,20 +639,16 @@ class TestConnectionCancellation(unittest.TestCase):
                 }
             }
         })
-        self.mock_psycopg_connection = MockPsycopgConnection(dsn_parameters={
-            'host': 'myserver',
-            'dbname': 'postgres',
-            'user': 'postgres'
-        })
+        self.mock_psycopg_connection = MockPsycopgConnection(dsn_parameters='host=myserver dbname=postgres user=postgres')
 
-        # Mock psycopg2's connect method to store the current cancellation token. This lets us
+        # Mock psycopg's connect method to store the current cancellation token. This lets us
         # capture the cancellation token state as it would be during a long-running connection.
         self.token_store = []
 
     def test_connecting_sets_cancellation_token(self):
         """Test that a cancellation token is set before a connection thread attempts to connect"""
         # If I attempt to connect
-        with mock.patch('psycopg2.connect', new=mock.Mock(side_effect=self._mock_connect)):
+        with mock.patch('psycopg.connect', new=mock.Mock(side_effect=self._mock_connect)):
             response = self.connection_service.connect(self.connect_params)
 
         # Then the cancellation token should have been set and should not have been canceled
@@ -688,7 +662,7 @@ class TestConnectionCancellation(unittest.TestCase):
     def test_connection_failed_removes_own_token(self):
         """Test that the cancellation token is removed after a connection fails"""
         # If I attempt to connect
-        with mock.patch('psycopg2.connect', new=mock.Mock(side_effect=Exception())):
+        with mock.patch('psycopg.connect', new=mock.Mock(side_effect=Exception())):
             response = self.connection_service.connect(self.connect_params)
 
         # Then the cancellation token should have been cleared when the connection failed
@@ -697,20 +671,20 @@ class TestConnectionCancellation(unittest.TestCase):
 
     def test_connecting_cancels_previous_connection(self):
         """Test that opening a new connection while one is ongoing cancels the previous connection"""
-        # Set up psycopg2's connection method to kick off a new connection. This simulates the case
-        # where a call to psycopg2.connect is taking a long time and another connection request for
+        # Set up psycopg's connection method to kick off a new connection. This simulates the case
+        # where a call to psycopg.connect is taking a long time and another connection request for
         # the same URI and connection type comes in and finishes before the current connection
-        with mock.patch('psycopg2.connect', new=mock.Mock(side_effect=self._mock_connect)) as mock_psycopg2_connect:
-            old_mock_connect = mock_psycopg2_connect.side_effect
+        with mock.patch('psycopg.connect', new=mock.Mock(side_effect=self._mock_connect)) as mock_psycopg_connect:
+            old_mock_connect = mock_psycopg_connect.side_effect
 
             def first_mock_connect(**kwargs):
                 """Mock connection method to store the current cancellation token, and kick off another connection"""
                 mock_connection = self._mock_connect()
-                mock_psycopg2_connect.side_effect = old_mock_connect
+                mock_psycopg_connect.side_effect = old_mock_connect
                 self.connection_service.connect(self.connect_params)
                 return mock_connection
 
-            mock_psycopg2_connect.side_effect = first_mock_connect
+            mock_psycopg_connect.side_effect = first_mock_connect
 
             # If I attempt to connect, and then kick off a new connection while connecting
             response = self.connection_service.connect(self.connect_params)
@@ -725,8 +699,8 @@ class TestConnectionCancellation(unittest.TestCase):
 
     def test_newer_cancellation_token_not_removed(self):
         """Test that a newer connection's cancellation token is not removed after a connection completes"""
-        # Set up psycopg2's connection method to simulate a new connection by overriding the
-        # current cancellation token. This simulates the case where a call to psycopg2.connect is
+        # Set up psycopg's connection method to simulate a new connection by overriding the
+        # current cancellation token. This simulates the case where a call to psycopg.connect is
         # taking a long time and another connection request for the same URI and connection type
         # comes in and finishes after the current connection
         cancellation_token = CancellationToken()
@@ -739,7 +713,7 @@ class TestConnectionCancellation(unittest.TestCase):
             self.connection_service._cancellation_map[cancellation_key] = cancellation_token
             return mock_connection
 
-        with mock.patch('psycopg2.connect', new=mock.Mock(side_effect=override_mock_connect)):
+        with mock.patch('psycopg.connect', new=mock.Mock(side_effect=override_mock_connect)):
             # If I attempt to connect, and the cancellation token gets updated while connecting
             response = self.connection_service.connect(self.connect_params)
 
@@ -793,18 +767,18 @@ class TestConnectionCancellation(unittest.TestCase):
             }
         })
 
-        # Set up psycopg2 instance for connection service to call
+        # Set up psycopg instance for connection service to call
         mock_connect_method = mock.Mock(return_value=self.mock_psycopg_connection)
 
         # Set up the connection service and call its connect method with the supported options
-        with mock.patch('psycopg2.connect', new=mock_connect_method):
+        with mock.patch('psycopg.connect', new=mock_connect_method):
             response = self.connection_service.connect(params)
 
-        # Verify that psycopg2's connection method was called with password set to account token.
+        # Verify that psycopg's connection method was called with password set to account token.
         mock_connect_method.assert_called_once_with(user='postgres', password='exampleToken', host='myserver',
                                                     port=DEFAULT_PORT[PG_PROVIDER_NAME], dbname='postgres')
 
-        # Verify that psycopg2's connection method was called and that the
+        # Verify that psycopg's connection method was called and that the
         # response has a connection id, indicating success.
         self.assertIs(self.connection_service.owner_to_connection_map[params.owner_uri].get_connection(params.type)._conn,
                       self.mock_psycopg_connection)
@@ -813,7 +787,7 @@ class TestConnectionCancellation(unittest.TestCase):
         self.assertFalse(response.server_info.is_cloud)
 
     def _mock_connect(self, **kwargs):
-        """Implementation for the mock psycopg2.connect method that saves the current cancellation token"""
+        """Implementation for the mock psycopg.connect method that saves the current cancellation token"""
         self.token_store.append(self.connection_service._cancellation_map[(self.owner_uri, self.connection_type)])
         return self.mock_psycopg_connection
 

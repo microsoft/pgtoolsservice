@@ -1,6 +1,6 @@
 # ossdbtoolsservice_main.spec
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files
-import psycopg2
+import psycopg
 import platform
 
 block_cipher = None
@@ -20,9 +20,9 @@ def collect_files(src_folder, dest_folder, file_ext=None):
 # Include files and directories
 include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes')]
 
-# Include psycopg2 dependencies
-hiddenimports = collect_submodules('psycopg2')
-datas = collect_data_files('psycopg2')
+# Include psycopg dependencies
+hiddenimports = collect_submodules('psycopg')
+datas = collect_data_files('psycopg')
 
 # Include ossdbtoolsservice data files
 datas += collect_data_files('ossdbtoolsservice', include_py_files=False)

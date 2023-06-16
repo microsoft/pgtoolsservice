@@ -19,7 +19,7 @@ WHERE
     proisagg = FALSE
     AND typname IN ('trigger', 'event_trigger')
 {% if fnid %}
-    AND pr.oid = {{ fnid|qtLiteral }}
+    AND pr.oid = {{ fnid }}
 {% endif %}
 {% if scid %}
     AND pronamespace = {{scid}}::oid

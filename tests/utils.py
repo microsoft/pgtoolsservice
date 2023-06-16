@@ -2,13 +2,13 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-
+from typing import List, Optional
 import logging
 import unittest
 import unittest.mock as mock
-from typing import Optional
 
-import psycopg2
+import psycopg
+from psycopg.connection import NoticeHandler, AdaptersMap
 
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
@@ -105,18 +105,22 @@ class MockRequestContext(RequestContext):
 
 
 class MockPsycopgConnection(object):
-    """Class used to mock psycopg2 connection objects for testing"""
+    """Class used to mock psycopg connection objects for testing"""
+
+    TransactionStatus = mock.Mock(return_value=psycopg.pq.TransactionStatus.IDLE)
 
     def __init__(self, dsn_parameters=None, cursor=None):
         self.close = mock.Mock()
         self.dsn_parameters = dsn_parameters
-        self.server_version = '90602'
-        self.cursor = mock.Mock(return_value=cursor)
-        self.get_backend_pid = mock.Mock(return_value=0)
-        self.notices = []
+        self.server_version = '131001'
+        self.cursor = mock.MagicMock(return_value=cursor)
         self.autocommit = True
-        self.get_transaction_status = mock.Mock(return_value=psycopg2.extensions.TRANSACTION_STATUS_IDLE)
         self.commit = mock.Mock()
+        self.pgconn = mock.Mock()
+        self.info = MockConnectionInfo(dsn_parameters, self.server_version)
+
+        self._adapters: Optional[AdaptersMap] = None
+        self.notice_handlers: List[NoticeHandler] = []
 
     @property
     def closed(self):
@@ -134,16 +138,33 @@ class MockPsycopgConnection(object):
         else:
             raise NotImplementedError()
 
+    def add_notice_handler(self, callback: NoticeHandler) -> None:
+        """
+        Register a callable to be invoked when a notice message is received.
+
+        :param callback: the callback to call upon message received.
+        :type callback: Callable[[~psycopg.errors.Diagnostic], None]
+        """
+        self.notice_handlers.append(callback)
+
+
+class MockConnectionInfo():
+
+    def __init__(self, dsn_parameters, server_version) -> None:
+        self.dsn = dsn_parameters
+        self.server_version = server_version
+        self.backend_pid = mock.Mock(return_value=0)
+
 
 class MockCursor:
-    """Class used to mock psycopg2 cursor objects for testing"""
+    """Class used to mock psycopg cursor objects for testing"""
 
     def __init__(self, query_results, columns_names=[], connection=mock.Mock()):
         self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
         self.fetchall = mock.Mock(return_value=query_results)
         self.fetchone = mock.Mock(side_effect=self.execute_fetch_one_side_effects)
         self.close = mock.Mock()
-        self.connection = connection
+        self.connection = connection.connection
         self.description = [self.create_column_description(name=name) for name in columns_names]
         self.rowcount = -1
         self._mogrified_value = b'Some query'
@@ -164,13 +185,17 @@ class MockCursor:
 
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
-        self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
+        for handler in self.connection.notice_handlers:
+            handler(MockNotice("NOTICE: foo"))
+            handler(MockNotice("DEBUG: bar"))
         self.rowcount = len(self._query_results) if self._query_results is not None else 0
 
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
-        self.connection.notices = ["NOTICE: foo", "DEBUG: bar"]
-        raise psycopg2.DatabaseError()
+        for handler in self.connection.notice_handlers:
+            handler(MockNotice("NOTICE: foo"))
+            handler(MockNotice("DEBUG: bar"))
+        raise psycopg.DatabaseError()
 
     def execute_fetch_one_side_effects(self, *args):
         if self._fetched_count < len(self._query_results):
@@ -215,3 +240,9 @@ class MockThread():
         self.args = args
         self.start = mock.Mock(side_effect=lambda: self.target(*self.args))
         return self
+
+
+class MockNotice():
+
+    def __init__(self, message_primary):
+        self.message_primary = message_primary

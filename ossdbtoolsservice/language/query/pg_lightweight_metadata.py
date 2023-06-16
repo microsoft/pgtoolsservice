@@ -87,7 +87,7 @@ class PGLightweightMetadata:
                 'm' - materialized view
         :return: list of (schema_name, relation_name, column_name, column_type) tuples
         """
-        if self.conn.connection.server_version >= 120000:
+        if self.conn.connection.info.server_version >= 120000:
             columns_query = '''
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
@@ -107,7 +107,7 @@ class PGLightweightMetadata:
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
                 ORDER BY 1, 2, att.attnum'''
-        elif self.conn.connection.server_version >= 80400:
+        elif self.conn.connection.info.server_version >= 80400:
             columns_query = '''
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
@@ -171,7 +171,7 @@ class PGLightweightMetadata:
     def foreignkeys(self):
         """Yields ForeignKey named tuples"""
 
-        if self.conn.connection.server_version < 90000:
+        if self.conn.connection.info.server_version < 90000:
             return
 
         with self.conn.cursor() as cur:
@@ -211,7 +211,7 @@ class PGLightweightMetadata:
     def functions(self):
         """Yields FunctionMetadata named tuples"""
 
-        if self.conn.connection.server_version >= 110000:
+        if self.conn.connection.info.server_version >= 110000:
             query = '''
                 SELECT n.nspname schema_name,
                         p.proname func_name,
@@ -229,7 +229,7 @@ class PGLightweightMetadata:
                 WHERE p.prorettype::regtype != 'trigger'::regtype
                 ORDER BY 1, 2
                 '''
-        elif self.conn.connection.server_version > 90000:
+        elif self.conn.connection.info.server_version > 90000:
             query = '''
                 SELECT n.nspname schema_name,
                         p.proname func_name,
@@ -247,7 +247,7 @@ class PGLightweightMetadata:
                 WHERE p.prorettype::regtype != 'trigger'::regtype
                 ORDER BY 1, 2
                 '''
-        elif self.conn.connection.server_version >= 80400:
+        elif self.conn.connection.info.server_version >= 80400:
             query = '''
                 SELECT n.nspname schema_name,
                         p.proname func_name,
@@ -294,7 +294,7 @@ class PGLightweightMetadata:
         """Yields tuples of (schema_name, type_name)"""
 
         with self.conn.cursor() as cur:
-            if self.conn.connection.server_version > 90000:
+            if self.conn.connection.info.server_version > 90000:
                 query = '''
                     SELECT n.nspname schema_name,
                            t.typname type_name

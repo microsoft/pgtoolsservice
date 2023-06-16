@@ -11,7 +11,7 @@ import os
 from typing import List
 import uuid
 
-import psycopg2
+import psycopg
 
 
 def integration_test(min_version=None, max_version=None):
@@ -47,7 +47,7 @@ def integration_test(min_version=None, max_version=None):
 def get_connection_details() -> dict:
     """
     Get connection details that can be used in integration tests. These details are formatted as a
-    dictionary of key-value pairs that can be passed directly to psycopg2.connect as parameters.
+    dictionary of key-value pairs that can be passed directly to psycopg.connect as parameters.
     """
     return _ConnectionManager.get_test_connection_details()
 
@@ -67,7 +67,7 @@ create_extra_test_database.__test__ = False
 
 class _ConnectionManager:
     current_test_is_integration_test: bool = False
-    _maintenance_connections: List[psycopg2.extensions.connection] = []
+    _maintenance_connections: List[psycopg.Connection] = []
     _current_test_connection_detail_list: List[dict] = None
     _in_progress_test_index: int = None
     _extra_databases: List[str] = []
@@ -94,7 +94,7 @@ class _ConnectionManager:
         needs_setup = False
         for index, details in enumerate(cls._current_test_connection_detail_list):
             cls._in_progress_test_index = index
-            server_version = cls._maintenance_connections[index].server_version
+            server_version = cls._maintenance_connections[index].info.server_version
             if min_version is not None and server_version < min_version or max_version is not None and server_version > max_version:
                 continue
             try:
@@ -105,7 +105,7 @@ class _ConnectionManager:
                 needs_setup = True
             except Exception as e:
                 host = details['host']
-                server_version = cls._maintenance_connections[index].server_version
+                server_version = cls._maintenance_connections[index].info.server_version
                 raise RuntimeError(f'Test failed while executing on server {index + 1} (host: {host}, version: {server_version})') from e
 
     @classmethod
@@ -114,7 +114,7 @@ class _ConnectionManager:
         cls._maintenance_connections = []
         cls._current_test_connection_detail_list = []
         for config_dict in config_list:
-            connection = psycopg2.connect(**config_dict)
+            connection = psycopg.connect(**config_dict)
             cls._maintenance_connections.append(connection)
             connection.autocommit = True
             config_dict['dbname'] = None

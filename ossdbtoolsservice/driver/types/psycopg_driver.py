@@ -5,10 +5,9 @@
 
 from typing import Dict, List, Optional, Tuple
 
-import psycopg2
-from psycopg2.extensions import (TRANSACTION_STATUS_INERROR, Column,
-                                 connection, cursor)
-
+import psycopg
+from psycopg import (Column, connection, cursor)
+from psycopg.pq import TransactionStatus
 from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace.contracts import Configuration
@@ -35,7 +34,7 @@ PG_CONNECTION_PARAM_KEYWORDS = [
 
 
 class PostgreSQLConnection(ServerConnection):
-    """Wrapper for a psycopg2 connection that makes various properties easier to access"""
+    """Wrapper for a psycopg connection that makes various properties easier to access"""
 
     def __init__(self, conn_params: Dict[str, str], config: Optional[Configuration] = None):
         """
@@ -48,7 +47,7 @@ class PostgreSQLConnection(ServerConnection):
         if 'azureAccountToken' in conn_params:
             conn_params['password'] = conn_params['azureAccountToken']
 
-        # Map the connection options to their psycopg2-specific options
+        # Map the connection options to their psycopg-specific options
         self._connection_options = connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
                                                          if option in PG_CONNECTION_PARAM_KEYWORDS}
 
@@ -64,19 +63,19 @@ class PostgreSQLConnection(ServerConnection):
             connection_options['port'] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
-        self._conn = psycopg2.connect(**connection_options)
+        self._conn = psycopg.connect(**connection_options)
 
         # Set autocommit mode so that users have control over transactions
         self._conn.autocommit = True
 
         # Get the DSN parameters for the connection as a dict
-        self._dsn_parameters = self._conn.get_dsn_parameters()
+        self._dsn_parameters = dict(part.split('=') for part in self._conn.info.dsn.split()) if self._conn.info.dsn is not None else {}
 
         # Find the class of the database error this driver throws
-        self._database_error = psycopg2.DatabaseError
+        self._database_error = psycopg.DatabaseError
 
         # Calculate the server version
-        version_string = str(self._conn.server_version)
+        version_string = str(self._conn.info.server_version)
         self._version: Tuple[int, int, int] = (
             int(version_string[:-4]),
             int(version_string[-4:-2]),
@@ -141,17 +140,17 @@ class PostgreSQLConnection(ServerConnection):
     @property
     def transaction_in_error(self) -> bool:
         """Returns bool indicating if transaction is in error"""
-        return self._conn.get_transaction_status() is TRANSACTION_STATUS_INERROR
+        return self._conn.TransactionStatus is TransactionStatus.INERROR
 
     @property
     def query_canceled_error(self) -> Exception:
         """Returns driver query canceled error"""
-        return psycopg2.extensions.QueryCanceledError
+        return psycopg.errors.QueryCanceled
 
     @property
     def cancellation_query(self) -> str:
         """Returns a SQL command to end the current query execution process"""
-        backend_pid = self._conn.get_backend_pid()
+        backend_pid = self._conn.info.backend_pid
         return PG_CANCELLATION_QUERY.format(backend_pid)
 
     @property
@@ -182,26 +181,16 @@ class PostgreSQLConnection(ServerConnection):
 
     def cursor(self, **kwargs):
         """
-        Returns a cursor for the current connection
+        Returns a client cursor for the current connection.
+        Client cursor is a new cursor introduced in psycopg3 with better performance.
         :param kwargs (optional) to create a named cursor
         """
-        # If the args for a named cursor are provided, create a named cursor
-        if kwargs and "name" in kwargs:
-            cursor_instance = self._conn.cursor(name=kwargs["name"], withhold=kwargs["withhold"])
-        else:
-            cursor_instance = self._conn.cursor()
-
-        # TODO: Find a way to store the provider name as an attribute in the cursor object
-        # attr = "provider"
-        # value = self._provider_name
-        # setattr(cursor_instance, attr, value)
-
-        return cursor_instance
+        return psycopg.ClientCursor(self._conn)
 
     def execute_query(self, query, all=True):
         """
         Execute a simple query without arguments for the given connection
-        :raises psycopg2.ProgrammingError: if there was no result set when executing the query
+        :raises psycopg.ProgrammingError: if there was no result set when executing the query
         """
         cursor = self._conn.cursor()
         cursor.execute(query)

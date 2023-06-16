@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import json
-import psycopg2
+import psycopg
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessageType
 from tests.integration import get_connection_details, create_extra_test_database
@@ -20,7 +20,7 @@ class ScriptingJSONRPCTests:
 
     def test_scripting(self):
         connection_details = get_connection_details()
-        connection = psycopg2.connect(**connection_details)
+        connection = psycopg.connect(**connection_details)
         connection.autocommit = True
 
         args = self.create_database_objects(META_DATA, connection)
@@ -84,7 +84,7 @@ class ScriptingJSONRPCTests:
 
         JSONRPCTestCase(test_messages).run()
 
-    def create_database_objects(self, metadata: dict, connection: 'psycopg2.connection', **kwargs):
+    def create_database_objects(self, metadata: dict, connection: 'psycopg.Connection', **kwargs):
 
         for key, metadata_value in metadata.items():
             create_script: str = CREATE_SCRIPTS.get(key)
@@ -97,7 +97,7 @@ class ScriptingJSONRPCTests:
                     kwargs[key + '_Name'] = dbname
                     connection_details = get_connection_details()
                     connection_details['dbname'] = dbname
-                    connection = psycopg2.connect(**connection_details)
+                    connection = psycopg.connect(**connection_details)
                     connection.autocommit = True
                 else:
                     self.execute_script(create_script.format(**kwargs), connection)
@@ -116,7 +116,7 @@ class ScriptingJSONRPCTests:
 
         return kwargs
 
-    def execute_script(self, script: str, connection: 'psycopg2.connection'):
+    def execute_script(self, script: str, connection: 'psycopg.Connection'):
         cursor = connection.cursor()
         cursor.execute(script)
         return cursor

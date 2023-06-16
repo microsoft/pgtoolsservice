@@ -36,4 +36,4 @@ CREATE OR REPLACE RULE {{ conn|qtIdent(rule_name) }} AS
 {% endif %}
 {% set old_comment = o_data.comment|default('', true) %}
 {% if (data.comment is defined and (data.comment != old_comment)) %}
-COMMENT ON RULE {{ conn|qtIdent(rule_name) }} ON {{ conn|qtIdent(o_data.schema, o_data.view) }} IS {{ data.comment|qtLiteral }};{% endif %}
+COMMENT ON RULE {{ conn|qtIdent(rule_name) }} ON {{ conn|qtIdent(o_data.schema, o_data.view) }} IS {{ data.comment }};{% endif %}
