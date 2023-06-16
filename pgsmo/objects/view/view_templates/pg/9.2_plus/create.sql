@@ -25,6 +25,6 @@ ALTER TABLE {{ conn|qtIdent(data.schema, data.name) }}
 {% if data.comment %}
 
 COMMENT ON VIEW {{ conn|qtIdent(data.schema, data.name) }}
-    IS {{ data.comment|qtLiteral }};
+    IS {{ data.comment }};
 {% endif %}
 {% endif %}

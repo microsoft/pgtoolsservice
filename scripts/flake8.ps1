@@ -8,7 +8,7 @@ $oldPythonpath=$Env:PYTHONPATH
 # Build the program
 Set-Location $scriptloc/..
 $Env:PYTHONPATH = ""
-$errors = flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg2,ossdbtoolsservice,View ossdbtoolsservice tests pgsmo
+$errors = flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg,ossdbtoolsservice,View ossdbtoolsservice tests pgsmo
 
 if ($errors) {
     Write-Host "flake8 style check failed:"

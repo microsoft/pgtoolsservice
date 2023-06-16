@@ -44,7 +44,7 @@ ALTER VIEW {{ conn|qtIdent(view_schema, view_name) }} RESET (check_option);
 {% if (data.comment is defined and (data.comment != old_comment)) %}
 
 COMMENT ON VIEW {{ conn|qtIdent(view_schema, view_name) }}
-    IS {{ data.comment|qtLiteral }};
+    IS {{ data.comment }};
 {% endif %}
 {# The SQL generated below will change privileges #}
 {% if data.datacl %}

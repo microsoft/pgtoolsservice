@@ -27,7 +27,7 @@ LEFT OUTER JOIN
 WHERE
     proisagg = FALSE
 {% if fnid %}
-    AND pr.oid = {{ fnid|qtLiteral }}
+    AND pr.oid = {{ fnid }}
 {% endif %}
     AND typname NOT IN ('trigger', 'event_trigger')
 ORDER BY

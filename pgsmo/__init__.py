@@ -10,6 +10,7 @@ from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.datatype.datatype import DataType
 from pgsmo.objects.functions.function import Function
+from pgsmo.objects.functions.procedure import Procedure
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.schema.schema import Schema
 from pgsmo.objects.sequence.sequence import Sequence
@@ -44,6 +45,7 @@ __all__ = [
     'Function',
     'Index',
     'IndexConstraint',
+    'Procedure',
     'Role',
     'Rule',
     'Schema',

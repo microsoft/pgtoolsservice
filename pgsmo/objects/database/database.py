@@ -13,6 +13,7 @@ import smo.utils.templating as templating
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.datatype.datatype import DataType
 from pgsmo.objects.functions.function import Function
+from pgsmo.objects.functions.procedure import Procedure
 from pgsmo.objects.functions.trigger_function import TriggerFunction
 from pgsmo.objects.sequence.sequence import Sequence
 from pgsmo.objects.table.table import Table
@@ -84,6 +85,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         self._collations: NodeCollection = self._register_child_collection(Collation)
         self._datatypes: NodeCollection = self._register_child_collection(DataType)
         self._functions: NodeCollection = self._register_child_collection(Function)
+        self._procedures: NodeCollection = self._register_child_collection(Procedure)
         self._sequences: NodeCollection = self._register_child_collection(Sequence)
         self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
         self._extensions: NodeCollection = self._register_child_collection(Extension)
@@ -205,6 +207,10 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     @property
     def functions(self) -> NodeCollection:
         return self._functions
+
+    @property
+    def procedures(self) -> NodeCollection:
+        return self._procedures
 
     @property
     def sequences(self) -> NodeCollection:

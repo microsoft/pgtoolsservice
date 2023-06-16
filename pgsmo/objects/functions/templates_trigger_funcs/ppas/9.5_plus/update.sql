@@ -21,8 +21,8 @@ o_data.proargtypenames }})
 CREATE OR REPLACE FUNCTION {{ conn|qtIdent(o_data.pronamespace, name) }}()
     RETURNS {{ o_data.prorettypename }}
 {% if 'lanname' in data %}
-    LANGUAGE {{ data.lanname|qtLiteral }} {% else %}
-    LANGUAGE {{ o_data.lanname|qtLiteral }}
+    LANGUAGE {{ data.lanname }} {% else %}
+    LANGUAGE {{ o_data.lanname }}
     {% endif %}{% if 'provolatile' in data and data.provolatile %}{{ data.provolatile }} {% elif 'provolatile' not in data and o_data.provolatile %}{{ o_data.provolatile }}{% endif %}
 {% if ('proleakproof' in data and data.proleakproof) or ('proleakproof' not in data and o_data.proleakproof) %} LEAKPROOF{% elif 'proleakproof' in data and not data.proleakproof %} NOT LEAKPROOF{% endif %}
 {% if ('proisstrict' in data and data.proisstrict) or ('proisstrict' not in data and o_data.proisstrict) %} STRICT{% endif %}
@@ -33,13 +33,13 @@ CREATE OR REPLACE FUNCTION {{ conn|qtIdent(o_data.pronamespace, name) }}()
 
     ROWS {{data.prorows}}{% elif o_data.prorows %}ROWS {{o_data.prorows}} {%endif -%}{% if data.merged_variables %}{% for v in data.merged_variables %}
 
-    SET {{ conn|qtIdent(v.name) }}={{ v.value|qtLiteral }}{% endfor -%}
+    SET {{ conn|qtIdent(v.name) }}={{ v.value }}{% endfor -%}
     {% endif %}
 
 AS {% if 'probin' in data or 'prosrc_c' in data %}
-{% if 'probin' in data %}{{ data.probin|qtLiteral }}{% else %}{{ o_data.probin|qtLiteral }}{% endif %}, {% if 'prosrc_c' in data %}{{ data.prosrc_c|qtLiteral }}{% else %}{{ o_data.prosrc_c|qtLiteral }}{% endif %}{% elif 'prosrc' in data %}
+{% if 'probin' in data %}{{ data.probin }}{% else %}{{ o_data.probin }}{% endif %}, {% if 'prosrc_c' in data %}{{ data.prosrc_c }}{% else %}{{ o_data.prosrc_c }}{% endif %}{% elif 'prosrc' in data %}
 $BODY${{ data.prosrc }}$BODY${% elif o_data.lanname == 'c' %}
-{{ o_data.probin|qtLiteral }}, {{ o_data.prosrc_c|qtLiteral }}{% else %}
+{{ o_data.probin }}, {{ o_data.prosrc_c }}{% else %}
 $BODY${{ o_data.prosrc }}$BODY${% endif -%};
 {% endif -%}
 {% if data.funcowner %}
@@ -103,7 +103,7 @@ ALTER FUNCTION {{ conn|qtIdent(o_data.pronamespace, name) }}({{o_data.proargtype
 {% if data.description is defined and data.description != o_data.description%}
 
 COMMENT ON FUNCTION {{ conn|qtIdent(o_data.pronamespace, name) }}({{o_data.proargtypenames }})
-    IS {{ data.description|qtLiteral }};
+    IS {{ data.description }};
 {% endif -%}
 
 {% if data.pronamespace %}
