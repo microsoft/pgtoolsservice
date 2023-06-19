@@ -159,6 +159,14 @@ jobs:
     pool:
       vmImage: windows-latest
     steps:
+      - task: GithubRelease@1
+        displayName: 'Delete GitHub Release'
+        continueOnError: true
+        inputs:
+          gitHubConnection: azuredatastudio-postgresqlext2
+          repositoryName: 'microsoft/pgtoolsservice'
+          action: delete
+          tag: '$(ReleaseVersion)-insiders'
       - task: DownloadBuildArtifacts@0
         inputs:
           buildType: current
@@ -171,8 +179,8 @@ jobs:
           gitHubConnection: azuredatastudio-postgresqlext2
           repositoryName: microsoft/pgtoolsservice
           tagSource: userSpecifiedTag
-          tag: $(ReleaseVersion)-insiders-$(Build.BuildNumber)
-          title: $(ReleaseVersion)-insiders-$(Build.BuildNumber)
+          tag: $(ReleaseVersion)-insiders
+          title: $(ReleaseVersion)-insiders
           changeLogType: issueBased
           isPreRelease: true
           assets: |
