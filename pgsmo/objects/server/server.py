@@ -185,6 +185,10 @@ class Server:
         """ Find the function in the server to script as """
         return self.find_schema_child_object('functions', metadata)
 
+    def find_procedure(self, metadata):
+        """ Find the procedure in the server to script as """
+        return self.find_schema_child_object('procedures', metadata)
+
     def find_database(self, metadata):
         """ Find a database in the server """
         try:
@@ -248,6 +252,7 @@ class Server:
             "View": self.find_view,
             "Role": self.find_role,
             "Function": self.find_function,
+            "Procedure": self.find_procedure,
             "Sequence": self.find_sequence,
             "Datatype": self.find_datatype,
             "Materializedview": self.find_materialized_view

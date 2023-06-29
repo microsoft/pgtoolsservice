@@ -10,6 +10,6 @@ FROM
     pg_tablespace ts
 {% if tsid %}
 WHERE
-    ts.oid={{ tsid|qtLiteral }}::OID
+    ts.oid={{ tsid }}::OID
 {% endif %}
 ORDER BY name;

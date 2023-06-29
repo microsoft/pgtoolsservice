@@ -126,7 +126,7 @@ class TestScripterOld(unittest.TestCase):
         result: str = self.scripter.script(scripter.ScriptOperation.CREATE, mock_metadata)
 
         # The result should be the correct template value
-        self.assertTrue('CREATE TABLE myschema.test' in result)
+        self.assertTrue('CREATE TABLE IF NOT EXISTS myschema.test' in result)
 
         # ... The URN should have been used to get the object
         self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
@@ -175,7 +175,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = self.service.script_as_create()
         # The result should be the correct template value
-        self.assertIn('ALTER TABLE "TestSchema"."TestTable"\n    ADD COLUMN "TestName" TestDatatype;', result)
+        self.assertIn('ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD COLUMN "TestName" TestDatatype;', result)
 
     def test_check_constraint_scripting(self):
         """ Helper function to test create script for check_constraint """

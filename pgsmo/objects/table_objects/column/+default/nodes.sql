@@ -20,15 +20,15 @@ LEFT OUTER JOIN information_schema.columns AS col ON col.table_schema = nspname 
      col.table_name = relname AND
      col.column_name = attname
 WHERE
-    attr.attrelid = {{ parent_id|qtLiteral }}::oid
+    attr.attrelid = {{ parent_id }}::oid
     {% if clid %}
-        AND attr.attnum = {{ clid|qtLiteral }}
+        AND attr.attnum = {{ clid }}
     {% endif %}
     {### To show system objects ###}
     {% if not show_sys_objects %}
         AND attr.attnum > 0
     {% endif %}
     AND atttypid <> 0 AND
-    relkind IN ('r', 'v', 'm') AND
+    relkind IN ('r', 'v', 'm', 'p') AND
     NOT attisdropped 
 ORDER BY attnum

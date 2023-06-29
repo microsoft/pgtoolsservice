@@ -7,10 +7,9 @@ import unittest
 import unittest.mock as mock
 from typing import List, Optional, Tuple
 
-from psycopg2 import DatabaseError
-from psycopg2.extensions import Column
+from psycopg import DatabaseError, Column, connection
 
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection, PG_CANCELLATION_QUERY
 from pgsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
 from tests.utils import MockPsycopgConnection
@@ -115,7 +114,7 @@ class MockPGServerConnection(PostgreSQLConnection):
             self,
             cur: Optional[MockCursor] = None,
             connection: Optional[MockPsycopgConnection] = None,
-            version: str = '90602',
+            version: str = '131001',
             name: str = 'postgres',
             host: str = 'localhost',
             port: str = '25565',
@@ -127,12 +126,22 @@ class MockPGServerConnection(PostgreSQLConnection):
 
         # if no mock pyscopg connection passed, create default one
         if not connection:
-            connection = MockPsycopgConnection(cursor=cur, dsn_parameters={
-                'dbname': name, 'host': host, 'port': port, 'user': user})
+            connection = MockPsycopgConnection(cursor=cur, dsn_parameters=f'host={host} dbname={name} user={user} port={port}')
 
-        # mock psycopg2.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
-        with mock.patch('psycopg2.connect', mock.Mock(return_value=connection)):
+        # mock psycopg.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
+        with mock.patch('psycopg.connect', mock.Mock(return_value=connection)):
             super().__init__({"host_name": host, "user_name": user, "port": port, "database_name": name})
+
+    @property
+    def connection(self) -> connection:
+        """Returns the underlying connection"""
+        return self._conn
+
+    @property
+    def cancellation_query(self) -> str:
+        """Returns a SQL command to end the current query execution process"""
+        return PG_CANCELLATION_QUERY.format(0)
+
 
 # OBJECT TEST HELPERS ######################################################
 

@@ -63,8 +63,8 @@ class TestServer(unittest.TestCase):
         mock_exec_dict = mock.MagicMock(return_value=([], [TestServer.CHECK_RECOVERY_ROW]))
 
         # ... Create an instance of the class and override the connection
-        mock_connection = MockPsycopgConnection({'host': 'host', 'dbname': 'dbname'})
-        with mock.patch('psycopg2.connect', new=mock.Mock(return_value=mock_connection)):
+        mock_connection = MockPsycopgConnection('host=host dbname=dbname')
+        with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_connection)):
             pg_connection = PostgreSQLConnection({})
         pg_connection.execute_dict = mock_exec_dict
         obj = Server(pg_connection)

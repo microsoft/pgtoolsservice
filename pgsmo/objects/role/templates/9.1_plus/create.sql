@@ -34,12 +34,12 @@ CREATE {% if data.rolcanlogin %}USER{% else %}ROLE{% endif %} {{ conn|qtIdent(da
 
 	CONNECTION LIMIT {{ data.rolconnlimit }}{% endif %}{% if data.rolvaliduntil and data.rolvaliduntil is not none %}
 
-	VALID UNTIL {{ data.rolvaliduntil|qtLiteral }} {% endif %}{% if data.rolpassword %}
+	VALID UNTIL {{ data.rolvaliduntil }} {% endif %}{% if data.rolpassword %}
 
 	PASSWORD {% if data.rolpassword is none %}NULL{% else %}{% if dummy %}'xxxxxx'{% else %} {{ data.rolpassword | qtLiteral }}{% endif %}{% endif %}{% endif %};{% if data.rolsuper and data.rolcatupdate is sameas false %}
 
 
-UPDATE pg_authid SET rolcatupdate=false WHERE rolname = {{ data.rolname|qtLiteral }};{% endif %}{% if data.members and data.members|length > 0 %}
+UPDATE pg_authid SET rolcatupdate=false WHERE rolname = {{ data.rolname }};{% endif %}{% if data.members and data.members|length > 0 %}
 
 
 GRANT {{ conn|qtIdent(data.members)|join(', ') }} TO {{ conn|qtIdent(data.rolname) }};{% endif %}{% if data.admins and data.admins|length > 0 %}
@@ -56,5 +56,5 @@ GRANT {{ conn|qtIdent(data.admins)|join(', ') }} TO {{ conn|qtIdent(data.rolname
 {{ VARIABLE.APPLY(conn, var.database, data.rolname, var.name, var.value) }}
 {% endfor %}{% endif %}{% if data.description %}
 
-COMMENT ON ROLE {{ conn|qtIdent(data.rolname) }} IS {{ data.description|qtLiteral }};
+COMMENT ON ROLE {{ conn|qtIdent(data.rolname) }} IS {{ data.description }};
 {% endif %}

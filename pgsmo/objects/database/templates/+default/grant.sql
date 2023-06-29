@@ -15,7 +15,7 @@
 {% import 'macros/default_privilege.macros' as DEFAULT_PRIVILEGE %}
 {% if data.comments %}
 COMMENT ON DATABASE {{ conn|qtIdent(data.name) }}
-    IS {{ data.comments|qtLiteral }};
+    IS {{ data.comments }};
 {% endif %}
 
 {# Generate the security labels #}

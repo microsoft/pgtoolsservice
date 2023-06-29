@@ -13,5 +13,5 @@ WHERE
 {% if tid %}
     c.oid = {{tid}}::oid;
 {% else %}
-    c.relname = {{tname|qtLiteral}}::text;
+    c.relname = {{tname}}::text;
 {% endif %}

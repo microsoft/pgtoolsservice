@@ -21,7 +21,7 @@ FROM
     FROM
         (SELECT aclexplode(nsp.nspacl) as d
         FROM pg_namespace nsp
-        WHERE nsp.oid = {{ scid|qtLiteral }}::OID
+        WHERE nsp.oid = {{ scid }}::OID
         ) a
     ) b
     LEFT JOIN pg_catalog.pg_roles g ON (b.grantor = g.oid)

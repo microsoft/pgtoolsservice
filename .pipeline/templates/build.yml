@@ -4,6 +4,7 @@ steps:
   inputs:
     versionSpec: '3.10'
 - task: Bash@3
+  displayName: 'Run build'
   condition: ne(variables['platform'], 'mac-arm64')
   inputs:
     filePath: $(buildScript)
@@ -14,8 +15,8 @@ steps:
   inputs:
     command: download
     vstsFeed: 'Database Systems/azuredatastudio-pgsqltoolsservice'
-    vstsFeedPackage: 'pgsqltoolsservice-osx-arm64'
-    vstsPackageVersion: '1.6.1'
+    vstsFeedPackage: '$(VstsPackageName)'
+    vstsPackageVersion: '$(VstsPackageVersion)'
     downloadDirectory: '$(Build.SourcesDirectory)'
 - task: ExtractFiles@1
   condition: eq(variables['platform'], 'mac-arm64')

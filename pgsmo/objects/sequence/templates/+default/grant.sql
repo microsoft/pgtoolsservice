@@ -16,7 +16,7 @@ ALTER SEQUENCE {{ seqname }}
 {% if data.comment %}
 
 COMMENT ON SEQUENCE {{ seqname }}
-    IS {{ data.comment|qtLiteral }};
+    IS {{ data.comment }};
 {% endif %}
 {% if data.securities %}
 
