@@ -28,6 +28,7 @@ class PGLightweightMetadata:
                 LEFT JOIN pg_catalog.pg_namespace n
                     ON n.oid = c.relnamespace
         WHERE   c.relkind = ANY(%s)
+          AND   NOT c.relispartition
         ORDER BY 1,2;'''
 
     databases_query = '''
@@ -48,10 +49,11 @@ class PGLightweightMetadata:
     just needed for intellisense
     """
 
-    def _relations(self, kinds=('r', 'v', 'm')):
+    def _relations(self, kinds=('p', 'r', 'v', 'm')):
         """Get table or view name metadata
 
         :param kinds: list of postgres relkind filters:
+                'p' - partitioned table
                 'r' - table
                 'v' - view
                 'm' - materialized view
@@ -67,7 +69,7 @@ class PGLightweightMetadata:
 
     def tables(self):
         """Yields (schema_name, table_name) tuples"""
-        for row in self._relations(kinds=['r']):
+        for row in self._relations(kinds=['r','p']):
             yield row
 
     def views(self):
@@ -78,10 +80,11 @@ class PGLightweightMetadata:
         for row in self._relations(kinds=['v', 'm']):
             yield row
 
-    def _columns(self, kinds=('r', 'v', 'm')):
+    def _columns(self, kinds=('p', 'r', 'v', 'm')):
         """Get column metadata for tables and views
 
         :param kinds: kinds: list of postgres relkind filters:
+                'p' - partitioned table
                 'r' - table
                 'v' - view
                 'm' - materialized view
@@ -106,6 +109,7 @@ class PGLightweightMetadata:
                 WHERE   cls.relkind = ANY(%s)
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
+                        AND NOT cls.relispartition
                 ORDER BY 1, 2, att.attnum'''
         elif self.conn.connection.info.server_version >= 80400:
             columns_query = '''
@@ -126,6 +130,7 @@ class PGLightweightMetadata:
                 WHERE   cls.relkind = ANY(%s)
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
+                        AND NOT cls.relispartition
                 ORDER BY 1, 2, att.attnum'''
         else:
             columns_query = '''
@@ -145,6 +150,7 @@ class PGLightweightMetadata:
                 WHERE   cls.relkind = ANY(%s)
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
+                        AND NOT cls.relispartition
                 ORDER BY 1, 2, att.attnum'''
 
         with self.conn.cursor() as cur:
@@ -155,7 +161,7 @@ class PGLightweightMetadata:
                 yield row
 
     def table_columns(self):
-        for row in self._columns(kinds=['r']):
+        for row in self._columns(kinds=['p','r']):
             yield row
 
     def view_columns(self):
