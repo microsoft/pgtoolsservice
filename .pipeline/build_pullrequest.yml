@@ -92,7 +92,15 @@ steps:
   - bash: |
       sudo apt update
       sudo apt install -y postgresql
+      sudo apt install -y postgresql-client
       sudo service postgresql start
+      echo '{
+          "host": "localhost",
+          "port": 5432,
+          "user": "postgres",
+          "password": "$(PostgresPassword)",
+          "dbname": "postgres"
+      }' > $(BUILD_SOURCESDIRECTORY)/tests/integration/config.json
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
   - bash: |
