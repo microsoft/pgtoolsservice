@@ -96,8 +96,8 @@ steps:
       cd pgsql/bin
       chmod -R 777 $BUILD_BINARIESDIRECTORY/pgsql
       sudo useradd -m postgres
-      sudo -u postgres bash -c "./initdb -U postgres -D ../db1"
-      sudo -u postgres bash -c "./pg_ctl -D ../db1 -l logfile start" > a.out
+      sudo -u postgres bash -c "./initdb -U postgres -D $BUILD_BINARIESDIRECTORY/db1"
+      sudo -u postgres bash -c "./pg_ctl -D $BUILD_BINARIESDIRECTORY/db1 -l $BUILD_BINARIESDIRECTORY/logfile start" > $BUILD_BINARIESDIRECTORY/a.out
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
   - bash: |
