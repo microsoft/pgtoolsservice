@@ -69,7 +69,7 @@ class PGLightweightMetadata:
 
     def tables(self):
         """Yields (schema_name, table_name) tuples"""
-        for row in self._relations(kinds=['r','p']):
+        for row in self._relations(kinds=['r', 'p']):
             yield row
 
     def views(self):
@@ -161,7 +161,7 @@ class PGLightweightMetadata:
                 yield row
 
     def table_columns(self):
-        for row in self._columns(kinds=['p','r']):
+        for row in self._columns(kinds=['p', 'r']):
             yield row
 
     def view_columns(self):
