@@ -99,13 +99,13 @@ steps:
           "host": "localhost",
           "port": 5432,
           "user": "postgres",
-          "password": "$(PostgresPassword)",
+          "password": "'"${{ env.PostgresPassword }}"'",
           "dbname": "postgres"
       }'
       echo $config > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       useradd -m postgres
-      echo "postgres:$(PostgresPassword)" | sudo chpasswd
+      echo "postgres:${{ env.PostgresPassword }}" | sudo chpasswd
       sudo service postgresql start
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
