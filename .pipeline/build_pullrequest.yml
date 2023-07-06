@@ -92,14 +92,19 @@ steps:
   - bash: |
       sudo apt update
       sudo apt install -y postgresql
-      sudo apt install -y postgresql-client
-      echo '{
+      sudo apt-get install postgresql-client
+      cd "$BUILD_BINARIESDIRECTORY/postgres/pgsql/bin"
+      config='{
           "host": "localhost",
           "port": 5432,
           "user": "postgres",
-          "password": "$(PostgresPassword)",
+          "password": "'"$PostgresPassword"'",
           "dbname": "postgres"
-      }' > $(BUILD_SOURCESDIRECTORY)/tests/integration/config.json
+      }'
+      echo $config > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
+      cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
+      useradd -m postgres
+      echo "postgres:$PostgresPassword" | chpasswd
       sudo service postgresql start
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
