@@ -90,14 +90,9 @@ steps:
     displayName: Start Postgres windows
     condition: eq(variables.platform, 'windows')
   - bash: |
-      cd $BUILD_BINARIESDIRECTORY
-      wget https://get.enterprisedb.com/postgresql/postgresql-10.1-1-linux-x64-binaries.tar.gz
-      tar -xf postgresql-10.1-1-linux-x64-binaries.tar.gz
-      cd pgsql/bin
-      chmod -R 777 $BUILD_BINARIESDIRECTORY/pgsql
-      sudo useradd -m postgres
-      sudo -u postgres bash -c "./initdb -U postgres -D $BUILD_BINARIESDIRECTORY/db1"
-      sudo -u postgres bash -c "$BUILD_BINARIESDIRECTORY/pgsql/bin/pg_ctl -D $BUILD_BINARIESDIRECTORY/db1 -l $BUILD_BINARIESDIRECTORY/logfile start > $BUILD_BINARIESDIRECTORY/a.out"
+      sudo apt update
+      sudo apt install -y postgresql
+      sudo service postgresql start
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
   - bash: |
