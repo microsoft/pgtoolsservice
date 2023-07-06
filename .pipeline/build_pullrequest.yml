@@ -93,19 +93,17 @@ steps:
       sudo apt update
       sudo apt install -y postgresql
       sudo apt install postgresql-client postgresql-client-common libpq-dev
-      pg_dump --version
-      pg_restore --version
       config='{
           "host": "localhost",
           "port": 5432,
           "user": "postgres",
-          "password": "'"${{ PostgresPassword }}"'",
+          "password": "$(POSTGRESPASSWORD)",
           "dbname": "postgres"
       }'
       echo $config > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       useradd -m postgres
-      echo "postgres:${{ PostgresPassword }}" | sudo chpasswd
+      echo "postgres:$(POSTGRESPASSWORD)" | sudo chpasswd
       sudo service postgresql start
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
