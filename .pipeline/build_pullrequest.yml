@@ -93,8 +93,6 @@ steps:
       sudo apt update
       sudo apt install -y postgresql
       sudo apt install postgresql-client postgresql-client-common libpq-dev
-      cd "$BUILD_BINARIESDIRECTORY/postgresql/14/bin"
-
       config='{
           "host": "localhost",
           "port": 5432,
@@ -104,17 +102,9 @@ steps:
       }'
       echo $config > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
+      ls /usr/lib/postgresql/14/bin
       useradd -m postgres
       echo "postgres:$(LINUXPASSWORD)" | sudo chpasswd
-
-      chmod -R 777 "$BUILD_BINARIESDIRECTORY"
-
-      sudo su - postgres
-      psql postgres postgres
-      ALTER USER postgres PASSWORD '$(LINUXPASSWORD)';
-      \q
-      \q
-
       sudo service postgresql start
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
