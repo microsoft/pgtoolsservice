@@ -102,6 +102,7 @@ steps:
       }'
       echo $config > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
+      ls /usr/lib/postgresql/14/bin
       useradd -m postgres
       echo "postgres:$(LINUXPASSWORD)" | sudo chpasswd
       sudo service postgresql start
