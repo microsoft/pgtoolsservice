@@ -93,22 +93,29 @@ steps:
       sudo apt update
       sudo apt install -y postgresql
       sudo apt install postgresql-client postgresql-client-common libpq-dev
-      config='{
-          "host": "localhost",
-          "port": 5432,
-          "user": "postgres",
-          "password": "$(POSTGRESPASSWORD)",
-          "dbname": "postgres"
-      }'
-      echo $config > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
+      cd "$BUILD_BINARIESDIRECTORY/postgres/pgsql/bin"
+
+      cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
+      {
+      "host": "localhost",
+      "port": 5432,
+      "user": "postgres",
+      "password": "$PostgresPassword",
+      "dbname": "postgres"
+      }
+      EOL
+
       cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
-      useradd -m postgres
-      echo "postgres:$(POSTGRESPASSWORD)" | sudo chpasswd
-      sudo -u postgres psql postgres
-      ALTER USER postgres with encrypted password $(POSTGRESPASSWORD);
-      hostssl template1       postgres        192.168.122.1/24        scram-sha-256
-      \q
-      sudo systemctl restart postgresql.service
+
+      echo "$PostgresPassword" | sudo -S sh -c 'dscl . -create /Users/postgres UserShell /bin/bash'
+
+      chmod -R 777 "$BUILD_BINARIESDIRECTORY"
+
+      sudo -u postgres ./initdb -U postgres -D ../db1
+
+      mkdir ../db1/pg_log
+
+      sudo -u postgres ./pg_ctl -D ../db1 -l ../db1/pg_log/postgres.log start
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
   - bash: |
