@@ -104,9 +104,11 @@ steps:
       cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       useradd -m postgres
       echo "postgres:$(POSTGRESPASSWORD)" | sudo chpasswd
-      pg_ctl start
-      pg_ctl status
-      psql -d postgres -p 5432 -U postgres -W $(POSTGRESPASSWORD)
+      sudo -u postgres psql postgres
+      ALTER USER postgres with encrypted password $(POSTGRESPASSWORD);
+      hostssl template1       postgres        192.168.122.1/24        scram-sha-256
+      \q
+      sudo systemctl restart postgresql.service
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
   - bash: |
