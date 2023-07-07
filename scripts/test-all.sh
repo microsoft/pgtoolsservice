@@ -12,4 +12,5 @@ then
   exit
 fi
 
+cat tests/integration/config.json
 nose2 -v --with-coverage --coverage-report html --plugin=nose2.plugins.junitxml --junit-xml "$@"
