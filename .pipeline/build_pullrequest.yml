@@ -104,7 +104,9 @@ steps:
       cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       useradd -m postgres
       echo "postgres:$(POSTGRESPASSWORD)" | sudo chpasswd
-      sudo service postgresql start
+      pg_ctl start
+      pg_ctl status
+      psql -d postgres -p 5432 -U postgres -W $(POSTGRESPASSWORD)
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
   - bash: |
