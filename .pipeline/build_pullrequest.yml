@@ -109,10 +109,11 @@ steps:
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
   - bash: |
-      curl -O https://get.enterprisedb.com/postgresql/postgresql-14.1-1-osx-binaries.zip
-      unzip postgresql-14.1-1-osx-binaries.zip
-      cd postgresql-14.1-1-osx-binaries
-      sudo installer -pkg PostgreSQL\ 14.1.pkg -target /
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      brew install curl unzip
+      curl -O https://get.enterprisedb.com/postgresql/postgresql-14.1-1-osx-x64-binaries.zip
+      unzip postgresql-14.1-1-osx-x64-binaries.zip
+      brew services start postgresql
     displayName: 'Install Postgres on Mac'
     condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'mac-arm64'))
   - bash: |
