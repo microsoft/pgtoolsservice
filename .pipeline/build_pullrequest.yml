@@ -111,13 +111,28 @@ steps:
   - bash: |
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       brew install curl unzip
-      curl -O https://get.enterprisedb.com/postgresql/postgresql-14.1-1-osx-x64-binaries.zip
-      unzip postgresql-14.1-1-osx-x64-binaries.zip
-      brew services start postgresql
+      brew install postgresql
     displayName: 'Install Postgres on Mac'
     condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'mac-arm64'))
   - bash: |
-      sudo -u _postgres /usr/libexec/postgresql/pg_ctl -D /Library/PostgreSQL/14/data start
+      cd "$BUILD_BINARIESDIRECTORY/postgres/pgsql/bin"
+
+      cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
+      {
+      "host": "localhost",
+      "port": 5432,
+      "user": "postgres",
+      "password": "$(LINUXPASSWORD)",
+      "dbname": "postgres"
+      }
+      EOL
+
+      cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
+
+      echo "$(LINUXPASSWORD)" | sudo -S sh -c 'dscl . -create /Users/postgres UserShell /bin/bash'
+
+      chmod -R 777 "$BUILD_BINARIESDIRECTORY"
+      brew services start postgresql
     displayName: 'Start Postgres on Mac'
     condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'mac-arm64'))
   - task: PowerShell@2
