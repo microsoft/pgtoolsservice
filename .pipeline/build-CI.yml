@@ -183,7 +183,7 @@ jobs:
           title: $(ReleaseVersion)-insiders
           changeLogType: issueBased
           changeLogCompareToRelease: lastNonDraftReleaseByTag
-          changeLogCompareToReleaseTag: 1.8.0-insiders
+          changeLogCompareToReleaseTag: $(PreviousReleaseVersion)-insiders
           isPreRelease: true
           assets: |
             $(System.ArtifactsDirectory)/**/*.gz
