@@ -23,5 +23,5 @@ WHERE
 {% endif %}
 
 {% if name %}
-DROP PROCEDURE IF EXISTS {{ conn|qtIdent(nspname, name) }}{{func_args}}{% if cascade %} CASCADE{% endif %};
+DROP PROCEDURE IF EXISTS {{ conn|qtIdent(nspname, name)|replace('"', '') }}{{func_args}}{% if cascade %} CASCADE{% endif %};
 {% endif %}

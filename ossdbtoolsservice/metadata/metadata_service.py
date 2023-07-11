@@ -22,6 +22,7 @@ SELECT s.nspname AS schema_name, p.proname || '(' || COALESCE(pg_catalog.pg_get_
 UNION
 SELECT schemaname AS schema_name, tablename AS object_name, 't' as type FROM pg_tables
     WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
+      AND tablename NOT IN ( SELECT relname FROM pg_class WHERE relispartition )
 UNION
 SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_views
     WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
