@@ -259,6 +259,14 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     @property
     def cascade(self):
         return self._full_properties.get("cascade", "")
+    
+    @property
+    def is_pure_sql(self):
+        return self._full_properties.get("is_pure_sql", "")
+    
+    @property
+    def prosrc_sql(self):
+        return self._full_properties.get("prosrc_sql", "")
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
@@ -290,7 +298,9 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
             "func_args_without": self.func_args_without,
             "description": self.description,
             "acl": self.acl,
-            "seclabels": self.seclabels
+            "seclabels": self.seclabels,
+            "is_pure_sql": self.is_pure_sql,
+            "prosrc_sql": self.prosrc_sql
         }}
 
     def _delete_query_data(self) -> dict:

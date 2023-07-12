@@ -9,6 +9,8 @@ from typing import Dict, List, Optional, Tuple
 
 from jinja2 import Environment, FileSystemLoader, Template
 
+from ossdbtoolsservice.driver.types import psycopg_driver as psycopg
+
 TEMPLATE_ENVIRONMENTS: Dict[int, Environment] = {}
 TEMPLATE_FOLDER_REGEX = re.compile(r'(\d+)\.(\d+)(?:_(\w+))?$')
 TEMPLATE_SKIPPED_FOLDERS: List[str] = ['macros']
@@ -108,6 +110,7 @@ def render_template(template_path: str, macro_roots: Optional[List[str]] = None,
         new_env.filters['qtTypeIdent'] = qt_type_ident
         new_env.filters['hasAny'] = has_any
         new_env.filters['string_convert'] = string_convert
+        new_env.filters['qtLiteral'] = qt_literal
 
         TEMPLATE_ENVIRONMENTS[environment_key] = new_env
 
@@ -195,6 +198,26 @@ def qt_ident(conn, *args):
         res = ((res and res + '.') or '') + value
 
     return res
+
+def qt_literal(value, conn, force_quote=False):
+        res = value
+
+        if conn:
+            try:
+                if type(conn) != psycopg.Connection and \
+                        type(conn) != psycopg.AsyncConnection:
+                    conn = conn.conn
+                res = psycopg.sql.Literal(value).as_string(conn).strip()
+            except Exception:
+                print("Exception", value)
+
+        if force_quote is True:
+            # Convert the input to the string to use the startsWith(...)
+            res = str(res)
+            if not res.startswith("'"):
+                return "'" + res + "'"
+
+        return res
 
 
 def has_any(data, keys):
