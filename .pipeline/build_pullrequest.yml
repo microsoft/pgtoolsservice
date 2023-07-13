@@ -115,7 +115,7 @@ steps:
     displayName: 'Install Postgres on Mac'
     condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'mac-arm64'))
   - bash: |
-      cd "$BUILD_BINARIESDIRECTORY/postgres/pgsql/bin"
+      /usr/local/opt/postgresql@14/bin/createuser -s postgres
 
       cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
       {
@@ -132,9 +132,30 @@ steps:
       echo "$(LINUXPASSWORD)" | sudo -S sh -c 'dscl . -create /Users/postgres UserShell /bin/bash'
 
       chmod -R 777 "$BUILD_BINARIESDIRECTORY"
-      brew services start postgresql
-    displayName: 'Start Postgres on Mac'
-    condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'mac-arm64'))
+      brew services start postgresql@14
+    displayName: 'Start Postgres on mac-x64'
+    condition: eq(variables.platform, 'mac-x64')
+  - bash: |
+      /opt/homebrew/bin/createuser -s postgres
+
+      cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
+      {
+      "host": "localhost",
+      "port": 5432,
+      "user": "postgres",
+      "password": "$(LINUXPASSWORD)",
+      "dbname": "postgres"
+      }
+      EOL
+
+      cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
+
+      echo "$(LINUXPASSWORD)" | sudo -S sh -c 'dscl . -create /Users/postgres UserShell /bin/bash'
+
+      chmod -R 777 "$BUILD_BINARIESDIRECTORY"
+      brew services start postgresql@14
+    displayName: 'Start Postgres on mac-arm64'
+    condition: eq(variables.platform, 'mac-arm64')
   - task: PowerShell@2
     displayName: Style Check windows
     condition: eq(variables.platform, 'windows')
