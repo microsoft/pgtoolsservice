@@ -85,7 +85,7 @@ class TestSaveAsExcelWriter(unittest.TestCase):
 
         self.assertEqual(1, write_column_value_args[4][0][0])
         self.assertEqual(1, write_column_value_args[4][0][1])
-        self.assertEqual('1023', write_column_value_args[4][0][2])
+        self.assertEqual(1023, write_column_value_args[4][0][2])
 
         self.assertEqual(1, write_column_value_args[5][0][0])
         self.assertEqual(2, write_column_value_args[5][0][1])
