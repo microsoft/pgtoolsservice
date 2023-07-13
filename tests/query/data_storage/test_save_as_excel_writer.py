@@ -21,9 +21,9 @@ class TestSaveAsExcelWriter(unittest.TestCase):
         self.mock_io = mock.MagicMock()
 
         self.row = [
-            DbCellValue('Test', False, None, 0),
-            DbCellValue(1023, False, None, 0),
-            DbCellValue(False, False, None, 0)
+            DbCellValue('Test', False, 'Test', 0),
+            DbCellValue(1023, False, 1023, 0),
+            DbCellValue(False, False, False, 0)
         ]
 
         name_column = DbColumn()
