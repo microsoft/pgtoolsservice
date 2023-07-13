@@ -90,6 +90,29 @@ jobs:
           Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
         displayName: Start Postgres windows
         condition: eq(variables.platform, 'windows')
+      - bash: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew install curl unzip
+          brew install postgresql
+        displayName: 'Install Postgres on Mac'
+        condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'mac-arm64'))
+      - bash: |
+          cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
+          {
+          "host": "localhost",
+          "port": 5432,
+          "user": "postgres",
+          "password": "$(LINUXPASSWORD)",
+          "dbname": "postgres"
+          }
+          EOL
+          cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
+          echo "$(LINUXPASSWORD)" | sudo -S sh -c 'dscl . -create /Users/postgres UserShell /bin/bash'
+          chmod -R 777 "$BUILD_BINARIESDIRECTORY"
+          brew services start postgresql@14
+          /usr/local/opt/postgresql@14/bin/createuser -s postgres
+        displayName: 'Start Postgres on mac-x64'
+        condition: eq(variables.platform, 'mac-x64')
       - task: PowerShell@2
         displayName: Style Check windows
         condition: eq(variables.platform, 'windows')
@@ -101,6 +124,12 @@ jobs:
             & "$env:BUILD_SOURCESDIRECTORY\scripts\flake8.ps1"
           warningPreference: stop
           failOnStderr: true
+      - task: Bash@3
+          displayName: 'Style Check'
+          condition: ne(variables.platform, 'windows')
+          inputs:
+            targetType: filePath
+            filePath: ./scripts/flake8.sh
       - task: PowerShell@2
         displayName: Run Tests windows
         condition: eq(variables.platform, 'windows')
@@ -109,15 +138,19 @@ jobs:
           filePath: ./scripts/test-all.ps1
           errorActionPreference: default
         continueOnError: true
+      - task: Bash@3
+        displayName: 'Run Tests'
+        condition: ne(variables.platform, 'windows')
+        inputs:
+          targetType: filePath
+          filePath: './scripts/test-all.sh'
       - task: PublishTestResults@2
-        displayName: Publish test results windows **/nose2-junit.xml
-        condition: eq(variables.platform, 'windows')
+        displayName: Publish test results **/nose2-junit.xml
         inputs:
           testResultsFormat: JUnit
           testResultsFiles: "**/nose2-junit.xml"
       - task: PublishCodeCoverageResults@1
-        displayName: Publish code coverage from **/htmlcov windows
-        condition: eq(variables.platform, 'windows')
+        displayName: Publish code coverage from **/htmlcov
         inputs:
           codeCoverageTool: Cobertura
           summaryFileLocation: "**/cchtml"

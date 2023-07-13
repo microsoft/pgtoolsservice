@@ -12,6 +12,7 @@ command_exists() {
 
 # Install flake8 if it's missing
 if ! command_exists flake8; then
+  python3 --version
   echo "flake8 not found. Installing flake8..."
   pip install flake8
 fi

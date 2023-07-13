@@ -115,7 +115,6 @@ steps:
     displayName: 'Install Postgres on Mac'
     condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'mac-arm64'))
   - bash: |
-
       cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
       {
       "host": "localhost",
@@ -188,12 +187,12 @@ steps:
       targetType: filePath
       filePath: './scripts/test-all.sh'
   - task: PublishTestResults@2
-    displayName: Publish test results windows **/nose2-junit.xml
+    displayName: Publish test results **/nose2-junit.xml
     inputs:
       testResultsFormat: JUnit
       testResultsFiles: "**/nose2-junit.xml"
   - task: PublishCodeCoverageResults@1
-    displayName: Publish code coverage from **/htmlcov windows
+    displayName: Publish code coverage from **/htmlcov
     inputs:
       codeCoverageTool: Cobertura
       summaryFileLocation: "**/cchtml"
