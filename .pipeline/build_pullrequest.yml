@@ -135,8 +135,6 @@ steps:
     displayName: 'Start Postgres on mac-x64'
     condition: eq(variables.platform, 'mac-x64')
   - bash: |
-      /opt/homebrew/var/postgresql@14/bin/createuser -s postgres
-
       cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
       {
       "host": "localhost",
@@ -153,6 +151,7 @@ steps:
 
       chmod -R 777 "$BUILD_BINARIESDIRECTORY"
       brew services start postgresql@14
+      /usr/local/opt/postgresql@14/bin/createuser -s postgres
     displayName: 'Start Postgres on mac-arm64'
     condition: eq(variables.platform, 'mac-arm64')
   - task: PowerShell@2
