@@ -89,7 +89,7 @@ class TestSaveAsExcelWriter(unittest.TestCase):
 
         self.assertEqual(1, write_column_value_args[5][0][0])
         self.assertEqual(2, write_column_value_args[5][0][1])
-        self.assertEqual('False', write_column_value_args[5][0][2])
+        self.assertEqual(False, write_column_value_args[5][0][2])
 
     def test_complete_write(self):
         self.writer.complete_write()
