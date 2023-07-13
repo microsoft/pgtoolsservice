@@ -182,6 +182,8 @@ jobs:
           tag: $(ReleaseVersion)-insiders
           title: $(ReleaseVersion)-insiders
           changeLogType: issueBased
+          changeLogCompareToRelease: lastNonDraftReleaseByTag
+          changeLogCompareToReleaseTag: $(PreviousReleaseVersion)-insiders
           isPreRelease: true
           assets: |
             $(System.ArtifactsDirectory)/**/*.gz
