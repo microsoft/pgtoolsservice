@@ -75,3 +75,19 @@ class TestSaveAsCsvWriter(unittest.TestCase):
 
             self.assertEqual(['Id', 'Valid'], write_row_args[0][0][0])
             self.assertEqual(['1023', 'False'], write_row_args[1][0][0])
+
+    def test_write_row_change_delimiter(self):
+
+        self.request.delimiter = ';'
+        writer_mock = mock.MagicMock()
+        csv_writer_mock = mock.Mock(return_value=writer_mock)
+        with mock.patch('csv.writer', new=csv_writer_mock):
+            self.writer.write_row(self.row, self.columns)
+
+            csv_writer_mock.assert_called_once_with(self.mock_io, delimiter=';', quotechar='"', quoting=0)
+
+            self.assertEqual(writer_mock.writerow.call_count, 2)
+            write_row_args = writer_mock.writerow.call_args_list
+
+            self.assertEqual(['Name', 'Id', 'Valid'], write_row_args[0][0][0])
+            self.assertEqual(['Test', '1023', 'False'], write_row_args[1][0][0])
