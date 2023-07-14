@@ -133,6 +133,7 @@ class _ConnectionManager:
 
         with open(config_path, encoding='utf-8-sig') as f:
             json_content = f.read()
+            print(json_content)
             config_list = json.loads(json_content)
 
         if not isinstance(config_list, list):
