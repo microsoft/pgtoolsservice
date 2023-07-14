@@ -103,6 +103,7 @@ steps:
       echo $config > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       sudo cat /etc/postgresql/14/main/pg_hba.conf
+      sudo sed -i 's/local\s*all\s*all\s*peer/local all all scram-sha-256/' /etc/postgresql/14/main/pg_hba.conf
       useradd -m postgres
       echo "postgres:$(LINUXPASSWORD)" | sudo chpasswd
       sudo service postgresql start
@@ -160,11 +161,17 @@ steps:
       errorActionPreference: default
     continueOnError: true
   - task: Bash@3
-    displayName: 'Run Tests'
-    condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'ubuntu'))
+    displayName: 'Run Tests mac-x64'
+    condition: eq(variables.platform, 'mac-x64'),
     inputs:
       targetType: filePath
       filePath: './scripts/test-all.sh'
+  - task: Bash@3
+    displayName: 'Run Tests linux'
+    condition: eq(variables.platform, 'ubuntu')
+    inputs:
+      targetType: filePath
+      filePath: './scripts/test-all-linux.sh'
   - task: PublishTestResults@2
     displayName: Publish test results **/nose2-junit.xml
     inputs:
