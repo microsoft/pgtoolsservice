@@ -162,7 +162,7 @@ steps:
     continueOnError: true
   - task: Bash@3
     displayName: 'Run Tests mac-x64'
-    condition: eq(variables.platform, 'mac-x64'),
+    condition: eq(variables.platform, 'mac-x64')
     inputs:
       targetType: filePath
       filePath: './scripts/test-all.sh'
