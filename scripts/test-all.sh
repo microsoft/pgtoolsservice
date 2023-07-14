@@ -15,7 +15,7 @@ fi
 # Install nose2 if it's missing
 if ! command_exists nose2; then
   echo "nose2 not found. Installing nose2..."
-  pip install nose2
+  pip3 install nose2
 fi
 
 cat tests/integration/config.json

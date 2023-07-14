@@ -14,7 +14,7 @@ command_exists() {
 if ! command_exists flake8; then
   python3 --version
   echo "flake8 not found. Installing flake8..."
-  pip install flake8
+  pip3 install flake8
 fi
 
 flake8 --max-line-length=160 --ignore W605,W503,W504 --builtins psycopg,ossdbtoolsservice,View ossdbtoolsservice
