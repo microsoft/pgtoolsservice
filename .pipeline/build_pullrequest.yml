@@ -94,7 +94,7 @@ steps:
       sudo apt-get install -y postgresql
       sudo apt-get install postgresql-client postgresql-client-common libpq-dev
       config='{
-          "host": "localhost",
+          "host": "127.0.0.1",
           "port": 5432,
           "user": "postgres",
           "password": "$(LINUXPASSWORD)",
@@ -102,7 +102,7 @@ steps:
       }'
       echo $config > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
       cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
-      ls /usr/lib/postgresql/14/bin
+      sudo cat /etc/postgresql/14/main/pg_hba.conf
       useradd -m postgres
       echo "postgres:$(LINUXPASSWORD)" | sudo chpasswd
       sudo service postgresql start
