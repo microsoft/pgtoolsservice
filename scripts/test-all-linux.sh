@@ -13,12 +13,11 @@ then
 fi
 
 # Check if nose2 is installed
-if ! command -v nose2 &> /dev/null; then
+if ! command -v nose2 &> /dev/null;
+then
     echo "nose2 is not installed. Installing..."
     sudo apt update
     sudo apt install -y nose2
-else
-    echo "nose2 is already installed."
 fi
 
 cat tests/integration/config.json
