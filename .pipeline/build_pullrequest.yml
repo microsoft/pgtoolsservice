@@ -106,6 +106,7 @@ steps:
       sudo sed -i 's/local\s*all\s*all\s*peer/local all all scram-sha-256/' /etc/postgresql/14/main/pg_hba.conf
       useradd -m postgres
       echo "postgres:$(LINUXPASSWORD)" | sudo chpasswd
+      sudo cat /etc/postgresql/14/main/pg_hba.conf
       sudo service postgresql start
     condition: eq(variables.platform, 'ubuntu')
     displayName: 'Download and Start Postgres linux'
