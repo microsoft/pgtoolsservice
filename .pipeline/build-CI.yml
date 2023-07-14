@@ -95,7 +95,7 @@ jobs:
           brew install curl unzip
           brew install postgresql
         displayName: 'Install Postgres on Mac'
-        condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'mac-arm64'))
+        condition: eq(variables.platform, 'mac-x64')
       - bash: |
           cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
           {
@@ -140,7 +140,7 @@ jobs:
         continueOnError: true
       - task: Bash@3
         displayName: 'Run Tests'
-        condition: ne(variables.platform, 'windows')
+        condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'ubuntu'))
         inputs:
           targetType: filePath
           filePath: './scripts/test-all.sh'

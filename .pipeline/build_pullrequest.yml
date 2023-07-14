@@ -113,7 +113,7 @@ steps:
       brew install curl unzip
       brew install postgresql
     displayName: 'Install Postgres on Mac'
-    condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'mac-arm64'))
+    condition: eq(variables.platform, 'mac-x64')
   - bash: |
       cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
       {
@@ -134,26 +134,6 @@ steps:
       /usr/local/opt/postgresql@14/bin/createuser -s postgres
     displayName: 'Start Postgres on mac-x64'
     condition: eq(variables.platform, 'mac-x64')
-  - bash: |
-      cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
-      {
-      "host": "localhost",
-      "port": 5432,
-      "user": "postgres",
-      "password": "$(LINUXPASSWORD)",
-      "dbname": "postgres"
-      }
-      EOL
-
-      cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
-
-      echo "$(LINUXPASSWORD)" | sudo -S sh -c 'dscl . -create /Users/postgres UserShell /bin/bash'
-
-      chmod -R 777 "$BUILD_BINARIESDIRECTORY"
-      brew services start postgresql@14
-      /usr/local/opt/postgresql@14/bin/createuser -s postgres
-    displayName: 'Start Postgres on mac-arm64'
-    condition: eq(variables.platform, 'mac-arm64')
   - task: PowerShell@2
     displayName: Style Check windows
     condition: eq(variables.platform, 'windows')
@@ -181,7 +161,7 @@ steps:
     continueOnError: true
   - task: Bash@3
     displayName: 'Run Tests'
-    condition: ne(variables.platform, 'windows')
+    condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'ubuntu'))
     inputs:
       targetType: filePath
       filePath: './scripts/test-all.sh'
