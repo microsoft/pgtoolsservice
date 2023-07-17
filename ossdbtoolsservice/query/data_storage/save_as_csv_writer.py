@@ -19,7 +19,7 @@ class SaveAsCsvWriter(SaveAsWriter):
 
     def write_row(self, row: List[DbCellValue], columns: List[DbColumn]):
 
-        writer = csv.writer(self._file_stream, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer = csv.writer(self._file_stream, delimiter=self._params.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
 
         if self._params.include_headers and not self._header_written:
             selected_column_names = [column.column_name for column in columns[
