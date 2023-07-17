@@ -35,7 +35,7 @@ class SaveAsExcelWriter(SaveAsWriter):
             self._header_written = True
 
         for loop_index, column_index in enumerate(range(column_start_index, column_end_index)):
-            self._worksheet.write(self._current_row, loop_index, row[column_index].display_value)
+            self._worksheet.write(self._current_row, loop_index, row[column_index].raw_object)
 
         self._current_row += 1
 

@@ -19,6 +19,7 @@ class SaveResultsAsCsvRequestParams(SaveResultsRequestParams):
     def __init__(self):
         super().__init__()
         self.include_headers: bool = None
+        self.delimiter: str = ','
 
 
 class SaveResultsAsJsonRequestParams(SaveResultsRequestParams):
