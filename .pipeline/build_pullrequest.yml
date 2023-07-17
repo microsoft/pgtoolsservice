@@ -92,10 +92,6 @@ steps:
   - bash: |
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       brew install curl unzip
-      brew uninstall postgresql
-      rm -rf /usr/local/var/postgres
-      rm -rf .psql_history .psqlrc .psql.local .pgpass .psqlrc.local
-      brew update
       brew install postgresql@14
     displayName: 'Install Postgres on Mac'
     condition: eq(variables.platform, 'mac-x64')
