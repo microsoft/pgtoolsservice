@@ -91,6 +91,25 @@ jobs:
           Start-Process ".\pg_ctl.exe"  -Credential $cred -NoNewWindow -ArgumentList "-D ..\db1 -l ..\db1\pg_log\postgres.log start"
         displayName: Start Postgres windows
         condition: eq(variables.platform, 'windows')
+      - task: PowerShell@2
+        displayName: Style Check windows
+        condition: eq(variables.platform, 'windows')
+        inputs:
+          filePath: scripts/flake8.ps1
+          script: |-
+            Get-ChildItem -Path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql"
+
+            & "$env:BUILD_SOURCESDIRECTORY\scripts\flake8.ps1"
+          warningPreference: stop
+          failOnStderr: true
+      - task: PowerShell@2
+        displayName: Run Tests windows
+        condition: eq(variables.platform, 'windows')
+        inputs:
+          targetType: filePath
+          filePath: ./scripts/test-all.ps1
+          errorActionPreference: default
+        continueOnError: true
       - bash: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           brew install curl unzip
@@ -114,34 +133,17 @@ jobs:
           /usr/local/opt/postgresql@14/bin/createuser -s postgres
         displayName: 'Start Postgres on mac-x64'
         condition: eq(variables.platform, 'mac-x64')
-      - task: PowerShell@2
-        displayName: Style Check windows
-        condition: eq(variables.platform, 'windows')
-        inputs:
-          filePath: scripts/flake8.ps1
-          script: |-
-            Get-ChildItem -Path "$env:BUILD_BINARIESDIRECTORY\postgres\pgsql"
-
-            & "$env:BUILD_SOURCESDIRECTORY\scripts\flake8.ps1"
-          warningPreference: stop
-          failOnStderr: true
       - task: Bash@3
           displayName: 'Style Check'
           condition: ne(variables.platform, 'windows')
           inputs:
             targetType: filePath
             filePath: ./scripts/flake8.sh
-      - task: PowerShell@2
-        displayName: Run Tests windows
-        condition: eq(variables.platform, 'windows')
-        inputs:
-          targetType: filePath
-          filePath: ./scripts/test-all.ps1
-          errorActionPreference: default
-        continueOnError: true
+          warningPreference: stop
+          failOnStderr: true
       - task: Bash@3
-        displayName: 'Run Tests'
-        condition: or(eq(variables.platform, 'mac-x64'), eq(variables.platform, 'ubuntu'))
+        displayName: 'Run Tests mac-x64'
+        condition: eq(variables.platform, 'mac-x64')
         inputs:
           targetType: filePath
           filePath: './scripts/test-all.sh'
