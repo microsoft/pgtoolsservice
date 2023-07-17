@@ -18,5 +18,4 @@ if ! command_exists nose2; then
   pip3 install nose2[coverage_plugin]
 fi
 
-cat tests/integration/config.json
 nose2 -v --with-coverage --coverage-report html --plugin=nose2.plugins.junitxml --junit-xml "$@"

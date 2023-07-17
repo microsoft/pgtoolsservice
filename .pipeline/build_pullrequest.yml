@@ -92,7 +92,7 @@ steps:
   - bash: |
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       brew install curl unzip
-      brew install postgresql
+      brew reinstall postgresql@14
     displayName: 'Install Postgres on Mac'
     condition: eq(variables.platform, 'mac-x64')
   - bash: |
