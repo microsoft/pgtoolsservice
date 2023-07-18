@@ -1,6 +1,6 @@
-{% import 'macros/functions/security.macros' as SECLABEL %}
-{% import 'macros/functions/privilege.macros' as PRIVILEGE %}
-{% import 'macros/functions/variable.macros' as VARIABLE %}
+{% import 'security.macros' as SECLABEL %}
+{% import 'privilege.macros' as PRIVILEGE %}
+{% import 'variable.macros' as VARIABLE %}
 {% set is_columns = [] %}
 {% set exclude_quoting = ['search_path'] %}
 {% if data %}
@@ -47,28 +47,28 @@ $BODY${{ data.prosrc }}$BODY${% endif -%};
 {% endif -%}
 {% if data.funcowner %}
 
-ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
+ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args}})
     OWNER TO {{ conn|qtIdent(data.funcowner) }};
 {% endif -%}
 {% if data.acl %}
 {% for p in data.acl %}
 
-{{ PRIVILEGE.SET(conn, "FUNCTION", p.grantee, data.name, p.without_grant, p.with_grant, data.pronamespace, data.func_args_without)}}
+{{ PRIVILEGE.SET(conn, "FUNCTION", p.grantee, data.name, p.without_grant, p.with_grant, data.pronamespace, data.func_args)}}
 {% endfor %}{% endif %}
 {% if data.revoke_all %}
 
-{{ PRIVILEGE.UNSETALL(conn, "FUNCTION", "PUBLIC", data.name, data.pronamespace, data.func_args_without)}}
+{{ PRIVILEGE.UNSETALL(conn, "FUNCTION", "PUBLIC", data.name, data.pronamespace, data.func_args)}}
 {% endif %}
 {% if data.description %}
 
-COMMENT ON FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args_without}})
+COMMENT ON FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args}})
     IS {{ data.description|qtLiteral(conn)  }};
 {% endif -%}
 {% if data.seclabels %}
 {% for r in data.seclabels %}
 {% if r.label and r.provider %}
 
-{{ SECLABEL.SET(conn, 'FUNCTION', data.name, r.provider, r.label, data.pronamespace, data.func_args_without) }}
+{{ SECLABEL.SET(conn, 'FUNCTION', data.name, r.provider, r.label, data.pronamespace, data.func_args) }}
 {% endif %}
 {% endfor %}
 {% endif -%}

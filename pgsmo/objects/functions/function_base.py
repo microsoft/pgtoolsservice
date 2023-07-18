@@ -261,8 +261,22 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         return self._full_properties.get("cascade", "")
     
     @property
+    def prosrc_sql(self):
+        """Only defined for PG version 14 and above"""
+        return self._full_properties.get("prosrc_sql", "")
+    
+    @property
+    def is_pure_sql(self):
+        """Only defined for PG version 14 and above"""
+        return self._full_properties.get("is_pure_sql", "")
+    
+    @property
     def name_property(self):
         return self._full_properties.get("name", "")
+    
+    @property
+    def prokind(self):
+        return self._full_properties.get("prokind", "")
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
@@ -273,11 +287,12 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         """ Provides data input for create script """
         func_def, func_args = self._get_function_definition()
 
-        return {
+        create_query_data = {
             "data": {
                 "name": self.name_property,
                 "pronamespace": self.schema,
                 "arguments": self.arguments,
+                "is_pure_sql": self.is_pure_sql,
                 "proretset": self.proretset,
                 "prorettypename": self.prorettypename,
                 "lanname": self.language_name,
@@ -289,10 +304,12 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
                 "proiswindow": self.proiswindow,
                 "proparallel": self.proparallel,
                 "prorows": self.prorows,
+                "prokind": self.prokind,
                 "variables": self.variables,
                 "probin": self.probin,
                 "prosrc_c": self.prosrc_c,
                 "prosrc": self.prosrc,
+                "prosrc_sql": self.prosrc_sql,
                 "funcowner": self.owner,
                 "func_args_without": self.func_args_without,
                 "description": self.description,
@@ -305,6 +322,10 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
             "func_def": func_def,
             "conn": self._server.connection.connection
         }
+
+        self._format_prosrc_for_pure_sql(create_query_data['data'])
+        self._reset_extra_params_for_procedures(create_query_data['data'])
+        return create_query_data
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
@@ -355,7 +376,14 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
             }
         }
     
-    ## PRIVATE PGADMIN METHODS
+    ##########################################################################
+    #
+    # pgAdmin 4 - PostgreSQL Tools
+    #
+    # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+    # This software is released under the PostgreSQL Licence
+    #
+    ##########################################################################
 
     def _get_function_definition(self):
 
@@ -377,3 +405,29 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
             replace(', ', ',\n\t') + ')'
 
         return func_def, rows[0]['func_args']
+    
+    def _format_prosrc_for_pure_sql(self, data):
+        if self._mxin_server_version[0] < 14:
+            # If less than version 14, prosrc will work for function body
+            return
+
+        # no need to test whether function/procedure definition is pure sql
+        # or not, the parameter from 'is_pure_sql' is sufficient.
+        if 'is_pure_sql' in data and data['is_pure_sql'] is True:
+            data['prosrc'] = data['prosrc_sql']
+            if data['prosrc'].endswith(';') is False:
+                data['prosrc'] = ''.join((data['prosrc'], ';'))
+        else:
+            data['is_pure_sql'] = False
+
+    def _reset_extra_params_for_procedures(self, data):
+        # Reset Volatile, Cost and Parallel parameter for Procedures
+        # if language is not 'edbspl' and database server version is
+        # greater than 10.
+        if self._mxin_server_version[0] >= 11 \
+            and ('prokind' in data and data['prokind'] == 'p') \
+                and ('lanname' in data and
+                     data['lanname'] != 'edbspl'):
+            data['procost'] = None
+            data['provolatile'] = None
+            data['proparallel'] = None
