@@ -115,7 +115,6 @@ jobs:
         inputs:
           targetType: filePath
           filePath: ./scripts/flake8.sh
-          warningPreference: stop
           failOnStderr: true
         continueOnError: true
       - task: PublishTestResults@2
