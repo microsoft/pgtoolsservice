@@ -109,9 +109,9 @@ steps:
       errorActionPreference: default
     continueOnError: true
   - bash: |
+      export HOMEBREW_NO_INSTALL_FROM_API=1
       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       brew install curl unzip
-      export HOMEBREW_NO_INSTALL_FROM_API=1
       brew install postgresql
     displayName: 'Install Postgres on Mac'
     condition: eq(variables.platform, 'mac-x64')

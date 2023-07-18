@@ -10,7 +10,7 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
-pip install --upgrade pip
+python3 -m pip install --upgrade pip
 # Install flake8 if it's missing
 if ! command_exists flake8; then
   echo "flake8 not found. Installing flake8..."
