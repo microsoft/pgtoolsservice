@@ -398,7 +398,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
         # Add newline and tab before each argument to format
         func_def = templating.qt_ident(
-            self._server.connection,
+            self._server.connection.connection,
             rows[0]['nspname'],
             rows[0]['proname']
         ) + '(\n\t' + rows[0]['func_args']. \
