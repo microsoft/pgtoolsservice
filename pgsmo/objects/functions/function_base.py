@@ -259,6 +259,10 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     @property
     def cascade(self):
         return self._full_properties.get("cascade", "")
+    
+    @property
+    def name_property(self):
+        return self._full_properties.get("name", "")
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
@@ -267,31 +271,40 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
-        return {"data": {
-            "name": self.name,
-            "pronamespace": self.schema,
-            "arguments": self.arguments,
-            "proretset": self.proretset,
-            "prorettypename": self.prorettypename,
-            "lanname": self.language_name,
-            "procost": self.procost,
-            "provolatile": self.provolatile,
-            "proleakproof": self.proleakproof,
-            "proisstrict": self.proisstrict,
-            "prosecdef": self.prosecdef,
-            "proiswindow": self.proiswindow,
-            "proparallel": self.proparallel,
-            "prorows": self.prorows,
-            "variables": self.variables,
-            "probin": self.probin,
-            "prosrc_c": self.prosrc_c,
-            "prosrc": self.prosrc,
-            "funcowner": self.owner,
-            "func_args_without": self.func_args_without,
-            "description": self.description,
-            "acl": self.acl,
-            "seclabels": self.seclabels
-        }}
+        func_def, func_args = self._get_function_definition()
+
+        return {
+            "data": {
+                "name": self.name_property,
+                "pronamespace": self.schema,
+                "arguments": self.arguments,
+                "proretset": self.proretset,
+                "prorettypename": self.prorettypename,
+                "lanname": self.language_name,
+                "procost": self.procost,
+                "provolatile": self.provolatile,
+                "proleakproof": self.proleakproof,
+                "proisstrict": self.proisstrict,
+                "prosecdef": self.prosecdef,
+                "proiswindow": self.proiswindow,
+                "proparallel": self.proparallel,
+                "prorows": self.prorows,
+                "variables": self.variables,
+                "probin": self.probin,
+                "prosrc_c": self.prosrc_c,
+                "prosrc": self.prosrc,
+                "funcowner": self.owner,
+                "func_args_without": self.func_args_without,
+                "description": self.description,
+                "acl": self.acl,
+                "seclabels": self.seclabels,
+                "func_args": func_args
+            },
+            "query_type": "create",
+            "query_for": "sql_panel",
+            "func_def": func_def,
+            "conn": self._server.connection.connection
+        }
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
@@ -341,3 +354,26 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
                 "prosrc": ""
             }
         }
+    
+    ## PRIVATE PGADMIN METHODS
+
+    def _get_function_definition(self):
+
+        sql = templating.render_template(
+            templating.get_template_path(self._mxin_template_root, 'get_definition.sql', self._mxin_server_version),
+            self._mxin_macro_root,
+            fnid=self.oid,
+            scid=self._scid
+        )
+
+        cols, rows = self._server.connection.execute_dict(sql)
+
+        # Add newline and tab before each argument to format
+        func_def = templating.qt_ident(
+            self._server.connection,
+            rows[0]['nspname'],
+            rows[0]['proname']
+        ) + '(\n\t' + rows[0]['func_args']. \
+            replace(', ', ',\n\t') + ')'
+
+        return func_def, rows[0]['func_args']
