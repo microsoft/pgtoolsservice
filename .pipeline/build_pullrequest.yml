@@ -108,6 +108,30 @@ steps:
       filePath: ./scripts/test-all.ps1
       errorActionPreference: default
     continueOnError: true
+  - bash: |
+      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      brew install curl unzip
+      export HOMEBREW_NO_INSTALL_FROM_API=1
+      brew install postgresql
+    displayName: 'Install Postgres on Mac'
+    condition: eq(variables.platform, 'mac-x64')
+  - bash: |
+      cat > "$BUILD_SOURCESDIRECTORY/tests/integration/config.json" << EOL
+      {
+      "host": "localhost",
+      "port": 5432,
+      "user": "postgres",
+      "password": "$(LINUXPASSWORD)",
+      "dbname": "postgres"
+      }
+      EOL
+      cat "$BUILD_SOURCESDIRECTORY/tests/integration/config.json"
+      echo "$(LINUXPASSWORD)" | sudo -S sh -c 'dscl . -create /Users/postgres UserShell /bin/bash'
+      chmod -R 777 "$BUILD_BINARIESDIRECTORY"
+      brew services start postgresql@14
+      /usr/local/opt/postgresql@14/bin/createuser -s postgres
+    displayName: 'Start Postgres on mac-x64'
+    condition: eq(variables.platform, 'mac-x64')
   - task: Bash@3
     displayName: 'Style Check'
     condition: ne(variables.platform, 'windows')
