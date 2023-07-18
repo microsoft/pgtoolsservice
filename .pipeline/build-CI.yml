@@ -109,6 +109,15 @@ jobs:
           filePath: ./scripts/test-all.ps1
           errorActionPreference: default
         continueOnError: true
+      - task: Bash@3
+        displayName: 'Style Check'
+        condition: ne(variables.platform, 'windows')
+        inputs:
+          targetType: filePath
+          filePath: ./scripts/flake8.sh
+          warningPreference: stop
+          failOnStderr: true
+        continueOnError: true
       - task: PublishTestResults@2
         displayName: Publish test results windows **/nose2-junit.xml
         condition: eq(variables.platform, 'windows')
