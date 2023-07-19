@@ -241,11 +241,11 @@ class TestDataEditorSession(unittest.TestCase):
         self._data_editor_session._last_row_id = 2
         revert_row_id = 3
 
-        with self.assertRaises(IndexError) as context_manager:
+        with self.assertRaises(KeyError) as context_manager:
             self._data_editor_session.revert_row(revert_row_id)
 
         if context_manager.exception.args is not None:
-            self.assertEqual(f"Parameter row_id with value {revert_row_id} is out of range", context_manager.exception.args[0])
+            self.assertEqual('There is no edit pending for the row you selected. Please check if you have already committed the changes.', context_manager.exception.args[0])
 
     def test_revert_row_when_row_does_not_exists(self):
         '''
