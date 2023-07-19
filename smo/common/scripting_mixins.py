@@ -29,7 +29,7 @@ class ScriptableCreate(ScriptableBase, metaclass=ABCMeta):
             self._mxin_macro_root,
             **data
         )
-
+        
     @abstractmethod
     def _create_query_data(self) -> dict:
         pass

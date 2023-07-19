@@ -17,9 +17,6 @@ def collect_files(src_folder, dest_folder, file_ext=None):
 
     return collected_files
 
-# Include files and directories
-include_files = [('./ossdbtoolsservice/pg_exes', './pg_exes')]
-
 # Include psycopg dependencies
 hiddenimports = collect_submodules('psycopg')
 datas = collect_data_files('psycopg')
@@ -47,7 +44,7 @@ else:
 a = Analysis(['ossdbtoolsservice/ossdbtoolsservice_main.py'],
              pathex=['/Users/yimdaeun/Projects/pgtoolsservice/'],
              binaries=binaries,
-             datas=datas + include_files,
+             datas=datas,
              hiddenimports=hiddenimports,
              hookspath=[],
              runtime_hooks=[],
