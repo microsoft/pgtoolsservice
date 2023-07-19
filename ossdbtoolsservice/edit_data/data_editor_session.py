@@ -113,14 +113,10 @@ class DataEditorSession():
         if not self._is_initialized:
             raise RuntimeError("Edit session has not been initialized")
 
-        if self._last_row_id is None or (row_id > self._last_row_id or row_id < 0):
-            raise IndexError(f"Parameter row_id with value {row_id} is out of range")
-
         try:
             self._session_cache.pop(row_id)
-
         except KeyError:
-            raise KeyError('No edit pending for row')
+            raise KeyError('There is no edit pending for the row you selected. Please check if you have already committed the changes.')
 
     def revert_cell(self, row_id: int, column_index: int) -> RevertCellResponse:
         if not self._is_initialized:
