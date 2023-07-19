@@ -401,8 +401,12 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
             self._server.connection.connection,
             rows[0]['nspname'],
             rows[0]['proname']
-        ) + '(\n\t' + rows[0]['func_args']. \
+        )
+        if rows[0]['func_args']:
+            func_def += '(\n\t' + rows[0]['func_args']. \
             replace(', ', ',\n\t') + ')'
+        else:
+            func_def += '()'
 
         return func_def, rows[0]['func_args']
     
