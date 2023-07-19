@@ -259,21 +259,21 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     @property
     def cascade(self):
         return self._full_properties.get("cascade", "")
-    
+
     @property
     def prosrc_sql(self):
         """Only defined for PG version 14 and above"""
         return self._full_properties.get("prosrc_sql", "")
-    
+
     @property
     def is_pure_sql(self):
         """Only defined for PG version 14 and above"""
         return self._full_properties.get("is_pure_sql", "")
-    
+
     @property
     def name_property(self):
         return self._full_properties.get("name", "")
-    
+
     @property
     def prokind(self):
         return self._full_properties.get("prokind", "")
@@ -375,7 +375,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
                 "prosrc": ""
             }
         }
-    
+
     ##########################################################################
     #
     # pgAdmin 4 - PostgreSQL Tools
@@ -404,12 +404,12 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         )
         if rows[0]['func_args']:
             func_def += '(\n\t' + rows[0]['func_args']. \
-            replace(', ', ',\n\t') + ')'
+                replace(', ', ',\n\t') + ')'
         else:
             func_def += '()'
 
         return func_def, rows[0]['func_args']
-    
+
     def _format_prosrc_for_pure_sql(self, data):
         if self._mxin_server_version[0] < 14:
             # If less than version 14, prosrc will work for function body
