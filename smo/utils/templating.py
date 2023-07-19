@@ -304,7 +304,10 @@ def scan_keyword_extra_lookup(key):
         # COL_NAME_KEYWORD        1
         # TYPE_FUNC_NAME_KEYWORD  2
         # RESERVED_KEYWORD        3
-        extra_keywords = {
+
+        return _EXTRA_KEYWORDS.get(key, None) or scan_keyword(key)
+
+_EXTRA_KEYWORDS = {
             'connect': 3,
             'convert': 3,
             'distributed': 0,
@@ -327,5 +330,3 @@ def scan_keyword_extra_lookup(key):
             'tinytext': 3,
             'varchar2': 3
         }
-
-        return extra_keywords.get(key, None) or scan_keyword(key)
