@@ -24,8 +24,14 @@ mkdir -p "./dist/pgsqltoolsservice"
 # Move the contents in the dist folder to pgsqltoolsservice folder
 find "./dist" -maxdepth 1 -type f -exec mv {} "./dist/pgsqltoolsservice" \;
 
-# Copy pg_exe folder to pgsqltoolsservice
-cp -R "./ossdbtoolsservice/pg_exes" "./dist/pgsqltoolsservice/pg_exes"
+# Check the current operating system and copy the correct pgsqltoolsservice
+if [[ "$(uname)" == "Darwin" ]]; then
+    mkdir -p "./dist/pgsqltoolsservice/pg_exes/mac"
+    cp -R "./ossdbtoolsservice/pg_exes/mac" "./dist/pgsqltoolsservice/pg_exes/"
+elif [[ "$(uname)" == "Linux" ]]; then
+    mkdir -p "./dist/pgsqltoolsservice/pg_exes/linux"
+    cp -R "./ossdbtoolsservice/pg_exes/linux" "./dist/pgsqltoolsservice/pg_exes/"
+fi
 
 # Restore the old PYTHONPATH and move back to the original directory
 cd "$pwd"
