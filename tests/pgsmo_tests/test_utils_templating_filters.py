@@ -22,7 +22,7 @@ class TestTemplatingFilters(unittest.TestCase):
         output = templating.scan_keyword_extra_lookup('abort')
 
         # Then: I should get back the standard keyword value
-        self.assertEqual(output, templating._KEYWORD_DICT['abort'])
+        self.assertEqual(output, templating.scan_keyword('abort'))
 
     def test_scan_keyword_extra_lookup_none(self):
         # If: I scan for a keyword that doesn't exist
