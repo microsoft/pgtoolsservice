@@ -107,6 +107,7 @@ steps:
       targetType: filePath
       filePath: ./scripts/test-all.ps1
       errorActionPreference: default
+      failOnStderr: true
     continueOnError: true
   - task: Bash@3
     displayName: 'Style Check'
