@@ -73,7 +73,7 @@ class PostgreSQLConnection(ServerConnection):
         if self._conn.info.dsn is not None:
             # split by spaces unless in quotes or double quotes
             parts = re.split(r'\s(?=(?:(?:[^"\'\\]*(?:\\.|"(?:[^"\\]*\\.)*[^"\\]*"|\'(?:[^\'\\]*\\.)*[^\'\\]*\')*))[^"\'\\]*$)', self._conn.info.dsn)
-            
+
             self._dsn_parameters = {}
             for part in parts:
                 if '=' not in part:
