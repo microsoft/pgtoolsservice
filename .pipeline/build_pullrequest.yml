@@ -108,7 +108,6 @@ steps:
       filePath: ./scripts/test-all.ps1
       errorActionPreference: default
       failOnStderr: true
-    continueOnError: true
   - task: Bash@3
     displayName: 'Style Check'
     condition: ne(variables.platform, 'windows')
@@ -116,16 +115,15 @@ steps:
       targetType: filePath
       filePath: ./scripts/flake8.sh
       failOnStderr: true
-    continueOnError: true
   - task: PublishTestResults@2
     displayName: Publish test results windows **/nose2-junit.xml
-    condition: eq(variables.platform, 'windows')
+    condition: and(succeededOrFailed(), eq(variables.platform, 'windows'))
     inputs:
       testResultsFormat: JUnit
       testResultsFiles: "**/nose2-junit.xml"
   - task: PublishCodeCoverageResults@1
     displayName: Publish code coverage from **/htmlcov windows
-    condition: eq(variables.platform, 'windows')
+    condition: and(succeededOrFailed(), eq(variables.platform, 'windows'))
     inputs:
       codeCoverageTool: Cobertura
       summaryFileLocation: "**/cchtml"
