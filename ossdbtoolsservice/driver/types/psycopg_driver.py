@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import re
 from typing import Dict, List, Optional, Tuple
 
 import psycopg
@@ -69,7 +70,21 @@ class PostgreSQLConnection(ServerConnection):
         self._conn.autocommit = True
 
         # Get the DSN parameters for the connection as a dict
-        self._dsn_parameters = dict(part.split('=') for part in self._conn.info.dsn.split()) if self._conn.info.dsn is not None else {}
+        if self._conn.info.dsn is not None:
+            # split by spaces unless in quotes or double quotes
+            parts = re.split(r'\s(?=(?:(?:[^"\'\\]*(?:\\.|"(?:[^"\\]*\\.)*[^"\\]*"|\'(?:[^\'\\]*\\.)*[^\'\\]*\')*))[^"\'\\]*$)', self._conn.info.dsn)
+            
+            self._dsn_parameters = {}
+            for part in parts:
+                if '=' not in part:
+                    raise ValueError(f'Malformed DSN string: {self._conn.info.dsn}')
+                key, value = part.split('=')
+
+                # Remove quotes or double quotes if they exist
+                value = re.sub(r'^[\'"]|[\'"]$', '', value)
+                self._dsn_parameters[key] = value
+        else:
+            self._dsn_parameters = {}
 
         # Find the class of the database error this driver throws
         self._database_error = psycopg.DatabaseError
