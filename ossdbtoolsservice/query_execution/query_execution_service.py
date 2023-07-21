@@ -356,7 +356,7 @@ class QueryExecutionService(object):
 
         # Wrap execution in a try/except block so that we can send an error if it fails
         try:
-            query.execute(worker_args.connection)
+            query.execute(worker_args.connection, self._service_provider.logger)
         except Exception as e:
             self._resolve_query_exception(e, query, worker_args)
         finally:

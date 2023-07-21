@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from enum import Enum
+from logging import Logger
 from typing import Callable, Dict, List, Optional  # noqa
 
 import sqlparse
@@ -113,7 +114,7 @@ class Query:
     def current_batch_index(self) -> int:
         return self._current_batch_index
 
-    def execute(self, connection: ServerConnection):
+    def execute(self, connection: ServerConnection, logger = None):
         """
         Execute the query using the given connection
 
@@ -129,9 +130,9 @@ class Query:
 
         # Run each batch sequentially
         try:
-                
-            if connection.transaction_in_trans:
-                Warning.warn('Connection status is currently in INTRANS. Suggestion: Commit or Rollback the current transaction before executing the query.')
+            # How to show warning to user without disrupting the query execution?
+            if connection.transaction_in_trans and logger is not None:
+                logger.exception('Connection status is currently in INTRANS. Suggestion: Commit or Rollback the current transaction before executing the query.')
             
             # When Analyze Explain is used we have to disable auto commit
             if self._disable_auto_commit and connection.autocommit:
