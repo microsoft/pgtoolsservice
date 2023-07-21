@@ -125,12 +125,16 @@ class Batch:
             cursor.execute(self.batch_text)
 
             # Commit the transaction if autocommit is True
-            if conn.autocommit:
+            if conn.autocommit or self.batch_text.strip().lower().startswith('commit'):
                 conn.commit()
+            # Commit the transaction if autocommit is True
+            elif self.batch_text.strip().lower().startswith('rollback'):
+                conn.rollback()
 
             self.after_execute(cursor)
         except psycopg.DatabaseError as e:
             self._has_error = True
+            conn.transactionError(True)
             raise e
         finally:
             # We are doing this because when the execute fails for named cursors

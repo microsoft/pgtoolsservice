@@ -179,6 +179,19 @@ class PostgreSQLConnection(ServerConnection):
         """
         self._conn.commit()
 
+    def rollback(self):
+        """
+        rollback the current transaction
+        """
+        self._conn.rollback()
+
+    def transactionError(self, mode: bool):
+        """
+        rollback the current transaction
+        """
+        if mode:
+            self._conn.TransactionStatus = TransactionStatus.INERROR
+
     def cursor(self, **kwargs):
         """
         Returns a client cursor for the current connection.

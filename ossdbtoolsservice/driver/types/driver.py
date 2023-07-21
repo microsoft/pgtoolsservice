@@ -109,6 +109,18 @@ class ServerConnection(ABC):
         """
 
     @abstractmethod
+    def rollback(self):
+        """
+        Rollback the current transaction
+        """
+
+    @abstractmethod
+    def transactionError(self):
+        """
+        Set the transaction to an error state
+        """
+
+    @abstractmethod
     def cursor(self, **kwargs):
         """
         Returns a cursor for the current connection
