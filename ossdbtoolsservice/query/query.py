@@ -127,12 +127,15 @@ class Query:
 
         self._execution_state = ExecutionState.EXECUTING
 
-        # When Analyze Explain is used we have to disable auto commit
-        if self._disable_auto_commit:
-            connection.autocommit = False
-
         # Run each batch sequentially
         try:
+                
+            if connection.transaction_in_trans:
+                Warning.warn('Connection status is currently in INTRANS. Suggestion: Commit or Rollback the current transaction before executing the query.')
+            
+            # When Analyze Explain is used we have to disable auto commit
+            if self._disable_auto_commit and connection.autocommit:
+                connection.autocommit = False
 
             for batch_index, batch in enumerate(self._batches):
                 self._current_batch_index = batch_index

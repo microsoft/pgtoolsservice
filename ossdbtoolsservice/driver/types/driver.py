@@ -68,6 +68,11 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
+    def transaction_in_trans(self) -> bool:
+        """Returns bool indicating if transaction is currently in transaction block"""
+
+    @property
+    @abstractmethod
     def query_canceled_error(self) -> Exception:
         """Returns driver query canceled error"""
 
@@ -115,7 +120,7 @@ class ServerConnection(ABC):
         """
 
     @abstractmethod
-    def transactionError(self):
+    def set_transaction_error(self):
         """
         Set the transaction to an error state
         """

@@ -143,6 +143,11 @@ class PostgreSQLConnection(ServerConnection):
         return self._conn.TransactionStatus is TransactionStatus.INERROR
 
     @property
+    def transaction_in_trans(self) -> bool:
+        """Returns bool indicating if transaction is currently in transaction block"""
+        return self._conn.info.transaction_status is TransactionStatus.INTRANS
+
+    @property
     def query_canceled_error(self) -> Exception:
         """Returns driver query canceled error"""
         return psycopg.errors.QueryCanceled
@@ -185,9 +190,9 @@ class PostgreSQLConnection(ServerConnection):
         """
         self._conn.rollback()
 
-    def transactionError(self, mode: bool):
+    def set_transaction_error(self, mode: bool):
         """
-        rollback the current transaction
+        Set the transaction status to in error
         """
         if mode:
             self._conn.TransactionStatus = TransactionStatus.INERROR
