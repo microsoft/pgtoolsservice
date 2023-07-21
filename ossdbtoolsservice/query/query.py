@@ -145,7 +145,7 @@ class Query:
                     break
 
                 batch.execute(connection)
-            
+
         finally:
             self._execution_state = ExecutionState.EXECUTED
 

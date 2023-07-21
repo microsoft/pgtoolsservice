@@ -140,7 +140,7 @@ class PostgreSQLConnection(ServerConnection):
     @property
     def transaction_in_error(self) -> bool:
         """Returns bool indicating if transaction is in error"""
-        return self._conn.TransactionStatus is TransactionStatus.INERROR
+        return self._conn.info.transaction_status is TransactionStatus.INERROR
 
     @property
     def transaction_in_trans(self) -> bool:
