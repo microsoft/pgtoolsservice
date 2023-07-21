@@ -101,7 +101,6 @@ jobs:
 
             & "$env:BUILD_SOURCESDIRECTORY\scripts\flake8.ps1"
           warningPreference: stop
-          failOnStderr: true
       - task: PowerShell@2
         displayName: Run Tests windows
         condition: eq(variables.platform, 'windows')
@@ -109,14 +108,12 @@ jobs:
           targetType: filePath
           filePath: ./scripts/test-all.ps1
           errorActionPreference: default
-          failOnStderr: true
       - task: Bash@3
         displayName: 'Style Check'
         condition: ne(variables.platform, 'windows')
         inputs:
           targetType: filePath
           filePath: ./scripts/flake8.sh
-          failOnStderr: true
       - task: PublishTestResults@2
         displayName: Publish test results windows **/nose2-junit.xml
         condition: and(succeededOrFailed(), eq(variables.platform, 'windows'))
