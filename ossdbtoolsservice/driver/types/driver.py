@@ -65,12 +65,12 @@ class ServerConnection(ABC):
     @abstractmethod
     def transaction_in_error(self) -> bool:
         """Returns bool indicating if transaction is in error"""
-
+                              
     @property
     @abstractmethod
     def query_canceled_error(self) -> Exception:
         """Returns driver query canceled error"""
-
+                         
     @property
     @abstractmethod
     def cancellation_query(self) -> str:
