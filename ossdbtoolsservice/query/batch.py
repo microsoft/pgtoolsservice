@@ -119,7 +119,7 @@ class Batch:
             self._batch_events._on_execution_started(self)
 
         cursor = self.get_cursor(conn)
-        conn.connection.add_notice_handler(lambda msg: self._notices.append(msg.message_primary))
+        conn.connection.add_notice_handler(lambda msg: self.notice_handler(msg, conn))
 
         try:
             cursor.execute(self.batch_text)
@@ -162,6 +162,11 @@ class Batch:
             raise IndexError('Result set index should be always 0')
 
         self._result_set.save_as(params, file_factory, on_success, on_failure)
+
+
+    def notice_handler(self, notice: str, conn: ServerConnection):
+        if not (conn.user_transaction and notice.message_primary == 'there is already a transaction in progress'):
+            self._notices.append(notice.message_primary)
 
 
 class SelectBatch(Batch):
