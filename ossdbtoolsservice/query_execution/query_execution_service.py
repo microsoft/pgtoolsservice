@@ -442,7 +442,7 @@ class QueryExecutionService(object):
 
         # If there was a failure in the middle of a transaction, roll it back.
         # Note that conn.rollback() won't work since the connection is in autocommit mode
-        if not is_rollback_error and worker_args.connection.transaction_in_error:
+        if not is_rollback_error and worker_args.connection.transaction_in_error and not worker_args.connection.user_transaction:
             rollback_query = Query(query.owner_uri, 'ROLLBACK', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
             try:
                 rollback_query.execute(worker_args.connection)

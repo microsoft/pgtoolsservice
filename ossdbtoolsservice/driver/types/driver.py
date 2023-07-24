@@ -68,6 +68,16 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
+    def transaction_is_idle(self) -> bool:
+        """Returns bool indicating if transaction is currently idle"""
+
+    @property
+    @abstractmethod
+    def user_transaction(self) -> bool:
+        """Returns bool if transaction is user started"""
+
+    @property
+    @abstractmethod
     def query_canceled_error(self) -> Exception:
         """Returns driver query canceled error"""
 
@@ -160,6 +170,12 @@ class ServerConnection(ABC):
 
     @abstractmethod
     def close(self):
+        """
+        Closes this current connection.
+        """
+
+    @abstractmethod
+    def set_user_transaction(self):
         """
         Closes this current connection.
         """

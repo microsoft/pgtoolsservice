@@ -56,6 +56,7 @@ class Query:
         self._owner_uri: str = owner_uri
         self._query_text = query_text
         self._disable_auto_commit = False
+        self._user_transaction = False
         self._current_batch_index = 0
         self._batches: List[Batch] = []
         self._execution_plan_options = query_execution_settings.execution_plan_options
@@ -81,6 +82,11 @@ class Query:
                 elif self._execution_plan_options.include_actual_execution_plan_xml:
                     self._disable_auto_commit = True
                     sql_statement_text = Query.ANALYZE_EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
+
+            # Check if user defined transaction
+            if formatted_text.lower() == 'begin;' or formatted_text.lower() == 'begin transaction':
+                self._disable_auto_commit = True
+                self._user_transaction = True
 
             batch = create_batch(
                 sql_statement_text,
@@ -128,8 +134,12 @@ class Query:
         # Run each batch sequentially
         try:
             current_auto_commit_status = connection.autocommit
+
+            if self._user_transaction:
+                connection.set_user_transaction()
+
             # When Analyze Explain is used we have to disable auto commit
-            if self._disable_auto_commit:
+            if self._disable_auto_commit and connection.transaction_is_idle:
                 connection.autocommit = False
 
             for batch_index, batch in enumerate(self._batches):
@@ -141,7 +151,7 @@ class Query:
                 batch.execute(connection)
         finally:
             # We can only set autocommit when the connection is open.
-            if connection.open:
+            if connection.open and connection.transaction_is_idle:
                 connection.autocommit = current_auto_commit_status
             self._execution_state = ExecutionState.EXECUTED
 
