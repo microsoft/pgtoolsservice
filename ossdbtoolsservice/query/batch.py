@@ -163,7 +163,6 @@ class Batch:
 
         self._result_set.save_as(params, file_factory, on_success, on_failure)
 
-
     def notice_handler(self, notice: str, conn: ServerConnection):
         if not (conn.user_transaction and notice.message_primary == 'there is already a transaction in progress'):
             self._notices.append(notice.message_primary)
