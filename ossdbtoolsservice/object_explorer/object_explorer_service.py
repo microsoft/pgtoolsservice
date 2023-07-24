@@ -43,6 +43,7 @@ class ObjectExplorerService(object):
         self._service_provider: ServiceProvider = None
         self._session_map: Dict[str, 'ObjectExplorerSession'] = {}
         self._session_lock: threading.Lock = threading.Lock()
+        self._connect_semaphore = threading.Semaphore(1)
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
@@ -85,20 +86,20 @@ class ObjectExplorerService(object):
 
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params, self._provider)
-            session: ObjectExplorerSession = ObjectExplorerSession(session_id, params)
 
             # Add the session to session map in a lock to prevent race conditions between check and add
             with self._session_lock:
                 if session_id in self._session_map:
-                    # Removed the exception for now. But we need to investigate why we would get this
+                    # If session already exists, get it and respond with it
                     if self._service_provider.logger is not None:
-                        self._service_provider.logger.error(f'Object explorer session for {session_id} already exists!')
-                    request_context.send_response(False)
-                    return
+                        self._service_provider.logger.info(f'Object explorer session for {session_id} already exists. Returning existing session.')
+                    session = self._session_map[session_id]
+                else:
+                    # If session doesn't exist, create a new one
+                    session = ObjectExplorerSession(session_id, params)
+                    self._session_map[session_id] = session
 
-                self._session_map[session_id] = session
-
-            # Respond that the session was created
+            # Respond that the session was created (or existing session was returned)
             response = CreateSessionResponse(session_id)
             request_context.send_response(response)
 
@@ -179,6 +180,12 @@ class ObjectExplorerService(object):
 
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
         # Step 1: Find the session
+        self._service_provider.logger.info("_expand_node_base.. ")
+        if params is not None and params.session_id is not None:
+            self._service_provider.logger.info(f'params: {params.session_id}')
+        self._service_provider.logger.info(f'Printing session map in expand nodebase..')
+        for key, value in self._session_map.items():
+            self._service_provider.logger.info(f'{key} {value}')
         session = self._get_session(request_context, params)
         if session is None:
             return
@@ -268,16 +275,18 @@ class ObjectExplorerService(object):
 
         try:
             # Step 1: Connect with the provided connection details
-            connect_request = ConnectRequestParams(
-                session.connection_details,
-                session.id,
-                ConnectionType.OBJECT_EXLPORER
-            )
-            connect_result = conn_service.connect(connect_request)
-            if connect_result is None:
-                raise RuntimeError('Connection was cancelled during connect')   # TODO Localize
-            if connect_result.error_message is not None:
-                raise RuntimeError(connect_result.error_message)
+            with self._connect_semaphore:
+                self._service_provider.logger.warning(f'Inside semaphore connecting to {session.id}')
+                connect_request = ConnectRequestParams(
+                    session.connection_details,
+                    session.id,
+                    ConnectionType.OBJECT_EXLPORER
+                )
+                connect_result = conn_service.connect(connect_request)
+                if connect_result is None:
+                    raise RuntimeError('Connection was cancelled during connect')   # TODO Localize
+                if connect_result.error_message is not None:
+                    raise RuntimeError(connect_result.error_message)
 
             # Step 2: Get the connection to use for object explorer
             connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
@@ -314,7 +323,7 @@ class ObjectExplorerService(object):
 
     def _session_created_error(self, request_context: RequestContext, session: ObjectExplorerSession, message: str):
         if self._service_provider.logger is not None:
-            self._service_provider.logger.warning(f'OE service errored while creating session: {message}')
+            self._service_provider.logger.warning(f'OE service errored while creating session to {session.id}: {message}')
 
         # Create error notification
         response = SessionCreatedParameters()
