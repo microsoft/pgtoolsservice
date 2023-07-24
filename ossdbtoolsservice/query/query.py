@@ -133,10 +133,7 @@ class Query:
 
         # Run each batch sequentially
         try:
-            current_auto_commit_status = connection.autocommit
-
-            if self._user_transaction:
-                connection.set_user_transaction()
+            connection.set_user_transaction(self._user_transaction)
 
             # When Analyze Explain is used we have to disable auto commit
             if self._disable_auto_commit and connection.transaction_is_idle:
@@ -152,7 +149,9 @@ class Query:
         finally:
             # We can only set autocommit when the connection is open.
             if connection.open and connection.transaction_is_idle:
-                connection.autocommit = current_auto_commit_status
+                connection.autocommit = True
+            self._disable_auto_commit = False
+            self._user_transaction = False 
             self._execution_state = ExecutionState.EXECUTED
 
     def get_subset(self, batch_index: int, start_index: int, end_index: int):

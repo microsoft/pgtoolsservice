@@ -305,8 +305,8 @@ class PostgreSQLConnection(ServerConnection):
         """
         self._conn.close()
 
-    def set_user_transaction(self):
+    def set_user_transaction(self, mode: bool):
         """
         Sets if current connection is user started
         """
-        self._user_transaction = True
+        self._user_transaction = mode
