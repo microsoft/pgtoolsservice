@@ -180,12 +180,6 @@ class ObjectExplorerService(object):
 
     def _expand_node_base(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters):
         # Step 1: Find the session
-        self._service_provider.logger.info("_expand_node_base.. ")
-        if params is not None and params.session_id is not None:
-            self._service_provider.logger.info(f'params: {params.session_id}')
-        self._service_provider.logger.info(f'Printing session map in expand nodebase..')
-        for key, value in self._session_map.items():
-            self._service_provider.logger.info(f'{key} {value}')
         session = self._get_session(request_context, params)
         if session is None:
             return
@@ -276,7 +270,6 @@ class ObjectExplorerService(object):
         try:
             # Step 1: Connect with the provided connection details
             with self._connect_semaphore:
-                self._service_provider.logger.warning(f'Inside semaphore connecting to {session.id}')
                 connect_request = ConnectRequestParams(
                     session.connection_details,
                     session.id,
