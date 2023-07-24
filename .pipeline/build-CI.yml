@@ -100,7 +100,6 @@ jobs:
 
             & "$env:BUILD_SOURCESDIRECTORY\scripts\flake8.ps1"
           warningPreference: stop
-          failOnStderr: true
       - task: PowerShell@2
         displayName: Run Tests windows
         condition: eq(variables.platform, 'windows')
@@ -108,16 +107,21 @@ jobs:
           targetType: filePath
           filePath: ./scripts/test-all.ps1
           errorActionPreference: default
-        continueOnError: true
+      - task: Bash@3
+        displayName: 'Style Check'
+        condition: ne(variables.platform, 'windows')
+        inputs:
+          targetType: filePath
+          filePath: ./scripts/flake8.sh
       - task: PublishTestResults@2
         displayName: Publish test results windows **/nose2-junit.xml
-        condition: eq(variables.platform, 'windows')
+        condition: and(succeededOrFailed(), eq(variables.platform, 'windows'))
         inputs:
           testResultsFormat: JUnit
           testResultsFiles: "**/nose2-junit.xml"
       - task: PublishCodeCoverageResults@1
         displayName: Publish code coverage from **/htmlcov windows
-        condition: eq(variables.platform, 'windows')
+        condition: and(succeededOrFailed(), eq(variables.platform, 'windows'))
         inputs:
           codeCoverageTool: Cobertura
           summaryFileLocation: "**/cchtml"
