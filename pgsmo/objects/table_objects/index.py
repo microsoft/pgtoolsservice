@@ -32,6 +32,8 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         idx._is_primary = kwargs['indisprimary']
         idx._is_unique = kwargs['indisunique']
         idx._is_valid = kwargs['indisvalid']
+        if idx.parent is not None and hasattr(idx.parent, 'schema'):
+            idx._schema = idx.parent.schema  # Parent will be either table or view, which both have schema defined
         return idx
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
@@ -52,9 +54,14 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         self._is_unique: Optional[bool] = None
         self._is_valid: Optional[bool] = None
         self._is_concurrent: Optional[bool] = None
+        self._schema: Optional[str] = None
 
     # PROPERTIES ###########################################################
     # -FULL OBJECT PROPERTIES ##############################################
+    @property
+    def schema(self):
+        return self._schema
+
     @property
     def is_clustered(self):
         return self._is_clustered
@@ -105,7 +112,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def cascade(self):
-        return self._full_properties["cascade"]
+        return self._full_properties.get("cascade", True)
 
     @property
     def description(self):
@@ -114,7 +121,9 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def extended_vars(self):
         return {
-            'tid': self.parent.oid                 # Table/view OID
+            'idx': self.oid,
+            'tid': self.parent.oid,         # Table/view OID
+            'did': self.parent.parent.oid   # Database OID
         }
     # IMPLEMENTATION DETAILS ###############################################
 
@@ -124,7 +133,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     def _create_query_data(self) -> dict:
         """ Provides data input for create script """
-        return {
+        create_query_data = {
             "data": {
                 "indisunique": self.is_unique,
                 "isconcurrent": self.is_concurrent,
@@ -132,13 +141,18 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "schema": self.parent.schema,
                 "table": self.parent.name,
                 "amname": self.amname,
-                "columns": self.columns,
                 "fillfactor": self.fillfactor,
                 "spcname": self.spcname,
                 "indconstraint": self.indconstraint
             },
             "mode": "create"
         }
+
+        self.get_column_details(create_query_data['data'], create_query_data['mode'])
+        if self._mxin_server_version[0] >= 11:
+            self.get_include_details(create_query_data['data'])
+
+        return create_query_data
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
@@ -170,3 +184,117 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "description": ""
             }
         }
+
+    ##########################################################################
+    #
+    # pgAdmin 4 - PostgreSQL Tools
+    #
+    # Copyright (C) 2013 - 2017, The pgAdmin Development Team
+    # This software is released under the PostgreSQL Licence
+    #
+    ##########################################################################
+
+    def get_column_details(self, data, mode='properties'):
+        """
+        This functional will fetch list of column for index.
+
+        :param self: Index Object
+        :param data: Data
+        :param mode: 'create' or 'properties'
+        :return:
+        """
+        sql = templating.render_template(
+            templating.get_template_path(self._mxin_template_root, 'column_details.sql', self._mxin_server_version),
+            self._mxin_macro_root,
+            idx=self.oid
+        )
+
+        cols, rows = self._server.connection.execute_dict(sql)
+
+        # Remove column if duplicate column is present in list.
+        rows = [i for n, i in enumerate(rows) if i not in rows[n + 1:]]
+
+        # 'attdef' comes with quotes from query so we need to strip them
+        # 'options' we need true/false to render switch ASC(false)/DESC(true)
+        columns = []
+        cols = []
+        for row in rows:
+            # We need all data as collection for ColumnsModel
+            # we will not strip down colname when using in SQL to display
+            cols_data = {
+                'colname': row['attdef'] if mode == 'create' else
+                row['attdef'].strip('"'),
+                'collspcname': row['collnspname'],
+                'op_class': row['opcname'],
+            }
+
+            # ASC/DESC and NULLS works only with btree indexes
+            if 'amname' in data and data['amname'] == 'btree':
+                cols_data['sort_order'] = False
+                if row['options'][0] == 'DESC':
+                    cols_data['sort_order'] = True
+
+                cols_data['nulls'] = False
+                if row['options'][1].split(" ")[1] == 'FIRST':
+                    cols_data['nulls'] = True
+            cols_data['is_sort_nulls_applicable'] = True  # Always set to true
+            columns.append(cols_data)
+
+            # We need same data as string to display in properties window
+            # If multiple column then separate it by colon
+            cols_str = ''
+            cols_str += self._get_column_property_display_data(row, row['attdef'], data)
+
+            cols.append(cols_str)
+
+        # Push as collection
+        data['columns'] = columns
+        # Push as string
+        data['columns_csv'] = ', '.join(cols)
+
+        return data
+
+    def get_include_details(self, data):
+        """
+        This functional will fetch list of include details for index
+        supported with Postgres 11+
+
+        :param self: Index object
+        :param data: data
+        :return:
+        """
+        sql = templating.render_template(
+            templating.get_template_path(self._mxin_template_root, 'include_details.sql', self._mxin_server_version),
+            self._mxin_macro_root,
+            idx=self.oid
+        )
+
+        cols, rows = self._server.connection.execute_dict(sql)
+
+        # Push as collection
+        data['include'] = [col['colname'] for col in rows]
+
+        return data
+
+    @staticmethod
+    def _get_column_property_display_data(row, col_str, data):
+        """
+        This function is used to get the columns data.
+        :param row:
+        :param col_str:
+        :param data:
+        :return:
+        """
+        if row['collnspname']:
+            col_str += ' COLLATE ' + row['collnspname']
+        if row['opcname']:
+            col_str += ' ' + row['opcname']
+
+        # ASC/DESC and NULLS works only with btree indexes
+        if 'amname' in data and data['amname'] == 'btree':
+            # Append sort order
+            col_str += ' ' + row['options'][0]
+            # Append nulls value
+            col_str += ' ' + row['options'][1]
+
+        return col_str

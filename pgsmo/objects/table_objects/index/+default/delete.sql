@@ -4,4 +4,4 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-DROP INDEX {{conn|qtIdent(data.nspname, data.name)}}{% if cascade %} cascade{% endif %};
+DROP INDEX IF EXISTS {{conn|qtIdent(data.nspname, data.name)}}{% if cascade %} cascade{% endif %};
