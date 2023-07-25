@@ -169,6 +169,11 @@ class PostgreSQLConnection(ServerConnection):
         return self._conn.info.transaction_status is TransactionStatus.IDLE
 
     @property
+    def transaction_in_trans(self) -> bool:
+        """Returns bool indicating if transaction is currently in transaction block"""
+        return self._conn.info.transaction_status is TransactionStatus.INTRANS
+
+    @property
     def user_transaction(self) -> bool:
         """Returns bool indicating if transaction is in error"""
         return self._user_transaction

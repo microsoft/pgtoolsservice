@@ -121,6 +121,9 @@ class Batch:
         cursor = self.get_cursor(conn)
         conn.connection.add_notice_handler(lambda msg: self.notice_handler(msg, conn))
 
+        if self.batch_text.startswith('begin') and conn.transaction_in_trans:
+            self._notices.append('WARNING: there is already a transaction in progress')
+
         try:
             cursor.execute(self.batch_text)
 
@@ -166,8 +169,7 @@ class Batch:
 
     def notice_handler(self, notice: str, conn: ServerConnection):
         if not (conn.user_transaction and notice.message_primary == 'there is already a transaction in progress'):
-            self._notices.append(notice.message_primary)
-
+            self._notices.append('WARNING: {0}'.format(notice.message_primary))
 
 class SelectBatch(Batch):
 

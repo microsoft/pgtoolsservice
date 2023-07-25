@@ -486,12 +486,12 @@ def _check_and_fire(action, params=None):
 
 def _transaction_commands_message(text: str):
     if text.startswith('begin'):
-        return 'Transaction started'
+        return 'Begin transaction'
     elif text.startswith('commit'):
-        return 'Transaction committed'
+        return 'Commit transaction'
     elif text.startswith('rollback'):
-        return 'Transaction rolled back'
+        return 'Rollback transaction'
     elif text.startswith('savepoint'):
-        return 'Savepoint created'
+        return 'Create savepoint'
     else:
         return 'Commands completed successfully'

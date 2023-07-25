@@ -73,6 +73,11 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
+    def transaction_in_trans(self) -> bool:
+        """Returns bool indicating if transaction is currently in transaction block"""
+
+    @property
+    @abstractmethod
     def user_transaction(self) -> bool:
         """Returns bool if transaction is user started"""
 
