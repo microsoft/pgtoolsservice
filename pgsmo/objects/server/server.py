@@ -7,9 +7,12 @@ from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
 from ossdbtoolsservice.driver import ServerConnection
+from pgsmo.objects.schema.schema import Schema
+from pgsmo.objects.table.table import Table
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
+from pgsmo.objects.table_objects.index import Index
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import smo.utils as utils
 
@@ -162,7 +165,7 @@ class Server:
         # Reset property collections
         self._recovery_props.reset()
 
-    def find_schema(self, metadata):
+    def find_schema(self, metadata) -> 'Schema':
         """ Find the schema in the server to script as """
         schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
         database = self.maintenance_db
@@ -222,6 +225,27 @@ class Server:
     def find_datatype(self, metadata):
         """ Find a datatype in the server """
         return self.find_schema_child_object('datatypes', metadata)
+    
+    def find_index(self, metadata):
+        try:
+            idx_name = metadata.name
+            parent_schema = self.find_schema(metadata)
+            if not parent_schema:
+                return None
+            obj_collection = []
+
+            # Go over all tables in schema and collect the indexes
+            for table in parent_schema.tables:
+                if isinstance(table, Table):
+                    obj_collection.extend(table.indexes)
+
+            # Find the matching index
+            if not obj_collection:
+                return None
+            idx = next((index for index in obj_collection if index.name == idx_name), None)
+            return idx
+        except Exception:
+            return None
 
     def find_schema_child_object(self, prop_name: str, metadata):
         """
@@ -255,7 +279,8 @@ class Server:
             "Procedure": self.find_procedure,
             "Sequence": self.find_sequence,
             "Datatype": self.find_datatype,
-            "Materializedview": self.find_materialized_view
+            "Materializedview": self.find_materialized_view,
+            "Index": self.find_index
         }
         return object_map[object_type.capitalize()](metadata)
 
