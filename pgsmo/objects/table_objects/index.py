@@ -32,7 +32,8 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         idx._is_primary = kwargs['indisprimary']
         idx._is_unique = kwargs['indisunique']
         idx._is_valid = kwargs['indisvalid']
-        idx._schema = idx.parent.schema # Parent will be either table or view, which both have schema defined
+        if idx.parent is not None and idx.parent.schema is not None:
+            idx._schema = idx.parent.schema  # Parent will be either table or view, which both have schema defined
         return idx
 
     def __init__(self, server: 's.Server', parent: NodeObject, name: str):
@@ -111,7 +112,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def cascade(self):
-        return self._full_properties["cascade"]
+        return self._full_properties.get("cascade", True)
 
     @property
     def description(self):
@@ -121,8 +122,8 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def extended_vars(self):
         return {
             'idx': self.oid,
-            'tid': self.parent.oid, # Table/view OID
-            'did': self.parent.parent.oid # Database OID
+            'tid': self.parent.oid,         # Table/view OID
+            'did': self.parent.parent.oid   # Database OID
         }
     # IMPLEMENTATION DETAILS ###############################################
 
@@ -152,7 +153,6 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             self.get_include_details(create_query_data['data'])
 
         return create_query_data
-
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
@@ -203,11 +203,6 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param mode: 'create' or 'properties'
         :return:
         """
-
-        # SQL = render_template(
-        #     "/".join([template_path, 'column_details.sql']), idx=idx
-        # )
-
         sql = templating.render_template(
             templating.get_template_path(self._mxin_template_root, 'column_details.sql', self._mxin_server_version),
             self._mxin_macro_root,
@@ -217,8 +212,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         cols, rows = self._server.connection.execute_dict(sql)
 
         # Remove column if duplicate column is present in list.
-        rows = [i for n, i in enumerate(rows) if
-                        i not in rows[n + 1:]]
+        rows = [i for n, i in enumerate(rows) if i not in rows[n + 1:]]
 
         # 'attdef' comes with quotes from query so we need to strip them
         # 'options' we need true/false to render switch ASC(false)/DESC(true)
@@ -283,7 +277,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         data['include'] = [col['colname'] for col in rows]
 
         return data
-    
+
     @staticmethod
     def _get_column_property_display_data(row, col_str, data):
         """

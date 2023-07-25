@@ -12,7 +12,6 @@ from pgsmo.objects.table.table import Table
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
-from pgsmo.objects.table_objects.index import Index
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import smo.utils as utils
 
@@ -225,7 +224,7 @@ class Server:
     def find_datatype(self, metadata):
         """ Find a datatype in the server """
         return self.find_schema_child_object('datatypes', metadata)
-    
+
     def find_index(self, metadata):
         try:
             idx_name = metadata.name

@@ -42,7 +42,7 @@ def _get_node_info(
     # Add the schema name if it is the immediate parent
     if node.parent is not None and node.parent.parent is None and hasattr(node, 'schema'):
         metadata.schema = node.schema
-    
+
     # Else if it is a table object, add the schema also. Important for scripting purposes
     elif node.parent is not None and node.parent.parent is not None and node.parent.parent.parent is None and hasattr(node, 'schema'):
         metadata.schema = node.schema
