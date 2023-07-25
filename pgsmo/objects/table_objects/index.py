@@ -32,7 +32,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         idx._is_primary = kwargs['indisprimary']
         idx._is_unique = kwargs['indisunique']
         idx._is_valid = kwargs['indisvalid']
-        if idx.parent is not None and idx.parent.schema is not None:
+        if idx.parent is not None and hasattr(idx.parent, 'schema'):
             idx._schema = idx.parent.schema  # Parent will be either table or view, which both have schema defined
         return idx
 
@@ -259,10 +259,8 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         This functional will fetch list of include details for index
         supported with Postgres 11+
 
-        :param conn: Connection object
-        :param idx: Index ID
+        :param self: Index object
         :param data: data
-        :param template_path: Optional template path
         :return:
         """
         sql = templating.render_template(
