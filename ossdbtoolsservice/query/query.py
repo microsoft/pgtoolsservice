@@ -84,7 +84,7 @@ class Query:
                     sql_statement_text = Query.ANALYZE_EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
 
             # Check if user defined transaction
-            if formatted_text.lower() == 'begin;' or formatted_text.lower() == 'begin transaction;':
+            if formatted_text.lower().startswith('begin'):
                 self._disable_auto_commit = True
                 self._user_transaction = True
 
