@@ -237,7 +237,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 cols_data['nulls'] = False
                 if row['options'][1].split(" ")[1] == 'FIRST':
                     cols_data['nulls'] = True
-
+            cols_data['is_sort_nulls_applicable'] = True  # Always set to true
             columns.append(cols_data)
 
             # We need same data as string to display in properties window
