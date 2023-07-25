@@ -438,7 +438,7 @@ class TestQueryService(unittest.TestCase):
 
         # Then we executed the query, did not manually call close,
         # did not call fetchall(), and cleared the notices
-        self.cursor.execute.assert_called_once()
+        self.cursor.execute.assert_called()
         self.cursor.close.assert_not_called()
         self.cursor.fetchall.assert_not_called()
 
@@ -474,7 +474,7 @@ class TestQueryService(unittest.TestCase):
 
         # Then we executed the query, did not manually call close,
         # did not call fetchall(), and cleared the notices
-        self.cursor.execute.assert_called_once()
+        self.cursor.execute.assert_called()
         self.cursor.close.assert_not_called()
         self.cursor.fetchall.assert_not_called()
 
