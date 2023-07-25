@@ -473,8 +473,8 @@ def _create_rows_affected_message(batch: Batch, user_transaction: bool) -> str:
     # a row count cannot be determined for or execute() was not performed
     if batch.row_count != -1:
         return '({0} row(s) affected)'.format(batch.row_count)  # TODO: Localize
-    elif user_transaction:
-        return _transaction_commands_message(batch.batch_text.strip().lower())
+    elif batch.status_message is not None:
+        return batch.status_message
     else:
         return 'Commands completed successfully'  # TODO: Localize
 
