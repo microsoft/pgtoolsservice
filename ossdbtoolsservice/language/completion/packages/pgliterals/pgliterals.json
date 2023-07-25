@@ -225,6 +225,7 @@
         "ROWID": [],
         "ROWNUM": [],
         "ROWS": [],
+        "SAVEPOINT": [],
         "SELECT": [],
         "SESSION": [],
         "SET": [],

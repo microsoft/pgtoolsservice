@@ -119,7 +119,10 @@ class Batch:
             self._batch_events._on_execution_started(self)
 
         cursor = self.get_cursor(conn)
-        conn.connection.add_notice_handler(lambda msg: self._notices.append(msg.message_primary))
+        conn.connection.add_notice_handler(lambda msg: self.notice_handler(msg, conn))
+
+        if self.batch_text.startswith('begin') and conn.transaction_in_trans:
+            self._notices.append('WARNING: there is already a transaction in progress')
 
         try:
             cursor.execute(self.batch_text)
@@ -131,6 +134,7 @@ class Batch:
             self.after_execute(cursor)
         except psycopg.DatabaseError as e:
             self._has_error = True
+            conn.set_transaction_in_error()
             raise e
         finally:
             # We are doing this because when the execute fails for named cursors
@@ -162,6 +166,12 @@ class Batch:
             raise IndexError('Result set index should be always 0')
 
         self._result_set.save_as(params, file_factory, on_success, on_failure)
+
+    def notice_handler(self, notice: str, conn: ServerConnection):
+        if not conn.user_transaction:
+            self._notices.append(notice.message_primary)
+        elif not notice.message_primary == 'there is already a transaction in progress':
+            self._notices.append('WARNING: {0}'.format(notice.message_primary))
 
 
 class SelectBatch(Batch):

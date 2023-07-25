@@ -69,6 +69,12 @@ class PostgreSQLConnection(ServerConnection):
         # Set autocommit mode so that users have control over transactions
         self._conn.autocommit = True
 
+        # Set initial transaction is not from user
+        self._user_transaction = False
+
+        # Set initial connection has error
+        self._transaction_in_error = self._conn.info.transaction_status is TransactionStatus.INERROR
+
         # Get the DSN parameters for the connection as a dict
         if self._conn.info.dsn is not None:
             # split by spaces unless in quotes or double quotes
@@ -155,7 +161,22 @@ class PostgreSQLConnection(ServerConnection):
     @property
     def transaction_in_error(self) -> bool:
         """Returns bool indicating if transaction is in error"""
-        return self._conn.TransactionStatus is TransactionStatus.INERROR
+        return self._conn.info.transaction_status is TransactionStatus.INERROR or self._transaction_in_error is TransactionStatus.INERROR
+
+    @property
+    def transaction_is_idle(self) -> bool:
+        """Returns bool indicating if transaction is currently idle"""
+        return self._conn.info.transaction_status is TransactionStatus.IDLE
+
+    @property
+    def transaction_in_trans(self) -> bool:
+        """Returns bool indicating if transaction is currently in transaction block"""
+        return self._conn.info.transaction_status is TransactionStatus.INTRANS
+
+    @property
+    def user_transaction(self) -> bool:
+        """Returns bool indicating if transaction is in error"""
+        return self._user_transaction
 
     @property
     def query_canceled_error(self) -> Exception:
@@ -291,3 +312,15 @@ class PostgreSQLConnection(ServerConnection):
         Closes this current connection.
         """
         self._conn.close()
+
+    def set_transaction_in_error(self):
+        """
+        Sets if current connection is in error
+        """
+        self._transaction_in_error = TransactionStatus.INERROR
+
+    def set_user_transaction(self, mode: bool):
+        """
+        Sets if current connection is user started
+        """
+        self._user_transaction = mode
