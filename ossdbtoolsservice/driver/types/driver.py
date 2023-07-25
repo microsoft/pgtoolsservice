@@ -181,7 +181,7 @@ class ServerConnection(ABC):
         """
 
     @abstractmethod
-    def set_user_transaction(self):
+    def set_user_transaction(self, mode: bool):
         """
         Sets if current connection is user started
         """

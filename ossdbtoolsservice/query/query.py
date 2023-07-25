@@ -73,7 +73,7 @@ class Query:
             if not formatted_text or formatted_text == ';':
                 continue
 
-            sql_statement_text = batch_text
+            sql_statement_text = formatted_text
 
             # Create and save the batch
             if bool(self._execution_plan_options):
@@ -84,7 +84,7 @@ class Query:
                     sql_statement_text = Query.ANALYZE_EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
 
             # Check if user defined transaction
-            if formatted_text.lower() == 'begin;' or formatted_text.lower() == 'begin transaction':
+            if formatted_text.lower() == 'begin;' or formatted_text.lower() == 'begin transaction;':
                 self._disable_auto_commit = True
                 self._user_transaction = True
 
@@ -133,7 +133,8 @@ class Query:
 
         # Run each batch sequentially
         try:
-            connection.set_user_transaction(self._user_transaction)
+            if self._user_transaction:
+                connection.set_user_transaction(True)
 
             # When Analyze Explain is used we have to disable auto commit
             if self._disable_auto_commit and connection.transaction_is_idle:
@@ -150,8 +151,8 @@ class Query:
             # We can only set autocommit when the connection is open.
             if connection.open and connection.transaction_is_idle:
                 connection.autocommit = True
-            self._disable_auto_commit = False
-            self._user_transaction = False
+                connection.set_user_transaction(False)
+                self._disable_auto_commit = False
             self._execution_state = ExecutionState.EXECUTED
 
     def get_subset(self, batch_index: int, start_index: int, end_index: int):
