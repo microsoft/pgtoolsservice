@@ -23,7 +23,7 @@ New-Item -ItemType Directory -Force -Path ".\dist\pgsqltoolsservice"
 Get-ChildItem -Path ".\dist" | Where-Object { !$_.PSIsContainer } | Move-Item -Destination ".\dist\pgsqltoolsservice"
 
 # copy pg_exe folder to pgsqltoolsservice
-Copy-Item ".\ossdbtoolsservice\pg_exes" ".\dist\pgsqltoolsservice\pg_exes" -Recurse
+Copy-Item ".\ossdbtoolsservice\pg_exes\win" ".\dist\pgsqltoolsservice\pg_exes\win" -Recurse
 
 # Restore the old PYTHONPATH and move back to the original directory
 Set-Location $curloc

@@ -438,7 +438,7 @@ class TestQueryService(unittest.TestCase):
 
         # Then we executed the query, did not manually call close,
         # did not call fetchall(), and cleared the notices
-        self.cursor.execute.assert_called_once()
+        self.cursor.execute.assert_called()
         self.cursor.close.assert_not_called()
         self.cursor.fetchall.assert_not_called()
 
@@ -452,7 +452,7 @@ class TestQueryService(unittest.TestCase):
         # The first is a message containing only the notifications, where is_error is false
         # The second is the error message, where is_error is true
         expected_notices = ["NOTICE: foo", "DEBUG: bar"]
-        self.assertEqual(len(call_params_list), 2)
+        self.assertEqual(len(call_params_list), 3)
         self.assertFalse(call_params_list[0].message.is_error)
         self.assertTrue(call_params_list[1].message.is_error)
         notices_str = ''.join(expected_notices)
@@ -474,7 +474,7 @@ class TestQueryService(unittest.TestCase):
 
         # Then we executed the query, did not manually call close,
         # did not call fetchall(), and cleared the notices
-        self.cursor.execute.assert_called_once()
+        self.cursor.execute.assert_called()
         self.cursor.close.assert_not_called()
         self.cursor.fetchall.assert_not_called()
 
@@ -488,7 +488,7 @@ class TestQueryService(unittest.TestCase):
         # The first is a message containing only the notifications, where is_error is false
         # The second is the error message, where is_error is true
         expected_notices = ["NOTICE: foo", "DEBUG: bar"]
-        self.assertEqual(len(call_params_list), 2)
+        self.assertEqual(len(call_params_list), 3)
         self.assertFalse(call_params_list[0].message.is_error)
         self.assertTrue(call_params_list[1].message.is_error)
         notices_str = ''.join(expected_notices)

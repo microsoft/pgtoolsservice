@@ -4,7 +4,8 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-CREATE {% if data.indisunique %}UNIQUE {% endif %}INDEX {% if data.isconcurrent %}CONCURRENTLY {% endif %}{{conn|qtIdent(data.name)}}
+CREATE{% if data.indisunique %} UNIQUE{% endif %} INDEX{% if add_not_exists_clause %} IF NOT EXISTS{% endif %}{% if data.isconcurrent %} CONCURRENTLY{% endif %}{% if data.name %} {{conn|qtIdent(data.name)}}{% endif %}
+
     ON {{conn|qtIdent(data.schema, data.table)}} {% if data.amname %}USING {{conn|qtIdent(data.amname)}}{% endif %}
 
 {% if mode == 'create' %}
@@ -23,9 +24,9 @@ FIRST{% else %}LAST{% endif %}{% endif %}{% endfor %})
     INCLUDE({% for col in data.include %}{% if loop.index != 1 %}, {% endif %}{{conn|qtIdent(col)}}{% endfor %})
 {% endif %}
 {% endif %}
-{% if data.fillfactor %}
-    WITH (FILLFACTOR={{data.fillfactor}})
+{% if data.storage_parameters %}
+    WITH ({% for key, value in data.storage_parameters.items() %}{% if loop.index != 1 %}, {% endif %}{{key}}={{value}}{% endfor %})
 {% endif %}{% if data.spcname %}
     TABLESPACE {{conn|qtIdent(data.spcname)}}{% endif %}{% if data.indconstraint %}
-    WHERE {{data.indconstraint}}
-{% endif %};
+
+    WHERE {{data.indconstraint}}{% endif %};

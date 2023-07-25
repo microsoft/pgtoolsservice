@@ -154,6 +154,7 @@ class MockConnectionInfo():
         self.dsn = dsn_parameters
         self.server_version = server_version
         self.backend_pid = mock.Mock(return_value=0)
+        self.transaction_status = psycopg.pq.TransactionStatus.IDLE
 
 
 class MockCursor:
