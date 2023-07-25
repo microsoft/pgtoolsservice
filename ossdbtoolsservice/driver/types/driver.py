@@ -175,7 +175,13 @@ class ServerConnection(ABC):
         """
 
     @abstractmethod
+    def set_transaction_in_error(self):
+        """
+        Sets if current connection is in error
+        """
+
+    @abstractmethod
     def set_user_transaction(self):
         """
-        Closes this current connection.
+        Sets if current connection is user started
         """

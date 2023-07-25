@@ -151,7 +151,7 @@ class Query:
             if connection.open and connection.transaction_is_idle:
                 connection.autocommit = True
             self._disable_auto_commit = False
-            self._user_transaction = False 
+            self._user_transaction = False
             self._execution_state = ExecutionState.EXECUTED
 
     def get_subset(self, batch_index: int, start_index: int, end_index: int):

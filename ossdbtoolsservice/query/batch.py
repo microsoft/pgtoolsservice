@@ -131,6 +131,7 @@ class Batch:
             self.after_execute(cursor)
         except psycopg.DatabaseError as e:
             self._has_error = True
+            conn.set_transaction_in_error()
             raise e
         finally:
             # We are doing this because when the execute fails for named cursors
