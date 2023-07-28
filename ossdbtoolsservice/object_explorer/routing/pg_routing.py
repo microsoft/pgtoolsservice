@@ -44,8 +44,9 @@ def _get_node_info(
         metadata.schema = node.schema
 
     # Else if it is a table object, add the schema also. Important for scripting purposes
-    elif node.parent is not None and node.parent.parent is not None and node.parent.parent.parent is None and hasattr(node, 'schema'):
-        metadata.schema = node.schema
+    # node.parent = Table/View, node.parent.parent = Schema, node.parent.parent.parent = None
+    elif node.parent is not None and node.parent.parent is not None and node.parent.parent.parent is None and hasattr(node.parent, 'schema'):
+        metadata.schema = node.parent.schema
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
