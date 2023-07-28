@@ -126,6 +126,13 @@ def convert_list(value: list):
     return bytearray(json.dumps(value).encode())
 
 
+def convert_uuid_list(values: list):
+    uuid_list = []
+    for value in values:
+        uuid_list.append(str(value))
+    return bytearray(json.dumps(uuid_list).encode())
+
+
 def convert_decimal_list(values: list):
     decimal_list = []
     for value in values:
@@ -264,7 +271,7 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BIT_VARYING_ARRAY: convert_list,
     datatypes.DATATYPE_TSVECTOR_ARRAY: convert_list,
     datatypes.DATATYPE_TSQUERY_ARRAY: convert_list,
-    datatypes.DATATYPE_UUID_ARRAY: convert_list,
+    datatypes.DATATYPE_UUID_ARRAY: convert_uuid_list,
     datatypes.DATATYPE_XML_ARRAY: convert_list,
     datatypes.DATATYPE_JSON_ARRAY: convert_list,
     datatypes.DATATYPE_JSONB_ARRAY: convert_list,
