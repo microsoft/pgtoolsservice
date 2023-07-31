@@ -154,3 +154,24 @@ steps:
     inputs:
       pathToPublish: $(Build.ArtifactStagingDirectory)
       artifactName: dist
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: current
+      downloadType: specific
+      artifactName: dist
+      downloadPath: $(System.ArtifactsDirectory)
+  - task: GithubRelease@1
+    displayName: Create GitHub Release
+    inputs:
+      gitHubConnection: azuredatastudio-postgresqlext2
+      repositoryName: microsoft/pgtoolsservice
+      tagSource: userSpecifiedTag
+      tag: $(ReleaseVersion)-insiders
+      title: $(ReleaseVersion)-testing
+      changeLogType: issueBased
+      changeLogCompareToRelease: lastNonDraftReleaseByTag
+      changeLogCompareToReleaseTag: $(PreviousReleaseVersion)
+      isPreRelease: true
+      assets: |
+        $(System.ArtifactsDirectory)/**/*.gz
+        $(System.ArtifactsDirectory)/**/*.zip
