@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 from typing import List, Optional
+import re
 import logging
 import unittest
 import unittest.mock as mock
@@ -155,6 +156,17 @@ class MockConnectionInfo():
         self.server_version = server_version
         self.backend_pid = mock.Mock(return_value=0)
         self.transaction_status = psycopg.pq.TransactionStatus.IDLE
+
+    def get_parameters(self):
+        # split by spaces unless in quotes or double quotes
+        parts = re.split(r'\s(?=(?:(?:[^"\'\\]*(?:\\.|"(?:[^"\\]*\\.)*[^"\\]*"|\'(?:[^\'\\]*\\.)*[^\'\\]*\')*))[^"\'\\]*$)', self.dsn)
+        dsn_parameters = {}
+        for part in parts:
+            key, value = part.split('=')
+            # Remove quotes or double quotes if they exist
+            value = re.sub(r'^[\'"]|[\'"]$', '', value)
+            dsn_parameters[key] = value
+        return dsn_parameters
 
 
 class MockCursor:
