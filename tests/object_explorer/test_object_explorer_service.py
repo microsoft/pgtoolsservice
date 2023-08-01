@@ -160,15 +160,24 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_handle_create_session_session_exists(self):
         # Setup: Create an OE service and pre-load a session
+        mock_connection = MockPGServerConnection(cur=None, host='myserver', name='postgres', user='postgres', port=123)
+        cs = ConnectionService()
+        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+
         oe = ObjectExplorerService()
-        oe._service_provider = utils.get_mock_service_provider({})
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
         params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
         oe._provider = constants.PG_PROVIDER_NAME
 
         # If: I attempt to create an OE session that already exists
-        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
+        rc = RequestFlowValidator()
+        rc.add_expected_response(
+            CreateSessionResponse,
+            lambda param: self.assertEqual(param.session_id, session_uri)
+        )
         oe._handle_create_session_request(rc.request_context, params)
 
         # Then:
