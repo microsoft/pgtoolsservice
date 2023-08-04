@@ -88,7 +88,7 @@ class MetadataService:
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Unhandled exception while executing the metadata schema worker thread')
-            request_context.send_error('Unhandled exception while listing metadata: ' + str(e))
+            request_context.send_error('Unhandled exception while getting schema DDL: ' + str(e))
 
     def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
         # Get current connection
@@ -113,8 +113,13 @@ class MetadataService:
         return metadata_list
 
     def _schema_metadata(self, owner_uri: str) -> str:
-        return "Hello world"
+        # Get current connection
+        connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+        connection: ServerConnection = connection_service.get_connection(owner_uri, ConnectionType.DEFAULT)
+        metadata_query = "SELECT version()"
 
+        query_results = connection.execute_query(metadata_query, all=True)
+        return query_results[0][0]
 
 _METADATA_TYPE_MAP = {
     'f': MetadataType.FUNCTION,

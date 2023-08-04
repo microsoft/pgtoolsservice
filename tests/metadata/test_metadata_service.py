@@ -12,12 +12,16 @@ from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.metadata.contracts import (METADATA_LIST_REQUEST,
                                                   MetadataListParameters,
                                                   MetadataListResponse,
+                                                  MetadataSchemaParameters,
+                                                  MetadataSchemaResponse,
                                                   MetadataType, ObjectMetadata)
 from ossdbtoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.pgsmo_tests.utils import MockPGServerConnection, MockPsycopgConnection
 from tests.utils import (
     MockCursor, MockRequestContext, MockThread)
+from tests.integration import get_connection_details, integration_test
+from ossdbtoolsservice.driver.types.psycopg_driver import (PostgreSQLConnection)
 
 
 class TestMetadataService(unittest.TestCase):
@@ -34,9 +38,9 @@ class TestMetadataService(unittest.TestCase):
 
     def test_initialization(self):
         """Test that the metadata service registers its handlers correctly"""
-        # Verify that the correct request handler was set up via the call to register during test setup
-        self.service_provider.server.set_request_handler.assert_called_once_with(
-            METADATA_LIST_REQUEST, self.metadata_service._handle_metadata_list_request)
+
+        # Verify that request handlers were set up via the call to register during test setup
+        self.service_provider.server.set_request_handler.assert_called()
 
     def test_metadata_list_request(self):
         """Test that the metadata list handler properly starts a thread to list metadata and responds with the list"""
@@ -101,3 +105,18 @@ class TestMetadataService(unittest.TestCase):
         self.assertIsNotNone(request_context.last_error_message)
         self.assertIsNone(request_context.last_notification_method)
         self.assertIsNone(request_context.last_response_params)
+
+    @integration_test
+    def test_metadata_schema_requests(self):
+        connection = PostgreSQLConnection(get_connection_details())
+        self.connection_service.get_connection = mock.Mock(return_value=connection)
+
+        request_context = MockRequestContext()
+        params = MetadataSchemaParameters()
+        params.owner_uri = self.test_uri
+
+        self.metadata_service._handle_metadata_schema_request(request_context, params)
+
+        response = request_context.last_response_params
+        self.assertIsInstance(response, MetadataSchemaResponse)
+        self.assertEqual(response.metadata, 'foo')
