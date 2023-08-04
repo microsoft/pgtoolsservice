@@ -251,7 +251,7 @@ class QueryExecutionService(object):
 
             # If the batch was successful, send a message to the client
             if not batch.has_error:
-                rows_message = _create_rows_affected_message(batch, worker_args.connection.user_transaction)
+                rows_message = _create_rows_affected_message(batch)
                 message_params = self.build_message_params(worker_args.owner_uri, batch.id, rows_message, False)
                 _check_and_fire(worker_args.on_message_notification, message_params)
 
@@ -467,7 +467,7 @@ class QueryExecutionService(object):
             on_error(str(error))
 
 
-def _create_rows_affected_message(batch: Batch, user_transaction: bool) -> str:
+def _create_rows_affected_message(batch: Batch) -> str:
     # Only add in rows affected if the batch's row count is not -1.
     # Row count is automatically -1 when an operation occurred that
     # a row count cannot be determined for or execute() was not performed
@@ -482,16 +482,3 @@ def _create_rows_affected_message(batch: Batch, user_transaction: bool) -> str:
 def _check_and_fire(action, params=None):
     if action is not None:
         action(params)
-
-
-def _transaction_commands_message(text: str):
-    if text.startswith('begin'):
-        return 'Begin transaction'
-    elif text.startswith('commit'):
-        return 'Commit transaction'
-    elif text.startswith('rollback'):
-        return 'Rollback transaction'
-    elif text.startswith('savepoint'):
-        return 'Create savepoint'
-    else:
-        return 'Commands completed successfully'
