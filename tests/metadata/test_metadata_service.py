@@ -115,7 +115,9 @@ class TestMetadataService(unittest.TestCase):
         params = MetadataSchemaParameters()
         params.owner_uri = self.test_uri
 
-        self.metadata_service._handle_metadata_schema_request(request_context, params)
+        mock_thread = MockThread()
+        with mock.patch('threading.Thread', new=mock.Mock(side_effect=mock_thread.initialize_target)):
+            self.metadata_service._handle_metadata_schema_request(request_context, params)
 
         response = request_context.last_response_params
         self.assertIsInstance(response, MetadataSchemaResponse)
