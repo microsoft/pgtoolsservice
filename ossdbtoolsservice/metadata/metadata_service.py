@@ -11,7 +11,7 @@ from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.metadata.contracts import (
     MetadataListParameters, MetadataListResponse, METADATA_LIST_REQUEST, MetadataType, ObjectMetadata,
-    MetadataSchemaParameters, MetadataSchemaResponse, METADATA_SCHEMA_REQUEST)
+    MetadataSchemaParameters, MetadataSchemaResponse, METADATA_SCHEMA_REQUEST, SchemaMetadata)
 from ossdbtoolsservice.utils import constants
 
 # This query collects all the tables, views, and functions in all the schemas in the database(s)?
@@ -116,10 +116,8 @@ class MetadataService:
         # Get current connection
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection: ServerConnection = connection_service.get_connection(owner_uri, ConnectionType.DEFAULT)
-        metadata_query = "SELECT version()"
-
-        query_results = connection.execute_query(metadata_query, all=True)
-        return query_results[0][0]
+        schema = SchemaMetadata(connection.cursor(), 'public')
+        return schema.describe()
 
 _METADATA_TYPE_MAP = {
     'f': MetadataType.FUNCTION,
