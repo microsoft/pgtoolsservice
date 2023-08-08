@@ -18,4 +18,4 @@ class MetadataSchemaResponse:
         self.metadata: str = metadata
 
 
-METADATA_SCHEMA_REQUEST = IncomingMessageConfiguration('metadata/sql', MetadataSchemaParameters)
+METADATA_SCHEMA_REQUEST = IncomingMessageConfiguration('metadata/schema', MetadataSchemaParameters)

@@ -8,9 +8,10 @@ from ossdbtoolsservice.metadata.contracts.metadata_list_request import (
 from ossdbtoolsservice.metadata.contracts.metadata_schema_request import (
     MetadataSchemaParameters, MetadataSchemaResponse, METADATA_SCHEMA_REQUEST)
 from ossdbtoolsservice.metadata.contracts.object_metadata import MetadataType, ObjectMetadata
+from ossdbtoolsservice.metadata.contracts.schema_metadata import SchemaMetadata
 
 __all__ = [
     'MetadataListParameters', 'MetadataListResponse', 'METADATA_LIST_REQUEST',
     'MetadataSchemaParameters', 'MetadataSchemaResponse', 'METADATA_SCHEMA_REQUEST',
-    'MetadataType', 'ObjectMetadata'
+    'MetadataType', 'ObjectMetadata', 'SchemaMetadata'
 ]
