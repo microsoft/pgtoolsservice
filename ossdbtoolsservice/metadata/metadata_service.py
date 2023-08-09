@@ -119,6 +119,7 @@ class MetadataService:
         schema = SchemaMetadata(connection.cursor(), 'public')
         return schema.describe()
 
+
 _METADATA_TYPE_MAP = {
     'f': MetadataType.FUNCTION,
     't': MetadataType.TABLE,

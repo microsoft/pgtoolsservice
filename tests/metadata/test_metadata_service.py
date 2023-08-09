@@ -10,8 +10,7 @@ from textwrap import (dedent)
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.metadata import MetadataService
-from ossdbtoolsservice.metadata.contracts import (METADATA_LIST_REQUEST,
-                                                  MetadataListParameters,
+from ossdbtoolsservice.metadata.contracts import (MetadataListParameters,
                                                   MetadataListResponse,
                                                   MetadataSchemaParameters,
                                                   MetadataSchemaResponse,
@@ -136,8 +135,8 @@ class TestMetadataService(unittest.TestCase):
         response = request_context.last_response_params
         self.assertIsInstance(response, MetadataSchemaResponse)
 
-        self.maxDiff = None # show the whole diff
-        self.assertEqual(response.description, dedent(f"""\
+        self.maxDiff = None  # show the whole diff
+        self.assertEqual(response.description, dedent("""\
             ## PostgreSQL database schema
 
             ## Tables and columns in the schema, in the form:
