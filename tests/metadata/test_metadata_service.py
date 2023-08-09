@@ -6,6 +6,7 @@
 import unittest
 import unittest.mock as mock
 
+from textwrap import (dedent)
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.metadata import MetadataService
@@ -111,6 +112,19 @@ class TestMetadataService(unittest.TestCase):
         connection = PostgreSQLConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
 
+        cur = connection.cursor()
+        cur.execute("""
+            CREATE TABLE students (
+                studentid SERIAL PRIMARY KEY,
+                firstname VARCHAR(100) NOT NULL,
+                lastname VARCHAR(100) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                birthdate DATE NOT NULL,
+                enrollmentyear INT CHECK
+                    (enrollmentyear >= 2000 AND enrollmentyear <= EXTRACT(YEAR FROM CURRENT_DATE))
+            );
+            """)
+
         request_context = MockRequestContext()
         params = MetadataSchemaParameters()
         params.owner_uri = self.test_uri
@@ -121,4 +135,40 @@ class TestMetadataService(unittest.TestCase):
 
         response = request_context.last_response_params
         self.assertIsInstance(response, MetadataSchemaResponse)
-        self.assertEqual(response.metadata, 'foo')
+
+        tab = "\t"
+        self.maxDiff = None # show the whole diff
+        self.assertEqual(response.description, dedent(f"""\
+            ## PostgreSQL database schema
+
+            ## Tables and columns in the schema, in the form:
+            table_name
+            {tab}column_name/type
+            {tab}column_name/type
+
+            students
+            {tab}studentid/int
+            {tab}firstname/varchar
+            {tab}lastname/varchar
+            {tab}email/varchar
+            {tab}birthdate/date
+            {tab}enrollmentyear/int
+
+            ## Table constraints, in the form:
+            table_name
+            {tab}constraint_def
+            {tab}constraint_def
+
+            students
+            {tab}primary key (studentid)
+            {tab}unique (email)
+
+            ## Table indexes, in the form:
+            table_name
+            {tab}type (column_name, column_name)
+            {tab}type (column_name, column_name)
+
+            students
+            {tab}btree (email)
+            {tab}btree (studentid)
+            """))

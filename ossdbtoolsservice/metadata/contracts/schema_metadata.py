@@ -41,6 +41,7 @@ class SchemaMetadata:
         table_name
         \tcolumn_name/type
         \tcolumn_name/type
+
         """)
 
         self.cur.execute(
@@ -68,8 +69,8 @@ class SchemaMetadata:
         for table, column, dt in tables:
             if table != cur_table:
                 cur_table = table
-                results += table
-            results += f"\t{column}/{_pretty_type(dt)}"
+                results += table + "\n"
+            results += f"\t{column}/{_pretty_type(dt)}\n"
 
         return results
 
@@ -79,6 +80,7 @@ class SchemaMetadata:
         table_name
         \tconstraint_def
         \tconstraint_def
+
         """)
 
         self.cur.execute(
@@ -105,8 +107,8 @@ class SchemaMetadata:
         for table, constraint in tables:
             if table != cur_table:
                 cur_table = table
-                results += table
-            results += "\t" + _pretty_constraint(constraint)
+                results += table + "\n"
+            results += "\t" + _pretty_constraint(constraint) + "\n"
 
         return results
 
@@ -116,6 +118,7 @@ class SchemaMetadata:
         table_name
         \ttype (column_name, column_name)
         \ttype (column_name, column_name)
+
         """)
 
         self.cur.execute(
@@ -133,7 +136,7 @@ class SchemaMetadata:
         for table, indx in tables:
             if table != cur_table:
                 cur_table = table
-                results += table
-            results += "\t" + _pretty_index(indx)
+                results += table + "\n"
+            results += "\t" + _pretty_index(indx) + "\n"
 
         return results
