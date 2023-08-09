@@ -14,8 +14,8 @@ class MetadataSchemaParameters(Serializable):
 
 
 class MetadataSchemaResponse:
-    def __init__(self, metadata: str):
-        self.metadata: str = metadata
+    def __init__(self, desc: str):
+        self.description: str = desc
 
 
 METADATA_SCHEMA_REQUEST = IncomingMessageConfiguration('metadata/schema', MetadataSchemaParameters)
