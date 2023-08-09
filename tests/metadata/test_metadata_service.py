@@ -136,39 +136,38 @@ class TestMetadataService(unittest.TestCase):
         response = request_context.last_response_params
         self.assertIsInstance(response, MetadataSchemaResponse)
 
-        tab = "\t"
         self.maxDiff = None # show the whole diff
         self.assertEqual(response.description, dedent(f"""\
             ## PostgreSQL database schema
 
             ## Tables and columns in the schema, in the form:
             table_name
-            {tab}column_name/type
-            {tab}column_name/type
+            \tcolumn_name/type
+            \tcolumn_name/type
 
             students
-            {tab}studentid/int
-            {tab}firstname/varchar
-            {tab}lastname/varchar
-            {tab}email/varchar
-            {tab}birthdate/date
-            {tab}enrollmentyear/int
+            \tstudentid/int
+            \tfirstname/varchar
+            \tlastname/varchar
+            \temail/varchar
+            \tbirthdate/date
+            \tenrollmentyear/int
 
             ## Table constraints, in the form:
             table_name
-            {tab}constraint_def
-            {tab}constraint_def
+            \tconstraint_def
+            \tconstraint_def
 
             students
-            {tab}primary key (studentid)
-            {tab}unique (email)
+            \tprimary key (studentid)
+            \tunique (email)
 
             ## Table indexes, in the form:
             table_name
-            {tab}type (column_name, column_name)
-            {tab}type (column_name, column_name)
+            \ttype (column_name, column_name)
+            \ttype (column_name, column_name)
 
             students
-            {tab}btree (email)
-            {tab}btree (studentid)
+            \tbtree (email)
+            \tbtree (studentid)
             """))
