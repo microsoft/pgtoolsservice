@@ -169,7 +169,7 @@ class Batch:
 
     def notice_handler(self, notice: str, conn: ServerConnection):
         if not conn.user_transaction:
-            self._notices.append(notice.message_primary)
+            self._notices.append('{0}: {1}'.format(notice.severity, notice.message_primary))
         elif not notice.message_primary == 'there is already a transaction in progress':
             self._notices.append('WARNING: {0}'.format(notice.message_primary))
 
