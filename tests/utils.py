@@ -184,6 +184,7 @@ class MockCursor:
         self.mogrify = mock.Mock(return_value=self._mogrified_value)
         self._query_results = query_results
         self._fetched_count = 0
+        self.statusmessage = None
 
     def __iter__(self):
         return self
