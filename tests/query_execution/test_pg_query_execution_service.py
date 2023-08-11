@@ -390,6 +390,11 @@ class TestQueryService(unittest.TestCase):
         # The first message should have the notices
         expected_notices = ["NOTICE: foo", "DEBUG: bar"]
         subset = '\n'.join(expected_notices)
+        print(call_params_list)
+        print(call_params_list[0])
+        print(call_params_list[0].message)
+        print(call_params_list[0].message.message)
+        print(call_params_list[0].message.is_error)
         self.assertTrue(subset in call_params_list[0].message.message)
 
     def test_deploy_message_notices_no_error(self):
