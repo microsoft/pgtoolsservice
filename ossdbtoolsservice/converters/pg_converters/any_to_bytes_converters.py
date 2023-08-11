@@ -143,7 +143,8 @@ def convert_decimal_list(values: list):
 def convert_bytea_list(values: list):
     bytea_list = []
     for value in values:
-        bytea_list.append(value.tobytes().decode(DECODING_METHOD))
+        byte = bytes(value)
+        bytea_list.append(str(byte))
     return bytearray(json.dumps(bytea_list).encode())
 
 
