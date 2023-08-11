@@ -10,8 +10,10 @@ from textwrap import (dedent)
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.metadata import MetadataService
-from ossdbtoolsservice.metadata.contracts import (MetadataListParameters,
+from ossdbtoolsservice.metadata.contracts import (METADATA_LIST_REQUEST,
+                                                  MetadataListParameters,
                                                   MetadataListResponse,
+                                                  METADATA_SCHEMA_REQUEST,
                                                   MetadataSchemaParameters,
                                                   MetadataSchemaResponse,
                                                   MetadataType, ObjectMetadata)
@@ -38,9 +40,11 @@ class TestMetadataService(unittest.TestCase):
 
     def test_initialization(self):
         """Test that the metadata service registers its handlers correctly"""
-
-        # Verify that request handlers were set up via the call to register during test setup
-        self.service_provider.server.set_request_handler.assert_called()
+        # Verify that the correct request handlers were set up via the call to register during test setup
+        self.service_provider.server.set_request_handler.assert_any_call(
+            METADATA_SCHEMA_REQUEST, self.metadata_service._handle_metadata_schema_request)
+        self.service_provider.server.set_request_handler.assert_any_call(
+            METADATA_LIST_REQUEST, self.metadata_service._handle_metadata_list_request)
 
     def test_metadata_list_request(self):
         """Test that the metadata list handler properly starts a thread to list metadata and responds with the list"""
