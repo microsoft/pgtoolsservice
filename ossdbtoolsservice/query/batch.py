@@ -52,6 +52,7 @@ class Batch:
         self.id = ordinal
         self.selection = selection
         self.batch_text = batch_text
+        self.status_message: str = None
 
         self._execution_start_time: datetime = None
         self._has_error = False
@@ -137,6 +138,8 @@ class Batch:
             conn.set_transaction_in_error()
             raise e
         finally:
+            if cursor and cursor.statusmessage is not None:
+                self.status_message = cursor.statusmessage
             # We are doing this because when the execute fails for named cursors
             # cursor is not activated on the server which results in failure on close
             # Hence we are checking if the cursor was really executed for us to close it
