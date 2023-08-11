@@ -261,7 +261,7 @@ class TestLanguageService(unittest.TestCase):
         """
         Test that the format codepath succeeds even if the configuration options aren't defined
         """
-        input_text = 'select * from foo where id in (select id from bar);'
+        input_text = 'select * from foo where id IN (select id from bar);'
 
         context: RequestContext = utils.MockRequestContext()
 
@@ -301,7 +301,7 @@ class TestLanguageService(unittest.TestCase):
         expected_output = '\n'.join([
             'SELECT *',
             'FROM foo',
-            'WHERE id in',
+            'WHERE id IN',
             '\t\t\t\t(SELECT id',
             '\t\t\t\t\tFROM bar);'
         ])
@@ -348,7 +348,7 @@ class TestLanguageService(unittest.TestCase):
         expected_output = '\n'.join([
             'SELECT *',
             'FROM foo',
-            'WHERE id in',
+            'WHERE id IN',
             '\t\t\t\t(SELECT id',
             '\t\t\t\t\tFROM bar);'
         ])

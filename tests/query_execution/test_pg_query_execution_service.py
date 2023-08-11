@@ -16,7 +16,6 @@ from unittest import mock
 import psycopg
 from dateutil import parser
 
-import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import (ConnectionDetails,
                                                     ConnectionType)
@@ -48,6 +47,7 @@ from ossdbtoolsservice.query_execution.query_execution_service import (
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.pgsmo_tests.utils import MockPGServerConnection
+import tests.utils as utils
 
 
 class TestQueryService(unittest.TestCase):
