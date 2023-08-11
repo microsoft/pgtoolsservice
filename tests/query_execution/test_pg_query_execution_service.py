@@ -389,7 +389,7 @@ class TestQueryService(unittest.TestCase):
 
         # The first message should have the notices
         expected_notices = ["NOTICE: foo", "DEBUG: bar"]
-        subset = ''.join(expected_notices)
+        subset = '\n'.join(expected_notices)
         self.assertTrue(subset in call_params_list[0].message.message)
 
     def test_deploy_message_notices_no_error(self):
@@ -421,7 +421,7 @@ class TestQueryService(unittest.TestCase):
 
         # The first message should have the notices
         expected_notices = ["NOTICE: foo", "DEBUG: bar"]
-        subset = ''.join(expected_notices)
+        subset = '\n'.join(expected_notices)
         self.assertTrue(subset in call_params_list[0].message.message)
 
     def test_message_notices_error(self):
@@ -455,7 +455,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(len(call_params_list), 3)
         self.assertFalse(call_params_list[0].message.is_error)
         self.assertTrue(call_params_list[1].message.is_error)
-        notices_str = ''.join(expected_notices)
+        notices_str = '\n'.join(expected_notices)
 
         # Make sure that the whole first message consists of the notices, as expected
         self.assertEqual(notices_str, call_params_list[0].message.message)
@@ -491,7 +491,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(len(call_params_list), 3)
         self.assertFalse(call_params_list[0].message.is_error)
         self.assertTrue(call_params_list[1].message.is_error)
-        notices_str = ''.join(expected_notices)
+        notices_str = '\n'.join(expected_notices)
 
         # Make sure that the whole first message consists of the notices, as expected
         self.assertEqual(notices_str, call_params_list[0].message.message)
