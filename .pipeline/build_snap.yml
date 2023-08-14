@@ -166,7 +166,7 @@ steps:
       gitHubConnection: azuredatastudio-postgresqlext2
       repositoryName: microsoft/pgtoolsservice
       tagSource: userSpecifiedTag
-      tag: $(ReleaseVersion)-insiders
+      tag: $(ReleaseVersion)-testing
       title: $(ReleaseVersion)-testing
       changeLogType: issueBased
       changeLogCompareToRelease: lastNonDraftReleaseByTag
