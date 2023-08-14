@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 from typing import List, Optional
+import re
 import logging
 import unittest
 import unittest.mock as mock
@@ -156,6 +157,17 @@ class MockConnectionInfo():
         self.backend_pid = mock.Mock(return_value=0)
         self.transaction_status = psycopg.pq.TransactionStatus.IDLE
 
+    def get_parameters(self):
+        # split by spaces unless in quotes or double quotes
+        parts = re.split(r'\s(?=(?:(?:[^"\'\\]*(?:\\.|"(?:[^"\\]*\\.)*[^"\\]*"|\'(?:[^\'\\]*\\.)*[^\'\\]*\')*))[^"\'\\]*$)', self.dsn)
+        dsn_parameters = {}
+        for part in parts:
+            key, value = part.split('=')
+            # Remove quotes or double quotes if they exist
+            value = re.sub(r'^[\'"]|[\'"]$', '', value)
+            dsn_parameters[key] = value
+        return dsn_parameters
+
 
 class MockCursor:
     """Class used to mock psycopg cursor objects for testing"""
@@ -172,6 +184,7 @@ class MockCursor:
         self.mogrify = mock.Mock(return_value=self._mogrified_value)
         self._query_results = query_results
         self._fetched_count = 0
+        self.statusmessage = None
 
     def __iter__(self):
         return self
@@ -187,15 +200,15 @@ class MockCursor:
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
         for handler in self.connection.notice_handlers:
-            handler(MockNotice("NOTICE: foo"))
-            handler(MockNotice("DEBUG: bar"))
+            handler(MockNotice("foo", "NOTICE"))
+            handler(MockNotice("bar", "DEBUG"))
         self.rowcount = len(self._query_results) if self._query_results is not None else 0
 
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         for handler in self.connection.notice_handlers:
-            handler(MockNotice("NOTICE: foo"))
-            handler(MockNotice("DEBUG: bar"))
+            handler(MockNotice("foo", "NOTICE"))
+            handler(MockNotice("bar", "DEBUG"))
         raise psycopg.DatabaseError()
 
     def execute_fetch_one_side_effects(self, *args):
@@ -245,5 +258,6 @@ class MockThread():
 
 class MockNotice():
 
-    def __init__(self, message_primary):
+    def __init__(self, message_primary, severity):
         self.message_primary = message_primary
+        self.severity = severity

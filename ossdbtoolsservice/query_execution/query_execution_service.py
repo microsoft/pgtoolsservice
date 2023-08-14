@@ -240,7 +240,8 @@ class QueryExecutionService(object):
             # Send back notices as a separate message to avoid error coloring / highlighting of text
             notices = batch.notices
             if notices:
-                notice_message_params = self.build_message_params(worker_args.owner_uri, batch.id, ''.join(notices), False)
+                notice_messages = '\n'.join(notices)
+                notice_message_params = self.build_message_params(worker_args.owner_uri, batch.id, notice_messages, False)
                 _check_and_fire(worker_args.on_message_notification, notice_message_params)
 
             batch_summary = batch.batch_summary
@@ -251,7 +252,7 @@ class QueryExecutionService(object):
 
             # If the batch was successful, send a message to the client
             if not batch.has_error:
-                rows_message = _create_rows_affected_message(batch, worker_args.connection.user_transaction)
+                rows_message = _create_rows_affected_message(batch)
                 message_params = self.build_message_params(worker_args.owner_uri, batch.id, rows_message, False)
                 _check_and_fire(worker_args.on_message_notification, message_params)
 
@@ -467,14 +468,14 @@ class QueryExecutionService(object):
             on_error(str(error))
 
 
-def _create_rows_affected_message(batch: Batch, user_transaction: bool) -> str:
+def _create_rows_affected_message(batch: Batch) -> str:
     # Only add in rows affected if the batch's row count is not -1.
     # Row count is automatically -1 when an operation occurred that
     # a row count cannot be determined for or execute() was not performed
     if batch.row_count != -1:
         return '({0} row(s) affected)'.format(batch.row_count)  # TODO: Localize
-    elif user_transaction:
-        return _transaction_commands_message(batch.batch_text.strip().lower())
+    elif batch.status_message is not None:
+        return batch.status_message
     else:
         return 'Commands completed successfully'  # TODO: Localize
 
@@ -482,16 +483,3 @@ def _create_rows_affected_message(batch: Batch, user_transaction: bool) -> str:
 def _check_and_fire(action, params=None):
     if action is not None:
         action(params)
-
-
-def _transaction_commands_message(text: str):
-    if text.startswith('begin'):
-        return 'Begin transaction'
-    elif text.startswith('commit'):
-        return 'Commit transaction'
-    elif text.startswith('rollback'):
-        return 'Rollback transaction'
-    elif text.startswith('savepoint'):
-        return 'Create savepoint'
-    else:
-        return 'Commands completed successfully'
