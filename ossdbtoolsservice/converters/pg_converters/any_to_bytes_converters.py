@@ -82,7 +82,7 @@ def convert_timedelta(value: datetime.timedelta):
     return bytearray(str(value).encode())
 
 
-def convert_uuid(value: str):
+def convert_into_string(value: str):
     return bytearray(str(value).encode())
 
 
@@ -126,7 +126,7 @@ def convert_list(value: list):
     return bytearray(json.dumps(value).encode())
 
 
-def convert_uuid_list(values: list):
+def convert_into_string_list(values: list):
     uuid_list = []
     for value in values:
         uuid_list.append(str(value))
@@ -143,7 +143,8 @@ def convert_decimal_list(values: list):
 def convert_bytea_list(values: list):
     bytea_list = []
     for value in values:
-        bytea_list.append(value.tobytes().decode(DECODING_METHOD))
+        byte = bytes(value)
+        bytea_list.append(str(byte))
     return bytearray(json.dumps(bytea_list).encode())
 
 
@@ -227,7 +228,7 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_TIMESTAMP: convert_datetime,
     datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_datetime,
     datatypes.DATATYPE_INTERVAL: convert_timedelta,
-    datatypes.DATATYPE_UUID: convert_uuid,
+    datatypes.DATATYPE_UUID: convert_into_string,
     datatypes.DATATYPE_BYTEA: convert_memoryview,
     datatypes.DATATYPE_JSON: convert_dict,
     datatypes.DATATYPE_JSONB: convert_dict,
@@ -238,6 +239,7 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_TSTZRANGE: convert_timestamptzrange,
     datatypes.DATATYPE_DATERANGE: convert_daterange,
     datatypes.DATATYPE_OID: convert_int,
+    datatypes.DATATYPE_INET: convert_into_string,
     datatypes.DATATYPE_SMALLINT_ARRAY: convert_list,
     datatypes.DATATYPE_INTEGER_ARRAY: convert_list,
     datatypes.DATATYPE_BIGINT_ARRAY: convert_list,
@@ -265,13 +267,13 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_POLYGON_ARRAY: convert_list,
     datatypes.DATATYPE_CIRCLE_ARRAY: convert_list,
     datatypes.DATATYPE_CIDR_ARRAY: convert_list,
-    datatypes.DATATYPE_INET_ARRAY: convert_list,
+    datatypes.DATATYPE_INET_ARRAY: convert_into_string_list,
     datatypes.DATATYPE_MACADDR_ARRAY: convert_list,
     datatypes.DATATYPE_BIT_ARRAY: convert_list,
     datatypes.DATATYPE_BIT_VARYING_ARRAY: convert_list,
     datatypes.DATATYPE_TSVECTOR_ARRAY: convert_list,
     datatypes.DATATYPE_TSQUERY_ARRAY: convert_list,
-    datatypes.DATATYPE_UUID_ARRAY: convert_uuid_list,
+    datatypes.DATATYPE_UUID_ARRAY: convert_into_string_list,
     datatypes.DATATYPE_XML_ARRAY: convert_list,
     datatypes.DATATYPE_JSON_ARRAY: convert_list,
     datatypes.DATATYPE_JSONB_ARRAY: convert_list,
