@@ -172,5 +172,4 @@ class TestMetadataService(unittest.TestCase):
 
             students
             \tbtree (email)
-            \tbtree (studentid)
-            """))
+            \tbtree (studentid)"""))

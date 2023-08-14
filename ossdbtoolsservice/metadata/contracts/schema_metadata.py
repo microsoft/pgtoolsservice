@@ -5,6 +5,7 @@
 
 from psycopg import (ClientCursor)
 from textwrap import (dedent)
+from collections import defaultdict
 import re
 
 
@@ -26,6 +27,26 @@ def _pretty_index(indexdef):
     return indexdef.split(' USING ')[1].lower()
 
 
+#    [("a", 1), ("a", 2), ("b", 3)]
+# => {'a': [1,2], 'b': [3]}
+def _multi_map(kvs: list[tuple]) -> dict[str, list]:
+    mm = defaultdict(list)
+    for key, value in kvs:
+        mm[key].append(value)
+    return mm
+
+
+#    {'a': [1,2], 'b': [3]} =>
+# => a\n\t1\n\t2\nb\n\t3
+def _serialize_map(mm: dict[str, list]) -> str:
+    out = []
+    for key in mm:
+        out.append(key)
+        for v in mm[key]:
+            out.append("\t" + str(v))
+    return "\n".join(out)
+
+
 class SchemaMetadata:
     """Describe the schema to an LLM"""
 
@@ -37,10 +58,10 @@ class SchemaMetadata:
         t = self.describe_tables()
         c = self.describe_constraints()
         i = self.describe_indexes()
-        return f"## PostgreSQL database schema\n{t}{c}{i}"
+        return "\n".join(["## PostgreSQL database schema", t, c, i])
 
     def describe_tables(self) -> str:
-        results = dedent("""
+        preamble = dedent("""
         ## Tables and columns in the schema, in the form:
         table_name
         \tcolumn_name/type
@@ -67,19 +88,12 @@ class SchemaMetadata:
                 c.ordinal_position;
             """
         )
-        tables = self.cur.fetchall()
-
-        cur_table = None
-        for table, column, dt in tables:
-            if table != cur_table:
-                cur_table = table
-                results += table + "\n"
-            results += f"\t{column}/{_pretty_type(dt)}\n"
-
-        return results
+        data = [(table, f"{column}/{_pretty_type(dt)}")
+                for table, column, dt in self.cur.fetchall()]
+        return preamble + _serialize_map(_multi_map(data))
 
     def describe_constraints(self) -> str:
-        results = dedent("""
+        preamble = dedent("""
         ## Table constraints, in the form:
         table_name
         \tconstraint_def
@@ -105,19 +119,12 @@ class SchemaMetadata:
             ORDER BY 1, 2;
             """
         )
-        tables = self.cur.fetchall()
-
-        cur_table = None
-        for table, constraint in tables:
-            if table != cur_table:
-                cur_table = table
-                results += table + "\n"
-            results += "\t" + _pretty_constraint(constraint) + "\n"
-
-        return results
+        data = [(table, _pretty_constraint(constraint))
+                for table, constraint in self.cur.fetchall()]
+        return preamble + _serialize_map(_multi_map(data))
 
     def describe_indexes(self) -> str:
-        results = dedent("""
+        preamble = dedent("""
         ## Table indexes, in the form:
         table_name
         \ttype (column_name, column_name)
@@ -135,12 +142,6 @@ class SchemaMetadata:
             ORDER BY 1, 2;
             """
         )
-        tables = self.cur.fetchall()
-        cur_table = None
-        for table, indx in tables:
-            if table != cur_table:
-                cur_table = table
-                results += table + "\n"
-            results += "\t" + _pretty_index(indx) + "\n"
-
-        return results
+        data = [(table, _pretty_index(idx))
+                for table, idx in self.cur.fetchall()]
+        return preamble + _serialize_map(_multi_map(data))
