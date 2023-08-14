@@ -116,7 +116,7 @@ class MetadataService:
         # Get current connection
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection: ServerConnection = connection_service.get_connection(owner_uri, ConnectionType.DEFAULT)
-        schema = SchemaMetadata(connection.cursor(), 'public')
+        schema = SchemaMetadata(connection.cursor())
         return schema.describe()
 
 
