@@ -2,13 +2,13 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-
 from typing import Dict, List, Optional, Tuple
 
 import psycopg
 from psycopg import (Column, connection, cursor)
 from psycopg.pq import TransactionStatus
 from ossdbtoolsservice.driver.types import ServerConnection
+from ossdbtoolsservice.driver.types.adapter import addAdapters
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace.contracts import Configuration
 
@@ -64,6 +64,7 @@ class PostgreSQLConnection(ServerConnection):
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg.connect(**connection_options)
+        addAdapters(self._conn)
 
         # Set autocommit mode so that users have control over transactions
         self._conn.autocommit = True
@@ -290,7 +291,17 @@ class PostgreSQLConnection(ServerConnection):
         """
         Get the message from DatabaseError instance
         """
-        return error.diag.message_primary
+        # If error.diag.message_primary is not None, return it.
+        if error.diag and error.diag.message_primary:
+            return error.diag.message_primary
+
+        # If error.args exists and has at least one element, return the first element as the error message.
+        elif hasattr(error, 'args') and error.args and len(error.args) > 0:
+            return error.args[0]
+
+        # If neither is available, return a generic error message.
+        else:
+            return "An unspecified database error occurred."
 
     def close(self):
         """

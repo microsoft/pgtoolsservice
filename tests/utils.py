@@ -120,13 +120,17 @@ class MockPsycopgConnection(object):
         self.pgconn = mock.Mock()
         self.info = MockConnectionInfo(dsn_parameters, self.server_version)
 
-        self._adapters: Optional[AdaptersMap] = None
+        self._adapters: Optional[AdaptersMap] = mock.Mock()
         self.notice_handlers: List[NoticeHandler] = []
 
     @property
     def closed(self):
         """Mock for the connection's closed property"""
         return self.close.call_count > 0
+
+    @property
+    def adapters(self) -> AdaptersMap:
+        return self._adapters
 
     def get_dsn_parameters(self):
         """Mock for the connection's get_dsn_parameters method"""
