@@ -17,7 +17,9 @@ LEFT JOIN pg_depend dep ON (dep.classid = cls.tableoid AND
 LEFT OUTER JOIN pg_constraint con ON (con.tableoid = dep.refclassid AND
                                       con.oid = dep.refobjid)
 WHERE indrelid = {{parent_id}}::oid
+{% if constraint_type is defined %}
 AND contype='{{constraint_type}}'
+{% endif %}
 {% if cid %}
 AND cls.oid = {{cid}}::oid
 {% endif %}

@@ -366,8 +366,7 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
         elif index.is_unique:
             node_type = 'Key_UniqueKey'
             attribs.insert(0, 'Unique')
-        else:
-            node_type = 'Index'
+        node_type = 'Index'
 
         attrib_str = '(' + ', '.join(attribs) + ')'
         yield _get_node_info(index, current_path, node_type, label=f'{index.name} {attrib_str}')

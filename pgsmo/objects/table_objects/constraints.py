@@ -29,7 +29,8 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
         """
         constraint = cls(server, parent, kwargs['name'])
         constraint._oid = kwargs['oid']
-        constraint._convalidated = kwargs['convalidated']
+        if 'convalidated' in kwargs:
+            constraint._convalidated = kwargs['convalidated']
 
         return constraint
 
@@ -305,6 +306,15 @@ class ForeignKeyConstraint(Constraint):
 
 class IndexConstraint(Constraint):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_index')
+
+    # TEMPLATING PROPERTIES ################################################
+    @property
+    def extended_vars(self) -> dict:
+        return {
+            'cid': self.oid,
+            'tid': self.parent.oid,         # Table/view OID
+            'did': self.parent.parent.oid   # Database OID
+        }
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property

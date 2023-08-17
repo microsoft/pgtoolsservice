@@ -8,6 +8,6 @@ SELECT c.oid, conname as name,
     NOT convalidated as convalidated
     FROM pg_constraint c
 WHERE contype = 'c'
-{% if tid %}
+{% if parent_id %}
     AND conrelid = {{ parent_id }}::oid
 {% endif %}

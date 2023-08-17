@@ -35,5 +35,7 @@ WHERE indrelid = {{tid}}::oid
 {% if cid %}
 AND cls.oid = {{cid}}::oid
 {% endif %}
+{% if constraint_type is defined %}
 AND contype='{{constraint_type}}'
+{% endif %}
 ORDER BY cls.relname
