@@ -5,9 +5,13 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT c.oid, conname as name,
-    NOT convalidated as convalidated
-    FROM pg_constraint c
+    NOT convalidated as convalidated, conislocal, description as comment
+    FROM pg_catalog.pg_constraint c
+LEFT OUTER JOIN
+    pg_catalog.pg_description des ON (des.objoid=c.oid AND
+                           des.classoid='pg_constraint'::regclass)
 WHERE contype = 'c'
-{% if parent_id %}
     AND conrelid = {{ parent_id }}::oid
+{% if cid %}
+    AND c.oid = {{ cid }}::oid
 {% endif %}
