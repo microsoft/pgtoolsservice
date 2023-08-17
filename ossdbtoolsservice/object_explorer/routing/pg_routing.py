@@ -361,10 +361,11 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
 
     for index in indexes:
         attribs = ['Clustered' if index.is_clustered else 'Non-Clustered']
-        if index.is_primary:
-            node_type = 'Key_PrimaryKey'
-        elif index.is_unique:
-            node_type = 'Key_UniqueKey'
+        # TODO: Add back in the correct node_type, but making sure the SCRIPT AS options still appear in the right-click menu
+        # if index.is_primary:
+        #     node_type = 'Key_PrimaryKey'
+        if index.is_unique:
+            # node_type = 'Key_UniqueKey'
             attribs.insert(0, 'Unique')
         node_type = 'Index'
 
