@@ -73,11 +73,17 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         self._foreign_key_constraints: NodeCollection[ForeignKeyConstraint] = self._register_child_collection(
             ForeignKeyConstraint
         )
-        self._primary_key_constraints: NodeCollection[PrimaryKeyConstraint] = self._register_child_collection(PrimaryKeyConstraint, context_args={"constraint_type": "p"})
-        self._unique_key_constraints: NodeCollection[UniqueKeyConstraint] = self._register_child_collection(UniqueKeyConstraint, context_args={"constraint_type": "u"})
+        self._primary_key_constraints: NodeCollection[PrimaryKeyConstraint] = self._register_child_collection(
+            PrimaryKeyConstraint,
+            context_args={"constraint_type": "p"}
+        )
+        self._unique_key_constraints: NodeCollection[UniqueKeyConstraint] = self._register_child_collection(
+            UniqueKeyConstraint,
+            context_args={"constraint_type": "u"}
+        )
 
-        # Index constraints should be comprised of primary key constraints ("p"), unique key constraints ("u"), and exclusion constraints ("x"). Exclusion constraints have their own separate
-        # templates, while primary key and unique key constraints share templates from constraint_index
+        # Index constraints should be comprised of primary key constraints ("p"), unique key constraints ("u"), and exclusion constraints ("x"). Exclusion
+        # constraints have their own separate templates, while primary key and unique key constraints share templates from constraint_index
         self._index_constraints: NodeCollection[IndexConstraint] = self._register_child_collection(IndexConstraint)
 
         self._indexes: NodeCollection[Index] = self._register_child_collection(Index)
@@ -122,11 +128,11 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
     @property
     def index_constraints(self) -> NodeCollection[IndexConstraint]:
         return self._index_constraints
-    
+
     @property
     def primary_key_constraints(self) -> NodeCollection[PrimaryKeyConstraint]:
         return self._primary_key_constraints
-    
+
     @property
     def unique_key_constraints(self) -> NodeCollection[UniqueKeyConstraint]:
         return self._unique_key_constraints
