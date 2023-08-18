@@ -332,8 +332,10 @@ def _constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSes
                      for node in table.exclusion_constraints])
     node_info.extend([_get_node_info(node, current_path, 'Key_ForeignKey')
                      for node in table.foreign_key_constraints])
-    node_info.extend([_get_node_info(node, current_path, 'Constraint')
-                     for node in table.index_constraints])
+    node_info.extend([_get_node_info(node, current_path, 'Key_PrimaryKey')
+                     for node in table.primary_key_constraints])
+    node_info.extend([_get_node_info(node, current_path, 'Key_UniqueKey')
+                     for node in table.unique_key_constraints])
 
     return sorted(node_info, key=lambda x: x.label)
 

@@ -313,10 +313,12 @@ class IndexConstraint(Constraint):
         return {
             'cid': self.oid,
             'tid': self.parent.oid,         # Table/view OID
-            'did': self.parent.parent.oid   # Database OID
+            'did': self.parent.parent.oid,  # Database OID
+            'contype': self.contype
         }
 
     # -FULL OBJECT PROPERTIES ##############################################
+
     @property
     def index(self):
         return self._full_properties["index"]
@@ -392,3 +394,13 @@ class IndexConstraint(Constraint):
                 "comment": ""
             }
         }
+
+class PrimaryKeyConstraint(IndexConstraint):
+    @property
+    def contype(self):
+        return "p"
+
+class UniqueKeyConstraint(IndexConstraint):
+    @property
+    def contype(self):
+        return "u"
