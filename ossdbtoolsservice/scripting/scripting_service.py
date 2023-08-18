@@ -25,7 +25,7 @@ class ScriptingService(object):
         self._service_provider = service_provider
 
         # Register the request handlers with the server
-        self._service_provider.server.set_request_handler(SCRIPTAS_REQUEST, self._handle_scriptas_request)
+        self._service_provider.server.set_request_handler(SCRIPTAS_REQUEST, self._handle_script_as_request)
 
         # Find the provider type
         self._provider: str = self._service_provider.provider
@@ -43,7 +43,7 @@ class ScriptingService(object):
         return object_metadata
 
     # REQUEST HANDLERS #####################################################
-    def _handle_scriptas_request(self, request_context: RequestContext, params: ScriptAsParameters) -> None:
+    def _handle_script_as_request(self, request_context: RequestContext, params: ScriptAsParameters) -> None:
         try:
             utils.validate.is_not_none('params', params)
 

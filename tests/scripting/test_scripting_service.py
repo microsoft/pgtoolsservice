@@ -63,7 +63,7 @@ class TestScriptingService(unittest.TestCase):
         # If: I make a scripting request missing params
         rc: RequestFlowValidator = RequestFlowValidator()
         rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
-        ss._handle_scriptas_request(rc.request_context, None)
+        ss._handle_script_as_request(rc.request_context, None)
 
         # Then:
         # ... I should get an error response
@@ -81,7 +81,7 @@ class TestScriptingService(unittest.TestCase):
         # If: I create an OE session with missing params
         rc: RequestFlowValidator = RequestFlowValidator()
         rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
-        ss._handle_scriptas_request(rc.request_context, None)
+        ss._handle_script_as_request(rc.request_context, None)
 
         # Then:
         # ... I should get an error response
@@ -129,7 +129,7 @@ class TestScriptingService(unittest.TestCase):
                     'scripting_objects': [scripting_object]
                 })
 
-                ss._handle_scriptas_request(rc.request_context, params)
+                ss._handle_script_as_request(rc.request_context, params)
 
                 # Then:
                 # ... The request should have been handled correctly
