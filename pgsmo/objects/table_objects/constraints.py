@@ -312,9 +312,9 @@ class IndexConstraint(Constraint):
     def extended_vars(self) -> dict:
         return {
             'cid': self.oid,
-            'tid': self.parent.oid,         # Table/view OID
-            'did': self.parent.parent.oid,  # Database OID
-            'contype': self.contype
+            'tid': self.parent.oid,                         # Table/view OID
+            'did': self.parent.parent.oid,                  # Database OID
+            'constraint_type': self.constraint_type         # Constraint type ("p" or "u" for primary or unique)
         }
 
     # -FULL OBJECT PROPERTIES ##############################################
@@ -397,10 +397,10 @@ class IndexConstraint(Constraint):
 
 class PrimaryKeyConstraint(IndexConstraint):
     @property
-    def contype(self):
+    def constraint_type(self):
         return "p"
 
 class UniqueKeyConstraint(IndexConstraint):
     @property
-    def contype(self):
+    def constraint_type(self):
         return "u"
