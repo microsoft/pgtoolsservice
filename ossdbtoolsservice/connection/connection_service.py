@@ -108,7 +108,7 @@ class ConnectionService:
 
         # Get the connection for the given type and build a response if it is present, otherwise open the connection
         connection = connection_info.get_connection(params.type)
-        if connection is not None:
+        if connection is not None and not connection.connection.broken:
             return _build_connection_response(connection_info, params.type)
 
         # The connection doesn't exist yet. Cancel any ongoing connection and set up a cancellation token
@@ -167,7 +167,7 @@ class ConnectionService:
         if connection_info is None:
             raise ValueError('No connection associated with given owner URI')
 
-        if not connection_info.has_connection(connection_type):
+        if not connection_info.has_connection(connection_type) or not connection_info.get_connection(connection_type).open:
             self.connect(ConnectRequestParams(connection_info.details, owner_uri, connection_type))
         return connection_info.get_connection(connection_type)
 

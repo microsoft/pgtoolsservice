@@ -348,7 +348,7 @@ class QueryExecutionService(object):
         except BaseException as e:
             raise e
 
-    def _execute_query_request_worker(self, worker_args: ExecuteRequestWorkerArgs):
+    def _execute_query_request_worker(self, worker_args: ExecuteRequestWorkerArgs, retry = False):
         """Worker method for 'handle execute query request' thread"""
 
         _check_and_fire(worker_args.before_query_initialize, {})
@@ -357,9 +357,15 @@ class QueryExecutionService(object):
 
         # Wrap execution in a try/except block so that we can send an error if it fails
         try:
-            query.execute(worker_args.connection)
+            query.execute(worker_args.connection, retry)
         except Exception as e:
-            self._resolve_query_exception(e, query, worker_args)
+            if not retry and worker_args.connection.connection.broken:
+                self._resolve_query_exception(e, query, worker_args, False, True)
+                conn = self._get_connection(worker_args.owner_uri, ConnectionType.QUERY)
+                worker_args.connection = conn
+                self._execute_query_request_worker(worker_args, True)
+            else:
+                self._resolve_query_exception(e, query, worker_args)
         finally:
             # Send a query complete notification
             batch_summaries = [batch.batch_summary for batch in query.batches]
@@ -417,11 +423,14 @@ class QueryExecutionService(object):
             # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
             return params.query
 
-    def _resolve_query_exception(self, e: Exception, query: Query, worker_args: ExecuteRequestWorkerArgs, is_rollback_error=False):
+    def _resolve_query_exception(self, e: Exception, query: Query, worker_args: ExecuteRequestWorkerArgs, is_rollback_error=False, retry_query=False):
         utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query.query_text}\n {e}')
 
+        if retry_query:
+            error_message = 'Server closed the connection unexpectedly. Will reconnect and try query again.'
+
         # If the error relates to the database, display the appropriate error message based on the provider
-        if isinstance(e, worker_args.connection.database_error) or isinstance(e, worker_args.connection.query_canceled_error):
+        elif isinstance(e, worker_args.connection.database_error) or isinstance(e, worker_args.connection.query_canceled_error):
             # get_error_message may return None so ensure error_message is str type
             error_message = str(worker_args.connection.get_error_message(e))
 
@@ -438,12 +447,13 @@ class QueryExecutionService(object):
             error_message = 'Error while rolling back open transaction due to previous failure: ' + error_message  # TODO: Localize
 
         # Send a message with the error to the client
-        result_message_params = self.build_message_params(query.owner_uri, query.batches[query.current_batch_index].id, error_message, True)
+        is_error_notification = not retry_query
+        result_message_params = self.build_message_params(query.owner_uri, query.batches[query.current_batch_index].id, error_message, is_error_notification)
         _check_and_fire(worker_args.on_message_notification, result_message_params)
 
         # If there was a failure in the middle of a transaction, roll it back.
         # Note that conn.rollback() won't work since the connection is in autocommit mode
-        if not is_rollback_error and worker_args.connection.transaction_in_error and not worker_args.connection.user_transaction:
+        if not is_rollback_error and not retry_query and worker_args.connection.transaction_in_error and not worker_args.connection.user_transaction:
             rollback_query = Query(query.owner_uri, 'ROLLBACK', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
             try:
                 rollback_query.execute(worker_args.connection)
