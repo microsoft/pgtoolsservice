@@ -1,0 +1,165 @@
+from datetime import datetime, date, time
+from ipaddress import IPv4Network, IPv6Network
+from psycopg.types.range import Range
+import unittest
+from unittest import mock
+
+from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.hosting import ServiceProvider
+from ossdbtoolsservice.parsers import datatypes
+from ossdbtoolsservice.query_execution.contracts import ExecuteStringParams, SubsetParams
+from ossdbtoolsservice.query_execution.query_execution_service import QueryExecutionService
+from ossdbtoolsservice.utils import constants
+from tests.integration import get_connection_details, integration_test
+import tests.utils as utils
+
+
+class TestConverters(unittest.TestCase):
+
+    def setUp(self):
+        self.query_execution_service = QueryExecutionService()
+        self.connection_service = ConnectionService()
+        self.service_provider = ServiceProvider(None, {}, constants.PG_PROVIDER_NAME)
+        self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: self.connection_service}
+        self.service_provider._is_initialized = True
+        self.query_execution_service._service_provider = self.service_provider
+        self.request_context = utils.MockRequestContext()
+
+    # if bool type has bool and bool_array while varchar[] is array type
+    def generic_test(self, connection, datatype, value, pg_cast, array_type_only=False):
+        request_params = ExecuteStringParams()
+        request_params.owner_uri = 'test_uri'
+
+        array_query = f"SELECT ARRAY[NULL::{pg_cast}]; SELECT ARRAY[{value}, {value}]::{pg_cast}[];"
+        scalar_query = f"SELECT NULL::{pg_cast}; SELECT {value}::{pg_cast};" if not array_type_only else ""
+
+        request_params.query = array_query + scalar_query
+        num_times = 2 if array_type_only else 4
+
+        mock_thread = utils.MockThread()
+        with mock.patch('threading.Thread', new=mock.Mock(side_effect=mock_thread.initialize_target)):
+            self.query_execution_service._handle_execute_query_request(self.request_context, request_params)
+
+        cursor = connection.cursor()
+        cursor.execute(request_params.query)
+        expected_results = []
+        while cursor:
+            expected_result = cursor.fetchall()
+            expected_results.append(expected_result)
+            if not cursor.nextset():
+                break
+
+        for i in range(num_times):
+            self._execute_query(request_params, i)
+            if not array_type_only:
+                self._compare_results(expected_results, i)
+            else:
+                self._compare_results_array(expected_results, i)
+
+    def _execute_query(self, request_params, batch_index):
+        subset_params = SubsetParams().from_dict({
+            'ownerUri': request_params.owner_uri,
+            'resultSetIndex': 0,
+            'rowsCount': 1,
+            'rowsStartIndex': 0,
+            'batchIndex': batch_index
+        })
+        self.query_execution_service._handle_subset_request(self.request_context, subset_params)
+
+    def _compare_results_array(self, expected_results, batch_index):
+        query_results = self.request_context.last_response_params.result_subset
+
+        actual_value = query_results.rows[0][0].raw_object
+        expected_value = expected_results[batch_index][0][0]
+
+        # PG null value is null while python is
+        actual_value = str(actual_value).lower().replace("'", '"')
+        expected_value = str(expected_value).lower().replace("'", '"')
+
+        self.assertEqual(actual_value, expected_value)
+
+    def _compare_results(self, expected_results, batch_index):
+        query_results = self.request_context.last_response_params.result_subset
+
+        actual_value = query_results.rows[0][0].raw_object
+        expected_value = expected_results[batch_index][0][0]
+
+        if isinstance(expected_value, list):
+            if all(isinstance(item, (date, time, datetime,)) for item in expected_value):
+                expected_value = [item.isoformat() for item in expected_value]
+            elif all(isinstance(item, (Range,)) for item in expected_value):
+                expected_value = [self._range_to_string(item) for item in expected_value]
+            elif all(isinstance(item, (IPv4Network, IPv6Network)) for item in expected_value):
+                actual_value = actual_value.replace("\\\"", "")
+        else:
+            if isinstance(expected_value, (date, time, datetime)):
+                expected_value = expected_value.isoformat()
+            elif isinstance(expected_value, (Range)):
+                expected_value = self._range_to_string(expected_value)
+            elif isinstance(expected_value, (IPv4Network, IPv6Network)):
+                actual_value = actual_value.replace("\"", "")
+
+        expected_value = [str(item).lower() for item in expected_value] if isinstance(expected_value, list) else expected_value
+
+        # PG null value is null while python is
+        actual_value = str(actual_value).replace('null', '"None"').lower().replace("\"", "").replace("\'", "")
+        expected_value = str(expected_value).lower().replace("\'", "").replace("\"", "")
+        self.assertEqual(actual_value, expected_value)
+
+    @integration_test
+    def test_datatypes_converters(self):
+        connection = PostgreSQLConnection(get_connection_details())
+        self.connection_service.get_connection = mock.Mock(return_value=connection)
+        self.generic_test(connection, datatypes.DATATYPE_BOOL, 'true', 'bool')
+        self.generic_test(connection, datatypes.DATATYPE_REAL, '5.67', 'real')
+        self.generic_test(connection, datatypes.DATATYPE_DOUBLE, '8.912', 'double precision')
+        self.generic_test(connection, datatypes.DATATYPE_SMALLINT, '123', 'smallint')
+        self.generic_test(connection, datatypes.DATATYPE_INTEGER, '123456', 'integer')
+        self.generic_test(connection, datatypes.DATATYPE_BIGINT, '1234567890', 'bigint')
+        self.generic_test(connection, datatypes.DATATYPE_NUMERIC, '1234.5678', 'numeric')
+        self.generic_test(connection, datatypes.DATATYPE_BPCHAR, "'hello'", 'bpchar')
+        self.generic_test(connection, datatypes.DATATYPE_DATE, "'2023-01-01'", 'date')
+        self.generic_test(connection, datatypes.DATATYPE_TIME, "'12:34:56'", 'time')
+        self.generic_test(connection, datatypes.DATATYPE_TIME_WITH_TIMEZONE, "'12:34:56+00'", 'timetz')
+        self.generic_test(connection, datatypes.DATATYPE_TIMESTAMP, "'2023-01-01 12:34:56'", 'timestamp')
+        self.generic_test(connection, datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE, "'2023-01-01 12:34:56+00'", 'timestamptz')
+        self.generic_test(connection, datatypes.DATATYPE_INTERVAL, "'5 days 3 hours'", 'interval')
+        self.generic_test(connection, datatypes.DATATYPE_UUID, "'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'", 'uuid')
+        self.generic_test(connection, datatypes.DATATYPE_BYTEA, r"E'\\xDEADBEEF'", 'bytea')
+        self.generic_test(connection, datatypes.DATATYPE_JSON, "'{\"key\": \"value\"}'", 'json')
+        self.generic_test(connection, datatypes.DATATYPE_JSONB, "'{\"key\": \"value\"}'", 'jsonb')
+        self.generic_test(connection, datatypes.DATATYPE_INT4RANGE, "'[1,10]'", 'int4range')
+        self.generic_test(connection, datatypes.DATATYPE_INT8RANGE, "'[1,1000000000]'", 'int8range')
+        self.generic_test(connection, datatypes.DATATYPE_NUMRANGE, "'[2.2,10.3]'", 'numrange')
+        self.generic_test(connection, datatypes.DATATYPE_TSRANGE, "'[2023-01-01 12:34, 2023-01-01 12:35]'", 'tsrange')
+        self.generic_test(connection, datatypes.DATATYPE_TSTZRANGE, "'[2023-01-01 12:34+00, 2023-01-01 12:35+00]'", 'tstzrange')
+        self.generic_test(connection, datatypes.DATATYPE_DATERANGE, "'[2023-01-01, 2023-01-02]'", 'daterange')
+        self.generic_test(connection, datatypes.DATATYPE_OID, '123456', 'oid')
+
+        # INET
+        self.generic_test(connection, datatypes.DATATYPE_INET, "'192.168.1.1'", 'inet')
+        self.generic_test(connection, datatypes.DATATYPE_INET, "'192.168.1.1/24'", 'inet')
+        self.generic_test(connection, datatypes.DATATYPE_INET, "'2001:0db8:85a3:0000:0000:8a2e:0370:7334'", 'inet')
+        self.generic_test(connection, datatypes.DATATYPE_INET, "'2001:0db8:85a3:0000:0000:8a2e:0370:7334/64'", 'inet')
+
+        # CIDR
+        self.generic_test(connection, datatypes.DATATYPE_CIDR, "'192.168.1.0/24'", 'cidr')
+        self.generic_test(connection, datatypes.DATATYPE_CIDR, "'2001:0db8:85a3::/64'", 'cidr')
+
+        # array only data types
+        self.generic_test(connection, datatypes.DATATYPE_VARCHAR_ARRAY, "ARRAY['abc', 'def']", 'varchar[]', True)
+        self.generic_test(connection, datatypes.DATATYPE_CHAR_ARRAY, "ARRAY['a'::char, 'b']", 'char[]', True)
+        self.generic_test(connection, datatypes.DATATYPE_TEXT_ARRAY, "ARRAY['abc', 'def']", 'text[]', True)
+
+    def _range_to_string(self, r):
+        items = [
+            r._bounds[0],
+            r._lower.isoformat() if isinstance(r._lower, (date, time, datetime)) else str(r._lower),
+            ",",
+            r._upper.isoformat() if isinstance(r._upper, (date, time, datetime)) else str(r._upper),
+            r._bounds[1]]
+        return "".join(items)
+
+    def _ip_address_to_string(self, ip):
+        return '\\' + "\"" + str(ip) + "\"" + '\\'
