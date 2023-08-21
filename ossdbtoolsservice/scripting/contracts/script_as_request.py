@@ -41,4 +41,4 @@ class ScriptAsResponse(Serializable):
         self.script: str = script
 
 
-SCRIPTAS_REQUEST = IncomingMessageConfiguration('scripting/script', ScriptAsParameters)
+SCRIPT_AS_REQUEST = IncomingMessageConfiguration('scripting/script', ScriptAsParameters)

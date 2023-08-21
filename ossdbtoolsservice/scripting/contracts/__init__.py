@@ -3,10 +3,10 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.scripting.contracts.scriptas_request import (
-    ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST, ScriptOperation)
+from ossdbtoolsservice.scripting.contracts.script_as_request import (
+    ScriptAsParameters, ScriptAsResponse, SCRIPT_AS_REQUEST, ScriptOperation)
 
 __all__ = [
-    'ScriptAsParameters', 'ScriptAsResponse', 'SCRIPTAS_REQUEST',
+    'ScriptAsParameters', 'ScriptAsResponse', 'SCRIPT_AS_REQUEST',
     'ScriptOperation'
 ]

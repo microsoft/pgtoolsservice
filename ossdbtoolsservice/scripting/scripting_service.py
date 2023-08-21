@@ -9,7 +9,7 @@ from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.scripting.scripter import Scripter
 from ossdbtoolsservice.scripting.contracts import (
-    ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST
+    ScriptAsParameters, ScriptAsResponse, SCRIPT_AS_REQUEST
 )
 from ossdbtoolsservice.connection.contracts import ConnectionType
 import ossdbtoolsservice.utils as utils
@@ -25,7 +25,7 @@ class ScriptingService(object):
         self._service_provider = service_provider
 
         # Register the request handlers with the server
-        self._service_provider.server.set_request_handler(SCRIPTAS_REQUEST, self._handle_script_as_request)
+        self._service_provider.server.set_request_handler(SCRIPT_AS_REQUEST, self._handle_script_as_request)
 
         # Find the provider type
         self._provider: str = self._service_provider.provider

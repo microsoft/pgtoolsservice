@@ -10,7 +10,7 @@ import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionCompleteParams
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
-from ossdbtoolsservice.scripting.contracts.scriptas_request import (
+from ossdbtoolsservice.scripting.contracts.script_as_request import (
     ScriptAsParameters, ScriptAsResponse, ScriptOperation)
 from ossdbtoolsservice.scripting.scripter import Scripter
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
