@@ -11,7 +11,7 @@ from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.metadata.contracts import (
     MetadataListParameters, MetadataListResponse, METADATA_LIST_REQUEST, MetadataType, ObjectMetadata,
-    MetadataSchemaParameters, MetadataSchemaResponse, METADATA_SCHEMA_REQUEST, SchemaMetadata)
+    ServerContextParameters, ServerContextResponse, SERVER_CONTEXT_REQUEST, ServerContext)
 from ossdbtoolsservice.utils import constants
 
 # This query collects all the tables, views, and functions in all the schemas in the database(s)?
@@ -48,7 +48,7 @@ class MetadataService:
             METADATA_LIST_REQUEST, self._handle_metadata_list_request
         )
         self._service_provider.server.set_request_handler(
-            METADATA_SCHEMA_REQUEST, self._handle_metadata_schema_request
+            SERVER_CONTEXT_REQUEST, self._handle_server_context_request
         )
 
         if self._service_provider.logger is not None:
@@ -56,9 +56,9 @@ class MetadataService:
 
     # REQUEST HANDLERS #####################################################
 
-    def _handle_metadata_schema_request(self, request_context: RequestContext, params: MetadataSchemaParameters) -> None:
+    def _handle_server_context_request(self, request_context: RequestContext, params: ServerContextParameters) -> None:
         thread = threading.Thread(
-            target=self._metadata_schema_worker,
+            target=self._server_context_worker,
             args=(request_context, params)
         )
         thread.daemon = True
@@ -81,10 +81,10 @@ class MetadataService:
                 self._service_provider.logger.exception('Unhandled exception while executing the metadata list worker thread')
             request_context.send_error('Unhandled exception while listing metadata: ' + str(e))  # TODO: Localize
 
-    def _metadata_schema_worker(self, request_context: RequestContext, params: MetadataSchemaParameters) -> None:
+    def _server_context_worker(self, request_context: RequestContext, params: ServerContextParameters) -> None:
         try:
-            metadata = self._schema_metadata(params.owner_uri)
-            request_context.send_response(MetadataSchemaResponse(metadata))
+            ctx = self._server_context(params.owner_uri)
+            request_context.send_response(ServerContextResponse(ctx))
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Unhandled exception while executing the metadata schema worker thread')
@@ -112,12 +112,11 @@ class MetadataService:
                 metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
         return metadata_list
 
-    def _schema_metadata(self, owner_uri: str) -> str:
+    def _server_context(self, owner_uri: str) -> str:
         # Get current connection
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection: ServerConnection = connection_service.get_connection(owner_uri, ConnectionType.DEFAULT)
-        schema = SchemaMetadata(connection.cursor())
-        return schema.describe()
+        return ServerContext(connection.cursor()).describe()
 
 
 _METADATA_TYPE_MAP = {

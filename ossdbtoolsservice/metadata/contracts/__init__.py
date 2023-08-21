@@ -5,13 +5,13 @@
 
 from ossdbtoolsservice.metadata.contracts.metadata_list_request import (
     MetadataListParameters, MetadataListResponse, METADATA_LIST_REQUEST)
-from ossdbtoolsservice.metadata.contracts.metadata_schema_request import (
-    MetadataSchemaParameters, MetadataSchemaResponse, METADATA_SCHEMA_REQUEST)
+from ossdbtoolsservice.metadata.contracts.server_context_request import (
+    ServerContextParameters, ServerContextResponse, SERVER_CONTEXT_REQUEST)
 from ossdbtoolsservice.metadata.contracts.object_metadata import MetadataType, ObjectMetadata
-from ossdbtoolsservice.metadata.contracts.schema_metadata import SchemaMetadata
+from ossdbtoolsservice.metadata.contracts.server_context import ServerContext
 
 __all__ = [
     'MetadataListParameters', 'MetadataListResponse', 'METADATA_LIST_REQUEST',
-    'MetadataSchemaParameters', 'MetadataSchemaResponse', 'METADATA_SCHEMA_REQUEST',
-    'MetadataType', 'ObjectMetadata', 'SchemaMetadata'
+    'ServerContextParameters', 'ServerContextResponse', 'SERVER_CONTEXT_REQUEST',
+    'MetadataType', 'ObjectMetadata', 'ServerContext'
 ]

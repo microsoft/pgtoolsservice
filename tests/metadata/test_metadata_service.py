@@ -13,9 +13,9 @@ from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.metadata.contracts import (METADATA_LIST_REQUEST,
                                                   MetadataListParameters,
                                                   MetadataListResponse,
-                                                  METADATA_SCHEMA_REQUEST,
-                                                  MetadataSchemaParameters,
-                                                  MetadataSchemaResponse,
+                                                  SERVER_CONTEXT_REQUEST,
+                                                  ServerContextParameters,
+                                                  ServerContextResponse,
                                                   MetadataType, ObjectMetadata)
 from ossdbtoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
@@ -42,7 +42,7 @@ class TestMetadataService(unittest.TestCase):
         """Test that the metadata service registers its handlers correctly"""
         # Verify that the correct request handlers were set up via the call to register during test setup
         self.service_provider.server.set_request_handler.assert_any_call(
-            METADATA_SCHEMA_REQUEST, self.metadata_service._handle_metadata_schema_request)
+            SERVER_CONTEXT_REQUEST, self.metadata_service._handle_server_context_request)
         self.service_provider.server.set_request_handler.assert_any_call(
             METADATA_LIST_REQUEST, self.metadata_service._handle_metadata_list_request)
 
@@ -111,7 +111,7 @@ class TestMetadataService(unittest.TestCase):
         self.assertIsNone(request_context.last_response_params)
 
     @integration_test
-    def test_metadata_schema_requests(self):
+    def test_server_context_requests(self):
         connection = PostgreSQLConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
 
@@ -129,15 +129,15 @@ class TestMetadataService(unittest.TestCase):
             """)
 
         request_context = MockRequestContext()
-        params = MetadataSchemaParameters()
+        params = ServerContextParameters()
         params.owner_uri = self.test_uri
 
         mock_thread = MockThread()
         with mock.patch('threading.Thread', new=mock.Mock(side_effect=mock_thread.initialize_target)):
-            self.metadata_service._handle_metadata_schema_request(request_context, params)
+            self.metadata_service._handle_server_context_request(request_context, params)
 
         response = request_context.last_response_params
-        self.assertIsInstance(response, MetadataSchemaResponse)
+        self.assertIsInstance(response, ServerContextResponse)
 
         self.maxDiff = None  # show the whole diff
         self.assertEqual(response.description, dedent("""\

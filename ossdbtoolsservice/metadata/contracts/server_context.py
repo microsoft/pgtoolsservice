@@ -47,7 +47,7 @@ def _serialize_map(mm: dict[str, list]) -> str:
     return "\n".join(out)
 
 
-class SchemaMetadata:
+class ServerContext:
     """Describe the schema to an LLM"""
 
     def __init__(self, cur: ClientCursor, schema: str = "public"):
