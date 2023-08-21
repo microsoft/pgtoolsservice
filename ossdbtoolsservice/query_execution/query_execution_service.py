@@ -427,7 +427,7 @@ class QueryExecutionService(object):
         utils.log.log_debug(self._service_provider.logger, f'Query execution failed for following query: {query.query_text}\n {e}')
 
         if retry_query:
-            error_message = 'Server closed the connection unexpectedly. Will reconnect and try query again.'
+            error_message = 'Server closed the connection unexpectedly. Attempting to reconnect...'
 
         # If the error relates to the database, display the appropriate error message based on the provider
         elif isinstance(e, worker_args.connection.database_error) or isinstance(e, worker_args.connection.query_canceled_error):
