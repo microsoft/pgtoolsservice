@@ -3,15 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-
-from typing import Callable, Any  # noqa
 import decimal
-import struct
+from datetime import date, time, datetime, timedelta
+from ipaddress import IPv4Network, IPv6Network
 import json
-import datetime
+from psycopg.types.range import NumericRange, TimestampRange, TimestamptzRange, DateRange
+import struct
+from typing import Union
 
 from ossdbtoolsservice.parsers import datatypes
-from psycopg.types.range import NumericRange, TimestampRange, TimestamptzRange, DateRange
 
 DECODING_METHOD = 'utf-8'
 
@@ -62,27 +62,15 @@ def convert_str(value: str):
     return bytearray(value.encode())
 
 
-def convert_date(value: datetime.date):
+def convert_isoformat(value: Union[date, time, datetime]):
     return bytearray(value.isoformat().encode())
 
 
-def convert_time(value: datetime.time):
-    return bytearray(value.isoformat().encode())
+def convert_timedelta(value: timedelta):
+    return convert_into_string(str(value))
 
 
-def convert_time_with_timezone(value: datetime.time):
-    return bytearray(value.isoformat().encode())
-
-
-def convert_datetime(value: datetime.datetime):
-    return bytearray(value.isoformat().encode())
-
-
-def convert_timedelta(value: datetime.timedelta):
-    return bytearray(str(value).encode())
-
-
-def convert_into_string(value: str):
+def convert_into_string(value):
     return bytearray(str(value).encode())
 
 
@@ -94,111 +82,8 @@ def convert_dict(value: dict):
     return bytearray(json.dumps(value).encode())
 
 
-def convert_numericrange(value: NumericRange):
-    """ Serialize NumericRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_to_string(value.lower) + "," + convert_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_timestamprange(value: TimestampRange):
-    """ Serialize TimestampRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_timestamptzrange(value: TimestamptzRange):
-    """ Serialize TimestamptzRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_daterange(value: DateRange):
-    """ Serialize DateRange object in "[lower,upper)" format before convert to bytearray """
-    bound = _get_range_data_type_bound(value)
-    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-    return bytearray(formatted_value_str.encode())
-
-
-def convert_list(value: list):
-    return bytearray(json.dumps(value).encode())
-
-
-def convert_into_string_list(values: list):
-    uuid_list = []
-    for value in values:
-        uuid_list.append(str(value))
-    return bytearray(json.dumps(uuid_list).encode())
-
-
-def convert_decimal_list(values: list):
-    decimal_list = []
-    for value in values:
-        decimal_list.append(str(decimal.Decimal(value)))
-    return bytearray(json.dumps(decimal_list).encode())
-
-
-def convert_bytea_list(values: list):
-    bytea_list = []
-    for value in values:
-        byte = bytes(value)
-        bytea_list.append(str(byte))
-    return bytearray(json.dumps(bytea_list).encode())
-
-
-def convert_datetime_list(values: list):
-    datetime_list = []
-    for value in values:
-        datetime_list.append(value.isoformat())
-    return bytearray(json.dumps(datetime_list).encode())
-
-
-def convert_date_list(values: list):
-    date_list = []
-    for value in values:
-        date_list.append(value.isoformat())
-    return bytearray(json.dumps(date_list).encode())
-
-
-def convert_time_list(values: list):
-    time_list = []
-    for value in values:
-        time_list.append(value.isoformat())
-    return bytearray(json.dumps(time_list).encode())
-
-
-def convert_time_with_timezone_list(values: list):
-    time_with_timezone_list = []
-    for value in values:
-        time_with_timezone_list.append(value.isoformat())
-    return bytearray(json.dumps(time_with_timezone_list).encode())
-
-
-def convert_timedelta_list(values: list):
-    timedelta_list = []
-    for value in values:
-        timedelta_list.append(str(value))
-    return bytearray(json.dumps(timedelta_list).encode())
-
-
-def convert_numericrange_list(values: list):
-    numericrange_list = []
-    for value in values:
-        bound = _get_range_data_type_bound(value)
-        formatted_value_str = bound[0] + str(int(value.lower)) + "," + str(int(value.upper)) + bound[1]
-        numericrange_list.append(str(formatted_value_str))
-    return bytearray(json.dumps(numericrange_list).encode())
-
-
-def convert_timestamprange_list(values: list):
-    timestamprange_list = []
-    for value in values:
-        bound = _get_range_data_type_bound(value)
-        formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
-        timestamprange_list.append(str(formatted_value_str))
-    return bytearray(json.dumps(timestamprange_list).encode())
+def convert_cidr(value):
+    return bytearray(json.dumps(value, default=cidr_serializer).encode())
 
 
 def convert_date_to_string(value):
@@ -213,6 +98,127 @@ def convert_to_string(value):
     return str(value)
 
 
+def convert_numericrange(value: NumericRange):
+    """ Serialize NumericRange object in "[lower,upper)" format before convert to bytearray """
+    bound = _get_range_data_type_bound(value)
+    formatted_value_str = bound[0] + convert_to_string(value.lower) + "," + convert_to_string(value.upper) + bound[1]
+    return bytearray(formatted_value_str.encode())
+
+
+def convert_time_range(value: Union[TimestampRange, TimestamptzRange, DateRange]):
+    """ Serialize Range object in "[lower,upper)" format before convert to bytearray """
+    bound = _get_range_data_type_bound(value)
+    formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
+    return bytearray(formatted_value_str.encode())
+
+
+def convert_list(value: list):
+    return bytearray(json.dumps(value).encode())
+
+
+def convert_into_string_list(values: list):
+    value_list = []
+    for value in values:
+        if value is None:
+            value_list.append(None)
+        else:
+            value_list.append(str(value))
+    return bytearray(json.dumps(value_list).encode())
+
+
+def convert_timedelta_list(values: list) -> bytearray:
+    timedelta_list = []
+    for value in values:
+        if value is None:
+            # Otherwise, the value will be shown as "None" instead of NULL
+            timedelta_list.append(None)
+        else:
+            timedelta_list.append(str(timedelta(value)))
+    return bytearray(json.dumps(timedelta_list).encode())
+
+
+def convert_decimal_list(values: list):
+    decimal_list = []
+    for value in values:
+        if value is None:
+            decimal_list.append(None)
+        else:
+            decimal_list.append(str(decimal.Decimal(value)))
+    return bytearray(json.dumps(decimal_list).encode())
+
+
+def convert_bytea_list(values: list):
+    bytea_list = []
+    for value in values:
+        if value is None:
+            bytea_list.append(None)
+        else:
+            try:
+                byte = bytes(value)
+                bytea_list.append(str(byte))
+            except Exception:
+                # You can either append None or some error string.
+                bytea_list.append(None)
+    return bytearray(json.dumps(bytea_list).encode())
+
+
+def convert_time_based_list(values: list):
+    formatted_list = [value.isoformat() if value is not None else None for value in values]
+    return bytearray(json.dumps(formatted_list).encode())
+
+
+def convert_numericrange_list(values: list):
+    numericrange_list = []
+    for value in values:
+        if value is None:
+            numericrange_list.append(None)
+        else:
+            bound = _get_range_data_type_bound(value)
+            formatted_value_str = bound[0] + str(int(value.lower)) + "," + str(int(value.upper)) + bound[1]
+            numericrange_list.append(str(formatted_value_str))
+    return bytearray(json.dumps(numericrange_list).encode())
+
+
+def convert_decimalrange_list(values: list):
+    decimalrange_list = []
+    for value in values:
+        if value is None:
+            decimalrange_list.append(None)
+        else:
+            bound = _get_range_data_type_bound(value)
+            formatted_value_str = bound[0] + str(decimal.Decimal(value.lower)) + "," + str(decimal.Decimal(value.upper)) + bound[1]
+            decimalrange_list.append(str(formatted_value_str))
+    return bytearray(json.dumps(decimalrange_list).encode())
+
+
+def convert_timestamprange_list(values: list):
+    timestamprange_list = []
+    for value in values:
+        if value is None:
+            timestamprange_list.append(None)
+        else:
+            bound = _get_range_data_type_bound(value)
+            formatted_value_str = bound[0] + convert_date_to_string(value.lower) + "," + convert_date_to_string(value.upper) + bound[1]
+            timestamprange_list.append(str(formatted_value_str))
+    return bytearray(json.dumps(timestamprange_list).encode())
+
+
+def convert_cidr_list(values: list):
+    cidr_list = []
+    for value in values:
+        if value is None:
+            cidr_list.append(None)
+        else:
+            cidr_list.append(json.dumps(value, default=cidr_serializer))
+    return bytearray(json.dumps(cidr_list).encode())
+
+
+def cidr_serializer(obj):
+    if isinstance(obj, (IPv4Network, IPv6Network)):
+        return str(obj)
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+
 PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BOOL: convert_bool,
     datatypes.DATATYPE_REAL: convert_float,
@@ -222,12 +228,12 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BIGINT: convert_long_long,
     datatypes.DATATYPE_NUMERIC: convert_decimal,
     datatypes.DATATYPE_BPCHAR: convert_str,
-    datatypes.DATATYPE_DATE: convert_date,
-    datatypes.DATATYPE_TIME: convert_time,
-    datatypes.DATATYPE_TIME_WITH_TIMEZONE: convert_time_with_timezone,
-    datatypes.DATATYPE_TIMESTAMP: convert_datetime,
-    datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_datetime,
-    datatypes.DATATYPE_INTERVAL: convert_timedelta,
+    datatypes.DATATYPE_DATE: convert_isoformat,
+    datatypes.DATATYPE_TIME: convert_isoformat,
+    datatypes.DATATYPE_TIME_WITH_TIMEZONE: convert_isoformat,
+    datatypes.DATATYPE_TIMESTAMP: convert_isoformat,
+    datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_isoformat,
+    datatypes.DATATYPE_INTERVAL: convert_into_string,
     datatypes.DATATYPE_UUID: convert_into_string,
     datatypes.DATATYPE_BYTEA: convert_memoryview,
     datatypes.DATATYPE_JSON: convert_dict,
@@ -235,11 +241,12 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_INT4RANGE: convert_numericrange,
     datatypes.DATATYPE_INT8RANGE: convert_numericrange,
     datatypes.DATATYPE_NUMRANGE: convert_numericrange,
-    datatypes.DATATYPE_TSRANGE: convert_timestamprange,
-    datatypes.DATATYPE_TSTZRANGE: convert_timestamptzrange,
-    datatypes.DATATYPE_DATERANGE: convert_daterange,
+    datatypes.DATATYPE_TSRANGE: convert_time_range,
+    datatypes.DATATYPE_TSTZRANGE: convert_time_range,
+    datatypes.DATATYPE_DATERANGE: convert_time_range,
     datatypes.DATATYPE_OID: convert_int,
     datatypes.DATATYPE_INET: convert_into_string,
+    datatypes.DATATYPE_CIDR: convert_cidr,
     datatypes.DATATYPE_SMALLINT_ARRAY: convert_list,
     datatypes.DATATYPE_INTEGER_ARRAY: convert_list,
     datatypes.DATATYPE_BIGINT_ARRAY: convert_list,
@@ -252,12 +259,12 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BPCHAR_ARRAY: convert_list,
     datatypes.DATATYPE_TEXT_ARRAY: convert_list,
     datatypes.DATATYPE_BYTEA_ARRAY: convert_bytea_list,
-    datatypes.DATATYPE_TIMESTAMP_ARRAY: convert_datetime_list,
-    datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE_ARRAY: convert_datetime_list,
-    datatypes.DATATYPE_DATE_ARRAY: convert_date_list,
-    datatypes.DATATYPE_TIME_ARRAY: convert_time_list,
-    datatypes.DATATYPE_TIME_WITH_TIMEZONE_ARRAY: convert_time_with_timezone_list,
-    datatypes.DATATYPE_INTERVAL_ARRAY: convert_timedelta_list,
+    datatypes.DATATYPE_TIMESTAMP_ARRAY: convert_time_based_list,
+    datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE_ARRAY: convert_time_based_list,
+    datatypes.DATATYPE_DATE_ARRAY: convert_time_based_list,
+    datatypes.DATATYPE_TIME_ARRAY: convert_time_based_list,
+    datatypes.DATATYPE_TIME_WITH_TIMEZONE_ARRAY: convert_time_based_list,
+    datatypes.DATATYPE_INTERVAL_ARRAY: convert_into_string_list,
     datatypes.DATATYPE_BOOL_ARRAY: convert_list,
     datatypes.DATATYPE_POINT_ARRAY: convert_list,
     datatypes.DATATYPE_LINE_ARRAY: convert_list,
@@ -266,7 +273,7 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_PATH_ARRAY: convert_list,
     datatypes.DATATYPE_POLYGON_ARRAY: convert_list,
     datatypes.DATATYPE_CIRCLE_ARRAY: convert_list,
-    datatypes.DATATYPE_CIDR_ARRAY: convert_list,
+    datatypes.DATATYPE_CIDR_ARRAY: convert_cidr_list,
     datatypes.DATATYPE_INET_ARRAY: convert_into_string_list,
     datatypes.DATATYPE_MACADDR_ARRAY: convert_list,
     datatypes.DATATYPE_BIT_ARRAY: convert_list,
@@ -279,7 +286,7 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_JSONB_ARRAY: convert_list,
     datatypes.DATATYPE_INT4RANGE_ARRAY: convert_numericrange_list,
     datatypes.DATATYPE_INT8RANGE_ARRAY: convert_numericrange_list,
-    datatypes.DATATYPE_NUMRANGE_ARRAY: convert_numericrange_list,
+    datatypes.DATATYPE_NUMRANGE_ARRAY: convert_decimalrange_list,
     datatypes.DATATYPE_TSRANGE_ARRAY: convert_timestamprange_list,
     datatypes.DATATYPE_TSTZRANGE_ARRAY: convert_timestamprange_list,
     datatypes.DATATYPE_DATERANGE_ARRAY: convert_timestamprange_list,
