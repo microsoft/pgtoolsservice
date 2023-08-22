@@ -332,7 +332,8 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         return {
             "name": self.name,
             "nspname": self.schema,
-            "cascade": self.cascade
+            "cascade": self.cascade,
+            "conn": self._server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -373,7 +374,8 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
                 "probin": "",
                 "prosrc_c": "",
                 "prosrc": ""
-            }
+            },
+            "conn": self._server.connection.connection
         }
 
     ##########################################################################
