@@ -4,17 +4,20 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
+{% import 'systemobjects.macros' as SYSOBJECTS %} 
 SELECT
-    pr.oid, 
-    pr.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(pr.oid), '') || ')' as name,
-    lanname, 
-    pg_get_userbyid(proowner) as funcowner, 
+    pr.oid,
+    pr.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(pr.oid), '') || ')' AS name,
+    lanname,
+    pg_catalog.pg_get_userbyid(proowner) AS funcowner,
     description,
     nsp.nspname AS schema,
     nsp.oid AS schemaoid,
-    {{ SYSOBJECTS.IS_SYSTEMSCHEMA('nsp') }} as is_system
+    {{ SYSOBJECTS.IS_SYSTEMSCHEMA('nsp') }} AS is_system
 FROM
     pg_catalog.pg_proc pr
+INNER JOIN
+    pg_catalog.pg_namespace nsp ON pr.pronamespace = nsp.oid
 JOIN
     pg_catalog.pg_type typ ON typ.oid=prorettype
 JOIN
