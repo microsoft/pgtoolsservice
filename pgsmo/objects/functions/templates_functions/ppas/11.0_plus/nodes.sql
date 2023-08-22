@@ -22,7 +22,8 @@ JOIN
 LEFT OUTER JOIN
     pg_catalog.pg_description des ON (des.objoid=pr.oid AND des.classoid='pg_proc'::regclass)
 WHERE
-   pr.prokind IN ('f', 'w')
+    pr.prokind IN ('f', 'w')
+    AND pr.protype = '0'::char
 {% if fnid %}
     AND pr.oid = {{ fnid|qtLiteral(conn) }}
 {% endif %}

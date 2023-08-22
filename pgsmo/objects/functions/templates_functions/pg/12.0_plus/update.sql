@@ -6,9 +6,15 @@
  #}
 {% import 'security.macros' as SECLABEL %}
 {% import 'privilege.macros' as PRIVILEGE %}
-{% import 'variable.macros' as VARIABLE %}
+{% import 'variable.macros' as VARIABLE %}{% if data %}
 {% set name = o_data.name %}
 {% set exclude_quoting = ['search_path'] %}
+{% set set_variables = [] %}
+{% if 'merged_variables' in data and data.merged_variables|length > 0 %}
+{% set set_variables = data.merged_variables %}
+{% elif 'variables' in o_data and o_data.variables|length > 0 %}
+{% set set_variables = o_data.variables %}
+{% endif %}
 {% if data.name %}
 {% if data.name != o_data.name %}
 ALTER FUNCTION {{ conn|qtIdent(o_data.pronamespace, o_data.name) }}({{
@@ -28,8 +34,8 @@ CREATE OR REPLACE FUNCTION {{ conn|qtIdent(o_data.pronamespace, name) }}({% if d
     RETURNS {% if 'prorettypename' in data %}{{ data.prorettypename }}{% else %}{{ o_data.prorettypename }}{% endif %}
 
 {% if 'lanname' in data %}
-    LANGUAGE {{ data.lanname }} {% else %}
-    LANGUAGE {{ o_data.lanname }}
+    LANGUAGE {{ data.lanname|qtLiteral(conn) }} {% else %}
+    LANGUAGE {{ o_data.lanname|qtLiteral(conn) }}
     {% endif %}{% if 'provolatile' in data and data.provolatile %}{{ data.provolatile }} {% elif 'provolatile' not in data and o_data.provolatile %}{{ o_data.provolatile }}{% endif %}
 {% if ('proleakproof' in data and data.proleakproof) or ('proleakproof' not in data and o_data.proleakproof) %} LEAKPROOF{% elif 'proleakproof' in data and not data.proleakproof %} NOT LEAKPROOF{% endif %}
 {% if ('proisstrict' in data and data.proisstrict) or ('proisstrict' not in data and o_data.proisstrict) %} STRICT{% endif %}
@@ -42,15 +48,15 @@ CREATE OR REPLACE FUNCTION {{ conn|qtIdent(o_data.pronamespace, name) }}({% if d
 
     ROWS {{data.prorows}}{% elif data.prorows is not defined and o_data.prorows and o_data.prorows != '0' %}    ROWS {{o_data.prorows}} {%endif %}
 
-    {% if data.prosupportfunc %}SUPPORT {{ data.prosupportfunc }}{% elif data.prosupportfunc is not defined and o_data.prosupportfunc %}SUPPORT {{ o_data.prosupportfunc }}{% endif -%}{% if data.merged_variables %}{% for v in data.merged_variables %}
+    {% if data.prosupportfunc %}SUPPORT {{ data.prosupportfunc }}{% elif data.prosupportfunc is not defined and o_data.prosupportfunc %}SUPPORT {{ o_data.prosupportfunc }}{% endif -%}{% if set_variables and set_variables|length > 0 %}{% for v in set_variables %}
 
-    SET {{ conn|qtIdent(v.name) }}={% if v.name in exclude_quoting %}{{ v.value }}{% else %}{{ v.value }}{% endif %}{% endfor -%}
+    SET {{ conn|qtIdent(v.name) }}={% if v.name in exclude_quoting %}{{ v.value }}{% else %}{{ v.value|qtLiteral(conn) }}{% endif %}{% endfor -%}
     {% endif %}
 
 AS {% if (data.lanname == 'c' or o_data.lanname == 'c') and ('probin' in data or 'prosrc_c' in data) %}
-{% if 'probin' in data %}{{ data.probin }}{% else %}{{ o_data.probin }}{% endif %}, {% if 'prosrc_c' in data %}{{ data.prosrc_c }}{% else %}{{ o_data.prosrc_c }}{% endif %}{% elif 'prosrc' in data %}
+{% if 'probin' in data %}{{ data.probin|qtLiteral(conn) }}{% else %}{{ o_data.probin|qtLiteral(conn) }}{% endif %}, {% if 'prosrc_c' in data %}{{ data.prosrc_c|qtLiteral(conn) }}{% else %}{{ o_data.prosrc_c|qtLiteral(conn) }}{% endif %}{% elif 'prosrc' in data %}
 $BODY${{ data.prosrc }}$BODY${% elif o_data.lanname == 'c' %}
-{{ o_data.probin }}, {{ o_data.prosrc_c }}{% else %}
+{{ o_data.probin|qtLiteral(conn) }}, {{ o_data.prosrc_c|qtLiteral(conn) }}{% else %}
 $BODY${{ o_data.prosrc }}$BODY${% endif -%};
 {% endif -%}
 {% if data.funcowner %}
@@ -118,7 +124,7 @@ ALTER FUNCTION {{ conn|qtIdent(o_data.pronamespace, name) }}({{o_data.proargtype
 {% if data.description is defined and data.description != o_data.description%}
 
 COMMENT ON FUNCTION {{ conn|qtIdent(o_data.pronamespace, name) }}({{o_data.proargtypenames }})
-    IS {{ data.description }};
+    IS {{ data.description|qtLiteral(conn) }};
 {% endif -%}
 
 {% if data.pronamespace %}

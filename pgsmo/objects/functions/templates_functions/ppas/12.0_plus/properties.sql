@@ -14,6 +14,7 @@ SELECT
     typns.nspname AS typnsp, lanname, proargnames, pg_catalog.oidvectortypes(proargtypes) AS proargtypenames,
     pg_catalog.pg_get_expr(proargdefaults, 'pg_catalog.pg_class'::regclass) AS proargdefaultvals,
     pr.pronargdefaults, proconfig, pg_catalog.pg_get_userbyid(proowner) AS funcowner, description,
+    CASE WHEN prosupport = 0::oid THEN '' ELSE prosupport::text END AS prosupportfunc,
     (SELECT
         pg_catalog.array_agg(provider || '=' || label)
     FROM
