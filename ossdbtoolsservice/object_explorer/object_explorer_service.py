@@ -222,8 +222,7 @@ class ObjectExplorerService(object):
             if session.server.connection.connection.broken and not retry:
                 self._expand_node_thread(is_refresh, request_context, params, session, True)
             else:
-                error = f'Failed to expand node: {str(e)}'    # TODO: Localize
-                self._expand_node_error(request_context, params, error)
+                self._expand_node_error(request_context, params, str(e))
 
     def _expand_node_error(self, request_context: RequestContext, params: ExpandParameters, message: str):
         if self._service_provider.logger is not None:
