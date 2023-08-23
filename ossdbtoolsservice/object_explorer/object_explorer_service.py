@@ -187,42 +187,43 @@ class ObjectExplorerService(object):
         if session is None:
             return
 
-        if session.server.connection.connection.broken:
-            conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-            connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
-            session.server.set_connection(connection)
-
         # Step 2: Start a task for expanding the node
+        key = params.node_path
+        if is_refresh:
+            task = session.refresh_tasks.get(key)
+        else:
+            task = session.expand_tasks.get(key)
+
+        if task is not None and task.is_alive():
+            return
+
+        new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
+        new_task.daemon = True
+        new_task.start()
+
+        if is_refresh:
+            session.refresh_tasks[key] = new_task
+        else:
+            session.expand_tasks[key] = new_task
+
+    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession, retry = False):
         try:
-            key = params.node_path
-            if is_refresh:
-                task = session.refresh_tasks.get(key)
-            else:
-                task = session.expand_tasks.get(key)
+            if session.server.connection.connection.broken:
+                conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+                connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
+                session.server.set_connection(connection)
+                session.server.refresh()
 
-            if task is not None and task.is_alive():
-                return
-
-            new_task = threading.Thread(target=self._expand_node_thread, args=(is_refresh, request_context, params, session))
-            new_task.daemon = True
-            new_task.start()
-
-            if is_refresh:
-                session.refresh_tasks[key] = new_task
-            else:
-                session.expand_tasks[key] = new_task
-
-        except Exception as e:
-            self._expand_node_error(request_context, params, str(e))
-
-    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession):
-        try:
             response = ExpandCompletedParameters(session.id, params.node_path)
             response.nodes = self._route_request(is_refresh, session, params.node_path)
 
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
         except Exception as e:
-            self._expand_node_error(request_context, params, str(e))
+            if session.server.connection.connection.broken and not retry:
+                self._expand_node_thread(is_refresh, request_context, params, session, True)
+            else:
+                error = f'Failed to expand node: {str(e)}'    # TODO: Localize
+                self._expand_node_error(request_context, params, error)
 
     def _expand_node_error(self, request_context: RequestContext, params: ExpandParameters, message: str):
         if self._service_provider.logger is not None:

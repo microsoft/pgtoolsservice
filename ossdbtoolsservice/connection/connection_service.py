@@ -195,7 +195,7 @@ class ConnectionService:
         """Close a connection in response to an incoming disconnection request"""
         request_context.send_response(self.disconnect(params.owner_uri, params.type))
 
-    def handle_list_databases(self, request_context: RequestContext, params: ListDatabasesParams):
+    def handle_list_databases(self, request_context: RequestContext, params: ListDatabasesParams, retry = False):
         """List all databases on the server that the given URI has a connection to"""
         connection = None
         try:
@@ -209,9 +209,13 @@ class ConnectionService:
             query_results = connection.list_databases()
 
         except Exception as err:
-            if self._service_provider is not None and self._service_provider.logger is not None:
-                self._service_provider.logger.exception('Error listing databases')
-            request_context.send_error(str(err))
+            if not retry and connection.connection.broken:
+                self._service_provider.logger.warn('Server closed the connection unexpectedly. Attempting to reconnect...')
+                self.handle_list_databases(request_context, params, True)
+            else:
+                if self._service_provider is not None and self._service_provider.logger is not None:
+                    self._service_provider.logger.exception('Error listing databases')
+                request_context.send_error(str(err))
             return
 
         database_names = [result[0] for result in query_results]
