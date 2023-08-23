@@ -44,7 +44,7 @@ ALTER FUNCTION {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args
 {% endfor %}{% endif %}
 {% if data.revoke_all %}
 
-{{ PRIVILEGE.UNSETALL(conn, "FUNCTION", "PUBLIC", data.name, data.pronamespace, data.func_args_without)}}
+{{ PRIVILEGE.UNSETALL(conn, "FUNCTION", "PUBLIC", data.name, data.pronamespace, data.func_args)}}
 {% endif %}
 {% if data.description %}
 
