@@ -1,9 +1,7 @@
 import psycopg
 from psycopg.types.string import TextLoader
 from psycopg.types.json import _JsonDumper
-from psycopg._encodings import py_codecs as encodings
 from psycopg.types.net import InetLoader
-from psycopg.adapt import Loader
 from ipaddress import ip_address, ip_interface
 
 encode_dict = {
@@ -26,8 +24,8 @@ PSYCOPG_SUPPORTED_STRING_DATATYPES = (
 )
 
 PSYCOPG_SUPPORTED_STRING_NUMERIC_DATATYPES = (
-    # Real, double precision, numeric, bigint
-    700, 701, 1700, 20
+    # Real, double precision, numeric, bigint, oid
+    700, 701, 1700, 20, 26
 )
 
 # int4range, int8range, numrange, daterange tsrange, tstzrange
@@ -93,6 +91,7 @@ PSYCOPG_SUPPORTED_RANGE_ARRAY_TYPES = (3905, 3927, 3907, 3913, 3909, 3911, 1270)
 # datemultirange[] tsmultirange[], tstzmultirange[]
 PSYCOPG_SUPPORTED_MULTIRANGE_ARRAY_TYPES = (6155, 6150, 6157, 6151, 6152, 6153)
 
+
 class pgAdminInetLoader(InetLoader):
     def load(self, data):
         if isinstance(data, memoryview):
@@ -128,37 +127,35 @@ class TextLoaderpgAdmin(TextLoader):
                     return bytes(data).decode('UTF-8')
                 return data.decode('UTF-8')
 
+
 class JsonDumperpgAdmin(_JsonDumper):
-    
-        def dump(self, obj):
-            return self.dumps(obj).encode()
+
+    def dump(self, obj):
+        return self.dumps(obj).encode()
+
 
 def addAdapters():
     # This registers a unicode type caster for datatype 'RECORD'.
     for typ in PSYCOPG_SUPPORTED_RECORD_TYPES:
-        psycopg.adapters.register_loader(typ,
-                                         TextLoaderpgAdmin)
+        psycopg.adapters.register_loader(typ, TextLoaderpgAdmin)
 
     for typ in PSYCOPG_SUPPORTED_STRING_DATATYPES + PSYCOPG_SUPPORTED_STRING_NUMERIC_DATATYPES +\
             PSYCOPG_SUPPORTED_RANGE_TYPES + PSYCOPG_SUPPORTED_MULTIRANGE_TYPES +\
             PSYCOPG_SUPPORTED_ARRAY_OF_STRING_DATATYPES:
-        psycopg.adapters.register_loader(typ,
-                                         TextLoaderpgAdmin)
-    
+        psycopg.adapters.register_loader(typ, TextLoaderpgAdmin)
+
     for typ in PSYCOPG_SUPPORTED_BUILTIN_ARRAY_DATATYPES +\
-        PSYCOPG_SUPPORTED_JSON_ARRAY_TYPES +\
-        PSYCOPG_SUPPORTED_IPADDRESS_ARRAY_TYPES +\
-        PSYCOPG_SUPPORTED_RANGE_ARRAY_TYPES + \
-        PSYCOPG_SUPPORTED_MULTIRANGE_ARRAY_TYPES:
-        psycopg.adapters.register_loader(typ,
-                                         TextLoaderpgAdmin)
-    
+        PSYCOPG_SUPPORTED_JSON_ARRAY_TYPES + PSYCOPG_SUPPORTED_IPADDRESS_ARRAY_TYPES +\
+            PSYCOPG_SUPPORTED_RANGE_ARRAY_TYPES + PSYCOPG_SUPPORTED_MULTIRANGE_ARRAY_TYPES:
+        psycopg.adapters.register_loader(typ, TextLoaderpgAdmin)
+
     for typ in PSYCOPG_SUPPORTED_JSON_TYPES + PSYCOPG_SUPPORTED_JSON_ARRAY_TYPES:
         psycopg.adapters.register_loader(typ, TextLoaderpgAdmin)
-    
+
     psycopg.adapters.register_loader("inet", pgAdminInetLoader)
     psycopg.adapters.register_loader("cidr", pgAdminInetLoader)
     psycopg.adapters.register_dumper(dict, JsonDumperpgAdmin)
+
 
 def get_encoding(key):
     """
@@ -175,7 +172,7 @@ def get_encoding(key):
     try:
         postgres_encoding = psycopg._encodings.py2pgenc(key).decode()
     except Exception:
-        postgres_encoding = 'utf-8'        
+        postgres_encoding = 'utf-8'
 
     python_encoding = psycopg._encodings._py_codecs.get(postgres_encoding,
                                                         'utf-8')

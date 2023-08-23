@@ -45,7 +45,7 @@ def get_columns_info(cursor) -> List[DbColumn]:
 
             for index, column in enumerate(cursor.description):
                 db_column = DbColumn.from_cursor_description(index, column)
-                db_column.data_type = rows_dict.get(column[1])
+                db_column.data_type = rows_dict.get(str(column[1]))
                 db_column.provider = constants.PG_PROVIDER_NAME
                 columns_info.append(db_column)
 
