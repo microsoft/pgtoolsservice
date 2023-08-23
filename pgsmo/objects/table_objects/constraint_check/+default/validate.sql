@@ -4,9 +4,5 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-SELECT amname
-FROM pg_am
-WHERE EXISTS (SELECT 1
-              FROM pg_proc
-              WHERE oid=amhandler)
-ORDER BY amname;
+ALTER TABLE IF EXISTS {{ conn|qtIdent(data.schema, data.table) }}
+    VALIDATE CONSTRAINT {{ conn|qtIdent(data.name) }};

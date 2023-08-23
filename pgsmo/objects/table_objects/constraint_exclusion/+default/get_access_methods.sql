@@ -5,8 +5,8 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT amname
-FROM pg_am
+FROM pg_catalog.pg_am
 WHERE EXISTS (SELECT 1
-              FROM pg_proc
-              WHERE oid=amgettuple)
+              FROM pg_catalog.pg_proc
+              WHERE oid=amhandler)
 ORDER BY amname;

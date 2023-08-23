@@ -12,7 +12,9 @@ from pgsmo.objects.table_objects.constraints import (
     CheckConstraint,
     ExclusionConstraint,
     ForeignKeyConstraint,
-    IndexConstraint
+    IndexConstraint,
+    PrimaryKeyConstraint,
+    UniqueKeyConstraint
 )
 from pgsmo.objects.table_objects.constraints_utils import (
     get_index_constraints,
@@ -63,13 +65,27 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         # Declare child items
         self._check_constraints: NodeCollection[CheckConstraint] = self._register_child_collection(CheckConstraint)
         self._columns: NodeCollection[Column] = self._register_child_collection(Column)
+
+        # Constraints
         self._exclusion_constraints: NodeCollection[ExclusionConstraint] = self._register_child_collection(
             ExclusionConstraint
         )
         self._foreign_key_constraints: NodeCollection[ForeignKeyConstraint] = self._register_child_collection(
             ForeignKeyConstraint
         )
+        self._primary_key_constraints: NodeCollection[PrimaryKeyConstraint] = self._register_child_collection(
+            PrimaryKeyConstraint,
+            context_args={"constraint_type": "p"}
+        )
+        self._unique_key_constraints: NodeCollection[UniqueKeyConstraint] = self._register_child_collection(
+            UniqueKeyConstraint,
+            context_args={"constraint_type": "u"}
+        )
+
+        # Index constraints should be comprised of primary key constraints ("p"), unique key constraints ("u"), and exclusion constraints ("x"). Exclusion
+        # constraints have their own separate templates, while primary key and unique key constraints share templates from constraint_index
         self._index_constraints: NodeCollection[IndexConstraint] = self._register_child_collection(IndexConstraint)
+
         self._indexes: NodeCollection[Index] = self._register_child_collection(Index)
         self._rules: NodeCollection[Rule] = self._register_child_collection(Rule)
         self._triggers: NodeCollection[Trigger] = self._register_child_collection(Trigger)
@@ -112,6 +128,14 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
     @property
     def index_constraints(self) -> NodeCollection[IndexConstraint]:
         return self._index_constraints
+
+    @property
+    def primary_key_constraints(self) -> NodeCollection[PrimaryKeyConstraint]:
+        return self._primary_key_constraints
+
+    @property
+    def unique_key_constraints(self) -> NodeCollection[UniqueKeyConstraint]:
+        return self._unique_key_constraints
 
     @property
     def indexes(self) -> NodeCollection[Index]:
