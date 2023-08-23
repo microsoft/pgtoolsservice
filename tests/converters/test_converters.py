@@ -1,6 +1,3 @@
-from datetime import datetime, date, time
-from ipaddress import IPv4Network, IPv6Network
-from psycopg.types.range import Range
 import unittest
 from unittest import mock
 
@@ -51,10 +48,7 @@ class TestConverters(unittest.TestCase):
 
         for i in range(num_times):
             self._execute_query(request_params, i)
-            if not array_type_only:
-                self._compare_results(expected_results, i)
-            else:
-                self._compare_results_array(expected_results, i)
+            self._compare_results(expected_results, i)
 
     def _execute_query(self, request_params, batch_index):
         subset_params = SubsetParams().from_dict({
@@ -66,44 +60,19 @@ class TestConverters(unittest.TestCase):
         })
         self.query_execution_service._handle_subset_request(self.request_context, subset_params)
 
-    def _compare_results_array(self, expected_results, batch_index):
-        query_results = self.request_context.last_response_params.result_subset
-
-        actual_value = query_results.rows[0][0].raw_object
-        expected_value = expected_results[batch_index][0][0]
-
-        # PG null value is null while python is
-        actual_value = str(actual_value).lower().replace("'", '"')
-        expected_value = str(expected_value).lower().replace("'", '"')
-
-        self.assertEqual(actual_value, expected_value)
-
     def _compare_results(self, expected_results, batch_index):
         query_results = self.request_context.last_response_params.result_subset
 
         actual_value = query_results.rows[0][0].raw_object
         expected_value = expected_results[batch_index][0][0]
 
-        if isinstance(expected_value, list):
-            if all(isinstance(item, (date, time, datetime,)) for item in expected_value):
-                expected_value = [item.isoformat() for item in expected_value]
-            elif all(isinstance(item, (Range,)) for item in expected_value):
-                expected_value = [self._range_to_string(item) for item in expected_value]
-            elif all(isinstance(item, (IPv4Network, IPv6Network)) for item in expected_value):
-                actual_value = actual_value.replace("\\\"", "")
-        else:
-            if isinstance(expected_value, (date, time, datetime)):
-                expected_value = expected_value.isoformat()
-            elif isinstance(expected_value, (Range)):
-                expected_value = self._range_to_string(expected_value)
-            elif isinstance(expected_value, (IPv4Network, IPv6Network)):
-                actual_value = actual_value.replace("\"", "")
+        print(actual_value, expected_value)
 
-        expected_value = [str(item).lower() for item in expected_value] if isinstance(expected_value, list) else expected_value
+        # expected_value = [str(item) for item in expected_value] if isinstance(expected_value, list) else expected_value
+        expected_value = str(expected_value).replace('None', 'null').replace('\"', '\'')
+        actual_value = str(actual_value).replace('None', 'null').replace('\"', '\'')
+        print(actual_value, expected_value)
 
-        # PG null value is null while python is
-        actual_value = str(actual_value).replace('null', '"None"').lower().replace("\"", "").replace("\'", "")
-        expected_value = str(expected_value).lower().replace("\'", "").replace("\"", "")
         self.assertEqual(actual_value, expected_value)
 
     @integration_test
@@ -146,19 +115,47 @@ class TestConverters(unittest.TestCase):
         self.generic_test(connection, "'192.168.1.0/24'", 'cidr')
         self.generic_test(connection, "'2001:0db8:85a3::/64'", 'cidr')
 
+        # MAC address type and its array
+        self.generic_test(connection, "'08:00:2b:01:02:03'", 'macaddr')
+
+        # Bit and its array
+        self.generic_test(connection, "B'1101'", 'bit')
+        self.generic_test(connection, "B'11010'", 'bit varying')
+
+        # tsvector and its array
+        self.generic_test(connection, "'hello world'", 'tsvector')
+        self.generic_test(connection, "'hello & world'", 'tsquery')
+
+        # xml and its array
+        self.generic_test(connection, "'<tag>Hello world</tag>'", 'xml')
+
+        # Geometric types
+        geometric_values = {
+            'point': "'(1,2)'",
+            'line': "'{1,2,3}'",
+            'lseg': "'[(1,2),(3,4)]'",
+            'box': "'((1,2),(3,4))'",
+            'path': "'[(1,2),(3,4),(5,6)]'",
+            'polygon': "'((1,2),(3,4),(5,6))'",
+            'circle': "'<(1,2),3>'"
+        }
+
+        for geo_type, geo_value in geometric_values.items():
+            self.generic_test(connection, geo_value, geo_type)
+
+        # OID related types
+        oid_types = [
+            'regproc', 'regprocedure', 'regoper', 'regoperator',
+            'regclass', 'regtype', 'regrole', 'regnamespace',
+            'regconfig', 'regdictionary'
+        ]
+
+        for oid_type in oid_types:
+            self.generic_test(connection, '1234', oid_type)
+
+        self.generic_test(connection, "'0/0'", 'pg_lsn')
+
         # array only data types
         self.generic_test(connection, "ARRAY['abc', 'def']", 'varchar[]', True)
         self.generic_test(connection, "ARRAY['a'::char, 'b']", 'char[]', True)
         self.generic_test(connection, "ARRAY['abc', 'def']", 'text[]', True)
-
-    def _range_to_string(self, r):
-        items = [
-            r._bounds[0],
-            r._lower.isoformat() if isinstance(r._lower, (date, time, datetime)) else str(r._lower),
-            ",",
-            r._upper.isoformat() if isinstance(r._upper, (date, time, datetime)) else str(r._upper),
-            r._bounds[1]]
-        return "".join(items)
-
-    def _ip_address_to_string(self, ip):
-        return '\\' + "\"" + str(ip) + "\"" + '\\'
