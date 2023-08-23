@@ -123,7 +123,7 @@ class TestConverters(unittest.TestCase):
         self.generic_test(connection, "'12:34:56+00'", 'timetz')
         self.generic_test(connection, "'2023-01-01 12:34:56'", 'timestamp')
         self.generic_test(connection, "'2023-01-01 12:34:56+00'", 'timestamptz')
-        self.generic_test(connection, "'5 days 3 hours'", 'interval')
+        self.generic_test(connection, "'1 year 2 months 5 days 3 hours'", 'interval')
         self.generic_test(connection, "'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'", 'uuid')
         self.generic_test(connection, r"E'\\xDEADBEEF'", 'bytea')
         self.generic_test(connection, "'{\"key\": \"value\"}'", 'json')
