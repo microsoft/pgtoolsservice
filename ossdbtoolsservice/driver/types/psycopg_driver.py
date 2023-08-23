@@ -64,7 +64,7 @@ class PostgreSQLConnection(ServerConnection):
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg.connect(**connection_options)
-        addAdapters(self._conn)
+        addAdapters()
 
         # Set autocommit mode so that users have control over transactions
         self._conn.autocommit = True
