@@ -113,7 +113,7 @@ class NodeObject(metaclass=ABCMeta):
         template_vars = {"oid": self.oid}
         extended_vars = self.extended_vars
         template_vars.update(extended_vars)
-        template_vars.update({"conn": self._server.connection.connection})
+        template_vars.update({"conn": self.server.connection.connection})
         return template_vars
 
     # METHODS ##############################################################
