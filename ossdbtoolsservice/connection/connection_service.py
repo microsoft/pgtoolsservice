@@ -209,7 +209,7 @@ class ConnectionService:
             query_results = connection.list_databases()
 
         except Exception as err:
-            if not retry and connection.connection.broken:
+            if connection is not None and connection.connection.broken and not retry:
                 self._service_provider.logger.warn('Server closed the connection unexpectedly. Attempting to reconnect...')
                 self.handle_list_databases(request_context, params, True)
             else:

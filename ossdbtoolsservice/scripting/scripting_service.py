@@ -57,7 +57,7 @@ class ScriptingService(object):
             script = scripter.script(scripting_operation, object_metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:
-            if not retry and connection.connection.broken:
+            if connection is not None and connection.connection.broken and not retry:
                 self._service_provider.logger.warn('Server closed the connection unexpectedly. Attempting to reconnect...')
                 self._handle_script_as_request(request_context, params, True)
             else:

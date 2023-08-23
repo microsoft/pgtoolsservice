@@ -208,7 +208,7 @@ class ObjectExplorerService(object):
 
     def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession, retry=False):
         try:
-            if session.server.connection.connection.broken:
+            if session.server.connection is not None and session.server.connection.connection.broken:
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
                 session.server.set_connection(connection)
@@ -219,7 +219,7 @@ class ObjectExplorerService(object):
 
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
         except Exception as e:
-            if session.server.connection.connection.broken and not retry:
+            if session.server.connection is not None and session.server.connection.connection.broken and not retry:
                 self._expand_node_thread(is_refresh, request_context, params, session, True)
             else:
                 self._expand_node_error(request_context, params, str(e))
