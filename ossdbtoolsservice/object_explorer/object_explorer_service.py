@@ -208,18 +208,16 @@ class ObjectExplorerService(object):
 
     def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession, retry=False):
         try:
-            if session.server.connection is not None and session.server.connection.connection.broken:
-                conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-                connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
-                session.server.set_connection(connection)
-                session.server.refresh()
-
             response = ExpandCompletedParameters(session.id, params.node_path)
             response.nodes = self._route_request(is_refresh, session, params.node_path)
 
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
         except Exception as e:
             if session.server.connection is not None and session.server.connection.connection.broken and not retry:
+                conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+                connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
+                session.server.set_connection(connection)
+                session.server.refresh()
                 self._expand_node_thread(is_refresh, request_context, params, session, True)
             else:
                 self._expand_node_error(request_context, params, str(e))
@@ -253,7 +251,7 @@ class ObjectExplorerService(object):
             request_context.send_response(True)
             return session
         except Exception as e:
-            message = f'Failed to expand node: {str(e)}'    # TODO: Localize
+            message = f'Failed to expand node base: {str(e)}'    # TODO: Localize
             if self._service_provider.logger is not None:
                 self._service_provider.logger.error(message)
             request_context.send_error(message)

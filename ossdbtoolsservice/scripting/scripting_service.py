@@ -46,7 +46,10 @@ class ScriptingService(object):
     def _handle_script_as_request(self, request_context: RequestContext, params: ScriptAsParameters, retry=False) -> None:
         try:
             utils.validate.is_not_none('params', params)
+        except Exception as e:
+            self._request_error(request_context, params, str(e))
 
+        try:
             scripting_operation = params.operation
             connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
             connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
@@ -61,6 +64,9 @@ class ScriptingService(object):
                 self._service_provider.logger.warn('Server closed the connection unexpectedly. Attempting to reconnect...')
                 self._handle_script_as_request(request_context, params, True)
             else:
-                if self._service_provider.logger is not None:
-                    self._service_provider.logger.exception('Scripting operation failed')
-                request_context.send_error(str(e), params)
+                self._request_error(request_context, params, str(e))
+
+    def _request_error(self, request_context: RequestContext, params: ScriptAsParameters, message: str):
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.exception('Scripting operation failed')
+        request_context.send_error(message, params)
