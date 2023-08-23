@@ -195,7 +195,7 @@ class ConnectionService:
         """Close a connection in response to an incoming disconnection request"""
         request_context.send_response(self.disconnect(params.owner_uri, params.type))
 
-    def handle_list_databases(self, request_context: RequestContext, params: ListDatabasesParams, retry = False):
+    def handle_list_databases(self, request_context: RequestContext, params: ListDatabasesParams, retry=False):
         """List all databases on the server that the given URI has a connection to"""
         connection = None
         try:

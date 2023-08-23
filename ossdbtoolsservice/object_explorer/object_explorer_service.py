@@ -206,7 +206,7 @@ class ObjectExplorerService(object):
         else:
             session.expand_tasks[key] = new_task
 
-    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession, retry = False):
+    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession, retry=False):
         try:
             if session.server.connection.connection.broken:
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]

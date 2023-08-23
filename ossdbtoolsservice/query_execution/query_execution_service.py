@@ -348,7 +348,7 @@ class QueryExecutionService(object):
         except BaseException as e:
             raise e
 
-    def _execute_query_request_worker(self, worker_args: ExecuteRequestWorkerArgs, retry = False):
+    def _execute_query_request_worker(self, worker_args: ExecuteRequestWorkerArgs, retry=False):
         """Worker method for 'handle execute query request' thread"""
 
         _check_and_fire(worker_args.before_query_initialize, {})

@@ -43,7 +43,7 @@ class ScriptingService(object):
         return object_metadata
 
     # REQUEST HANDLERS #####################################################
-    def _handle_script_as_request(self, request_context: RequestContext, params: ScriptAsParameters, retry = False) -> None:
+    def _handle_script_as_request(self, request_context: RequestContext, params: ScriptAsParameters, retry=False) -> None:
         try:
             utils.validate.is_not_none('params', params)
 
