@@ -88,7 +88,8 @@ class CheckConstraint(Constraint):
                 "comment": self.comment,
                 "connoinherit": self.no_inherit,
                 "convalidated": self.convalidated
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _delete_query_data(self) -> dict:
@@ -98,7 +99,8 @@ class CheckConstraint(Constraint):
                 "name": self.name,
                 "nspname": self.parent.parent.name,
                 "relname": self.parent.name
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -116,7 +118,8 @@ class CheckConstraint(Constraint):
                 "nspname": "",
                 "relname": "",
                 "convalidated": ""
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
 
@@ -176,7 +179,8 @@ class ExclusionConstraint(Constraint):
                 "condeferred": self.deferred,
                 "constraint": self.constraint,
                 "comment": self.comment
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _delete_query_data(self) -> dict:
@@ -187,7 +191,8 @@ class ExclusionConstraint(Constraint):
                 "table": self.parent.name,
                 "name": self.name
             },
-            "cascade": self.cascade
+            "cascade": self.cascade,
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -206,7 +211,8 @@ class ExclusionConstraint(Constraint):
                 "spcname": "",
                 "fillfactor": "",
                 "comment": ""
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
 
@@ -272,7 +278,8 @@ class ForeignKeyConstraint(Constraint):
                 "condeferred": self.deferred,
                 "convalidated": self.convalidated,
                 "comment": self.comment
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _delete_query_data(self) -> dict:
@@ -283,7 +290,8 @@ class ForeignKeyConstraint(Constraint):
                 "table": self.parent.name,
                 "name": self.name
             },
-            "cascade": self.cascade
+            "cascade": self.cascade,
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -300,7 +308,8 @@ class ForeignKeyConstraint(Constraint):
                 "name": "",
                 "convalidated": "",
                 "comment": ""
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
 
@@ -352,7 +361,8 @@ class IndexConstraint(Constraint):
                 "condeferrable": self.deferrable,
                 "condeferred": self.deferred,
                 "comment": self.comment
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _delete_query_data(self) -> dict:
@@ -363,7 +373,8 @@ class IndexConstraint(Constraint):
                 "table": self.parent.name,
                 "name": self.name
             },
-            "cascade": self.cascade
+            "cascade": self.cascade,
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -382,7 +393,8 @@ class IndexConstraint(Constraint):
                 "spcname": "",
                 "fillfactor": "",
                 "comment": ""
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
 
