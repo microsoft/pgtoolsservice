@@ -283,6 +283,10 @@ class Server:
         }
         return object_map[object_type.capitalize()](metadata)
 
+    def set_connection(self, conn: ServerConnection) -> ServerConnection:
+        """Reset connection to the server/db that this object will use"""
+        self._conn = conn
+
     # IMPLEMENTATION DETAILS ###############################################
 
     def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:

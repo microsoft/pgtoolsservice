@@ -187,6 +187,11 @@ class ObjectExplorerService(object):
         if session is None:
             return
 
+        if session.server.connection.connection.broken:
+            conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+            connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
+            session.server.set_connection(connection)
+
         # Step 2: Start a task for expanding the node
         try:
             key = params.node_path
