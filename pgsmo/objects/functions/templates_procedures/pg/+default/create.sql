@@ -13,28 +13,28 @@
 {% if query_for == 'sql_panel' and func_def is defined %}
 CREATE OR REPLACE PROCEDURE {{func_def}}
 {% else %}
-CREATE{% if add_replace_clause %} OR REPLACE{% endif %} PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name)|replace('"', '') }}{% if data.arguments is defined %}
+CREATE{% if add_replace_clause %} OR REPLACE{% endif %} PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}{% if data.arguments is defined %}
 ({% for p in data.arguments %}{% if p.argmode %}{{p.argmode}} {% endif %}{% if p.argname %}{{ conn|qtIdent(p.argname)}} {% endif %}{% if p.argtype %}{{ p.argtype }}{% endif %}{% if p.argdefval %} DEFAULT {{p.argdefval}}{% endif %}
 {% if not loop.last %}, {% endif %}
 {% endfor -%}
 {% endif %}
 )
 {% endif %}
-LANGUAGE {{ data.lanname }}{% if data.prosecdef %}
+LANGUAGE {{ data.lanname|qtLiteral(conn) }}{% if data.prosecdef %}
 
     SECURITY DEFINER {% endif %}
 {% if data.variables %}{% for v in data.variables %}
 
-    SET {{ conn|qtIdent(v.name) }}={% if v.name in exclude_quoting %}{{ v.value }}{% else %}{{ v.value }}{% endif %}{% endfor -%}
+    SET {{ conn|qtIdent(v.name) }}={% if v.name in exclude_quoting %}{{ v.value }}{% else %}{{ v.value|qtLiteral(conn) }}{% endif %}{% endfor -%}
 {% endif %}
 
 AS {% if data.lanname == 'c' %}
-{{ data.probin }}, {{ data.prosrc_c }}
+{{ data.probin|qtLiteral(conn) }}, {{ data.prosrc_c|qtLiteral(conn) }}
 {% else %}
 $BODY${{ data.prosrc }}$BODY${% endif -%};
 
 {% if data.funcowner %}
-ALTER PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name)|replace('"', '') }}({{data.func_args}})
+ALTER PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args}})
     OWNER TO {{ conn|qtIdent(data.funcowner) }};
 {% endif -%}
 
@@ -49,8 +49,8 @@ ALTER PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name)|replace('"', '') }
 {% endif %}
 {% if data.description %}
 
-COMMENT ON PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name)|replace('"', '') }}({{data.func_args}})
-    IS {{ data.description  }};
+COMMENT ON PROCEDURE {{ conn|qtIdent(data.pronamespace, data.name) }}({{data.func_args}})
+    IS {{ data.description|qtLiteral(conn)  }};
 {% endif -%}
 {% if data.seclabels %}
 {% for r in data.seclabels %}
