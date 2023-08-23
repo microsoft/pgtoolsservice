@@ -189,7 +189,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_check_constraint.create_script()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" CHECK (TestConsrc);' in result)
+        self.assertTrue('ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" CHECK (TestConsrc);' in result)
 
     def test_exclusion_constraint_scripting(self):
         """ Helper function to test create script for exclusion_constraint """
@@ -204,7 +204,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_exclusion_constraint.create_script()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" EXCLUDE USING TestAmname' in result)
+        self.assertTrue('ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" EXCLUDE USING TestAmname' in result)
 
     def test_foreign_key_constraint_scripting(self):
         """ Helper function to test create script for foreign_key_constraint """
@@ -220,7 +220,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_foreign_key_constraint.create_script()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" FOREIGN KEY '
+        self.assertTrue('ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" FOREIGN KEY '
                         '(None, None, None, None, None, None, None, None, None, None, None)\n    '
                         'REFERENCES "TestRemoteSchema"."TestRemoteTable"' in result)
 
@@ -237,7 +237,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_index_constraint.create_script()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName"  USING INDEX "TestIndex";' in result)
+        self.assertTrue('ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName"  USING INDEX "TestIndex";' in result)
 
     def test_rule_scripting(self):
         """ Helper function to test create script for rule """

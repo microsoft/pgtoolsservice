@@ -332,8 +332,10 @@ def _constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSes
                      for node in table.exclusion_constraints])
     node_info.extend([_get_node_info(node, current_path, 'Key_ForeignKey')
                      for node in table.foreign_key_constraints])
-    node_info.extend([_get_node_info(node, current_path, 'Constraint')
-                     for node in table.index_constraints])
+    node_info.extend([_get_node_info(node, current_path, 'Key_PrimaryKey')
+                     for node in table.primary_key_constraints])
+    node_info.extend([_get_node_info(node, current_path, 'Key_UniqueKey')
+                     for node in table.unique_key_constraints])
 
     return sorted(node_info, key=lambda x: x.label)
 
@@ -361,13 +363,13 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
 
     for index in indexes:
         attribs = ['Clustered' if index.is_clustered else 'Non-Clustered']
-        if index.is_primary:
-            node_type = 'Key_PrimaryKey'
-        elif index.is_unique:
-            node_type = 'Key_UniqueKey'
+        # TODO: Add back in the correct node_type, but making sure the SCRIPT AS options still appear in the right-click menu
+        # if index.is_primary:
+        #     node_type = 'Key_PrimaryKey'
+        if index.is_unique:
+            # node_type = 'Key_UniqueKey'
             attribs.insert(0, 'Unique')
-        else:
-            node_type = 'Index'
+        node_type = 'Index'
 
         attrib_str = '(' + ', '.join(attribs) + ')'
         yield _get_node_info(index, current_path, node_type, label=f'{index.name} {attrib_str}')

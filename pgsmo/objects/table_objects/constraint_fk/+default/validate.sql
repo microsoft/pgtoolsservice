@@ -4,5 +4,5 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-ALTER TABLE {{ conn|qtIdent(data.schema, data.table) }}
+ALTER TABLE IF EXISTS {{ conn|qtIdent(data.schema, data.table) }}
     VALIDATE CONSTRAINT {{ conn|qtIdent(data.name) }};

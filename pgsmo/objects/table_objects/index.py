@@ -125,6 +125,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             'tid': self.parent.oid,         # Table/view OID
             'did': self.parent.parent.oid   # Database OID
         }
+
     # IMPLEMENTATION DETAILS ###############################################
 
     @classmethod

@@ -1,6 +1,6 @@
 trigger: none
 pr:
-  - master
+  - release
 strategy:
   matrix:
     linux:
@@ -128,3 +128,50 @@ steps:
     inputs:
       SourceFolder: $(Build.SourcesDirectory)/dist/pgsqltoolsservice
       Contents: CodeSignSummary*.md
+  - task: ArchiveFiles@2
+    displayName: Archive files
+    inputs:
+      rootFolderOrFile: $(Build.SourcesDirectory)/dist/pgsqltoolsservice
+      includeRootFolder: true
+      archiveType: $(archiveType)
+      archiveFile: $(Build.SourcesDirectory)/dist/$(archiveFileName)
+      replaceExistingArchive: true
+  - task: ArchiveFiles@1
+    displayName: Archive files - coverage
+    inputs:
+      rootFolder: $(Build.SourcesDirectory)/cover
+      includeRootFolder: false
+      archiveType: tar
+      archiveFile: $(Build.ArtifactStagingDirectory)/coverage.tar.gz
+    enabled: false
+  - task: CopyFiles@2
+    displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)"
+    inputs:
+      sourceFolder: $(Build.SourcesDirectory)
+      contents: dist/$(archiveFileName)
+      targetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: $(Build.ArtifactStagingDirectory)
+      artifactName: dist
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: current
+      downloadType: specific
+      artifactName: dist
+      downloadPath: $(System.ArtifactsDirectory)
+  - task: GithubRelease@1
+    displayName: Create GitHub Release
+    inputs:
+      gitHubConnection: azuredatastudio-postgresqlext2
+      repositoryName: microsoft/pgtoolsservice
+      tagSource: userSpecifiedTag
+      tag: $(ReleaseVersion)-testing
+      title: $(ReleaseVersion)-testing
+      changeLogType: issueBased
+      changeLogCompareToRelease: lastNonDraftReleaseByTag
+      changeLogCompareToReleaseTag: $(PreviousReleaseVersion)
+      isPreRelease: true
+      assets: |
+        $(System.ArtifactsDirectory)/**/*.gz
+        $(System.ArtifactsDirectory)/**/*.zip
