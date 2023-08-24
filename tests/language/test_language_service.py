@@ -301,7 +301,7 @@ class TestLanguageService(unittest.TestCase):
         expected_output = '\n'.join([
             'SELECT *',
             'FROM foo',
-            'WHERE id in',
+            'WHERE id IN',
             '\t\t\t\t(SELECT id',
             '\t\t\t\t\tFROM bar);'
         ])
@@ -348,7 +348,7 @@ class TestLanguageService(unittest.TestCase):
         expected_output = '\n'.join([
             'SELECT *',
             'FROM foo',
-            'WHERE id in',
+            'WHERE id IN',
             '\t\t\t\t(SELECT id',
             '\t\t\t\t\tFROM bar);'
         ])

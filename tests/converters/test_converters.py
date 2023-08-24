@@ -65,7 +65,7 @@ class TestConverters(unittest.TestCase):
 
         actual_value = query_results.rows[0][0].raw_object
         expected_value = expected_results[batch_index][0][0]
-        
+
         expected_value = str(expected_value).replace('None', 'null').replace('\"', '\'')
         actual_value = str(actual_value).replace('None', 'null').replace('\"', '\'')
 
