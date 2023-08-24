@@ -106,5 +106,6 @@ def convert_bytes_to_daterange_format_str(value) -> str:
 PG_DATATYPE_READER_MAP = {
     datatypes.DATATYPE_BOOL: convert_bytes_to_bool,
     datatypes.DATATYPE_SMALLINT: convert_bytes_to_short,
-    datatypes.DATATYPE_INTEGER: convert_bytes_to_int
+    datatypes.DATATYPE_INTEGER: convert_bytes_to_int,
+    datatypes.DATATYPE_OID: convert_bytes_to_int,
 }
