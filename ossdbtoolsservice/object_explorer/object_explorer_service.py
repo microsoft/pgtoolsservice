@@ -206,14 +206,14 @@ class ObjectExplorerService(object):
         else:
             session.expand_tasks[key] = new_task
 
-    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession, retry=False):
+    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession, retry_state=False):
         try:
             response = ExpandCompletedParameters(session.id, params.node_path)
             response.nodes = self._route_request(is_refresh, session, params.node_path)
 
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
         except BaseException as e:
-            if session.server.connection is not None and session.server.connection.connection.broken and not retry:
+            if session.server.connection is not None and session.server.connection.connection.broken and not retry_state:
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
                 session.server.set_connection(connection)

@@ -348,7 +348,7 @@ class QueryExecutionService(object):
         except BaseException as e:
             raise e
 
-    def _execute_query_request_worker(self, worker_args: ExecuteRequestWorkerArgs, retry=False):
+    def _execute_query_request_worker(self, worker_args: ExecuteRequestWorkerArgs, retry_state=False):
         """Worker method for 'handle execute query request' thread"""
 
         _check_and_fire(worker_args.before_query_initialize, {})
@@ -357,9 +357,9 @@ class QueryExecutionService(object):
 
         # Wrap execution in a try/except block so that we can send an error if it fails
         try:
-            query.execute(worker_args.connection, retry)
+            query.execute(worker_args.connection, retry_state)
         except Exception as e:
-            if not retry and worker_args.connection.connection.broken:
+            if not retry_state and worker_args.connection.connection.broken:
                 self._resolve_query_exception(e, query, worker_args, False, True)
                 conn = self._get_connection(worker_args.owner_uri, ConnectionType.QUERY)
                 worker_args.connection = conn

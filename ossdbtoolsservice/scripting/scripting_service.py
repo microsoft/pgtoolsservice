@@ -43,7 +43,7 @@ class ScriptingService(object):
         return object_metadata
 
     # REQUEST HANDLERS #####################################################
-    def _handle_script_as_request(self, request_context: RequestContext, params: ScriptAsParameters, retry=False) -> None:
+    def _handle_script_as_request(self, request_context: RequestContext, params: ScriptAsParameters, retry_state=False) -> None:
         try:
             utils.validate.is_not_none('params', params)
         except Exception as e:
@@ -61,7 +61,7 @@ class ScriptingService(object):
             script = scripter.script(scripting_operation, object_metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:
-            if connection is not None and connection.connection.broken and not retry:
+            if connection is not None and connection.connection.broken and not retry_state:
                 self._service_provider.logger.warn('Server closed the connection unexpectedly. Attempting to reconnect...')
                 self._handle_script_as_request(request_context, params, True)
             else:
