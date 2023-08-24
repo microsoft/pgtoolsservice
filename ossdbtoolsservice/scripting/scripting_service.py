@@ -48,6 +48,7 @@ class ScriptingService(object):
             utils.validate.is_not_none('params', params)
         except Exception as e:
             self._request_error(request_context, params, str(e))
+            return
 
         try:
             scripting_operation = params.operation
