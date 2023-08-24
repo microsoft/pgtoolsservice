@@ -209,7 +209,8 @@ class ObjectExplorerService(object):
         except Exception as e:
             self._expand_node_error(request_context, params, str(e))
 
-    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession, retry_state=False):
+    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext,
+                            params: ExpandParameters, session: ObjectExplorerSession, retry_state=False):
         try:
             response = ExpandCompletedParameters(session.id, params.node_path)
             response.nodes = self._route_request(is_refresh, session, params.node_path)
