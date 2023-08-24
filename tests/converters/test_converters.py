@@ -66,12 +66,8 @@ class TestConverters(unittest.TestCase):
         actual_value = query_results.rows[0][0].raw_object
         expected_value = expected_results[batch_index][0][0]
 
-        print(actual_value, expected_value)
-
-        # expected_value = [str(item) for item in expected_value] if isinstance(expected_value, list) else expected_value
         expected_value = str(expected_value).replace('None', 'null').replace('\"', '\'')
         actual_value = str(actual_value).replace('None', 'null').replace('\"', '\'')
-        print(actual_value, expected_value)
 
         self.assertEqual(actual_value, expected_value)
 

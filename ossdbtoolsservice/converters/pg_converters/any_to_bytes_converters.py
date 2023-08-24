@@ -38,6 +38,7 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_BOOL: convert_bool,
     datatypes.DATATYPE_SMALLINT: convert_short,
     datatypes.DATATYPE_INTEGER: convert_int,
+    datatypes.DATATYPE_OID: convert_int,
     datatypes.DATATYPE_POINT_ARRAY: convert_list,
     datatypes.DATATYPE_LINE_ARRAY: convert_list,
     datatypes.DATATYPE_LSEG_ARRAY: convert_list,

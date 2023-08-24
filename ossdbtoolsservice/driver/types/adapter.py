@@ -24,8 +24,8 @@ PSYCOPG_SUPPORTED_STRING_DATATYPES = (
 )
 
 PSYCOPG_SUPPORTED_STRING_NUMERIC_DATATYPES = (
-    # Real, double precision, numeric, bigint, oid
-    700, 701, 1700, 20, 26
+    # Real, double precision, numeric, bigint
+    700, 701, 1700, 20
 )
 
 # int4range, int8range, numrange, daterange tsrange, tstzrange

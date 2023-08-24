@@ -1,7 +1,7 @@
 {
-    "host": "localhost",
+    "host": "daeunyim-ads-14.postgres.database.azure.com",
     "port": 5432,
-    "user": "postgres",
-    "password": "",
+    "user": "daeunyim",
+    "password": "Demopass123",
     "dbname": "postgres"
 }
