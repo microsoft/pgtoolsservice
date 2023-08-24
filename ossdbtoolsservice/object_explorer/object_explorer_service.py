@@ -215,7 +215,7 @@ class ObjectExplorerService(object):
             response.nodes = self._route_request(is_refresh, session, params.node_path)
 
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
-        except Exception as e:
+        except BaseException as e:
             if session.server.connection is not None and session.server.connection.connection.broken and not retry:
                 conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
                 connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
