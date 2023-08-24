@@ -63,7 +63,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def lanname(self):
         return self._full_properties["lanname"]
-    
+
     @property
     def tgtype(self):
         return self._full_properties["tgtype"]
@@ -107,15 +107,15 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def is_enable_trigger(self):
         return self._full_properties["is_enable_trigger"]
-    
+
     @property
     def custom_tgargs(self):
         return self._full_properties["custom_tgargs"]
-    
+
     @property
     def tgattr(self):
         return self._full_properties["tgattr"]
-    
+
     @property
     def tgfoid(self):
         return self._full_properties["tgfoid"]
@@ -219,7 +219,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     # This software is released under the PostgreSQL Licence
     #
     ##########################################################################
-    
+
     def _trigger_definition(self, data):
         """
         This function will set the trigger definition details from the raw data
@@ -281,7 +281,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             data['evnt_truncate'] = False
 
         return data
-    
+
     def _get_trigger_function_and_columns(self, data, show_system_objects=False):
         """
         This function will return trigger function with schema name.
@@ -303,17 +303,16 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
         cols, rows = self.server.connection.execute_dict(sql)
 
-            # Update the trigger function which we have fetched with
-            # schema name
-        if len(rows) > 0 and \
-                'tfunctions' in rows[0]:
+        # Update the trigger function which we have fetched with
+        # schema name
+        if len(rows) > 0 and 'tfunctions' in rows[0]:
             data['tfunction'] = rows[0]['tfunctions']
 
         if len(data['custom_tgargs']) > 0:
             # We know that trigger has more than 1 argument, let's join them
             # and convert it to string
             formatted_args = [templating.qt_literal(arg, self.server.connection.connection)
-                            for arg in data['custom_tgargs']]
+                              for arg in data['custom_tgargs']]
             formatted_args = ', '.join(formatted_args)
 
             data['tgargs'] = formatted_args
@@ -325,7 +324,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             data['columns'] = self._get_column_details(columns)
 
         return data
-    
+
     def _get_column_details(self, clist):
         """
         This functional will fetch list of column for trigger.

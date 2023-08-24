@@ -9,7 +9,6 @@ from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from pgsmo.objects.schema.schema import Schema
-from pgsmo.objects.table.table import Table
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
@@ -240,7 +239,7 @@ class Server:
                 idx = next((index for index in table_obj.indexes if index.name == idx_name), None)
                 if idx is not None:
                     return idx
-                
+
             # Otherwise, search through materialized views and try to retrieve the index there
             materialized_view_metadata = ObjectMetadata(metadata_type_name='Materializedview', name=table_or_mv_name, schema=schema_name)
             materialized_view_obj = self.find_materialized_view(materialized_view_metadata)
@@ -267,7 +266,6 @@ class Server:
                     return trigger
         except Exception:
             return None
-
 
     def find_schema_child_object(self, prop_name: str, metadata):
         """
