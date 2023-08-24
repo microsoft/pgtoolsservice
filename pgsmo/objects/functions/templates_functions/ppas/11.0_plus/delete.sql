@@ -10,11 +10,11 @@ SELECT
     .pg_get_function_identity_arguments(pr.oid), '') || ')' as func_args,
     nspname
 FROM
-    pg_proc pr
+    pg_catalog.pg_proc pr
 JOIN
-    pg_type typ ON typ.oid=prorettype
+    pg_catalog.pg_type typ ON typ.oid=prorettype
 JOIN
-    pg_namespace nsp ON nsp.oid=pr.pronamespace
+    pg_catalog.pg_namespace nsp ON nsp.oid=pr.pronamespace
 WHERE
     pr.prokind IN ('f', 'w')
     AND pronamespace = {{scid}}::oid
@@ -23,6 +23,6 @@ WHERE
 {% endif %}
 
 {% if name %}
-DROP FUNCTION {{ conn|qtIdent(nspname, name) }}{{func_args}}{% if cascade %} CASCADE{% endif %};
+DROP FUNCTION IF EXISTS {{ conn|qtIdent(nspname, name) }}{{func_args}}{% if cascade %} CASCADE{% endif %};
 {% endif %}
 

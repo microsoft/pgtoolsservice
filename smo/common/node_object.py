@@ -28,7 +28,7 @@ class NodeObject(metaclass=ABCMeta):
         template_root = cls._template_root(root_server)
 
         # Only include a parent ID if a parent was provided
-        template_vars = {}      # TODO: Allow configuring show/hide system objects
+        template_vars = {"conn": root_server.connection.connection}      # TODO: Allow configuring show/hide system objects
         if parent_obj is not None:
             template_vars['parent_id'] = parent_obj._oid
 
@@ -112,7 +112,9 @@ class NodeObject(metaclass=ABCMeta):
     def template_vars(self) -> dict:
         template_vars = {"oid": self.oid}
         extended_vars = self.extended_vars
-        return {**template_vars, **extended_vars}
+        template_vars.update(extended_vars)
+        template_vars.update({"conn": self.server.connection.connection})
+        return template_vars
 
     # METHODS ##############################################################
     def get_object_by_urn(self, urn_fragment: str) -> 'NodeObject':
