@@ -125,7 +125,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return {
             'tid': self.parent.oid,
             'trid': self.oid,
-            'datlastsysoid': self.parent.parent.datlastsysoid
+            'datlastsysoid': self.get_database_node().datlastsysoid
         }
 
     # IMPLEMENTATION DETAILS ###############################################
