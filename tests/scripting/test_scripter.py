@@ -142,7 +142,6 @@ class TestScripterOld(unittest.TestCase):
                                                                                 "evnt_insert": True,
                                                                                 "tfunction": tfunction_name,
                                                                                 "table": table_name}})
-        
 
         mock_table._indexes = NodeCollection(lambda: [mock_index])
         mock_table._triggers = NodeCollection(lambda: [mock_trigger])
