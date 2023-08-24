@@ -23,16 +23,21 @@ CREATE{% if data.is_constraint_trigger %} CONSTRAINT{% endif %} TRIGGER {{ conn|
     ON {{ conn|qtIdent(data.schema, data.table) }}
 {% if data.tgdeferrable %}
     DEFERRABLE{% if data.tginitdeferred %} INITIALLY DEFERRED{% endif %}
+
+{% endif %}
+{% if data.tgoldtable or data.tgnewtable %}
+    REFERENCING{% if data.tgnewtable %} NEW TABLE AS {{ conn|qtIdent(data.tgnewtable) }}{% endif %}{% if data.tgoldtable %} OLD TABLE AS {{ conn|qtIdent(data.tgoldtable) }}{% endif %}
+
 {% endif %}
     FOR EACH{% if data.is_row_trigger %} ROW{% else %} STATEMENT{% endif %}
 {% if data.whenclause %}
 
-    WHEN {{ data.whenclause }}{% endif %}
+    WHEN {% if not data.oid %}({% endif %}{{ data.whenclause }}{% if not data.oid %}){% endif %}{% endif %}
 
     {% if data.prosrc is defined and
-    (data.lanname == 'edbspl' or data.tfunction == 'Inline EDB-SPL') %}{{ data.prosrc }}{% else %}EXECUTE PROCEDURE {{ data.tfunction }}{% if data.tgargs %}({{ data.tgargs }}){% else %}(){% endif%}{% endif%};
+    (data.lanname == 'edbspl' or data.tfunction == 'Inline EDB-SPL') %}{{ data.prosrc }}{% else %}EXECUTE FUNCTION {{ data.tfunction }}{% if data.tgargs %}({{ data.tgargs }}){% else %}(){% endif%}{% endif%};
 
 {% if data.description %}
 COMMENT ON TRIGGER {{ conn|qtIdent(data.name) }} ON {{ conn|qtIdent(data.schema, data.table) }}
-    IS {{data.description}};
+    IS {{data.description|qtLiteral(conn)}};
 {% endif %}

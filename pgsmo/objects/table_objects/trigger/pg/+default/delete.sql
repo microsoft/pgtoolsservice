@@ -4,4 +4,4 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
-DROP TRIGGER {{conn|qtIdent(data.name)}} ON {{conn|qtIdent(data.nspname, data.relname )}}{% if cascade %} CASCADE{% endif %};
+DROP TRIGGER IF EXISTS {{conn|qtIdent(data.name)}} ON {{conn|qtIdent(data.nspname, data.relname )}}{% if cascade %} CASCADE{% endif %};
