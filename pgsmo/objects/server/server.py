@@ -266,6 +266,10 @@ class Server:
                     return trigger
         except Exception:
             return None
+        
+    def find_trigger_function(self, metadata):
+        """ Find a trigger function in the server """
+        return self.find_schema_child_object('trigger_functions', metadata)
 
     def find_schema_child_object(self, prop_name: str, metadata):
         """
@@ -301,7 +305,8 @@ class Server:
             "Datatype": self.find_datatype,
             "Materializedview": self.find_materialized_view,
             "Index": self.find_index,
-            "Trigger": self.find_trigger
+            "Trigger": self.find_trigger,
+            "Triggerfunction": self.find_trigger_function
         }
         return object_map[object_type.capitalize()](metadata)
 
