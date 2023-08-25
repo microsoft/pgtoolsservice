@@ -320,7 +320,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
             "query_type": "create",
             "query_for": "sql_panel",
             "func_def": func_def,
-            "conn": self._server.connection.connection
+            "conn": self.server.connection.connection
         }
 
         self._format_prosrc_for_pure_sql(create_query_data['data'])
@@ -332,7 +332,8 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
         return {
             "name": self.name,
             "nspname": self.schema,
-            "cascade": self.cascade
+            "cascade": self.cascade,
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -373,7 +374,8 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
                 "probin": "",
                 "prosrc_c": "",
                 "prosrc": ""
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     ##########################################################################

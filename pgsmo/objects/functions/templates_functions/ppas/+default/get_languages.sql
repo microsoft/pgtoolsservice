@@ -7,4 +7,4 @@
 SELECT
     lanname as label, lanname as value
 FROM
-    pg_language;
+    pg_catalog.pg_language;

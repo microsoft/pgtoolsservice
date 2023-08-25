@@ -187,8 +187,8 @@ class ObjectExplorerService(object):
         if session is None:
             return
 
-        # Step 2: Start a task for expanding the node
         try:
+            # Step 2: Start a task for expanding the node
             key = params.node_path
             if is_refresh:
                 task = session.refresh_tasks.get(key)
@@ -206,18 +206,26 @@ class ObjectExplorerService(object):
                 session.refresh_tasks[key] = new_task
             else:
                 session.expand_tasks[key] = new_task
-
         except Exception as e:
             self._expand_node_error(request_context, params, str(e))
 
-    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext, params: ExpandParameters, session: ObjectExplorerSession):
+    def _expand_node_thread(self, is_refresh: bool, request_context: RequestContext,
+                            params: ExpandParameters, session: ObjectExplorerSession, retry_state=False):
         try:
             response = ExpandCompletedParameters(session.id, params.node_path)
             response.nodes = self._route_request(is_refresh, session, params.node_path)
 
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
-        except Exception as e:
-            self._expand_node_error(request_context, params, str(e))
+        except BaseException as e:
+            if session.server.connection is not None and session.server.connection.connection.broken and not retry_state:
+                conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+                connection = conn_service.get_connection(session.id, ConnectionType.OBJECT_EXLPORER)
+                session.server.set_connection(connection)
+                session.server.refresh()
+                self._expand_node_thread(is_refresh, request_context, params, session, True)
+                return
+            else:
+                self._expand_node_error(request_context, params, str(e))
 
     def _expand_node_error(self, request_context: RequestContext, params: ExpandParameters, message: str):
         if self._service_provider.logger is not None:
@@ -248,7 +256,7 @@ class ObjectExplorerService(object):
             request_context.send_response(True)
             return session
         except Exception as e:
-            message = f'Failed to expand node: {str(e)}'    # TODO: Localize
+            message = f'Failed to expand node base: {str(e)}'    # TODO: Localize
             if self._service_provider.logger is not None:
                 self._service_provider.logger.error(message)
             request_context.send_error(message)
