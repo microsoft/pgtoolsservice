@@ -50,13 +50,19 @@ class PostgreSQLConnection(ServerConnection):
         # Map the connection options to their psycopg-specific options
         self._connection_options = connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
                                                          if option in PG_CONNECTION_PARAM_KEYWORDS}
+        # Flag to determine whether server is Azure Cosmos PG server
+        is_cosmos = 'host' in connection_options and connection_options['host'].endswith('.postgres.cosmos.azure.com')
+
+        # Use the correct default DB depending on whether config is defined and whether the server is an Azure Cosmos PG server
+        self._default_database = config.pgsql.default_database if config else constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
+        if is_cosmos and config:
+            self._default_database = config.pgsql.cosmos_default_database
+        elif is_cosmos and not config:
+            self._default_database = constants.DEFAULT_DB[constants.COSMOS_PG_DEFAULT_DB]
 
         # Use the default database if one was not provided
         if 'dbname' not in connection_options or not connection_options['dbname']:
-            if config:
-                connection_options['dbname'] = config.pgsql.default_database
-            else:
-                connection_options['dbname'] = constants.DEFAULT_DB[constants.PG_PROVIDER_NAME]
+            connection_options['dbname'] = self.default_database
 
         # Use the default port number if one was not provided
         if 'port' not in connection_options or not connection_options['port']:
@@ -137,7 +143,7 @@ class PostgreSQLConnection(ServerConnection):
     @property
     def default_database(self):
         """Returns the default database for PostgreSQL if no other database is specified"""
-        return constants.DEFAULT_DB[self._provider_name]
+        return self._default_database
 
     @property
     def database_error(self):
