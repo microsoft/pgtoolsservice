@@ -113,7 +113,7 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def trigger_functions(self) -> NodeCollection:
-        return [trigger for trigger in self.parent.trigger_functions if trigger.scid == self.oid]
+        return [trigger_function for trigger_function in self.parent.trigger_functions if trigger_function.scid == self.oid]
 
     @property
     def views(self) -> NodeCollection:

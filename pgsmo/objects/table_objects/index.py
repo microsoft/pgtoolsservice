@@ -112,7 +112,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def cascade(self):
-        return self._full_properties.get("cascade", True)
+        return self._full_properties.get("cascade", False)
 
     @property
     def description(self):
@@ -146,7 +146,8 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "spcname": self.spcname,
                 "indconstraint": self.indconstraint
             },
-            "mode": "create"
+            "mode": "create",
+            "add_not_exists_clause": True
         }
 
         self.get_column_details(create_query_data['data'], create_query_data['mode'])
