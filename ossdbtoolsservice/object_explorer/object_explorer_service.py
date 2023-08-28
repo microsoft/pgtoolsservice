@@ -352,16 +352,18 @@ class ObjectExplorerService(object):
         if provider_name == utils.constants.PG_PROVIDER_NAME:
             utils.validate.is_not_none_or_whitespace('params.database_name', params.options.get('dbname'))
         utils.validate.is_not_none('params.port', params.options.get('port'))
+        utils.validate.is_not_none_or_whitespace('params.groupId', params.options.get('groupId'))
 
         # Generates a session ID that will function as the base URI for the session
         host = quote(params.options['host'])
         user = quote(params.options['user'])
         db = quote(params.options['dbname'])
+        group_id = quote(params.options['groupId'].lower())
         # Port number distinguishes between connections to different server
         # instances with the same username, dbname running on same host
         port = quote(str(params.options['port']))
 
-        return f'objectexplorer://{user}@{host}:{port}:{db}/'
+        return f'objectexplorer://{group_id}.{user}@{host}:{port}:{db}/'
 
     def _route_request(self, is_refresh: bool, session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
         """

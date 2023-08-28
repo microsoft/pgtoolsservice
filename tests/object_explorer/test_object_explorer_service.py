@@ -36,6 +36,7 @@ TEST_DBNAME = 'testdb'
 TEST_USER = 'testuser'
 TEST_PASSWORD = 'testpassword'
 TEST_PORT = 5432
+TEST_GROUP_ID = '8b66e74f-50f0-4f47-b525-880274ce3f98'
 
 
 def _connection_details() -> Tuple[ConnectionDetails, str]:
@@ -44,7 +45,8 @@ def _connection_details() -> Tuple[ConnectionDetails, str]:
         'host': TEST_HOST,
         'dbname': TEST_DBNAME,
         'user': TEST_USER,
-        'port': TEST_PORT
+        'port': TEST_PORT,
+        'groupId': TEST_GROUP_ID
     }
     session_uri = ObjectExplorerService._generate_session_uri(param, constants.PG_PROVIDER_NAME)
     return param, session_uri
@@ -93,10 +95,11 @@ class TestObjectExplorer(unittest.TestCase):
     def test_generate_uri_missing_params(self):
         # Setup: Create the parameter sets that will be missing a param each
         params = [
-            ConnectionDetails.from_data({'host': None, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': TEST_PORT}),
-            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': None, 'user': TEST_USER, 'port': TEST_PORT}),
-            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': None, 'port': TEST_PORT}),
-            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': None})
+            ConnectionDetails.from_data({'host': None, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': TEST_PORT, 'groupId': TEST_GROUP_ID}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': None, 'user': TEST_USER, 'port': TEST_PORT, 'groupId': TEST_GROUP_ID}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': None, 'port': TEST_PORT, 'groupId': TEST_GROUP_ID}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': None, 'groupId': TEST_GROUP_ID}),
+            ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': TEST_PORT, 'groupId': None})
         ]
 
         for param_set in params:
@@ -115,8 +118,11 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertEqual(parse_result.scheme, 'objectexplorer')
         self.assertTrue(parse_result.netloc)
 
-        re_match = re.match(r'(?P<username>\w+)@(?P<host>\w+):(?P<port>\w+):(?P<db_name>\w+)', parse_result.netloc)
+        re_match = re.match(r'(?P<group_id>[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})\.' +
+                            r'(?P<username>\w+)@(?P<host>\w+):(?P<port>\w+):(?P<db_name>\w+)',
+                            parse_result.netloc)
         self.assertIsNotNone(re_match)
+        self.assertEqual(re_match.group('group_id'), TEST_GROUP_ID)
         self.assertEqual(re_match.group('username'), TEST_USER)
         self.assertEqual(re_match.group('host'), TEST_HOST)
         self.assertEqual(int(re_match.group('port')), TEST_PORT)
@@ -700,7 +706,9 @@ class SessionTestCase(unittest.TestCase):
 
         # Then: I should get a successful response
         rc.validate()
-        self.oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id objectexplorer://testuser@testhost:5432:testdb/')
+        self.oe._service_provider.logger.info.assert_called_with(
+            'Could not close the OE session with Id objectexplorer://8b66e74f-50f0-4f47-b525-880274ce3f98.testuser@testhost:5432:testdb/'
+        )
 
     def test_handle_close_session_throwsException(self):
         # setup to throw exception on disconnect
@@ -738,7 +746,9 @@ class SessionTestCase(unittest.TestCase):
     def test_handle_shutdown_successfulWithSessions(self):
         # shutdown the session
         self.oe._handle_shutdown()
-        self.oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:5432:testdb/')
+        self.oe._service_provider.logger.info.assert_called_with(
+            'Closed the OE session with Id: objectexplorer://8b66e74f-50f0-4f47-b525-880274ce3f98.testuser@testhost:5432:testdb/'
+        )
 
     def test_handle_shutdown_successfulNoDatabase(self):
         # Setup: Create an OE service and add a session to it
@@ -746,7 +756,9 @@ class SessionTestCase(unittest.TestCase):
 
         # shutdown the session
         self.oe._handle_shutdown()
-        self.oe._service_provider.logger.info.assert_called_with('Closed the OE session with Id: objectexplorer://testuser@testhost:5432:testdb/')
+        self.oe._service_provider.logger.info.assert_called_with(
+            'Closed the OE session with Id: objectexplorer://8b66e74f-50f0-4f47-b525-880274ce3f98.testuser@testhost:5432:testdb/'
+        )
 
     def test_handle_shutdown_UnsuccessfulWithSessions(self):
         # Setup: Create an OE service and add a session to it
@@ -754,7 +766,9 @@ class SessionTestCase(unittest.TestCase):
 
         # shutdown the session
         self.oe._handle_shutdown()
-        self.oe._service_provider.logger.info.assert_called_with('Could not close the OE session with Id: objectexplorer://testuser@testhost:5432:testdb/')
+        self.oe._service_provider.logger.info.assert_called_with(
+            'Could not close the OE session with Id: objectexplorer://8b66e74f-50f0-4f47-b525-880274ce3f98.testuser@testhost:5432:testdb/'
+        )
 
     def test_handle_shutdown_successfulNoSessions(self):
         # Setup: Create an empty session dictionary
