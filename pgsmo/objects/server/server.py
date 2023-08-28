@@ -266,7 +266,7 @@ class Server:
                     return trigger
         except Exception:
             return None
-        
+
     def find_trigger_function(self, metadata):
         """ Find a trigger function in the server """
         return self.find_schema_child_object('trigger_functions', metadata)

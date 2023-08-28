@@ -202,6 +202,7 @@ def _procedures(is_refresh: bool, current_path: str, session: ObjectExplorerSess
         for node in parent_obj.procedures if node.is_system == is_system and schema.name == node.schema
     ]
 
+
 def _trigger_functions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for trigger functions in a schema
@@ -479,9 +480,9 @@ PG_ROUTING_TABLE = {
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/procedures/$'): RoutingTarget(None,
                                                                                                                               _procedures),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/triggerfunctions/$'): RoutingTarget(None,
-                                                                                                                       _trigger_functions),
+                                                                                                                             _trigger_functions),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/triggerfunctions/$'): RoutingTarget(None,
-                                                                                                                              _trigger_functions),
+                                                                                                                                    _trigger_functions),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/collations/$'): RoutingTarget(None,
                                                                                                                        _collations),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/collations/$'): RoutingTarget(None,
