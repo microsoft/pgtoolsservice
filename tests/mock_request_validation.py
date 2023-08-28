@@ -104,6 +104,7 @@ class RequestFlowValidator:
                     'Expected additional messages: '
                     f'[{self._expected_messages[i].message_type}] '
                     f'{self._expected_messages[i].param_type}'
+                    f'{self._expected_messages[i].message_method}'
                 )
             received = self._received_messages[i]
 

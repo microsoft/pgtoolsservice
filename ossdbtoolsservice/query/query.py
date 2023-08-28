@@ -117,7 +117,7 @@ class Query:
     def current_batch_index(self) -> int:
         return self._current_batch_index
 
-    def execute(self, connection: ServerConnection):
+    def execute(self, connection: ServerConnection, retry_state=False):
         """
         Execute the query using the given connection
 
@@ -126,7 +126,7 @@ class Query:
         :param batch_end_callback: A function to run after executing each batch
         :raises RuntimeError: If the query was already executed
         """
-        if self._execution_state is ExecutionState.EXECUTED:
+        if self._execution_state is ExecutionState.EXECUTED and not retry_state:
             raise RuntimeError('Cannot execute a query multiple times')
 
         self._execution_state = ExecutionState.EXECUTING

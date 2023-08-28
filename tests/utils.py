@@ -119,6 +119,7 @@ class MockPsycopgConnection(object):
         self.commit = mock.Mock()
         self.pgconn = mock.Mock()
         self.info = MockConnectionInfo(dsn_parameters, self.server_version)
+        self.broken = False
 
         self._adapters: Optional[AdaptersMap] = mock.Mock()
         self.notice_handlers: List[NoticeHandler] = []
