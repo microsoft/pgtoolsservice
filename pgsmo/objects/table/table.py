@@ -430,6 +430,24 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
 
         return res
 
+    def create_script(self):
+        table_create_sql = super().create_script()
+        main_sql = [table_create_sql.strip("\n") + "\n"]
+
+        for table_index in self.indexes:
+            table_index_sql = table_index.create_script()
+            table_index_sql_header = f"-- Index: {table_index.schema}.{table_index.name}\n"
+            table_index_sql = table_index_sql_header + table_index_sql
+            main_sql.append(table_index_sql.strip("\n"))
+
+        for table_trigger in self.triggers:
+            table_trigger_sql = table_trigger.create_script()
+            table_trigger_sql_header = f"-- Trigger: {table_trigger.name}\n"
+            table_trigger_sql = table_trigger_sql_header + table_trigger_sql
+            main_sql.append(table_trigger_sql.strip("\n"))
+
+        return "\n".join(main_sql)
+
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
         return {

@@ -5,7 +5,7 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT att.attname as name
-FROM pg_attribute att
+FROM pg_catalog.pg_attribute att
     WHERE att.attrelid = {{tid}}::oid
     AND att.attnum IN ({{ clist }})
     AND att.attisdropped IS FALSE
