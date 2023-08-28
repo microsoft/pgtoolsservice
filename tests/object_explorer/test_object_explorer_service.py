@@ -240,7 +240,68 @@ class TestObjectExplorer(unittest.TestCase):
         # ... Create parameters, session, request context validator
         params, session_uri = _connection_details()
 
-        # ... Create validation of success notification
+        rc = self._create_request_flow_validator(session_uri, oe)
+
+        # If: I create a session
+        oe._handle_create_session_request(rc.request_context, params)
+        oe._session_map[session_uri].init_task.join()
+
+        # Then:
+        # ... Error notification should have been returned, session should be cleaned up from OE service
+        rc.validate()
+
+        # ... The session should still exist and should have connection and server setup
+        self.assertIn(session_uri, oe._session_map)
+        self.assertIsInstance(oe._session_map[session_uri].server, Server)
+        self.assertTrue(oe._session_map[session_uri].is_ready)
+
+    def test_handle_create_session_successful_multiple_sessions_different_groups(self):
+        # Setup:
+        # ... Create OE service with mock connection service that returns a successful connection response
+        mock_connection = MockPGServerConnection(cur=None, host='myserver', name='postgres', user='postgres', port=123)
+        cs = ConnectionService()
+        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
+        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+        oe = ObjectExplorerService()
+        oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
+        oe._provider = constants.PG_PROVIDER_NAME
+        oe._server = Server
+
+        # ... Create parameters, session, request context validator
+        params_1 = ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': TEST_PORT, 'groupId': TEST_GROUP_ID})
+        session_uri_1 = ObjectExplorerService._generate_session_uri(params_1, constants.PG_PROVIDER_NAME)
+        TEST_GROUP_ID_2 = 'be804233-bfa3-496a-8ba3-bf6f6380280c'
+        params_2 = ConnectionDetails.from_data({'host': TEST_HOST, 'dbname': TEST_DBNAME, 'user': TEST_USER, 'port': TEST_PORT, 'groupId': TEST_GROUP_ID_2})
+        session_uri_2 = ObjectExplorerService._generate_session_uri(params_2, constants.PG_PROVIDER_NAME)
+
+        # Create the request flow validators
+        rc_1 = self._create_request_flow_validator(session_uri_1, oe)
+        rc_2 = self._create_request_flow_validator(session_uri_2, oe)
+
+        # If: I create a session
+        oe._handle_create_session_request(rc_1.request_context, params_1)
+        oe._session_map[session_uri_1].init_task.join()
+
+        # Then:
+        # ... Error notifications should have been returned, session should be cleaned up from OE service
+        rc_1.validate()
+
+        # Create the duplicate session and validate it as well
+        oe._handle_create_session_request(rc_2.request_context, params_2)
+        oe._session_map[session_uri_2].init_task.join()
+        rc_2.validate()
+
+        # ... The sessions should still exist and should have connection and server setup
+        self.assertIn(session_uri_1, oe._session_map)
+        self.assertIsInstance(oe._session_map[session_uri_1].server, Server)
+        self.assertTrue(oe._session_map[session_uri_1].is_ready)
+
+        self.assertIn(session_uri_2, oe._session_map)
+        self.assertIsInstance(oe._session_map[session_uri_2].server, Server)
+        self.assertTrue(oe._session_map[session_uri_2].is_ready)
+
+    # ... Create validation of success notification
+    def _generate_validate_success_notifcation_function(self, session_uri, oe: ObjectExplorerService):
         def validate_success_notification(response: SessionCreatedParameters):
             self.assertTrue(response.success)
             self.assertEqual(response.session_id, session_uri)
@@ -255,7 +316,9 @@ class TestObjectExplorer(unittest.TestCase):
             self.assertEqual(response.root_node.metadata.name, oe._session_map[session_uri].server.maintenance_db_name)
             self.assertEqual(response.root_node.metadata.metadata_type_name, 'Database')
             self.assertFalse(response.root_node.is_leaf)
+        return validate_success_notification
 
+    def _create_request_flow_validator(self, session_uri, oe: ObjectExplorerService) -> RequestFlowValidator:
         rc = RequestFlowValidator()
         rc.add_expected_response(
             CreateSessionResponse,
@@ -264,21 +327,9 @@ class TestObjectExplorer(unittest.TestCase):
         rc.add_expected_notification(
             SessionCreatedParameters,
             SESSION_CREATED_METHOD,
-            validate_success_notification
+            self._generate_validate_success_notifcation_function(session_uri, oe)
         )
-
-        # If: I create a session
-        oe._handle_create_session_request(rc.request_context, params)
-        oe._session_map[session_uri].init_task.join()
-
-        # Then:
-        # ... Error notification should have been returned, session should be cleaned up from OE service
-        rc.validate()
-
-        # ... The session should still exist and should have connection and server setup
-        self.assertIn(session_uri, oe._session_map)
-        self.assertIsInstance(oe._session_map[session_uri].server, Server)
-        self.assertTrue(oe._session_map[session_uri].is_ready)
+        return rc
 
     def test_init_session_cancelled_connection(self):
         # Setup:
