@@ -130,6 +130,7 @@ steps:
       Contents: CodeSignSummary*.md
   - task: ArchiveFiles@2
     displayName: Archive files
+    condition: always()
     inputs:
       rootFolderOrFile: $(Build.SourcesDirectory)/dist/pgsqltoolsservice
       includeRootFolder: true
@@ -138,6 +139,7 @@ steps:
       replaceExistingArchive: true
   - task: ArchiveFiles@1
     displayName: Archive files - coverage
+    condition: always()
     inputs:
       rootFolder: $(Build.SourcesDirectory)/cover
       includeRootFolder: false
@@ -146,11 +148,13 @@ steps:
     enabled: false
   - task: CopyFiles@2
     displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)"
+    condition: always()
     inputs:
       sourceFolder: $(Build.SourcesDirectory)
       contents: dist/$(archiveFileName)
       targetFolder: $(Build.ArtifactStagingDirectory)
   - task: PublishBuildArtifacts@1
+    condition: always()
     inputs:
       pathToPublish: $(Build.ArtifactStagingDirectory)
       artifactName: dist
