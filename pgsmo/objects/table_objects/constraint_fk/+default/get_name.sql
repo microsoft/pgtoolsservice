@@ -5,5 +5,5 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT conname as name
-FROM pg_constraint ct
+FROM pg_catalog.pg_constraint ct
 WHERE ct.oid = {{fkid}}::oid

@@ -22,13 +22,13 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
 
         # test data
         self._bool_test_value = True
-        self._float_test_value1 = 123.456
-        self._float_test_value2 = 123.45600128173828
+        self._float_test_value1 = "123.456"
+        self._float_test_value2 = "123.45600128173828"
         self._short_test_value = 12345
         self._int_test_value = 1234567890
-        self._long_long_test_value = 123456789012
+        self._long_long_test_value = "123456789012"
         self._str_test_value = "TestString"
-        self._bytea_test_value = memoryview(b'TestString')
+        self._bytea_test_value = "89504E470D0A1A0A"
         self._dict_test_value = {"Ser,ver": " Tes'tS,,erver ", "Sche'ma": "TestSchema"}
         self._list_test_value = ["Test,Server", "Tes'tSchema", "Tes,'tTable"]
         self._numericrange_test_value = "[10,20)"
@@ -36,7 +36,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._datetimetzrange_test_value = "[2014-06-08T12:12:45-07:00,2016-07-06T14:12:08-07:00)"
         self._daterange_test_value = "[2015-06-06,2016-08-08)"
 
-        # file_streams
+        # # file_streams
         self._bool_file_stream = io.BytesIO()
         bool_val = bytearray(struct.pack("?", self._bool_test_value))
         bool_len = len(bool_val)
@@ -48,14 +48,14 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._bool_file_stream.write(bool_val)
 
         self._float_file_stream1 = io.BytesIO()
-        float_val1 = bytearray(struct.pack("d", self._float_test_value1))
+        float_val1 = bytearray(self._float_test_value1.encode('utf-8'))
         float_len1 = len(float_val1)
         float_len_to_write1 = bytearray(struct.pack("i", float_len1))
         self._float_file_stream1.write(float_len_to_write1)
         self._float_file_stream1.write(float_val1)
 
         self._float_file_stream2 = io.BytesIO()
-        float_val2 = bytearray(struct.pack("d", self._float_test_value2))
+        float_val2 = bytearray(self._float_test_value2.encode('utf-8'))
         float_len2 = len(float_val2)
         float_len_to_write2 = bytearray(struct.pack("i", float_len2))
         self._float_file_stream2.write(float_len_to_write2)
@@ -76,14 +76,14 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._int_file_stream.write(int_val)
 
         self._long_long_file_stream = io.BytesIO()
-        long_long_val = bytearray(struct.pack("q", self._long_long_test_value))
+        long_long_val = bytearray(self._long_long_test_value.encode('utf-8'))
         long_long_len = len(long_long_val)
         long_long_len_to_write = bytearray(struct.pack("i", long_long_len))
         self._long_long_file_stream.write(long_long_len_to_write)
         self._long_long_file_stream.write(long_long_val)
 
         self._bytea_file_stream = io.BytesIO()
-        bytea_val = bytes(self._bytea_test_value)
+        bytea_val = bytearray(self._bytea_test_value.encode('utf-8'))
         bytea_len = len(bytea_val)
         bytea_len_to_write = bytearray(struct.pack("i", bytea_len))
         self._bytea_file_stream.write(bytea_len_to_write)
@@ -132,7 +132,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._daterange_file_stream.write(daterange_val)
 
         self._multiple_cols_file_stream = io.BytesIO()
-        val0 = bytearray(struct.pack("d", self._float_test_value1))
+        val0 = bytearray(self._float_test_value1.encode('utf-8'))
         len0 = len(val0)
         len0_to_write = bytearray(struct.pack("i", len0))
         val1 = bytearray(struct.pack("i", self._int_test_value))
@@ -141,7 +141,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         val2 = bytearray(self._str_test_value.encode())
         len2 = len(val2)
         len2_to_write = bytearray(struct.pack("i", len2))
-        val3 = bytearray(struct.pack("d", self._float_test_value2))
+        val3 = bytearray(self._float_test_value2.encode('utf-8'))
         len3 = len(val3)
         len3_to_write = bytearray(struct.pack("i", len3))
         self._multiple_cols_file_stream.write(len0_to_write)
@@ -232,9 +232,8 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(col)
 
         res = self._bytea_reader.read_row(test_file_offset, test_row_id, test_columns_info)
-        expected = self._bytea_test_value.tobytes()
         actual = str(res[0].raw_object)
-        self.assertEqual(str(expected), actual)
+        self.assertEqual(self._bytea_test_value, actual)
 
     def test_read_json(self):
         """Test json/jsonb string is returned as is"""

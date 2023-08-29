@@ -43,10 +43,10 @@ def _get_node_info(
     if node.parent is not None and node.parent.parent is None and hasattr(node, 'schema'):
         metadata.schema = node.schema
 
-    # Else if it is a table object, add the schema also. Important for scripting purposes
+    # Else if it is a table object, add the schema and the object name. Important for scripting purposes
     # node.parent = Table/View, node.parent.parent = Schema, node.parent.parent.parent = None
     elif node.parent is not None and node.parent.parent is not None and node.parent.parent.parent is None and hasattr(node.parent, 'schema'):
-        metadata.schema = node.parent.schema
+        metadata.schema = ".".join([node.parent.schema, node.parent.name])
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
@@ -203,6 +203,24 @@ def _procedures(is_refresh: bool, current_path: str, session: ObjectExplorerSess
     ]
 
 
+def _trigger_functions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for trigger functions in a schema
+    Expected match_params:
+      dbid int: Database OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(
+        session.server.databases[int(match_params['dbid'])], is_refresh)
+    schema = _get_obj_with_refresh(_get_schema(
+        session, match_params['dbid'], match_params['scid']), is_refresh)
+    return [
+        _get_node_info(node, current_path, 'TableValuedFunction',
+                       label=f'{node.name}')
+        for node in parent_obj.trigger_functions if node.is_system == is_system and schema.name == node.schema
+    ]
+
+
 def _collations(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
     """
     Function to generate a list of NodeInfo for collations in a schema
@@ -332,8 +350,10 @@ def _constraints(is_refresh: bool, current_path: str, session: ObjectExplorerSes
                      for node in table.exclusion_constraints])
     node_info.extend([_get_node_info(node, current_path, 'Key_ForeignKey')
                      for node in table.foreign_key_constraints])
-    node_info.extend([_get_node_info(node, current_path, 'Constraint')
-                     for node in table.index_constraints])
+    node_info.extend([_get_node_info(node, current_path, 'Key_PrimaryKey')
+                     for node in table.primary_key_constraints])
+    node_info.extend([_get_node_info(node, current_path, 'Key_UniqueKey')
+                     for node in table.unique_key_constraints])
 
     return sorted(node_info, key=lambda x: x.label)
 
@@ -361,13 +381,13 @@ def _indexes(is_refresh: bool, current_path: str, session: ObjectExplorerSession
 
     for index in indexes:
         attribs = ['Clustered' if index.is_clustered else 'Non-Clustered']
-        if index.is_primary:
-            node_type = 'Key_PrimaryKey'
-        elif index.is_unique:
-            node_type = 'Key_UniqueKey'
+        # TODO: Add back in the correct node_type, but making sure the SCRIPT AS options still appear in the right-click menu
+        # if index.is_primary:
+        #     node_type = 'Key_PrimaryKey'
+        if index.is_unique:
+            # node_type = 'Key_UniqueKey'
             attribs.insert(0, 'Unique')
-        else:
-            node_type = 'Index'
+        node_type = 'Index'
 
         attrib_str = '(' + ', '.join(attribs) + ')'
         yield _get_node_info(index, current_path, node_type, label=f'{index.name} {attrib_str}')
@@ -421,6 +441,7 @@ PG_ROUTING_TABLE = {
         Folder('Materialized Views', 'materializedviews'),
         Folder('Functions', 'functions'),
         Folder('Procedures', 'procedures'),
+        Folder('Trigger Functions', 'triggerfunctions'),
         Folder('Collations', 'collations'),
         Folder('Data Types', 'datatypes'),
         Folder('Sequences', 'sequences'),
@@ -432,6 +453,7 @@ PG_ROUTING_TABLE = {
         Folder('Materialized Views', 'materializedviews'),
         Folder('Functions', 'functions'),
         Folder('Procedures', 'procedures'),
+        Folder('Trigger Functions', 'triggerfunctions'),
         Folder('Collations', 'collations'),
         Folder('Data Types', 'datatypes'),
         Folder('Sequences', 'sequences'),
@@ -457,6 +479,10 @@ PG_ROUTING_TABLE = {
                                                                                                                        _procedures),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/procedures/$'): RoutingTarget(None,
                                                                                                                               _procedures),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/triggerfunctions/$'): RoutingTarget(None,
+                                                                                                                             _trigger_functions),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/triggerfunctions/$'): RoutingTarget(None,
+                                                                                                                                    _trigger_functions),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/collations/$'): RoutingTarget(None,
                                                                                                                        _collations),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/collations/$'): RoutingTarget(None,

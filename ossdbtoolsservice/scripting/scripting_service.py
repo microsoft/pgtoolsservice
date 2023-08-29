@@ -9,7 +9,7 @@ from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.scripting.scripter import Scripter
 from ossdbtoolsservice.scripting.contracts import (
-    ScriptAsParameters, ScriptAsResponse, SCRIPTAS_REQUEST
+    ScriptAsParameters, ScriptAsResponse, SCRIPT_AS_REQUEST
 )
 from ossdbtoolsservice.connection.contracts import ConnectionType
 import ossdbtoolsservice.utils as utils
@@ -25,7 +25,7 @@ class ScriptingService(object):
         self._service_provider = service_provider
 
         # Register the request handlers with the server
-        self._service_provider.server.set_request_handler(SCRIPTAS_REQUEST, self._handle_scriptas_request)
+        self._service_provider.server.set_request_handler(SCRIPT_AS_REQUEST, self._handle_script_as_request)
 
         # Find the provider type
         self._provider: str = self._service_provider.provider
@@ -43,10 +43,14 @@ class ScriptingService(object):
         return object_metadata
 
     # REQUEST HANDLERS #####################################################
-    def _handle_scriptas_request(self, request_context: RequestContext, params: ScriptAsParameters) -> None:
+    def _handle_script_as_request(self, request_context: RequestContext, params: ScriptAsParameters, retry_state=False) -> None:
         try:
             utils.validate.is_not_none('params', params)
+        except Exception as e:
+            self._request_error(request_context, params, str(e))
+            return
 
+        try:
             scripting_operation = params.operation
             connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
             connection = connection_service.get_connection(params.owner_uri, ConnectionType.QUERY)
@@ -57,6 +61,13 @@ class ScriptingService(object):
             script = scripter.script(scripting_operation, object_metadata)
             request_context.send_response(ScriptAsResponse(params.owner_uri, script))
         except Exception as e:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception('Scripting operation failed')
-            request_context.send_error(str(e), params)
+            if connection is not None and connection.connection.broken and not retry_state:
+                self._service_provider.logger.warn('Server closed the connection unexpectedly. Attempting to reconnect...')
+                self._handle_script_as_request(request_context, params, True)
+            else:
+                self._request_error(request_context, params, str(e))
+
+    def _request_error(self, request_context: RequestContext, params: ScriptAsParameters, message: str):
+        if self._service_provider.logger is not None:
+            self._service_provider.logger.exception('Scripting operation failed')
+        request_context.send_error(message, params)

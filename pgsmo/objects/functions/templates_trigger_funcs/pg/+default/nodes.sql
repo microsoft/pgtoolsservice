@@ -4,25 +4,36 @@
  # Copyright (C) 2013 - 2017, The pgAdmin Development Team
  # This software is released under the PostgreSQL Licence
  #}
+{% import 'systemobjects.macros' as SYSOBJECTS %} 
 SELECT
     pr.oid, pr.proname || '()' as name,
-    lanname, pg_get_userbyid(proowner) as funcowner, description
+    lanname, pg_catalog.pg_get_userbyid(proowner) as funcowner, description,
+    nsp.nspname AS schema,
+    nsp.oid AS schemaoid,
+    {{ SYSOBJECTS.IS_SYSTEMSCHEMA('nsp') }} as is_system
 FROM
-    pg_proc pr
+    pg_catalog.pg_proc pr
+INNER JOIN 
+    pg_catalog.pg_namespace nsp ON pr.pronamespace = nsp.oid
 JOIN
-    pg_type typ ON typ.oid=prorettype
+    pg_catalog.pg_type typ ON typ.oid=prorettype
 JOIN
-    pg_language lng ON lng.oid=prolang
+    pg_catalog.pg_language lng ON lng.oid=prolang
 LEFT OUTER JOIN
-    pg_description des ON (des.objoid=pr.oid AND des.classoid='pg_proc'::regclass)
+    pg_catalog.pg_description des ON (des.objoid=pr.oid AND des.classoid='pg_proc'::regclass)
 WHERE
     proisagg = FALSE
 {% if fnid %}
-    AND pr.oid = {{ fnid }}
+    AND pr.oid = {{ fnid|qtLiteral(conn) }}
 {% endif %}
 {% if scid %}
     AND pronamespace = {{scid}}::oid
 {% endif %}
-    AND typname = 'trigger' AND lanname != 'edbspl'
+{% if schema_diff %}
+    AND CASE WHEN (SELECT COUNT(*) FROM pg_catalog.pg_depend
+        WHERE objid = pr.oid AND deptype = 'e') > 0 THEN FALSE ELSE TRUE END
+{% endif %}
+    AND typname IN ('trigger', 'event_trigger')
+    AND lanname NOT IN ('edbspl', 'sql', 'internal')
 ORDER BY
     proname;
