@@ -79,7 +79,9 @@ class ObjectExplorerService(object):
 
             # Use the provider's default db if db name was not specified
             if params.database_name is None or params.database_name == '':
-                params.database_name = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.pgsql.default_database
+                is_cosmos = params.server_name.endswith(".postgres.cosmos.azure.com")
+                pgsql_config = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME].configuration.pgsql
+                params.database_name = pgsql_config.default_database if not is_cosmos else pgsql_config.cosmos_default_database
 
             # Use the provider's default port if port number was not specified
             if not params.port:

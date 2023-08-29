@@ -43,10 +43,10 @@ def _get_node_info(
     if node.parent is not None and node.parent.parent is None and hasattr(node, 'schema'):
         metadata.schema = node.schema
 
-    # Else if it is a table object, add the schema also. Important for scripting purposes
+    # Else if it is a table object, add the schema and the object name. Important for scripting purposes
     # node.parent = Table/View, node.parent.parent = Schema, node.parent.parent.parent = None
     elif node.parent is not None and node.parent.parent is not None and node.parent.parent.parent is None and hasattr(node.parent, 'schema'):
-        metadata.schema = node.parent.schema
+        metadata.schema = ".".join([node.parent.schema, node.parent.name])
 
     node_info: NodeInfo = NodeInfo()
     node_info.is_leaf = is_leaf
@@ -200,6 +200,24 @@ def _procedures(is_refresh: bool, current_path: str, session: ObjectExplorerSess
         _get_node_info(node, current_path, 'StoredProcedure',
                        label=f'{node.name}')
         for node in parent_obj.procedures if node.is_system == is_system and schema.name == node.schema
+    ]
+
+
+def _trigger_functions(is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    """
+    Function to generate a list of NodeInfo for trigger functions in a schema
+    Expected match_params:
+      dbid int: Database OID
+    """
+    is_system = is_system_request(current_path)
+    parent_obj = _get_obj_with_refresh(
+        session.server.databases[int(match_params['dbid'])], is_refresh)
+    schema = _get_obj_with_refresh(_get_schema(
+        session, match_params['dbid'], match_params['scid']), is_refresh)
+    return [
+        _get_node_info(node, current_path, 'TableValuedFunction',
+                       label=f'{node.name}')
+        for node in parent_obj.trigger_functions if node.is_system == is_system and schema.name == node.schema
     ]
 
 
@@ -423,6 +441,7 @@ PG_ROUTING_TABLE = {
         Folder('Materialized Views', 'materializedviews'),
         Folder('Functions', 'functions'),
         Folder('Procedures', 'procedures'),
+        Folder('Trigger Functions', 'triggerfunctions'),
         Folder('Collations', 'collations'),
         Folder('Data Types', 'datatypes'),
         Folder('Sequences', 'sequences'),
@@ -434,6 +453,7 @@ PG_ROUTING_TABLE = {
         Folder('Materialized Views', 'materializedviews'),
         Folder('Functions', 'functions'),
         Folder('Procedures', 'procedures'),
+        Folder('Trigger Functions', 'triggerfunctions'),
         Folder('Collations', 'collations'),
         Folder('Data Types', 'datatypes'),
         Folder('Sequences', 'sequences'),
@@ -459,6 +479,10 @@ PG_ROUTING_TABLE = {
                                                                                                                        _procedures),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/procedures/$'): RoutingTarget(None,
                                                                                                                               _procedures),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/triggerfunctions/$'): RoutingTarget(None,
+                                                                                                                             _trigger_functions),
+    re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/triggerfunctions/$'): RoutingTarget(None,
+                                                                                                                                    _trigger_functions),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/(?P<scid>\d+)/collations/$'): RoutingTarget(None,
                                                                                                                        _collations),
     re.compile(r'^/(?P<db>databases|systemdatabases)/(?P<dbid>\d+)/schemas/system/(?P<scid>\d+)/collations/$'): RoutingTarget(None,

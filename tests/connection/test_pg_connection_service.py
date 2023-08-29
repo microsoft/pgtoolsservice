@@ -567,6 +567,34 @@ class TestPGConnectionService(unittest.TestCase):
             self.assertEqual(len(calls), 1)
             self.assertEqual(calls[0][2]['dbname'], default_db)
 
+    def test_cosmos_default_database(self):
+        """Test that if no database is given, the default database is used"""
+        # Set up the connection params and default database name
+        default_db = 'citus_test_db'
+        self.connection_service._service_provider[WORKSPACE_SERVICE_NAME].configuration.pgsql.cosmos_default_database = default_db
+        params: ConnectRequestParams = ConnectRequestParams.from_dict({
+            'ownerUri': 'someUri',
+            'type': ConnectionType.DEFAULT,
+            'connection': {
+                'options': {
+                    'user': 'postgres',
+                    'password': 'password',
+                    'host': 'myserver.postgres.cosmos.azure.com',
+                    'dbname': ''
+                }
+            }
+        })
+
+        # If I connect with an empty database name
+        with mock.patch('ossdbtoolsservice.connection.connection_service._build_connection_response'), \
+                mock.patch('psycopg.connect', return_value=MockPsycopgConnection()) as mock_psycopg_connect:
+            self.connection_service.connect(params)
+
+            # Then psycopg's connect method was called with the default database
+            calls = mock_psycopg_connect.mock_calls
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(calls[0][2]['dbname'], default_db)
+
     def test_non_default_database(self):
         """Test that if a database is given, the default database is not used"""
         # Set up the connection params and default database name
