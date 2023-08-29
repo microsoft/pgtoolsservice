@@ -5,5 +5,5 @@
  # This software is released under the PostgreSQL Licence
  #}
 {% if data %}
-ALTER TABLE {{ conn|qtIdent(data.nspname, data.relname) }} DROP CONSTRAINT {{ conn|qtIdent(data.name) }};
+ALTER TABLE IF EXISTS {{ conn|qtIdent(data.nspname, data.relname) }} DROP CONSTRAINT IF EXISTS {{ conn|qtIdent(data.name) }};
 {% endif %}

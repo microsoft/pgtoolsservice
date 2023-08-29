@@ -29,7 +29,8 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
         """
         constraint = cls(server, parent, kwargs['name'])
         constraint._oid = kwargs['oid']
-        constraint._convalidated = kwargs['convalidated']
+        if 'convalidated' in kwargs:
+            constraint._convalidated = kwargs['convalidated']
 
         return constraint
 
@@ -87,7 +88,8 @@ class CheckConstraint(Constraint):
                 "comment": self.comment,
                 "connoinherit": self.no_inherit,
                 "convalidated": self.convalidated
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _delete_query_data(self) -> dict:
@@ -97,7 +99,8 @@ class CheckConstraint(Constraint):
                 "name": self.name,
                 "nspname": self.parent.parent.name,
                 "relname": self.parent.name
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -115,7 +118,8 @@ class CheckConstraint(Constraint):
                 "nspname": "",
                 "relname": "",
                 "convalidated": ""
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
 
@@ -175,7 +179,8 @@ class ExclusionConstraint(Constraint):
                 "condeferred": self.deferred,
                 "constraint": self.constraint,
                 "comment": self.comment
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _delete_query_data(self) -> dict:
@@ -186,7 +191,8 @@ class ExclusionConstraint(Constraint):
                 "table": self.parent.name,
                 "name": self.name
             },
-            "cascade": self.cascade
+            "cascade": self.cascade,
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -205,7 +211,8 @@ class ExclusionConstraint(Constraint):
                 "spcname": "",
                 "fillfactor": "",
                 "comment": ""
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
 
@@ -271,7 +278,8 @@ class ForeignKeyConstraint(Constraint):
                 "condeferred": self.deferred,
                 "convalidated": self.convalidated,
                 "comment": self.comment
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _delete_query_data(self) -> dict:
@@ -282,7 +290,8 @@ class ForeignKeyConstraint(Constraint):
                 "table": self.parent.name,
                 "name": self.name
             },
-            "cascade": self.cascade
+            "cascade": self.cascade,
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -299,7 +308,8 @@ class ForeignKeyConstraint(Constraint):
                 "name": "",
                 "convalidated": "",
                 "comment": ""
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
 
@@ -307,6 +317,7 @@ class IndexConstraint(Constraint):
     TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_index')
 
     # -FULL OBJECT PROPERTIES ##############################################
+
     @property
     def index(self):
         return self._full_properties["index"]
@@ -350,7 +361,8 @@ class IndexConstraint(Constraint):
                 "condeferrable": self.deferrable,
                 "condeferred": self.deferred,
                 "comment": self.comment
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     def _delete_query_data(self) -> dict:
@@ -361,7 +373,8 @@ class IndexConstraint(Constraint):
                 "table": self.parent.name,
                 "name": self.name
             },
-            "cascade": self.cascade
+            "cascade": self.cascade,
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
@@ -380,5 +393,38 @@ class IndexConstraint(Constraint):
                 "spcname": "",
                 "fillfactor": "",
                 "comment": ""
-            }
+            },
+            "conn": self.server.connection.connection
+        }
+
+
+class PrimaryKeyConstraint(IndexConstraint):
+    @property
+    def constraint_type(self):
+        return "p"
+
+    # TEMPLATING PROPERTIES ################################################
+    @property
+    def extended_vars(self) -> dict:
+        return {
+            'cid': self.oid,
+            'tid': self.parent.oid,                         # Table/view OID
+            'did': self.parent.parent.oid,                  # Database OID
+            'constraint_type': self.constraint_type         # Constraint type ("p" or "u" for primary or unique)
+        }
+
+
+class UniqueKeyConstraint(IndexConstraint):
+    @property
+    def constraint_type(self):
+        return "u"
+
+    # TEMPLATING PROPERTIES ################################################
+    @property
+    def extended_vars(self) -> dict:
+        return {
+            'cid': self.oid,
+            'tid': self.parent.oid,                         # Table/view OID
+            'did': self.parent.parent.oid,                  # Database OID
+            'constraint_type': self.constraint_type         # Constraint type ("p" or "u" for primary or unique)
         }

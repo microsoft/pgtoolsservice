@@ -119,14 +119,19 @@ class MockPsycopgConnection(object):
         self.commit = mock.Mock()
         self.pgconn = mock.Mock()
         self.info = MockConnectionInfo(dsn_parameters, self.server_version)
+        self.broken = False
 
-        self._adapters: Optional[AdaptersMap] = None
+        self._adapters: Optional[AdaptersMap] = mock.Mock()
         self.notice_handlers: List[NoticeHandler] = []
 
     @property
     def closed(self):
         """Mock for the connection's closed property"""
         return self.close.call_count > 0
+
+    @property
+    def adapters(self) -> AdaptersMap:
+        return self._adapters
 
     def get_dsn_parameters(self):
         """Mock for the connection's get_dsn_parameters method"""
@@ -184,6 +189,7 @@ class MockCursor:
         self.mogrify = mock.Mock(return_value=self._mogrified_value)
         self._query_results = query_results
         self._fetched_count = 0
+        self.statusmessage = None
 
     def __iter__(self):
         return self
@@ -199,15 +205,15 @@ class MockCursor:
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
         for handler in self.connection.notice_handlers:
-            handler(MockNotice("NOTICE: foo"))
-            handler(MockNotice("DEBUG: bar"))
+            handler(MockNotice("foo", "NOTICE"))
+            handler(MockNotice("bar", "DEBUG"))
         self.rowcount = len(self._query_results) if self._query_results is not None else 0
 
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
         for handler in self.connection.notice_handlers:
-            handler(MockNotice("NOTICE: foo"))
-            handler(MockNotice("DEBUG: bar"))
+            handler(MockNotice("foo", "NOTICE"))
+            handler(MockNotice("bar", "DEBUG"))
         raise psycopg.DatabaseError()
 
     def execute_fetch_one_side_effects(self, *args):
@@ -257,5 +263,6 @@ class MockThread():
 
 class MockNotice():
 
-    def __init__(self, message_primary):
+    def __init__(self, message_primary, severity):
         self.message_primary = message_primary
+        self.severity = severity

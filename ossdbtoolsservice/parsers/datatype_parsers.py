@@ -70,8 +70,8 @@ def parse_datetime(value: str) -> datetime.datetime:
     return date_parser.parse(value)
 
 
-def parse_timedelta(value: str) -> datetime.timedelta:
-    raise NotImplementedError()
+def parse_timedelta(value: str) -> str:
+    return value
 
 
 def parse_uuid(value: str) -> uuid.UUID:

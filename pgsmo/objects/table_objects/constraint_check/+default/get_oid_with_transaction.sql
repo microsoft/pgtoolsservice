@@ -5,7 +5,9 @@
  # This software is released under the PostgreSQL Licence
  #}
 SELECT ct.oid,
-    ct.conname as name
-FROM pg_constraint ct
+    ct.conname as name,
+    NOT convalidated as convalidated
+FROM pg_catalog.pg_constraint ct
 WHERE contype='c' AND
-    conrelid = {{tid}}::oid LIMIT 1;
+    conrelid = {{tid}}::oid
+ORDER BY ct.oid DESC LIMIT 1;

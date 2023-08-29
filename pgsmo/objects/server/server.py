@@ -7,8 +7,8 @@ from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
 
 from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from pgsmo.objects.schema.schema import Schema
-from pgsmo.objects.table.table import Table
 from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
@@ -226,25 +226,50 @@ class Server:
         return self.find_schema_child_object('datatypes', metadata)
 
     def find_index(self, metadata):
+        """ Find an index in the server. Indexes are always children of either tables or materialized views """
         try:
             idx_name = metadata.name
-            parent_schema = self.find_schema(metadata)
-            if not parent_schema:
-                return None
-            obj_collection = []
+            # For table_objects, the schema key in metadata stores "schema.table_name". See get_node_info
+            schema_name, table_or_mv_name = metadata.schema.split('.')
 
-            # Go over all tables in schema and collect the indexes
-            for table in parent_schema.tables:
-                if isinstance(table, Table):
-                    obj_collection.extend(table.indexes)
+            # Find the table and retrieve the index if it exists
+            table_metadata = ObjectMetadata(metadata_type_name='Table', name=table_or_mv_name, schema=schema_name)
+            table_obj = self.find_table(table_metadata)
+            if table_obj is not None:
+                idx = next((index for index in table_obj.indexes if index.name == idx_name), None)
+                if idx is not None:
+                    return idx
 
-            # Find the matching index
-            if not obj_collection:
-                return None
-            idx = next((index for index in obj_collection if index.name == idx_name), None)
-            return idx
+            # Otherwise, search through materialized views and try to retrieve the index there
+            materialized_view_metadata = ObjectMetadata(metadata_type_name='Materializedview', name=table_or_mv_name, schema=schema_name)
+            materialized_view_obj = self.find_materialized_view(materialized_view_metadata)
+            if materialized_view_obj is not None:
+                idx = next((index for index in materialized_view_obj.indexes if index.name == idx_name), None)
+                if idx is not None:
+                    return idx
         except Exception:
             return None
+
+    def find_trigger(self, metadata):
+        """ Find a trigger in the server. Triggers are always children of tables """
+        try:
+            trigger_name = metadata.name
+            # For table_objects, the schema key in metadata stores "schema.table_name". See get_node_info
+            schema_name, table_name = metadata.schema.split('.')
+
+            # Find the table and retrieve the trigger if it exists
+            table_metadata = ObjectMetadata(metadata_type_name='Table', name=table_name, schema=schema_name)
+            table_obj = self.find_table(table_metadata)
+            if table_obj is not None:
+                trigger = next((trigger for trigger in table_obj.triggers if trigger.name == trigger_name), None)
+                if trigger is not None:
+                    return trigger
+        except Exception:
+            return None
+
+    def find_trigger_function(self, metadata):
+        """ Find a trigger function in the server """
+        return self.find_schema_child_object('trigger_functions', metadata)
 
     def find_schema_child_object(self, prop_name: str, metadata):
         """
@@ -279,9 +304,15 @@ class Server:
             "Sequence": self.find_sequence,
             "Datatype": self.find_datatype,
             "Materializedview": self.find_materialized_view,
-            "Index": self.find_index
+            "Index": self.find_index,
+            "Trigger": self.find_trigger,
+            "Triggerfunction": self.find_trigger_function
         }
         return object_map[object_type.capitalize()](metadata)
+
+    def set_connection(self, conn: ServerConnection) -> ServerConnection:
+        """Reset connection to the server/db that this object will use"""
+        self._conn = conn
 
     # IMPLEMENTATION DETAILS ###############################################
 

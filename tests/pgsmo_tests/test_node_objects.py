@@ -366,8 +366,9 @@ class TestNodeObject(unittest.TestCase):
 
         # Then:
         # ... The template path and template renderer should have been called once
+        template_vars = {"conn": mock_server.connection.connection}  # The "conn" key should always be set for nodes.sql in the template_vars
         mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_server.version)
-        mock_render.assert_called_once_with('path', macro_roots=None, **{})     # Params to the renderer should be empty
+        mock_render.assert_called_once_with('path', macro_roots=None, **template_vars)     # Params to the renderer should be empty except for "conn"
 
         # ... A query should have been executed
         mock_executor.assert_called_once_with('SQL')
@@ -414,7 +415,7 @@ class TestNodeObject(unittest.TestCase):
         # Then:
         # ... The template path and template renderer should have been called once
         mock_template_path.assert_called_once_with('template_root', 'nodes.sql', mock_server.version)
-        mock_render.assert_called_once_with('path', macro_roots=None, **{'parent_id': 123})
+        mock_render.assert_called_once_with('path', macro_roots=None, **{'parent_id': 123, 'conn': mock_server.connection.connection})
 
         # ... A query should have been executed
         mock_executor.assert_called_once_with('SQL')
