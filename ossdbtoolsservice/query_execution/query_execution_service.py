@@ -6,7 +6,7 @@
 from datetime import datetime
 import threading
 import uuid
-from typing import Callable, Dict, List  # noqa
+from typing import Callable, Dict, List, Optional  # noqa
 import sqlparse
 import ntpath
 
@@ -16,7 +16,7 @@ from ossdbtoolsservice.query import (
     Batch, BatchEvents, ExecutionState, QueryExecutionSettings, Query, QueryEvents,
     compute_selection_data_for_batches as compute_batches
 )
-from ossdbtoolsservice.query.contracts import BatchSummary, SelectionData, SaveResultsRequestParams, SubsetResult  # noqa
+from ossdbtoolsservice.query.contracts import BatchSummary, ResultSetSubset, SelectionData, SaveResultsRequestParams, SubsetResult  # noqa
 from ossdbtoolsservice.query import ResultSetStorageType
 from ossdbtoolsservice.query_execution.contracts import (
     EXECUTE_STRING_REQUEST, EXECUTE_DEPLOY_REQUEST, EXECUTE_DOCUMENT_SELECTION_REQUEST, ExecuteRequestParamsBase,

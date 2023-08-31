@@ -105,7 +105,27 @@ def convert_bytes_to_daterange_format_str(value) -> str:
 
 PG_DATATYPE_READER_MAP = {
     datatypes.DATATYPE_BOOL: convert_bytes_to_bool,
+    datatypes.DATATYPE_REAL: convert_bytes_to_float,
+    datatypes.DATATYPE_DOUBLE: convert_bytes_to_double,
     datatypes.DATATYPE_SMALLINT: convert_bytes_to_short,
     datatypes.DATATYPE_INTEGER: convert_bytes_to_int,
+    datatypes.DATATYPE_BIGINT: convert_bytes_to_long_long,
+    datatypes.DATATYPE_NUMERIC: convert_bytes_to_decimal,
+    datatypes.DATATYPE_DATE: convert_bytes_to_date,
+    datatypes.DATATYPE_TIME: convert_bytes_to_time,
+    datatypes.DATATYPE_TIME_WITH_TIMEZONE: convert_bytes_to_time_with_timezone,
+    datatypes.DATATYPE_TIMESTAMP: convert_bytes_to_datetime,
+    datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: convert_bytes_to_datetime,
+    datatypes.DATATYPE_INTERVAL: convert_bytes_to_timedelta,
+    datatypes.DATATYPE_UUID: convert_bytes_to_uuid,
+    datatypes.DATATYPE_JSON: convert_bytes_to_str,
+    datatypes.DATATYPE_JSONB: convert_bytes_to_str,
+    datatypes.DATATYPE_INT4RANGE: convert_bytes_to_numericrange_format_str,
+    datatypes.DATATYPE_INT8RANGE: convert_bytes_to_numericrange_format_str,
+    datatypes.DATATYPE_NUMRANGE: convert_bytes_to_numericrange_format_str,
+    datatypes.DATATYPE_TSRANGE: convert_bytes_to_datetimerange_format_str,
+    datatypes.DATATYPE_TSTZRANGE: convert_bytes_to_datetimetzrange_format_str,
+    datatypes.DATATYPE_DATERANGE: convert_bytes_to_daterange_format_str,
     datatypes.DATATYPE_OID: convert_bytes_to_int,
+    datatypes.DATATYPE_BYTEA: convert_bytes_to_memoryview
 }

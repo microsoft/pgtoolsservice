@@ -5,10 +5,13 @@
 
 import unittest
 from unittest import mock
+from dateutil.tz import tzoffset
+from decimal import Decimal
 import uuid
 import struct
 import io
 import datetime
+from psycopg.types.range import NumericRange, TimestampRange, TimestamptzRange, DateRange
 
 from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
 from ossdbtoolsservice.query.contracts import DbColumn
@@ -54,7 +57,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(1), res)
 
     def test_write_float(self):
-        test_value = "123.456"
+        test_value = 123.456
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_REAL
@@ -64,10 +67,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(8), res)
 
     def test_write_double(self):
-        test_value = "12345678.90123456"
+        test_value = 12345678.90123456
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_DOUBLE
@@ -77,7 +80,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(8), res)
 
     def test_write_short(self):
         test_value = 12345
@@ -106,7 +109,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(4), res)
 
     def test_write_long_long(self):
-        test_value = "123456789012"
+        test_value = 123456789012
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_BIGINT
@@ -116,10 +119,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(8), res)
 
     def test_write_decimal(self):
-        test_val = "123.1421321"
+        test_val = Decimal(123)
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_NUMERIC
@@ -158,7 +161,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
 
     def test_write_date(self):
-        test_value = datetime.date(2004, 10, 19).isoformat()
+        test_value = datetime.date(2004, 10, 19)
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_DATE
@@ -168,10 +171,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value.isoformat())), res)
 
     def test_write_time(self):
-        test_value = datetime.time(10, 23, 54).isoformat()
+        test_value = datetime.time(10, 23, 54)
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TIME
@@ -181,10 +184,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value.isoformat())), res)
 
     def test_write_time_with_timezone(self):
-        test_value = datetime.time(10, 23, 54, tzinfo=None).isoformat()
+        test_value = datetime.time(10, 23, 54, tzinfo=None)
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TIME_WITH_TIMEZONE
@@ -194,10 +197,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value.isoformat())), res)
 
     def test_write_datetime(self):
-        test_value = datetime.datetime(2004, 10, 19, 10, 23, 54).isoformat()
+        test_value = datetime.datetime(2004, 10, 19, 10, 23, 54)
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TIMESTAMP
@@ -207,10 +210,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value.isoformat())), res)
 
     def test_write_timedelta(self):
-        test_value = "2 years 1 day"
+        test_value = datetime.timedelta(days=3, hours=4, minutes=5, seconds=6)
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_INTERVAL
@@ -220,10 +223,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
 
     def test_write_uuid(self):
-        test_value = str(uuid.uuid4())
+        test_value = uuid.uuid4()
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_UUID
@@ -233,10 +236,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)  # UUID standard len is 36
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(36), res)  # UUID standard len is 36
 
     def test_write_bytea(self):
-        test_value = "89504E470D0A1A0A"
+        test_value = memoryview(b'TestString')
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_BYTEA
@@ -246,10 +249,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value.tobytes())), res)
 
     def test_write_json(self):
-        test_value = str({"Name": "TestName", "Schema": "TestSchema"})
+        test_value = {"Name": "TestName", "Schema": "TestSchema"}
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_JSON
@@ -259,10 +262,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(str(test_value))), res)
 
     def test_write_int4range(self):
-        test_value = "[10,20)"
+        test_value = NumericRange(10, 20)
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_INT4RANGE
@@ -272,10 +275,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[10,20)")), res)
 
     def test_write_tsrange(self):
-        test_value = "[2014-06-08T12:12:45,2016-07-06T14:12:08)"
+        test_value = TimestampRange(datetime.datetime(2014, 6, 8, 12, 12, 45), datetime.datetime(2016, 7, 6, 14, 12, 8))
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TSRANGE
@@ -285,10 +288,13 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[2014-06-08T12:12:45,2016-07-06T14:12:08)")), res)
 
     def test_write_tstzrange(self):
-        test_value = "[2014-06-08T12:12:45+12:00,2016-07-06T14:12:08+12:00)"
+        test_value = TimestamptzRange(
+            datetime.datetime(2014, 6, 8, 12, 12, 45, tzinfo=tzoffset(None, 720 * 60)),
+            datetime.datetime(2016, 7, 6, 14, 12, 8, tzinfo=tzoffset(None, 720 * 60)),
+        )
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_TSTZRANGE
@@ -298,10 +304,10 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[2014-06-08T12:12:45+12:00,2016-07-06T14:12:08+12:00)")), res)
 
     def test_write_daterange(self):
-        test_value = "[2015-06-06,2016-08-08)"
+        test_value = DateRange(datetime.date(2015, 6, 6), datetime.date(2016, 8, 8))
         test_columns_info = []
         col = DbColumn()
         col.data_type = datatypes.DATATYPE_DATERANGE
@@ -311,7 +317,7 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
         mock_storage_data_reader.get_value = mock.MagicMock(return_value=test_value)
 
         res = self._writer.write_row(mock_storage_data_reader)
-        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len(test_value)), res)
+        self.assertEqual(self.get_expected_length_with_additional_buffer_for_size(len("[2015-06-06,2016-08-08)")), res)
 
     def test_write_udt(self):
         test_value = "TestUserDefinedTypes"
