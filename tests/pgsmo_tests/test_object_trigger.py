@@ -40,7 +40,6 @@ class TestTrigger(NodeObjectTestBase, unittest.TestCase):
             "prosrc": "prosrc",
             "custom_tgargs": "custom_tgargs",
             "description": "description",
-            "cascade": "cascade",
             "is_enable_trigger": "is_enable_trigger"
         }
 
@@ -58,7 +57,6 @@ class TestTrigger(NodeObjectTestBase, unittest.TestCase):
             "prosrc": "test",
             "custom_tgargs": 1,
             "description": "test_description",
-            "cascade": True,
             "is_enable_trigger": True
         }
 
