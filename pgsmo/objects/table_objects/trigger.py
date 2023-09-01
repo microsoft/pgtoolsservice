@@ -101,10 +101,6 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return self._full_properties["description"]
 
     @property
-    def cascade(self):
-        return self._full_properties["cascade"]
-
-    @property
     def is_enable_trigger(self):
         return self._full_properties["is_enable_trigger"]
 
@@ -165,7 +161,7 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "nspname": self.parent.schema,
                 "relname": self.parent.name
             },
-            "cascade": self.cascade
+            "cascade": True
         }
 
     def _update_query_data(self) -> dict:
