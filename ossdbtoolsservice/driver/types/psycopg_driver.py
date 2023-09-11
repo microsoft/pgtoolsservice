@@ -49,7 +49,7 @@ class PostgreSQLConnection(ServerConnection):
 
         # Map the connection options to their psycopg-specific options
         self._connection_options = connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
-                                                         if option in PG_CONNECTION_PARAM_KEYWORDS}
+                                                         if PG_CONNECTION_OPTION_KEY_MAP.get(option, option) in PG_CONNECTION_PARAM_KEYWORDS}
         # Flag to determine whether server is Azure Cosmos PG server
         is_cosmos = 'host' in connection_options and connection_options['host'].endswith('.postgres.cosmos.azure.com')
 
