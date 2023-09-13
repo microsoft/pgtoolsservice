@@ -3,7 +3,7 @@ steps:
   displayName: 'Code Signing for windows'
   condition: eq(variables['platform'], 'windows')
   inputs:
-    ConnectedServiceName: 'Database System ESRP Connector'
+    ConnectedServiceName: 'OrcaSQL ESRP Code Sign'
     FolderPath: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
     Pattern: |
       *.exe
