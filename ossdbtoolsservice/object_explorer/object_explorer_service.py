@@ -116,10 +116,9 @@ class ObjectExplorerService(object):
 
         # Step 2: Connect the session and lookup the root node asynchronously
         try:
-            if not session_exist_check:
-                session.init_task = threading.Thread(target=self._initialize_session, args=(request_context, session))
-                session.init_task.daemon = True
-                session.init_task.start()
+            session.init_task = threading.Thread(target=self._initialize_session, args=(request_context, session))
+            session.init_task.daemon = True
+            session.init_task.start()
         except Exception as e:
             # TODO: Localize
             self._session_created_error(request_context, session, f'Failed to start OE init task: {str(e)}')

@@ -177,20 +177,18 @@ class TestObjectExplorer(unittest.TestCase):
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
         oe._provider = constants.PG_PROVIDER_NAME
+        oe._server = Server
 
         # If: I attempt to create an OE session that already exists
-        rc = RequestFlowValidator()
-        rc.add_expected_response(
-            CreateSessionResponse,
-            lambda param: self.assertEqual(param.session_id, session_uri)
-        )
+        rc = self._create_request_flow_validator(session_uri, oe)
         oe._handle_create_session_request(rc.request_context, params)
+        oe._session_map[session_uri].init_task.join()
 
         # Then:
-        # ... I should get a response as False
+        # ... I should get re-initialize the session and retrieve it
         rc.validate()
 
-        # ... The old session should remain
+        # ... The old session id should still be there in the session map
         self.assertIs(oe._session_map[session_uri], session)
 
     def test_handle_create_session_threading_fail(self):
