@@ -72,7 +72,6 @@ class ObjectExplorerService(object):
     def _handle_create_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle a create object explorer session request"""
         # Step 1: Create the session
-        session_exist_check = False
         try:
             # Make sure we have the appropriate session params
             utils.validate.is_not_none('params', params)
@@ -94,7 +93,6 @@ class ObjectExplorerService(object):
             with self._session_lock:
                 if session_id in self._session_map:
                     # If session already exists, get it and respond with it
-                    session_exist_check = True
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.info(f'Object explorer session for {session_id} already exists. Returning existing session.')
                     session = self._session_map[session_id]
