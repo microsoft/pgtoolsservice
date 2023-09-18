@@ -48,25 +48,7 @@ class PostgreSQLConnection(ServerConnection):
             conn_params['password'] = conn_params['azureAccountToken']
 
         # Map the connection options to their psycopg-specific options
-        self._connection_options = connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
-                                                         if PG_CONNECTION_OPTION_KEY_MAP.get(option, option) in PG_CONNECTION_PARAM_KEYWORDS}
-        # Flag to determine whether server is Azure Cosmos PG server
-        is_cosmos = 'host' in connection_options and connection_options['host'].endswith('.postgres.cosmos.azure.com')
-
-        # Use the correct default DB depending on whether config is defined and whether the server is an Azure Cosmos PG server
-        self._default_database = config.pgsql.default_database if config else constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
-        if is_cosmos and config:
-            self._default_database = config.pgsql.cosmos_default_database
-        elif is_cosmos and not config:
-            self._default_database = constants.DEFAULT_DB[constants.COSMOS_PG_DEFAULT_DB]
-
-        # Use the default database if one was not provided
-        if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['dbname'] = self.default_database
-
-        # Use the default port number if one was not provided
-        if 'port' not in connection_options or not connection_options['port']:
-            connection_options['port'] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
+        self._connection_options = connection_options = self._load_connection_options(conn_params, config)
 
         # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
         self._conn = psycopg.connect(**connection_options)
@@ -100,6 +82,38 @@ class PostgreSQLConnection(ServerConnection):
         self._server_type = "PostgreSQL"
 
     # METHODS ##############################################################
+    def _load_connection_options(self, conn_params: Dict[str, str], config: Optional[Configuration] = None) -> dict:
+        """
+        Loads the connection options from the conn_params and maps them to the psycopg-specific options. Loads default options
+        when necessary.
+        :param conn_params: The connection parameters dictionary received from Azure Data Studio
+        :param config: The configuration object with PGSQL connection config
+        """
+        connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
+                              if PG_CONNECTION_OPTION_KEY_MAP.get(option, option) in PG_CONNECTION_PARAM_KEYWORDS}
+        # Flag to determine whether server is Azure Cosmos PG server
+        is_cosmos = 'host' in connection_options and connection_options['host'].endswith('.postgres.cosmos.azure.com')
+
+        # Use the correct default DB depending on whether config is defined and whether the server is an Azure Cosmos PG server
+        self._default_database = config.pgsql.default_database if config else constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
+        if is_cosmos and config:
+            self._default_database = config.pgsql.cosmos_default_database
+        elif is_cosmos and not config:
+            self._default_database = constants.DEFAULT_DB[constants.COSMOS_PG_DEFAULT_DB]
+
+        # Use the default database if one was not provided
+        if 'dbname' not in connection_options or not connection_options['dbname']:
+            connection_options['dbname'] = self.default_database
+
+        # Use the default port number if one was not provided
+        if 'port' not in connection_options or not connection_options['port']:
+            connection_options['port'] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
+
+        # Override application name to be default constant. Can change to be more specific in the future
+        connection_options['application_name'] = constants.DEFAULT_APPLICATION_NAME[constants.PG_PROVIDER_NAME]
+
+        return connection_options
+
     @property
     def autocommit(self) -> bool:
         """Returns the current autocommit status for this connection"""

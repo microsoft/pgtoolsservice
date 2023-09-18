@@ -804,7 +804,8 @@ class TestConnectionCancellation(unittest.TestCase):
 
         # Verify that psycopg's connection method was called with password set to account token.
         mock_connect_method.assert_called_once_with(user='postgres', password='exampleToken', host='myserver',
-                                                    port=DEFAULT_PORT[PG_PROVIDER_NAME], dbname='postgres')
+                                                    port=DEFAULT_PORT[PG_PROVIDER_NAME], dbname='postgres',
+                                                    application_name="azuredatastudio-postgresql")
 
         # Verify that psycopg's connection method was called and that the
         # response has a connection id, indicating success.
