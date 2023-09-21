@@ -1,6 +1,5 @@
 trigger: none
-pr:
-  - release
+pr: none
 strategy:
   matrix:
     linux:
