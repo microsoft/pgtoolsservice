@@ -297,13 +297,13 @@ class PostgreSQLConnection(ServerConnection):
         """
         Get the message from DatabaseError instance
         """
-        # If error.diag.message_primary is not None, return it.
-        if error.diag and error.diag.message_primary:
-            return error.diag.message_primary
-
         # If error.args exists and has at least one element, return the first element as the error message.
-        elif hasattr(error, 'args') and error.args and len(error.args) > 0:
+        if hasattr(error, 'args') and error.args and len(error.args) > 0:
             return error.args[0]
+
+        # If error.diag.message_primary is not None, return it.
+        elif error.diag and error.diag.message_primary:
+            return error.diag.message_primary
 
         # If neither is available, return a generic error message.
         else:
