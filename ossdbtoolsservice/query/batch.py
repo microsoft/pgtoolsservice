@@ -8,7 +8,6 @@ from datetime import datetime
 import psycopg
 import uuid
 import sqlparse
-from sqlparse.sql import Statement
 
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.utils.time import get_time_str, get_elapsed_time_str
@@ -43,7 +42,7 @@ class Batch:
 
     def __init__(
             self,
-            statement: Statement,
+            batch_text: str,
             ordinal: int,
             selection: SelectionData,
             batch_events: BatchEvents = None,
@@ -51,8 +50,7 @@ class Batch:
     ) -> None:
         self.id = ordinal
         self.selection = selection
-        self.statement = statement
-        self.batch_text = str(statement)
+        self.batch_text = batch_text
         self.status_message: str = None
 
         self._execution_start_time: datetime = None
@@ -203,11 +201,14 @@ def create_result_set(storage_type: ResultSetStorageType, result_set_id: int, ba
     return InMemoryResultSet(result_set_id, batch_id)
 
 
-def create_batch(statement: Statement, ordinal: int, selection: SelectionData, batch_events: BatchEvents, storage_type: ResultSetStorageType) -> Batch:
+def create_batch(batch_text: str, ordinal: int, selection: SelectionData, batch_events: BatchEvents, storage_type: ResultSetStorageType) -> Batch:
+    sql = sqlparse.parse(batch_text)
+    statement = sql[0]
+
     if statement.get_type().lower() == 'select':
         into_checker = [True for token in statement.tokens if token.normalized == 'INTO']
         cte_checker = [True for token in statement.tokens if token.ttype == sqlparse.tokens.Keyword.CTE]
         if len(into_checker) == 0 and len(cte_checker) == 0:  # SELECT INTO and CTE keywords can't be used in named cursor
-            return SelectBatch(statement, ordinal, selection, batch_events, storage_type)
+            return SelectBatch(batch_text, ordinal, selection, batch_events, storage_type)
 
-    return Batch(statement, ordinal, selection, batch_events, storage_type)
+    return Batch(batch_text, ordinal, selection, batch_events, storage_type)

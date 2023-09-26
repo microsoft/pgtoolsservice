@@ -7,7 +7,6 @@ from enum import Enum
 from typing import Callable, Dict, List, Optional  # noqa
 
 import sqlparse
-from sqlparse.sql import Statement
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.query import Batch, BatchEvents, create_batch, ResultSetStorageType
 from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
@@ -65,11 +64,10 @@ class Query:
         self.is_canceled = False
 
         # Initialize the batches
-        statements = sqlparse.parse(query_text)
+        statements = sqlparse.split(query_text)
         selection_data = compute_selection_data_for_batches(statements, query_text)
 
-        for index, batch in enumerate(statements):
-            batch_text = str(batch)
+        for index, batch_text in enumerate(statements):
             # Skip any empty text
             formatted_text = sqlparse.format(batch_text, strip_comments=True).strip()
             if not formatted_text or formatted_text == ';':
@@ -91,7 +89,7 @@ class Query:
                 self._user_transaction = True
 
             batch = create_batch(
-                batch,
+                sql_statement_text,
                 len(self.batches),
                 selection_data[index],
                 query_events.batch_events,
@@ -170,7 +168,7 @@ class Query:
         self.batches[params.batch_index].save_as(params, file_factory, on_success, on_failure)
 
 
-def compute_selection_data_for_batches(batches: List[Statement], full_text: str) -> List[SelectionData]:
+def compute_selection_data_for_batches(batches: List[str], full_text: str) -> List[SelectionData]:
     # Map the starting index of each line to the line number
     line_map: Dict[int, int] = {}
     search_offset = 0
@@ -183,15 +181,14 @@ def compute_selection_data_for_batches(batches: List[Statement], full_text: str)
     selection_data: List[SelectionData] = []
     search_offset = 0
     for batch in batches:
-        batch_text = str(batch)
         # Calculate the starting line number and column
-        start_index = full_text.index(batch_text, search_offset)
+        start_index = full_text.index(batch, search_offset)
         start_line_index = max(filter(lambda line_index: line_index <= start_index, line_map.keys()))
         start_line_num = line_map[start_line_index]
         start_col_num = start_index - start_line_index
 
         # Calculate the ending line number and column
-        end_index = start_index + len(batch_text)
+        end_index = start_index + len(batch)
         end_line_index = max(filter(lambda line_index: line_index < end_index, line_map.keys()))
         end_line_num = line_map[end_line_index]
         end_col_num = end_index - end_line_index
