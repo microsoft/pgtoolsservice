@@ -180,16 +180,26 @@ def compute_selection_data_for_batches(batches: List[str], full_text: str) -> Li
     # Iterate through the batches to build selection data
     selection_data: List[SelectionData] = []
     search_offset = 0
+    line_map_keys = sorted(line_map.keys())
+    l, r = 0, 0
+    start_line_index, end_line_index = 0, 0
     for batch in batches:
         # Calculate the starting line number and column
-        start_index = full_text.index(batch, search_offset)
-        start_line_index = max(filter(lambda line_index: line_index <= start_index, line_map.keys()))
-        start_line_num = line_map[start_line_index]
-        start_col_num = start_index - start_line_index
+        start_index = full_text.index(batch, search_offset) # batch start index
+        # start_line_index = max(filter(lambda line_index: line_index <= start_index, line_map_keys)) # find the character index of the batch start line
+        while l < len(line_map_keys) and line_map_keys[l] <= start_index:
+            start_line_index = line_map_keys[l]
+            l += 1
+
+        start_line_num = line_map[start_line_index] # map that to the line number
+        start_col_num = start_index - start_line_index 
 
         # Calculate the ending line number and column
         end_index = start_index + len(batch)
-        end_line_index = max(filter(lambda line_index: line_index < end_index, line_map.keys()))
+        # end_line_index = max(filter(lambda line_index: line_index < end_index, line_map_keys))
+        while r < len(line_map_keys) and line_map_keys[r] < end_index:
+            end_line_index = line_map_keys[r]
+            r += 1
         end_line_num = line_map[end_line_index]
         end_col_num = end_index - end_line_index
 
