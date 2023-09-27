@@ -202,13 +202,13 @@ def create_result_set(storage_type: ResultSetStorageType, result_set_id: int, ba
 
 
 def create_batch(batch_text: str, ordinal: int, selection: SelectionData, batch_events: BatchEvents, storage_type: ResultSetStorageType) -> Batch:
-    sql = sqlparse.parse(batch_text)
-    statement = sql[0]
+    # sql = sqlparse.parse(batch_text)
+    # statement = sql[0]
 
-    if statement.get_type().lower() == 'select':
-        into_checker = [True for token in statement.tokens if token.normalized == 'INTO']
-        cte_checker = [True for token in statement.tokens if token.ttype == sqlparse.tokens.Keyword.CTE]
-        if len(into_checker) == 0 and len(cte_checker) == 0:  # SELECT INTO and CTE keywords can't be used in named cursor
-            return SelectBatch(batch_text, ordinal, selection, batch_events, storage_type)
+    # if statement.get_type().lower() == 'select':
+    #     into_checker = [True for token in statement.tokens if token.normalized == 'INTO']
+    #     cte_checker = [True for token in statement.tokens if token.ttype == sqlparse.tokens.Keyword.CTE]
+    #     if len(into_checker) == 0 and len(cte_checker) == 0:  # SELECT INTO and CTE keywords can't be used in named cursor
+    #         return SelectBatch(batch_text, ordinal, selection, batch_events, storage_type)
 
     return Batch(batch_text, ordinal, selection, batch_events, storage_type)

@@ -64,38 +64,41 @@ class Query:
         self.is_canceled = False
 
         # Initialize the batches
-        statements = sqlparse.split(query_text)
-        selection_data = compute_selection_data_for_batches(statements, query_text)
+        # statements = sqlparse.split(query_text)
+        selection_data = compute_selection_data_for_batches([query_text], query_text)
 
-        for index, batch_text in enumerate(statements):
-            # Skip any empty text
-            formatted_text = sqlparse.format(batch_text, strip_comments=True).strip()
-            if not formatted_text or formatted_text == ';':
-                continue
+        # for index, batch_text in enumerate(statements):
+        index = 0
+        batch_text = query_text
+        # Skip any empty text
+        # formatted_text = sqlparse.format(batch_text, strip_comments=True).strip()
+        # if not formatted_text or formatted_text == ';':
+        #     return None
+        formatted_text = batch_text
 
-            sql_statement_text = batch_text
+        sql_statement_text = batch_text
 
-            # Create and save the batch
-            if bool(self._execution_plan_options):
-                if self._execution_plan_options.include_estimated_execution_plan_xml:
-                    sql_statement_text = Query.EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
-                elif self._execution_plan_options.include_actual_execution_plan_xml:
-                    self._disable_auto_commit = True
-                    sql_statement_text = Query.ANALYZE_EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
-
-            # Check if user defined transaction
-            if formatted_text.lower().startswith('begin'):
+        # Create and save the batch
+        if bool(self._execution_plan_options):
+            if self._execution_plan_options.include_estimated_execution_plan_xml:
+                sql_statement_text = Query.EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
+            elif self._execution_plan_options.include_actual_execution_plan_xml:
                 self._disable_auto_commit = True
-                self._user_transaction = True
+                sql_statement_text = Query.ANALYZE_EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
 
-            batch = create_batch(
-                sql_statement_text,
-                len(self.batches),
-                selection_data[index],
-                query_events.batch_events,
-                query_execution_settings.result_set_storage_type)
+        # Check if user defined transaction
+        if formatted_text.lower().startswith('begin'):
+            self._disable_auto_commit = True
+            self._user_transaction = True
 
-            self._batches.append(batch)
+        batch = create_batch(
+            sql_statement_text,
+            len(self.batches),
+            selection_data[index],
+            query_events.batch_events,
+            query_execution_settings.result_set_storage_type)
+
+        self._batches.append(batch)
 
     @property
     def owner_uri(self) -> str:
