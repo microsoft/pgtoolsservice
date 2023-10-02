@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import datetime
 from enum import Enum
 from typing import Callable, Dict, List, Optional  # noqa
 
@@ -11,6 +12,7 @@ from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.query import Batch, BatchEvents, create_batch, ResultSetStorageType
 from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
 from ossdbtoolsservice.query.data_storage import FileStreamFactory
+import psycopg
 
 
 class QueryEvents:
@@ -60,45 +62,47 @@ class Query:
         self._current_batch_index = 0
         self._batches: List[Batch] = []
         self._execution_plan_options = query_execution_settings.execution_plan_options
+        self._query_events = query_events
+        self._query_execution_settings = query_execution_settings
 
         self.is_canceled = False
 
         # Initialize the batches
         # statements = sqlparse.split(query_text)
-        selection_data = compute_selection_data_for_batches([query_text], query_text)
+        # selection_data = compute_selection_data_for_batches([query_text], query_text)
 
-        # for index, batch_text in enumerate(statements):
-        index = 0
-        batch_text = query_text
-        # Skip any empty text
-        # formatted_text = sqlparse.format(batch_text, strip_comments=True).strip()
-        # if not formatted_text or formatted_text == ';':
-        #     return None
-        formatted_text = batch_text
+        # # for index, batch_text in enumerate(statements):
+        # index = 0
+        # batch_text = query_text
+        # # Skip any empty text
+        # # formatted_text = sqlparse.format(batch_text, strip_comments=True).strip()
+        # # if not formatted_text or formatted_text == ';':
+        # #     return None
+        # formatted_text = batch_text
 
-        sql_statement_text = batch_text
+        # sql_statement_text = batch_text
 
-        # Create and save the batch
-        if bool(self._execution_plan_options):
-            if self._execution_plan_options.include_estimated_execution_plan_xml:
-                sql_statement_text = Query.EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
-            elif self._execution_plan_options.include_actual_execution_plan_xml:
-                self._disable_auto_commit = True
-                sql_statement_text = Query.ANALYZE_EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
+        # # Create and save the batch
+        # if bool(self._execution_plan_options):
+        #     if self._execution_plan_options.include_estimated_execution_plan_xml:
+        #         sql_statement_text = Query.EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
+        #     elif self._execution_plan_options.include_actual_execution_plan_xml:
+        #         self._disable_auto_commit = True
+        #         sql_statement_text = Query.ANALYZE_EXPLAIN_QUERY_TEMPLATE.format(sql_statement_text)
 
-        # Check if user defined transaction
-        if formatted_text.lower().startswith('begin'):
-            self._disable_auto_commit = True
-            self._user_transaction = True
+        # # Check if user defined transaction
+        # if formatted_text.lower().startswith('begin'):
+        #     self._disable_auto_commit = True
+        #     self._user_transaction = True
 
-        batch = create_batch(
-            sql_statement_text,
-            len(self.batches),
-            selection_data[index],
-            query_events.batch_events,
-            query_execution_settings.result_set_storage_type)
+        # batch = create_batch(
+        #     sql_statement_text,
+        #     len(self.batches),
+        #     selection_data[index],
+        #     query_events.batch_events,
+        #     query_execution_settings.result_set_storage_type)
 
-        self._batches.append(batch)
+        # self._batches.append(batch)
 
     @property
     def owner_uri(self) -> str:
@@ -119,6 +123,14 @@ class Query:
     @property
     def current_batch_index(self) -> int:
         return self._current_batch_index
+    
+    @property
+    def query_events(self) -> QueryEvents:
+        return self._query_events
+    
+    @property
+    def query_execution_settings(self) -> QueryExecutionSettings:
+        return self._query_execution_settings
 
     def execute(self, connection: ServerConnection, retry_state=False):
         """
@@ -143,13 +155,52 @@ class Query:
             if self._disable_auto_commit and connection.transaction_is_idle:
                 connection.autocommit = False
 
-            for batch_index, batch in enumerate(self._batches):
-                self._current_batch_index = batch_index
+            # for batch_index, batch in enumerate(self._batches):
+            #     self._current_batch_index = batch_index
 
-                if self.is_canceled:
-                    break
+            #     if self.is_canceled:
+            #         break
 
-                batch.execute(connection)
+            # Start a cursor block
+            batch_events: BatchEvents = None
+            if self.query_events is not None and self.query_events.batch_events is not None:
+                batch_events = self.query_events.batch_events
+            with connection.cursor() as cur:
+                connection.connection.add_notice_handler(lambda msg: self.notice_handler(msg, connection))
+                batch_ordinal = 0
+                cur.execute(self.query_text)
+                curr_resultset = True
+                while curr_resultset:
+                    batch_obj = create_batch(
+                        None,
+                        batch_ordinal,
+                        None,
+                        self.query_events.batch_events,
+                        self.query_execution_settings.result_set_storage_type,
+                        # Cursor description will have a result if it contains tuples
+                        True
+                    )
+
+                    # use callbacks
+                    if batch_events and batch_events._on_execution_started:
+                        batch_events._on_execution_started(batch_obj)
+
+                    batch_obj.after_execute(cur)
+
+                    if batch_events and batch_events._on_execution_completed:
+                        batch_events._on_execution_completed(batch_obj)
+
+                    if cur and cur.statusmessage is not None:
+                        batch_obj.status_message = cur.statusmessage
+
+                    batch_obj._has_executed = True
+
+                    # Append the batch object and update while loop values
+                    self.batches.append(batch_obj)
+                    curr_resultset = cur.nextset()
+                    batch_ordinal += 1
+
+
         finally:
             # We can only set autocommit when the connection is open.
             if connection.open and connection.transaction_is_idle:
@@ -157,6 +208,12 @@ class Query:
                 connection.set_user_transaction(False)
                 self._disable_auto_commit = False
             self._execution_state = ExecutionState.EXECUTED
+    
+    def notice_handler(self, notice: str, conn: ServerConnection):
+        if not conn.user_transaction:
+            self._notices.append('{0}: {1}'.format(notice.severity, notice.message_primary))
+        elif not notice.message_primary == 'there is already a transaction in progress':
+            self._notices.append('WARNING: {0}'.format(notice.message_primary))
 
     def get_subset(self, batch_index: int, start_index: int, end_index: int):
         if batch_index < 0 or batch_index >= len(self._batches):

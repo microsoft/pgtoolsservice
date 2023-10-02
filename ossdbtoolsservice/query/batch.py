@@ -201,7 +201,7 @@ def create_result_set(storage_type: ResultSetStorageType, result_set_id: int, ba
     return InMemoryResultSet(result_set_id, batch_id)
 
 
-def create_batch(batch_text: str, ordinal: int, selection: SelectionData, batch_events: BatchEvents, storage_type: ResultSetStorageType) -> Batch:
+def create_batch(batch_text: str, ordinal: int, selection: SelectionData, batch_events: BatchEvents, storage_type: ResultSetStorageType, select_batch: bool = False) -> Batch:
     # sql = sqlparse.parse(batch_text)
     # statement = sql[0]
 
@@ -210,5 +210,6 @@ def create_batch(batch_text: str, ordinal: int, selection: SelectionData, batch_
     #     cte_checker = [True for token in statement.tokens if token.ttype == sqlparse.tokens.Keyword.CTE]
     #     if len(into_checker) == 0 and len(cte_checker) == 0:  # SELECT INTO and CTE keywords can't be used in named cursor
     #         return SelectBatch(batch_text, ordinal, selection, batch_events, storage_type)
-
+    if select_batch:
+        return SelectBatch(batch_text, ordinal, selection, batch_events, storage_type)
     return Batch(batch_text, ordinal, selection, batch_events, storage_type)
