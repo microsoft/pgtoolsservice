@@ -3,9 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import datetime
+from datetime import datetime
 from enum import Enum
-from typing import Callable, Dict, List, Optional  # noqa
+from typing import Callable, Dict, List, Optional, Tuple  # noqa
 
 import sqlparse
 from ossdbtoolsservice.driver import ServerConnection
@@ -66,6 +66,7 @@ class Query:
         self._query_execution_settings = query_execution_settings
 
         self.is_canceled = False
+        self.selection_data = compute_selection_data_for_batches([self.query_text], self.query_text)[0]
 
         # Initialize the batches
         # statements = sqlparse.split(query_text)
@@ -168,35 +169,50 @@ class Query:
             with connection.cursor() as cur:
                 connection.connection.add_notice_handler(lambda msg: self.notice_handler(msg, connection))
                 batch_ordinal = 0
-                cur.execute(self.query_text)
+                start_time = datetime.now()
+
+                try:
+                    cur.execute(self.query_text)
+                    end_time = datetime.now()
+                except psycopg.DatabaseError as e:
+                    end_time = datetime.now()
+                    self.handle_database_error_during_execute(connection, (start_time, end_time), batch_events)
+                    # Exit
+                    raise e
+
                 curr_resultset = True
                 while curr_resultset:
                     batch_obj = create_batch(
-                        None,
+                        self.query_text,
                         batch_ordinal,
-                        None,
+                        self.selection_data,
                         self.query_events.batch_events,
-                        self.query_execution_settings.result_set_storage_type,
-                        # Cursor description will have a result if it contains tuples
-                        True
+                        self.query_execution_settings.result_set_storage_type
                     )
 
-                    # use callbacks
+                    # Only set end execution time to first batch summary as we cannot collect individual statement execution times
+                    batch_obj._execution_start_time = start_time
+                    if batch_ordinal == 0:
+                        batch_obj._execution_end_time = end_time
+
+                    # Call start callback
                     if batch_events and batch_events._on_execution_started:
                         batch_events._on_execution_started(batch_obj)
 
                     batch_obj.after_execute(cur)
 
+                    batch_obj._has_executed = True
+
+                    # Call Completed callback
                     if batch_events and batch_events._on_execution_completed:
                         batch_events._on_execution_completed(batch_obj)
 
                     if cur and cur.statusmessage is not None:
                         batch_obj.status_message = cur.statusmessage
 
-                    batch_obj._has_executed = True
-
                     # Append the batch object and update while loop values
                     self.batches.append(batch_obj)
+                    self._current_batch_index = batch_ordinal
                     curr_resultset = cur.nextset()
                     batch_ordinal += 1
 
@@ -208,12 +224,34 @@ class Query:
                 connection.set_user_transaction(False)
                 self._disable_auto_commit = False
             self._execution_state = ExecutionState.EXECUTED
+
+    def handle_database_error_during_execute(self, conn: ServerConnection, execution_times: Tuple[datetime, datetime], batch_events: BatchEvents):
+        start_time, end_time = execution_times
+        batch_obj = create_batch(
+                        self.query_text,
+                        0,
+                        self.selection_data,
+                        self.query_events.batch_events,
+                        self.query_execution_settings.result_set_storage_type
+                    )
+        batch_obj._execution_start_time = start_time
+        batch_obj._execution_end_time = end_time
+
+        # Call start callback
+        if batch_events and batch_events._on_execution_started:
+            batch_events._on_execution_started(batch_obj)
+
+        batch_obj._has_error = True
+        self.batches.append(batch_obj)
+        self._current_batch_index = 0
+        conn.set_transaction_in_error()
     
     def notice_handler(self, notice: str, conn: ServerConnection):
-        if not conn.user_transaction:
-            self._notices.append('{0}: {1}'.format(notice.severity, notice.message_primary))
-        elif not notice.message_primary == 'there is already a transaction in progress':
-            self._notices.append('WARNING: {0}'.format(notice.message_primary))
+        if self.batches and len(self.batches) > 0:
+            if not conn.user_transaction:
+                self.batches[self.current_batch_index]._notices.append('{0}: {1}'.format(notice.severity, notice.message_primary))
+            elif not notice.message_primary == 'there is already a transaction in progress':
+                self.batches[self.current_batch_index].append('WARNING: {0}'.format(notice.message_primary))
 
     def get_subset(self, batch_index: int, start_index: int, end_index: int):
         if batch_index < 0 or batch_index >= len(self._batches):
