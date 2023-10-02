@@ -172,6 +172,8 @@ class Query:
                 start_time = datetime.now()
 
                 try:
+                    if self.is_canceled:
+                        return
                     cur.execute(self.query_text)
                     end_time = datetime.now()
                 except psycopg.DatabaseError as e:
@@ -189,6 +191,9 @@ class Query:
                         self.query_events.batch_events,
                         self.query_execution_settings.result_set_storage_type
                     )
+                    # Break if canceled
+                    if self.is_canceled:
+                        break
 
                     # Only set end execution time to first batch summary as we cannot collect individual statement execution times
                     batch_obj._execution_start_time = start_time
