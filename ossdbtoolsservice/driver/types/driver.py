@@ -63,6 +63,11 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
+    def transaction_is_active(self) -> bool:
+        """Returns bool indicating if transaction is active"""
+
+    @property
+    @abstractmethod
     def transaction_in_error(self) -> bool:
         """Returns bool indicating if transaction is in error"""
 
@@ -70,6 +75,11 @@ class ServerConnection(ABC):
     @abstractmethod
     def transaction_is_idle(self) -> bool:
         """Returns bool indicating if transaction is currently idle"""
+
+    @property
+    @abstractmethod
+    def transaction_in_unknown(self) -> bool:
+        """Returns bool indicating if transaction is active"""
 
     @property
     @abstractmethod
@@ -177,6 +187,12 @@ class ServerConnection(ABC):
     def close(self):
         """
         Closes this current connection.
+        """
+
+
+    def transaction_status(self):
+        """
+        Gets the current transaction status if it exists
         """
 
     @abstractmethod
