@@ -107,50 +107,6 @@ class Batch:
     def get_cursor(self, connection: ServerConnection):
         return connection.cursor()
 
-    def execute(self, conn: ServerConnection) -> None:
-        """
-        Execute the batch using a cursor retrieved from the given connection
-
-        :raises DatabaseError: if an error is encountered while running the batch's query
-        """
-        self._execution_start_time = datetime.now()
-
-        if self._batch_events and self._batch_events._on_execution_started:
-            self._batch_events._on_execution_started(self)
-
-        cursor = self.get_cursor(conn)
-
-        conn.connection.add_notice_handler(lambda msg: self.notice_handler(msg, conn))
-
-        if self.batch_text.startswith('begin') and conn.transaction_in_trans:
-            self._notices.append('WARNING: there is already a transaction in progress')
-
-        try:
-            cursor.execute(self.batch_text)
-
-            # Commit the transaction if autocommit is True
-            if conn.autocommit:
-                conn.commit()
-
-            self.after_execute(cursor)
-        except psycopg.DatabaseError as e:
-            self._has_error = True
-            conn.set_transaction_in_error()
-            raise e
-        finally:
-            if cursor and cursor.statusmessage is not None:
-                self.status_message = cursor.statusmessage
-            # We are doing this because when the execute fails for named cursors
-            # cursor is not activated on the server which results in failure on close
-            # Hence we are checking if the cursor was really executed for us to close it
-            if cursor and cursor.rowcount != -1 and cursor.rowcount is not None:
-                cursor.close()
-            self._has_executed = True
-            self._execution_end_time = datetime.now()
-
-            if self._batch_events and self._batch_events._on_execution_completed:
-                self._batch_events._on_execution_completed(self)
-
     def after_execute(self, cursor) -> None:
         if cursor.description is not None:
             self.create_result_set(cursor)

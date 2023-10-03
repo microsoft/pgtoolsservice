@@ -14,6 +14,10 @@ SUPPORTED_PROVIDERS = [PG_PROVIDER_NAME]
 COSMOS_PG_DEFAULT_DB = "COSMOSPGSQL"
 PG_DEFAULT_DB = PG_PROVIDER_NAME
 
+# Max number of results that will be shown from a query's batch results. Will show only first 100 result messages.
+# TODO: Show LAST 100 result messages
+MAX_BATCH_RESULT_MESSAGES = 100
+
 DEFAULT_DB = {
     PG_DEFAULT_DB: "postgres",
     COSMOS_PG_DEFAULT_DB: "citus"
