@@ -4,9 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 # This module holds the error resource constants for ossdb tools service errors
-
-# INTERNAL ERROR CODES. According to the standard, the first two characters of an error code denote a class of errors, while the last three characters indicate a specific condition within that class
+# According to the PostgreSQL standard, the first two characters of an error code denote a class of errors, while the
+# last three characters indicate a specific condition within that class
 # Read more here: https://www.postgresql.org/docs/current/errcodes-appendix.html
+
+# INTERNAL ERROR CODES
 REQUEST_METHOD_PROCESSING_UNHANDLED_EXCEPTION = 'AD004'
 EXECUTE_QUERY_GET_CONNECTION_ERROR = 'AD005'
 EXECUTE_DEPLOY_GET_CONNECTION_ERROR = 'AD006'

@@ -6,6 +6,7 @@
 from ossdbtoolsservice.hosting.json_rpc_server import RequestContext
 from ossdbtoolsservice.serialization import Serializable
 
+
 class TelemetryParams(Serializable):
     """Parameters to be sent back with a telemetry event"""
 
@@ -20,8 +21,8 @@ class TelemetryParams(Serializable):
 def send_error_telemetry_notification(request_context: RequestContext, view: str, name: str, errorCode):
     if request_context is not None:
         request_context.send_notification(
-            method = TELEMETRY_NOTIFICATION,
-            params = TelemetryParams(
+            method=TELEMETRY_NOTIFICATION,
+            params=TelemetryParams(
                 TELEMETRY_ERROR_EVENT,
                 {
                     'view': view,
@@ -29,7 +30,8 @@ def send_error_telemetry_notification(request_context: RequestContext, view: str
                     'errorCode': str(errorCode)
                 }
             )
-    )
+        )
+
 
 # Method name listened by client
 TELEMETRY_NOTIFICATION = "telemetry/pgevent"

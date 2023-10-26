@@ -31,7 +31,6 @@ from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.driver import ServerConnection, ConnectionManager
 
 
-
 class ConnectionInfo(object):
     """Information pertaining to a unique connection instance"""
 
@@ -350,8 +349,11 @@ def _build_connection_response_error(connection_info: ConnectionInfo, connection
     response.messages = errorMessage
     response.error_message = errorMessage
 
-    send_error_telemetry_notification(request_context, error_constants.CONNECTION, error_constants.BUILD_CONNECTION_ERROR, error_constants.BUILD_CONNECTION_ERROR_CODE)
-
+    send_error_telemetry_notification(
+        request_context, error_constants.CONNECTION,
+        error_constants.BUILD_CONNECTION_ERROR,
+        error_constants.BUILD_CONNECTION_ERROR_CODE
+    )
     return response
 
 

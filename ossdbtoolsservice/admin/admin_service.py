@@ -9,7 +9,6 @@ from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.utils.telemetry import send_error_telemetry_notification
 
 
 class AdminService(object):
