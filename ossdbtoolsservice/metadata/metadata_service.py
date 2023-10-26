@@ -70,6 +70,7 @@ class MetadataService:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Unhandled exception while executing the metadata list worker thread')
             send_error_telemetry_notification(
+                request_context,
                 error_constants.METADATA,
                 error_constants.LIST_METADATA_FAILURE,
                 error_constants.LIST_METADATA_FAILURE_ERROR_CODE
