@@ -9,6 +9,7 @@ from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.utils.telemetry import send_error_telemetry_notification
 
 
 class AdminService(object):
@@ -33,7 +34,7 @@ class AdminService(object):
     def _handle_get_database_info_request(self, request_context: RequestContext, params: GetDatabaseInfoParameters) -> None:
         # Retrieve the connection from the connection service
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        connection: ServerConnection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+        connection: ServerConnection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT, request_context)
 
         # Get database owner
         owner_result = connection.get_database_owner()

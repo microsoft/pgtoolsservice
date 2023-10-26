@@ -12,6 +12,8 @@ from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
 from ossdbtoolsservice.metadata.contracts import (
     MetadataListParameters, MetadataListResponse, METADATA_LIST_REQUEST, MetadataType, ObjectMetadata)
 from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.utils.telemetry import send_error_telemetry_notification
+from ossdbtoolsservice.exception import constants as error_constants
 
 # This query collects all the tables, views, and functions in all the schemas in the database(s)?
 PG_METADATA_QUERY = """
@@ -62,17 +64,22 @@ class MetadataService:
 
     def _metadata_list_worker(self, request_context: RequestContext, params: MetadataListParameters) -> None:
         try:
-            metadata = self._list_metadata(params.owner_uri)
+            metadata = self._list_metadata(params.owner_uri, request_context)
             request_context.send_response(MetadataListResponse(metadata))
         except Exception as e:
             if self._service_provider.logger is not None:
                 self._service_provider.logger.exception('Unhandled exception while executing the metadata list worker thread')
+            send_error_telemetry_notification(
+                error_constants.METADATA,
+                error_constants.LIST_METADATA_FAILURE,
+                error_constants.LIST_METADATA_FAILURE_ERROR_CODE
+            )
             request_context.send_error('Unhandled exception while listing metadata: ' + str(e))  # TODO: Localize
 
-    def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
+    def _list_metadata(self, owner_uri: str, request_context: RequestContext) -> List[ObjectMetadata]:
         # Get current connection
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        connection: ServerConnection = connection_service.get_connection(owner_uri, ConnectionType.DEFAULT)
+        connection: ServerConnection = connection_service.get_connection(owner_uri, ConnectionType.DEFAULT, request_context)
 
         # Get the current database
         database_name = connection.database_name

@@ -17,7 +17,7 @@ class TelemetryParams(Serializable):
         }
 
 
-def send_error_telemetry_notification(request_context: RequestContext, view: str, name: str, errorCode: int):
+def send_error_telemetry_notification(request_context: RequestContext, view: str, name: str, errorCode):
     if request_context is not None:
         request_context.send_notification(
             method = TELEMETRY_NOTIFICATION,
