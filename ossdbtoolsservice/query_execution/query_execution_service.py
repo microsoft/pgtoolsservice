@@ -355,7 +355,7 @@ class QueryExecutionService(object):
             # If it's not started, then make sure it never starts. If it's executing, make sure
             # that we stop it
             if self.query_results[params.owner_uri].execution_state is not ExecutionState.EXECUTED:
-                self.cancel_query(params.owner_uri)
+                self.cancel_query(params.owner_uri, request_context)
             del self.query_results[params.owner_uri]
             request_context.send_response({})
         except Exception as e:

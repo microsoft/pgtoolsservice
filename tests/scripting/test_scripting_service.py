@@ -66,7 +66,7 @@ class TestScriptingService(unittest.TestCase):
         rc: RequestFlowValidator = RequestFlowValidator()      
 
         telemetryView, telemetryName, telemetryErrorCode = error_constants.SCRIPTING, error_constants.SCRIPT_AS_REQUEST, error_constants.SCRIPTAS_REQUEST_ERROR
-        rc.add_expected_notification(TelemetryParams, TELEMETRY_NOTIFICATION, lambda param: self._validate_telemetry_error(param, telemetryView, telemetryName, telemetryErrorCode))
+        rc.add_expected_notification(TelemetryParams, TELEMETRY_NOTIFICATION, RequestFlowValidator.validate_telemetry_error(telemetryView, telemetryName, telemetryErrorCode))
         rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         ss._handle_script_as_request(rc.request_context, None)
 
@@ -86,7 +86,7 @@ class TestScriptingService(unittest.TestCase):
         # If: I create an OE session with missing params
         rc: RequestFlowValidator = RequestFlowValidator()
         telemetryView, telemetryName, telemetryErrorCode = error_constants.SCRIPTING, error_constants.SCRIPT_AS_REQUEST, error_constants.SCRIPTAS_REQUEST_ERROR
-        rc.add_expected_notification(TelemetryParams, TELEMETRY_NOTIFICATION, lambda param: self._validate_telemetry_error(param, telemetryView, telemetryName, telemetryErrorCode))
+        rc.add_expected_notification(TelemetryParams, TELEMETRY_NOTIFICATION, RequestFlowValidator.validate_telemetry_error(telemetryView, telemetryName, telemetryErrorCode))
         rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         ss._handle_script_as_request(rc.request_context, None)
 
@@ -149,17 +149,3 @@ class TestScriptingService(unittest.TestCase):
 
             for calls in matches.values():
                 self.assertEqual(calls, 1)
-
-    def _validate_telemetry_error(self, telemetryParams: TelemetryParams, view, name, errorCode):
-        self.assertTrue("eventName" in telemetryParams.params)
-        self.assertTrue("properties" in telemetryParams.params)
-        self.assertTrue("measures" in telemetryParams.params)
-
-        properties = telemetryParams.params['properties']
-
-        self.assertTrue("view" in properties)
-        self.assertTrue("name" in properties)
-        self.assertTrue("errorCode" in properties)
-        self.assertEqual(properties['view'], view)
-        self.assertEqual(properties['name'], name)
-        self.assertEqual(properties['errorCode'], errorCode)

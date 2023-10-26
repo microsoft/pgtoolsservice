@@ -480,8 +480,10 @@ class TestPGConnectionService(unittest.TestCase):
         params.owner_uri = 'unknown_uri'
 
         self.connection_service.handle_list_databases(mock_request_context, params)
-        self.assertIsNone(mock_request_context.last_notification_method)
-        self.assertIsNone(mock_request_context.last_notification_params)
+
+        # Telemetry notification and error. Should be no response
+        self.assertIsNotNone(mock_request_context.last_notification_method)
+        self.assertIsNotNone(mock_request_context.last_notification_params)
         self.assertIsNone(mock_request_context.last_response_params)
         self.assertIsNotNone(mock_request_context.last_error_message)
 
@@ -507,8 +509,10 @@ class TestPGConnectionService(unittest.TestCase):
 
         with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_connection)):
             self.connection_service.handle_list_databases(mock_request_context, params)
-        self.assertIsNone(mock_request_context.last_notification_method)
-        self.assertIsNone(mock_request_context.last_notification_params)
+        
+        # Telemetry notification and error message. Should be no response
+        self.assertIsNotNone(mock_request_context.last_notification_method)
+        self.assertIsNotNone(mock_request_context.last_notification_params)
         self.assertIsNone(mock_request_context.last_response_params)
         self.assertIsNotNone(mock_request_context.last_error_message)
 
