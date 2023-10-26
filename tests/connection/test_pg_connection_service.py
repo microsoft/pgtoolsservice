@@ -509,7 +509,7 @@ class TestPGConnectionService(unittest.TestCase):
 
         with mock.patch('psycopg.connect', new=mock.Mock(return_value=mock_connection)):
             self.connection_service.handle_list_databases(mock_request_context, params)
-        
+
         # Telemetry notification and error message. Should be no response
         self.assertIsNotNone(mock_request_context.last_notification_method)
         self.assertIsNotNone(mock_request_context.last_notification_params)

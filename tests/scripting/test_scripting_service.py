@@ -11,7 +11,7 @@ from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionCompleteParams
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
 from ossdbtoolsservice.scripting.contracts.script_as_request import (
-    SCRIPT_AS_REQUEST, ScriptAsParameters, ScriptAsResponse, ScriptOperation)
+    ScriptAsParameters, ScriptAsResponse, ScriptOperation)
 from ossdbtoolsservice.scripting.scripter import Scripter
 from ossdbtoolsservice.utils.telemetry import TELEMETRY_NOTIFICATION, TelemetryParams
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
@@ -63,10 +63,16 @@ class TestScriptingService(unittest.TestCase):
         ss._service_provider = utils.get_mock_service_provider({})
 
         # If: I make a scripting request missing params
-        rc: RequestFlowValidator = RequestFlowValidator()      
-
-        telemetryView, telemetryName, telemetryErrorCode = error_constants.SCRIPTING, error_constants.SCRIPT_AS_REQUEST, error_constants.SCRIPTAS_REQUEST_ERROR
-        rc.add_expected_notification(TelemetryParams, TELEMETRY_NOTIFICATION, RequestFlowValidator.validate_telemetry_error(telemetryView, telemetryName, telemetryErrorCode))
+        rc: RequestFlowValidator = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.SCRIPTING,
+                error_constants.SCRIPT_AS_REQUEST,
+                error_constants.SCRIPTAS_REQUEST_ERROR
+            )
+        )
         rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         ss._handle_script_as_request(rc.request_context, None)
 
@@ -85,8 +91,15 @@ class TestScriptingService(unittest.TestCase):
 
         # If: I create an OE session with missing params
         rc: RequestFlowValidator = RequestFlowValidator()
-        telemetryView, telemetryName, telemetryErrorCode = error_constants.SCRIPTING, error_constants.SCRIPT_AS_REQUEST, error_constants.SCRIPTAS_REQUEST_ERROR
-        rc.add_expected_notification(TelemetryParams, TELEMETRY_NOTIFICATION, RequestFlowValidator.validate_telemetry_error(telemetryView, telemetryName, telemetryErrorCode))
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.SCRIPTING,
+                error_constants.SCRIPT_AS_REQUEST,
+                error_constants.SCRIPTAS_REQUEST_ERROR
+            )
+        )
         rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         ss._handle_script_as_request(rc.request_context, None)
 
