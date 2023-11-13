@@ -55,7 +55,7 @@ steps:
     inlineOperation: |
       [
         {
-          "KeyCode" : "CP-450779-Pgp",
+          "KeyCode" : "CP-500191-Pgp",
           "OperationCode" : "LinuxSign",
           "Parameters" : {},
           "ToolName" : "sign",
