@@ -13,3 +13,4 @@ if (!(Test-Path 'tests\integration\config.json'))
 # Run the tests
 nose2 -v --with-coverage --coverage-report html --plugin=nose2.plugins.junitxml --junit-xml @args
 Set-Location $curloc
+
