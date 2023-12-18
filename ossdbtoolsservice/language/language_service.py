@@ -242,9 +242,9 @@ class LanguageService:
         do_send_default_empty_response()
 
     # SERVICE NOTIFICATION HANDLERS #####################################################
-    def on_connect(self, conn_info: ConnectionInfo) -> threading.Thread:
+    def on_connect(self, conn_info: ConnectionInfo, request_context: RequestContext) -> threading.Thread:
         """Set up intellisense cache on connection to a new database"""
-        return utils.thread.run_as_thread(self._build_intellisense_cache_thread, conn_info)
+        return utils.thread.run_as_thread(self._build_intellisense_cache_thread, conn_info, request_context)
 
     # PROPERTIES ###########################################################
     @property
@@ -278,12 +278,12 @@ class LanguageService:
         """
         return uri in self._valid_uri
 
-    def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
+    def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo, request_context: RequestContext) -> None:
         # TODO build the cache. For now, sending intellisense ready as a test
         scriptparseinfo: ScriptParseInfo = self.get_script_parse_info(conn_info.owner_uri, create_if_not_exists=True)
         if scriptparseinfo is not None:
             # This is a connection for an actual script in the workspace. Build the intellisense cache for it
-            connection_context: ConnectionContext = self.operations_queue.add_connection_context(conn_info, False)
+            connection_context: ConnectionContext = self.operations_queue.add_connection_context(conn_info, False, request_context)
             # Wait until the intellisense is completed before sending back the message and caching the key
             connection_context.intellisense_complete.wait()
             scriptparseinfo.connection_key = connection_context.key
@@ -366,7 +366,8 @@ class LanguageService:
             matching_completion = next(completion for completion in completions if completion.display == word_under_cursor)
             if matching_completion:
                 connection = self._connection_service.get_connection(params.text_document.uri,
-                                                                     ConnectionType.QUERY)
+                                                                     ConnectionType.QUERY,
+                                                                     request_context)
                 scripter_instance = scripter.Scripter(connection)
                 object_metadata = ObjectMetadata(None, None, matching_completion.display_meta,
                                                  matching_completion.display,

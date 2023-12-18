@@ -10,6 +10,7 @@ import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
 from typing import Callable, Tuple
+from ossdbtoolsservice.utils.telemetry import TELEMETRY_NOTIFICATION, TelemetryParams
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
@@ -26,6 +27,7 @@ from ossdbtoolsservice.object_explorer.object_explorer_service import (
     ObjectExplorerService, ObjectExplorerSession)
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.exception import constants as error_constants
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from tests.mock_request_validation import RequestFlowValidator
@@ -129,7 +131,17 @@ class TestObjectExplorer(unittest.TestCase):
         oe._service_provider = utils.get_mock_service_provider({})
 
         # If: I create an OE session with missing params
-        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        rc = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.OBJECT_EXPLORER,
+                error_constants.OBJECT_EXPLORER_CREATE_SESSION,
+                error_constants.OBJECT_EXPLORER_CREATE_SESSION_ERROR
+            )
+        )
+        rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         oe._handle_create_session_request(rc.request_context, None)
 
         # Then:
@@ -147,7 +159,17 @@ class TestObjectExplorer(unittest.TestCase):
         # If: I create an OE session for with missing params
         # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
         #       scenarios in a different test
-        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        rc = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.OBJECT_EXPLORER,
+                error_constants.OBJECT_EXPLORER_CREATE_SESSION,
+                error_constants.OBJECT_EXPLORER_CREATE_SESSION_ERROR
+            )
+        )
+        rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         params = ConnectionDetails.from_data({})
         oe._handle_create_session_request(rc.request_context, params)
 
@@ -331,12 +353,13 @@ class TestObjectExplorer(unittest.TestCase):
         mock_connection = MockPGServerConnection()
         oe = ObjectExplorerService()
         cs = ConnectionService()
+        request_context: RequestContext = utils.MockRequestContext()
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
         params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
-        connection = oe._create_connection(session, 'foo_database')
+        connection = oe._create_connection(session, 'foo_database', request_context)
 
         self.assertIsNotNone(connection)
         self.assertEqual(connection, mock_connection)
@@ -347,6 +370,7 @@ class TestObjectExplorer(unittest.TestCase):
         # Setup:
         oe = ObjectExplorerService()
         cs = ConnectionService()
+        request_context: RequestContext = utils.MockRequestContext()
         connect_response = ConnectionCompleteParams()
         error = 'Failed'
         connect_response.error_message = error
@@ -356,7 +380,7 @@ class TestObjectExplorer(unittest.TestCase):
         session = ObjectExplorerSession(session_uri, params)
 
         with self.assertRaises(RuntimeError) as context:
-            oe._create_connection(session, 'foo_database')
+            oe._create_connection(session, 'foo_database', request_context)
             self.assertEqual(error, str(context.exception))
 
         cs.connect.assert_called_once()
@@ -441,7 +465,17 @@ class TestObjectExplorer(unittest.TestCase):
 
         for params in param_sets:
             # If: I expand with an invalid set of parameters
-            rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+            rc = RequestFlowValidator()
+            rc.add_expected_notification(
+                TelemetryParams,
+                TELEMETRY_NOTIFICATION,
+                RequestFlowValidator.validate_telemetry_error(
+                    error_constants.OBJECT_EXPLORER,
+                    error_constants.OBJECT_EXPLORER_EXPAND_NODE,
+                    error_constants.OBJECT_EXPLORER_EXPAND_NODE_ERROR
+                )
+            )
+            rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
             method(oe, rc.request_context, params)
 
             # Then: I should get an error response
@@ -454,7 +488,17 @@ class TestObjectExplorer(unittest.TestCase):
         oe._service_provider = utils.get_mock_service_provider({})
 
         # If: I expand a node on a session that doesn't exist
-        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        rc = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.OBJECT_EXPLORER,
+                error_constants.OBJECT_EXPLORER_EXPAND_NODE,
+                error_constants.OBJECT_EXPLORER_EXPAND_NODE_ERROR
+            )
+        )
+        rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         params = ExpandParameters.from_dict({'session_id': 'session', 'node_path': None})
         method(oe, rc.request_context, params)
 
@@ -467,7 +511,17 @@ class TestObjectExplorer(unittest.TestCase):
         session.is_ready = False
 
         # If: I expand a node on a session that isn't ready
-        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        rc = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.OBJECT_EXPLORER,
+                error_constants.OBJECT_EXPLORER_EXPAND_NODE,
+                error_constants.OBJECT_EXPLORER_EXPAND_NODE_ERROR
+            )
+        )
+        rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         params = ExpandParameters.from_dict({'session_id': session_uri, 'node_path': None})
         method(oe, rc.request_context, params)
 
@@ -656,7 +710,17 @@ class SessionTestCase(unittest.TestCase):
 
     def test_handle_close_session_missing_params(self):
         # If: I close an OE session with missing params
-        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        rc = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.OBJECT_EXPLORER,
+                error_constants.OBJECT_EXPLORER_CLOSE_SESSION,
+                error_constants.OBJECT_EXPLORER_CLOSE_SESSION_ERROR
+            )
+        )
+        rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         self.oe._handle_close_session_request(rc.request_context, None)
 
         # Then: I should get an error response
@@ -666,7 +730,17 @@ class SessionTestCase(unittest.TestCase):
         # If: I close an OE session for with missing params
         # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
         #       scenarios in a different test
-        rc = RequestFlowValidator().add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
+        rc = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.OBJECT_EXPLORER,
+                error_constants.OBJECT_EXPLORER_CLOSE_SESSION,
+                error_constants.OBJECT_EXPLORER_CLOSE_SESSION_ERROR
+            )
+        )
+        rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         params = ConnectionDetails.from_data({})
         self.oe._handle_close_session_request(rc.request_context, params)
 
@@ -707,7 +781,18 @@ class SessionTestCase(unittest.TestCase):
         self.cs.disconnect = mock.MagicMock(side_effect=Exception)
 
         # If: I close an OE session that doesn't exist
-        rc = RequestFlowValidator().add_expected_error(type(None))
+        rc = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.OBJECT_EXPLORER,
+                error_constants.OBJECT_EXPLORER_CLOSE_SESSION,
+                error_constants.OBJECT_EXPLORER_CLOSE_SESSION_ERROR
+            )
+        )
+        rc.add_expected_error(type(None))
+
         session_id = _connection_details()[1]
         params = _close_session_params()
         params.session_id = session_id

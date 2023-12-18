@@ -235,11 +235,12 @@ class TestLanguageService(unittest.TestCase):
 
         refresher_mock = mock.MagicMock()
         refresh_method_mock = mock.MagicMock()
+        request_context: RequestContext = utils.MockRequestContext()
         refresher_mock.refresh = refresh_method_mock
         patch_path = 'ossdbtoolsservice.language.operations_queue.CompletionRefresher'
         with mock.patch(patch_path) as refresher_patch:
             refresher_patch.return_value = refresher_mock
-            task: threading.Thread = service.on_connect(conn_info)
+            task: threading.Thread = service.on_connect(conn_info, request_context)
             # And when refresh is "complete"
             refresh_method_mock.assert_called_once()
             callback = refresh_method_mock.call_args[0][0]

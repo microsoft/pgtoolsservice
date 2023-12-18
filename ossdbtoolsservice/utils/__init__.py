@@ -12,6 +12,7 @@ import ossdbtoolsservice.utils.serialization
 import ossdbtoolsservice.utils.thread
 import ossdbtoolsservice.utils.time
 import ossdbtoolsservice.utils.validate         # noqa
+import ossdbtoolsservice.utils.telemetry        # noqa
 
 __all__ = [
     'cancellation',
@@ -20,5 +21,6 @@ __all__ = [
     'serialization',
     'thread',
     'time',
-    'validate'
+    'validate',
+    'telemetry'
 ]

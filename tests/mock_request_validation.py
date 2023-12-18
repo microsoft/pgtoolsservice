@@ -12,6 +12,7 @@ import json
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.json_rpc_server import RequestContext
 import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.utils.telemetry import TelemetryParams
 
 
 TValidation = TypeVar(Optional[Callable[[any], None]])
@@ -135,6 +136,26 @@ class RequestFlowValidator:
         test_case = unittest.TestCase('__init__')
         test_case.assertIsNotNone(param.message)
         test_case.assertNotEqual(param.message.strip(), '')
+
+    @staticmethod
+    def validate_telemetry_error(view, name, errorCode) -> TValidation:
+        """Returns single paramter function to validate view, name and errorCode of TelemetryParams for
+        telemetry error event"""
+        def validate_telemetry_error_helper(telemetryParams: TelemetryParams):
+            test_case = unittest.TestCase('__init__')
+            test_case.assertTrue("eventName" in telemetryParams.params)
+            test_case.assertTrue("properties" in telemetryParams.params)
+            test_case.assertTrue("measures" in telemetryParams.params)
+
+            properties = telemetryParams.params['properties']
+
+            test_case.assertTrue("view" in properties)
+            test_case.assertTrue("name" in properties)
+            test_case.assertTrue("errorCode" in properties)
+            test_case.assertEqual(properties['view'], view)
+            test_case.assertEqual(properties['name'], name)
+            test_case.assertEqual(properties['errorCode'], errorCode)
+        return validate_telemetry_error_helper
 
     # IMPLEMENTATION DETAILS ###############################################
     def _received_error_callback(self, message: str, data: any = None, code: int = 0):

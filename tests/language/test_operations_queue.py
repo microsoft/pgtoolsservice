@@ -10,6 +10,7 @@ import unittest
 from unittest import mock
 
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
+from ossdbtoolsservice.hosting.json_rpc_server import RequestContext
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectRequestParams  # noqa
 from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
@@ -17,6 +18,7 @@ from ossdbtoolsservice.language.operations_queue import (
     ConnectionContext, OperationsQueue, QueuedOperation, INTELLISENSE_URI
 )
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from tests.utils import MockRequestContext
 
 COMPLETIONREFRESHER_PATH_PATH = 'ossdbtoolsservice.language.operations_queue.CompletionRefresher'
 
@@ -67,13 +69,14 @@ class TestOperationsQueue(unittest.TestCase):
         connect_result.error_message = None
         self.mock_connection_service.get_connection = mock.Mock(return_value=mock.MagicMock())
         self.mock_connection_service.connect = mock.MagicMock(return_value=connect_result)
+        request_context: RequestContext = MockRequestContext()
 
         # When I add a connection context
         operations_queue = OperationsQueue(self.mock_service_provider)
 
         with mock.patch(COMPLETIONREFRESHER_PATH_PATH) as refresher_patch:
             refresher_patch.return_value = self.refresher_mock
-            context: ConnectionContext = operations_queue.add_connection_context(self.connection_info)
+            context: ConnectionContext = operations_queue.add_connection_context(self.connection_info, request_context)
             # Then I expect the context to be non-null
             self.assertIsNotNone(context)
             self.assertEqual(context.key, self.expected_context_key)
@@ -84,12 +87,14 @@ class TestOperationsQueue(unittest.TestCase):
         def do_test():
             # When I add context for 2 URIs with same connection details
             operations_queue = OperationsQueue(self.mock_service_provider)
+            request_context_1: RequestContext = MockRequestContext()
+            request_context_2: RequestContext = MockRequestContext()
 
             with mock.patch(COMPLETIONREFRESHER_PATH_PATH) as refresher_patch:
                 refresher_patch.return_value = self.refresher_mock
-                operations_queue.add_connection_context(self.connection_info)
+                operations_queue.add_connection_context(self.connection_info, request_context_1)
                 conn_info2 = ConnectionInfo('newuri', self.connection_info.details)
-                operations_queue.add_connection_context(conn_info2)
+                operations_queue.add_connection_context(conn_info2, request_context_2)
                 # Then I expect to only have connection
                 connect_mock: mock.MagicMock = self.mock_connection_service.connect
                 connect_mock.assert_called_once()
@@ -101,11 +106,13 @@ class TestOperationsQueue(unittest.TestCase):
         def do_test():
             # When I add context for 2 URIs with same connection details
             operations_queue = OperationsQueue(self.mock_service_provider)
+            request_context_1: RequestContext = MockRequestContext()
+            request_context_2: RequestContext = MockRequestContext()
             with mock.patch(COMPLETIONREFRESHER_PATH_PATH) as refresher_patch:
                 refresher_patch.return_value = self.refresher_mock
-                operations_queue.add_connection_context(self.connection_info)
+                operations_queue.add_connection_context(self.connection_info, request_context_1)
                 conn_info2 = ConnectionInfo('newuri', self.connection_info.details)
-                operations_queue.add_connection_context(conn_info2, overwrite=True)
+                operations_queue.add_connection_context(conn_info2, request_context_2, overwrite=True)
                 # Then I expect to only have 1 connection
                 # and I expect disconnect and reconnect to have been called
                 connect_mock: mock.MagicMock = self.mock_connection_service.connect

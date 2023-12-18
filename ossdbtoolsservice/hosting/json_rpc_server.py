@@ -10,6 +10,8 @@ import uuid
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
 from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
+from ossdbtoolsservice.utils.telemetry import send_error_telemetry_notification
+from ossdbtoolsservice.exception import constants as error_constants
 
 
 class JSONRPCServer:
@@ -267,6 +269,11 @@ class JSONRPCServer:
             # Make sure we got a handler for the request
             if handler is None:
                 # TODO: Localize?
+                send_error_telemetry_notification(
+                    request_context,
+                    error_constants.JSON_RPC,
+                    error_constants.UNSUPPORTED_REQUEST,
+                    error_constants.UNSUPPORTED_REQUEST_METHOD)
                 request_context.send_error(f'Requested method is unsupported: {message.message_method}')
                 if self._logger is not None:
                     self._logger.warn('Requested method is unsupported: %s', message.message_method)
@@ -285,6 +292,11 @@ class JSONRPCServer:
                 error_message = f'Unhandled exception while handling request method {message.message_method}: "{e}"'  # TODO: Localize
                 if self._logger is not None:
                     self._logger.exception(error_message)
+                send_error_telemetry_notification(
+                    request_context,
+                    error_constants.JSON_RPC,
+                    error_constants.REQUEST_METHOD_PROCESSING,
+                    error_constants.REQUEST_METHOD_PROCESSING_UNHANDLED_EXCEPTION)
                 request_context.send_error(error_message, code=-32603)
         elif message.message_type is JSONRPCMessageType.Notification:
             if self._logger is not None:
