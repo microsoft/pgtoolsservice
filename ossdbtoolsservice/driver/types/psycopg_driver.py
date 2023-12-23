@@ -151,6 +151,11 @@ class PostgreSQLConnection(ServerConnection):
         return self._database_error
 
     @property
+    def transaction_is_active(self) -> bool:
+        """Returns bool indicating if transaction is active"""
+        return self._conn.info.transaction_status is TransactionStatus.ACTIVE
+
+    @property
     def transaction_in_error(self) -> bool:
         """Returns bool indicating if transaction is in error"""
         return self._conn.info.transaction_status is TransactionStatus.INERROR or self._transaction_in_error is TransactionStatus.INERROR
@@ -159,6 +164,11 @@ class PostgreSQLConnection(ServerConnection):
     def transaction_is_idle(self) -> bool:
         """Returns bool indicating if transaction is currently idle"""
         return self._conn.info.transaction_status is TransactionStatus.IDLE
+    
+    @property
+    def transaction_in_unknown(self) -> bool:
+        """Returns bool indicating if transaction is in unknown state"""
+        return self._conn.info.transaction_status is TransactionStatus.UNKNOWN
 
     @property
     def transaction_in_trans(self) -> bool:
@@ -314,6 +324,14 @@ class PostgreSQLConnection(ServerConnection):
         Closes this current connection.
         """
         self._conn.close()
+
+    def transaction_status(self):
+        """
+        Gets the current transaction status if it exists
+        """
+        if self._conn and self._conn.info:
+            return self._conn.info.transaction_status
+        return None
 
     def set_transaction_in_error(self):
         """

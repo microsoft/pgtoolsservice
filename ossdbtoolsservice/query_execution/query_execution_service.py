@@ -9,6 +9,7 @@ import uuid
 from typing import Callable, Dict, List  # noqa
 import sqlparse
 import ntpath
+from utils import constants
 
 
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
@@ -238,12 +239,6 @@ class QueryExecutionService(object):
 
         def _batch_execution_finished_callback(batch: Batch) -> None:
             # Send back notices as a separate message to avoid error coloring / highlighting of text
-            notices = batch.notices
-            if notices:
-                notice_messages = '\n'.join(notices)
-                notice_message_params = self.build_message_params(worker_args.owner_uri, batch.id, notice_messages, False)
-                _check_and_fire(worker_args.on_message_notification, notice_message_params)
-
             batch_summary = batch.batch_summary
 
             # send query/resultSetComplete response
@@ -255,6 +250,12 @@ class QueryExecutionService(object):
                 rows_message = _create_rows_affected_message(batch)
                 message_params = self.build_message_params(worker_args.owner_uri, batch.id, rows_message, False)
                 _check_and_fire(worker_args.on_message_notification, message_params)
+            
+            notices = batch.notices
+            if notices:
+                notice_messages = '\n'.join(notices)
+                notice_message_params = self.build_message_params(worker_args.owner_uri, batch.id, notice_messages, False)
+                _check_and_fire(worker_args.on_message_notification, notice_message_params)
 
             # send query/batchComplete and query/complete response
             batch_event_params = BatchNotificationParams(batch_summary, worker_args.owner_uri)
@@ -368,7 +369,7 @@ class QueryExecutionService(object):
                 self._resolve_query_exception(e, query, worker_args)
         finally:
             # Send a query complete notification
-            batch_summaries = [batch.batch_summary for batch in query.batches]
+            batch_summaries = [batch.batch_summary for batch in query.batches[:constants.MAX_BATCH_RESULT_MESSAGES]]
 
             query_complete_params = QueryCompleteNotificationParams(worker_args.owner_uri, batch_summaries)
             _check_and_fire(worker_args.on_query_complete, query_complete_params)
