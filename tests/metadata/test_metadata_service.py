@@ -6,18 +6,24 @@
 import unittest
 import unittest.mock as mock
 
+from textwrap import (dedent)
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.metadata.contracts import (METADATA_LIST_REQUEST,
                                                   MetadataListParameters,
                                                   MetadataListResponse,
+                                                  SERVER_CONTEXT_REQUEST,
+                                                  ServerContextParameters,
+                                                  ServerContextResponse,
                                                   MetadataType, ObjectMetadata)
 from ossdbtoolsservice.utils import constants
 from tests.mocks.service_provider_mock import ServiceProviderMock
 from tests.pgsmo_tests.utils import MockPGServerConnection, MockPsycopgConnection
 from tests.utils import (
     MockCursor, MockRequestContext, MockThread)
+from tests.integration import get_connection_details, integration_test
+from ossdbtoolsservice.driver.types.psycopg_driver import (PostgreSQLConnection)
 
 
 class TestMetadataService(unittest.TestCase):
@@ -34,8 +40,10 @@ class TestMetadataService(unittest.TestCase):
 
     def test_initialization(self):
         """Test that the metadata service registers its handlers correctly"""
-        # Verify that the correct request handler was set up via the call to register during test setup
-        self.service_provider.server.set_request_handler.assert_called_once_with(
+        # Verify that the correct request handlers were set up via the call to register during test setup
+        self.service_provider.server.set_request_handler.assert_any_call(
+            SERVER_CONTEXT_REQUEST, self.metadata_service._handle_server_context_request)
+        self.service_provider.server.set_request_handler.assert_any_call(
             METADATA_LIST_REQUEST, self.metadata_service._handle_metadata_list_request)
 
     def test_metadata_list_request(self):
@@ -101,3 +109,67 @@ class TestMetadataService(unittest.TestCase):
         self.assertIsNotNone(request_context.last_error_message)
         self.assertIsNone(request_context.last_notification_method)
         self.assertIsNone(request_context.last_response_params)
+
+    @integration_test
+    def test_server_context_requests(self):
+        connection = PostgreSQLConnection(get_connection_details())
+        self.connection_service.get_connection = mock.Mock(return_value=connection)
+
+        cur = connection.cursor()
+        cur.execute("""
+            CREATE TABLE students (
+                studentid SERIAL PRIMARY KEY,
+                firstname VARCHAR(100) NOT NULL,
+                lastname VARCHAR(100) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                birthdate DATE NOT NULL,
+                enrollmentyear INT CHECK
+                    (enrollmentyear >= 2000 AND enrollmentyear <= EXTRACT(YEAR FROM CURRENT_DATE))
+            );
+            """)
+
+        request_context = MockRequestContext()
+        params = ServerContextParameters()
+        params.owner_uri = self.test_uri
+
+        mock_thread = MockThread()
+        with mock.patch('threading.Thread', new=mock.Mock(side_effect=mock_thread.initialize_target)):
+            self.metadata_service._handle_server_context_request(request_context, params)
+
+        response = request_context.last_response_params
+        self.assertIsInstance(response, ServerContextResponse)
+
+        self.maxDiff = None  # show the whole diff
+        self.assertEqual(response.description, dedent("""\
+            ## PostgreSQL database schema
+
+            ## Tables and columns in the schema, in the form:
+            table_name
+            \tcolumn_name/type
+            \tcolumn_name/type
+
+            students
+            \tstudentid/int
+            \tfirstname/varchar
+            \tlastname/varchar
+            \temail/varchar
+            \tbirthdate/date
+            \tenrollmentyear/int
+
+            ## Table constraints, in the form:
+            table_name
+            \tconstraint_def
+            \tconstraint_def
+
+            students
+            \tprimary key (studentid)
+            \tunique (email)
+
+            ## Table indexes, in the form:
+            table_name
+            \ttype (column_name, column_name)
+            \ttype (column_name, column_name)
+
+            students
+            \tbtree (email)
+            \tbtree (studentid)"""))
