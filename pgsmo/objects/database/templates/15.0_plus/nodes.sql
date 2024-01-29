@@ -9,7 +9,10 @@
        db.datname as name, 
        ta.spcname as spcname, 
        db.datallowconn,
-       0 as datlastsysoid,
+       {# The first normal object id is given in PG source code. Article here describes it: https://dba.stackexchange.com/questions/316723/oid-release-ranges-for-built-in-aka-standard-database-objects-during-postgresq
+       # We set datlastsysoid to one less than that for PG 15 and above because the datlastsysoid column no longer is present past that
+       #}
+       16383 as datlastsysoid,
        has_database_privilege(db.oid, 'CREATE') as cancreate, 
        datdba as owner, 
        db.datistemplate , 
