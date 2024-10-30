@@ -69,11 +69,14 @@ if __name__ == '__main__':
                 except IndexError:
                     pass
                 try:
-                    debugpy.listen(address=('0.0.0.0', port))
+                    os.environ["DEBUGPY_LOG_DIR"] = "./debugpy_logs"  # Path to store logs
+                    # Dynamically set the Python interpreter for debugpy
+                    debugpy.configure(python="C:\\Users\\chkraw\\AppData\\Local\\Programs\\Python\\Python313\\python.exe")
+                    debugpy.listen(("127.0.0.1", 50001))
                 except BaseException:
                     # If port 3000 is used, try another debug port
                     port += 1
-                    debugpy.listen(address=('0.0.0.0', port))
+                    debugpy.listen(("127.0.0.1", 50001))
                 if arg_parts[0] == '--enable-remote-debugging-wait':
                     wait_for_debugger = True
             elif arg_parts[0] == '--log-dir':

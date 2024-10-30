@@ -1,5 +1,5 @@
 # ossdbtoolsservice_main.spec
-from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+from PyInstaller.utils.hooks import collect_submodules, collect_data_files, collect_all
 import psycopg
 import platform
 
@@ -21,6 +21,20 @@ def collect_files(src_folder, dest_folder, file_ext=None):
 hiddenimports = collect_submodules('psycopg')
 datas = collect_data_files('psycopg')
 
+# Collect all dependencies for debugpy
+datas_debugpy, binaries_debugpy, hiddenimports_debugpy = collect_all("debugpy")
+
+# Extend the existing hiddenimports array (or create it if it's not defined)
+hiddenimports = hiddenimports if 'hiddenimports' in locals() else []
+hiddenimports.extend(hiddenimports_debugpy)
+
+# Extend the existing datas array (or create it if it's not defined)
+datas = datas if 'datas' in locals() else []
+datas.extend(datas_debugpy)
+
+# Add xmlrpc.server to hiddenimports
+hiddenimports.append('xmlrpc.server')
+
 # Include ossdbtoolsservice data files
 datas += collect_data_files('ossdbtoolsservice', include_py_files=False)
 datas += [('./ossdbtoolsservice/language/completion/packages/pgliterals/pgliterals.json', 'language/completion/packages/pgliterals')]
@@ -40,6 +54,10 @@ if platform.system() == 'Darwin' and platform.machine() == 'arm64':
     ]
 else:
     binaries = []
+
+# Extend the existing binaries array (or create it if it's not defined)
+binaries = binaries if 'binaries' in locals() else []
+binaries.extend(binaries_debugpy)
 
 a = Analysis(['ossdbtoolsservice/ossdbtoolsservice_main.py'],
              pathex=['/Users/yimdaeun/Projects/pgtoolsservice/'],

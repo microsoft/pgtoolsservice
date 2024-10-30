@@ -1,0 +1,3 @@
+Content-Length: 72
+
+{"jsonrpc": "2.0","method": "version","params": {},"id": 1}
