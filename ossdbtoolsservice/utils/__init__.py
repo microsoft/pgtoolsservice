@@ -8,6 +8,7 @@
 import ossdbtoolsservice.utils.cancellation
 import ossdbtoolsservice.utils.constants
 import ossdbtoolsservice.utils.log
+import ossdbtoolsservice.utils.markdown
 import ossdbtoolsservice.utils.serialization
 import ossdbtoolsservice.utils.thread
 import ossdbtoolsservice.utils.time
@@ -17,6 +18,7 @@ __all__ = [
     'cancellation',
     'constants',
     'log',
+    'markdown',
     'serialization',
     'thread',
     'time',

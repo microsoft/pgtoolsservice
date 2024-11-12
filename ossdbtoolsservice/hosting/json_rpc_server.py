@@ -6,15 +6,23 @@
 from queue import Queue
 import threading
 import uuid
+import json
 
+from flask import Flask, request, session, jsonify
+from flask_socketio import SocketIO, emit, send, disconnect
+from flask_cors import CORS
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
 from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
+from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 
+# Dictionary to store session IDs by WebSocket sid
+active_sessions = {}
 
 class JSONRPCServer:
     """
     Handles async requests, async notifications, and async responses
+    Supports both HTTP and WebSocket connections when WebServer is enabled
     """
     # CONSTANTS ############################################################
     OUTPUT_THREAD_NAME = u"JSON_RPC_Output_Thread"
@@ -25,21 +33,53 @@ class JSONRPCServer:
             self.class_ = class_
             self.handler = handler
 
-    def __init__(self, in_stream, out_stream, logger=None, version='0'):
+    def __init__(self, in_stream=None, out_stream=None, logger=None, enable_web_server=False, listen_address='0.0.0.0', listen_port=80, debug_web_server=False, version='1'):
         """
-        Initializes internal state of the server and sets up a few useful built-in request handlers
-        :param in_stream: Input stream that will provide messages from the client
-        :param out_stream: Output stream that will send message to the client
-        :param logger: Optional logger
-        :param version: Protocol version. Defaults to 0
+        Initializes internal state of the server and sets up a few useful built-in request handlers.
+        :param in_stream: Input stream that will provide messages from the client. Used when the web server is disabled.
+        :param out_stream: Output stream that will send messages to the client. Used when the web server is disabled.
+        :param logger: Optional logger for logging purposes.
+        :param enable_web_server: Flag to enable or disable the web server. Defaults to False.
+        :param listen_address: Address on which the web server will listen. Defaults to '0.0.0.0'.
+        :param listen_port: Port on which the web server will listen. Defaults to 80.
+        :param debug_web_server: Flag to enable or disable debug mode for the web server. Defaults to False.
+        :param version: Protocol version. Defaults to '1'.
         """
-        self.writer = JSONRPCWriter(out_stream, logger=logger)
-        self.reader = JSONRPCReader(in_stream, logger=logger)
+        self._enable_web_server = enable_web_server
+
+        # Enable the web server if the flag is set
+        if self._enable_web_server:
+            self.app = Flask(__name__)
+            CORS(self.app)  # Enable CORS for all routes and origins
+            self.app.config['SECRET_KEY'] = 'supersecretkey'
+            self.app.add_url_rule('/start-session', 'start-session', self._handle_start_session, methods=['POST'])
+            self.app.add_url_rule('/json-rpc', 'json_rpc', self._handle_http_request, methods=['POST'])
+            self.socketio = SocketIO(self.app, async_mode='gevent', cors_allowed_origins="*", manage_session=True, logger=logger, engineio_logger=logger, ping_interval=1e9, always_connect=False)
+            self.socketio.on_event('connect', self._handle_ws_connect)
+            self.socketio.on_event('disconnect', self._handle_ws_disconnect)
+            self.socketio.on_event('message', self._handle_ws_request)
+
+            self._listen_address = listen_address
+            self._listen_port = listen_port
+            self._debug_web_server = debug_web_server
+
+            # Disable stdin reader and stdout writer when web server is disabled.
+            self.reader = None
+            self.writer = None
+            self._output_queue = None
+        else:
+            # Enable stdin reader and stdout writer only when web server is disabled.
+            self.reader = JSONRPCReader(in_stream, logger=logger)
+            self.writer = JSONRPCWriter(out_stream, logger=logger)
+            self._output_queue = Queue()
+
+            # Disable Flask app and SocketIO when web server is disabled.
+            self.app = None
+            self.socketio = None
+
         self._logger = logger
         self._version = version
         self._stop_requested = False
-
-        self._output_queue = Queue()
 
         self._request_handlers = {}
         self._notification_handlers = {}
@@ -80,41 +120,53 @@ class JSONRPCServer:
 
     def start(self):
         """
-        Starts the background threads to listen for responses and requests from the underlying
-        streams. Encapsulated into its own method for future async extensions without threads
+        When web server is disabled starts the background threads to listen for responses and requests from
+        the underlying streams. Encapsulated into its own method for future async extensions without threads.
+        In web server mode, starts the Flask server with SocketIO websocket support.
         """
-        if self._logger is not None:
-            self._logger.info("JSON RPC server starting...")
+        self._log_information("JSON RPC server starting...")
 
-        self._output_consumer = threading.Thread(
-            target=self._consume_output,
-            name=self.OUTPUT_THREAD_NAME
-        )
-        self._output_consumer.daemon = True
-        self._output_consumer.start()
+        if self._enable_web_server:
+            # Start the Flask server with SocketIO websocket support.
+            self.socketio.run(self.app, host=self._listen_address, port=self._listen_port, debug=self._debug_web_server)
+        else:
+            # Enable stdout writer only when webserver is disabled.
+            self._output_consumer = threading.Thread(
+                target=self._consume_output,
+                name=self.OUTPUT_THREAD_NAME
+            )
+            self._output_consumer.daemon = True
+            self._output_consumer.start()
 
-        self._input_consumer = threading.Thread(
-            target=self._consume_input,
-            name=self.INPUT_THREAD_NAME
-        )
-        self._input_consumer.daemon = True
-        self._input_consumer.start()
+            # Enable stdin reader only when webserver is disabled.
+            self._input_consumer = threading.Thread(
+                target=self._consume_input,
+                name=self.INPUT_THREAD_NAME
+            )
+            self._input_consumer.daemon = True
+            self._input_consumer.start()
 
     def stop(self):
         """
-        Signal input and output threads to halt asap
+        When web server is disabled signals input and output threads to halt asap
+        In web server mode, disconnects all clients and stops the server
         """
         self._stop_requested = True
+        self._log_information('JSON RPC server stopping...')
 
-        # Enqueue None to optimistically unblock output thread so it can check for the cancellation flag
-        self._output_queue.put(None)
-
-        if self._logger is not None:
-            self._logger.info('JSON RPC server stopping...')
+        if self._enable_web_server:
+            # Disconnect all clients and stop the server
+            for sid in active_sessions.values():
+                disconnect(sid)
+            self.socketio.stop()
+        else:
+            # Enqueue None to optimistically unblock output thread so it can check for the cancellation flag
+            self._output_queue.put(None)
 
     def send_request(self, method, params):
         """
         Add a new request to the output queue
+        In web server mode, broadcasts the request to all connected clients over WebSocket
         :param method: Method string of the request
         :param params: Data to send along with the request
         """
@@ -123,22 +175,33 @@ class JSONRPCServer:
         # Create the message
         message = JSONRPCMessage.create_request(message_id, method, params)
 
-        # TODO: Add support for handlers for the responses
-        # Add the message to the output queue
-        self._output_queue.put(message)
+        if self._enable_web_server:
+            # Generate the message string and header string
+            json_content = json.dumps(message.dictionary, sort_keys=True)
+            self.socketio.send('request', json_content)
+        else:
+            # TODO: Add support for handlers for the responses
+            # Add the message to the output queue
+            self._output_queue.put(message)
 
     def send_notification(self, method, params):
         """
         Sends a notification, independent of any request
+        In web server mode, broadcasts the notification to all connected clients over WebSocket
         :param method: String name of the method for the notification
         :param params: Data to send with the notification
         """
         # Create the message
         message = JSONRPCMessage.create_notification(method, params)
 
-        # TODO: Add support for handlers for the responses
-        # Add the message to the output queue
-        self._output_queue.put(message)
+        if self._enable_web_server:
+            # Generate the message string and header string
+            json_content = json.dumps(message.dictionary, sort_keys=True)
+            self.socketio.send('notification', json_content)
+        else:
+            # TODO: Add support for handlers for the responses
+            # Add the message to the output queue
+            self._output_queue.put(message)
 
     def set_request_handler(self, config, handler):
         """
@@ -159,16 +222,18 @@ class JSONRPCServer:
     def wait_for_exit(self):
         """
         Blocks until both input and output threads return, ie, until the server stops.
+        This method is a no-op when the web server is enabled.
         """
-        self._input_consumer.join()
-        self._output_consumer.join()
-        if self._logger is not None:
-            self._logger.info('Input and output threads have completed')
+        # Only wait for IO threads if the webserver is disabled.
+        if not self._enable_web_server:
+            self._input_consumer.join()
+            self._output_consumer.join()
+            self._log_information('Input and output threads have completed')
 
-        # Close the reader/writer here instead of in the stop method in order to allow "softer"
-        # shutdowns that will read or write the last message before halting
-        self.reader.close()
-        self.writer.close()
+            # Close the reader/writer here instead of in the stop method in order to allow "softer"
+            # shutdowns that will read or write the last message before halting
+            self.reader.close()
+            self.writer.close()
 
     # BUILT-IN HANDLERS ####################################################
 
@@ -181,8 +246,7 @@ class JSONRPCServer:
 
     def _handle_shutdown_request(self, request_context, params):
         # Signal that the threads should stop
-        if self._logger is not None:
-            self._logger.info('Received shutdown request')
+        self._log_information('Received shutdown request')
         self._stop_requested = True
 
         # Execute the shutdown request handlers
@@ -200,8 +264,7 @@ class JSONRPCServer:
         :raises LookupError: No void header with content-length was found
         :raises EOFError: The stream may not contain any bytes yet, so retry.
         """
-        if self._logger is not None:
-            self._logger.info('Input thread started')
+        self._log_information('Input thread started')
 
         while not self._stop_requested:
             try:
@@ -223,12 +286,106 @@ class JSONRPCServer:
                 self._log_exception(error, self.INPUT_THREAD_NAME)
                 # Do not halt the input thread
 
+    def _handle_start_session(self):
+        """
+        Initiates a connection to the JRPC server over HTTP and starts a session, the value of which will
+        be stored in a cookie as session_id. This session_id is used to coorelate future requests, as well
+        as associate this client connection with a cooresponding WebSocket connection for asynchronous responses.
+        """
+        # Create a unique session_id and store it in Flask's session
+        return {"session_id": self._ensure_session_id()}, 200
+
+    def _handle_http_request(self):
+        """
+        Handles an incoming HTTP request by processing the JSON-RPC payload and dispatching the message.
+        Leverages Flask's session to store the session_id and WebSocket sid which are later used to coorelate
+        asynchronous responses and notifications to this request.
+        Returns:
+            Response: A Flask response object containing the JSON-RPC response or error message.
+        """
+        # Retrieve the session_id from Flask's session
+        session_id = session.get('session_id')
+        if not session_id:
+            return jsonify({"error": "No session ID found. Please authenticate first."}), 403
+
+        # Look up the WebSocket sid using the session_id
+        sid = active_sessions.get(session_id)
+        if not sid:
+            return jsonify({"error": "No active WebSocket connection found for this session"}), 404
+
+        # Decode the JSON-RPC message and dispatch it.
+        try:
+            message = JSONRPCMessage.from_dictionary(request.get_json())
+            self._dispatch_message(message, session_id)
+            return jsonify({"result": "ok"}), 200
+        except Exception as e:
+            # Response has invalid json object
+            self._log_warning('JSON RPC reader on _handle_http_request() encountered exception: {}'.format(e))
+            return jsonify({"error": str(e)}), 500
+
+    def _handle_ws_connect(self):
+        """
+        Handles an incoming WebSocket connection event by looking up the session_id in Flask's session to
+        ensure the client is authenticated and has started a valid session. If authenticated, the WebSocket sid is
+        stored in a dictionary with session_id as the key. This ensures a 1:1 mapping between HTTP session and WebSocket
+        connection, which is later used to coorelate asynchronous WebSocket responses and notifications to incoming
+        HTTP requests.
+        Returns:
+            Response: True if the WebSocket connection was established and False if it was rejected.
+        """
+        self._log_information(f"WebSocket connect event triggered with sid: {request.sid}")
+        # Map session_id to the WebSocket connection (request.sid)
+        session_id = session.get('session_id')
+        if session_id:
+            active_sessions[session_id] = request.sid
+            self._log_information(f"Client connected with session ID: {session_id}")
+            return True
+        else:
+            self._log_warning("Session ID not found for client; disconnecting.")
+            # Force the underlying websocket (engineio) to disconnect as socketio.disconnect() relies on the client to respect the disconnect request.
+            eio_sid = self._get_eio_sid(request.sid, request.namespace)
+            timer = threading.Timer(1.0, self._force_disconnect, args=(eio_sid,)) # Schedule _force_disconnect to run after a 5-second delay with arguments
+            timer.start()
+            return False
+
+    def _handle_ws_disconnect(self):
+        """
+        Handles a WebSocket disconnect event by looking up the session_id in the active_sessions dictionary and
+        removing the entry if found. This ensures that the session_id is no longer associated with any WebSocket.
+        Implements a force disconnect mechanism to ensure the client is disconnected even if they do not respect the
+        disconnect request.
+        """
+        self._log_information(f"WebSocket disconnect event triggered with sid: {request.sid}")
+        # Retrieve and remove the session associated with the WebSocket connection
+        session_id = None
+        for s_id, sid in active_sessions.items():
+            if sid == request.sid:
+                session_id = s_id
+                break
+
+        # Remove the session entry if found
+        if session_id:
+            del active_sessions[session_id]
+            self._log_information(f"Client disconnected with session ID: {session_id}")
+            # Perform any additional cleanup based on the session_id if needed
+        else:
+            self._log_warning("No session found for disconnected client.")
+
+        # Force the underlying websocket (engineio) to disconnect as socketio.disconnect() relies on the client to respect the disconnect request.
+        eio_sid = self._get_eio_sid(request.sid, request.namespace)
+        self._force_disconnect(eio_sid)
+
+    def _handle_ws_request(self, message):
+        self._log_information(f"WebSocket message event triggered with sid: {request.sid}")
+        # Process the JSON-RPC request
+        response = "ok" # process_request(data)
+        self._socketio.emit('response', {'data': 'Message received!'})
+
     def _consume_output(self):
         """
         Send output over the output stream
         """
-        if self._logger is not None:
-            self._logger.info('Output thread started')
+        self._log_information('Output thread started')
 
         while not self._stop_requested:
             try:
@@ -247,10 +404,11 @@ class JSONRPCServer:
                 # Catch generic exceptions without breaking out of loop
                 self._log_exception(error, self.OUTPUT_THREAD_NAME)
 
-    def _dispatch_message(self, message):
+    def _dispatch_message(self, message, session_id=None):
         """
         Dispatches a message that was received to the necessary handler
         :param message: The message that was received
+        :param session_id: The session ID of the client that sent the message, used in web server mode.
         """
         if message.message_type in [JSONRPCMessageType.ResponseSuccess, JSONRPCMessageType.ResponseError]:
             # Responses need to be routed to the handler that requested them
@@ -259,17 +417,16 @@ class JSONRPCServer:
 
         # Figure out which handler will execute the request/notification
         if message.message_type is JSONRPCMessageType.Request:
-            if self._logger is not None:
-                self._logger.info('Received request id=%s method=%s', message.message_id, message.message_method)
+            self._log_information(f'Received request id={message.message_id} method={message.message_method}')
             handler = self._request_handlers.get(message.message_method)
-            request_context = RequestContext(message, self._output_queue)
+            request_context = RequestContext(message, self._output_queue, self.socketio, session_id)
 
             # Make sure we got a handler for the request
             if handler is None:
                 # TODO: Localize?
-                request_context.send_error(f'Requested method is unsupported: {message.message_method}')
-                if self._logger is not None:
-                    self._logger.warn('Requested method is unsupported: %s', message.message_method)
+                message = f'Requested method is unsupported: {message.message_method}'
+                request_context.send_error(message)
+                self._log_warning(message)
                 return
 
             # Call the handler with a request context and the deserialized parameter object
@@ -283,22 +440,19 @@ class JSONRPCServer:
                 handler.handler(request_context, deserialized_object)
             except Exception as e:
                 error_message = f'Unhandled exception while handling request method {message.message_method}: "{e}"'  # TODO: Localize
-                if self._logger is not None:
-                    self._logger.exception(error_message)
+                self._log_exception(error_message)
                 request_context.send_error(error_message, code=-32603)
         elif message.message_type is JSONRPCMessageType.Notification:
-            if self._logger is not None:
-                self._logger.info('Received notification method=%s', message.message_method)
+            self._log_information(f'Received notification method={message.message_method}')
             handler = self._notification_handlers.get(message.message_method)
 
             if handler is None:
                 # Ignore the notification
-                if self._logger is not None:
-                    self._logger.warn('Notification method %s is unsupported', message.message_method)
+                self._log_warning(f'Notification method {message.message_method} is unsupported')
                 return
 
             # Call the handler with a notification context
-            notification_context = NotificationContext(self._output_queue)
+            notification_context = NotificationContext(self._output_queue, self.socketio, session_id)
             deserialized_object = None
             if handler.class_ is None:
                 # Don't attempt to do complex deserialization
@@ -310,13 +464,38 @@ class JSONRPCServer:
                 handler.handler(notification_context, deserialized_object)
             except Exception:
                 error_message = f'Unhandled exception while handling notification method {message.message_method}'
-                if self._logger is not None:
-                    self._logger.exception(error_message)
+                self._log_exception(error_message)
         else:
             # If this happens we have a serious issue with the JSON RPC reader
-            if self._logger is not None:
-                self._logger.warn('Received unsupported message type %s', message.message_type)
+            self._log_warning(f'Received unsupported message type {message.message_type}')
             return
+
+    def _ensure_session_id(self):
+        """
+        Utility function to ensure session_id exists in the session.
+        :return: The session_id
+        """
+        if 'session_id' not in session:
+            session['session_id'] = str(uuid.uuid4())
+        return session['session_id']
+
+    def _force_disconnect(self, eio_sid):
+        """
+        Force disconnects a WebSocket client using its engineio session ID.
+        Higher-level SocketIO.disconnect() relies on the client to respect the disconnect request, which is not always the case.
+        :param eio_sid: The engineio session ID of the client to disconnect
+        """
+        self._log_information(f"Force disconnecting WebSocket with engineio session ID: {eio_sid}")
+        if eio_sid:
+            self.socketio.server.eio.disconnect(eio_sid)  # Disconnect the client using its eio session ID
+
+    def _get_eio_sid(self, sid, namespace):
+        """
+        Retrieves the engineio session ID from the WebSocket (SocketIO) session ID and namespace.
+        :param sid: The WebSocket session ID from SocketIO
+        :param namespace: The namespace of the WebSocket connection
+        """
+        return self.socketio.server.manager.eio_sid_from_sid(sid, namespace)
 
     def _log_exception(self, ex, thread_name):
         """
@@ -327,6 +506,29 @@ class JSONRPCServer:
         if self._logger is not None:
             self._logger.exception('Thread %s encountered exception %s', thread_name, ex)
 
+    def _log_exception(self, message):
+        """
+        Logs an exception if the logger is defined
+        :param message: Exception to log
+        """
+        if self._logger is not None:
+            self._logger.exception(message)
+
+    def _log_information(self, message):
+        """
+        Logs information if the logger is defined
+        :param message: Information to log
+        """
+        if self._logger is not None:
+            self._logger.info(message)
+
+    def _log_warning(self, message):
+        """
+        Logs a warning if the logger is defined
+        :param message: Warning to log
+        """
+        if self._logger is not None:
+            self._logger.warn(message)
 
 class IncomingMessageConfiguration:
     """Object that stores the info for registering a request"""
@@ -346,14 +548,18 @@ class RequestContext:
     Context for a received message
     """
 
-    def __init__(self, message, queue):
+    def __init__(self, message, queue, socketio=None, session_id=None):
         """
         Initializes a new request context
         :param message: The raw request message
         :param queue: Output queue that any outgoing messages will be added to
+        :param socketio: The SocketIO instance to use for sending messages over WebSocket
+        :param session_id: The session ID of the client that sent the request
         """
         self._message = message
         self._queue = queue
+        self._socketio = socketio
+        self._session_id = session_id
 
     def send_response(self, params):
         """
@@ -361,7 +567,10 @@ class RequestContext:
         :param params: Data to send back with the response
         """
         message = JSONRPCMessage.create_response(self._message.message_id, params)
-        self._queue.put(message)
+        if self._socketio and self._session_id:
+            self._send_over_socket('response', message)
+        else:
+            self._queue.put(message)
 
     def send_notification(self, method, params):
         """
@@ -370,7 +579,10 @@ class RequestContext:
         :param params: Data to send with the notification
         """
         message = JSONRPCMessage.create_notification(method, params)
-        self._queue.put(message)
+        if self._socketio and self._session_id:
+            self._send_over_socket('notification', message)
+        else:
+            self._queue.put(message)
 
     def send_error(self, message, data=None, code=0):
         """
@@ -379,26 +591,46 @@ class RequestContext:
         :param data: Optional data to send back with the error
         :param code: Optional error code to identify the error
         """
-
         message = JSONRPCMessage.create_error(self._message.message_id, code, message, data)
-        self._queue.put(message)
+        if self._socketio and self._session_id:
+            self._send_over_socket('error', message)
+        else:
+            self._queue.put(message)
 
     def send_unhandled_error_response(self, ex: Exception):
         """Send response for any unhandled exceptions"""
         self.send_error('Unhandled exception: {}'.format(str(ex)))  # TODO: Localize
 
+    def _send_over_socket(self, event, message):
+        """
+        Sends a message over the WebSocket to the client that made the initial request
+        :param event: The socket event to send, e.g. 'response', 'notification', 'error'
+        :param message: The message to send
+        """
+        if self._socketio and self._session_id:
+            # Generate the message string and header string
+            json_content = json.dumps(message.dictionary, sort_keys=True)
+
+            # Send the message back via WebSocket if the client is still connected
+            sid = active_sessions.get(self._session_id)
+            if sid:
+                self._socketio.emit(event, json_content, to=sid)
 
 class NotificationContext:
     """
     Context for a received notification
     """
 
-    def __init__(self, queue):
+    def __init__(self, queue, socketio=None, session_id=None):
         """
         Initializes a new notification context
         :param queue: Output queue that any outgoing messages will be added to
+        :param socketio: The SocketIO instance to use for sending messages over WebSocket
+        :param session_id: The session ID of the client that sent the request
         """
         self._queue = queue
+        self._socketio = socketio
+        self._session_id = session_id
 
     def send_notification(self, method, params):
         """
@@ -407,4 +639,14 @@ class NotificationContext:
         :param params: Any data to send along with the notification
         """
         message = JSONRPCMessage.create_notification(method, params)
-        self._queue.put(message)
+        if self._socketio and self._session_id:
+            # Generate the message string and header string
+            json_content = json.dumps(message.dictionary, sort_keys=True)
+
+            # Send the message back via WebSocket if the client is still connected
+            sid = active_sessions.get(self._session_id)
+            if sid:
+                self._socketio.emit('notification', json_content, to=sid)
+        else:
+            self._queue.put(message)
+

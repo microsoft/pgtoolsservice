@@ -1,4 +1,4 @@
-Content-Length: 448
+Content-Length: 447
 Content-Type: application/json
 
 {
@@ -6,7 +6,7 @@ Content-Type: application/json
     "method": "connection/connect",
     "id": 1,
     "params": {
-        "owner_uri": "your_owner_uri",
+        "ownerUri": "your_owner_uri",
         "connection": {
             "options": {
                 "host": "exampleserver8675.postgres.database.azure.com",

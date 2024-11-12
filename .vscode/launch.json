@@ -7,6 +7,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            //"args": ["--enable-web-server", "--listen-port=5000", "--debug-web-server"],
+            "args": ["--generate-markdown"],
             "pathMappings": [
                 {
                     "localRoot": "${workspaceFolder}",
@@ -15,7 +17,8 @@
             ],
             "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}",
+                "GEVENT_SUPPORT": "True"
             }
         },
         {
