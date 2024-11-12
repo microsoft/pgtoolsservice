@@ -316,6 +316,8 @@ class JSONRPCServer:
         if not sid:
             return jsonify({"error": "No active WebSocket connection found for this session"}), 404
 
+        self._log_information(f"HTTP request was triggered with session_id: {session_id} sid: {sid}")
+
         # Decode the JSON-RPC message and dispatch it.
         try:
             message = JSONRPCMessage.from_dictionary(request.get_json())
@@ -378,11 +380,30 @@ class JSONRPCServer:
         eio_sid = self._get_eio_sid(request.sid, request.namespace)
         self._force_disconnect(eio_sid)
 
-    def _handle_ws_request(self, message):
+    def _handle_ws_request(self, raw_message):
         self._log_information(f"WebSocket message event triggered with sid: {request.sid}")
-        # Process the JSON-RPC request
-        response = "ok" # process_request(data)
-        self._socketio.emit('response', {'data': 'Message received!'})
+
+        # Retrieve the session_id from Flask's session
+        session_id = session.get('session_id')
+        if not session_id:
+            self.socketio.emit('error', {'result': 'No session ID found. Please authenticate first.'})
+            return
+
+        # Look up the WebSocket sid using the session_id
+        sid = active_sessions.get(session_id)
+        if not sid:
+            self.socketio.emit('error', {'result': 'This WebSocket connection does not match an active session.'})
+            return
+
+        # Decode the JSON-RPC message and dispatch it.
+        try:
+            message = JSONRPCMessage.from_dictionary(raw_message)
+            self._dispatch_message(message, session_id)
+            self.socketio.emit('response', {'result': 'Request accepted!', 'message_id': message.message_id})
+        except Exception as e:
+            # Response has invalid json object
+            self._log_warning('JSON RPC reader on _handle_ws_request() encountered exception: {}'.format(e))
+            self.socketio.emit('error', {'result': 'Error processing request!', 'exception': str(e)})
 
     def _consume_output(self):
         """
