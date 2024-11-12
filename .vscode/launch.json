@@ -7,8 +7,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            //"args": ["--enable-web-server", "--listen-port=5000", "--debug-web-server"],
-            "args": ["--generate-markdown"],
+            "args": ["--enable-web-server", "--listen-port=5000"],
+            //"args": ["--generate-markdown"],
             "pathMappings": [
                 {
                     "localRoot": "${workspaceFolder}",

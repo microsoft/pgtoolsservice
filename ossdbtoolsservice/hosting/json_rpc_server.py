@@ -33,7 +33,7 @@ class JSONRPCServer:
             self.class_ = class_
             self.handler = handler
 
-    def __init__(self, in_stream=None, out_stream=None, logger=None, enable_web_server=False, listen_address='0.0.0.0', listen_port=80, debug_web_server=False, version='1'):
+    def __init__(self, in_stream=None, out_stream=None, logger=None, enable_web_server=False, listen_address='0.0.0.0', listen_port=80, disable_keep_alive=False, debug_web_server=False, version='1'):
         """
         Initializes internal state of the server and sets up a few useful built-in request handlers.
         :param in_stream: Input stream that will provide messages from the client. Used when the web server is disabled.
@@ -42,6 +42,7 @@ class JSONRPCServer:
         :param enable_web_server: Flag to enable or disable the web server. Defaults to False.
         :param listen_address: Address on which the web server will listen. Defaults to '0.0.0.0'.
         :param listen_port: Port on which the web server will listen. Defaults to 80.
+        :param disable_keep_alive: Flag to enable or disable keep-alive for the web server. Defaults to False.
         :param debug_web_server: Flag to enable or disable debug mode for the web server. Defaults to False.
         :param version: Protocol version. Defaults to '1'.
         """
@@ -54,13 +55,15 @@ class JSONRPCServer:
             self.app.config['SECRET_KEY'] = 'supersecretkey'
             self.app.add_url_rule('/start-session', 'start-session', self._handle_start_session, methods=['POST'])
             self.app.add_url_rule('/json-rpc', 'json_rpc', self._handle_http_request, methods=['POST'])
-            self.socketio = SocketIO(self.app, async_mode='gevent', cors_allowed_origins="*", manage_session=True, logger=logger, engineio_logger=logger, ping_interval=1e9, always_connect=False)
+            ping_interval = 1e9 if disable_keep_alive else 25
+            self.socketio = SocketIO(self.app, async_mode='gevent', cors_allowed_origins="*", manage_session=True, logger=logger, engineio_logger=logger, ping_interval=ping_interval, always_connect=False)
             self.socketio.on_event('connect', self._handle_ws_connect)
             self.socketio.on_event('disconnect', self._handle_ws_disconnect)
             self.socketio.on_event('message', self._handle_ws_request)
 
             self._listen_address = listen_address
             self._listen_port = listen_port
+            self._disable_keep_alive = disable_keep_alive
             self._debug_web_server = debug_web_server
 
             # Disable stdin reader and stdout writer when web server is disabled.

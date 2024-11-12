@@ -30,9 +30,9 @@ def _create_server(input_stream, output_stream, server_logger, provider):
     rpc_server = JSONRPCServer(input_stream, output_stream, server_logger)
     return _create_server_init(rpc_server, provider, server_logger)
 
-def _create_web_server(server_logger, provider, listen_address, listen_port, debug_web_server):
+def _create_web_server(server_logger, provider, listen_address, listen_port, disable_keep_alive, debug_web_server):
     # Create the server, but don't start it yet
-    rpc_server = JSONRPCServer(logger=server_logger, enable_web_server=True, listen_address=listen_address, listen_port=listen_port, debug_web_server=debug_web_server)
+    rpc_server = JSONRPCServer(logger=server_logger, enable_web_server=True, listen_address=listen_address, listen_port=listen_port, disable_keep_alive=disable_keep_alive, debug_web_server=debug_web_server)
     return _create_server_init(rpc_server, provider, server_logger)
 
 def _create_server_init(rpc_server, provider, server_logger):
@@ -71,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('--listen-address', type=str, default='0.0.0.0', help='Address to listen on for the web server (default:0.0.0.0)')
     parser.add_argument('--listen-port', type=int, default=80, help='Port to listen on for the web server (default:80)')
     parser.add_argument('--debug-web-server', action='store_true', help='Enable debug mode for the web server')
+    parser.add_argument('--disable-keep-alive', action='store_true', help='Disable keep-alive for the web server. Should not be used in production only for debugging')
     parser.add_argument('--enable-remote-debugging', type=int, nargs='?', const=3000, help='Enable remote debugging on the specified port (default: 3000)')
     parser.add_argument('--enable-remote-debugging-wait', type=int, nargs='?', const=3000, help='Enable remote debugging and wait for the debugger to attach on the specified port (default: 3000)')
     parser.add_argument('--log-dir', type=str, help='Directory to store logs')
@@ -136,7 +137,7 @@ if __name__ == '__main__':
     # Create the server, but don't start it yet
     server=None
     if args.enable_web_server:
-        server = _create_web_server(logger, provider_name, listen_address=args.listen_address, listen_port=args.listen_port, debug_web_server=args.debug_web_server)
+        server = _create_web_server(logger, provider_name, listen_address=args.listen_address, listen_port=args.listen_port, disable_keep_alive=args.disable_keep_alive, debug_web_server=args.debug_web_server)
     else:
         server = _create_server(stdin, std_out_wrapped, logger, provider_name)
 

@@ -2,6 +2,7 @@
 from PyInstaller.utils.hooks import collect_submodules, collect_data_files, collect_all
 import psycopg
 import platform
+import os
 
 block_cipher = None
 
@@ -52,37 +53,73 @@ if platform.system() == 'Darwin' and platform.machine() == 'arm64':
     binaries = [
         ('/usr/local/opt/zlib/lib/libz.dylib', 'zlib'),
     ]
-else:
-    binaries = []
 
-# Extend the existing binaries array (or create it if it's not defined)
+# Collect all dependencies for new requirements
+datas_flask, binaries_flask, hiddenimports_flask = collect_all("flask")
+datas_flask_cors, binaries_flask_cors, hiddenimports_flask_cors = collect_all("flask_cors")
+datas_flask_socketio, binaries_flask_socketio, hiddenimports_flask_socketio = collect_all("flask_socketio")
+datas_gevent, binaries_gevent, hiddenimports_gevent = collect_all("gevent")
+datas_gevent_websocket, binaries_gevent_websocket, hiddenimports_gevent_websocket = collect_all("gevent_websocket")
+
+# Extend the existing hiddenimports array
+hiddenimports.extend(hiddenimports_flask)
+hiddenimports.extend(hiddenimports_flask_cors)
+hiddenimports.extend(hiddenimports_flask_socketio)
+hiddenimports.extend(hiddenimports_gevent)
+hiddenimports.extend(hiddenimports_gevent_websocket)
+
+# Extend the existing datas array
+datas.extend(datas_flask)
+datas.extend(datas_flask_cors)
+datas.extend(datas_flask_socketio)
+datas.extend(datas_gevent)
+datas.extend(datas_gevent_websocket)
+
+# Extend the existing binaries array if it exists
 binaries = binaries if 'binaries' in locals() else []
-binaries.extend(binaries_debugpy)
+binaries.extend(binaries_flask)
+binaries.extend(binaries_flask_cors)
+binaries.extend(binaries_flask_socketio)
+binaries.extend(binaries_gevent)
+binaries.extend(binaries_gevent_websocket)
 
-a = Analysis(['ossdbtoolsservice/ossdbtoolsservice_main.py'],
-             pathex=['/Users/yimdaeun/Projects/pgtoolsservice/'],
-             binaries=binaries,
-             datas=datas,
-             hiddenimports=hiddenimports,
-             hookspath=[],
-             runtime_hooks=[],
-             excludes=[],
-             win_no_prefer_redirects=False,
-             win_private_assemblies=False,
-             cipher=block_cipher,
-             noarchive=False)
-
+a = Analysis(
+    ['ossdbtoolsservice_main.py'],
+    pathex=['.'],
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=hiddenimports,
+    hookspath=[],
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+)
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
-exe = EXE(pyz,
-          a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,
-          [],
-          name='ossdbtoolsservice_main',
-          debug=False,
-          bootloader_ignore_signals=False,
-          strip=False,
-          upx=True,
-          console=True)
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='ossdbtoolsservice_main',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=True,
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='ossdbtoolsservice_main',
+)
