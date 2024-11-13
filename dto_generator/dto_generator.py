@@ -6,7 +6,7 @@
 """Utility functions for generating JSON Schema and TypeScript interfaces"""
 
 import json
-import subprocess
+import os
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.utils.serialization import convert_to_dict
@@ -42,18 +42,11 @@ def generate_json_schema_from_object(obj):
         schema["required"].append(key)
     return schema
 
-def generate_typescript_interfaces_from_schema(schema: dict, output_file: str):
-    """Generate TypeScript interfaces from JSON Schema using datamodel-code-generator."""
-    schema_json = json.dumps(schema, indent=4)
-    with open('schema.json', 'w') as f:
-        f.write(schema_json)
-    
-    subprocess.run([
-        'datamodel-code-generator',
-        '--input', 'schema.json',
-        '--input-file-type', 'jsonschema',
-        '--output', output_file
-    ])
+def save_json_schema_to_file(schema: dict, file_path: str):
+    """Save JSON Schema to a file."""
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, 'w') as f:
+        json.dump(schema, f, indent=4)
 
 if __name__ == '__main__':
     # Create the service provider and add the providers to it
@@ -78,5 +71,6 @@ if __name__ == '__main__':
         schema = generate_json_schema_from_object(example_instance)
         print(json.dumps(schema, indent=4))
 
-    # Generate TypeScript interfaces from the schema
-    generate_typescript_interfaces_from_schema(schema, 'model.ts')
+        # Save the JSON Schema to a file
+        schema_file_path = f"build/dto_generator/{messageConfig.method.replace('/', '_')}_schema.json"
+        save_json_schema_to_file(schema, schema_file_path)
