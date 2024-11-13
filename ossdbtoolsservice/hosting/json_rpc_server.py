@@ -51,7 +51,7 @@ class JSONRPCServer:
         # Enable the web server if the flag is set
         if self._enable_web_server:
             self.app = Flask(__name__)
-            CORS(self.app)  # Enable CORS for all routes and origins
+            CORS(self.app, supports_credentials=True)  # Enable CORS for all routes and origins
             self.app.config['SECRET_KEY'] = 'supersecretkey'
             self.app.add_url_rule('/start-session', 'start-session', self._handle_start_session, methods=['POST'])
             self.app.add_url_rule('/json-rpc', 'json_rpc', self._handle_http_request, methods=['POST'])
@@ -557,6 +557,9 @@ class JSONRPCServer:
 class IncomingMessageConfiguration:
     """Object that stores the info for registering a request"""
 
+    # Static collection to store all incoming message configurations
+    message_configurations = []
+
     def __init__(self, method, parameter_class):
         """
         Constructor for request configuration
@@ -565,6 +568,7 @@ class IncomingMessageConfiguration:
         """
         self.method = method
         self.parameter_class = parameter_class
+        IncomingMessageConfiguration.message_configurations.append(self)
 
 
 class RequestContext:
