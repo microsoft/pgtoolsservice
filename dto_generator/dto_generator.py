@@ -5,14 +5,16 @@
 
 """Utility functions for generating JSON Schema and TypeScript interfaces"""
 
+import enum
 import json
 import os
+import inspect
+from typing import Type, Dict, Any, Optional, Union
+from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
-from ossdbtoolsservice.utils.serialization import convert_to_dict
-from ossdbtoolsservice.utils.markdown import create_example_instance
-from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectRequestParams
-
+from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectRequestParams, ChangeDatabaseRequestParams
+from ossdbtoolsservice.edit_data.contracts import DisposeRequest
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
 from ossdbtoolsservice.connection import ConnectionService
@@ -28,19 +30,131 @@ from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace import WorkspaceService
 
-def generate_json_schema_from_object(obj):
-    """Generate JSON Schema from an instance of an object."""
+# Registry to store reusable schemas
+schema_registry: Dict[str, Dict[str, Any]] = {}
+
+def class_to_json_schema(cls: Type) -> Dict[str, Any]:
+    # Check if the schema for this class already exists in the registry
+    if cls.__name__ in schema_registry:
+        return schema_registry[cls.__name__]
+
+    # Ensure all base classes are processed first
+    base_schemas = []
+    for base in cls.__bases__:
+        if base in [object, Serializable]:  # Skip `object` and `Serializable` as a base class
+            continue
+        elif base.__name__ not in schema_registry:
+            # Process base class first if it hasn’t been processed
+            class_to_json_schema(base)
+        base_schemas.append({"$ref": f"#/definitions/{base.__name__}"})
+
+    # Define the initial schema structure
     schema = {
-        "title": obj.__class__.__name__,
+        "title": cls.__name__,
         "type": "object",
         "properties": {},
         "required": []
     }
-    obj_dict = convert_to_dict(obj)
-    for key, value in obj_dict.items():
-        schema["properties"][key] = {"type": type(value).__name__}
-        schema["required"].append(key)
+
+    # If the class has base classes, use allOf to include them
+    if base_schemas:
+        schema["allOf"] = base_schemas
+
+    # Register the schema structure in the registry before fully populating it
+    schema_registry[cls.__name__] = schema
+    
+    # Get all type hints, including those defined directly as class variables
+    hints = cls.__annotations__
+
+    # Include properties defined with `@property` decorators
+    for name, method in inspect.getmembers(cls, lambda o: isinstance(o, property)):
+        # Add property to schema with appropriate type (string for str, integer for int, etc.)
+        prop_type = hints.get(name, str)  # Default to `str` if type hint is missing
+        schema["properties"][name] = get_schema_type(prop_type)
+        
+        # Properties without a setter are read-only
+        if method.fset is None:
+            schema["properties"][name]["readOnly"] = True
+        
+        # If the property is required (doesn't default to None), add it to `required`
+        if name in hints and not is_optional_type(hints[name]):
+            schema["required"].append(name)
+
+    # Include other non-property attributes from type hints
+    for attr, attr_type in hints.items():
+        if attr not in schema["properties"]:  # Avoid duplicate entries for properties
+            schema["properties"][attr] = get_schema_type(attr_type)
+            if not is_optional_type(attr_type):
+                schema["required"].append(attr)
+
     return schema
+
+def enum_to_json_schema(enum_class: Type[enum.Enum]) -> Dict[str, Any]:
+    """Convert an Enum class to a JSON schema enum definition."""
+    # Define the schema structure
+    schema = {
+        "title": enum_class.__name__,
+        "type": "string",
+        "enum": [item.value for item in enum_class],
+        "description": enum_class.__doc__ or ""
+    }
+
+    # Register the schema structure in the registry before fully populating it
+    schema_registry[enum_class.__name__] = schema
+    return schema
+
+def get_schema_type(attr_type: Type) -> Dict[str, Any]:
+    """Convert Python types to JSON schema types and handle nested classes."""
+    if attr_type == str:
+        return {"type": "string"}
+    elif attr_type == int:
+        return {"type": "integer"}
+    elif attr_type == bool:
+        return {"type": "boolean"}
+    elif attr_type == float:
+        return {"type": "number"}
+    elif attr_type == list:
+        return {"type": "array"}
+    elif attr_type == dict:
+        return {"type": "object"}
+    elif inspect.isclass(attr_type):
+        # Ensure the schema for the nested class is created and registered
+        if attr_type.__name__ not in schema_registry:
+            if issubclass(attr_type, enum.Enum):
+                enum_to_json_schema(attr_type)
+            else:
+                class_to_json_schema(attr_type)
+        # Use reference if the schema is already in the registry
+        return {"$ref": f"#/definitions/{attr_type.__name__}"}
+    elif hasattr(attr_type, "__origin__") and attr_type.__origin__ is Union:
+        # Handle Optional or Union types
+        inner_types = [t for t in attr_type.__args__ if t is not type(None)]
+        if len(inner_types) == 1:
+            return get_schema_type(inner_types[0])
+        return {"anyOf": [get_schema_type(t) for t in inner_types]}
+    return {"type": "string"}  # Default to string for unknown types
+
+def is_optional_type(attr_type: Type) -> bool:
+    """Check if the type is Optional."""
+    return Union[None, attr_type] == Optional[attr_type] or (
+        hasattr(attr_type, "__origin__") and attr_type.__origin__ is Union and type(None) in attr_type.__args__
+    )
+
+def generate_full_schema() -> Dict[str, Any]:
+    """Generate a unified JSON schema containing multiple classes."""
+    unified_schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "UnifiedSchema",
+        "type": "object",
+        "definitions": {},
+        "properties": {}
+    }
+
+    for name, schema in schema_registry.items():
+        unified_schema["definitions"][name] = schema
+        unified_schema["properties"][name] = {"$ref": f"#/definitions/{name}"}
+
+    return unified_schema
 
 def save_json_schema_to_file(schema: dict, file_path: str):
     """Save JSON Schema to a file."""
@@ -65,12 +179,16 @@ if __name__ == '__main__':
         constants.TASK_SERVICE_NAME: TaskService
     }
 
+    # Generate the JSON schema for ChangeDatabaseRequestParams
+    #schema = class_to_json_schema(DisposeRequest)
+    # print(schema)
+
     for messageConfig in IncomingMessageConfiguration.message_configurations:
         print(f"Message: {messageConfig.method} - {messageConfig.parameter_class}")
-        example_instance = create_example_instance(messageConfig.parameter_class)
-        schema = generate_json_schema_from_object(example_instance)
-        print(json.dumps(schema, indent=4))
+        class_to_json_schema(messageConfig.parameter_class)
 
-        # Save the JSON Schema to a file
-        schema_file_path = f"build/dto_generator/{messageConfig.method.replace('/', '_')}_schema.json"
-        save_json_schema_to_file(schema, schema_file_path)
+    # Generate the full schema and save it to a file
+    full_schema = generate_full_schema()
+    print(full_schema)
+    schema_file_path = f"build/dto_generator/full_schema.json"
+    save_json_schema_to_file(full_schema, schema_file_path)

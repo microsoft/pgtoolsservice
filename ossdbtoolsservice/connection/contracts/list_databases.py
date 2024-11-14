@@ -13,6 +13,8 @@ from ossdbtoolsservice.serialization import Serializable
 
 class ListDatabasesParams(Serializable):
     """Parameters for the connection/listdatabases request"""
+    owner_uri: str
+    include_details: bool
 
     def __init__(self):
         self.owner_uri: str = None

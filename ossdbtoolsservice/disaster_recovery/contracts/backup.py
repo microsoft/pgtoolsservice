@@ -6,27 +6,57 @@
 """Module containing contracts for backup operations"""
 
 import enum
-from typing import List  # noqa
+from typing import Optional
 
 from ossdbtoolsservice.capabilities.contracts import CategoryValue, FeatureMetadataProvider, ServiceOption
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
 
-
-class BackupParams(Serializable):
-    """Parameters for a backup request"""
-    @classmethod
-    def get_child_serializable_types(cls):
-        return {'backup_info': BackupInfo}
-
-    def __init__(self):
-        self.owner_uri: str = None
-        self.backup_info: BackupInfo = None
-        self.task_execution_mode = None
-
+class BackupType(enum.Enum):
+    """Enum for the type of backups that are supported"""
+    PG_DUMP = 'dump'
+    DIRECTORY = 'directory'
+    TAR = 'tar'
+    PLAIN_TEXT = 'sql'
 
 class BackupInfo(Serializable):
     """Options for a requested backup"""
+    type: BackupType
+    path: str
+    jobs: int
+    compress: int
+    data_only: bool
+    blobs: bool
+    clean: bool
+    create: bool
+    encoding: str
+    schema: str
+    exclude_schema: str
+    oids: bool
+    no_owner: bool
+    schema_only: bool
+    superuser: str
+    table: str
+    exclude_table: str
+    no_privileges: bool
+    column_inserts: bool
+    disable_dollar_quoting: bool
+    disable_triggers: bool
+    enable_row_security: bool
+    exclude_table_data: str
+    if_exists: bool
+    inserts: bool
+    no_security_labels: bool
+    no_synchronized_snapshots: bool
+    no_tablespaces: bool
+    no_unlogged_table_data: bool
+    quote_all_identifiers: bool
+    section: str
+    serializable_deferrable: bool
+    snapshot: str
+    strict_names: bool
+    use_set_session_authorization: bool
+
     @classmethod
     def get_child_serializable_types(cls):
         return {'type': BackupType}
@@ -72,14 +102,20 @@ class BackupInfo(Serializable):
         self.strict_names: bool = None
         self.use_set_session_authorization: bool = None
 
+class BackupParams(Serializable):
+    """Parameters for a backup request"""
+    owner_uri: str
+    backup_info: BackupInfo
+    task_execution_mode: str
 
-class BackupType(enum.Enum):
-    """Enum for the type of backups that are supported"""
-    PG_DUMP = 'dump'
-    DIRECTORY = 'directory'
-    TAR = 'tar'
-    PLAIN_TEXT = 'sql'
+    @classmethod
+    def get_child_serializable_types(cls):
+        return {'backup_info': BackupInfo}
 
+    def __init__(self):
+        self.owner_uri: str = None
+        self.backup_info: BackupInfo = None
+        self.task_execution_mode = None
 
 BACKUP_REQUEST = IncomingMessageConfiguration('backup/backup', BackupParams)
 

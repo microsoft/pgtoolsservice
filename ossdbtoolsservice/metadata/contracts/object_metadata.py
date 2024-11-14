@@ -19,6 +19,11 @@ class MetadataType(enum.Enum):
 
 class ObjectMetadata(Serializable):
     """Database object metadata"""
+    metadata_type: MetadataType
+    metadata_type_name: str
+    name: str
+    schema: str
+    urn: str
 
     @classmethod
     def get_child_serializable_types(cls):

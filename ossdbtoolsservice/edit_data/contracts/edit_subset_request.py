@@ -12,6 +12,9 @@ from ossdbtoolsservice.edit_data.contracts import EditRow
 
 
 class EditSubsetParams(Serializable):
+    owner_uri: str
+    row_start_index: int
+    row_count: int
 
     def __init__(self):
         self.owner_uri: str = None

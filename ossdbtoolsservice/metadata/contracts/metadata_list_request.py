@@ -10,6 +10,7 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class MetadataListParameters(Serializable):
+    owner_uri: str
 
     def __init__(self):
         self.owner_uri: str = None

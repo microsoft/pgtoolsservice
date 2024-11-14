@@ -11,6 +11,8 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class SimpleExecuteRequest(Serializable):
+    owner_uri: str
+    query_string: str
 
     def __init__(self):
         self.owner_uri: str = None

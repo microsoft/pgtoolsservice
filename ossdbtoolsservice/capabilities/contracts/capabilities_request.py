@@ -10,6 +10,8 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class CapabilitiesRequestParams(Serializable):
+    host_name: str
+    host_version: str
 
     def __init__(self):
         self.host_name = None

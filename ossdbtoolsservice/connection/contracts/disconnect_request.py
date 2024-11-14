@@ -5,9 +5,11 @@
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
-
+from ossdbtoolsservice.connection.contracts.common import ConnectionType
 
 class DisconnectRequestParams(Serializable):
+    owner_uri: str
+    type: ConnectionType
 
     def __init__(self):
         self.owner_uri = None

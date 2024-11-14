@@ -9,6 +9,11 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class SubsetParams(Serializable):
+    owner_uri: str
+    batch_index: int
+    result_set_index: int
+    rows_start_index: int
+    rows_count: int
 
     def __init__(self):
         self.owner_uri = None
@@ -22,6 +27,7 @@ SUBSET_REQUEST = IncomingMessageConfiguration('query/subset', SubsetParams)
 
 
 class QueryCancelParams(Serializable):
+    owner_uri: str
 
     def __init__(self):
         self.owner_uri = None
@@ -31,6 +37,7 @@ CANCEL_REQUEST = IncomingMessageConfiguration('query/cancel', QueryCancelParams)
 
 
 class QueryDisposeParams(Serializable):
+    owner_uri: str
 
     def __init__(self):
         self.owner_uri = None

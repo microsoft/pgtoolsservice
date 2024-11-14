@@ -43,6 +43,16 @@ class CompletionItem(Serializable):
     Completion items are presented in an IntelliSense user interface, representing valid
     items to complete an in-process typing
     """
+    label: str
+    kind: CompletionItemKind
+    detail: str
+    documentation: str
+    sort_text: str
+    filter_text: str
+    insert_text_format: str
+    text_edit: TextEdit
+    data: any
+
     @classmethod
     def get_child_serializable_types(cls):
         return {'kind': CompletionItemKind, 'text_edit': TextEdit}

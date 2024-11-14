@@ -15,6 +15,8 @@ class SaveResultRequestResult:
 
 
 class SaveResultsAsCsvRequestParams(SaveResultsRequestParams):
+    include_headers: bool
+    delimiter: str
 
     def __init__(self):
         super().__init__()
@@ -29,6 +31,7 @@ class SaveResultsAsJsonRequestParams(SaveResultsRequestParams):
 
 
 class SaveResultsAsExcelRequestParams(SaveResultsRequestParams):
+    include_headers: bool
 
     def __init__(self):
         super().__init__()

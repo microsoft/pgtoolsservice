@@ -11,6 +11,13 @@ from ossdbtoolsservice.serialization import Serializable
 
 class InitializeRequestParams(Serializable):
     """Initialization request parameters"""
+    capabilities: any
+    initialization_options: any
+    process_id: int
+    trace: str
+    root_path: str
+    root_uri: str
+    workspace_folders: str
 
     def __init__(self):
         self.capabilities: any = None    # TODO: Add support for client capabilities

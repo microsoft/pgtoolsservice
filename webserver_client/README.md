@@ -10,3 +10,9 @@ From the `webserver_client` directory:
 3. Run `npx serve .` to start the local client server.
 
 ***Note:*** *To use this client the pgtoolsservice must NOT be started with `--disable-keep-alive`*
+
+# Updating DTO Objects
+To update the DTO objects from the pgtoolservice:
+1. Ensure you've set up the environment as above
+2. Run the [DTO Generator](../dto_generator/)
+3. Run the `import_dto.ps1` or `import_dto.sh` script from this folder (depending on your environment)

@@ -11,6 +11,8 @@ from ossdbtoolsservice.serialization import Serializable
 
 class GetDatabaseInfoParameters(Serializable):
     """Contract for the parameters to admin/getdatabaseinfo requests"""
+    options: dict
+    owner_uri: str
 
     def __init__(self):
         self.options: dict = None

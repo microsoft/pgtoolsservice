@@ -9,21 +9,35 @@ from ossdbtoolsservice.capabilities.contracts import FeatureMetadataProvider, Se
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
 
-
-class RestoreParams(Serializable):
-    """Parameters for a restore request"""
-    @classmethod
-    def get_child_serializable_types(cls):
-        return {'options': RestoreOptions}
-
-    def __init__(self):
-        self.owner_uri: str = None
-        self.options: RestoreOptions = None
-        self.task_execution_mode = None
-
-
 class RestoreOptions(Serializable):
     """Options for a requested restore"""
+    path: str
+    data_only: bool
+    clean: bool
+    create: bool
+    exit_on_error: bool
+    index: str
+    jobs: int
+    use_list: str
+    schema: str
+    no_owner: bool
+    function: str
+    schema_only: bool
+    superuser: str
+    table: str
+    trigger: str
+    no_privileges: bool
+    single_transaction: bool
+    disable_triggers: bool
+    enable_row_security: bool
+    if_exists: bool
+    no_data_for_failed_tables: bool
+    no_security_labels: bool
+    no_tablespaces: bool
+    section: str
+    strict_names: bool
+    role: str
+
     @classmethod
     def ignore_extra_attributes(cls):
         return True
@@ -55,6 +69,21 @@ class RestoreOptions(Serializable):
         self.section: str = None
         self.strict_names: bool = None
         self.role: str = None
+
+class RestoreParams(Serializable):
+    """Parameters for a restore request"""
+    owner_uri: str
+    options: RestoreOptions
+    task_execution_mode: str
+
+    @classmethod
+    def get_child_serializable_types(cls):
+        return {'options': RestoreOptions}
+
+    def __init__(self):
+        self.owner_uri: str = None
+        self.options: RestoreOptions = None
+        self.task_execution_mode = None
 
 
 RESTORE_REQUEST = IncomingMessageConfiguration('restore/restore', RestoreParams)
