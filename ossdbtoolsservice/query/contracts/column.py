@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import ossdbtoolsservice.parsers.datatypes as datatypes
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 DESC = {'name': 0, 'type_code': 1, 'display_size': 2, 'internal_size': 3, 'precision': 4, 'scale': 5, 'null_ok': 6}
 
@@ -20,6 +21,28 @@ def get_column_name(column_index: int, colum_name: str):
 
 
 class DbColumn:
+    allow_db_null: bool
+    base_catalog_name: str
+    column_size: int
+    numeric_precision: int
+    numeric_scale: int
+    base_schema_name: str
+    base_server_name: str
+    base_table_name: str
+    column_ordinal: int
+    base_column_name: str
+    column_name: str
+    is_aliased: bool
+    is_auto_increment: bool
+    is_expression: bool
+    is_hidden: bool
+    is_identity: bool
+    is_key: bool
+    is_read_only: bool
+    is_unique: bool
+    data_type: str
+    is_updatable: bool
+    _provider: str
 
     def __init__(self):
         self.allow_db_null: bool = None
@@ -106,9 +129,16 @@ class DbColumn:
 
 
 class DbCellValue:
+    display_value: str
+    is_null: bool
+    row_id: int
+    raw_object: object
 
     def __init__(self, display_value: any, is_null: bool, raw_object: object, row_id: int):
         self.display_value: str = '' if (display_value is None) else str(display_value)
         self.is_null: bool = is_null
         self.row_id: int = row_id
         self.raw_object = raw_object
+
+OutgoingMessageRegistration.register_outgoing_message(DbColumn)
+OutgoingMessageRegistration.register_outgoing_message(DbCellValue)

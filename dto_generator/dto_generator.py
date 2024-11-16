@@ -11,15 +11,11 @@ import os
 import inspect
 from typing import Type, Dict, Any, Optional, Union
 from ossdbtoolsservice.serialization import Serializable
-from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
-from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectRequestParams, ChangeDatabaseRequestParams
-from ossdbtoolsservice.edit_data.contracts import DisposeRequest
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import DisasterRecoveryService
-from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.object_explorer import ObjectExplorerService
@@ -115,7 +111,7 @@ def get_schema_type(attr_type: Type) -> Dict[str, Any]:
         return {"type": "number"}
     elif attr_type == list:
         return {"type": "array"}
-    elif attr_type == dict:
+    elif attr_type in [dict, object]:
         return {"type": "object"}
     elif inspect.isclass(attr_type):
         # Ensure the schema for the nested class is created and registered
@@ -179,16 +175,17 @@ if __name__ == '__main__':
         constants.TASK_SERVICE_NAME: TaskService
     }
 
-    # Generate the JSON schema for ChangeDatabaseRequestParams
-    #schema = class_to_json_schema(DisposeRequest)
-    # print(schema)
-
+    # Convert all parameter classes registered in IncomingMessageConfiguration to JSON schema
     for messageConfig in IncomingMessageConfiguration.message_configurations:
         print(f"Message: {messageConfig.method} - {messageConfig.parameter_class}")
         class_to_json_schema(messageConfig.parameter_class)
 
-    # Generate the full schema and save it to a file
+    # Convert all outgoing message classes registered in OutgoingMessageRegistration to JSON schema
+    for outgoingMessage in OutgoingMessageRegistration.message_configurations:
+        print(f"Message: {outgoingMessage}")
+        class_to_json_schema(outgoingMessage)
+
+    # Generate the full schema and save it to a JSON schema file
     full_schema = generate_full_schema()
-    print(full_schema)
     schema_file_path = f"build/dto_generator/full_schema.json"
     save_json_schema_to_file(full_schema, schema_file_path)

@@ -5,11 +5,14 @@
 
 from typing import Dict, List  # noqa
 
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.query.contracts import DbCellValue
 import ossdbtoolsservice.utils as utils
 
 
 class ResultSetSubset:
+    rows: List[List[DbCellValue]]
+    row_count: int
 
     @classmethod
     def from_result_set(cls, result_set, start_index: int, end_index: int):
@@ -107,6 +110,10 @@ class ResultSetSubset:
 
 
 class SubsetResult:
+    result_subset: ResultSetSubset
 
     def __init__(self, result_subset: ResultSetSubset):
         self.result_subset: ResultSetSubset = result_subset
+
+OutgoingMessageRegistration.register_outgoing_message(SubsetResult)
+OutgoingMessageRegistration.register_outgoing_message(ResultSetSubset)

@@ -4,8 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 import enum
-
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from typing import List
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -33,6 +33,8 @@ class InitializeRequestParams(Serializable):
 
 class CompletionOptions:
     """Completion options contract"""
+    resolve_provider: bool
+    trigger_characters: List[str]
 
     def __init__(self, resolve_provider=None, trigger_characters=None):
         self.resolve_provider = resolve_provider
@@ -41,6 +43,7 @@ class CompletionOptions:
 
 class SignatureHelpOptions:
     """Signature help options contract"""
+    trigger_characters: List[str]
 
     def __init__(self, trigger_characters=None):
         self.trigger_characters = trigger_characters
@@ -54,6 +57,18 @@ class TextDocumentSyncKind(enum.Enum):
 
 
 class ServerCapabilities:
+    text_document_sync: TextDocumentSyncKind
+    hover_provider: bool
+    completion_provider: CompletionOptions
+    signature_help_provider: SignatureHelpOptions
+    definition_provider: bool
+    references_provider: bool
+    document_highlight_provider: bool
+    document_formatting_provider: bool
+    document_range_formatting_provider: bool
+    document_symbol_provider: bool
+    workspace_symbol_provider: bool
+
     def __init__(self,
                  text_document_sync=None,
                  hover_provider=None,
@@ -81,9 +96,15 @@ class ServerCapabilities:
 
 class InitializeResult:
     """Initialization result parameters"""
+    capabilities: ServerCapabilities
 
     def __init__(self, capabilities: ServerCapabilities):
         self.capabilities: ServerCapabilities = capabilities
 
 
 INITIALIZE_REQUEST = IncomingMessageConfiguration('initialize', InitializeRequestParams)
+OutgoingMessageRegistration.register_outgoing_message(InitializeResult)
+OutgoingMessageRegistration.register_outgoing_message(ServerCapabilities)
+OutgoingMessageRegistration.register_outgoing_message(TextDocumentSyncKind)
+OutgoingMessageRegistration.register_outgoing_message(CompletionOptions)
+OutgoingMessageRegistration.register_outgoing_message(SignatureHelpOptions)

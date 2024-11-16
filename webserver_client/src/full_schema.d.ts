@@ -44,6 +44,15 @@ export type ScriptOperation = 0 | 1 | 3 | 4;
  */
 export type CompletionItemKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
 export type DocumentRangeFormattingParams = DocumentFormattingParams;
+export type ConnectionOption = ServiceOption;
+/**
+ * Text document sync kind contract
+ */
+export type TextDocumentSyncKind = 0 | 1 | 2;
+/**
+ * Enum representing task status
+ */
+export type TaskStatus = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface UnifiedSchema {
   CancelConnectParams?: CancelConnectParams;
@@ -106,12 +115,44 @@ export interface UnifiedSchema {
   CompletionItem?: CompletionItem;
   CompletionItemKind?: CompletionItemKind;
   TextEdit?: TextEdit;
+  Range?: Range;
   DocumentFormattingParams?: DocumentFormattingParams;
   FormattingOptions?: FormattingOptions;
   DocumentRangeFormattingParams?: DocumentRangeFormattingParams;
-  Range?: Range;
   CloseSessionParameters?: CloseSessionParameters;
   ExpandParameters?: ExpandParameters;
+  ListDatabasesResponse?: ListDatabasesResponse;
+  DbColumn?: DbColumn;
+  DbCellValue?: DbCellValue;
+  SubsetResult?: SubsetResult;
+  ResultSetSubset?: ResultSetSubset;
+  MetadataListResponse?: MetadataListResponse;
+  DisposeResponse?: DisposeResponse;
+  EditCommitResponse?: EditCommitResponse;
+  EditSubsetResponse?: EditSubsetResponse;
+  GetDatabaseInfoResponse?: GetDatabaseInfoResponse;
+  DatabaseInfo?: DatabaseInfo;
+  CapabilitiesResult?: CapabilitiesResult;
+  DMPServerCapabilities?: DMPServerCapabilities;
+  ConnectionProviderOptions?: ConnectionProviderOptions;
+  FeatureMetadataProvider?: FeatureMetadataProvider;
+  ServiceOption?: ServiceOption;
+  ConnectionOption?: ConnectionOption;
+  CategoryValue?: CategoryValue;
+  InitializeResult?: InitializeResult;
+  ServerCapabilities?: ServerCapabilities;
+  TextDocumentSyncKind?: TextDocumentSyncKind;
+  CompletionOptions?: CompletionOptions;
+  SignatureHelpOptions?: SignatureHelpOptions;
+  TaskInfo?: TaskInfo;
+  TaskStatus?: TaskStatus;
+  Task?: Task;
+  lock?: Lock;
+  QueryCancelResult?: QueryCancelResult;
+  SimpleExecuteResponse?: SimpleExecuteResponse;
+  SaveResultRequestResult?: SaveResultRequestResult;
+  DefinitionResult?: DefinitionResult;
+  CreateSessionResponse?: CreateSessionResponse;
   [k: string]: unknown;
 }
 export interface CancelConnectParams {
@@ -396,6 +437,13 @@ export interface CompletionItem {
   [k: string]: unknown;
 }
 export interface TextEdit {
+  range?: Range;
+  new_text?: string;
+  [k: string]: unknown;
+}
+export interface Range {
+  start?: Position;
+  end?: Position;
   [k: string]: unknown;
 }
 export interface DocumentFormattingParams {
@@ -406,11 +454,6 @@ export interface DocumentFormattingParams {
 export interface FormattingOptions {
   tab_size?: number;
   insert_spaces?: boolean;
-  [k: string]: unknown;
-}
-export interface Range {
-  start?: Position;
-  end?: Position;
   [k: string]: unknown;
 }
 export interface CloseSessionParameters {
@@ -428,5 +471,204 @@ export interface CloseSessionParameters {
 export interface ExpandParameters {
   session_id?: string;
   node_path?: string;
+  [k: string]: unknown;
+}
+export interface ListDatabasesResponse {
+  database_names?: string;
+  [k: string]: unknown;
+}
+export interface DbColumn {
+  is_bytes?: string;
+  is_chars?: string;
+  is_json?: string;
+  is_long?: string;
+  is_udt?: string;
+  is_xml?: string;
+  provider?: string;
+  allow_db_null?: boolean;
+  base_catalog_name?: string;
+  column_size?: number;
+  numeric_precision?: number;
+  numeric_scale?: number;
+  base_schema_name?: string;
+  base_server_name?: string;
+  base_table_name?: string;
+  column_ordinal?: number;
+  base_column_name?: string;
+  column_name?: string;
+  is_aliased?: boolean;
+  is_auto_increment?: boolean;
+  is_expression?: boolean;
+  is_hidden?: boolean;
+  is_identity?: boolean;
+  is_key?: boolean;
+  is_read_only?: boolean;
+  is_unique?: boolean;
+  data_type?: string;
+  is_updatable?: boolean;
+  _provider?: string;
+  [k: string]: unknown;
+}
+export interface DbCellValue {
+  display_value?: string;
+  is_null?: boolean;
+  row_id?: number;
+  raw_object?: {
+    [k: string]: unknown;
+  };
+  [k: string]: unknown;
+}
+export interface SubsetResult {
+  result_subset?: ResultSetSubset;
+  [k: string]: unknown;
+}
+export interface ResultSetSubset {
+  rows?: string;
+  row_count?: number;
+  [k: string]: unknown;
+}
+export interface MetadataListResponse {
+  metadata?: string;
+  [k: string]: unknown;
+}
+export interface DisposeResponse {
+  [k: string]: unknown;
+}
+export interface EditCommitResponse {
+  [k: string]: unknown;
+}
+export interface EditSubsetResponse {
+  [k: string]: unknown;
+}
+export interface GetDatabaseInfoResponse {
+  database_info?: DatabaseInfo;
+  [k: string]: unknown;
+}
+export interface DatabaseInfo {
+  OWNER?: string;
+  DBNAME?: string;
+  SIZE?: string;
+  [k: string]: unknown;
+}
+export interface CapabilitiesResult {
+  capabilities?: DMPServerCapabilities;
+  [k: string]: unknown;
+}
+export interface DMPServerCapabilities {
+  protocol_version?: string;
+  provider_name?: string;
+  provider_display_name?: string;
+  connection_provider?: ConnectionProviderOptions;
+  features?: string;
+  [k: string]: unknown;
+}
+export interface ConnectionProviderOptions {
+  options?: string;
+  [k: string]: unknown;
+}
+export interface FeatureMetadataProvider {
+  enabled?: boolean;
+  feature_name?: string;
+  options_metadata?: string;
+  [k: string]: unknown;
+}
+export interface ServiceOption {
+  VALUE_TYPE_STRING?: string;
+  VALUE_TYPE_MULTI_STRING?: string;
+  VALUE_TYPE_PASSWORD?: string;
+  VALUE_TYPE_ACCESS_TOKEN?: string;
+  VALUE_TYPE_NUMBER?: string;
+  VALUE_TYPE_CATEGORY?: string;
+  VALUE_TYPE_BOOLEAN?: string;
+  name?: string;
+  display_name?: string;
+  description?: string;
+  group_name?: string;
+  value_type?: string;
+  default_value?: string;
+  category_values?: string;
+  is_required?: boolean;
+  [k: string]: unknown;
+}
+export interface CategoryValue {
+  display_name?: string;
+  name?: string;
+  [k: string]: unknown;
+}
+export interface InitializeResult {
+  capabilities?: ServerCapabilities;
+  [k: string]: unknown;
+}
+export interface ServerCapabilities {
+  text_document_sync?: TextDocumentSyncKind;
+  hover_provider?: boolean;
+  completion_provider?: CompletionOptions;
+  signature_help_provider?: SignatureHelpOptions;
+  definition_provider?: boolean;
+  references_provider?: boolean;
+  document_highlight_provider?: boolean;
+  document_formatting_provider?: boolean;
+  document_range_formatting_provider?: boolean;
+  document_symbol_provider?: boolean;
+  workspace_symbol_provider?: boolean;
+  [k: string]: unknown;
+}
+export interface CompletionOptions {
+  resolve_provider?: boolean;
+  trigger_characters?: string;
+  [k: string]: unknown;
+}
+export interface SignatureHelpOptions {
+  trigger_characters?: string;
+  [k: string]: unknown;
+}
+export interface TaskInfo {
+  task_id?: string;
+  status?: TaskStatus;
+  server_name?: string;
+  database_name?: string;
+  name?: string;
+  description?: string;
+  provider_name?: string;
+  [k: string]: unknown;
+}
+export interface Task {
+  _is_completed?: string;
+  task_info?: string;
+  name?: string;
+  description?: string;
+  provider_name?: string;
+  server_name?: string;
+  database_name?: string;
+  id?: string;
+  status?: TaskStatus;
+  status_message?: string;
+  on_cancel?: string;
+  cancellation_lock?: Lock;
+  canceled?: boolean;
+  [k: string]: unknown;
+}
+export interface Lock {
+  [k: string]: unknown;
+}
+export interface QueryCancelResult {
+  messages?: string;
+  [k: string]: unknown;
+}
+export interface SimpleExecuteResponse {
+  rows?: string;
+  row_count?: number;
+  column_info?: string;
+  [k: string]: unknown;
+}
+export interface SaveResultRequestResult {
+  messages?: string;
+  [k: string]: unknown;
+}
+export interface DefinitionResult {
+  [k: string]: unknown;
+}
+export interface CreateSessionResponse {
+  session_id?: string;
   [k: string]: unknown;
 }

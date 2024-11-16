@@ -6,7 +6,7 @@
 
 from typing import List
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.edit_data.contracts import EditRow
 
@@ -30,3 +30,4 @@ class EditSubsetResponse:
 
 
 EDIT_SUBSET_REQUEST = IncomingMessageConfiguration('edit/subset', EditSubsetParams)
+OutgoingMessageRegistration.register_outgoing_message(EditSubsetResponse)

@@ -554,6 +554,22 @@ class JSONRPCServer:
         if self._logger is not None:
             self._logger.warn(message)
 
+
+class OutgoingMessageRegistration:
+    """Object that stores the info for registering a response or notification"""
+
+    # Static collection to store all outgoing message configurations
+    message_configurations = []
+
+    @staticmethod
+    def register_outgoing_message(message_class):
+        """
+        Registers an outgoing message configuration
+        :param message_class: Class to deserialize the response parameters into
+        """
+        OutgoingMessageRegistration.message_configurations.append(message_class)
+
+
 class IncomingMessageConfiguration:
     """Object that stores the info for registering a request"""
 

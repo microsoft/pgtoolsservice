@@ -7,7 +7,7 @@
 
 import enum
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.workspace.contracts import TextDocumentPosition
 from ossdbtoolsservice.language.contracts import TextEdit   # noqa
 from ossdbtoolsservice.serialization import Serializable
@@ -72,3 +72,4 @@ class CompletionItem(Serializable):
 COMPLETION_REQUEST = IncomingMessageConfiguration('textDocument/completion', TextDocumentPosition)
 
 COMPLETION_RESOLVE_REQUEST = IncomingMessageConfiguration('completionItem/resolve', CompletionItem)
+OutgoingMessageRegistration.register_outgoing_message(CompletionItem)

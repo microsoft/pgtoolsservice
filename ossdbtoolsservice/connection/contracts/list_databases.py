@@ -7,7 +7,7 @@
 
 from typing import List  # noqa
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -23,9 +23,11 @@ class ListDatabasesParams(Serializable):
 
 class ListDatabasesResponse:
     """Response for the connection/listdatabases request"""
+    database_names: List[str]
 
     def __init__(self, database_names):
         self.database_names: List[str] = database_names
 
 
 LIST_DATABASES_REQUEST = IncomingMessageConfiguration('connection/listdatabases', ListDatabasesParams)
+OutgoingMessageRegistration.register_outgoing_message(ListDatabasesResponse)

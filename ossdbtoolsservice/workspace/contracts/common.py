@@ -113,6 +113,8 @@ class Location(Serializable):
         uri: uri pointing to a file
         range: start and stop position determining range within the file
     """
+    uri: str
+    range: Range
 
     def __init__(self, uri: str, rng: Range):
         self.uri = uri
