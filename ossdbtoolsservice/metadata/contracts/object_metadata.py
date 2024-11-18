@@ -7,7 +7,7 @@ import enum
 from typing import Optional
 
 from ossdbtoolsservice.serialization import Serializable
-
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 class MetadataType(enum.Enum):
     """Contract enum for representing metadata types"""
@@ -35,3 +35,5 @@ class ObjectMetadata(Serializable):
         self.name: str = name
         self.schema: str = schema
         self.urn: str = urn
+
+OutgoingMessageRegistration.register_outgoing_message(ObjectMetadata)

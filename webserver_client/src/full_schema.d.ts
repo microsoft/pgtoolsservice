@@ -14,14 +14,6 @@
  *
  */
 export type ConnectionType = "Default" | "Query" | "Edit" | "QueryCancel" | "ObjectExplorer" | "Intellisense";
-export type RowOperationRequest = SessionOperationRequest;
-export type UpdateCellRequest = RowOperationRequest;
-export type CreateRowRequest = SessionOperationRequest;
-export type DeleteRowRequest = RowOperationRequest;
-export type DisposeRequest = SessionOperationRequest;
-export type EditCommitRequest = SessionOperationRequest;
-export type RevertCellRequest = RowOperationRequest;
-export type RevertRowRequest = RowOperationRequest;
 /**
  * Enum for the type of backups that are supported
  */
@@ -44,6 +36,14 @@ export type ScriptOperation = 0 | 1 | 3 | 4;
  */
 export type CompletionItemKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
 export type DocumentRangeFormattingParams = DocumentFormattingParams;
+export type RowOperationRequest = SessionOperationRequest;
+export type UpdateCellRequest = RowOperationRequest;
+export type CreateRowRequest = SessionOperationRequest;
+export type DeleteRowRequest = RowOperationRequest;
+export type DisposeRequest = SessionOperationRequest;
+export type EditCommitRequest = SessionOperationRequest;
+export type RevertCellRequest = RowOperationRequest;
+export type RevertRowRequest = RowOperationRequest;
 export type ConnectionOption = ServiceOption;
 /**
  * Text document sync kind contract
@@ -53,8 +53,13 @@ export type TextDocumentSyncKind = 0 | 1 | 2;
  * Enum representing task status
  */
 export type TaskStatus = 0 | 1 | 2 | 3 | 4 | 5;
+/**
+ * Contract enum for representing metadata types
+ */
+export type MetadataType = 0 | 1 | 2 | 3;
 
 export interface UnifiedSchema {
+  GetDatabaseInfoParameters?: GetDatabaseInfoParameters;
   CancelConnectParams?: CancelConnectParams;
   ConnectionType?: ConnectionType;
   BuildConnectionInfoParams?: BuildConnectionInfoParams;
@@ -68,20 +73,6 @@ export interface UnifiedSchema {
   DidChangeTextDocumentParams?: DidChangeTextDocumentParams;
   DidCloseTextDocumentParams?: DidCloseTextDocumentParams;
   DidOpenTextDocumentParams?: DidOpenTextDocumentParams;
-  MetadataListParameters?: MetadataListParameters;
-  InitializeEditParams?: InitializeEditParams;
-  EditInitializerFilter?: EditInitializerFilter;
-  SessionOperationRequest?: SessionOperationRequest;
-  RowOperationRequest?: RowOperationRequest;
-  UpdateCellRequest?: UpdateCellRequest;
-  CreateRowRequest?: CreateRowRequest;
-  DeleteRowRequest?: DeleteRowRequest;
-  DisposeRequest?: DisposeRequest;
-  EditCommitRequest?: EditCommitRequest;
-  RevertCellRequest?: RevertCellRequest;
-  RevertRowRequest?: RevertRowRequest;
-  EditSubsetParams?: EditSubsetParams;
-  GetDatabaseInfoParameters?: GetDatabaseInfoParameters;
   CapabilitiesRequestParams?: CapabilitiesRequestParams;
   InitializeRequestParams?: InitializeRequestParams;
   BackupParams?: BackupParams;
@@ -106,6 +97,7 @@ export interface UnifiedSchema {
   SaveResultsAsCsvRequestParams?: SaveResultsAsCsvRequestParams;
   SaveResultsAsJsonRequestParams?: SaveResultsAsJsonRequestParams;
   SaveResultsAsExcelRequestParams?: SaveResultsAsExcelRequestParams;
+  MetadataListParameters?: MetadataListParameters;
   ScriptAsParameters?: ScriptAsParameters;
   ScriptOperation?: ScriptOperation;
   LanguageFlavorChangeParams?: LanguageFlavorChangeParams;
@@ -121,17 +113,24 @@ export interface UnifiedSchema {
   DocumentRangeFormattingParams?: DocumentRangeFormattingParams;
   CloseSessionParameters?: CloseSessionParameters;
   ExpandParameters?: ExpandParameters;
-  ListDatabasesResponse?: ListDatabasesResponse;
-  DbColumn?: DbColumn;
-  DbCellValue?: DbCellValue;
-  SubsetResult?: SubsetResult;
-  ResultSetSubset?: ResultSetSubset;
-  MetadataListResponse?: MetadataListResponse;
-  DisposeResponse?: DisposeResponse;
-  EditCommitResponse?: EditCommitResponse;
-  EditSubsetResponse?: EditSubsetResponse;
+  InitializeEditParams?: InitializeEditParams;
+  EditInitializerFilter?: EditInitializerFilter;
+  SessionOperationRequest?: SessionOperationRequest;
+  RowOperationRequest?: RowOperationRequest;
+  UpdateCellRequest?: UpdateCellRequest;
+  CreateRowRequest?: CreateRowRequest;
+  DeleteRowRequest?: DeleteRowRequest;
+  DisposeRequest?: DisposeRequest;
+  EditCommitRequest?: EditCommitRequest;
+  RevertCellRequest?: RevertCellRequest;
+  RevertRowRequest?: RevertRowRequest;
+  EditSubsetParams?: EditSubsetParams;
   GetDatabaseInfoResponse?: GetDatabaseInfoResponse;
   DatabaseInfo?: DatabaseInfo;
+  ConnectionCompleteParams?: ConnectionCompleteParams;
+  ServerInfo?: ServerInfo;
+  ConnectionSummary?: ConnectionSummary;
+  ListDatabasesResponse?: ListDatabasesResponse;
   CapabilitiesResult?: CapabilitiesResult;
   DMPServerCapabilities?: DMPServerCapabilities;
   ConnectionProviderOptions?: ConnectionProviderOptions;
@@ -148,11 +147,40 @@ export interface UnifiedSchema {
   TaskStatus?: TaskStatus;
   Task?: Task;
   lock?: Lock;
+  DbColumn?: DbColumn;
+  DbCellValue?: DbCellValue;
+  SubsetResult?: SubsetResult;
+  ResultSetSubset?: ResultSetSubset;
+  ResultSetSummary?: ResultSetSummary;
+  BatchSummary?: BatchSummary;
+  BatchNotificationParams?: BatchNotificationParams;
   QueryCancelResult?: QueryCancelResult;
+  MessageNotificationParams?: MessageNotificationParams;
+  ResultMessage?: ResultMessage;
+  QueryCompleteNotificationParams?: QueryCompleteNotificationParams;
+  ResultSetNotificationParams?: ResultSetNotificationParams;
   SimpleExecuteResponse?: SimpleExecuteResponse;
   SaveResultRequestResult?: SaveResultRequestResult;
+  ObjectMetadata?: ObjectMetadata;
+  MetadataType?: MetadataType;
+  MetadataListResponse?: MetadataListResponse;
+  StatusChangeParams?: StatusChangeParams;
   DefinitionResult?: DefinitionResult;
   CreateSessionResponse?: CreateSessionResponse;
+  NodeInfo?: NodeInfo;
+  SessionCreatedParameters?: SessionCreatedParameters;
+  ExpandCompletedParameters?: ExpandCompletedParameters;
+  DisposeResponse?: DisposeResponse;
+  EditCommitResponse?: EditCommitResponse;
+  SessionReadyNotificationParams?: SessionReadyNotificationParams;
+  EditSubsetResponse?: EditSubsetResponse;
+  [k: string]: unknown;
+}
+export interface GetDatabaseInfoParameters {
+  options?: {
+    [k: string]: unknown;
+  };
+  owner_uri?: string;
   [k: string]: unknown;
 }
 export interface CancelConnectParams {
@@ -211,40 +239,6 @@ export interface DidCloseTextDocumentParams {
   [k: string]: unknown;
 }
 export interface DidOpenTextDocumentParams {
-  [k: string]: unknown;
-}
-export interface MetadataListParameters {
-  owner_uri?: string;
-  [k: string]: unknown;
-}
-export interface InitializeEditParams {
-  owner_uri?: string;
-  schema_name?: string;
-  object_type?: string;
-  object_name?: string;
-  query_string?: string;
-  filters?: EditInitializerFilter;
-  [k: string]: unknown;
-}
-export interface EditInitializerFilter {
-  limit_results?: number;
-  [k: string]: unknown;
-}
-export interface SessionOperationRequest {
-  owner_uri?: string;
-  [k: string]: unknown;
-}
-export interface EditSubsetParams {
-  owner_uri?: string;
-  row_start_index?: number;
-  row_count?: number;
-  [k: string]: unknown;
-}
-export interface GetDatabaseInfoParameters {
-  options?: {
-    [k: string]: unknown;
-  };
-  owner_uri?: string;
   [k: string]: unknown;
 }
 export interface CapabilitiesRequestParams {
@@ -360,6 +354,10 @@ export interface ExecutionPlanOptions {
   [k: string]: unknown;
 }
 export interface SelectionData {
+  start_line?: number;
+  start_column?: number;
+  end_line?: number;
+  end_column?: number;
   [k: string]: unknown;
 }
 export interface SubsetParams {
@@ -399,6 +397,10 @@ export interface SaveResultsRequestParams {
   row_end_index?: number;
   column_start_index?: number;
   column_end_index?: number;
+  [k: string]: unknown;
+}
+export interface MetadataListParameters {
+  owner_uri?: string;
   [k: string]: unknown;
 }
 export interface ScriptAsParameters {
@@ -473,71 +475,27 @@ export interface ExpandParameters {
   node_path?: string;
   [k: string]: unknown;
 }
-export interface ListDatabasesResponse {
-  database_names?: string;
+export interface InitializeEditParams {
+  owner_uri?: string;
+  schema_name?: string;
+  object_type?: string;
+  object_name?: string;
+  query_string?: string;
+  filters?: EditInitializerFilter;
   [k: string]: unknown;
 }
-export interface DbColumn {
-  is_bytes?: string;
-  is_chars?: string;
-  is_json?: string;
-  is_long?: string;
-  is_udt?: string;
-  is_xml?: string;
-  provider?: string;
-  allow_db_null?: boolean;
-  base_catalog_name?: string;
-  column_size?: number;
-  numeric_precision?: number;
-  numeric_scale?: number;
-  base_schema_name?: string;
-  base_server_name?: string;
-  base_table_name?: string;
-  column_ordinal?: number;
-  base_column_name?: string;
-  column_name?: string;
-  is_aliased?: boolean;
-  is_auto_increment?: boolean;
-  is_expression?: boolean;
-  is_hidden?: boolean;
-  is_identity?: boolean;
-  is_key?: boolean;
-  is_read_only?: boolean;
-  is_unique?: boolean;
-  data_type?: string;
-  is_updatable?: boolean;
-  _provider?: string;
+export interface EditInitializerFilter {
+  limit_results?: number;
   [k: string]: unknown;
 }
-export interface DbCellValue {
-  display_value?: string;
-  is_null?: boolean;
-  row_id?: number;
-  raw_object?: {
-    [k: string]: unknown;
-  };
+export interface SessionOperationRequest {
+  owner_uri?: string;
   [k: string]: unknown;
 }
-export interface SubsetResult {
-  result_subset?: ResultSetSubset;
-  [k: string]: unknown;
-}
-export interface ResultSetSubset {
-  rows?: string;
+export interface EditSubsetParams {
+  owner_uri?: string;
+  row_start_index?: number;
   row_count?: number;
-  [k: string]: unknown;
-}
-export interface MetadataListResponse {
-  metadata?: string;
-  [k: string]: unknown;
-}
-export interface DisposeResponse {
-  [k: string]: unknown;
-}
-export interface EditCommitResponse {
-  [k: string]: unknown;
-}
-export interface EditSubsetResponse {
   [k: string]: unknown;
 }
 export interface GetDatabaseInfoResponse {
@@ -548,6 +506,30 @@ export interface DatabaseInfo {
   OWNER?: string;
   DBNAME?: string;
   SIZE?: string;
+  [k: string]: unknown;
+}
+export interface ConnectionCompleteParams {
+  owner_uri?: string;
+  connection_id?: string;
+  messages?: string;
+  error_message?: string;
+  error_number?: number;
+  server_info?: ServerInfo;
+  connection_summary?: ConnectionSummary;
+  type?: ConnectionType;
+  [k: string]: unknown;
+}
+export interface ServerInfo {
+  server?: string;
+  server_version?: string;
+  is_cloud?: boolean;
+  [k: string]: unknown;
+}
+export interface ConnectionSummary {
+  [k: string]: unknown;
+}
+export interface ListDatabasesResponse {
+  database_names?: string;
   [k: string]: unknown;
 }
 export interface CapabilitiesResult {
@@ -651,8 +633,103 @@ export interface Task {
 export interface Lock {
   [k: string]: unknown;
 }
+export interface DbColumn {
+  is_bytes?: string;
+  is_chars?: string;
+  is_json?: string;
+  is_long?: string;
+  is_udt?: string;
+  is_xml?: string;
+  provider?: string;
+  allow_db_null?: boolean;
+  base_catalog_name?: string;
+  column_size?: number;
+  numeric_precision?: number;
+  numeric_scale?: number;
+  base_schema_name?: string;
+  base_server_name?: string;
+  base_table_name?: string;
+  column_ordinal?: number;
+  base_column_name?: string;
+  column_name?: string;
+  is_aliased?: boolean;
+  is_auto_increment?: boolean;
+  is_expression?: boolean;
+  is_hidden?: boolean;
+  is_identity?: boolean;
+  is_key?: boolean;
+  is_read_only?: boolean;
+  is_unique?: boolean;
+  data_type?: string;
+  is_updatable?: boolean;
+  _provider?: string;
+  [k: string]: unknown;
+}
+export interface DbCellValue {
+  display_value?: string;
+  is_null?: boolean;
+  row_id?: number;
+  raw_object?: {
+    [k: string]: unknown;
+  };
+  [k: string]: unknown;
+}
+export interface SubsetResult {
+  result_subset?: ResultSetSubset;
+  [k: string]: unknown;
+}
+export interface ResultSetSubset {
+  rows?: string;
+  row_count?: number;
+  [k: string]: unknown;
+}
+export interface ResultSetSummary {
+  id?: number;
+  batch_id?: number;
+  row_count?: number;
+  complete?: boolean;
+  column_info?: string;
+  [k: string]: unknown;
+}
+export interface BatchSummary {
+  id?: number;
+  selection?: SelectionData;
+  execution_start?: string;
+  has_error?: boolean;
+  execution_end?: string;
+  execution_elapsed?: string;
+  result_set_summaries?: string;
+  [k: string]: unknown;
+}
+export interface BatchNotificationParams {
+  batch_summary?: BatchSummary;
+  owner_uri?: string;
+  [k: string]: unknown;
+}
 export interface QueryCancelResult {
   messages?: string;
+  [k: string]: unknown;
+}
+export interface MessageNotificationParams {
+  owner_uri?: string;
+  message?: ResultMessage;
+  [k: string]: unknown;
+}
+export interface ResultMessage {
+  batch_id?: number;
+  is_error?: boolean;
+  time?: string;
+  message?: string;
+  [k: string]: unknown;
+}
+export interface QueryCompleteNotificationParams {
+  owner_uri?: string;
+  batch_summaries?: string;
+  [k: string]: unknown;
+}
+export interface ResultSetNotificationParams {
+  owner_uri?: string;
+  result_set_summary?: ResultSetSummary;
   [k: string]: unknown;
 }
 export interface SimpleExecuteResponse {
@@ -665,10 +742,68 @@ export interface SaveResultRequestResult {
   messages?: string;
   [k: string]: unknown;
 }
+export interface ObjectMetadata {
+  metadata_type?: MetadataType;
+  metadata_type_name?: string;
+  name?: string;
+  schema?: string;
+  urn?: string;
+  [k: string]: unknown;
+}
+export interface MetadataListResponse {
+  metadata?: string;
+  [k: string]: unknown;
+}
+export interface StatusChangeParams {
+  owner_uri?: string;
+  status?: string;
+  [k: string]: unknown;
+}
 export interface DefinitionResult {
   [k: string]: unknown;
 }
 export interface CreateSessionResponse {
   session_id?: string;
+  [k: string]: unknown;
+}
+export interface NodeInfo {
+  node_path?: string;
+  node_type?: string;
+  label?: string;
+  node_sub_type?: string;
+  node_status?: string;
+  is_leaf?: boolean;
+  metadata?: ObjectMetadata;
+  error_message?: string;
+  is_system?: boolean;
+  [k: string]: unknown;
+}
+export interface SessionCreatedParameters {
+  error_message?: string;
+  success?: boolean;
+  session_id?: string;
+  root_node?: NodeInfo;
+  [k: string]: unknown;
+}
+export interface ExpandCompletedParameters {
+  session_id?: string;
+  node_path?: string;
+  error_message?: string;
+  nodes?: string;
+  [k: string]: unknown;
+}
+export interface DisposeResponse {
+  [k: string]: unknown;
+}
+export interface EditCommitResponse {
+  [k: string]: unknown;
+}
+export interface SessionReadyNotificationParams {
+  owner_uri?: string;
+  success?: boolean;
+  message?: string;
+  [k: string]: unknown;
+}
+export interface EditSubsetResponse {
   [k: string]: unknown;
 }

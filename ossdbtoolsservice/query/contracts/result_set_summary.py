@@ -7,9 +7,14 @@
 from typing import List  # noqa
 
 from ossdbtoolsservice.query.contracts import DbColumn
-
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 class ResultSetSummary:
+    id: int
+    batch_id: int
+    row_count: int
+    complete: bool
+    column_info: List[DbColumn]
 
     def __init__(self, result_set_id: int, batch_id: int, row_count: int, complete: bool, column_info: List[DbColumn]):
         self.id = result_set_id
@@ -17,3 +22,5 @@ class ResultSetSummary:
         self.row_count = row_count
         self.complete = complete
         self.column_info = column_info
+
+OutgoingMessageRegistration.register_outgoing_message(ResultSetSummary)

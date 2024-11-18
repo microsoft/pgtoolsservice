@@ -3,10 +3,19 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import List
 from ossdbtoolsservice.query.contracts import SelectionData
-
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
+from ossdbtoolsservice.query.contracts.result_set_summary import ResultSetSummary
 
 class BatchSummary:
+    id: int
+    selection: SelectionData
+    execution_start: str
+    has_error: bool
+    execution_end: str
+    execution_elapsed: str
+    result_set_summaries: List[ResultSetSummary]
 
     @classmethod
     def from_batch(cls, batch):
@@ -31,3 +40,5 @@ class BatchSummary:
         self.execution_end: str = None
         self.execution_elapsed = None
         self.result_set_summaries = None
+
+OutgoingMessageRegistration.register_outgoing_message(BatchSummary)
