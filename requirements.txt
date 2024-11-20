@@ -12,6 +12,7 @@ flask_cors
 flask-socketio
 gevent
 gevent-websocket
+argparse
 
 # PGSMO Requirements
 jinja2
