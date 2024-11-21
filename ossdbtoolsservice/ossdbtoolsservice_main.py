@@ -90,11 +90,11 @@ if __name__ == '__main__':
             # Dynamically set the Python interpreter for debugpy fron an environment variable or default to the current interpreter.
             python_path = os.getenv("PYTHON", default=sys.executable)
             debugpy.configure(python=python_path)
-            debugpy.listen(("0.0.0.0", port))
+            debugpy.listen(("127.0.0.1", port))
         except BaseException:
             # If port 3000 is used, try another debug port
             port += 1
-            debugpy.listen(("0.0.0.0", port))
+            debugpy.listen(("127.0.0.1", port))
         if args.enable_remote_debugging_wait:
             wait_for_debugger = True
 
