@@ -130,6 +130,8 @@ class JSONRPCServer:
         self._log_information("JSON RPC server starting...")
 
         if self._enable_web_server:
+            # Start a background task to log the startup message
+            self.socketio.start_background_task(self.webserver_started)
             # Start the Flask server with SocketIO websocket support.
             self.socketio.run(self.app, host=self._listen_address, port=self._listen_port, debug=self._debug_web_server)
         else:
@@ -148,6 +150,9 @@ class JSONRPCServer:
             )
             self._input_consumer.daemon = True
             self._input_consumer.start()
+            message = f"JSON RPC server started with input and output stream processing."
+            self._log_information(message)
+            print(message)
 
     def stop(self):
         """
@@ -165,6 +170,14 @@ class JSONRPCServer:
         else:
             # Enqueue None to optimistically unblock output thread so it can check for the cancellation flag
             self._output_queue.put(None)
+
+    def webserver_started(self):
+        """
+        Logs a message when the server has started
+        """
+        message = f"Web server started on {self._listen_address}:{self._listen_port}"
+        self._log_information(message)
+        print(message)
 
     def send_request(self, method, params):
         """
