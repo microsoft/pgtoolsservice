@@ -33,4 +33,4 @@ RUN chmod -R +x /app
 EXPOSE 80
 
 # Specify the command to run the executable
-CMD ["/app/ossdbtoolsservice_main.exe", "--enable-web-server"]
+CMD ["/app/ossdbtoolsservice_main", "--enable-web-server"]
