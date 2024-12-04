@@ -24,6 +24,14 @@ mkdir -p "./dist/pgsqltoolsservice"
 # Move the contents in the dist folder to pgsqltoolsservice folder
 find "./dist" -maxdepth 1 -type f -exec mv {} "./dist/pgsqltoolsservice" \;
 
+# Copy the develpment ssl certificate to the dist folder
+mkdir -p "./dist/pgsqltoolsservice/ssl"
+cp "./ssl/cert.pem" "./dist/pgsqltoolsservice/ssl/"
+cp "./ssl/key.pem" "./dist/pgsqltoolsservice/ssl/"
+
+# Copy the pgsqltoolsservice config file to the dist folder
+cp "./config.ini" "./dist/pgsqltoolsservice/"
+
 # Check the current operating system and copy the correct pgsqltoolsservice
 if [[ "$(uname)" == "Darwin" ]]; then
     mkdir -p "./dist/pgsqltoolsservice/pg_exes/mac"

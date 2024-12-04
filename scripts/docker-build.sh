@@ -20,7 +20,7 @@ done
 
 # Set BuildVersion to the current date and time if not provided
 if [ -z "$BuildVersion" ]; then
-    BuildVersion=$(date +"%m%d%Y%H")
+    BuildVersion=$(date +"%Y-%m-%d-%H-%M-%S")
 fi
 
 # Print the generated BuildVersion

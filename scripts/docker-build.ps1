@@ -8,7 +8,7 @@ param (
 )
 
 if (-not $BuildVersion) {
-    $BuildVersion = (Get-Date -Format "MMddyyyyHH")
+    $BuildVersion = (Get-Date -Format "yyyy-MM-dd-HH-mm-ss")
 }
 
 write-host "BuildVersion: $BuildVersion"
