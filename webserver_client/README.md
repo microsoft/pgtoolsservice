@@ -8,6 +8,7 @@ From the `webserver_client` directory:
 1. Run `npm install` to install dependencies.
 2. Run `npx webpack` to compile and package TypeScript.
 3. Run `npx serve .` to start the local client server.
+4. Install self-signed [ssl-certificate](../ssl/cert.pem) in your trusted roots.
 
 ***Note:*** *To use this client the pgtoolsservice must NOT be started with `--disable-keep-alive`*
 
