@@ -36,9 +36,11 @@ function logToOutput(message: string, isError = false): void {
 
 // Function to start the session
 async function startSession(): Promise<void> {
-    logToOutput("Attempting to connect to the server...");
+    const hostInput = document.getElementById('hostInput') as HTMLInputElement;
+    let host = hostInput.value;
+    logToOutput(`Attempting to connect to the server ${host} ...`);
     try {
-        const response = await fetch("http://localhost:5000/start-session", {
+        const response = await fetch(`https://${host}/start-session`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -67,7 +69,10 @@ async function startSession(): Promise<void> {
 
 // Function to connect to the Socket.IO server
 function connectToSocket(): void {
-    const socket: Socket = io("http://localhost:5000", {
+    const hostInput = document.getElementById('hostInput') as HTMLInputElement;
+    let host = hostInput.value;
+    const socket: Socket = io(`https://${host}`, {
+        transports: ["websocket", "polling"], // Use WebSocket and fall-back to polling
         withCredentials: true, // Ensure cookies are sent with the WebSocket handshake
     });
 
@@ -125,18 +130,12 @@ function connectToSocket(): void {
         if (message) {
             logToOutput("You: " + message);
             try {
-                const response = await fetch("http://localhost:5000/json-rpc", {
+                const response = await fetch(`https://${host}/json-rpc`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: message,
-                    // body: JSON.stringify({
-                    //     jsonrpc: "2.0",
-                    //     method: "sendMessage",
-                    //     params: { message },
-                    //     id: 1,
-                    // }),
                     credentials: "include",
                 });
 

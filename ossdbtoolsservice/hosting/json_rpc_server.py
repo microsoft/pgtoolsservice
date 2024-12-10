@@ -3,18 +3,24 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from configparser import ConfigParser
+from logging import Logger
+from gevent import monkey
 from queue import Queue
 import threading
 import uuid
 import json
+import ssl
+import os
 
-from flask import Flask, request, session, jsonify
-from flask_socketio import SocketIO, emit, send, disconnect
+from flask import Flask, request, session, jsonify, make_response
+from flask_socketio import SocketIO, disconnect
 from flask_cors import CORS
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
 from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
+from ossdbtoolsservice.utils.path import path_relative_to_base
 
 # Dictionary to store session IDs by WebSocket sid
 active_sessions = {}
@@ -33,7 +39,18 @@ class JSONRPCServer:
             self.class_ = class_
             self.handler = handler
 
-    def __init__(self, in_stream=None, out_stream=None, logger=None, enable_web_server=False, listen_address='0.0.0.0', listen_port=80, disable_keep_alive=False, debug_web_server=False, version='1'):
+    def __init__(self,
+                 in_stream=None,
+                 out_stream=None,
+                 logger: Logger = None,
+                 enable_web_server=False,
+                 listen_address='0.0.0.0',
+                 listen_port=8443,
+                 disable_keep_alive=False,
+                 debug_web_server=False,
+                 enable_dynamic_cors=False,
+                 config: ConfigParser = None,
+                 version='1'):
         """
         Initializes internal state of the server and sets up a few useful built-in request handlers.
         :param in_stream: Input stream that will provide messages from the client. Used when the web server is disabled.
@@ -41,30 +58,56 @@ class JSONRPCServer:
         :param logger: Optional logger for logging purposes.
         :param enable_web_server: Flag to enable or disable the web server. Defaults to False.
         :param listen_address: Address on which the web server will listen. Defaults to '0.0.0.0'.
-        :param listen_port: Port on which the web server will listen. Defaults to 80.
+        :param listen_port: Port on which the web server will listen. Defaults to 8443.
         :param disable_keep_alive: Flag to enable or disable keep-alive for the web server. Defaults to False.
         :param debug_web_server: Flag to enable or disable debug mode for the web server. Defaults to False.
+        :param enable_dynamic_cors: Flag to enable or disable dynamic CORS handling. Defaults to False.
+        :param config: Configuration object for the server. Defaults to None.
         :param version: Protocol version. Defaults to '1'.
         """
         self._enable_web_server = enable_web_server
 
         # Enable the web server if the flag is set
         if self._enable_web_server:
-            self.app = Flask(__name__)
-            CORS(self.app, supports_credentials=True)  # Enable CORS for all routes and origins
-            self.app.config['SECRET_KEY'] = 'supersecretkey'
-            self.app.add_url_rule('/start-session', 'start-session', self._handle_start_session, methods=['POST'])
-            self.app.add_url_rule('/json-rpc', 'json_rpc', self._handle_http_request, methods=['POST'])
-            ping_interval = 1e9 if disable_keep_alive else 25
-            self.socketio = SocketIO(self.app, async_mode='gevent', cors_allowed_origins="*", manage_session=True, logger=logger, engineio_logger=logger, ping_interval=ping_interval, always_connect=False)
-            self.socketio.on_event('connect', self._handle_ws_connect)
-            self.socketio.on_event('disconnect', self._handle_ws_disconnect)
-            self.socketio.on_event('message', self._handle_ws_request)
+            # Patch sockets to make the standard library cooperative https://www.gevent.org/api/gevent.monkey.html
+            monkey.patch_all()
 
             self._listen_address = listen_address
             self._listen_port = listen_port
             self._disable_keep_alive = disable_keep_alive
             self._debug_web_server = debug_web_server
+            self._enable_dynamic_cors = enable_dynamic_cors
+
+            # Load the allowed CORS origins from the config file (if available), environment (if available), or use the default value
+            cors_origins_config = 'http://localhost'
+            if config is not None:
+                cors_origins_config = config.get('server', 'cors_origins', fallback='http://localhost')
+            cors_origins_env = os.getenv('CORS_ORIGINS', cors_origins_config)
+            self._allowed_origins = [origin.strip() for origin in cors_origins_env.split(',') if origin.strip()]
+
+            self.app = Flask(__name__)
+            CORS(self.app, supports_credentials=True, origins=self._allowed_origins)  # Enable CORS
+            if self._enable_dynamic_cors:
+                self.app.add_url_rule("/<path:dummy>", self._global_options_handler, methods=["OPTIONS"])
+                self.app.after_request(self._after_request_handler)
+            self.app.config["SESSION_COOKIE_SAMESITE"] = "None" # Configure session cookie to allow cross-origin requests
+            self.app.config["SESSION_COOKIE_SECURE"] = True  # Required for SameSite=None in modern browsers
+            self.app.config['SECRET_KEY'] = 'supersecretkey'
+            self.app.add_url_rule('/start-session', 'start-session', self._handle_start_session, methods=['POST'])
+            self.app.add_url_rule('/json-rpc', 'json_rpc', self._handle_http_request, methods=['POST'])
+            ping_interval = 1e9 if self._disable_keep_alive else 25
+            self.socketio = SocketIO(self.app, async_mode='gevent', cors_allowed_origins=lambda origin: self._dynamic_cors_handler(origin), manage_session=True, logger=logger, engineio_logger=logger, ping_interval=ping_interval, always_connect=False)
+            self.socketio.on_event('connect', self._handle_ws_connect)
+            self.socketio.on_event('disconnect', self._handle_ws_disconnect)
+            self.socketio.on_event('message', self._handle_ws_request)
+
+            # Construct the path to the certificates
+            certfile_path = path_relative_to_base('ssl', 'cert.pem')
+            keyfile_path = path_relative_to_base('ssl', 'key.pem')
+
+            # Create an SSLContext object
+            self._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            self._ssl_context.load_cert_chain(certfile=certfile_path, keyfile=keyfile_path)
 
             # Disable stdin reader and stdout writer when web server is disabled.
             self.reader = None
@@ -130,8 +173,10 @@ class JSONRPCServer:
         self._log_information("JSON RPC server starting...")
 
         if self._enable_web_server:
+            # Start a background task to log the startup message
+            self.socketio.start_background_task(self.webserver_started)
             # Start the Flask server with SocketIO websocket support.
-            self.socketio.run(self.app, host=self._listen_address, port=self._listen_port, debug=self._debug_web_server)
+            self.socketio.run(self.app, host=self._listen_address, port=self._listen_port, ssl_context=self._ssl_context, debug=self._debug_web_server)
         else:
             # Enable stdout writer only when webserver is disabled.
             self._output_consumer = threading.Thread(
@@ -148,6 +193,9 @@ class JSONRPCServer:
             )
             self._input_consumer.daemon = True
             self._input_consumer.start()
+            message = f"JSON RPC server started with input and output stream processing."
+            self._log_information(message)
+            print(message)
 
     def stop(self):
         """
@@ -165,6 +213,14 @@ class JSONRPCServer:
         else:
             # Enqueue None to optimistically unblock output thread so it can check for the cancellation flag
             self._output_queue.put(None)
+
+    def webserver_started(self):
+        """
+        Logs a message when the server has started
+        """
+        message = f"Web server started on {self._listen_address}:{self._listen_port}"
+        self._log_information(message)
+        print(message)
 
     def send_request(self, method, params):
         """
@@ -296,7 +352,9 @@ class JSONRPCServer:
         as associate this client connection with a cooresponding WebSocket connection for asynchronous responses.
         """
         # Create a unique session_id and store it in Flask's session
-        return {"session_id": self._ensure_session_id()}, 200
+        session_id = self._ensure_session_id();
+        self._log_information(f"Session started with ID: {session_id}")
+        return {"session_id": session_id}, 200
 
     def _handle_http_request(self):
         """
@@ -512,6 +570,35 @@ class JSONRPCServer:
         self._log_information(f"Force disconnecting WebSocket with engineio session ID: {eio_sid}")
         if eio_sid:
             self.socketio.server.eio.disconnect(eio_sid)  # Disconnect the client using its eio session ID
+
+    def _dynamic_cors_handler(self, origin):
+            """Determine if the origin is allowed."""
+            if self._enable_dynamic_cors:
+                return True
+            elif origin in self._allowed_origins:
+                return True
+            return False
+
+    def _global_options_handler(self, dummy):
+        """ Handles OPTIONS requests for all routes """
+        response = make_response("")
+        origin = request.headers.get("Origin", "*")
+        self._set_cors_headers(response, origin)
+        return response
+
+    def _after_request_handler(self, response):
+        """ Handles CORS headers for all HTTP responses """
+        # Dynamically set CORS headers
+        origin = request.headers.get("Origin", "*")
+        self._set_cors_headers(response, origin)
+        return response
+
+    def _set_cors_headers(self, response, origin):
+        """ Sets the CORS headers on the response """
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
 
     def _get_eio_sid(self, sid, namespace):
         """

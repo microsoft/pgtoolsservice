@@ -13,6 +13,7 @@ flask-socketio
 gevent
 gevent-websocket
 argparse
+configparser
 
 # PGSMO Requirements
 jinja2
