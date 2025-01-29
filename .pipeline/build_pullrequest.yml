@@ -30,7 +30,6 @@ pool:
   vmImage: $(imageName)
 steps:
   - template: templates/build.yml
-  - template: templates/code-sign.yml
   - task: PowerShell@1
     displayName: Download Postgres windows
     condition: eq(variables.platform, 'windows')
