@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from logging import getLogger
+from logging import Logger
 from typing import Annotated, Optional
 
 from psycopg_pool import AsyncConnectionPool
@@ -16,9 +16,6 @@ from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from .postgres_utils import execute_readonly_query, execute_statement, fetch_schema
 
 
-logger = getLogger(__name__)
-
-
 @dataclass
 class PostgresPlugin:
     """PostgresPlugin is a class designed to interact with a Postgres database using an asynchronous connection pool."""
@@ -26,9 +23,10 @@ class PostgresPlugin:
     name: str = "PostgreSQL"
     description: str = "A plugin for interacting with PostgreSQL databases."
 
-    def __init__(self, connection_service: ConnectionService, owner_uri: str) -> None:
+    def __init__(self, connection_service: ConnectionService, owner_uri: str, logger: Logger | None) -> None:
         self._connection_service = connection_service
         self._owner_uri = owner_uri
+        self._logger = logger
 
     def add_to(self, kernel: Kernel) -> None:
         kernel.add_plugin(self, plugin_name=self.name, description=self.description)
@@ -50,9 +48,10 @@ class PostgresPlugin:
         ] = "public",
     ) -> Annotated[str, "The schema creation script for the database."]:
         """Get the schema of the database."""
-        logger.info(
-            f" ... Fetching schema for schema '{schema_name}'"
-        )  # TODO: Make status update
+        if self._logger:
+            self._logger.info(
+                f" ... Fetching schema for schema '{schema_name}'"
+            )  # TODO: Make status update
 
         connection = self._get_connection()
         if connection is None:
@@ -73,9 +72,10 @@ class PostgresPlugin:
         script_name: Annotated[str, "Short descriptive title for the SQL query."],
     ) -> Annotated[str, "The result of the SQL query."]:
         """Get performance statistics for the database."""
-        logger.info(
-            f" ... Executing query {script_name} 🔎"
-        )  # TODO: Make status update
+        if self._logger:
+            self._logger.info(
+                f" ... Executing query {script_name} 🔎"
+            )  # TODO: Make status update
         connection = self._get_connection()
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
@@ -99,9 +99,10 @@ class PostgresPlugin:
         ],
     ) -> Annotated[str, "The result of the SQL statement."]:
         """Execute a statement against the database."""
-        logger.info(
-            f" ... Executing statement {script_name} 📜"
-        )  # TODO: Make status update
+        if self._logger:
+            self._logger.info(
+                f" ... Executing statement {script_name} 📜"
+            )  # TODO: Make status update
         connection = self._get_connection()
         if connection is None:
             return "Error. Could not connect to the database. No connection found."

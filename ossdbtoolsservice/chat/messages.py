@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
-    OutgoingMessageRegistration,
 )
 
 
@@ -24,23 +23,19 @@ class ChatCompletionRequestParams(Serializable):
     document: str | None = None
     history: list[ChatMessageContent] | None = None
 
-
-@dataclass
-class CompletionResponse(Serializable):
-    owner_uri: str | None = None
-    prompt: str | None = None
-    history: list[str] | None = None
+    @classmethod
+    def get_child_serializable_types(cls):
+        return {'history': ChatMessageContent}
 
 
 @dataclass
 class ChatCompletionResult(Serializable):
     content: str | None = None
     chat_id: str | None = None
+    role: str | None = None
+    is_complete: bool | None = None
 
 
 CHAT_REQUEST = IncomingMessageConfiguration(
     "chat/completion-request", ChatCompletionRequestParams
-)
-CHAT_RESPONSE = OutgoingMessageRegistration.register_outgoing_message(
-    CompletionResponse
 )
