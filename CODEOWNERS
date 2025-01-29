@@ -1,5 +1,5 @@
-/ossdbtoolsservice/** @microsoft/azurepostgresql
-/pgsmo/** @microsoft/azurepostgresql
-/scripts/** @microsoft/azurepostgresql
-/smo/** @microsoft/azurepostgresql
-/tests/** @microsoft/azurepostgresql
+/ossdbtoolsservice/** @microsoft/azurepostgresql @microsoft/postgresql-devx
+/pgsmo/** @microsoft/azurepostgresql @microsoft/postgresql-devx
+/scripts/** @microsoft/azurepostgresql @microsoft/postgresql-devx
+/smo/** @microsoft/azurepostgresql @microsoft/postgresql-devx
+/tests/** @microsoft/azurepostgresql @microsoft/postgresql-devx
