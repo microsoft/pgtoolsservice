@@ -27,3 +27,9 @@ flake8
 debugpy==1.8.7
 python-dateutil
 pyinstaller
+
+# Chat
+rich==13.9.4
+click ~= 8.0
+azure-identity ~= 1.13
+semantic-kernel @ git+https://github.com/lossyrob/semantic-kernel.git@feature/python-postgres-search#egg=semantic-kernel&subdirectory=python

@@ -13,6 +13,7 @@ import debugpy
 
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
+from ossdbtoolsservice.chat.chat_service import ChatService
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import DisasterRecoveryService
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
@@ -52,7 +53,8 @@ def _create_server_init(rpc_server, provider, server_logger):
         constants.SCRIPTING_SERVICE_NAME: ScriptingService,
         constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
         constants.EDIT_DATA_SERVICE_NAME: EditDataService,
-        constants.TASK_SERVICE_NAME: TaskService
+        constants.TASK_SERVICE_NAME: TaskService,
+        constants.CHAT_SERVICE_NAME: ChatService
     }
     service_box = ServiceProvider(rpc_server, services, provider, server_logger)
     service_box.initialize()
@@ -105,11 +107,26 @@ if __name__ == '__main__':
     parser.add_argument('--log-dir', type=str, default=log_dir_env, help='Directory to store logs')
     parser.add_argument('--console-logging', action='store_true', default=str_to_bool(console_logging_env), help='Enable logging to the console (can only be enabled if --enable-web-server is true)')
     parser.add_argument('--provider', type=str, help='Provider name')
+
+    # VS Code arguments
+    parser.add_argument('--log-file', type=str, help='Log file')
+    parser.add_argument('--tracing-level', type=str, help='Tracing level')
+    parser.add_argument('--application-name', type=str, help='Application name')
+    parser.add_argument('--data-path', type=str, help='Data path')
+    parser.add_argument('--enable-sql-authentication-provider', action='store_true', help='Enable SQL authentication provider')
+
     args = parser.parse_args()
 
+    
     # Handle input file for stdin
     if args.input:
         stdin = io.open(args.input, 'rb', buffering=0)
+
+    # Wrap standard in and out in io streams to add readinto support
+    if stdin is None:
+        stdin = io.open(sys.stdin.fileno(), 'rb', buffering=0, closefd=False)
+
+    std_out_wrapped = io.open(sys.stdout.fileno(), 'wb', buffering=0, closefd=False)
 
     # Handle remote debugging
     if args.enable_remote_debugging or args.enable_remote_debugging_wait:
@@ -145,9 +162,11 @@ if __name__ == '__main__':
     # Create the output logger
     logger = logging.getLogger('ossdbtoolsservice')
     try:
+        std_out_wrapped.write(f"Log dir: {log_dir}\n".encode('utf-8'))
         os.makedirs(log_dir, exist_ok=True)
         handler = logging.FileHandler(os.path.join(log_dir, 'ossdbtoolsservice.log'))
     except Exception:
+        std_out_wrapped.write(f"EXCLog dir: {log_dir}\n".encode('utf-8'))
         handler = logging.NullHandler()
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler.setFormatter(formatter)
@@ -156,8 +175,8 @@ if __name__ == '__main__':
 
     # Add console logging if requested
     if args.console_logging:
-        if not args.enable_web_server:
-            parser.error("--console-logging can only be enabled if --enable-web-server is true")
+        # if not args.enable_web_server:
+        #     parser.error("--console-logging can only be enabled if --enable-web-server is true")
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
@@ -166,12 +185,6 @@ if __name__ == '__main__':
     if wait_for_debugger:
         logger.debug('Waiting for a debugger to attach...')
         debugpy.wait_for_client()
-
-    # Wrap standard in and out in io streams to add readinto support
-    if stdin is None:
-        stdin = io.open(sys.stdin.fileno(), 'rb', buffering=0, closefd=False)
-
-    std_out_wrapped = io.open(sys.stdout.fileno(), 'wb', buffering=0, closefd=False)
 
     logger.info('{0} Tools Service is starting up...'.format(provider_name))
 

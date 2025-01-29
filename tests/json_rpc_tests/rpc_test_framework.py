@@ -15,7 +15,7 @@ from typing import Callable, List, Optional, Tuple
 from unittest import mock
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessageType
-import ossdbtoolsservice.ossdbtoolsservice_main as ossdbtoolsservice_main
+import ossdbtoolsservice_main as ossdbtoolsservice_main
 from ossdbtoolsservice.utils import constants
 
 

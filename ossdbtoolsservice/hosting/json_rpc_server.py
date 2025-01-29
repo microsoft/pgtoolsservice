@@ -287,6 +287,7 @@ class JSONRPCServer:
         if not self._enable_web_server:
             self._input_consumer.join()
             self._output_consumer.join()
+            
             self._log_information('Input and output threads have completed')
 
             # Close the reader/writer here instead of in the stop method in order to allow "softer"
