@@ -320,7 +320,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
             "query_type": "create",
             "query_for": "sql_panel",
             "func_def": func_def,
-            "conn": self._server.connection.connection
+            "conn": self.server.connection.connection
         }
 
         self._format_prosrc_for_pure_sql(create_query_data['data'])
@@ -329,17 +329,21 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
     def _delete_query_data(self) -> dict:
         """ Provides data input for delete script """
+        func_def, func_args = self._get_function_definition()
+        func_args = "(" + func_args + ")"
         return {
-            "name": self.name,
+            "name": self.name_property,
             "nspname": self.schema,
-            "cascade": self.cascade
+            "cascade": self.cascade,
+            "func_args": func_args,
+            "conn": self.server.connection.connection
         }
 
     def _update_query_data(self) -> dict:
         """ Function that returns data for update script """
         return {
             "data": {
-                "name": self.name,
+                "name": self.name_property,
                 "pronamespace": self.schema,
                 "arguments": self.arguments,
                 "lanname": self.language_name,
@@ -373,7 +377,8 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
                 "probin": "",
                 "prosrc_c": "",
                 "prosrc": ""
-            }
+            },
+            "conn": self.server.connection.connection
         }
 
     ##########################################################################

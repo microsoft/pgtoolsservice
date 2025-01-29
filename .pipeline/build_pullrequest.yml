@@ -1,4 +1,3 @@
----
 trigger: none
 pr:
   - master
@@ -31,7 +30,6 @@ pool:
   vmImage: $(imageName)
 steps:
   - template: templates/build.yml
-  - template: templates/code-sign.yml
   - task: PowerShell@1
     displayName: Download Postgres windows
     condition: eq(variables.platform, 'windows')
@@ -129,29 +127,3 @@ steps:
     inputs:
       SourceFolder: $(Build.SourcesDirectory)/dist/pgsqltoolsservice
       Contents: CodeSignSummary*.md
-  - task: ArchiveFiles@2
-    displayName: Archive files
-    inputs:
-      rootFolderOrFile: $(Build.SourcesDirectory)/dist/pgsqltoolsservice
-      includeRootFolder: true
-      archiveType: $(archiveType)
-      archiveFile: $(Build.SourcesDirectory)/dist/$(archiveFileName)
-      replaceExistingArchive: true
-  - task: ArchiveFiles@1
-    displayName: Archive files - coverage
-    inputs:
-      rootFolder: $(Build.SourcesDirectory)/cover
-      includeRootFolder: false
-      archiveType: tar
-      archiveFile: $(Build.ArtifactStagingDirectory)/coverage.tar.gz
-    enabled: false
-  - task: CopyFiles@2
-    displayName: "Copy Files to: $(Build.ArtifactStagingDirectory)"
-    inputs:
-      sourceFolder: $(Build.SourcesDirectory)
-      contents: dist/$(archiveFileName)
-      targetFolder: $(Build.ArtifactStagingDirectory)
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathToPublish: $(Build.ArtifactStagingDirectory)
-      artifactName: dist

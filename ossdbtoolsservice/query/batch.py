@@ -2,7 +2,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-
 from enum import Enum
 from typing import List  # noqa
 from datetime import datetime
@@ -120,6 +119,7 @@ class Batch:
             self._batch_events._on_execution_started(self)
 
         cursor = self.get_cursor(conn)
+
         conn.connection.add_notice_handler(lambda msg: self.notice_handler(msg, conn))
 
         if self.batch_text.startswith('begin') and conn.transaction_in_trans:
@@ -172,7 +172,7 @@ class Batch:
 
     def notice_handler(self, notice: str, conn: ServerConnection):
         if not conn.user_transaction:
-            self._notices.append(notice.message_primary)
+            self._notices.append('{0}: {1}'.format(notice.severity, notice.message_primary))
         elif not notice.message_primary == 'there is already a transaction in progress':
             self._notices.append('WARNING: {0}'.format(notice.message_primary))
 

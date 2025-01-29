@@ -3,7 +3,7 @@ steps:
   displayName: 'Code Signing for windows'
   condition: eq(variables['platform'], 'windows')
   inputs:
-    ConnectedServiceName: 'Database System ESRP Connector'
+    ConnectedServiceName: 'OrcaSQL ESRP Code Sign'
     FolderPath: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
     Pattern: |
       *.exe
@@ -47,7 +47,7 @@ steps:
   displayName: 'Code Signing for linux and mac'
   condition: ne(variables['platform'], 'windows')
   inputs:
-    ConnectedServiceName: 'Database System ESRP Connector'
+    ConnectedServiceName: 'OrcaSQL ESRP Code Sign'
     FolderPath: '$(Build.SourcesDirectory)/dist/pgsqltoolsservice'
     Pattern: 'ossdbtoolsservice_main*'
     useMinimatch: true
@@ -55,7 +55,7 @@ steps:
     inlineOperation: |
       [
         {
-          "KeyCode" : "CP-450779-Pgp",
+          "KeyCode" : "CP-500191-Pgp",
           "OperationCode" : "LinuxSign",
           "Parameters" : {},
           "ToolName" : "sign",

@@ -195,7 +195,7 @@ class TestObjectExplorer(unittest.TestCase):
         oe._provider = constants.PG_PROVIDER_NAME
 
         # ... Patch the threading to throw
-        patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
+        patch_mock = mock.MagicMock(side_effect=Exception('Boom! Create Session Failed'))
         patch_path = 'ossdbtoolsservice.object_explorer.object_explorer_service.threading.Thread'
         with mock.patch(patch_path, patch_mock):
             # If: I create a new session
@@ -304,7 +304,7 @@ class TestObjectExplorer(unittest.TestCase):
         # ... Create OE service with mock connection service that returns a failed connection response
         cs = ConnectionService()
         connect_response = ConnectionCompleteParams()
-        connect_response.error_message = 'Boom!'
+        connect_response.error_message = 'Boom! Init Session Failed'
         cs.connect = mock.MagicMock(return_value=connect_response)
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({constants.CONNECTION_SERVICE_NAME: cs})
@@ -479,7 +479,7 @@ class TestObjectExplorer(unittest.TestCase):
         oe, session, session_uri = self._preloaded_oe_service()
 
         # ... Patch the threading to throw
-        patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
+        patch_mock = mock.MagicMock(side_effect=Exception('Boom! Thread Error Handling Failed'))
         patch_path = 'ossdbtoolsservice.object_explorer.object_explorer_service.threading.Thread'
         with mock.patch(patch_path, patch_mock):
             # If: I expand a node (with threading that throws)
@@ -502,11 +502,11 @@ class TestObjectExplorer(unittest.TestCase):
 
     def _handle_er_exception_expanding(self, method: TEventHandler, get_tasks: TGetTask):
         # Setup: Create an OE service with a session preloaded
-        oe, session, session_uri = self._preloaded_oe_service()
+        oe, session, session_uri = self._preloaded_oe_service(Server(MockPGServerConnection()))
 
         # ... Patch the route_request to throw
         # ... Patch the threading to throw
-        patch_mock = mock.MagicMock(side_effect=Exception('Boom!'))
+        patch_mock = mock.MagicMock(side_effect=Exception('Boom! Expand Error Handling Failed'))
         patch_path = 'ossdbtoolsservice.object_explorer.object_explorer_service.ObjectExplorerService._route_request'
         with mock.patch(patch_path, patch_mock):
             # If: I expand a node (with route_request that throws)
@@ -600,14 +600,14 @@ class TestObjectExplorer(unittest.TestCase):
         testevent.set()
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _preloaded_oe_service(self) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
+    def _preloaded_oe_service(self, server=mock.Mock()) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
         oe._routing_table = PG_ROUTING_TABLE
 
         conn_details, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, conn_details)
-        session.server = mock.Mock()
+        session.server = server
         session.is_ready = True
         oe._session_map[session_uri] = session
 

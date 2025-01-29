@@ -112,21 +112,54 @@ class TestScripterOld(unittest.TestCase):
 
     def test_table_create_script(self):
         """ Tests create script for tables"""
+        # Set up names for mocks
+        table_name = "testTable"
+        schema_name = "myschema"
+        db_name = "test_db"
+        tfunction_name = "TestFunction"
+        index_name = 'testIndex'
+        trigger_name = 'testTrigger'
+
         # Set up the mocks
-        mock_schema = Schema(self.server, None, 'myschema')
-        mock_table = Table(self.server, mock_schema, 'test')
+        mock_db = Database(self.server, db_name)
+        mock_schema = Schema(self.server, mock_db, schema_name)
+        mock_table = Table(self.server, mock_schema, 'testTable')
         mock_table._create_query_data = mock.MagicMock(return_value={"data": {
-            "name": "test",
-            "schema": "myschema"
+            "name": table_name,
+            "schema": schema_name
         }})
+
+        # Set up the mock index
+        mock_index = Index(self.server, mock_table, index_name)
+        mock_index._template_root = mock.MagicMock(return_value=Index.TEMPLATE_ROOT)
+        mock_index._create_query_data = mock.MagicMock(return_value={"data": {"name": index_name,
+                                                                              "schema": schema_name,
+                                                                              "table": table_name}})
+        # Set up the mock trigger
+        mock_trigger = Trigger(self.server, mock_table, trigger_name)
+        mock_trigger._template_root = mock.MagicMock(return_value=Trigger.TEMPLATE_ROOT)
+        mock_trigger._create_query_data = mock.MagicMock(return_value={"data": {"name": trigger_name,
+                                                                                "evnt_insert": True,
+                                                                                "tfunction": tfunction_name,
+                                                                                "table": table_name}})
+
+        mock_table._indexes = NodeCollection(lambda: [mock_index])
+        mock_table._triggers = NodeCollection(lambda: [mock_trigger])
         self.server.get_object_by_urn = mock.MagicMock(return_value=mock_table)
 
         # If I try to get create script
-        mock_metadata = ObjectMetadata('//urn/', None, 'Table', 'test')
+        mock_metadata = ObjectMetadata('//urn/', None, 'Table', 'testTable')
         result: str = self.scripter.script(scripter.ScriptOperation.CREATE, mock_metadata)
 
         # The result should be the correct template value
-        self.assertTrue('CREATE TABLE IF NOT EXISTS myschema.test' in result)
+        self.assertTrue(f'CREATE TABLE IF NOT EXISTS {schema_name}."{table_name}"' in result)
+
+        # The result should have the CREATE INDEX script
+        self.assertTrue(f'CREATE INDEX "{index_name}"\n    ON {schema_name}."{table_name}"' in result)
+
+        # The result should also have the CREATE TRIGGER script
+        self.assertTrue(f'CREATE TRIGGER "{trigger_name}"\n     INSERT\n    ON "{table_name}"\n    FOR EACH STATEMENT\n    ' +
+                        f'EXECUTE FUNCTION {tfunction_name}();' in result)
 
         # ... The URN should have been used to get the object
         self.server.get_object_by_urn.assert_called_once_with(mock_metadata.urn)
@@ -189,7 +222,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_check_constraint.create_script()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" CHECK (TestConsrc);' in result)
+        self.assertTrue('ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" CHECK (TestConsrc);' in result)
 
     def test_exclusion_constraint_scripting(self):
         """ Helper function to test create script for exclusion_constraint """
@@ -204,7 +237,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_exclusion_constraint.create_script()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" EXCLUDE USING TestAmname' in result)
+        self.assertTrue('ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" EXCLUDE USING TestAmname' in result)
 
     def test_foreign_key_constraint_scripting(self):
         """ Helper function to test create script for foreign_key_constraint """
@@ -220,7 +253,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_foreign_key_constraint.create_script()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" FOREIGN KEY '
+        self.assertTrue('ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" FOREIGN KEY '
                         '(None, None, None, None, None, None, None, None, None, None, None)\n    '
                         'REFERENCES "TestRemoteSchema"."TestRemoteTable"' in result)
 
@@ -237,7 +270,7 @@ class TestScripterOld(unittest.TestCase):
         # If I try to get create script
         result = mock_index_constraint.create_script()
         # The result should be the correct template value
-        self.assertTrue('ALTER TABLE "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName"  USING INDEX "TestIndex";' in result)
+        self.assertTrue('ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName"  USING INDEX "TestIndex";' in result)
 
     def test_rule_scripting(self):
         """ Helper function to test create script for rule """
@@ -269,7 +302,7 @@ class TestScripterOld(unittest.TestCase):
         result = mock_trigger.create_script()
         # The result should be the correct template value
         self.assertTrue('CREATE TRIGGER "TestName"\n     INSERT\n    ON "TestTable"\n    '
-                        'FOR EACH STATEMENT\n    EXECUTE PROCEDURE TestFunction();\n\n' in result)
+                        'FOR EACH STATEMENT\n    EXECUTE FUNCTION TestFunction();\n\n' in result)
 
     def test_index_scripting(self):
         """ Helper function to test create script for index """
