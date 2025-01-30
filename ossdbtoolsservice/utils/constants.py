@@ -23,6 +23,10 @@ DEFAULT_PORT = {
     PG_PROVIDER_NAME: 5432,
 }
 
+DEFAULT_APPLICATION_NAME = {
+    PG_PROVIDER_NAME: "azuredatastudio-postgresql"
+}
+
 # Service names
 ADMIN_SERVICE_NAME = 'admin'
 CAPABILITIES_SERVICE_NAME = 'capabilities'
