@@ -32,4 +32,4 @@ This extension is [licensed under the MIT License]. Please see the [third-party 
 [Code of Conduct FAQ]:https://opensource.microsoft.com/codeofconduct/faq/
 [opencode@microsoft.com]:mailto:opencode@microsoft.com
 
--- testing PR automatic build -- 
+--- testing PR automatic build --- 
