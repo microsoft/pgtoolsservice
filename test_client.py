@@ -9,6 +9,8 @@ import sys
 from rich.console import Console
 import click
 
+PRINT_STDERR = False
+
 
 def read_responses(stdout_wrapped: FileIO, queue: Queue):
     """Read responses from the server's stdout."""
@@ -39,14 +41,18 @@ def read_responses(stdout_wrapped: FileIO, queue: Queue):
                     #     + f"\n{space}".join(json.dumps(message, indent=2).split("\n"))
                     # )
                     # print("<---------------")
+                    
                     params = message["params"]
                     content = params["content"]
-                    print(content, end="")
+                    
+                    if content:
+                        print(content, end="")
+
                     if chat_response is None:
-                        chat_response = params["content"]
+                        chat_response = params["content"] or ""
                     else:
-                        chat_response += params["content"]
-                    if params["isComplete"]:
+                        chat_response += params["content"] or ""
+                    if params["isComplete"] and chat_response:
                         queue.put(chat_response)
                         chat_response = None
                 else:
@@ -105,9 +111,7 @@ def send_chat_completion_message(
     send_message(stdin_wrapped, request)
 
 
-def chat_with_postgresql():
-    PRINT_STDERR = False
-
+def chat_with_postgresql():    
     console = Console()
 
     print("Starting the language server...")
@@ -202,17 +206,19 @@ def chat_with_postgresql():
             history.append({"participant": "assistant", "content": result})
             chatting = True
 
-        send_message(
-            stdin_wrapped,
-            {
-                "jsonrpc": "2.0",
-                "method": "exit",
-                "id": 21451,
-                "params": None,
-            },
-        )
-
     finally:
+        try:
+            send_message(
+                stdin_wrapped,
+                {
+                    "jsonrpc": "2.0",
+                    "method": "exit",
+                    "id": 21451,
+                    "params": None,
+                },
+            )
+        except:
+            pass
         process.terminate()
         process.wait()
         response_thread.join()

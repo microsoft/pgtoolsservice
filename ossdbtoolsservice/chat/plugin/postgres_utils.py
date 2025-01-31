@@ -1,10 +1,39 @@
 from psycopg import sql, Connection
 
 
+def fetch_schemas_and_tables(connection: Connection) -> str:
+    """Fetch all user schemas and their tables."""
+    with connection.cursor() as cur:
+        cur.execute(
+            """
+            SELECT 
+                table_schema,
+                table_name
+            FROM 
+                information_schema.tables
+            WHERE 
+                table_type = 'BASE TABLE'
+                AND table_schema NOT IN ('pg_catalog', 'information_schema')
+                AND table_schema NOT LIKE 'pg_%'
+            ORDER BY 
+                table_schema, 
+                table_name;
+            """
+        )
+        schemas_and_tables = cur.fetchall()
+        return str(schemas_and_tables)
+
+
 def fetch_schema(connection: Connection, schema_name: str = "public") -> str:
     """Fetch the schema creation script for the database."""
     with connection.cursor() as cur:
         schema_creation_script = []
+
+        # Get postgres version
+        cur.execute("SELECT version();")
+        version = cur.fetchone()
+        if version:
+            schema_creation_script.append(f"-- PostgreSQL version: {version[0]}")
 
         # Fetch extensions for the database
         cur.execute(sql.SQL("SELECT extname FROM pg_extension;"))
@@ -147,14 +176,21 @@ def execute_readonly_query(connection: Connection, query: str) -> str:
     """Execute a read-only query against the database."""
     with connection.cursor() as cur:
         cur.execute("BEGIN TRANSACTION READ ONLY;")
-        cur.execute(sql.SQL(query))
-        result = cur.fetchall()
-        connection.rollback()
-        return str(result)
+        try:
+            cur.execute(wrap_sql(query))
+            result = cur.fetchall()
+            return str(result)
+        finally:
+            connection.rollback()
 
 
 def execute_statement(connection: Connection, statement: str) -> str:
     """Execute a statement against the database."""
     with connection.cursor() as cur:
-        cur.execute(sql.SQL(statement))
+        cur.execute(wrap_sql(statement))
         return "Statement executed successfully."
+
+
+def wrap_sql(statement: str) -> sql.SQL:
+    """Wrap a SQL statement in a transaction."""
+    return sql.SQL(statement)  # type:ignore

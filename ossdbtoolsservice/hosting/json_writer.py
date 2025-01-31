@@ -50,11 +50,13 @@ class JSONRPCWriter:
         self.stream.flush()
 
         if self._logger is not None:
-            self._logger.info("{} message sent id={} method={}".format(
+            self._logger.info("{} message sent id={} method={} {}".format(
                 message.message_type.name,
                 message.message_id,
-                message.message_method
+                message.message_method,
+                json_content
             ))
 
             # Uncomment for verbose logging
-            # self._logger.debug(f'{json_content}')
+            # if self._logger:
+            #     self._logger.info(f'{json_content}')

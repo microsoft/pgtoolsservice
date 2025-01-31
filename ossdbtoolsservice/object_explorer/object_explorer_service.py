@@ -4,9 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 import functools
+from logging import Logger
 import threading
 from typing import Dict, Optional, List     # noqa
 from urllib.parse import quote, urlparse
+
+import psycopg
 
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.connection.contracts import ConnectRequestParams, ConnectionDetails, ConnectionType
@@ -41,12 +44,14 @@ class ObjectExplorerService(object):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
+        self._logger: Logger = None        
         self._session_map: Dict[str, 'ObjectExplorerSession'] = {}
         self._session_lock: threading.Lock = threading.Lock()
         self._connect_semaphore = threading.Semaphore(1)
 
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
+        self._logger = self._service_provider.logger
 
         # Register the request handlers with the server
         self._service_provider.server.set_request_handler(CREATE_SESSION_REQUEST, self._handle_create_session_request)
@@ -73,6 +78,8 @@ class ObjectExplorerService(object):
         """Handle a create object explorer session request"""
         # Step 1: Create the session
         session_exist_check = False
+        if self._logger:
+            self._logger.info(f' [handler] Creating OE session for {params.server_name}')
         try:
             # Make sure we have the appropriate session params
             utils.validate.is_not_none('params', params)
@@ -90,6 +97,9 @@ class ObjectExplorerService(object):
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params, self._provider)
 
+            if self._logger:
+                self._logger.info(f'   - Session ID: {session_id}')
+
             # Add the session to session map in a lock to prevent race conditions between check and add
             with self._session_lock:
                 if session_id in self._session_map:
@@ -102,6 +112,9 @@ class ObjectExplorerService(object):
                     # If session doesn't exist, create a new one
                     session = ObjectExplorerSession(session_id, params)
                     self._session_map[session_id] = session
+
+            if self._logger:
+                self._logger.info(f'   - Session created: {session_id}')
 
             # Respond that the session was created (or existing session was returned)
             response = CreateSessionResponse(session_id)
@@ -178,7 +191,11 @@ class ObjectExplorerService(object):
     def _close_database_connections(self, session: 'ObjectExplorerSession') -> None:
         conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
         for database in session.server.databases:
-            close_result = conn_service.disconnect(session.id + database.name, ConnectionType.OBJECT_EXLPORER)
+            try:
+                close_result = conn_service.disconnect(session.id + database.name, ConnectionType.OBJECT_EXLPORER)
+            except psycopg.OperationalError as e:
+                if self._service_provider.logger is not None:
+                    self._service_provider.logger.info(f'could not close the connection for the database {database.name}: {e}')
             if not close_result:
                 if self._service_provider.logger is not None:
                     self._service_provider.logger.info(f'could not close the connection for the database {database.name}')

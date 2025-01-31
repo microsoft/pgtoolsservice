@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import argparse
+import asyncio
 import configparser
 import io
 import logging
@@ -15,7 +16,9 @@ from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
 from ossdbtoolsservice.chat.chat_service import ChatService
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import DisasterRecoveryService
+from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import (
+    DisasterRecoveryService,
+)
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
@@ -25,21 +28,50 @@ from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants, markdown
+from ossdbtoolsservice.utils.async_runner import AsyncRunner
 from ossdbtoolsservice.utils.bool import str_to_bool
 from ossdbtoolsservice.utils.path import path_relative_to_base
 from ossdbtoolsservice.workspace import WorkspaceService
 
-def _create_server(input_stream, output_stream, server_logger, provider):
+
+def _create_server(
+    input_stream, output_stream, server_logger, provider
+) -> tuple[JSONRPCServer, ServiceProvider]:
     # Create the server, but don't start it yet
     rpc_server = JSONRPCServer(input_stream, output_stream, server_logger)
-    return _create_server_init(rpc_server, provider, server_logger)
+    async_runner = AsyncRunner()
+    return _create_server_init(
+        rpc_server, provider, server_logger, async_runner=async_runner
+    )
 
-def _create_web_server(server_logger, provider, listen_address, listen_port, disable_keep_alive, debug_web_server, enable_dynamic_cors, config):
+
+def _create_web_server(
+    server_logger,
+    provider,
+    listen_address,
+    listen_port,
+    disable_keep_alive,
+    debug_web_server,
+    enable_dynamic_cors,
+    config,
+) -> tuple[JSONRPCServer, ServiceProvider]:
     # Create the server, but don't start it yet
-    rpc_server = JSONRPCServer(logger=server_logger, enable_web_server=True, listen_address=listen_address, listen_port=listen_port, disable_keep_alive=disable_keep_alive, debug_web_server=debug_web_server, enable_dynamic_cors=enable_dynamic_cors, config=config)
-    return _create_server_init(rpc_server, provider, server_logger)
+    rpc_server = JSONRPCServer(
+        logger=server_logger,
+        enable_web_server=True,
+        listen_address=listen_address,
+        listen_port=listen_port,
+        disable_keep_alive=disable_keep_alive,
+        debug_web_server=debug_web_server,
+        enable_dynamic_cors=enable_dynamic_cors,
+        config=config,
+    )
+    return _create_server_init(rpc_server, provider, server_logger, async_runner=None)
 
-def _create_server_init(rpc_server, provider, server_logger):
+
+def _create_server_init(
+    rpc_server, provider, server_logger, async_runner: AsyncRunner | None
+) -> tuple[JSONRPCServer, ServiceProvider]:
     # Create the service provider and add the providers to it
     services = {
         constants.ADMIN_SERVICE_NAME: AdminService,
@@ -54,13 +86,16 @@ def _create_server_init(rpc_server, provider, server_logger):
         constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
         constants.EDIT_DATA_SERVICE_NAME: EditDataService,
         constants.TASK_SERVICE_NAME: TaskService,
-        constants.CHAT_SERVICE_NAME: ChatService
+        constants.CHAT_SERVICE_NAME: ChatService,
     }
-    service_box = ServiceProvider(rpc_server, services, provider, server_logger)
+    service_box = ServiceProvider(
+        rpc_server, services, provider, server_logger, async_runner=async_runner
+    )
     service_box.initialize()
-    return rpc_server
+    return rpc_server, service_box
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # See if we have any arguments
     wait_for_debugger = False
     log_dir = None
@@ -70,63 +105,126 @@ if __name__ == '__main__':
 
     # Load configuration from the config file
     config = configparser.ConfigParser()
-    config.read(path_relative_to_base('config.ini'))
+    config.read(path_relative_to_base("config.ini"))
 
     # Define defaults from the config file
     defaults = {
-        "log_dir": config.get('general', 'log_dir', fallback=os.path.dirname(sys.argv[0])),
-        "enable_web_server": config.get('server', 'enable_web_server', fallback="false"),
-        "listen_address": config.get('server', 'listen_address', fallback="0.0.0.0"),
-        "listen_port": config.get('server', 'listen_port', fallback="8443"),
-        "console_logging": config.get('server', 'console_logging', fallback="false"),
-        "disable_keep_alive": config.get('server', 'disable_keep_alive', fallback="false"),
-        "enable_dynamic_cors": config.get('server', 'enable_dynamic_cors', fallback="false")
+        "log_dir": config.get(
+            "general", "log_dir", fallback=os.path.dirname(sys.argv[0])
+        ),
+        "enable_web_server": config.get(
+            "server", "enable_web_server", fallback="false"
+        ),
+        "listen_address": config.get("server", "listen_address", fallback="0.0.0.0"),
+        "listen_port": config.get("server", "listen_port", fallback="8443"),
+        "console_logging": config.get("server", "console_logging", fallback="false"),
+        "disable_keep_alive": config.get(
+            "server", "disable_keep_alive", fallback="false"
+        ),
+        "enable_dynamic_cors": config.get(
+            "server", "enable_dynamic_cors", fallback="false"
+        ),
     }
 
     # Override config defaults with environment variables (if present)
-    log_dir_env = os.getenv('LOG_DIR', defaults['log_dir'])
-    enable_web_server_env = os.getenv('ENABLE_WEB_SERVER', defaults['enable_web_server'])
-    listen_address_env = os.getenv('LISTEN_ADDRESS', defaults['listen_address'])
-    listen_port_env = os.getenv('LISTEN_PORT', defaults['listen_port'])
-    console_logging_env = os.getenv('CONSOLE_LOGGING', defaults['console_logging'])
-    disable_keep_alive_env = os.getenv('DISABLE_KEEP_ALIVE', defaults['disable_keep_alive'])
-    enable_dynamic_cors_env = os.getenv('ENABLE_DYNAMIC_CORS', defaults['enable_dynamic_cors'])
+    log_dir_env = os.getenv("LOG_DIR", defaults["log_dir"])
+    enable_web_server_env = os.getenv(
+        "ENABLE_WEB_SERVER", defaults["enable_web_server"]
+    )
+    listen_address_env = os.getenv("LISTEN_ADDRESS", defaults["listen_address"])
+    listen_port_env = os.getenv("LISTEN_PORT", defaults["listen_port"])
+    console_logging_env = os.getenv("CONSOLE_LOGGING", defaults["console_logging"])
+    disable_keep_alive_env = os.getenv(
+        "DISABLE_KEEP_ALIVE", defaults["disable_keep_alive"]
+    )
+    enable_dynamic_cors_env = os.getenv(
+        "ENABLE_DYNAMIC_CORS", defaults["enable_dynamic_cors"]
+    )
 
     # Parse command-line arguments (takes precidence over config file and environment variables)
-    parser = argparse.ArgumentParser(description='Start the Tools Service')
-    parser.add_argument('--generate-markdown', action='store_true', help='Generate Markdown documentation for requests')
-    parser.add_argument('--input', type=str, help='Input file for stdin')
-    parser.add_argument('--enable-web-server', action='store_true', default=str_to_bool(enable_web_server_env), help='Enable the web server to receive requests over HTTP and WebSocket')
-    parser.add_argument('--listen-address', type=str, default=listen_address_env, help='Address to listen on for the web server (default:0.0.0.0)')
-    parser.add_argument('--listen-port', type=int, default=int(listen_port_env), help='Port to listen on for the web server (default:8443)')
-    parser.add_argument('--debug-web-server', action='store_true', help='Enable debug mode for the web server')
-    parser.add_argument('--disable-keep-alive', action='store_true', default=str_to_bool(disable_keep_alive_env), help='Disable keep-alive for the web server. Should not be used in production only for debugging')
-    parser.add_argument('--enable-dynamic-cors', action='store_true', default=str_to_bool(enable_dynamic_cors_env), help='Enable dynamic setting of CORS, allow any origin. Should not be used in production only for debugging')
-    parser.add_argument('--enable-remote-debugging', type=int, nargs='?', const=3000, help='Enable remote debugging on the specified port (default: 3000)')
-    parser.add_argument('--enable-remote-debugging-wait', type=int, nargs='?', const=3000, help='Enable remote debugging and wait for the debugger to attach on the specified port (default: 3000)')
-    parser.add_argument('--log-dir', type=str, default=log_dir_env, help='Directory to store logs')
-    parser.add_argument('--console-logging', action='store_true', default=str_to_bool(console_logging_env), help='Enable logging to the console (can only be enabled if --enable-web-server is true)')
-    parser.add_argument('--provider', type=str, help='Provider name')
+    parser = argparse.ArgumentParser(description="Start the Tools Service")
+    parser.add_argument(
+        "--generate-markdown",
+        action="store_true",
+        help="Generate Markdown documentation for requests",
+    )
+    parser.add_argument("--input", type=str, help="Input file for stdin")
+    parser.add_argument(
+        "--enable-web-server",
+        action="store_true",
+        default=str_to_bool(enable_web_server_env),
+        help="Enable the web server to receive requests over HTTP and WebSocket",
+    )
+    parser.add_argument(
+        "--listen-address",
+        type=str,
+        default=listen_address_env,
+        help="Address to listen on for the web server (default:0.0.0.0)",
+    )
+    parser.add_argument(
+        "--listen-port",
+        type=int,
+        default=int(listen_port_env),
+        help="Port to listen on for the web server (default:8443)",
+    )
+    parser.add_argument(
+        "--debug-web-server",
+        action="store_true",
+        help="Enable debug mode for the web server",
+    )
+    parser.add_argument(
+        "--disable-keep-alive",
+        action="store_true",
+        default=str_to_bool(disable_keep_alive_env),
+        help="Disable keep-alive for the web server. Should not be used in production only for debugging",
+    )
+    parser.add_argument(
+        "--enable-dynamic-cors",
+        action="store_true",
+        default=str_to_bool(enable_dynamic_cors_env),
+        help="Enable dynamic setting of CORS, allow any origin. Should not be used in production only for debugging",
+    )
+    parser.add_argument(
+        "--enable-remote-debugging",
+        type=int,
+        nargs="?",
+        const=3000,
+        help="Enable remote debugging on the specified port (default: 3000)",
+    )
+    parser.add_argument(
+        "--enable-remote-debugging-wait",
+        type=int,
+        nargs="?",
+        const=3000,
+        help="Enable remote debugging and wait for the debugger to attach on the specified port (default: 3000)",
+    )
+    parser.add_argument(
+        "--log-dir", type=str, default=log_dir_env, help="Directory to store logs"
+    )
+    parser.add_argument(
+        "--console-logging",
+        action="store_true",
+        default=str_to_bool(console_logging_env),
+        help="Enable logging to the console (can only be enabled if --enable-web-server is true)",
+    )
+    parser.add_argument("--provider", type=str, help="Provider name")
 
     # VS Code arguments
-    parser.add_argument('--log-file', type=str, help='Log file')
-    parser.add_argument('--tracing-level', type=str, help='Tracing level')
-    parser.add_argument('--application-name', type=str, help='Application name')
-    parser.add_argument('--data-path', type=str, help='Data path')
-    parser.add_argument('--enable-sql-authentication-provider', action='store_true', help='Enable SQL authentication provider')
+    parser.add_argument("--log-file", type=str, help="Log file")
+    parser.add_argument("--tracing-level", type=str, help="Tracing level")
+    parser.add_argument("--application-name", type=str, help="Application name")
+    parser.add_argument("--data-path", type=str, help="Data path")
+    parser.add_argument(
+        "--enable-sql-authentication-provider",
+        action="store_true",
+        help="Enable SQL authentication provider",
+    )
 
     args = parser.parse_args()
 
-    
     # Handle input file for stdin
     if args.input:
-        stdin = io.open(args.input, 'rb', buffering=0)
-
-    # Wrap standard in and out in io streams to add readinto support
-    if stdin is None:
-        stdin = io.open(sys.stdin.fileno(), 'rb', buffering=0, closefd=False)
-
-    std_out_wrapped = io.open(sys.stdout.fileno(), 'wb', buffering=0, closefd=False)
+        stdin = io.open(args.input, "rb", buffering=0)
 
     # Handle remote debugging
     if args.enable_remote_debugging or args.enable_remote_debugging_wait:
@@ -157,18 +255,18 @@ if __name__ == '__main__':
         # Check if we support the given provider
         supported = provider_name in constants.SUPPORTED_PROVIDERS
         if not supported:
-            raise AssertionError("{} is not a supported provider".format(str(provider_name)))
+            raise AssertionError(
+                "{} is not a supported provider".format(str(provider_name))
+            )
 
     # Create the output logger
-    logger = logging.getLogger('ossdbtoolsservice')
+    logger = logging.getLogger("ossdbtoolsservice")
     try:
-        std_out_wrapped.write(f"Log dir: {log_dir}\n".encode('utf-8'))
         os.makedirs(log_dir, exist_ok=True)
-        handler = logging.FileHandler(os.path.join(log_dir, 'ossdbtoolsservice.log'))
+        handler = logging.FileHandler(os.path.join(log_dir, "ossdbtoolsservice.log"))
     except Exception:
-        std_out_wrapped.write(f"EXCLog dir: {log_dir}\n".encode('utf-8'))
         handler = logging.NullHandler()
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
@@ -183,22 +281,46 @@ if __name__ == '__main__':
 
     # Wait for the debugger to attach if needed
     if wait_for_debugger:
-        logger.debug('Waiting for a debugger to attach...')
+        logger.debug("Waiting for a debugger to attach...")
         debugpy.wait_for_client()
 
-    logger.info('{0} Tools Service is starting up...'.format(provider_name))
+    # Wrap standard in and out in io streams to add readinto support
+    if stdin is None:
+        stdin = io.open(sys.stdin.fileno(), "rb", buffering=0, closefd=False)
+
+    std_out_wrapped = io.open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)
+
+    logger.info("{0} Tools Service is starting up...".format(provider_name))
 
     # Create the server, but don't start it yet
-    server=None
+    server = None
     if args.enable_web_server:
-        server = _create_web_server(logger, provider_name, listen_address=args.listen_address, listen_port=args.listen_port, disable_keep_alive=args.disable_keep_alive, debug_web_server=args.debug_web_server, enable_dynamic_cors=args.enable_dynamic_cors, config=config)
+        server, service_box = _create_web_server(
+            logger,
+            provider_name,
+            listen_address=args.listen_address,
+            listen_port=args.listen_port,
+            disable_keep_alive=args.disable_keep_alive,
+            debug_web_server=args.debug_web_server,
+            enable_dynamic_cors=args.enable_dynamic_cors,
+            config=config,
+        )
     else:
-        server = _create_server(stdin, std_out_wrapped, logger, provider_name)
+        server, service_box = _create_server(
+            stdin, std_out_wrapped, logger, provider_name
+        )
 
     # Generate Markdown if the feature switch is enabled
     if args.generate_markdown:
         markdown.generate_requests_markdown(server, logger)
     else:
+        # Manage the event loop
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(loop)
+
         # Start the server
-        server.start()
-        server.wait_for_exit()
+        try:
+            server.start()
+            server.wait_for_exit()
+        finally:            
+            service_box.shutdown()
