@@ -33,7 +33,7 @@ class AdminService(object):
     def _handle_get_database_info_request(self, request_context: RequestContext, params: GetDatabaseInfoParameters) -> None:
         # Retrieve the connection from the connection service
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        connection: ServerConnection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+        connection: ServerConnection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT, request_context)
 
         # Get database owner
         owner_result = connection.get_database_owner()

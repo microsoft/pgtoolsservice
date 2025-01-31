@@ -74,7 +74,7 @@ class TestMetadataService(unittest.TestCase):
             self.assertEqual(mock_thread.target, self.metadata_service._metadata_list_worker)
             mock_thread.start.assert_called_once()
         # And the worker retrieved the correct connection and executed a query on it
-        self.connection_service.get_connection.assert_called_once_with(self.test_uri, ConnectionType.DEFAULT)
+        self.connection_service.get_connection.assert_called_once_with(self.test_uri, ConnectionType.DEFAULT, request_context)
         mock_cursor.execute.assert_called_once()
         # And the handler responded with the expected results
         self.assertIsNone(request_context.last_error_message)
@@ -97,7 +97,7 @@ class TestMetadataService(unittest.TestCase):
         with mock.patch('threading.Thread', new=mock.Mock(side_effect=mock_thread.initialize_target)):
             # If I call the metadata list request handler and its execution raises an error
             self.metadata_service._handle_metadata_list_request(request_context, params)
-        # Then an error response is sent
+        # Then a telemetry event and error response are sent
+        self.assertIsNotNone(request_context.last_notification_method)
         self.assertIsNotNone(request_context.last_error_message)
-        self.assertIsNone(request_context.last_notification_method)
         self.assertIsNone(request_context.last_response_params)

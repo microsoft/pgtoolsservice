@@ -13,9 +13,11 @@ from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
 from ossdbtoolsservice.scripting.contracts.script_as_request import (
     ScriptAsParameters, ScriptAsResponse, ScriptOperation)
 from ossdbtoolsservice.scripting.scripter import Scripter
+from ossdbtoolsservice.utils.telemetry import TELEMETRY_NOTIFICATION, TelemetryParams
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from ossdbtoolsservice.utils.constants import (CONNECTION_SERVICE_NAME,
                                                PG_PROVIDER_NAME)
+from ossdbtoolsservice.exception import constants as error_constants
 from tests.mock_request_validation import RequestFlowValidator
 from tests.pgsmo_tests.utils import MockPGServerConnection
 
@@ -62,6 +64,15 @@ class TestScriptingService(unittest.TestCase):
 
         # If: I make a scripting request missing params
         rc: RequestFlowValidator = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.SCRIPTING,
+                error_constants.SCRIPT_AS_REQUEST,
+                error_constants.SCRIPTAS_REQUEST_ERROR
+            )
+        )
         rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         ss._handle_script_as_request(rc.request_context, None)
 
@@ -80,6 +91,15 @@ class TestScriptingService(unittest.TestCase):
 
         # If: I create an OE session with missing params
         rc: RequestFlowValidator = RequestFlowValidator()
+        rc.add_expected_notification(
+            TelemetryParams,
+            TELEMETRY_NOTIFICATION,
+            RequestFlowValidator.validate_telemetry_error(
+                error_constants.SCRIPTING,
+                error_constants.SCRIPT_AS_REQUEST,
+                error_constants.SCRIPTAS_REQUEST_ERROR
+            )
+        )
         rc.add_expected_error(type(None), RequestFlowValidator.basic_error_validation)
         ss._handle_script_as_request(rc.request_context, None)
 

@@ -13,7 +13,7 @@ from typing import Callable, Dict, List, Optional   # noqa
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectRequestParams, ConnectionType
-from ossdbtoolsservice.hosting import ServiceProvider
+from ossdbtoolsservice.hosting import ServiceProvider, RequestContext
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
 from ossdbtoolsservice.driver import ServerConnection
 
@@ -117,7 +117,7 @@ class OperationsQueue:
         key: str = OperationsQueue.create_key(conn_info)
         return key in self._context_map
 
-    def add_connection_context(self, conn_info: ConnectionInfo, overwrite=False) -> ConnectionContext:
+    def add_connection_context(self, conn_info: ConnectionInfo, request_context: RequestContext, overwrite=False) -> ConnectionContext:
         """
         Adds a connection context and returns the notification event.
         If a connection queue exists alread, will overwrite if necesary
@@ -135,7 +135,7 @@ class OperationsQueue:
                     return context
             # Create the context and start refresh
             context = ConnectionContext(key, logger)
-            conn = self._create_connection(key, conn_info)
+            conn = self._create_connection(key, conn_info, request_context)
             context.refresh_metadata(conn)
             self._context_map[key] = context
             return context
@@ -162,15 +162,15 @@ class OperationsQueue:
         """
         return '{0}|{1}|{2}'.format(conn_info.details.server_name, conn_info.details.database_name, conn_info.details.user_name)
 
-    def _create_connection(self, connection_key: str, conn_info: ConnectionInfo) -> Optional[ServerConnection]:
+    def _create_connection(self, connection_key: str, conn_info: ConnectionInfo, request_context: RequestContext) -> Optional[ServerConnection]:
         conn_service = self._connection_service
         key_uri = INTELLISENSE_URI + connection_key
         connect_request = ConnectRequestParams(conn_info.details, key_uri, ConnectionType.INTELLISENSE)
-        connect_result = conn_service.connect(connect_request)
+        connect_result = conn_service.connect(connect_request, request_context)
         if connect_result.error_message is not None:
             raise RuntimeError(connect_result.error_message)
 
-        connection = conn_service.get_connection(key_uri, ConnectionType.INTELLISENSE)
+        connection = conn_service.get_connection(key_uri, ConnectionType.INTELLISENSE, request_context)
         return connection
 
     def _process_operations(self):
