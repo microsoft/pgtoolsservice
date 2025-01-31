@@ -72,7 +72,6 @@ class ObjectExplorerService(object):
     def _handle_create_session_request(self, request_context: RequestContext, params: ConnectionDetails) -> None:
         """Handle a create object explorer session request"""
         # Step 1: Create the session
-        session_exist_check = False
         try:
             # Make sure we have the appropriate session params
             utils.validate.is_not_none('params', params)
@@ -94,7 +93,6 @@ class ObjectExplorerService(object):
             with self._session_lock:
                 if session_id in self._session_map:
                     # If session already exists, get it and respond with it
-                    session_exist_check = True
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.info(f'Object explorer session for {session_id} already exists. Returning existing session.')
                     session = self._session_map[session_id]
@@ -116,10 +114,9 @@ class ObjectExplorerService(object):
 
         # Step 2: Connect the session and lookup the root node asynchronously
         try:
-            if not session_exist_check:
-                session.init_task = threading.Thread(target=self._initialize_session, args=(request_context, session))
-                session.init_task.daemon = True
-                session.init_task.start()
+            session.init_task = threading.Thread(target=self._initialize_session, args=(request_context, session))
+            session.init_task.daemon = True
+            session.init_task.start()
         except Exception as e:
             # TODO: Localize
             self._session_created_error(request_context, session, f'Failed to start OE init task: {str(e)}')
@@ -354,16 +351,18 @@ class ObjectExplorerService(object):
         if provider_name == utils.constants.PG_PROVIDER_NAME:
             utils.validate.is_not_none_or_whitespace('params.database_name', params.options.get('dbname'))
         utils.validate.is_not_none('params.port', params.options.get('port'))
+        utils.validate.is_not_none_or_whitespace('params.groupId', params.options.get('groupId'))
 
         # Generates a session ID that will function as the base URI for the session
         host = quote(params.options['host'])
         user = quote(params.options['user'])
         db = quote(params.options['dbname'])
+        group_id = quote(params.options['groupId'].lower())
         # Port number distinguishes between connections to different server
         # instances with the same username, dbname running on same host
         port = quote(str(params.options['port']))
 
-        return f'objectexplorer://{user}@{host}:{port}:{db}/'
+        return f'objectexplorer://{group_id}.{user}@{host}:{port}:{db}/'
 
     def _route_request(self, is_refresh: bool, session: ObjectExplorerSession, path: str) -> List[NodeInfo]:
         """
