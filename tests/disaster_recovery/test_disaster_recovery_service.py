@@ -168,7 +168,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             sys.platform = old_platform
 
     def test_get_pg_exe_path_frozen_linux(self):
-        """Test the get_pg_exe_path function for linux when the service is running from a cx_freeze build"""
+        """Test the get_pg_exe_path function for linux when the service is running from a build"""
         # Back up these values so that the test can overwrite them
         old_arg0 = sys.argv[0]
         old_platform = sys.platform
@@ -180,7 +180,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         try:
             with mock.patch('os.walk', new=mock.Mock(return_value=return_value)):
                 with mock.patch('os.path.exists', new=mock.Mock(return_value=True)):
-                    # Override sys.argv[0] to simulate running the code from a cx_freeze build
+                    # Override sys.argv[0] to simulate running the code from a build
                     sys.argv[0] = os.path.normpath('/ossdbtoolsservice/build/ossdbtoolsservice/ossdbtoolsservice_main')
 
                     # If I get the executable path on Linux
@@ -193,7 +193,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             sys.platform = old_platform
 
     def test_get_pg_exe_path_frozen_mac(self):
-        """Test the get_pg_exe_path function for mac when the service is running from a cx_freeze build"""
+        """Test the get_pg_exe_path function for mac when the service is running from a build"""
         # Back up these values so that the test can overwrite them
         old_arg0 = sys.argv[0]
         old_platform = sys.platform
@@ -205,7 +205,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         try:
             with mock.patch('os.walk', new=mock.Mock(return_value=return_value)):
                 with mock.patch('os.path.exists', new=mock.Mock(return_value=True)):
-                    # Override sys.argv[0] to simulate running the code from a cx_freeze build
+                    # Override sys.argv[0] to simulate running the code from a build
                     sys.argv[0] = os.path.normpath('/ossdbtoolsservice/build/ossdbtoolsservice/ossdbtoolsservice_main')
 
                     # If I get the executable path on Mac
@@ -218,7 +218,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             sys.platform = old_platform
 
     def test_get_pg_exe_path_frozen_win(self):
-        """Test the get_pg_exe_path function for windows when the service is running from a cx_freeze build"""
+        """Test the get_pg_exe_path function for windows when the service is running from a build"""
         # Back up these values so that the test can overwrite them
         old_arg0 = sys.argv[0]
         old_platform = sys.platform
@@ -230,7 +230,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         try:
             with mock.patch('os.walk', new=mock.Mock(return_value=return_value)):
                 with mock.patch('os.path.exists', new=mock.Mock(return_value=True)):
-                    # Override sys.argv[0] to simulate running the code from a cx_freeze build
+                    # Override sys.argv[0] to simulate running the code from a build
                     sys.argv[0] = os.path.normpath('/ossdbtoolsservice/build/ossdbtoolsservice/ossdbtoolsservice_main')
 
                     # If I get the executable path on Windows
