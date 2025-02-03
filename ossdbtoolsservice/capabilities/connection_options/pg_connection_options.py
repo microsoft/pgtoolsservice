@@ -53,6 +53,20 @@ pg_conn_provider_opts = ConnectionProviderOptions([
         group_name='Security'
     ),
     ConnectionOption(
+        name='authenticationType',
+        display_name='Authentication Type',
+        description='Specifies the method of authenticating with PostgreSQL Server',
+        value_type=ConnectionOption.VALUE_TYPE_CATEGORY,
+        special_value_type=ConnectionOption.SPECIAL_VALUE_AUTH_TYPE,
+        is_identity=True,
+        is_required=True,
+        category_values=[
+            CategoryValue('Password', 'SqlLogin'),
+            CategoryValue('Entra Auth', 'AzureMFA')
+        ],
+        group_name='Security',
+    ),
+    ConnectionOption(
         name='azureAccountToken',
         display_name='Access Token',
         description='Indicates an Active Directory access token to be used when connecting to the data source',
