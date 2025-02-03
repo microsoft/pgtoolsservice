@@ -2,10 +2,30 @@ from enum import Enum
 from typing import Any, Union
 from pydantic import BaseModel, Field
 
+from semantic_kernel.contents.utils.finish_reason import FinishReason
+
 from ossdbtoolsservice.hosting.json_rpc_server import (
     IncomingMessageConfiguration,
     OutgoingMessageRegistration,
 )
+
+
+class VSCodeLanguageModelFinishReason(str, Enum):
+    """Finish Reason enum."""
+
+    STOP = "stop"
+    CONTENT_FILTER = "content_filter"
+    TOOL_CALLS = "tool_calls"
+    ERROR = "error"
+
+    def to_sk_finish_reason(self) -> FinishReason:
+        """Converts the VSCodeLanguageModelFinishReason to a Semantic Kernel FinishReason."""
+        if self == VSCodeLanguageModelFinishReason.ERROR:
+            # This doen'st have a mapping, and should be handled by error handling elsewhere.
+            # Just use STOP.
+            return FinishReason.STOP
+        return FinishReason(self.value)
+
 
 # Requests
 
@@ -34,14 +54,14 @@ class VSCodeLanguageModelToolResultPart(BaseModel):
 
 
 class VSCodeLanguageModelCompleteResultPart(BaseModel):
-    is_error: bool = Field(default=False, alias="isError")
     error_message: str | None = Field(default=None, alias="errorMessage")
+    finish_reason: VSCodeLanguageModelFinishReason = Field(alias="finishReason")
 
 
 # Request
 
 
-class VSCodeLanguageModelChatMessageRole(Enum):
+class VSCodeLanguageModelChatMessageRole(str, Enum):
     USER = "user"
     ASSISTANT = "assistant"
 
@@ -71,6 +91,7 @@ class VSCodeLanguageModelChatTool(BaseModel):
 
 
 class VSCodeLanguageModelCompletionRequestParams(BaseModel):
+    chat_id: str = Field(alias="chatId")
     request_id: str = Field(alias="requestId")
     messages: list[VSCodeLanguageModelChatMessage]
     model_options: dict[str, Any] = Field(alias="modelOptions")
@@ -88,6 +109,7 @@ class VSCodeLanguageModelChatCompletionResponse(BaseModel):
         | VSCodeLanguageModelTextPart
         | VSCodeLanguageModelToolCallPart
     )
+
 
 # Configs
 

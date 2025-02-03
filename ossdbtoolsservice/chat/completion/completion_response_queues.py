@@ -1,4 +1,4 @@
-from queue import Queue
+from asyncio import Queue
 import uuid
 
 from .messages import VSCodeLanguageModelChatCompletionResponse
@@ -8,7 +8,7 @@ class CompletionResponseQueues:
     def __init__(self) -> None:
         self._queues: dict[str, Queue] = {}
 
-    def register_new_qeue(self) -> tuple[str, Queue]:
+    def register_new_queue(self) -> tuple[str, Queue]:
         request_id = str(uuid.uuid4())
         queue = Queue()
         self._queues[request_id] = queue
@@ -20,8 +20,8 @@ class CompletionResponseQueues:
     def delete_queue(self, request_id: str) -> None:
         del self._queues[request_id]
 
-    def handle_completion_response(
+    async def handle_completion_response(
         self, message: VSCodeLanguageModelChatCompletionResponse
     ):
         queue = self.get_queue(message.request_id)
-        queue.put(message.response)
+        await queue.put(message.response)

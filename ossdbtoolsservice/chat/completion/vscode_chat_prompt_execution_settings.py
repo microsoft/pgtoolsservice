@@ -22,3 +22,10 @@ class VSCodeChatPromptExecutionSettings(PromptExecutionSettings):
             "on the function choice configuration.",
         ),
     ] = None
+    tool_choice: Annotated[
+        str | None,
+        Field(
+            description="Do not set this manually. It is set by the service based "
+            "on the function choice configuration.",
+        ),
+    ] = None

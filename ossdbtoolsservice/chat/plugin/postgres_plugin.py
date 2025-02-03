@@ -21,7 +21,9 @@ from ossdbtoolsservice.hosting.json_rpc_server import RequestContext
 from .postgres_utils import (
     execute_readonly_query,
     execute_statement,
-    fetch_schema,
+    # fetch_schema,
+    fetch_schema_v4 as fetch_schema,
+    fetch_schema_v1,
     fetch_schemas_and_tables,
 )
 
@@ -40,12 +42,14 @@ class PostgresPlugin:
         chat_id: str,
         owner_uri: str,
         logger: Logger | None,
+        max_result_chars: int = 30000,
     ) -> None:
         self._connection_service = connection_service
         self._request_context = request_context
         self._chat_id = chat_id
         self._owner_uri = owner_uri
         self._logger = logger
+        self._max_result_chars = max_result_chars
 
     def add_to(self, kernel: Kernel) -> None:
         kernel.add_plugin(self, plugin_name=self.name, description=self.description)
@@ -55,43 +59,44 @@ class PostgresPlugin:
             self._owner_uri, ConnectionType.QUERY
         )
 
+    # @kernel_function(
+    #     name="get_schemas_tables",
+    #     description="Gets the table names for each schema name in the database.",
+    # )
+    # def get_schemas_and_tables_kernelfunc(
+    #     self,
+    # ) -> Annotated[str, "The PostgreSQL schema name and the table names associated with that schema."]:
+    #     if self._logger:
+    #         self._logger.info(" ... Fetching schemas and tables 📚")
+
+    #     self._request_context.send_notification(
+    #         CHAT_PROGRESS_UPDATE_METHOD,
+    #         ChatProgressUpdateParams(
+    #             chatId=self._chat_id,
+    #             content="Fetching schemas and tables 📚...",
+    #         ),
+    #     )
+
+    #     connection = self._get_connection()
+    #     if connection is None:
+    #         return "Error. Could not connect to the database. No connection found."
+    #     assert isinstance(connection, PostgreSQLConnection)
+    #     return fetch_schemas_and_tables(connection._conn)
+
     @kernel_function(
-        name="get_schemas_and_tables",
-        description="Gets all user schemas and their tables.",
-    )
-    def get_schemas_and_tables_kernelfunc(
-        self,
-    ) -> Annotated[str, "The schemas and tables in the database."]:        
-        if self._logger:
-            self._logger.info(" ... Fetching schemas and tables 📚")
-
-        self._request_context.send_notification(
-            CHAT_PROGRESS_UPDATE_METHOD,
-            ChatProgressUpdateParams(
-                chatId=self._chat_id,
-                content="Fetching schemas and tables 📚...",
-            ),
-        )
-
-        connection = self._get_connection()
-        if connection is None:
-            return "Error. Could not connect to the database. No connection found."
-        assert isinstance(connection, PostgreSQLConnection)
-        return fetch_schemas_and_tables(connection._conn)
-
-    @kernel_function(
-        name="get_database_schema_context",
-        description="Gets the full context for a schema in the user's database in the form of a creation script.",
+        name="get_full_schema_context",
+        description="Gets the full context for a schema in the user's database in the form of a creation script. "
+        "Includes detailed table structures, including columns, data types, and relationships, as well as indexes, functions, and more.",
     )
     def get_schema_kernelfunc(
         self,
         schema_name: Annotated[
             str,
-            "The name of the schema to retrieve.",
-        ] = "public",
-    ) -> Annotated[str, "The creation script for the database schema."]:        
+            "The name of the schema to retrieve context for.",
+        ],
+    ) -> Annotated[str, "The creation script for the schema."]:
         if self._logger:
-            self._logger.info(f" ... Fetching schema for schema '{schema_name}' 📖")
+            self._logger.info(f" ... Fetching context for schema '{schema_name}' 📖")
 
         self._request_context.send_notification(
             CHAT_PROGRESS_UPDATE_METHOD,
@@ -105,13 +110,38 @@ class PostgresPlugin:
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
         assert isinstance(connection, PostgreSQLConnection)
-        return fetch_schema(connection._conn, schema_name=schema_name)
+        return fetch_schema_v1(connection._conn, schema_name=schema_name)
+
+    @kernel_function(
+        name="get_schema_and_table_context",
+        description="Gets the context for a database by returning a create script for each schema and table. ",
+    )
+    def get_db_context(
+        self,
+    ) -> Annotated[str, "The creation script for the schemas and tables."]:
+        if self._logger:
+            self._logger.info(" ... Fetching database context 📖")
+
+        self._request_context.send_notification(
+            CHAT_PROGRESS_UPDATE_METHOD,
+            ChatProgressUpdateParams(
+                chatId=self._chat_id,
+                content="Fetching database context 📖...",
+            ),
+        )
+
+        connection = self._get_connection()
+        if connection is None:
+            return "Error. Could not connect to the database. No connection found."
+        assert isinstance(connection, PostgreSQLConnection)
+        return fetch_schema(connection._conn)
 
     @kernel_function(
         name="execute_sql_query_readonly",
         description=(
             "Execute a SQL query against the database. This statement must not modify the database at all. "
-            "Can include SELECT, SHOW, EXPLAIN etc."
+            "Can include SELECT, SHOW, EXPLAIN etc. Do not include additional statements, e.g. SET search_path, in this query."
+            "It must only be a single query."
         ),
     )
     def execute_sql_query_readonly_kernelfunc(
@@ -134,7 +164,9 @@ class PostgresPlugin:
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
         assert isinstance(connection, PostgreSQLConnection)
-        return execute_readonly_query(connection._conn, statement)
+        return execute_readonly_query(
+            connection._conn, statement, self._max_result_chars
+        )
 
     @kernel_function(
         name="execute_sql_statement",

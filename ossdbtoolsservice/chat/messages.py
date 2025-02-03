@@ -3,10 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from dataclasses import dataclass
-
-from pydantic import BaseModel, ConfigDict, Field, with_config
-from ossdbtoolsservice.serialization import Serializable
+from pydantic import BaseModel, ConfigDict, Field
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
 )
