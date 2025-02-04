@@ -12,6 +12,7 @@ from ossdbtoolsservice.utils.serialization import convert_to_dict
 from typing import Any, Type
 from enum import Enum
 
+
 def generate_requests_markdown(server, logger, output_file='docs/Requests.md'):
     # Dictionary to store requests grouped by service
     services_dict = {}
@@ -53,7 +54,8 @@ def generate_requests_markdown(server, logger, output_file='docs/Requests.md'):
 
             # Append the request details to the service entry
             services_dict[service_name]["index"].append(f"- [{method}](#{anchor_link})")
-            services_dict[service_name]["requests"].append(f"## {method}\n- **Class**: {req_handler.class_.__name__ if req_handler.class_ else 'None'}\n- **Method**: {method}\n- **Request JSON**:\n```json\n{json_rpc_request_str}\n```")
+            services_dict[service_name]["requests"].append(
+                f"## {method}\n- **Class**: {req_handler.class_.__name__ if req_handler.class_ else 'None'}\n- **Method**: {method}\n- **Request JSON**:\n```json\n{json_rpc_request_str}\n```") # noqa
         except TypeError as e:
             logger.error(f"Could not create example instance for {req_handler.class_} in '{method}': {e}")
 
@@ -70,6 +72,7 @@ def generate_requests_markdown(server, logger, output_file='docs/Requests.md'):
     # Output the Markdown content to a file
     with open(output_file, 'w') as f:
         f.write(markdown_content)
+
 
 def generate_mock_data_for_type(field_type: Type) -> Any:
     """Generate example mock data based on attribute type."""
@@ -89,6 +92,7 @@ def generate_mock_data_for_type(field_type: Type) -> Any:
         return list(field_type)[0]  # Return the first value of the enum
     return None  # Default for unhandled types
 
+
 def create_example_instance(cls: Type) -> Any:
     """Generate an example instance of a class with mock data."""
     if hasattr(cls, "__init__"):
@@ -106,7 +110,7 @@ def create_example_instance(cls: Type) -> Any:
             instance = list(cls)[0]  # Return the first value of the enum
         else:
             instance = cls(**init_args)
-        
+
         # Handle any custom attributes
         if hasattr(cls, "get_child_serializable_types"):
             child_types = cls.get_child_serializable_types()

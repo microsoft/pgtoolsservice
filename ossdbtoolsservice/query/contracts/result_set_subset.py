@@ -115,5 +115,6 @@ class SubsetResult:
     def __init__(self, result_subset: ResultSetSubset):
         self.result_subset: ResultSetSubset = result_subset
 
+
 OutgoingMessageRegistration.register_outgoing_message(SubsetResult)
 OutgoingMessageRegistration.register_outgoing_message(ResultSetSubset)

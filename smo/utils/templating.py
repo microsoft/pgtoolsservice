@@ -157,76 +157,78 @@ def _hash_source_list(sources: list) -> int:
 
 
 def qt_type_ident(conn, *args):
-        # We're not using the conn object at the moment, but - we will
-        # modify the
-        # logic to use the server version specific keywords later.
-        res = None
-        value = None
+       # We're not using the conn object at the moment, but - we will
+       # modify the
+       # logic to use the server version specific keywords later.
+    res = None
+    value = None
 
-        for val in args:
-            # DataType doesn't have len function then convert it to string
-            if not hasattr(val, '__len__'):
-                val = str(val)
+    for val in args:
+           # DataType doesn't have len function then convert it to string
+        if not hasattr(val, '__len__'):
+            val = str(val)
 
-            if len(val) == 0:
-                continue
-            value = val
+        if len(val) == 0:
+            continue
+        value = val
 
-            if needs_quoting(val, True):
-                value = value.replace("\"", "\"\"")
-                value = "\"" + value + "\""
+        if needs_quoting(val, True):
+            value = value.replace("\"", "\"\"")
+            value = "\"" + value + "\""
 
-            res = ((res and res + '.') or '') + value
+        res = ((res and res + '.') or '') + value
 
-        return res
+    return res
 
 
 def qt_ident(conn, *args):
-        # We're not using the conn object at the moment, but - we will
-        # modify the logic to use the server version specific keywords later.
-        res = None
-        value = None
+    # We're not using the conn object at the moment, but - we will
+    # modify the logic to use the server version specific keywords later.
+    res = None
+    value = None
 
-        for val in args:
-            if isinstance(val, list):
-                return map(lambda w: qt_ident(conn, w), val)
+    for val in args:
+        if isinstance(val, list):
+            return map(lambda w: qt_ident(conn, w), val)
 
-            # DataType doesn't have len function then convert it to string
-            if not hasattr(val, '__len__'):
-                val = str(val)
+        # DataType doesn't have len function then convert it to string
+        if not hasattr(val, '__len__'):
+            val = str(val)
 
-            if len(val) == 0:
-                continue
+        if len(val) == 0:
+            continue
 
-            value = val
+        value = val
 
-            if needs_quoting(val, False):
-                value = value.replace("\"", "\"\"")
-                value = "\"" + value + "\""
+        if needs_quoting(val, False):
+            value = value.replace("\"", "\"\"")
+            value = "\"" + value + "\""
 
-            res = ((res and res + '.') or '') + value
+        res = ((res and res + '.') or '') + value
 
-        return res
+    return res
+
 
 def qt_literal(value, conn, force_quote=False):
-        res = value
+    res = value
 
-        if conn:
-            try:
-                if type(conn) != psycopg.Connection and \
-                        type(conn) != psycopg.AsyncConnection:
-                    conn = conn.conn
-                res = psycopg.sql.Literal(value).as_string(conn).strip()
-            except Exception:
-                print("Exception", value)
+    if conn:
+        try:
 
-        if force_quote is True:
-            # Convert the input to the string to use the startsWith(...)
-            res = str(res)
-            if not res.startswith("'"):
-                return "'" + res + "'"
 
-        return res
+if not isinstance(conn,             if )                    type(conn) != psycopg.AsyncConnection:
+                conn = conn.conn
+            res = psycopg.sql.Literal(value).as_string(conn).strip()
+        except Exception:
+            print("Exception", value)
+
+    if force_quote is True:
+        # Convert the input to the string to use the startsWith(...)
+        res = str(res)
+        if not res.startswith("'"):
+            return "'" + res + "'"
+
+    return res
 
 
 def has_any(data, keys):
@@ -247,68 +249,70 @@ def has_any(data, keys):
 
 
 def needs_quoting(key, for_types):
-        value = key
-        val_noarray = value
+    value = key
+    val_noarray = value
 
-        # check if the string is number or not
-        if isinstance(value, int):
-            return True
-        # certain types should not be quoted even though it contains a space.
-        # Evilness.
-        elif for_types and value[-2:] == "[]":
-            val_noarray = value[:-2]
+    # check if the string is number or not
+    if isinstance(value, int):
+        return True
+    # certain types should not be quoted even though it contains a space.
+    # Evilness.
+    elif for_types and value[-2:] == "[]":
+        val_noarray = value[:-2]
 
-        if for_types and val_noarray.lower() in [
-            'bit varying',
-            '"char"',
-            'character varying',
-            'double precision',
-            'timestamp without time zone',
-            'timestamp with time zone',
-            'time without time zone',
-            'time with time zone',
-            '"trigger"',
-            '"unknown"'
-        ]:
-            return False
+    if for_types and val_noarray.lower() in [
+        'bit varying',
+        '"char"',
+        'character varying',
+        'double precision',
+        'timestamp without time zone',
+        'timestamp with time zone',
+        'time without time zone',
+        'time with time zone',
+        '"trigger"',
+        '"unknown"'
+    ]:
+        return False
 
-        # If already quoted?, If yes then do not quote again
-        if for_types and val_noarray and \
-                (val_noarray.startswith('"') or val_noarray.endswith('"')):
-            return False
+    # If already quoted?, If yes then do not quote again
+    if for_types and val_noarray and \
+            (val_noarray.startswith('"') or val_noarray.endswith('"')):
+        return False
 
-        if '0' <= val_noarray[0] <= '9':
-            return True
-
-        if re.search('[^a-z_0-9]+', val_noarray):
-            return True
-
-        # check string is keywaord or not
-        category = scan_keyword_extra_lookup(value)
-
-        if category is None:
-            return False
-
-        # UNRESERVED_KEYWORD
-        if category == 0:
-            return False
-
-        # COL_NAME_KEYWORD
-        if for_types and category == 1:
-            return False
-
+    if '0' <= val_noarray[0] <= '9':
         return True
 
-def scan_keyword_extra_lookup(key):
-        # UNRESERVED_KEYWORD      0
-        # COL_NAME_KEYWORD        1
-        # TYPE_FUNC_NAME_KEYWORD  2
-        # RESERVED_KEYWORD        3
+    if re.search('[^a-z_0-9]+', val_noarray):
+        return True
 
-        return _EXTRA_KEYWORDS.get(key, None) or scan_keyword(key)
+    # check string is keywaord or not
+    category = scan_keyword_extra_lookup(value)
+
+    if category is None:
+        return False
+
+    # UNRESERVED_KEYWORD
+    if category == 0:
+        return False
+
+    # COL_NAME_KEYWORD
+    if for_types and category == 1:
+        return False
+
+    return True
+
+
+def scan_keyword_extra_lookup(key):
+    # UNRESERVED_KEYWORD      0
+    # COL_NAME_KEYWORD        1
+    # TYPE_FUNC_NAME_KEYWORD  2
+    # RESERVED_KEYWORD        3
+
+    return _EXTRA_KEYWORDS.get(key, None) or scan_keyword(key)
+
 
 _EXTRA_KEYWORDS = {
-            'connect': 3,
+    'connect': 3,
             'convert': 3,
             'distributed': 0,
             'exec': 3,

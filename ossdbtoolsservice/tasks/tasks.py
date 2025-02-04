@@ -5,15 +5,15 @@
 
 """Module containing the task service, allowing long-running asynchronous operations"""
 
-import enum
 import threading
 import time
-from typing import Callable, Dict  # noqa
+from typing import Callable
 import uuid
 
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.hosting import RequestContext
 from ossdbtoolsservice.tasks.contracts import TaskInfo, TaskStatus
+
 
 class TaskResult:
     """Class representing the result of a task execution"""
@@ -113,5 +113,6 @@ class Task:
     @property
     def _is_completed(self) -> bool:
         return self.status in [TaskStatus.CANCELED, TaskStatus.FAILED, TaskStatus.SUCCEEDED, TaskStatus.SUCCEEDED_WITH_WARNING]
+
 
 OutgoingMessageRegistration.register_outgoing_message(Task)

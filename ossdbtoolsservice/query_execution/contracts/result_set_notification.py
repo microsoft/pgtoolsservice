@@ -6,6 +6,7 @@
 from ossdbtoolsservice.query.contracts import ResultSetSummary
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class ResultSetNotificationParams:
     """
     Parameters to return when a result set is started or completed

@@ -14,4 +14,5 @@ class DefinitionResult:
         self.message = message
         self.locations: [] = locations
 
+
 OutgoingMessageRegistration.register_outgoing_message(DefinitionResult)

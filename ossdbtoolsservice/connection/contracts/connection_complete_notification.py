@@ -6,6 +6,7 @@
 from ossdbtoolsservice.connection.contracts.common import ConnectionSummary, ConnectionType     # noqa
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class ServerInfo(object):
     """Contract for information on the connected server"""
     server: str

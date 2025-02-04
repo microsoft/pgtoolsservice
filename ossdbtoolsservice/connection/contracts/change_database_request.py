@@ -18,8 +18,9 @@ class ChangeDatabaseRequestParams(Serializable):
     def get_child_serializable_types(cls):
         return {'connection': ConnectionDetails}
 
-    def __init__(self, owner_uri: str=None, new_database: str=None):
+    def __init__(self, owner_uri: str = None, new_database: str = None):
         self.owner_uri: str = owner_uri
         self.new_database: str = new_database
+
 
 CHANGE_DATABASE_REQUEST = IncomingMessageConfiguration('connection/changedatabase', ChangeDatabaseRequestParams)

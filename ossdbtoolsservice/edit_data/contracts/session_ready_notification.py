@@ -6,6 +6,7 @@
 from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class SessionReadyNotificationParams(Serializable):
     """
     Parameters to be sent back with a edit session ready event

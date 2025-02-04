@@ -8,6 +8,7 @@ from typing import List
 from ossdbtoolsservice.query.contracts import BatchSummary
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class QueryCompleteNotificationParams:
     """
     Parameters to be sent back with a query execution complete event

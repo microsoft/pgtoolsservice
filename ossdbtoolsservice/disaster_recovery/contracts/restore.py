@@ -9,6 +9,7 @@ from ossdbtoolsservice.capabilities.contracts import FeatureMetadataProvider, Se
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
 
+
 class RestoreOptions(Serializable):
     """Options for a requested restore"""
     path: str
@@ -69,6 +70,7 @@ class RestoreOptions(Serializable):
         self.section: str = None
         self.strict_names: bool = None
         self.role: str = None
+
 
 class RestoreParams(Serializable):
     """Parameters for a restore request"""

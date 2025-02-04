@@ -8,6 +8,7 @@ from typing import Optional     # noqa
 from ossdbtoolsservice.object_explorer.contracts.node_info import NodeInfo  # noqa
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class SessionCreatedParameters:
     """Parameters to be sent back when an object explorer session is created"""
     error_message: Optional[str]

@@ -55,4 +55,5 @@ class QueryCancelResult:
         # Set to none if no errors
         self.messages = messages
 
+
 OutgoingMessageRegistration.register_outgoing_message(QueryCancelResult)

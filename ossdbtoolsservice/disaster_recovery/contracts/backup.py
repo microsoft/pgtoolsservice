@@ -6,11 +6,11 @@
 """Module containing contracts for backup operations"""
 
 import enum
-from typing import Optional
 
 from ossdbtoolsservice.capabilities.contracts import CategoryValue, FeatureMetadataProvider, ServiceOption
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
+
 
 class BackupType(enum.Enum):
     """Enum for the type of backups that are supported"""
@@ -18,6 +18,7 @@ class BackupType(enum.Enum):
     DIRECTORY = 'directory'
     TAR = 'tar'
     PLAIN_TEXT = 'sql'
+
 
 class BackupInfo(Serializable):
     """Options for a requested backup"""
@@ -102,6 +103,7 @@ class BackupInfo(Serializable):
         self.strict_names: bool = None
         self.use_set_session_authorization: bool = None
 
+
 class BackupParams(Serializable):
     """Parameters for a backup request"""
     owner_uri: str
@@ -116,6 +118,7 @@ class BackupParams(Serializable):
         self.owner_uri: str = None
         self.backup_info: BackupInfo = None
         self.task_execution_mode = None
+
 
 BACKUP_REQUEST = IncomingMessageConfiguration('backup/backup', BackupParams)
 

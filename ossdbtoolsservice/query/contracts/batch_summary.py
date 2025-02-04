@@ -8,6 +8,7 @@ from ossdbtoolsservice.query.contracts import SelectionData
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.query.contracts.result_set_summary import ResultSetSummary
 
+
 class BatchSummary:
     id: int
     selection: SelectionData
@@ -40,5 +41,6 @@ class BatchSummary:
         self.execution_end: str = None
         self.execution_elapsed = None
         self.result_set_summaries = None
+
 
 OutgoingMessageRegistration.register_outgoing_message(BatchSummary)

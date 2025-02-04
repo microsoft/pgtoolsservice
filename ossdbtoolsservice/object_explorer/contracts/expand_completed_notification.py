@@ -8,6 +8,7 @@ from typing import List, Optional  # noqa
 from ossdbtoolsservice.object_explorer.contracts.node_info import NodeInfo  # noqa
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class ExpandCompletedParameters:
     """Parameters to be sent back with a expand completed"""
     session_id: str

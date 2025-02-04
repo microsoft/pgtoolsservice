@@ -6,6 +6,7 @@
 import enum
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class TaskStatus(enum.Enum):
     """Enum representing task status"""
     NOT_STARTED = 0
@@ -14,6 +15,7 @@ class TaskStatus(enum.Enum):
     SUCCEEDED_WITH_WARNING = 3
     FAILED = 4
     CANCELED = 5
+
 
 class TaskInfo:
     """Contract class for representing tasks"""
@@ -41,5 +43,6 @@ class TaskInfo:
         self.name: str = task_name
         self.description: str = description
         self.provider_name: str = provider_name
+
 
 OutgoingMessageRegistration.register_outgoing_message(TaskInfo)

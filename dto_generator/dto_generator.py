@@ -29,6 +29,7 @@ from ossdbtoolsservice.workspace import WorkspaceService
 # Registry to store reusable schemas
 schema_registry: Dict[str, Dict[str, Any]] = {}
 
+
 def class_to_json_schema(cls: Type) -> Dict[str, Any]:
     # Check if the schema for this class already exists in the registry
     if cls.__name__ in schema_registry:
@@ -58,7 +59,7 @@ def class_to_json_schema(cls: Type) -> Dict[str, Any]:
 
     # Register the schema structure in the registry before fully populating it
     schema_registry[cls.__name__] = schema
-    
+
     # Get all type hints, including those defined directly as class variables
     hints = cls.__annotations__
 
@@ -67,11 +68,11 @@ def class_to_json_schema(cls: Type) -> Dict[str, Any]:
         # Add property to schema with appropriate type (string for str, integer for int, etc.)
         prop_type = hints.get(name, str)  # Default to `str` if type hint is missing
         schema["properties"][name] = get_schema_type(prop_type)
-        
+
         # Properties without a setter are read-only
         if method.fset is None:
             schema["properties"][name]["readOnly"] = True
-        
+
         # If the property is required (doesn't default to None), add it to `required`
         if name in hints and not is_optional_type(hints[name]):
             schema["required"].append(name)
@@ -84,6 +85,7 @@ def class_to_json_schema(cls: Type) -> Dict[str, Any]:
                 schema["required"].append(attr)
 
     return schema
+
 
 def enum_to_json_schema(enum_class: Type[enum.Enum]) -> Dict[str, Any]:
     """Convert an Enum class to a JSON schema enum definition."""
@@ -98,6 +100,7 @@ def enum_to_json_schema(enum_class: Type[enum.Enum]) -> Dict[str, Any]:
     # Register the schema structure in the registry before fully populating it
     schema_registry[enum_class.__name__] = schema
     return schema
+
 
 def get_schema_type(attr_type: Type) -> Dict[str, Any]:
     """Convert Python types to JSON schema types and handle nested classes."""
@@ -130,11 +133,13 @@ def get_schema_type(attr_type: Type) -> Dict[str, Any]:
         return {"anyOf": [get_schema_type(t) for t in inner_types]}
     return {"type": "string"}  # Default to string for unknown types
 
+
 def is_optional_type(attr_type: Type) -> bool:
     """Check if the type is Optional."""
     return Union[None, attr_type] == Optional[attr_type] or (
         hasattr(attr_type, "__origin__") and attr_type.__origin__ is Union and type(None) in attr_type.__args__
     )
+
 
 def generate_full_schema() -> Dict[str, Any]:
     """Generate a unified JSON schema containing multiple classes."""
@@ -152,11 +157,13 @@ def generate_full_schema() -> Dict[str, Any]:
 
     return unified_schema
 
+
 def save_json_schema_to_file(schema: dict, file_path: str):
     """Save JSON Schema to a file."""
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, 'w') as f:
         json.dump(schema, f, indent=4)
+
 
 if __name__ == '__main__':
     # Create the service provider and add the providers to it

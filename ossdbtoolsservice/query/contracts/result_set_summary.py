@@ -9,6 +9,7 @@ from typing import List  # noqa
 from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class ResultSetSummary:
     id: int
     batch_id: int
@@ -22,5 +23,6 @@ class ResultSetSummary:
         self.row_count = row_count
         self.complete = complete
         self.column_info = column_info
+
 
 OutgoingMessageRegistration.register_outgoing_message(ResultSetSummary)

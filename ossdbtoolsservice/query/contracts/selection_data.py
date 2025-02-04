@@ -8,6 +8,7 @@ from ossdbtoolsservice.workspace.contracts import Position, Range
 from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class SelectionData(Serializable):
     """Container class for a selection range from file"""
     start_line: int
@@ -24,5 +25,6 @@ class SelectionData(Serializable):
     def to_range(self):
         """Convert the SelectionData object to a workspace service Range object"""
         return Range(Position(self.start_line, self.start_column), Position(self.end_line, self.end_column))
+
 
 OutgoingMessageRegistration.register_outgoing_message(SelectionData)

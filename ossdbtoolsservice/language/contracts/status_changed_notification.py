@@ -8,6 +8,7 @@
 from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class StatusChangeParams(Serializable):
     owner_uri: str
     status: str

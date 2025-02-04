@@ -5,6 +5,7 @@
 
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
+
 class ResultMessage:
     batch_id: int
     is_error: bool

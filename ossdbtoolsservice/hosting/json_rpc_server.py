@@ -19,11 +19,11 @@ from flask_cors import CORS
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
 from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
-from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 from ossdbtoolsservice.utils.path import path_relative_to_base
 
 # Dictionary to store session IDs by WebSocket sid
 active_sessions = {}
+
 
 class JSONRPCServer:
     """
@@ -90,13 +90,14 @@ class JSONRPCServer:
             if self._enable_dynamic_cors:
                 self.app.add_url_rule("/<path:dummy>", self._global_options_handler, methods=["OPTIONS"])
                 self.app.after_request(self._after_request_handler)
-            self.app.config["SESSION_COOKIE_SAMESITE"] = "None" # Configure session cookie to allow cross-origin requests
+            self.app.config["SESSION_COOKIE_SAMESITE"] = "None"  # Configure session cookie to allow cross-origin requests
             self.app.config["SESSION_COOKIE_SECURE"] = True  # Required for SameSite=None in modern browsers
             self.app.config['SECRET_KEY'] = 'supersecretkey'
             self.app.add_url_rule('/start-session', 'start-session', self._handle_start_session, methods=['POST'])
             self.app.add_url_rule('/json-rpc', 'json_rpc', self._handle_http_request, methods=['POST'])
             ping_interval = 1e9 if self._disable_keep_alive else 25
-            self.socketio = SocketIO(self.app, async_mode='gevent', cors_allowed_origins=lambda origin: self._dynamic_cors_handler(origin), manage_session=True, logger=logger, engineio_logger=logger, ping_interval=ping_interval, always_connect=False)
+            self.socketio = SocketIO(self.app, async_mode='gevent', cors_allowed_origins=lambda origin: self._dynamic_cors_handler(
+                origin), manage_session=True, logger=logger, engineio_logger=logger, ping_interval=ping_interval, always_connect=False)
             self.socketio.on_event('connect', self._handle_ws_connect)
             self.socketio.on_event('disconnect', self._handle_ws_disconnect)
             self.socketio.on_event('message', self._handle_ws_request)
@@ -193,7 +194,7 @@ class JSONRPCServer:
             )
             self._input_consumer.daemon = True
             self._input_consumer.start()
-            message = f"JSON RPC server started with input and output stream processing."
+            message = "JSON RPC server started with input and output stream processing."
             self._log_information(message)
             print(message)
 
@@ -332,17 +333,17 @@ class JSONRPCServer:
 
             except EOFError as error:
                 # Thread fails once we read EOF. Halt the input thread
-                self._log_exception(error, self.INPUT_THREAD_NAME)
+                self._log_thread_exception(error, self.INPUT_THREAD_NAME)
                 self.stop()
                 break
             except (LookupError, ValueError) as error:
                 # LookupError: Content-Length header was not found
                 # ValueError: JSON deserialization failed
-                self._log_exception(error, self.INPUT_THREAD_NAME)
+                self._log_thread_exception(error, self.INPUT_THREAD_NAME)
                 # Do not halt the input thread
             except Exception as error:
                 # Catch generic exceptions
-                self._log_exception(error, self.INPUT_THREAD_NAME)
+                self._log_thread_exception(error, self.INPUT_THREAD_NAME)
                 # Do not halt the input thread
 
     def _handle_start_session(self):
@@ -352,7 +353,7 @@ class JSONRPCServer:
         as associate this client connection with a cooresponding WebSocket connection for asynchronous responses.
         """
         # Create a unique session_id and store it in Flask's session
-        session_id = self._ensure_session_id();
+        session_id = self._ensure_session_id()
         self._log_information(f"Session started with ID: {session_id}")
         return {"session_id": session_id}, 200
 
@@ -407,7 +408,7 @@ class JSONRPCServer:
             self._log_warning("Session ID not found for client; disconnecting.")
             # Force the underlying websocket (engineio) to disconnect as socketio.disconnect() relies on the client to respect the disconnect request.
             eio_sid = self._get_eio_sid(request.sid, request.namespace)
-            timer = threading.Timer(1.0, self._force_disconnect, args=(eio_sid,)) # Schedule _force_disconnect to run after a 5-second delay with arguments
+            timer = threading.Timer(1.0, self._force_disconnect, args=(eio_sid,))  # Schedule _force_disconnect to run after a 5-second delay with arguments
             timer.start()
             return False
 
@@ -480,11 +481,11 @@ class JSONRPCServer:
 
             except ValueError as error:
                 # Stream is closed, break out of the loop
-                self._log_exception(error, self.OUTPUT_THREAD_NAME)
+                self._log_thread_exception(error, self.OUTPUT_THREAD_NAME)
                 break
             except Exception as error:
                 # Catch generic exceptions without breaking out of loop
-                self._log_exception(error, self.OUTPUT_THREAD_NAME)
+                self._log_thread_exception(error, self.OUTPUT_THREAD_NAME)
 
     def _dispatch_message(self, message, session_id=None):
         """
@@ -572,12 +573,12 @@ class JSONRPCServer:
             self.socketio.server.eio.disconnect(eio_sid)  # Disconnect the client using its eio session ID
 
     def _dynamic_cors_handler(self, origin):
-            """Determine if the origin is allowed."""
-            if self._enable_dynamic_cors:
-                return True
-            elif origin in self._allowed_origins:
-                return True
-            return False
+        """Determine if the origin is allowed."""
+        if self._enable_dynamic_cors:
+            return True
+        elif origin in self._allowed_origins:
+            return True
+        return False
 
     def _global_options_handler(self, dummy):
         """ Handles OPTIONS requests for all routes """
@@ -608,7 +609,7 @@ class JSONRPCServer:
         """
         return self.socketio.server.manager.eio_sid_from_sid(sid, namespace)
 
-    def _log_exception(self, ex, thread_name):
+    def _log_thread_exception(self, ex, thread_name):
         """
         Logs an exception if the logger is defined
         :param ex: Exception to log
@@ -747,6 +748,7 @@ class RequestContext:
             if sid:
                 self._socketio.emit(event, json_content, to=sid)
 
+
 class NotificationContext:
     """
     Context for a received notification
@@ -780,4 +782,3 @@ class NotificationContext:
                 self._socketio.emit('notification', json_content, to=sid)
         else:
             self._queue.put(message)
-

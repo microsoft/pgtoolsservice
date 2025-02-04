@@ -140,5 +140,6 @@ class DbCellValue:
         self.row_id: int = row_id
         self.raw_object = raw_object
 
+
 OutgoingMessageRegistration.register_outgoing_message(DbColumn)
 OutgoingMessageRegistration.register_outgoing_message(DbCellValue)
