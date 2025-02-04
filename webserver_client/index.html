@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pgtoolsservice webserver client</title>
+</head>
+
+<body>
+  <h1>pgtoolsservice webserver client</h1>
+
+  <!-- Host Input -->
+  <label for="hostInput">Enter Host:</label>
+  <input type="text" id="hostInput" name="hostInput" placeholder="localhost:8443">
+  <button id="startSessionButton">Start Session</button>
+
+  <h3>Output Window</h3>
+  <div id="outputWindow"
+    style="border: 1px solid #ccc; padding: 10px; margin: 20px 0; height: 150px; overflow-y: scroll;">
+    <ul id="outputMessages"></ul>
+  </div>
+
+  <div id="chatInterface" style="display: none;">
+  <h3>Input Window</h3>
+  <div style="border: 1px solid #ccc; padding: 10px; margin: 20px 0; height: 150px; overflow-y: scroll;">
+    <div id="jsonEditorContainer" placeholder="Input a JSON-rpc request..."></div>
+    <button onclick="sendMessage()">Send</button>
+    <ul id="messages"></ul>
+  </div>
+  </div>
+
+  <!-- Include the compiled TypeScript code -->
+  <script src="dist/bundle.js"></script>
+</body>
+
+</html>

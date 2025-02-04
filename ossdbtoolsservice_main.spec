@@ -1,7 +1,8 @@
 # ossdbtoolsservice_main.spec
-from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_all
 import psycopg
 import platform
+import os
 
 block_cipher = None
 
@@ -17,9 +18,18 @@ def collect_files(src_folder, dest_folder, file_ext=None):
 
     return collected_files
 
+hiddenimports=['psycopg', 'engineio.async_drivers.gevent', 'xmlrpc.server']
+binaries = []
+datas = []
+
 # Include psycopg dependencies
-hiddenimports = collect_submodules('psycopg')
-datas = collect_data_files('psycopg')
+datas += collect_data_files('psycopg')
+
+# Collect all dependencies for debugpy
+datas_debugpy, binaries_debugpy, hiddenimports_debugpy = collect_all("debugpy")
+hiddenimports.extend(hiddenimports_debugpy)
+datas.extend(datas_debugpy)
+binaries.extend(binaries_debugpy)
 
 # Include ossdbtoolsservice data files
 datas += collect_data_files('ossdbtoolsservice', include_py_files=False)
@@ -38,33 +48,32 @@ if platform.system() == 'Darwin' and platform.machine() == 'arm64':
     binaries = [
         ('/usr/local/opt/zlib/lib/libz.dylib', 'zlib'),
     ]
-else:
-    binaries = []
 
 a = Analysis(['ossdbtoolsservice/ossdbtoolsservice_main.py'],
-             pathex=['/Users/yimdaeun/Projects/pgtoolsservice/'],
-             binaries=binaries,
-             datas=datas,
-             hiddenimports=hiddenimports,
-             hookspath=[],
-             runtime_hooks=[],
-             excludes=[],
-             win_no_prefer_redirects=False,
-             win_private_assemblies=False,
-             cipher=block_cipher,
-             noarchive=False)
+    pathex=[],
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=hiddenimports,
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False)
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(pyz,
-          a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,
-          [],
-          name='ossdbtoolsservice_main',
-          debug=False,
-          bootloader_ignore_signals=False,
-          strip=False,
-          upx=True,
-          console=True)
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='ossdbtoolsservice_main',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=True)

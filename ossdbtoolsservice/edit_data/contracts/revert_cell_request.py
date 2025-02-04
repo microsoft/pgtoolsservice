@@ -9,6 +9,7 @@ from ossdbtoolsservice.edit_data.contracts import RowOperationRequest, EditCellR
 
 
 class RevertCellRequest(RowOperationRequest):
+    column_id: int
 
     def __init__(self):
         RowOperationRequest.__init__(self)

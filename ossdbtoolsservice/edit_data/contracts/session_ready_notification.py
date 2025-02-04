@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.serialization import Serializable
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 
 class SessionReadyNotificationParams(Serializable):
@@ -13,6 +14,9 @@ class SessionReadyNotificationParams(Serializable):
         owner_uri:          URI for the editor that owns the query
         batch_summaries:    Summaries of the result sets that were returned with the query
     """
+    owner_uri: str
+    success: bool
+    message: str
 
     def __init__(self, owner_uri: str, success: bool, message: str):
         self.owner_uri: str = owner_uri
@@ -21,3 +25,5 @@ class SessionReadyNotificationParams(Serializable):
 
 
 SESSION_READY_NOTIFICATION = 'edit/sessionReady'
+
+OutgoingMessageRegistration.register_outgoing_message(SessionReadyNotificationParams)

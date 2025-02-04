@@ -22,6 +22,13 @@ New-Item -ItemType Directory -Force -Path ".\dist\pgsqltoolsservice"
 # Move the contents in the dist folder to pgsqltoolsservice folder
 Get-ChildItem -Path ".\dist" | Where-Object { !$_.PSIsContainer } | Move-Item -Destination ".\dist\pgsqltoolsservice"
 
+# Copy the development ssl certificate to the pgsqltoolsservice folder
+Copy-Item ".\ssl\cert.pem" ".\dist\pgsqltoolsservice\ssl\cert.pem"
+Copy-Item ".\ssl\key.pem" ".\dist\pgsqltoolsservice\ssl\key.pem"
+
+# Copy the pgsqltoolsservice config file to the dist folder
+Copy-Item ".\config.ini" ".\dist\pgsqltoolsservice\config.ini"
+
 # copy pg_exe folder to pgsqltoolsservice
 Copy-Item ".\ossdbtoolsservice\pg_exes\win" ".\dist\pgsqltoolsservice\pg_exes\win" -Recurse
 

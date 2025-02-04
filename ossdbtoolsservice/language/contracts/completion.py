@@ -7,7 +7,7 @@
 
 import enum
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.workspace.contracts import TextDocumentPosition
 from ossdbtoolsservice.language.contracts import TextEdit   # noqa
 from ossdbtoolsservice.serialization import Serializable
@@ -43,6 +43,16 @@ class CompletionItem(Serializable):
     Completion items are presented in an IntelliSense user interface, representing valid
     items to complete an in-process typing
     """
+    label: str
+    kind: CompletionItemKind
+    detail: str
+    documentation: str
+    sort_text: str
+    filter_text: str
+    insert_text_format: str
+    text_edit: TextEdit
+    data: any
+
     @classmethod
     def get_child_serializable_types(cls):
         return {'kind': CompletionItemKind, 'text_edit': TextEdit}
@@ -62,3 +72,4 @@ class CompletionItem(Serializable):
 COMPLETION_REQUEST = IncomingMessageConfiguration('textDocument/completion', TextDocumentPosition)
 
 COMPLETION_RESOLVE_REQUEST = IncomingMessageConfiguration('completionItem/resolve', CompletionItem)
+OutgoingMessageRegistration.register_outgoing_message(CompletionItem)

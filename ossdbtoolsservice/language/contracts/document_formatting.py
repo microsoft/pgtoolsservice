@@ -12,6 +12,9 @@ from ossdbtoolsservice.serialization import Serializable
 
 class FormattingOptions(Serializable):
     """Language Service options passed in each format request"""
+    tab_size: int
+    insert_spaces: bool
+
     @classmethod
     def from_data(cls, tab_size: int, insert_spaces: bool):
         obj = cls()
@@ -28,6 +31,9 @@ class DocumentFormattingParams(Serializable):
     """
     Parameters used in a formatting request to process an entire document
     """
+    text_document: TextDocumentIdentifier
+    options: FormattingOptions
+
     @classmethod
     def get_child_serializable_types(cls):
         return {'text_document': TextDocumentIdentifier, 'options': FormattingOptions}
@@ -41,6 +47,8 @@ class DocumentRangeFormattingParams(DocumentFormattingParams):
     """
     Parameters used in a formatting request to process a specific text range
     """
+    range: Range
+
     @classmethod
     def get_child_serializable_types(cls):
         return {'range': Range, 'text_document': TextDocumentIdentifier, 'options': FormattingOptions}

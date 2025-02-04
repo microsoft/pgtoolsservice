@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.query.contracts import BatchSummary
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 
 class BatchNotificationParams:
@@ -15,6 +16,8 @@ class BatchNotificationParams:
         batch_summary:  Summary of the batch that is being notified
         owner_uri:      URI for the editor that owns the query
     """
+    batch_summary: BatchSummary
+    owner_uri: str
 
     def __init__(self, batch_summary: BatchSummary, owner_uri: str):
         self.batch_summary: BatchSummary = batch_summary
@@ -28,3 +31,5 @@ BATCH_START_NOTIFICATION = 'query/batchStart'
 DEPLOY_BATCH_COMPLETE_NOTIFICATION = 'query/deployBatchComplete'
 
 DEPLOY_BATCH_START_NOTIFICATION = 'query/deployBatchStart'
+
+OutgoingMessageRegistration.register_outgoing_message(BatchNotificationParams)

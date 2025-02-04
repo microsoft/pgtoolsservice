@@ -13,6 +13,8 @@ class Position(Serializable):
         line:       0-based line number
         character:  0-based column number
     """
+    line: int
+    character: int
 
     @classmethod
     def from_data(cls, line: int, col: int):
@@ -33,6 +35,8 @@ class Range(Serializable):
         start:  The starting position of the range, inclusive
         end:    The ending position of the range, inclusive
     """
+    start: Position
+    end: Position
 
     @classmethod
     def from_data(cls, start_line: int, start_col: int, end_line: int, end_col: int):
@@ -73,6 +77,7 @@ class TextDocumentIdentifier(Serializable):
     Attributes:
         uri:        The URI that uniquely identifies the path of the text document
     """
+    uri: str
 
     def __init__(self):
         self.uri: str = None
@@ -85,6 +90,8 @@ class TextDocumentPosition(Serializable):
         text_document: The document identifier
         position: The position in the document
     """
+    text_document: TextDocumentIdentifier
+    position: Position
 
     @classmethod
     def get_child_serializable_types(cls):
@@ -106,6 +113,8 @@ class Location(Serializable):
         uri: uri pointing to a file
         range: start and stop position determining range within the file
     """
+    uri: str
+    range: Range
 
     def __init__(self, uri: str, rng: Range):
         self.uri = uri

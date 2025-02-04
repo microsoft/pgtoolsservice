@@ -9,6 +9,7 @@ from ossdbtoolsservice.serialization.serializable import convert_from_dict
 
 class CancelTaskParameters:
     """Parameters for the tasks/canceltask request"""
+    task_id: str
 
     @classmethod
     def from_dict(cls, dictionary: dict):

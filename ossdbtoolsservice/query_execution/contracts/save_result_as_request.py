@@ -4,17 +4,20 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.query.contracts import SaveResultsRequestParams
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.capabilities.contracts import FeatureMetadataProvider
 
 
 class SaveResultRequestResult:
+    messages: str
 
     def __init__(self):
         self.messages: str = None
 
 
 class SaveResultsAsCsvRequestParams(SaveResultsRequestParams):
+    include_headers: bool
+    delimiter: str
 
     def __init__(self):
         super().__init__()
@@ -29,6 +32,7 @@ class SaveResultsAsJsonRequestParams(SaveResultsRequestParams):
 
 
 class SaveResultsAsExcelRequestParams(SaveResultsRequestParams):
+    include_headers: bool
 
     def __init__(self):
         super().__init__()
@@ -55,3 +59,5 @@ SERIALIZATION_OPTIONS = FeatureMetadataProvider(
     'serializationService',
     []
 )
+
+OutgoingMessageRegistration.register_outgoing_message(SaveResultRequestResult)
