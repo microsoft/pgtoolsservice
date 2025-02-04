@@ -30,7 +30,7 @@ class SaveAsExcelWriter(SaveAsWriter):
         if not self._header_written:
             bold = self._workbook.add_format({'bold': 1})
             for index, column in enumerate(columns[column_start_index: column_end_index]):
-                self._worksheet.write(string.ascii_uppercase[index] + '1', column.column_name, bold)
+                self._worksheet.write(0, index, column.column_name, bold)
 
             self._header_written = True
 
