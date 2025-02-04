@@ -17,6 +17,7 @@ from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 NoticeHandler = Callable[[str], None]
 
+
 def assert_not_none_or_empty(value: str):
     """Assertion to confirm a string to be not none or empty"""
     testcase = unittest.TestCase('__init__')
