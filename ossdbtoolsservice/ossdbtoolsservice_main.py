@@ -13,8 +13,11 @@ import debugpy
 
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
+from ossdbtoolsservice.chat.chat_service import ChatService
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import DisasterRecoveryService
+from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import (
+    DisasterRecoveryService,
+)
 from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
@@ -72,7 +75,8 @@ def _create_server_init(
         constants.SCRIPTING_SERVICE_NAME: ScriptingService,
         constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
         constants.EDIT_DATA_SERVICE_NAME: EditDataService,
-        constants.TASK_SERVICE_NAME: TaskService
+        constants.TASK_SERVICE_NAME: TaskService,
+        constants.CHAT_SERVICE_NAME: ChatService,
     }
     service_box = ServiceProvider(
         rpc_server, services, provider, server_logger, async_runner=async_runner
@@ -81,7 +85,7 @@ def _create_server_init(
     return rpc_server, service_box
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # See if we have any arguments
     wait_for_debugger = False
     log_dir = None
@@ -91,27 +95,41 @@ if __name__ == '__main__':
 
     # Load configuration from the config file
     config = configparser.ConfigParser()
-    config.read(path_relative_to_base('config.ini'))
+    config.read(path_relative_to_base("config.ini"))
 
     # Define defaults from the config file
     defaults = {
-        "log_dir": config.get('general', 'log_dir', fallback=os.path.dirname(sys.argv[0])),
-        "enable_web_server": config.get('server', 'enable_web_server', fallback="false"),
-        "listen_address": config.get('server', 'listen_address', fallback="0.0.0.0"),
-        "listen_port": config.get('server', 'listen_port', fallback="8443"),
-        "console_logging": config.get('server', 'console_logging', fallback="false"),
-        "disable_keep_alive": config.get('server', 'disable_keep_alive', fallback="false"),
-        "enable_dynamic_cors": config.get('server', 'enable_dynamic_cors', fallback="false")
+        "log_dir": config.get(
+            "general", "log_dir", fallback=os.path.dirname(sys.argv[0])
+        ),
+        "enable_web_server": config.get(
+            "server", "enable_web_server", fallback="false"
+        ),
+        "listen_address": config.get("server", "listen_address", fallback="0.0.0.0"),
+        "listen_port": config.get("server", "listen_port", fallback="8443"),
+        "console_logging": config.get("server", "console_logging", fallback="false"),
+        "disable_keep_alive": config.get(
+            "server", "disable_keep_alive", fallback="false"
+        ),
+        "enable_dynamic_cors": config.get(
+            "server", "enable_dynamic_cors", fallback="false"
+        ),
     }
 
     # Override config defaults with environment variables (if present)
-    log_dir_env = os.getenv('LOG_DIR', defaults['log_dir'])
-    enable_web_server_env = os.getenv('ENABLE_WEB_SERVER', defaults['enable_web_server'])
-    listen_address_env = os.getenv('LISTEN_ADDRESS', defaults['listen_address'])
-    listen_port_env = os.getenv('LISTEN_PORT', defaults['listen_port'])
-    console_logging_env = os.getenv('CONSOLE_LOGGING', defaults['console_logging'])
-    disable_keep_alive_env = os.getenv('DISABLE_KEEP_ALIVE', defaults['disable_keep_alive'])
-    enable_dynamic_cors_env = os.getenv('ENABLE_DYNAMIC_CORS', defaults['enable_dynamic_cors'])
+    log_dir_env = os.getenv("LOG_DIR", defaults["log_dir"])
+    enable_web_server_env = os.getenv(
+        "ENABLE_WEB_SERVER", defaults["enable_web_server"]
+    )
+    listen_address_env = os.getenv("LISTEN_ADDRESS", defaults["listen_address"])
+    listen_port_env = os.getenv("LISTEN_PORT", defaults["listen_port"])
+    console_logging_env = os.getenv("CONSOLE_LOGGING", defaults["console_logging"])
+    disable_keep_alive_env = os.getenv(
+        "DISABLE_KEEP_ALIVE", defaults["disable_keep_alive"]
+    )
+    enable_dynamic_cors_env = os.getenv(
+        "ENABLE_DYNAMIC_CORS", defaults["enable_dynamic_cors"]
+    )
 
     # Parse command-line arguments (takes precidence over config file and environment variables)
     parser = argparse.ArgumentParser(description="Start the Tools Service")
@@ -196,7 +214,7 @@ if __name__ == '__main__':
 
     # Handle input file for stdin
     if args.input:
-        stdin = io.open(args.input, 'rb', buffering=0)
+        stdin = io.open(args.input, "rb", buffering=0)
 
     # Handle remote debugging
     if args.enable_remote_debugging or args.enable_remote_debugging_wait:
@@ -227,16 +245,18 @@ if __name__ == '__main__':
         # Check if we support the given provider
         supported = provider_name in constants.SUPPORTED_PROVIDERS
         if not supported:
-            raise AssertionError("{} is not a supported provider".format(str(provider_name)))
+            raise AssertionError(
+                "{} is not a supported provider".format(str(provider_name))
+            )
 
     # Create the output logger
-    logger = logging.getLogger('ossdbtoolsservice')
+    logger = logging.getLogger("ossdbtoolsservice")
     try:
         os.makedirs(log_dir, exist_ok=True)
-        handler = logging.FileHandler(os.path.join(log_dir, 'ossdbtoolsservice.log'))
+        handler = logging.FileHandler(os.path.join(log_dir, "ossdbtoolsservice.log"))
     except Exception:
         handler = logging.NullHandler()
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
@@ -251,16 +271,16 @@ if __name__ == '__main__':
 
     # Wait for the debugger to attach if needed
     if wait_for_debugger:
-        logger.debug('Waiting for a debugger to attach...')
+        logger.debug("Waiting for a debugger to attach...")
         debugpy.wait_for_client()
 
     # Wrap standard in and out in io streams to add readinto support
     if stdin is None:
-        stdin = io.open(sys.stdin.fileno(), 'rb', buffering=0, closefd=False)
+        stdin = io.open(sys.stdin.fileno(), "rb", buffering=0, closefd=False)
 
-    std_out_wrapped = io.open(sys.stdout.fileno(), 'wb', buffering=0, closefd=False)
+    std_out_wrapped = io.open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)
 
-    logger.info('{0} Tools Service is starting up...'.format(provider_name))
+    logger.info("{0} Tools Service is starting up...".format(provider_name))
 
     # Create the server, but don't start it yet
     server = None
