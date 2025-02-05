@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.edit_data.contracts import SessionOperationRequest
 
 
@@ -21,3 +21,4 @@ class EditCommitResponse:
 
 
 EDIT_COMMIT_REQUEST = IncomingMessageConfiguration('edit/commit', EditCommitRequest)
+OutgoingMessageRegistration.register_outgoing_message(EditCommitResponse)

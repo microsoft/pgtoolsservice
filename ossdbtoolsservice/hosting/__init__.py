@@ -7,11 +7,12 @@ from ossdbtoolsservice.hosting.json_rpc_server import (
     JSONRPCServer,
     NotificationContext,
     IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
     RequestContext
 )
 from ossdbtoolsservice.hosting.service_provider import ServiceProvider
 
 __all__ = [
-    'JSONRPCServer', 'NotificationContext', 'IncomingMessageConfiguration', 'RequestContext',
+    'JSONRPCServer', 'NotificationContext', 'IncomingMessageConfiguration', 'OutgoingMessageRegistration', 'RequestContext',
     'ServiceProvider'
 ]

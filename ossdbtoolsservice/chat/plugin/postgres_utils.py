@@ -1,0 +1,1886 @@
+from psycopg import sql, Connection
+import re
+
+
+def fetch_schemas_and_tables(connection: Connection) -> str:
+    """Fetch all user schemas and their tables."""
+    with connection.cursor() as cur:
+        cur.execute(
+            """
+            SELECT 
+                table_schema,
+                table_name
+            FROM 
+                information_schema.tables
+            WHERE 
+                table_type = 'BASE TABLE'
+                AND table_schema NOT IN ('pg_catalog', 'information_schema')
+                AND table_schema NOT LIKE 'pg_%'
+            ORDER BY 
+                table_schema, 
+                table_name;
+            """
+        )
+        schemas_and_tables = cur.fetchall()
+        return str(schemas_and_tables)
+
+
+def execute_readonly_query(
+    connection: Connection, query: str, max_result_chars: int = 7000
+) -> str:
+    """Execute a read-only query against the database."""
+    with connection.cursor() as cur:
+        cur.execute("BEGIN TRANSACTION READ ONLY;")
+        try:
+            cur.execute(wrap_sql(query))
+            result = cur.fetchall()
+            result_str = str(result)
+            # Format as CSV
+            if result:
+                if cur.description:
+                    headers = [desc.name for desc in cur.description]
+                    result_str = ",".join(headers) + "\n"
+                    result_str += "\n".join(
+                        ",".join(str(cell) for cell in row) for row in result
+                    )
+                else:
+                    result_str = str(result)
+
+            # Estimate the number of tokens in the result
+            if len(result_str) > max_result_chars:
+                return f"Result has {len(result)} rows, and is too large to return. Run the query in an editor to see the full result."
+            return result_str
+        finally:
+            connection.rollback()
+
+
+def execute_statement(connection: Connection, statement: str) -> str:
+    """Execute a statement against the database."""
+    with connection.cursor() as cur:
+        cur.execute(wrap_sql(statement))
+        return "Statement executed successfully."
+
+
+def wrap_sql(statement: str) -> sql.SQL:
+    """Wrap a SQL statement in a transaction."""
+    return sql.SQL(statement)  # type:ignore
+
+
+def fetch_schema_v1(connection: Connection, schema_name: str = "public") -> str:
+    """Fetch the full schema creation script for the database."""
+    with connection.cursor() as cur:
+        schema_creation_script = []
+
+        # Get postgres version
+        cur.execute("SELECT version();")
+        version = cur.fetchone()
+        if version:
+            schema_creation_script.append(f"-- PostgreSQL version: {version[0]}")
+
+        # Fetch extensions for the database
+        cur.execute(sql.SQL("SELECT extname FROM pg_extension;"))
+        extensions = cur.fetchall()
+        schema_creation_script.extend(
+            f"CREATE EXTENSION IF NOT EXISTS {ext[0]};" for ext in extensions
+        )
+        schema_creation_script.append(f"CREATE SCHEMA {schema_name};")
+
+        # Fetch tables for the schema
+        cur.execute(
+            sql.SQL("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = {};
+            """).format(sql.Literal(schema_name))
+        )
+        tables = cur.fetchall()
+
+        for table in tables:
+            table_name = table[0]
+            # Get CREATE TABLE statement with constraints
+            cur.execute(
+                sql.SQL("""
+                    SELECT 'CREATE TABLE ' || table_schema || '.' || table_name || ' (' ||
+                    string_agg(column_name || ' ' || 
+                                CASE 
+                                    WHEN data_type = 'USER-DEFINED' THEN 
+                                        (SELECT pg_catalog.format_type(atttypid, atttypmod) 
+                                         FROM pg_attribute 
+                                         WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = table_name) 
+                                         AND attname = column_name)
+                                    ELSE data_type 
+                                END || 
+                                COALESCE('(' || character_maximum_length || ')', '') || 
+                                COALESCE(' ' || column_default, '') || 
+                                CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END, ', ') || 
+                    COALESCE(', ' || string_agg(constraint_name || ' ' || constraint_type, ', '), '') || ');'
+                    FROM (
+                        SELECT c.table_schema, c.table_name, c.column_name, c.data_type, c.character_maximum_length, c.column_default, c.is_nullable,
+                               tc.constraint_name, tc.constraint_type
+                        FROM information_schema.columns c
+                        LEFT JOIN (
+                            SELECT tc.table_schema, tc.table_name, kcu.column_name, tc.constraint_name, tc.constraint_type
+                            FROM information_schema.table_constraints tc
+                            JOIN information_schema.key_column_usage kcu
+                            ON tc.constraint_name = kcu.constraint_name
+                            AND tc.table_schema = kcu.table_schema
+                            AND tc.table_name = kcu.table_name
+                        ) tc
+                        ON c.table_schema = tc.table_schema
+                        AND c.table_name = tc.table_name
+                        AND c.column_name = tc.column_name
+                        WHERE c.table_schema = {} AND c.table_name = {}
+                    ) sub
+                    GROUP BY table_schema, table_name;
+                """).format(sql.Literal(schema_name), sql.Literal(table_name))
+            )
+            create_table_stmt = cur.fetchone()
+            if create_table_stmt:
+                schema_creation_script.append(create_table_stmt[0])
+
+        # Fetch indexes for the schema
+        cur.execute(
+            sql.SQL("""
+                SELECT indexdef
+                FROM pg_indexes
+                WHERE schemaname = {};
+            """).format(sql.Literal(schema_name))
+        )
+        indexes = cur.fetchall()
+        schema_creation_script.extend(idx[0] for idx in indexes)
+
+        # Fetch sequences for the schema
+        cur.execute(
+            sql.SQL("""
+                SELECT sequence_schema, sequence_name, data_type, start_value, increment, maximum_value, minimum_value, cycle_option
+                FROM information_schema.sequences
+                WHERE sequence_schema = {};
+            """).format(sql.Literal(schema_name))
+        )
+        sequences = cur.fetchall()
+        for seq in sequences:
+            schema_creation_script.append(
+                f"CREATE SEQUENCE {seq[0]}.{seq[1]} "
+                f"AS {seq[2]} "
+                f"START WITH {seq[3]} "
+                f"INCREMENT BY {seq[4]} "
+                f"MINVALUE {seq[6]} "
+                f"MAXVALUE {seq[5]} "
+                f"{'CYCLE' if seq[7] == 'YES' else 'NO CYCLE'};"
+            )
+
+        # Fetch views for the schema
+        cur.execute(
+            sql.SQL("""
+                SELECT table_name, view_definition
+                FROM information_schema.views
+                WHERE table_schema = {};
+            """).format(sql.Literal(schema_name))
+        )
+        views = cur.fetchall()
+        schema_creation_script.extend(
+            f"CREATE VIEW {schema_name}.{view[0]} AS {view[1]};" for view in views
+        )
+
+        # Fetch functions and procedures for the schema
+        cur.execute(
+            sql.SQL("""
+                SELECT routine_name, routine_definition
+                FROM information_schema.routines
+                WHERE routine_schema = {};
+            """).format(sql.Literal(schema_name))
+        )
+        routines = cur.fetchall()
+        schema_creation_script.extend(
+            f"CREATE FUNCTION {schema_name}.{routine[0]} AS $$ {routine[1]} $$ LANGUAGE plpgsql;"
+            for routine in routines
+        )
+
+        # Fetch triggers for the schema
+        cur.execute(
+            sql.SQL("""
+                SELECT tgname, pg_get_triggerdef(t.oid)
+                FROM pg_trigger t
+                JOIN pg_class c ON c.oid = t.tgrelid
+                JOIN pg_namespace n ON n.oid = c.relnamespace
+                WHERE n.nspname = {};
+            """).format(sql.Literal(schema_name))
+        )
+        triggers = cur.fetchall()
+        schema_creation_script.extend(
+            f"CREATE TRIGGER {trigger[0]} {trigger[1]};" for trigger in triggers
+        )
+
+        return "\n".join(schema_creation_script)
+
+
+def fetch_schema_v2(connection: Connection) -> str:
+    """Fetch the schema and table creation script for each schema in the database."""
+    with connection.cursor() as cur:
+        schema_creation_script = []
+
+        # Get postgres version
+        cur.execute("SELECT version();")
+        version = cur.fetchone()
+        if version:
+            schema_creation_script.append(f"-- PostgreSQL version: {version[0]}")
+
+        # Fetch extensions for the database
+        cur.execute(sql.SQL("SELECT extname FROM pg_extension;"))
+        extensions = cur.fetchall()
+        schema_creation_script.extend(
+            f"CREATE EXTENSION IF NOT EXISTS {ext[0]};" for ext in extensions
+        )
+
+        # Fetch all schema names
+        cur.execute(
+            """
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+            AND schema_name NOT LIKE 'pg_%';
+            """
+        )
+        schemas = cur.fetchall()
+
+        for schema in schemas:
+            schema_name = schema[0]
+            schema_creation_script.append(f"CREATE SCHEMA {schema_name};")
+
+            # Fetch tables for the schema
+            cur.execute(
+                sql.SQL("""
+                    SELECT table_name 
+                    FROM information_schema.tables 
+                    WHERE table_schema = {};
+                """).format(sql.Literal(schema_name))
+            )
+            tables = cur.fetchall()
+
+            for table in tables:
+                table_name = table[0]
+                # Get CREATE TABLE statement with constraints
+                cur.execute(
+                    sql.SQL("""
+                        SELECT 'CREATE TABLE ' || table_schema || '.' || table_name || ' (' ||
+                        string_agg(column_name || ' ' || 
+                                    CASE 
+                                        WHEN data_type = 'USER-DEFINED' THEN 
+                                            (SELECT pg_catalog.format_type(atttypid, atttypmod) 
+                                             FROM pg_attribute 
+                                             WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = table_name) 
+                                             AND attname = column_name)
+                                        ELSE data_type 
+                                    END || 
+                                    COALESCE('(' || character_maximum_length || ')', '') || 
+                                    COALESCE(' ' || column_default, '') || 
+                                    CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END, ', ') || 
+                        COALESCE(', ' || string_agg(constraint_name || ' ' || constraint_type, ', '), '') || ');'
+                        FROM (
+                            SELECT c.table_schema, c.table_name, c.column_name, c.data_type, c.character_maximum_length, c.column_default, c.is_nullable,
+                                   tc.constraint_name, tc.constraint_type
+                            FROM information_schema.columns c
+                            LEFT JOIN (
+                                SELECT tc.table_schema, tc.table_name, kcu.column_name, tc.constraint_name, tc.constraint_type
+                                FROM information_schema.table_constraints tc
+                                JOIN information_schema.key_column_usage kcu
+                                ON tc.constraint_name = kcu.constraint_name
+                                AND tc.table_schema = kcu.table_schema
+                                AND tc.table_name = kcu.table_name
+                            ) tc
+                            ON c.table_schema = tc.table_schema
+                            AND c.table_name = tc.table_name
+                            AND c.column_name = tc.column_name
+                            WHERE c.table_schema = {} AND c.table_name = {}
+                        ) sub
+                        GROUP BY table_schema, table_name;
+                    """).format(sql.Literal(schema_name), sql.Literal(table_name))
+                )
+                create_table_stmt = cur.fetchone()
+                if create_table_stmt:
+                    schema_creation_script.append(create_table_stmt[0])
+
+        return "\n".join(schema_creation_script)
+
+
+def fetch_schema_v3(connection: Connection) -> str:
+    """
+    Fetch the complete schema creation script for each non-system schema,
+    including partitioned tables and their partitions (attached via ALTER TABLE).
+    """
+    with connection.cursor() as cur:
+        schema_creation_script = []
+
+        # PostgreSQL version as a comment.
+        cur.execute("SELECT version();")
+        version = cur.fetchone()
+        if version:
+            schema_creation_script.append(f"-- PostgreSQL version: {version[0]}")
+
+        # Create extensions.
+        cur.execute("SELECT extname FROM pg_extension;")
+        for (extname,) in cur.fetchall():
+            schema_creation_script.append(f"CREATE EXTENSION IF NOT EXISTS {extname};")
+
+        # Get non-system schemas.
+        cur.execute("""
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+              AND schema_name NOT LIKE 'pg_%';
+        """)
+        schemas = cur.fetchall()
+
+        for (schema_name,) in schemas:
+            schema_creation_script.append(f"CREATE SCHEMA {schema_name};")
+
+            # Query objects in the schema.
+            # Note: We exclude tables that are partitions (i.e. that appear in pg_inherits)
+            cur.execute(
+                sql.SQL("""
+                SELECT c.relname, c.relkind, c.oid
+                FROM pg_class c
+                JOIN pg_namespace n ON c.relnamespace = n.oid
+                WHERE n.nspname = %s
+                  AND c.relkind IN ('r', 'p', 'f', 'v', 'm')
+                  AND (c.relkind NOT IN ('r', 'f') OR c.oid NOT IN (SELECT inhrelid FROM pg_inherits))
+                ORDER BY c.relname;
+            """),
+                [schema_name],
+            )
+            for obj_name, relkind, oid in cur.fetchall():
+                full_name = f"{schema_name}.{obj_name}"
+
+                if relkind in ("r", "p", "f"):
+                    # Build column definitions from pg_attribute.
+                    cur.execute(
+                        sql.SQL("""
+                        SELECT a.attname,
+                               pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
+                               a.attnotnull,
+                               pg_get_expr(ad.adbin, ad.adrelid) AS default_value
+                        FROM pg_attribute a
+                        LEFT JOIN pg_attrdef ad
+                          ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
+                        WHERE a.attrelid = %s::regclass
+                          AND a.attnum > 0
+                          AND NOT a.attisdropped
+                        ORDER BY a.attnum;
+                    """),
+                        [full_name],
+                    )
+                    columns = cur.fetchall()
+                    col_defs = []
+                    for col_name, data_type, attnotnull, default_value in columns:
+                        col_def = f"{col_name} {data_type}"
+                        if default_value is not None:
+                            col_def += f" DEFAULT {default_value}"
+                        if attnotnull:
+                            col_def += " NOT NULL"
+                        col_defs.append(col_def)
+
+                    # Add constraints via pg_constraint.
+                    cur.execute(
+                        sql.SQL("""
+                        SELECT conname, pg_get_constraintdef(oid, true)
+                        FROM pg_constraint
+                        WHERE conrelid = %s::regclass
+                        ORDER BY contype;
+                    """),
+                        [full_name],
+                    )
+                    for conname, condef in cur.fetchall():
+                        col_defs.append(f"CONSTRAINT {conname} {condef}")
+
+                    stmt = (
+                        f"CREATE TABLE {full_name} (\n    "
+                        + ",\n    ".join(col_defs)
+                        + "\n)"
+                    )
+
+                    # If the table is partitioned, append the PARTITION BY clause.
+                    if relkind == "p":
+                        cur.execute(
+                            sql.SQL("SELECT pg_get_partkeydef(%s::regclass);"),
+                            [full_name],
+                        )
+                        partdef = cur.fetchone()[0]
+                        if partdef:
+                            stmt += f" PARTITION BY {partdef}"
+
+                    # If the table is a foreign table, adjust the DDL accordingly.
+                    if relkind == "f":
+                        cur.execute(
+                            sql.SQL("""
+                            SELECT fs.srvname,
+                                   array_to_string(ft.ftoptions, ', ')
+                            FROM pg_foreign_table ft
+                            JOIN pg_foreign_server fs ON ft.ftserver = fs.oid
+                            WHERE ft.ftrelid = %s::regclass;
+                        """),
+                            [full_name],
+                        )
+                        foreign_info = cur.fetchone()
+                        if foreign_info:
+                            srvname, options = foreign_info
+                            stmt = stmt.replace(
+                                "CREATE TABLE", "CREATE FOREIGN TABLE", 1
+                            )
+                            stmt += f" SERVER {srvname}"
+                            if options:
+                                stmt += f" OPTIONS ({options})"
+                    stmt += ";"
+                    schema_creation_script.append(stmt)
+
+                    # *** NEW: If the table is partitioned, fetch and attach its partitions.
+                    if relkind == "p":
+                        cur.execute(
+                            sql.SQL("""
+                            SELECT child.relname,
+                                   pg_get_expr(child.relpartbound, child.oid) AS part_bound
+                            FROM pg_inherits i
+                            JOIN pg_class child ON i.inhrelid = child.oid
+                            WHERE i.inhparent = %s::regclass;
+                        """),
+                            [full_name],
+                        )
+                        partitions = cur.fetchall()
+                        for part_name, part_bound in partitions:
+                            child_full_name = f"{schema_name}.{part_name}"
+                            alter_stmt = f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            if part_bound:
+                                # pg_get_expr returns a string like "FOR VALUES FROM (...) TO (...)"
+                                alter_stmt += f" {part_bound}"
+                            alter_stmt += ";"
+                            schema_creation_script.append(alter_stmt)
+
+                elif relkind == "v":
+                    # For views, use pg_get_viewdef.
+                    cur.execute(
+                        sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
+                        [full_name],
+                    )
+                    viewdef = cur.fetchone()[0]
+                    stmt = f"CREATE OR REPLACE VIEW {full_name} AS\n{viewdef};"
+                    schema_creation_script.append(stmt)
+
+                elif relkind == "m":
+                    # For materialized views.
+                    cur.execute(
+                        sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
+                        [full_name],
+                    )
+                    viewdef = cur.fetchone()[0]
+                    stmt = (
+                        f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
+                    )
+                    schema_creation_script.append(stmt)
+
+        return "\n".join(schema_creation_script)
+
+
+def fetch_schema_v4(connection: Connection) -> str:
+    """
+    Fetch a complete schema creation script for each non-system schema in the database,
+    including tables, partitioned tables (with ALTER TABLE ... ATTACH PARTITION),
+    foreign tables, views, materialized views, sequences, indexes, triggers, and functions.
+    Objects contributed by installed extensions (those with pg_depend.deptype = 'e') are excluded.
+    """
+    with connection.cursor() as cur:
+        schema_creation_script = []
+
+        # PostgreSQL version (as a comment)
+        cur.execute("SELECT version();")
+        version = cur.fetchone()
+        if version:
+            schema_creation_script.append(f"-- PostgreSQL version: {version[0]}")
+
+        # Create extensions (we still create these, but later exclude their contributed objects)
+        cur.execute("SELECT extname FROM pg_extension;")
+        for (extname,) in cur.fetchall():
+            schema_creation_script.append(f"CREATE EXTENSION IF NOT EXISTS {extname};")
+
+        # Get all non-system schemas.
+        cur.execute("""
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+              AND schema_name NOT LIKE 'pg_%';
+        """)
+        schemas = cur.fetchall()
+
+        for (schema_name,) in schemas:
+            schema_creation_script.append(f"CREATE SCHEMA {schema_name};")
+
+            # -- Process tables (regular, partitioned, foreign), views, and materialized views.
+            cur.execute(
+                sql.SQL("""
+                SELECT c.relname, c.relkind, c.oid
+                FROM pg_class c
+                JOIN pg_namespace n ON c.relnamespace = n.oid
+                WHERE n.nspname = %s
+                  AND c.relkind IN ('r', 'p', 'f', 'v', 'm')
+                  -- For regular and foreign tables, exclude those that are partitions.
+                  AND (c.relkind NOT IN ('r', 'f') OR c.oid NOT IN (SELECT inhrelid FROM pg_inherits))
+                ORDER BY c.relname;
+            """),
+                [schema_name],
+            )
+            objects = cur.fetchall()
+
+            for obj_name, relkind, oid in objects:
+                full_name = f"{schema_name}.{obj_name}"
+                if relkind in ("r", "p", "f"):
+                    # Build CREATE TABLE (or CREATE FOREIGN TABLE) DDL
+                    cur.execute(
+                        sql.SQL("""
+                        SELECT a.attname,
+                               pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
+                               a.attnotnull,
+                               pg_get_expr(ad.adbin, ad.adrelid) AS default_value
+                        FROM pg_attribute a
+                        LEFT JOIN pg_attrdef ad
+                          ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
+                        WHERE a.attrelid = %s::regclass
+                          AND a.attnum > 0
+                          AND NOT a.attisdropped
+                        ORDER BY a.attnum;
+                    """),
+                        [full_name],
+                    )
+                    columns = cur.fetchall()
+                    col_defs = []
+                    for col_name, data_type, attnotnull, default_value in columns:
+                        col_def = f"{col_name} {data_type}"
+                        if default_value is not None:
+                            col_def += f" DEFAULT {default_value}"
+                        if attnotnull:
+                            col_def += " NOT NULL"
+                        col_defs.append(col_def)
+
+                    # Append constraints (ensuring multi‑column constraints are output only once)
+                    cur.execute(
+                        sql.SQL("""
+                        SELECT conname, pg_get_constraintdef(oid, true)
+                        FROM pg_constraint
+                        WHERE conrelid = %s::regclass
+                        ORDER BY contype;
+                    """),
+                        [full_name],
+                    )
+                    for conname, condef in cur.fetchall():
+                        col_defs.append(f"CONSTRAINT {conname} {condef}")
+
+                    stmt = (
+                        f"CREATE TABLE {full_name} (\n    "
+                        + ",\n    ".join(col_defs)
+                        + "\n)"
+                    )
+
+                    # If partitioned, add the PARTITION BY clause.
+                    if relkind == "p":
+                        cur.execute(
+                            sql.SQL("SELECT pg_get_partkeydef(%s::regclass);"),
+                            [full_name],
+                        )
+                        partdef = cur.fetchone()[0]
+                        if partdef:
+                            stmt += f" PARTITION BY {partdef}"
+
+                    # If a foreign table, adjust the DDL.
+                    if relkind == "f":
+                        cur.execute(
+                            sql.SQL("""
+                            SELECT fs.srvname,
+                                   array_to_string(ft.ftoptions, ', ')
+                            FROM pg_foreign_table ft
+                            JOIN pg_foreign_server fs ON ft.ftserver = fs.oid
+                            WHERE ft.ftrelid = %s::regclass;
+                        """),
+                            [full_name],
+                        )
+                        foreign_info = cur.fetchone()
+                        if foreign_info:
+                            srvname, options = foreign_info
+                            stmt = stmt.replace(
+                                "CREATE TABLE", "CREATE FOREIGN TABLE", 1
+                            )
+                            stmt += f" SERVER {srvname}"
+                            if options:
+                                stmt += f" OPTIONS ({options})"
+                    stmt += ";"
+                    schema_creation_script.append(stmt)
+
+                    # Add triggers for this table.
+                    cur.execute(
+                        sql.SQL("""
+                        SELECT tgname, pg_get_triggerdef(t.oid, true)
+                        FROM pg_trigger t
+                        WHERE t.tgrelid = %s::regclass
+                          AND NOT t.tgisinternal
+                          AND NOT EXISTS (
+                              SELECT 1 FROM pg_depend d
+                              WHERE d.objid = t.oid AND d.deptype = 'e'
+                          );
+                    """),
+                        [full_name],
+                    )
+                    for tgname, tgdef in cur.fetchall():
+                        # pg_get_triggerdef returns the trigger definition (without a trailing semicolon)
+                        schema_creation_script.append(tgdef + ";")
+
+                    # For partitioned tables, attach child partitions.
+                    if relkind == "p":
+                        cur.execute(
+                            sql.SQL("""
+                            SELECT child.relname,
+                                   pg_get_expr(child.relpartbound, child.oid) AS part_bound
+                            FROM pg_inherits i
+                            JOIN pg_class child ON i.inhrelid = child.oid
+                            WHERE i.inhparent = %s::regclass;
+                        """),
+                            [full_name],
+                        )
+                        for part_name, part_bound in cur.fetchall():
+                            child_full_name = f"{schema_name}.{part_name}"
+                            alter_stmt = f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            if part_bound:
+                                alter_stmt += f" {part_bound}"
+                            alter_stmt += ";"
+                            schema_creation_script.append(alter_stmt)
+
+                elif relkind == "v":
+                    # Create view.
+                    cur.execute(
+                        sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
+                        [full_name],
+                    )
+                    viewdef = cur.fetchone()[0]
+                    schema_creation_script.append(
+                        f"CREATE OR REPLACE VIEW {full_name} AS\n{viewdef};"
+                    )
+                elif relkind == "m":
+                    # Create materialized view.
+                    cur.execute(
+                        sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
+                        [full_name],
+                    )
+                    viewdef = cur.fetchone()[0]
+                    schema_creation_script.append(
+                        f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
+                    )
+
+            # -- Now process additional objects in the schema.
+
+            # Sequences (using information_schema so that we get a readable set of attributes)
+            cur.execute(
+                sql.SQL("""
+                SELECT sequence_name, start_value, minimum_value, maximum_value, increment, cycle_option
+                FROM information_schema.sequences
+                WHERE sequence_schema = %s;
+            """),
+                [schema_name],
+            )
+            for (
+                seq_name,
+                start_value,
+                min_value,
+                max_value,
+                increment,
+                cycle_option,
+            ) in cur.fetchall():
+                seq_stmt = f"CREATE SEQUENCE {schema_name}.{seq_name}\n"
+                seq_stmt += f"    START WITH {start_value}\n"
+                seq_stmt += f"    INCREMENT BY {increment}\n"
+                seq_stmt += f"    MINVALUE {min_value}\n"
+                seq_stmt += f"    MAXVALUE {max_value}\n"
+                seq_stmt += (
+                    f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
+                )
+                schema_creation_script.append(seq_stmt)
+
+            # Indexes (query via pg_indexes and join with pg_class to exclude extension‐owned objects)
+            cur.execute(
+                sql.SQL("""
+                SELECT c.oid, i.indexname, i.indexdef
+                FROM pg_indexes i
+                JOIN pg_namespace n ON i.schemaname = n.nspname
+                JOIN pg_class c ON c.relname = i.indexname AND c.relnamespace = n.oid
+                WHERE i.schemaname = %s
+                  AND NOT EXISTS (
+                      SELECT 1 FROM pg_depend d
+                      WHERE d.objid = c.oid AND d.deptype = 'e'
+                  );
+            """),
+                [schema_name],
+            )
+            for oid, indexname, indexdef in cur.fetchall():
+                schema_creation_script.append(indexdef + ";")
+
+            # Functions (exclude functions that are part of an extension)
+            try:
+                cur.execute(
+                    sql.SQL("""
+                   SELECT p.oid, p.proname, 
+                        CASE 
+                            WHEN p.prokind = 'f' THEN pg_get_functiondef(p.oid)
+                            WHEN p.prokind = 'a' THEN 
+                                'Aggregate function using ' || (SELECT pp.proname 
+                                                                FROM pg_proc pp 
+                                                                WHERE pp.oid = a.aggtransfn)
+                            ELSE '' 
+                        END AS function_def
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON p.pronamespace = n.oid
+                    LEFT JOIN pg_aggregate a ON a.aggfnoid = p.oid  -- Get aggregate details
+                    WHERE n.nspname = %s
+                    AND NOT EXISTS (
+                        SELECT 1 FROM pg_depend d
+                        WHERE d.objid = p.oid AND d.deptype = 'e'
+                    );
+                   """),
+                    [schema_name],
+                )
+                for oid, proname, funcdef in cur.fetchall():
+                    schema_creation_script.append(funcdef)
+            except Exception:
+               pass
+
+        return "\n\n".join(schema_creation_script)
+
+
+def fetch_schema_v5(
+    connection: Connection,
+    include_tables: bool = True,
+    include_views: bool = True,
+    include_indexes: bool = True,
+    include_triggers: bool = True,
+    include_sequences: bool = True,
+    include_functions: bool = True,
+    include_procedures: bool = True,
+    include_types: bool = True,
+    include_rls: bool = True,
+    include_rules: bool = True,
+    include_fdw: bool = True,
+    include_collations: bool = True,
+    include_grants: bool = True,
+    include_aggregates: bool = True,
+    include_operators: bool = True,
+    include_operator_classes: bool = True,
+    include_event_triggers: bool = True,
+) -> str:
+    """
+    Fetch a complete database schema creation script with full context.
+
+    Parameters control whether the following objects are included:
+
+      - Tables (including partitioned and foreign tables)
+      - Views and materialized views
+      - Indexes
+      - Triggers (per table)
+      - Sequences
+      - Functions (normal) and Procedures (PostgreSQL 11+)
+      - User‐defined types: composite types, enumerated types, domains, and range types
+      - Row-level security policies and rewrite rules
+      - Foreign Data Wrapper objects (FDWs, foreign servers, and user mappings)
+      - Custom collations
+      - Grants (privileges) on tables, sequences, and routines
+      - Aggregates, operators, and operator classes
+      - Event triggers
+
+    All flags default to True. Objects contributed by installed extensions
+    (those with a dependency type of 'e') are omitted.
+    """
+    schema_creation_script = []
+    with connection.cursor() as cur:
+        # --- Global objects (not schema‐bound) ---
+
+        # PostgreSQL version.
+        cur.execute("SELECT version();")
+        version = cur.fetchone()
+        if version:
+            schema_creation_script.append(f"-- PostgreSQL version: {version[0]}")
+
+        # Extensions.
+        cur.execute("SELECT extname FROM pg_extension;")
+        for (extname,) in cur.fetchall():
+            schema_creation_script.append(f"CREATE EXTENSION IF NOT EXISTS {extname};")
+
+        # Foreign Data Wrapper (FDW) objects.
+        if include_fdw:
+            # FDW wrappers: (Note that FDW definitions are complex; here we simply note their existence.)
+            cur.execute("SELECT fdwname FROM pg_foreign_data_wrapper;")
+            for (fdwname,) in cur.fetchall():
+                schema_creation_script.append(f"-- FDW Wrapper: {fdwname}")
+            # FDW servers.
+            cur.execute("""
+                SELECT srvname, srvfdw, array_to_string(srvoptions, ', ')
+                FROM pg_foreign_server;
+            """)
+            for srvname, srvfdw, srvoptions in cur.fetchall():
+                stmt = f"CREATE SERVER {srvname} FOREIGN DATA WRAPPER {srvfdw}"
+                if srvoptions:
+                    stmt += f" OPTIONS ({srvoptions})"
+                stmt += ";"
+                schema_creation_script.append(stmt)
+            # User mappings.
+            cur.execute("""
+                SELECT umuser, umserver, array_to_string(umoptions, ', ')
+                FROM pg_user_mappings;
+            """)
+            for umuser, umserver, umoptions in cur.fetchall():
+                # Note: umuser is stored as an OID; in a production system you might resolve it to a role name.
+                stmt = f"CREATE USER MAPPING FOR {umuser} SERVER {umserver}"
+                if umoptions:
+                    stmt += f" OPTIONS ({umoptions})"
+                stmt += ";"
+                schema_creation_script.append(stmt)
+
+        # Event triggers.
+        if include_event_triggers:
+            cur.execute(
+                "SELECT evtname, pg_get_event_trigger_def(oid) FROM pg_event_trigger;"
+            )
+            for evtname, evtdef in cur.fetchall():
+                schema_creation_script.append(evtdef + ";")
+
+        # --- Process each non-system schema ---
+        cur.execute("""
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+              AND schema_name NOT LIKE 'pg_%';
+        """)
+        schemas = [row[0] for row in cur.fetchall()]
+
+        for schema_name in schemas:
+            schema_creation_script.append(f"CREATE SCHEMA {schema_name};")
+
+            # --- Table-like objects: tables, partitioned tables, foreign tables, and views ---
+            if any(
+                [
+                    include_tables,
+                    include_views,
+                    include_indexes,
+                    include_triggers,
+                    include_rls,
+                    include_rules,
+                ]
+            ):
+                cur.execute(
+                    sql.SQL("""
+                    SELECT c.relname, c.relkind, c.oid
+                    FROM pg_class c
+                    JOIN pg_namespace n ON c.relnamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND c.relkind IN ('r', 'p', 'f', 'v', 'm')
+                      -- Exclude partitions from regular and foreign tables.
+                      AND (c.relkind NOT IN ('r', 'f') OR c.oid NOT IN (SELECT inhrelid FROM pg_inherits))
+                    ORDER BY c.relname;
+                """),
+                    [schema_name],
+                )
+                for obj_name, relkind, _ in cur.fetchall():
+                    full_name = f"{schema_name}.{obj_name}"
+                    if relkind in ("r", "p", "f") and include_tables:
+                        # Build table/foreign table DDL.
+                        cur.execute(
+                            sql.SQL("""
+                            SELECT a.attname,
+                                   pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
+                                   a.attnotnull,
+                                   pg_get_expr(ad.adbin, ad.adrelid) AS default_value
+                            FROM pg_attribute a
+                            LEFT JOIN pg_attrdef ad
+                              ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
+                            WHERE a.attrelid = %s::regclass
+                              AND a.attnum > 0
+                              AND NOT a.attisdropped
+                            ORDER BY a.attnum;
+                        """),
+                            [full_name],
+                        )
+                        columns = cur.fetchall()
+                        col_defs = []
+                        for col_name, data_type, attnotnull, default_value in columns:
+                            col_def = f"{col_name} {data_type}"
+                            if default_value is not None:
+                                col_def += f" DEFAULT {default_value}"
+                            if attnotnull:
+                                col_def += " NOT NULL"
+                            col_defs.append(col_def)
+                        # Append constraints (using pg_constraint to avoid duplicates).
+                        cur.execute(
+                            sql.SQL("""
+                            SELECT conname, pg_get_constraintdef(oid, true)
+                            FROM pg_constraint
+                            WHERE conrelid = %s::regclass
+                            ORDER BY contype;
+                        """),
+                            [full_name],
+                        )
+                        for conname, condef in cur.fetchall():
+                            col_defs.append(f"CONSTRAINT {conname} {condef}")
+                        stmt = (
+                            f"CREATE TABLE {full_name} (\n    "
+                            + ",\n    ".join(col_defs)
+                            + "\n)"
+                        )
+                        if relkind == "p":  # Partitioned table.
+                            cur.execute(
+                                sql.SQL("SELECT pg_get_partkeydef(%s::regclass);"),
+                                [full_name],
+                            )
+                            partdef = cur.fetchone()[0]
+                            if partdef:
+                                stmt += f" PARTITION BY {partdef}"
+                        if relkind == "f":  # Foreign table.
+                            cur.execute(
+                                sql.SQL("""
+                                SELECT fs.srvname,
+                                       array_to_string(ft.ftoptions, ', ')
+                                FROM pg_foreign_table ft
+                                JOIN pg_foreign_server fs ON ft.ftserver = fs.oid
+                                WHERE ft.ftrelid = %s::regclass;
+                            """),
+                                [full_name],
+                            )
+                            foreign_info = cur.fetchone()
+                            if foreign_info:
+                                srvname, options = foreign_info
+                                stmt = stmt.replace(
+                                    "CREATE TABLE", "CREATE FOREIGN TABLE", 1
+                                )
+                                stmt += f" SERVER {srvname}"
+                                if options:
+                                    stmt += f" OPTIONS ({options})"
+                        stmt += ";"
+                        schema_creation_script.append(stmt)
+
+                        # If the table is partitioned, attach its partitions.
+                        if relkind == "p":
+                            cur.execute(
+                                sql.SQL("""
+                                SELECT child.relname,
+                                       pg_get_expr(child.relpartbound, child.oid) AS part_bound
+                                FROM pg_inherits i
+                                JOIN pg_class child ON i.inhrelid = child.oid
+                                WHERE i.inhparent = %s::regclass;
+                            """),
+                                [full_name],
+                            )
+                            for part_name, part_bound in cur.fetchall():
+                                child_full_name = f"{schema_name}.{part_name}"
+                                alter_stmt = f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                                if part_bound:
+                                    alter_stmt += f" {part_bound}"
+                                alter_stmt += ";"
+                                schema_creation_script.append(alter_stmt)
+
+                    elif relkind == "v" and include_views:
+                        # Regular view.
+                        cur.execute(
+                            sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
+                            [full_name],
+                        )
+                        viewdef = cur.fetchone()[0]
+                        schema_creation_script.append(
+                            f"CREATE OR REPLACE VIEW {full_name} AS\n{viewdef};"
+                        )
+                    elif relkind == "m" and include_views:
+                        # Materialized view.
+                        cur.execute(
+                            sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
+                            [full_name],
+                        )
+                        viewdef = cur.fetchone()[0]
+                        schema_creation_script.append(
+                            f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
+                        )
+
+            # Indexes.
+            if include_indexes:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT c.oid, i.indexname, i.indexdef
+                    FROM pg_indexes i
+                    JOIN pg_namespace n ON i.schemaname = n.nspname
+                    JOIN pg_class c ON c.relname = i.indexname AND c.relnamespace = n.oid
+                    WHERE i.schemaname = %s
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = c.oid AND d.deptype = 'e'
+                      );
+                """),
+                    [schema_name],
+                )
+                for _, indexname, indexdef in cur.fetchall():
+                    schema_creation_script.append(indexdef + ";")
+
+            # Triggers.
+            if include_triggers:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT tgname, pg_get_triggerdef(t.oid, true)
+                    FROM pg_trigger t
+                    JOIN pg_class c ON t.tgrelid = c.oid
+                    JOIN pg_namespace n ON c.relnamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND NOT t.tgisinternal
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = t.oid AND d.deptype = 'e'
+                      );
+                """),
+                    [schema_name],
+                )
+                for tgname, tgdef in cur.fetchall():
+                    schema_creation_script.append(tgdef + ";")
+
+            # Row-level security policies.
+            if include_rls:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT pol.polname, c.relname,
+                           pg_get_expr(pol.polqual, pol.polrelid) AS qual,
+                           pg_get_expr(pol.polwithcheck, pol.polrelid) AS with_check,
+                           pol.polcmd
+                    FROM pg_policy pol
+                    JOIN pg_class c ON pol.polrelid = c.oid
+                    JOIN pg_namespace n ON c.relnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """),
+                    [schema_name],
+                )
+                for polname, tablename, qual, with_check, polcmd in cur.fetchall():
+                    stmt = f"CREATE POLICY {polname} ON {schema_name}.{tablename} "
+                    if polcmd != "all":
+                        stmt += f"FOR {polcmd.upper()} "
+                    if qual:
+                        stmt += f"USING ({qual}) "
+                    if with_check:
+                        stmt += f"WITH CHECK ({with_check})"
+                    schema_creation_script.append(stmt.strip() + ";")
+
+            # Rewrite rules.
+            if include_rules:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT r.rulename, pg_get_ruledef(r.oid)
+                    FROM pg_rewrite r
+                    JOIN pg_class c ON r.ev_class = c.oid
+                    JOIN pg_namespace n ON c.relnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """),
+                    [schema_name],
+                )
+                for rulename, ruledef in cur.fetchall():
+                    schema_creation_script.append(ruledef + ";")
+
+            # Sequences.
+            if include_sequences:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT sequence_name, start_value, minimum_value, maximum_value, increment, cycle_option
+                    FROM information_schema.sequences
+                    WHERE sequence_schema = %s;
+                """),
+                    [schema_name],
+                )
+                for (
+                    seq_name,
+                    start_value,
+                    min_value,
+                    max_value,
+                    increment,
+                    cycle_option,
+                ) in cur.fetchall():
+                    seq_stmt = f"CREATE SEQUENCE {schema_name}.{seq_name}\n"
+                    seq_stmt += f"    START WITH {start_value}\n"
+                    seq_stmt += f"    INCREMENT BY {increment}\n"
+                    seq_stmt += f"    MINVALUE {min_value}\n"
+                    seq_stmt += f"    MAXVALUE {max_value}\n"
+                    seq_stmt += f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
+                    schema_creation_script.append(seq_stmt)
+
+            # Functions.
+            if include_functions:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT p.oid, p.proname, pg_get_functiondef(p.oid)
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON p.pronamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND p.prokind = 'f'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = p.oid AND d.deptype = 'e'
+                      );
+                """),
+                    [schema_name],
+                )
+                for _, proname, funcdef in cur.fetchall():
+                    schema_creation_script.append(funcdef)
+
+            # Procedures (PostgreSQL 11+).
+            if include_procedures:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT p.oid, p.proname, pg_get_functiondef(p.oid)
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON p.pronamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND p.prokind = 'p'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = p.oid AND d.deptype = 'e'
+                      );
+                """),
+                    [schema_name],
+                )
+                for _, proname, procdef in cur.fetchall():
+                    schema_creation_script.append(procdef)
+
+            # Aggregates.
+            if include_aggregates:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT p.oid, p.proname, pg_get_functiondef(p.oid)
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON p.pronamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND p.prokind = 'a'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = p.oid AND d.deptype = 'e'
+                      );
+                """),
+                    [schema_name],
+                )
+                for _, aggname, aggdef in cur.fetchall():
+                    schema_creation_script.append(aggdef)
+
+            # User-defined types.
+            if include_types:
+                # Enumerated types.
+                cur.execute(
+                    sql.SQL("""
+                    SELECT t.typname
+                    FROM pg_type t
+                    JOIN pg_namespace n ON t.typnamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND t.typtype = 'e'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = t.oid AND d.deptype = 'e'
+                      );
+                """),
+                    [schema_name],
+                )
+                for (enum_name,) in cur.fetchall():
+                    cur.execute(
+                        "SELECT enumlabel FROM pg_enum WHERE enumtypid = %s::regtype ORDER BY enumsortorder;",
+                        [f"{schema_name}.{enum_name}"],
+                    )
+                    labels = [row[0] for row in cur.fetchall()]
+                    labels_str = ", ".join(f"'{label}'" for label in labels)
+                    stmt = (
+                        f"CREATE TYPE {schema_name}.{enum_name} AS ENUM ({labels_str});"
+                    )
+                    schema_creation_script.append(stmt)
+
+                # Composite types.
+                cur.execute(
+                    sql.SQL("""
+                    SELECT t.typname, t.typrelid
+                    FROM pg_type t
+                    JOIN pg_namespace n ON t.typnamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND t.typtype = 'c'
+                      AND t.typrelid != 0
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = t.oid AND d.deptype = 'e'
+                      );
+                """),
+                    [schema_name],
+                )
+                for typname, typrelid in cur.fetchall():
+                    cur.execute(
+                        sql.SQL("""
+                        SELECT attname, pg_catalog.format_type(atttypid, atttypmod)
+                        FROM pg_attribute
+                        WHERE attrelid = %s
+                          AND attnum > 0
+                          AND NOT attisdropped
+                        ORDER BY attnum;
+                    """),
+                        [typrelid],
+                    )
+                    attrs = cur.fetchall()
+                    attr_defs = ", ".join(
+                        f"{attname} {datatype}" for attname, datatype in attrs
+                    )
+                    stmt = f"CREATE TYPE {schema_name}.{typname} AS ({attr_defs});"
+                    schema_creation_script.append(stmt)
+
+                # Domains.
+                cur.execute(
+                    sql.SQL("""
+                    SELECT domain_name, data_type
+                    FROM information_schema.domains
+                    WHERE domain_schema = %s;
+                """),
+                    [schema_name],
+                )
+                for domain_name, data_type in cur.fetchall():
+                    stmt = f"CREATE DOMAIN {schema_name}.{domain_name} AS {data_type};"
+                    schema_creation_script.append(stmt)
+
+                # Range types.
+                cur.execute(
+                    sql.SQL("""
+                    SELECT t.typname,
+                           r.rngsubtype::regtype::text,
+                           r.rngcollation::regcollation::text,
+                           r.rngsubopc::regoperator::text,
+                           pg_get_expr(r.rngcanonical, 0),
+                           pg_get_expr(r.rngdiff, 0)
+                    FROM pg_type t
+                    JOIN pg_namespace n ON t.typnamespace = n.oid
+                    JOIN pg_range r ON r.rngtypid = t.oid
+                    WHERE n.nspname = %s
+                      AND t.typtype = 'r'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = t.oid AND d.deptype = 'e'
+                      );
+                """),
+                    [schema_name],
+                )
+                for (
+                    typname,
+                    rngsubtype,
+                    rngcollation,
+                    rngsubopc,
+                    canonical,
+                    diff,
+                ) in cur.fetchall():
+                    stmt = f"CREATE TYPE {schema_name}.{typname} AS RANGE (subtype = {rngsubtype}"
+                    if rngcollation and rngcollation != "-":
+                        stmt += f", collation = {rngcollation}"
+                    if rngsubopc and rngsubopc != "-":
+                        stmt += f", subtype_opclass = {rngsubopc}"
+                    if canonical and canonical != "":
+                        stmt += f", canonical = {canonical}"
+                    if diff and diff != "":
+                        stmt += f", diff = {diff}"
+                    stmt += ");"
+                    schema_creation_script.append(stmt)
+
+            # Custom collations.
+            if include_collations:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT c.collname, c.collcollate, c.collctype, c.collprovider, c.collisdeterministic
+                    FROM pg_collation c
+                    JOIN pg_namespace n ON c.collnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """),
+                    [schema_name],
+                )
+                for (
+                    collname,
+                    collcollate,
+                    collctype,
+                    collprovider,
+                    collisdeterministic,
+                ) in cur.fetchall():
+                    stmt = (
+                        f"CREATE COLLATION {schema_name}.{collname} "
+                        f"(lc_collate = '{collcollate}', lc_ctype = '{collctype}', "
+                        f"provider = '{collprovider}', deterministic = {'true' if collisdeterministic else 'false'});"
+                    )
+                    schema_creation_script.append(stmt)
+
+            # Operators.
+            if include_operators:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT o.oid, o.oprname, pg_get_operatordef(o.oid)
+                    FROM pg_operator o
+                    JOIN pg_namespace n ON o.oprnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """),
+                    [schema_name],
+                )
+                for _, oprname, opdef in cur.fetchall():
+                    schema_creation_script.append(opdef + ";")
+
+            # Operator classes.
+            if include_operator_classes:
+                cur.execute(
+                    sql.SQL("""
+                    SELECT oc.oid, oc.opcname, pg_get_opclassdef(oc.oid)
+                    FROM pg_opclass oc
+                    JOIN pg_namespace n ON oc.opcnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """),
+                    [schema_name],
+                )
+                for _, opcname, opclassdef in cur.fetchall():
+                    schema_creation_script.append(opclassdef + ";")
+
+            # Grants.
+            if include_grants:
+                # Table privileges.
+                cur.execute(
+                    sql.SQL("""
+                    SELECT table_name, grantee, privilege_type
+                    FROM information_schema.table_privileges
+                    WHERE table_schema = %s;
+                """),
+                    [schema_name],
+                )
+                for table_name, grantee, privilege_type in cur.fetchall():
+                    schema_creation_script.append(
+                        f"GRANT {privilege_type} ON {schema_name}.{table_name} TO {grantee};"
+                    )
+                # Sequence privileges.
+                cur.execute(
+                    sql.SQL("""
+                    SELECT sequence_name, grantee, privilege_type
+                    FROM information_schema.sequence_privileges
+                    WHERE sequence_schema = %s;
+                """),
+                    [schema_name],
+                )
+                for sequence_name, grantee, privilege_type in cur.fetchall():
+                    schema_creation_script.append(
+                        f"GRANT {privilege_type} ON {schema_name}.{sequence_name} TO {grantee};"
+                    )
+                # Routine (function/procedure) privileges.
+                cur.execute(
+                    sql.SQL("""
+                    SELECT specific_name, grantee, privilege_type
+                    FROM information_schema.routine_privileges
+                    WHERE specific_schema = %s;
+                """),
+                    [schema_name],
+                )
+                for specific_name, grantee, privilege_type in cur.fetchall():
+                    schema_creation_script.append(
+                        f"GRANT {privilege_type} ON FUNCTION {schema_name}.{specific_name} TO {grantee};"
+                    )
+
+    return "\n\n".join(schema_creation_script)
+
+
+def fetch_schema_v6(
+    connection: Connection,
+    include_tables: bool = True,
+    include_views: bool = True,
+    include_indexes: bool = True,
+    include_triggers: bool = True,
+    include_sequences: bool = True,
+    include_functions: bool = True,
+    include_procedures: bool = True,
+    include_types: bool = True,
+    include_rls: bool = True,
+    include_rules: bool = True,
+    include_fdw: bool = True,
+    include_collations: bool = True,
+    include_grants: bool = True,
+    include_aggregates: bool = True,
+    include_operators: bool = True,
+    include_operator_classes: bool = True,
+    include_event_triggers: bool = True
+) -> str:
+    """
+    Fetch a complete database schema creation script with full context,
+    accounting for differences in PostgreSQL versions (supported down to 13).
+
+    Parameters control whether the following objects are included:
+      - Tables (including partitioned and foreign tables)
+      - Views and materialized views
+      - Indexes
+      - Triggers (per table)
+      - Sequences
+      - Functions (normal) and Procedures (PostgreSQL 11+)
+      - User‐defined types: composite types, enumerated types, domains, and range types
+      - Row-level security policies and rewrite rules
+      - Foreign Data Wrapper objects (FDWs, foreign servers, and user mappings)
+      - Custom collations
+      - Grants (privileges) on tables, sequences, and routines
+      - Aggregates, operators, and operator classes
+      - Event triggers
+
+    All flags default to True. Objects contributed by installed extensions
+    (those with a dependency type of 'e') are omitted.
+    """
+    schema_creation_script = []
+    with connection.cursor() as cur:
+        # --- Determine PostgreSQL version ---
+        cur.execute("SHOW server_version;")
+        server_version_str = cur.fetchone()[0]
+        m = re.match(r"(\d+)", server_version_str)
+        if m:
+            major_version = int(m.group(1))
+        else:
+            major_version = 13  # Fallback default.
+        schema_creation_script.append(f"-- Detected PostgreSQL version: {server_version_str} (major: {major_version})")
+        
+        # --- Global objects (not schema‐bound) ---
+        # Extensions.
+        cur.execute("SELECT extname FROM pg_extension;")
+        for (extname,) in cur.fetchall():
+            schema_creation_script.append(f"CREATE EXTENSION IF NOT EXISTS {extname};")
+
+        # Foreign Data Wrapper (FDW) objects.
+        if include_fdw:
+            # FDW wrappers.
+            cur.execute("SELECT fdwname FROM pg_foreign_data_wrapper;")
+            for (fdwname,) in cur.fetchall():
+                schema_creation_script.append(f"-- FDW Wrapper: {fdwname}")
+            # FDW servers.
+            cur.execute("""
+                SELECT srvname, srvfdw, array_to_string(srvoptions, ', ')
+                FROM pg_foreign_server;
+            """)
+            for srvname, srvfdw, srvoptions in cur.fetchall():
+                stmt = f"CREATE SERVER {srvname} FOREIGN DATA WRAPPER {srvfdw}"
+                if srvoptions:
+                    stmt += f" OPTIONS ({srvoptions})"
+                stmt += ";"
+                schema_creation_script.append(stmt)
+            # User mappings.
+            # Use different column names for PG16+ vs older versions.
+            
+            cur.execute("""
+                SELECT usename, srvname, array_to_string(umoptions, ', ')
+                FROM pg_user_mappings;
+            """)
+            for umuser, umserver, mapping_options in cur.fetchall():
+                stmt = f"CREATE USER MAPPING FOR {umuser} SERVER {umserver}"
+                if mapping_options:
+                    stmt += f" OPTIONS ({mapping_options})"
+                stmt += ";"
+                schema_creation_script.append(stmt)
+        
+
+        # Event triggers.
+        if include_event_triggers:
+            cur.execute("""
+                SELECT evtname, evtevent, evtenabled, evtfoid::regprocedure
+                FROM pg_event_trigger;
+            """)
+            for evtname, evtevent, evtenabled, evtfunc in cur.fetchall():
+                stmt = f"CREATE EVENT TRIGGER {evtname} ON {evtevent} EXECUTE FUNCTION {evtfunc}();"
+                schema_creation_script.append(stmt)
+                # If the event trigger is disabled or enabled in replica mode, emit an ALTER statement.
+                if evtenabled == 'D':
+                    schema_creation_script.append(f"ALTER EVENT TRIGGER {evtname} DISABLE;")
+                elif evtenabled == 'R':
+                    schema_creation_script.append(f"ALTER EVENT TRIGGER {evtname} ENABLE REPLICA;")
+        
+        
+        # --- Process each non-system schema ---
+        cur.execute("""
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+              AND schema_name NOT LIKE 'pg_%';
+        """)
+        schemas = [row[0] for row in cur.fetchall()]
+        for schema_name in schemas:
+            schema_creation_script.append(f"CREATE SCHEMA {schema_name};")
+
+            # --- Table-like objects: tables, partitioned tables, foreign tables, and views ---
+            if any([include_tables, include_views, include_indexes, include_triggers, include_rls, include_rules]):
+                cur.execute(sql.SQL("""
+                    SELECT c.relname, c.relkind, c.oid
+                    FROM pg_class c
+                    JOIN pg_namespace n ON c.relnamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND c.relkind IN ('r', 'p', 'f', 'v', 'm')
+                      -- Exclude partitions from regular and foreign tables.
+                      AND (c.relkind NOT IN ('r', 'f') OR c.oid NOT IN (SELECT inhrelid FROM pg_inherits))
+                    ORDER BY c.relname;
+                """), [schema_name])
+                for obj_name, relkind, _ in cur.fetchall():
+                    full_name = f"{schema_name}.{obj_name}"
+                    if relkind in ('r', 'p', 'f') and include_tables:
+                        # Build table (or foreign table) DDL.
+                        cur.execute(sql.SQL("""
+                            SELECT a.attname,
+                                   pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
+                                   a.attnotnull,
+                                   pg_get_expr(ad.adbin, ad.adrelid) AS default_value
+                            FROM pg_attribute a
+                            LEFT JOIN pg_attrdef ad
+                              ON a.attrelid = ad.adrelid AND a.attnum = ad.adnum
+                            WHERE a.attrelid = %s::regclass
+                              AND a.attnum > 0
+                              AND NOT a.attisdropped
+                            ORDER BY a.attnum;
+                        """), [full_name])
+                        columns = cur.fetchall()
+                        col_defs = []
+                        for col_name, data_type, attnotnull, default_value in columns:
+                            col_def = f"{col_name} {data_type}"
+                            if default_value is not None:
+                                col_def += f" DEFAULT {default_value}"
+                            if attnotnull:
+                                col_def += " NOT NULL"
+                            col_defs.append(col_def)
+                        # Append constraints.
+                        cur.execute(sql.SQL("""
+                            SELECT conname, pg_get_constraintdef(oid, true)
+                            FROM pg_constraint
+                            WHERE conrelid = %s::regclass
+                            ORDER BY contype;
+                        """), [full_name])
+                        for conname, condef in cur.fetchall():
+                            col_defs.append(f"CONSTRAINT {conname} {condef}")
+                        stmt = f"CREATE TABLE {full_name} (\n    " + ",\n    ".join(col_defs) + "\n)"
+                        if relkind == 'p':  # Partitioned table.
+                            cur.execute(sql.SQL("SELECT pg_get_partkeydef(%s::regclass);"), [full_name])
+                            partdef = cur.fetchone()[0]
+                            if partdef:
+                                stmt += f" PARTITION BY {partdef}"
+                        if relkind == 'f':  # Foreign table.
+                            cur.execute(sql.SQL("""
+                                SELECT fs.srvname,
+                                       array_to_string(ft.ftoptions, ', ')
+                                FROM pg_foreign_table ft
+                                JOIN pg_foreign_server fs ON ft.ftserver = fs.oid
+                                WHERE ft.ftrelid = %s::regclass;
+                            """), [full_name])
+                            foreign_info = cur.fetchone()
+                            if foreign_info:
+                                srvname, options = foreign_info
+                                stmt = stmt.replace("CREATE TABLE", "CREATE FOREIGN TABLE", 1)
+                                stmt += f" SERVER {srvname}"
+                                if options:
+                                    stmt += f" OPTIONS ({options})"
+                        stmt += ";"
+                        schema_creation_script.append(stmt)
+
+                        # Attach partitions if applicable.
+                        if relkind == 'p':
+                            cur.execute(sql.SQL("""
+                                SELECT child.relname,
+                                       pg_get_expr(child.relpartbound, child.oid) AS part_bound
+                                FROM pg_inherits i
+                                JOIN pg_class child ON i.inhrelid = child.oid
+                                WHERE i.inhparent = %s::regclass;
+                            """), [full_name])
+                            for part_name, part_bound in cur.fetchall():
+                                child_full_name = f"{schema_name}.{part_name}"
+                                alter_stmt = f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                                if part_bound:
+                                    alter_stmt += f" {part_bound}"
+                                alter_stmt += ";"
+                                schema_creation_script.append(alter_stmt)
+                    elif relkind == 'v' and include_views:
+                        cur.execute(sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"), [full_name])
+                        viewdef = cur.fetchone()[0]
+                        schema_creation_script.append(f"CREATE OR REPLACE VIEW {full_name} AS\n{viewdef};")
+                    elif relkind == 'm' and include_views:
+                        cur.execute(sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"), [full_name])
+                        viewdef = cur.fetchone()[0]
+                        schema_creation_script.append(f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;")
+            
+            # Indexes.
+            if include_indexes:
+                cur.execute(sql.SQL("""
+                    SELECT c.oid, i.indexname, i.indexdef
+                    FROM pg_indexes i
+                    JOIN pg_namespace n ON i.schemaname = n.nspname
+                    JOIN pg_class c ON c.relname = i.indexname AND c.relnamespace = n.oid
+                    WHERE i.schemaname = %s
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = c.oid AND d.deptype = 'e'
+                      );
+                """), [schema_name])
+                for _, indexname, indexdef in cur.fetchall():
+                    schema_creation_script.append(indexdef + ";")
+            
+            # Triggers.
+            if include_triggers:
+                cur.execute(sql.SQL("""
+                    SELECT tgname, pg_get_triggerdef(t.oid, true)
+                    FROM pg_trigger t
+                    JOIN pg_class c ON t.tgrelid = c.oid
+                    JOIN pg_namespace n ON c.relnamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND NOT t.tgisinternal
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = t.oid AND d.deptype = 'e'
+                      );
+                """), [schema_name])
+                for tgname, tgdef in cur.fetchall():
+                    schema_creation_script.append(tgdef + ";")
+            
+            # Row-level security policies.
+            if include_rls:
+                cur.execute(sql.SQL("""
+                    SELECT pol.polname, c.relname,
+                           pg_get_expr(pol.polqual, pol.polrelid) AS qual,
+                           pg_get_expr(pol.polwithcheck, pol.polrelid) AS with_check,
+                           pol.polcmd
+                    FROM pg_policy pol
+                    JOIN pg_class c ON pol.polrelid = c.oid
+                    JOIN pg_namespace n ON c.relnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """), [schema_name])
+                for polname, tablename, qual, with_check, polcmd in cur.fetchall():
+                    stmt = f"CREATE POLICY {polname} ON {schema_name}.{tablename} "
+                    if polcmd != 'all':
+                        stmt += f"FOR {polcmd.upper()} "
+                    if qual:
+                        stmt += f"USING ({qual}) "
+                    if with_check:
+                        stmt += f"WITH CHECK ({with_check})"
+                    schema_creation_script.append(stmt.strip() + ";")
+            
+            # Rewrite rules.
+            if include_rules:
+                cur.execute(sql.SQL("""
+                    SELECT r.rulename, pg_get_ruledef(r.oid)
+                    FROM pg_rewrite r
+                    JOIN pg_class c ON r.ev_class = c.oid
+                    JOIN pg_namespace n ON c.relnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """), [schema_name])
+                for rulename, ruledef in cur.fetchall():
+                    schema_creation_script.append(ruledef + ";")
+            
+            # Sequences.
+            if include_sequences:
+                cur.execute(sql.SQL("""
+                    SELECT sequence_name, start_value, minimum_value, maximum_value, increment, cycle_option
+                    FROM information_schema.sequences
+                    WHERE sequence_schema = %s;
+                """), [schema_name])
+                for seq_name, start_value, min_value, max_value, increment, cycle_option in cur.fetchall():
+                    seq_stmt = f"CREATE SEQUENCE {schema_name}.{seq_name}\n"
+                    seq_stmt += f"    START WITH {start_value}\n"
+                    seq_stmt += f"    INCREMENT BY {increment}\n"
+                    seq_stmt += f"    MINVALUE {min_value}\n"
+                    seq_stmt += f"    MAXVALUE {max_value}\n"
+                    seq_stmt += f"    {'CYCLE' if cycle_option.upper()=='YES' else 'NO CYCLE'};"
+                    schema_creation_script.append(seq_stmt)
+            
+            # Functions.
+            if include_functions:
+                cur.execute(sql.SQL("""
+                    SELECT p.oid, p.proname, pg_get_functiondef(p.oid)
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON p.pronamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND p.prokind = 'f'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = p.oid AND d.deptype = 'e'
+                      );
+                """), [schema_name])
+                for _, proname, funcdef in cur.fetchall():
+                    schema_creation_script.append(funcdef)
+            
+            # Procedures (for PG 11+).
+            if include_procedures and major_version >= 11:
+                cur.execute(sql.SQL("""
+                    SELECT p.oid, p.proname, pg_get_functiondef(p.oid)
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON p.pronamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND p.prokind = 'p'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = p.oid AND d.deptype = 'e'
+                      );
+                """), [schema_name])
+                for _, proname, procdef in cur.fetchall():
+                    schema_creation_script.append(procdef)
+            
+            # Aggregates.
+            if include_aggregates and major_version >= 11:
+                cur.execute(sql.SQL("""
+                    SELECT p.oid, p.proname, pg_get_functiondef(p.oid)
+                    FROM pg_proc p
+                    JOIN pg_namespace n ON p.pronamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND p.prokind = 'a'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = p.oid AND d.deptype = 'e'
+                      );
+                """), [schema_name])
+                for _, aggname, aggdef in cur.fetchall():
+                    schema_creation_script.append(aggdef)
+            
+            # User-defined types.
+            if include_types:
+                # Enumerated types.
+                cur.execute(sql.SQL("""
+                    SELECT t.typname
+                    FROM pg_type t
+                    JOIN pg_namespace n ON t.typnamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND t.typtype = 'e'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = t.oid AND d.deptype = 'e'
+                      );
+                """), [schema_name])
+                for (enum_name,) in cur.fetchall():
+                    cur.execute(
+                        "SELECT enumlabel FROM pg_enum WHERE enumtypid = %s::regtype ORDER BY enumsortorder;",
+                        [f"{schema_name}.{enum_name}"]
+                    )
+                    labels = [row[0] for row in cur.fetchall()]
+                    labels_str = ", ".join(f"'{label}'" for label in labels)
+                    stmt = f"CREATE TYPE {schema_name}.{enum_name} AS ENUM ({labels_str});"
+                    schema_creation_script.append(stmt)
+                
+                # Composite types.
+                cur.execute(sql.SQL("""
+                    SELECT t.typname, t.typrelid
+                    FROM pg_type t
+                    JOIN pg_namespace n ON t.typnamespace = n.oid
+                    WHERE n.nspname = %s
+                      AND t.typtype = 'c'
+                      AND t.typrelid != 0
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = t.oid AND d.deptype = 'e'
+                      );
+                """), [schema_name])
+                for typname, typrelid in cur.fetchall():
+                    cur.execute(sql.SQL("""
+                        SELECT attname, pg_catalog.format_type(atttypid, atttypmod)
+                        FROM pg_attribute
+                        WHERE attrelid = %s
+                          AND attnum > 0
+                          AND NOT attisdropped
+                        ORDER BY attnum;
+                    """), [typrelid])
+                    attrs = cur.fetchall()
+                    attr_defs = ", ".join(f"{attname} {datatype}" for attname, datatype in attrs)
+                    stmt = f"CREATE TYPE {schema_name}.{typname} AS ({attr_defs});"
+                    schema_creation_script.append(stmt)
+                
+                # Domains.
+                cur.execute(sql.SQL("""
+                    SELECT domain_name, data_type
+                    FROM information_schema.domains
+                    WHERE domain_schema = %s;
+                """), [schema_name])
+                for domain_name, data_type in cur.fetchall():
+                    stmt = f"CREATE DOMAIN {schema_name}.{domain_name} AS {data_type};"
+                    schema_creation_script.append(stmt)
+                
+                # Range types.
+                cur.execute(sql.SQL("""
+                    SELECT t.typname,
+                           r.rngsubtype::regtype::text,
+                           r.rngcollation::regcollation::text,
+                           r.rngsubopc::regoperator::text,
+                           pg_get_expr(r.rngcanonical, 0),
+                           pg_get_expr(r.rngdiff, 0)
+                    FROM pg_type t
+                    JOIN pg_namespace n ON t.typnamespace = n.oid
+                    JOIN pg_range r ON r.rngtypid = t.oid
+                    WHERE n.nspname = %s
+                      AND t.typtype = 'r'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM pg_depend d
+                          WHERE d.objid = t.oid AND d.deptype = 'e'
+                      );
+                """), [schema_name])
+                for typname, rngsubtype, rngcollation, rngsubopc, canonical, diff in cur.fetchall():
+                    stmt = f"CREATE TYPE {schema_name}.{typname} AS RANGE (subtype = {rngsubtype}"
+                    if rngcollation and rngcollation != "-":
+                        stmt += f", collation = {rngcollation}"
+                    if rngsubopc and rngsubopc != "-":
+                        stmt += f", subtype_opclass = {rngsubopc}"
+                    if canonical and canonical != "":
+                        stmt += f", canonical = {canonical}"
+                    if diff and diff != "":
+                        stmt += f", diff = {diff}"
+                    stmt += ");"
+                    schema_creation_script.append(stmt)
+            
+            # Custom collations.
+            if include_collations:
+                cur.execute(sql.SQL("""
+                    SELECT c.collname, c.collcollate, c.collctype, c.collprovider, c.collisdeterministic
+                    FROM pg_collation c
+                    JOIN pg_namespace n ON c.collnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """), [schema_name])
+                for collname, collcollate, collctype, collprovider, collisdeterministic in cur.fetchall():
+                    stmt = (f"CREATE COLLATION {schema_name}.{collname} "
+                            f"(lc_collate = '{collcollate}', lc_ctype = '{collctype}', "
+                            f"provider = '{collprovider}', deterministic = {'true' if collisdeterministic else 'false'});")
+                    schema_creation_script.append(stmt)
+            
+            # Operators.
+            if include_operators:
+                cur.execute(sql.SQL("""
+                    SELECT o.oid, o.oprname, pg_get_operatordef(o.oid)
+                    FROM pg_operator o
+                    JOIN pg_namespace n ON o.oprnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """), [schema_name])
+                for _, oprname, opdef in cur.fetchall():
+                    schema_creation_script.append(opdef + ";")
+            
+            # Operator classes.
+            if include_operator_classes:
+                cur.execute(sql.SQL("""
+                    SELECT oc.oid, oc.opcname, pg_get_opclassdef(oc.oid)
+                    FROM pg_opclass oc
+                    JOIN pg_namespace n ON oc.opcnamespace = n.oid
+                    WHERE n.nspname = %s;
+                """), [schema_name])
+                for _, opcname, opclassdef in cur.fetchall():
+                    schema_creation_script.append(opclassdef + ";")
+            
+            # Grants.
+            if include_grants:
+                # Table privileges.
+                cur.execute(sql.SQL("""
+                    SELECT table_name, grantee, privilege_type
+                    FROM information_schema.table_privileges
+                    WHERE table_schema = %s;
+                """), [schema_name])
+                for table_name, grantee, privilege_type in cur.fetchall():
+                    schema_creation_script.append(
+                        f"GRANT {privilege_type} ON {schema_name}.{table_name} TO {grantee};"
+                    )
+                # Sequence privileges.
+                cur.execute(sql.SQL("""
+                    SELECT sequence_name, grantee, privilege_type
+                    FROM information_schema.sequence_privileges
+                    WHERE sequence_schema = %s;
+                """), [schema_name])
+                for sequence_name, grantee, privilege_type in cur.fetchall():
+                    schema_creation_script.append(
+                        f"GRANT {privilege_type} ON {schema_name}.{sequence_name} TO {grantee};"
+                    )
+                # Routine privileges.
+                cur.execute(sql.SQL("""
+                    SELECT specific_name, grantee, privilege_type
+                    FROM information_schema.routine_privileges
+                    WHERE specific_schema = %s;
+                """), [schema_name])
+                for specific_name, grantee, privilege_type in cur.fetchall():
+                    schema_creation_script.append(
+                        f"GRANT {privilege_type} ON FUNCTION {schema_name}.{specific_name} TO {grantee};"
+                    )
+                    
+    return "\n\n".join(schema_creation_script)

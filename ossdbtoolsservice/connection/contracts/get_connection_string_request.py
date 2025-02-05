@@ -9,6 +9,7 @@ from ossdbtoolsservice.serialization import Serializable
 
 class GetConnectionStringParams(Serializable):
     """Parameters for Getting Connection String request"""
+    owner_uri: str
 
     def __init__(self, owner_uri: str = None):
         self.owner_uri: str = owner_uri

@@ -8,6 +8,8 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class ExpandParameters(Serializable):
+    session_id: str
+    node_path: str
 
     def __init__(self):
         self.session_id: str = None

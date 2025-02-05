@@ -5,11 +5,13 @@
 
 from typing import List
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.serialization import Serializable
 
 
 class CapabilitiesRequestParams(Serializable):
+    host_name: str
+    host_version: str
 
     def __init__(self):
         self.host_name = None
@@ -18,6 +20,8 @@ class CapabilitiesRequestParams(Serializable):
 
 class CategoryValue:
     """Defines a category value for an option"""
+    display_name: str
+    name: str
 
     def __init__(self, display_name: str = None, name: str = None):
         self.display_name: str = display_name
@@ -26,13 +30,21 @@ class CategoryValue:
 
 class ServiceOption:
     """Defines an option for an arbitrary service"""
-    VALUE_TYPE_STRING = 'string'
-    VALUE_TYPE_MULTI_STRING = 'multistring'
-    VALUE_TYPE_PASSWORD = 'password'
-    VALUE_TYPE_ACCESS_TOKEN = 'azureAccountToken'
-    VALUE_TYPE_NUMBER = 'number'
-    VALUE_TYPE_CATEGORY = 'category'
-    VALUE_TYPE_BOOLEAN = 'boolean'
+    VALUE_TYPE_STRING: str = 'string'
+    VALUE_TYPE_MULTI_STRING: str = 'multistring'
+    VALUE_TYPE_PASSWORD: str = 'password'
+    VALUE_TYPE_ACCESS_TOKEN: str = 'azureAccountToken'
+    VALUE_TYPE_NUMBER: str = 'number'
+    VALUE_TYPE_CATEGORY: str = 'category'
+    VALUE_TYPE_BOOLEAN: str = 'boolean'
+    name: str
+    display_name: str
+    description: str
+    group_name: str
+    value_type: str
+    default_value: str
+    category_values: List[CategoryValue]
+    is_required: bool
 
     def __init__(self, name: str = None, display_name: str = None, description: str = None, group_name: str = None, value_type: str = None,
                  default_value: str = None, category_values: List[CategoryValue] = None, is_required: bool = False):
@@ -48,13 +60,15 @@ class ServiceOption:
 
 class ConnectionOption(ServiceOption):
     """Defines a connection provider option"""
-    SPECIAL_VALUE_SERVER_NAME = 'serverName'
-    SPECIAL_VALUE_DATABASE_NAME = 'databaseName'
-    SPECIAL_VALUE_AUTH_TYPE = 'authType'
-    SPECIAL_VALUE_USER_NAME = 'userName'
-    SPECIAL_VALUE_PASSWORD_NAME = 'password'
-    SPECIAL_VALUE_ACCESS_TOKEN_NAME = 'azureAccountToken'
-    SPECIAL_VALUE_APP_NAME = 'appName'
+    SPECIAL_VALUE_SERVER_NAME: str = 'serverName'
+    SPECIAL_VALUE_DATABASE_NAME: str = 'databaseName'
+    SPECIAL_VALUE_AUTH_TYPE: str = 'authType'
+    SPECIAL_VALUE_USER_NAME: str = 'userName'
+    SPECIAL_VALUE_PASSWORD_NAME: str = 'password'
+    SPECIAL_VALUE_ACCESS_TOKEN_NAME: str = 'azureAccountToken'
+    SPECIAL_VALUE_APP_NAME: str = 'appName'
+    special_value_type: str
+    is_identity: bool
 
     def __init__(self, name: str = None, display_name: str = None, description: str = None, group_name: str = None, value_type: str = None,
                  default_value: str = None, category_values: List[CategoryValue] = None, special_value_type: str = None, is_identity: bool = False,
@@ -66,6 +80,7 @@ class ConnectionOption(ServiceOption):
 
 class ConnectionProviderOptions:
     """Defines the connection provider options that the DMP server implements"""
+    options: List[ConnectionOption]
 
     def __init__(self, options: List[ConnectionOption]):
         self.options: List[ConnectionOption] = options
@@ -73,6 +88,9 @@ class ConnectionProviderOptions:
 
 class FeatureMetadataProvider:
     """Defines a set of options that will be sent to the client"""
+    enabled: bool
+    feature_name: str
+    options_metadata: List[ServiceOption]
 
     def __init__(self, enabled: bool, feature_name: str, options_metadata: List[ServiceOption]):
         self.enabled = enabled
@@ -82,6 +100,11 @@ class FeatureMetadataProvider:
 
 class DMPServerCapabilities:
     """Defines the DMP server capabilities"""
+    protocol_version: str
+    provider_name: str
+    provider_display_name: str
+    connection_provider: ConnectionProviderOptions
+    features: List[FeatureMetadataProvider]
 
     def __init__(self,
                  protocol_version: str,
@@ -98,9 +121,17 @@ class DMPServerCapabilities:
 
 class CapabilitiesResult(object):
     """Defines the capabilities result contract"""
+    capabilities: DMPServerCapabilities
 
     def __init__(self, capabilities: DMPServerCapabilities):
         self.capabilities: DMPServerCapabilities = capabilities
 
 
 CAPABILITIES_REQUEST = IncomingMessageConfiguration('capabilities/list', CapabilitiesRequestParams)
+OutgoingMessageRegistration.register_outgoing_message(CapabilitiesResult)
+OutgoingMessageRegistration.register_outgoing_message(DMPServerCapabilities)
+OutgoingMessageRegistration.register_outgoing_message(ConnectionProviderOptions)
+OutgoingMessageRegistration.register_outgoing_message(FeatureMetadataProvider)
+OutgoingMessageRegistration.register_outgoing_message(ConnectionOption)
+OutgoingMessageRegistration.register_outgoing_message(ServiceOption)
+OutgoingMessageRegistration.register_outgoing_message(CategoryValue)
