@@ -114,25 +114,84 @@ if __name__ == '__main__':
     enable_dynamic_cors_env = os.getenv('ENABLE_DYNAMIC_CORS', defaults['enable_dynamic_cors'])
 
     # Parse command-line arguments (takes precidence over config file and environment variables)
-    parser = argparse.ArgumentParser(description='Start the Tools Service')
-    parser.add_argument('--generate-markdown', action='store_true', help='Generate Markdown documentation for requests')
-    parser.add_argument('--input', type=str, help='Input file for stdin')
-    parser.add_argument('--enable-web-server', action='store_true', default=str_to_bool(enable_web_server_env),
-                        help='Enable the web server to receive requests over HTTP and WebSocket')
-    parser.add_argument('--listen-address', type=str, default=listen_address_env, help='Address to listen on for the web server (default:0.0.0.0)')
-    parser.add_argument('--listen-port', type=int, default=int(listen_port_env), help='Port to listen on for the web server (default:8443)')
-    parser.add_argument('--debug-web-server', action='store_true', help='Enable debug mode for the web server')
-    parser.add_argument('--disable-keep-alive', action='store_true', default=str_to_bool(disable_keep_alive_env),
-                        help='Disable keep-alive for the web server. Should not be used in production only for debugging')
-    parser.add_argument('--enable-dynamic-cors', action='store_true', default=str_to_bool(enable_dynamic_cors_env),
-                        help='Enable dynamic setting of CORS, allow any origin. Should not be used in production only for debugging')
-    parser.add_argument('--enable-remote-debugging', type=int, nargs='?', const=3000, help='Enable remote debugging on the specified port (default: 3000)')
-    parser.add_argument('--enable-remote-debugging-wait', type=int, nargs='?', const=3000,
-                        help='Enable remote debugging and wait for the debugger to attach on the specified port (default: 3000)')
-    parser.add_argument('--log-dir', type=str, default=log_dir_env, help='Directory to store logs')
-    parser.add_argument('--console-logging', action='store_true', default=str_to_bool(console_logging_env),
-                        help='Enable logging to the console (can only be enabled if --enable-web-server is true)')
-    parser.add_argument('--provider', type=str, help='Provider name')
+    parser = argparse.ArgumentParser(description="Start the Tools Service")
+    parser.add_argument(
+        "--generate-markdown",
+        action="store_true",
+        help="Generate Markdown documentation for requests",
+    )
+    parser.add_argument("--input", type=str, help="Input file for stdin")
+    parser.add_argument(
+        "--enable-web-server",
+        action="store_true",
+        default=str_to_bool(enable_web_server_env),
+        help="Enable the web server to receive requests over HTTP and WebSocket",
+    )
+    parser.add_argument(
+        "--listen-address",
+        type=str,
+        default=listen_address_env,
+        help="Address to listen on for the web server (default:0.0.0.0)",
+    )
+    parser.add_argument(
+        "--listen-port",
+        type=int,
+        default=int(listen_port_env),
+        help="Port to listen on for the web server (default:8443)",
+    )
+    parser.add_argument(
+        "--debug-web-server",
+        action="store_true",
+        help="Enable debug mode for the web server",
+    )
+    parser.add_argument(
+        "--disable-keep-alive",
+        action="store_true",
+        default=str_to_bool(disable_keep_alive_env),
+        help="Disable keep-alive for the web server. Should not be used in production only for debugging",
+    )
+    parser.add_argument(
+        "--enable-dynamic-cors",
+        action="store_true",
+        default=str_to_bool(enable_dynamic_cors_env),
+        help="Enable dynamic setting of CORS, allow any origin. Should not be used in production only for debugging",
+    )
+    parser.add_argument(
+        "--enable-remote-debugging",
+        type=int,
+        nargs="?",
+        const=3000,
+        help="Enable remote debugging on the specified port (default: 3000)",
+    )
+    parser.add_argument(
+        "--enable-remote-debugging-wait",
+        type=int,
+        nargs="?",
+        const=3000,
+        help="Enable remote debugging and wait for the debugger to attach on the specified port (default: 3000)",
+    )
+    parser.add_argument(
+        "--log-dir", type=str, default=log_dir_env, help="Directory to store logs"
+    )
+    parser.add_argument(
+        "--console-logging",
+        action="store_true",
+        default=str_to_bool(console_logging_env),
+        help="Enable logging to the console (can only be enabled if --enable-web-server is true)",
+    )
+    parser.add_argument("--provider", type=str, help="Provider name")
+
+    # VS Code arguments
+    parser.add_argument("--log-file", type=str, help="Log file")
+    parser.add_argument("--tracing-level", type=str, help="Tracing level")
+    parser.add_argument("--application-name", type=str, help="Application name")
+    parser.add_argument("--data-path", type=str, help="Data path")
+    parser.add_argument(
+        "--enable-sql-authentication-provider",
+        action="store_true",
+        help="Enable SQL authentication provider",
+    )
+
     args = parser.parse_args()
 
     # Handle input file for stdin
