@@ -34,6 +34,7 @@ binaries.extend(binaries_debugpy)
 # Include ossdbtoolsservice data files
 datas += collect_data_files('ossdbtoolsservice', include_py_files=False)
 datas += [('./ossdbtoolsservice/language/completion/packages/pgliterals/pgliterals.json', 'language/completion/packages/pgliterals')]
+datas += collect_files('./ossdbtoolsservice/chat/prompts', 'ossdbtoolsservice/chat/prompts', ".md")
 
 # Include sql and macros files under pgsmo/objects
 src_folder = './pgsmo/objects'
