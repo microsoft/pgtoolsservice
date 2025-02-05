@@ -22,6 +22,8 @@ class ConnectionDetails(Serializable):
     Details about the connection on top of a basic connection summary. Used as part of the incoming
     connection request
     """
+    options: dict
+
     @classmethod
     def from_data(cls, opts: dict):
         obj = cls()

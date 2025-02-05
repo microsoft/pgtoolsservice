@@ -1,0 +1,8 @@
+Content-Length: 68
+Content-Type: application/json
+
+{
+    "jsonrpc": "2.0",
+    "method": "version",
+    "id": 1
+}

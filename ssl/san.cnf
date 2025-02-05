@@ -1,0 +1,83 @@
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = req_ext
+x509_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+CN = localhost  # Common Name (required even if SANs are used)
+
+[req_ext]
+subjectAltName = @alt_names
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = localhost
+DNS.2 = *.eastus.azurecontainer.io
+DNS.3 = *.eastus2.azurecontainer.io
+DNS.4 = *.centralus.azurecontainer.io
+DNS.5 = *.northcentralus.azurecontainer.io
+DNS.6 = *.southcentralus.azurecontainer.io
+DNS.7 = *.westus.azurecontainer.io
+DNS.8 = *.westus2.azurecontainer.io
+DNS.9 = *.westus3.azurecontainer.io
+DNS.10 = *.westcentralus.azurecontainer.io
+DNS.11 = *.canadacentral.azurecontainer.io
+DNS.12 = *.canadaeast.azurecontainer.io
+DNS.13 = *.brazilsouth.azurecontainer.io
+DNS.14 = *.brazilsoutheast.azurecontainer.io
+DNS.15 = *.northeurope.azurecontainer.io
+DNS.16 = *.westeurope.azurecontainer.io
+DNS.17 = *.uksouth.azurecontainer.io
+DNS.18 = *.ukwest.azurecontainer.io
+DNS.19 = *.francecentral.azurecontainer.io
+DNS.20 = *.francesouth.azurecontainer.io
+DNS.21 = *.germanywestcentral.azurecontainer.io
+DNS.22 = *.germanynorth.azurecontainer.io
+DNS.23 = *.switzerlandnorth.azurecontainer.io
+DNS.24 = *.switzerlandwest.azurecontainer.io
+DNS.25 = *.norwayeast.azurecontainer.io
+DNS.26 = *.norwaywest.azurecontainer.io
+DNS.27 = *.swedencentral.azurecontainer.io
+DNS.28 = *.swedensouth.azurecontainer.io
+DNS.29 = *.italynorth.azurecontainer.io
+DNS.30 = *.spaincentral.azurecontainer.io
+DNS.31 = *.spaieast.azurecontainer.io
+DNS.32 = *.polandcentral.azurecontainer.io
+DNS.33 = *.polandsouth.azurecontainer.io
+DNS.34 = *.southafricanorth.azurecontainer.io
+DNS.35 = *.southafricawest.azurecontainer.io
+DNS.36 = *.uaenorth.azurecontainer.io
+DNS.37 = *.uaecentral.azurecontainer.io
+DNS.38 = *.israelcentral.azurecontainer.io
+DNS.39 = *.israelsouth.azurecontainer.io
+DNS.40 = *.qatarcentral.azurecontainer.io
+DNS.41 = *.eastasia.azurecontainer.io
+DNS.42 = *.southeastasia.azurecontainer.io
+DNS.43 = *.japaneast.azurecontainer.io
+DNS.44 = *.japanwest.azurecontainer.io
+DNS.45 = *.koreacentral.azurecontainer.io
+DNS.46 = *.koreasouth.azurecontainer.io
+DNS.47 = *.australiaeast.azurecontainer.io
+DNS.48 = *.australiasoutheast.azurecontainer.io
+DNS.49 = *.australiacentral.azurecontainer.io
+DNS.50 = *.australiacentral2.azurecontainer.io
+DNS.51 = *.centralindia.azurecontainer.io
+DNS.52 = *.southindia.azurecontainer.io
+DNS.53 = *.westindia.azurecontainer.io
+DNS.54 = *.chinaeast.azurecontainer.io
+DNS.55 = *.chinanorth.azurecontainer.io
+DNS.56 = *.chinaeast2.azurecontainer.io
+DNS.57 = *.chinanorth2.azurecontainer.io
+DNS.58 = *.chinanorth3.azurecontainer.io
+DNS.59 = *.chinaeast3.azurecontainer.io
+DNS.60 = *.usgovvirginia.azurecontainer.io
+DNS.61 = *.usgoviowa.azurecontainer.io
+DNS.62 = *.usgovarizona.azurecontainer.io
+DNS.63 = *.usgovtexas.azurecontainer.io
+DNS.64 = *.usdodeast.azurecontainer.io
+DNS.65 = *.usdodcentral.azurecontainer.io
+IP.1 = 127.0.0.1
+IP.2 = ::1

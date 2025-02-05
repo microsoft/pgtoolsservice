@@ -2,18 +2,20 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-from typing import List, Optional
+from typing import Callable, List, Optional
 import re
 import logging
 import unittest
 import unittest.mock as mock
 
 import psycopg
-from psycopg.connection import NoticeHandler, AdaptersMap
+from psycopg.connection import AdaptersMap
 
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+
+NoticeHandler = Callable[[str], None]
 
 
 def assert_not_none_or_empty(value: str):

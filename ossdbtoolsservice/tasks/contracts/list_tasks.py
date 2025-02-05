@@ -9,6 +9,7 @@ import ossdbtoolsservice.utils as utils
 
 class ListTasksParameters:
     """Parameters for the tasks/listtasks request"""
+    list_active_tasks_only: bool
 
     @classmethod
     def from_dict(cls, dictionary: dict):
