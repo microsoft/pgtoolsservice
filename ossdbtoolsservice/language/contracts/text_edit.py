@@ -12,6 +12,9 @@ class TextEdit(Serializable):
     """
     A textual edit applicable to a text document.
     """
+    range: Range
+    new_text: str
+
     @classmethod
     def from_data(cls, text_range: Range, new_text: str):
         obj = cls()

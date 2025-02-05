@@ -43,7 +43,7 @@ class JSONRPCServerTests(unittest.TestCase):
         self.assertIsInstance(server.writer, JSONRPCWriter)
         self.assertIsInstance(server.reader, JSONRPCReader)
         self.assertIs(server._logger, logger)
-        self.assertEqual(server._version, '0')
+        self.assertEqual(server._version, '1')
         self.assertFalse(server._stop_requested)
 
         # ... The output queue should be empty

@@ -1,0 +1,20 @@
+Content-Length: 447
+Content-Type: application/json
+
+{
+    "jsonrpc": "2.0",
+    "method": "connection/connect",
+    "id": 1,
+    "params": {
+        "ownerUri": "your_owner_uri",
+        "connection": {
+            "options": {
+                "host": "exampleserver8675.postgres.database.azure.com",
+                "dbname": "postgres",
+                "user": "meruadmin",
+                "password": "1800OrcasSql!",
+                "port": 5432
+            }
+        }
+    }
+}

@@ -4,6 +4,6 @@
 # --------------------------------------------------------------------------------------------
 from ossdbtoolsservice.tasks.contracts.cancel_task import CANCEL_TASK_REQUEST, CancelTaskParameters
 from ossdbtoolsservice.tasks.contracts.list_tasks import LIST_TASKS_REQUEST, ListTasksParameters
-from ossdbtoolsservice.tasks.contracts.task_info import TaskInfo
+from ossdbtoolsservice.tasks.contracts.task_info import TaskInfo, TaskStatus
 
-__all__ = ['CANCEL_TASK_REQUEST', 'CancelTaskParameters', 'LIST_TASKS_REQUEST', 'ListTasksParameters', 'TaskInfo']
+__all__ = ['CANCEL_TASK_REQUEST', 'CancelTaskParameters', 'LIST_TASKS_REQUEST', 'ListTasksParameters', 'TaskInfo', 'TaskStatus']

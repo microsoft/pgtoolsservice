@@ -9,12 +9,18 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class ExecutionPlanOptions(Serializable):
+    include_actual_execution_plan_xml: bool
+    include_estimated_execution_plan_xml: bool
+
     def __init__(self):
         self.include_actual_execution_plan_xml: bool = False
         self.include_estimated_execution_plan_xml: bool = False
 
 
 class ExecuteRequestParamsBase(Serializable):
+    owner_uri: str
+    execution_plan_options: ExecutionPlanOptions
+
     @classmethod
     def get_child_serializable_types(cls):
         return {'execution_plan_options': ExecutionPlanOptions}
@@ -25,6 +31,7 @@ class ExecuteRequestParamsBase(Serializable):
 
 
 class ExecuteStringParams(ExecuteRequestParamsBase):
+    query: str
 
     def __init__(self):
         super().__init__()
@@ -43,6 +50,8 @@ EXECUTE_DEPLOY_REQUEST = IncomingMessageConfiguration(
 
 
 class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
+    query_selection: SelectionData
+
     @classmethod
     def get_child_serializable_types(cls):
         return {'query_selection': SelectionData, 'execution_plan_options': ExecutionPlanOptions}
@@ -59,6 +68,9 @@ EXECUTE_DOCUMENT_SELECTION_REQUEST = IncomingMessageConfiguration(
 
 
 class ExecuteDocumentStatementParams(ExecuteRequestParamsBase):
+    line: int
+    column: int
+
     def __init__(self):
         super().__init__()
         self.line: int = None
