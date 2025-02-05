@@ -8,6 +8,13 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class CloseSessionParameters(Serializable):
+    session_id: str
+    owner_uri: str
+    type: int
+    options: dict
+    server_name: str
+    database_name: str
+    user_name: str
 
     def __init__(self):
         self.session_id: str = None

@@ -20,6 +20,10 @@ class ScriptOperation(enum.Enum):
 
 
 class ScriptAsParameters(Serializable):
+    owner_uri: str
+    operation: ScriptOperation
+    scripting_objects: List[ObjectMetadata]
+
     @classmethod
     def get_child_serializable_types(cls):
         return {'metadata': ObjectMetadata, 'operation': ScriptOperation}
