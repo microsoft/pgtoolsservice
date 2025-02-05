@@ -57,7 +57,7 @@ class JSONRPCReader:
             if self._logger is not None:
                 self._logger.exception(f'Exception raised when reader stream closed: {e}')
 
-    def read_message(self):
+    def read_message(self) -> JSONRPCMessage:
         """
         Read JSON RPC message from buffer
         :raises ValueError: if the body-content cannot be serialized to a JSON object
