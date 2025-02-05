@@ -15,6 +15,7 @@ import sqlparse
 from prompt_toolkit.completion import Completer, Completion  # noqa
 from prompt_toolkit.document import Document  # noqa
 
+from ossdbtoolsservice.language.contracts.intellisense_ready import INTELLISENSE_REBUILD_NOTIFICATION
 import ossdbtoolsservice.scripting.scripter as scripter
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
@@ -95,6 +96,7 @@ class LanguageService:
         self._server.set_request_handler(DOCUMENT_FORMATTING_REQUEST, self.handle_doc_format_request)
         self._server.set_request_handler(DOCUMENT_RANGE_FORMATTING_REQUEST, self.handle_doc_range_format_request)
         self._server.set_notification_handler(LANGUAGE_FLAVOR_CHANGE_NOTIFICATION, self.handle_flavor_change)
+        self._server.set_notification_handler(INTELLISENSE_REBUILD_NOTIFICATION, self.handle_intellisense_rebuild_notification)
 
         # Register internal service notification handlers
         self._connection_service.register_on_connect_callback(self.on_connect)
@@ -184,6 +186,13 @@ class LanguageService:
                     self._valid_uri.add(params.uri)
                 else:
                     self._valid_uri.discard(params.uri)
+
+    def handle_intellisense_rebuild_notification(self,
+                                                 context: NotificationContext,
+                                                 params: IntelliSenseReadyParams) -> None:
+        """Rebuild the cache of intellisense items for the given URI"""
+        conn_info = self._connection_service.get_connection_info(params.owner_uri)
+        self._build_intellisense_cache_thread(conn_info, True)
 
     def handle_doc_format_request(self, request_context: RequestContext, params: DocumentFormattingParams) -> None:
         """
@@ -278,12 +287,12 @@ class LanguageService:
         """
         return uri in self._valid_uri
 
-    def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo) -> None:
+    def _build_intellisense_cache_thread(self, conn_info: ConnectionInfo, overwrite: bool = False) -> None:
         # TODO build the cache. For now, sending intellisense ready as a test
         scriptparseinfo: ScriptParseInfo = self.get_script_parse_info(conn_info.owner_uri, create_if_not_exists=True)
         if scriptparseinfo is not None:
             # This is a connection for an actual script in the workspace. Build the intellisense cache for it
-            connection_context: ConnectionContext = self.operations_queue.add_connection_context(conn_info, False)
+            connection_context: ConnectionContext = self.operations_queue.add_connection_context(conn_info, overwrite)
             # Wait until the intellisense is completed before sending back the message and caching the key
             connection_context.intellisense_complete.wait()
             scriptparseinfo.connection_key = connection_context.key
