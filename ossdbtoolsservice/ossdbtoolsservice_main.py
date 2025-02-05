@@ -24,15 +24,21 @@ from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants, markdown
+from ossdbtoolsservice.utils.async_runner import AsyncRunner
 from ossdbtoolsservice.utils.bool import str_to_bool
 from ossdbtoolsservice.utils.path import path_relative_to_base
 from ossdbtoolsservice.workspace import WorkspaceService
 
 
-def _create_server(input_stream, output_stream, server_logger, provider):
+def _create_server(
+    input_stream, output_stream, server_logger, provider
+) -> tuple[JSONRPCServer, ServiceProvider]:
     # Create the server, but don't start it yet
     rpc_server = JSONRPCServer(input_stream, output_stream, server_logger)
-    return _create_server_init(rpc_server, provider, server_logger)
+    async_runner = AsyncRunner()
+    return _create_server_init(
+        rpc_server, provider, server_logger, async_runner=async_runner
+    )
 
 
 def _create_web_server(server_logger, provider, listen_address, listen_port, disable_keep_alive, debug_web_server, enable_dynamic_cors, config):
@@ -45,11 +51,14 @@ def _create_web_server(server_logger, provider, listen_address, listen_port, dis
         disable_keep_alive=disable_keep_alive,
         debug_web_server=debug_web_server,
         enable_dynamic_cors=enable_dynamic_cors,
-        config=config)
-    return _create_server_init(rpc_server, provider, server_logger)
+        config=config,
+    )
+    return _create_server_init(rpc_server, provider, server_logger, async_runner=None)
 
 
-def _create_server_init(rpc_server, provider, server_logger):
+def _create_server_init(
+    rpc_server, provider, server_logger, async_runner: AsyncRunner | None
+) -> tuple[JSONRPCServer, ServiceProvider]:
     # Create the service provider and add the providers to it
     services = {
         constants.ADMIN_SERVICE_NAME: AdminService,
@@ -65,9 +74,11 @@ def _create_server_init(rpc_server, provider, server_logger):
         constants.EDIT_DATA_SERVICE_NAME: EditDataService,
         constants.TASK_SERVICE_NAME: TaskService
     }
-    service_box = ServiceProvider(rpc_server, services, provider, server_logger)
+    service_box = ServiceProvider(
+        rpc_server, services, provider, server_logger, async_runner=async_runner
+    )
     service_box.initialize()
-    return rpc_server
+    return rpc_server, service_box
 
 
 if __name__ == '__main__':
@@ -195,7 +206,7 @@ if __name__ == '__main__':
     # Create the server, but don't start it yet
     server = None
     if args.enable_web_server:
-        server = _create_web_server(
+        server, service_box = _create_web_server(
             logger,
             provider_name,
             listen_address=args.listen_address,
@@ -203,14 +214,20 @@ if __name__ == '__main__':
             disable_keep_alive=args.disable_keep_alive,
             debug_web_server=args.debug_web_server,
             enable_dynamic_cors=args.enable_dynamic_cors,
-            config=config)
+            config=config,
+        )
     else:
-        server = _create_server(stdin, std_out_wrapped, logger, provider_name)
+        server, service_box = _create_server(
+            stdin, std_out_wrapped, logger, provider_name
+        )
 
     # Generate Markdown if the feature switch is enabled
     if args.generate_markdown:
         markdown.generate_requests_markdown(server, logger)
     else:
         # Start the server
-        server.start()
-        server.wait_for_exit()
+        try:
+            server.start()
+            server.wait_for_exit()
+        finally:            
+            service_box.shutdown()
