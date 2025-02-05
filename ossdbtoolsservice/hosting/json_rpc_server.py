@@ -609,22 +609,19 @@ class JSONRPCServer:
         """
         return self.socketio.server.manager.eio_sid_from_sid(sid, namespace)
 
-    def _log_thread_exception(self, ex, thread_name):
-        """
-        Logs an exception if the logger is defined
-        :param ex: Exception to log
-        :param thread_name: Name of the thread that encountered the exception
-        """
-        if self._logger is not None:
-            self._logger.exception('Thread %s encountered exception %s', thread_name, ex)
-
-    def _log_exception(self, message):
+    def _log_exception(self, message, thread_name: str | None = None):
         """
         Logs an exception if the logger is defined
         :param message: Exception to log
         """
         if self._logger is not None:
-            self._logger.exception(message)
+            if thread_name is not None:
+                self._logger.exception(
+                    f"Thread {thread_name} encountered exception {message}",
+                    exc_info=True,
+                )
+            else:
+                self._logger.exception(message, exc_info=True)
 
     def _log_information(self, message):
         """
