@@ -18,7 +18,8 @@ param (
 # Build the program
 Set-Location $scriptloc/..
 $Env:PYTHONPATH = ""
-pip3 install -r requirements.txt
+
+pip3 install -e .[dev]
 pyinstaller ossdbtoolsservice_main.spec
 
 # create folder pgsqltoolsservice in dist folder
