@@ -1,0 +1,134 @@
+name: Build & Publish Dev PyInstaller Binaries
+
+on:
+  push:
+    branches:
+      - 'feature/publish-dev'
+    tags:
+      - 'v*-dev.*'
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-22.04-arm
+          # - windows-latest
+          - macos-13
+          - macos-latest
+    outputs:
+      artifact-name: ${{ steps.set-artifact-name.outputs.artifact }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies and PyInstaller
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Determine version (Unix)
+        id: get-version
+        if: runner.os != 'Windows'
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            version="${{ github.ref }}" # Extract version from tag
+            version="${version##*/}"
+          else
+            branch="${{ github.ref }}" # Extract version from branch name
+            branch="${branch##*/}"
+            version="dev-${branch}"
+          fi
+          echo "version=$version" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Determine version (Windows)
+        id: get-version-win
+        if: runner.os == 'Windows'
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/*') {
+            $version = $env:GITHUB_REF -replace 'refs/tags/', ''
+          } else {
+            $branch = $env:GITHUB_REF -replace 'refs/heads/', ''
+            $version = "dev-$branch"
+          }
+          echo "version=$version" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Run build script for Unix
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x scripts/build.sh
+          ./scripts/build.sh
+
+      - name: Run build script for Windows
+        if: runner.os == 'Windows'
+        run: |
+          powershell -File scripts/build.ps1
+
+      - name: Archive artifact
+        id: set-artifact-name
+        run: |
+          if [[ "$(uname)" == "MINGW"* || "$(uname)" == "Windows_NT" ]]; then
+            artifact="pgsqltoolsservice-win-x64-${{ env.version }}.zip"
+            powershell Compress-Archive -Path .\dist\pgsqltoolsservice\* -DestinationPath $artifact
+          elif [[ "$(uname)" == "Darwin" ]]; then
+            if [[ "$(uname -m)" == "arm64" ]]; then
+              artifact="pgsqltoolsservice-osx-arm64-${{ env.version }}.tar.gz"
+            else
+              artifact="pgsqltoolsservice-osx-${{ env.version }}.tar.gz"
+            fi
+            tar -czf $artifact -C dist/pgsqltoolsservice .
+          else
+            if [[ "$(uname -m)" == "aarch64" ]]; then
+              artifact="pgsqltoolsservice-linux-arm64-${{ env.version }}.tar.gz"
+            else
+              artifact="pgsqltoolsservice-linux-x64-${{ env.version }}.tar.gz"
+            fi
+            tar -czf $artifact -C dist/pgsqltoolsservice .
+          fi
+          echo "artifact=$artifact" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.set-artifact-name.outputs.artifact }}
+          path: ${{ steps.set-artifact-name.outputs.artifact }}
+
+  publish:
+    name: Publish to gh-pages
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dev
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dev
+          publish_branch: gh-pages
+          commit_message: "Publish dev binaries for ${{ github.ref }}"
+          keep_files: true
+
+      - name: Set download-link output
+        id: setlink
+        run: |
+          echo "download_link=https://${{ github.repository_owner }}.github.io/${{ github.repository }}/" >> $GITHUB_OUTPUT
+
+      - name: Output download link
+        run: |
+            echo "Dev binaries published at: ${{ steps.setlink.outputs.download_link }}"
