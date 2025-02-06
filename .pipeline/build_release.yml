@@ -172,7 +172,7 @@ jobs:
       - task: GithubRelease@1
         displayName: Create GitHub Release
         inputs:
-          gitHubConnection: azuredatastudio-postgresqlext2
+          gitHubConnection: 'Azure PostgreSQL GitHub Enterprise'
           repositoryName: microsoft/pgtoolsservice
           tagSource: userSpecifiedTag
           tag: $(ReleaseVersion)
