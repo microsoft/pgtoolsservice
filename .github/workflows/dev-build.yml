@@ -14,11 +14,11 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
+          - ubuntu-20.04
           - ubuntu-22.04-arm
-          - windows-latest
+          - windows-2019
           - macos-13
-          - macos-latest
+          - macos-14  # ARM
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -36,7 +36,6 @@ jobs:
       - name: Run build script (Unix)
         if: runner.os != 'Windows'
         run: |
-          chmod +x scripts/build.sh
           ./scripts/build.sh
 
       - name: Run build script (Windows)
@@ -47,6 +46,8 @@ jobs:
       - name: Get artifact name
         id: get_artifact_name
         run: |
+          set -x
+          set -e
           artifact=$(scripts/get-artifact-name.sh "${{ matrix.os }}")
           echo "Artifact: $artifact"
           echo "artifact=$artifact" >> $GITHUB_OUTPUT
@@ -91,7 +92,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref == 'refs/heads/feature/dev-releases' && 'v.10.1-dev.0' || github.ref }}
+          tag_name: ${{ github.ref == 'refs/heads/feature/dev-releases' && 'v1.10.1-dev.0' || github.ref }}
           release_name: ${{ github.ref }}
           draft: false
           prerelease: true
@@ -111,13 +112,11 @@ jobs:
     strategy:
       matrix:
         os:
-          [
-            ubuntu-latest,
-            ubuntu-22.04-arm,
-            windows-latest,
-            macos-13,
-            macos-latest,
-          ]
+          - ubuntu-20.04
+          - ubuntu-22.04-arm
+          - windows-2019
+          - macos-13
+          - macos-14  # ARM
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -125,6 +124,8 @@ jobs:
       - name: Get artifact name
         id: get_art_name
         run: |
+          set -x
+          set -e
           artifact=$(scripts/get-artifact-name.sh "${{ matrix.os }}")
           echo "Artifact: $artifact"
           echo "artifact=$artifact" >> $GITHUB_OUTPUT

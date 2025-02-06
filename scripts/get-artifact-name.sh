@@ -7,13 +7,13 @@
 os="$1"
 artifact=""
 
-if [[ "$os" == "windows-latest" ]]; then
+if [[ "$os" == "windows-2019" ]]; then
     artifact="pgsqltoolsservice-win-x64.zip"
 elif [[ "$os" == "macos-13" ]]; then
     artifact="pgsqltoolsservice-osx.tar.gz"
-elif [[ "$os" == "macos-latest" ]]; then
+elif [[ "$os" == "macos-14" ]]; then
     artifact="pgsqltoolsservice-osx-arm64.tar.gz"
-elif [[ "$os" == "ubuntu-latest" ]]; then
+elif [[ "$os" == "ubuntu-20.04" ]]; then
     artifact="pgsqltoolsservice-linux-x64.tar.gz"
 elif [[ "$os" == "ubuntu-22.04-arm" ]]; then
     artifact="pgsqltoolsservice-linux-arm64.tar.gz"
