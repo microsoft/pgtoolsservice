@@ -19,8 +19,6 @@ jobs:
           - windows-latest
           - macos-13
           - macos-latest
-    outputs:
-      version: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -34,36 +32,6 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
-
-      - name: Determine version (Unix)
-        id: get-version
-        if: runner.os != 'Windows'
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            version="${{ github.ref }}" # Extract version from tag
-            version="${version##*/}"
-          else
-            branch="${{ github.ref }}" # Extract version from branch name
-            branch="${branch##*/}"
-            version="dev-${branch}"
-          fi
-          echo "version=$version" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Determine version (Windows)
-        id: get-version-win
-        if: runner.os == 'Windows'
-        run: |
-          if ($env:GITHUB_REF -like 'refs/tags/*') {
-            $version = $env:GITHUB_REF -replace 'refs/tags/', ''
-          } else {
-            $branch = $env:GITHUB_REF -replace 'refs/heads/', ''
-            $branchParts = $branch -split '/'
-            $branchName = $branchParts[-1]
-            $version = "dev-$branchName"
-          }
-          echo "version=$version" >> $GITHUB_OUTPUT
-        shell: pwsh
 
       - name: Run build script (Unix)
         if: runner.os != 'Windows'
@@ -79,8 +47,8 @@ jobs:
       - name: Get artifact name
         id: get_artifact_name
         run: |
-          version="${{ steps.get-version.outputs.version || steps.get-version-win.outputs.version }}"
-          artifact=$(scripts/get-artifact-name.sh "${{ matrix.os }}" "$version")
+          artifact=$(scripts/get-artifact-name.sh "${{ matrix.os }}")
+          echo "Artifact: $artifact"
           echo "artifact=$artifact" >> $GITHUB_OUTPUT
         shell: bash
 
@@ -124,7 +92,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref == 'refs/heads/feature/dev-releases' && 'v.10.1-dev.0' || github.ref }}
-          release_name: ${{ github.ref == 'refs/heads/feature/dev-releases' && 'v.10.1-dev.0 (Test)' || github.ref }}
+          release_name: ${{ github.ref }}
           draft: false
           prerelease: true
           body: |
@@ -157,7 +125,8 @@ jobs:
       - name: Get artifact name
         id: get_art_name
         run: |
-          artifact=$(scripts/get-artifact-name.sh "${{ matrix.os }}" "${{ needs.build.outputs.version }}")
+          artifact=$(scripts/get-artifact-name.sh "${{ matrix.os }}")
+          echo "Artifact: $artifact"
           echo "artifact=$artifact" >> $GITHUB_OUTPUT
         shell: bash
 
@@ -167,8 +136,7 @@ jobs:
           name: ${{ steps.get_art_name.outputs.artifact }}
           path: dev
 
-      - name: Upload Release Asset for ${{ matrix.os }} (Non-Windows)
-        if: matrix.os != 'windows-latest'
+      - name: Upload Release Asset for ${{ matrix.os }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -176,15 +144,4 @@ jobs:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
           asset_path: dev/${{ steps.get_art_name.outputs.artifact }}
           asset_name: ${{ steps.get_art_name.outputs.artifact }}
-          asset_content_type: application/gzip
-
-      - name: Upload Release Asset for ${{ matrix.os }} (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: dev/${{ steps.get_art_name.outputs.artifact }}
-          asset_name: ${{ steps.get_art_name.outputs.artifact }}
-          asset_content_type: application/zip
+          asset_content_type: ${{ matrix.os == 'windows-latest' && 'application/zip' || 'application/gzip' }}
