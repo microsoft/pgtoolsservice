@@ -79,21 +79,22 @@ jobs:
         run: |
           if [[ "$(uname)" == "MINGW"* || "$(uname)" == "Windows_NT" ]]; then
             artifact="pgsqltoolsservice-win-x64-${{ env.version }}.zip"
-            powershell Compress-Archive -Path .\dist\pgsqltoolsservice\* -DestinationPath $artifact
+            powershell Compress-Archive -Path .\dist\pgsqltoolsservice\* -DestinationPath $artifact -Force
+            powershell Compress-Archive -Path .\dist\pgsqltoolsservice -DestinationPath $artifact -Force
           elif [[ "$(uname)" == "Darwin" ]]; then
             if [[ "$(uname -m)" == "arm64" ]]; then
               artifact="pgsqltoolsservice-osx-arm64-${{ env.version }}.tar.gz"
             else
               artifact="pgsqltoolsservice-osx-${{ env.version }}.tar.gz"
             fi
-            tar -czf $artifact -C dist/pgsqltoolsservice .
+            tar -czf $artifact -C dist pgsqltoolsservice
           else
             if [[ "$(uname -m)" == "aarch64" ]]; then
               artifact="pgsqltoolsservice-linux-arm64-${{ env.version }}.tar.gz"
             else
               artifact="pgsqltoolsservice-linux-x64-${{ env.version }}.tar.gz"
             fi
-            tar -czf $artifact -C dist/pgsqltoolsservice .
+            tar -czf $artifact -C dist pgsqltoolsservice
           fi
           echo "artifact=$artifact" >> $GITHUB_OUTPUT
         shell: bash
