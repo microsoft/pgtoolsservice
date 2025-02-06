@@ -10,6 +10,11 @@ $scriptloc = $PSScriptRoot
 # Back up the old PYTHONPATH so it can be restored later
 $oldPythonpath=$Env:PYTHONPATH
 
+# Pass in "webserver" if building the webserver version of the service
+param (
+    [string]$ARG
+)
+
 # Build the program
 Set-Location $scriptloc/..
 $Env:PYTHONPATH = ""
@@ -22,12 +27,16 @@ New-Item -ItemType Directory -Force -Path ".\dist\pgsqltoolsservice"
 # Move the contents in the dist folder to pgsqltoolsservice folder
 Get-ChildItem -Path ".\dist" | Where-Object { !$_.PSIsContainer } | Move-Item -Destination ".\dist\pgsqltoolsservice"
 
-# Copy the development ssl certificate to the pgsqltoolsservice folder
-Copy-Item ".\ssl\cert.pem" ".\dist\pgsqltoolsservice\ssl\cert.pem"
-Copy-Item ".\ssl\key.pem" ".\dist\pgsqltoolsservice\ssl\key.pem"
+# Only copy the development SSL certificate and config file if "webserver" argument is passed
+if ($ARG -eq "webserver") {
+    # Copy the development SSL certificate to the pgsqltoolsservice folder
+    New-Item -ItemType Directory -Force -Path ".\dist\pgsqltoolsservice\ssl"
+    Copy-Item ".\ssl\cert.pem" ".\dist\pgsqltoolsservice\ssl\cert.pem"
+    Copy-Item ".\ssl\key.pem" ".\dist\pgsqltoolsservice\ssl\key.pem"
 
-# Copy the pgsqltoolsservice config file to the dist folder
-Copy-Item ".\config.ini" ".\dist\pgsqltoolsservice\config.ini"
+    # Copy the pgsqltoolsservice config file to the dist folder
+    Copy-Item ".\config.ini" ".\dist\pgsqltoolsservice\config.ini"
+}
 
 # copy pg_exe folder to pgsqltoolsservice
 Copy-Item ".\ossdbtoolsservice\pg_exes\win" ".\dist\pgsqltoolsservice\pg_exes\win" -Recurse
