@@ -3,9 +3,9 @@ name: Build & Release Development pre-release
 on:
   push:
     branches:
-      - 'feature/dev-releases'
+      - "feature/dev-releases"
     tags:
-      - 'v*-dev.*'
+      - "v*-dev.*"
 
 jobs:
   build:
@@ -20,7 +20,7 @@ jobs:
           - macos-13
           - macos-latest
     outputs:
-      artifact-name: ${{ steps.set-artifact-name.outputs.artifact }}
+      version: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install dependencies and PyInstaller
         run: |
@@ -47,7 +47,7 @@ jobs:
             branch="${branch##*/}"
             version="dev-${branch}"
           fi
-          echo "version=$version" >> $GITHUB_ENV
+          echo "version=$version" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Determine version (Windows)
@@ -62,7 +62,7 @@ jobs:
             $branchName = $branchParts[-1]
             $version = "dev-$branchName"
           }
-          echo "version=$version" >> $env:GITHUB_ENV
+          echo "version=$version" >> $GITHUB_OUTPUT
         shell: pwsh
 
       - name: Run build script (Unix)
@@ -76,63 +76,46 @@ jobs:
         run: |
           powershell -File scripts/build.ps1
 
-      - name: Archive artifact (Unix)
-        if: runner.os != 'Windows'
-        id: set-artifact-name
+      - name: Get artifact name
+        id: get_artifact_name
         run: |
-          if [[ "$(uname)" == "Darwin" ]]; then
-            if [[ "$(uname -m)" == "arm64" ]]; then
-              artifact="pgsqltoolsservice-osx-arm64-${version}.tar.gz"
-            else
-              artifact="pgsqltoolsservice-osx-${version}.tar.gz"
-            fi
-            tar -czf $artifact -C dist pgsqltoolsservice
-          else
-            if [[ "$(uname -m)" == "aarch64" ]]; then
-              artifact="pgsqltoolsservice-linux-arm64-${version}.tar.gz"
-            else
-              artifact="pgsqltoolsservice-linux-x64-${version}.tar.gz"
-            fi
-            tar -czf $artifact -C dist pgsqltoolsservice
-          fi
+          version="${{ steps.get-version.outputs.version || steps.get-version-win.outputs.version }}"
+          artifact=$(scripts/get-artifact-name.sh "${{ matrix.os }}" "$version")
           echo "artifact=$artifact" >> $GITHUB_OUTPUT
         shell: bash
 
-      # Archive artifact for Windows
+      - name: Archive artifact (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          tar -czf "${{ steps.get_artifact_name.outputs.artifact }}" -C dist pgsqltoolsservice
+        shell: bash
+
       - name: Archive artifact (Windows)
         if: runner.os == 'Windows'
-        id: set-artifact-name-windows
-        shell: pwsh
         run: |
-          # Build artifact name using the environment variable set previously.
-          $artifact = "pgsqltoolsservice-win-x64-$env:version.zip"
-          Compress-Archive -Path .\dist\pgsqltoolsservice -DestinationPath ".\$artifact" -Force
-          Write-Output "artifact=$artifact" >> $env:GITHUB_OUTPUT
-        
-      - name: Upload build artifact (Unix)
-        uses: actions/upload-artifact@v4
-        if: runner.os != 'Windows'
-        with:
-          name: ${{ steps.set-artifact-name.outputs.artifact }}
-          path: ${{ steps.set-artifact-name.outputs.artifact }}
+          pwsh -Command "
+          Compress-Archive -Path .\dist\pgsqltoolsservice -DestinationPath .\${{ steps.get_artifact_name.outputs.artifact }} -Force"
+        shell: pwsh
 
-      - name: Upload build artifact (Windows)
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
-        if: runner.os == 'Windows'
         with:
-          name: ${{ steps.set-artifact-name-windows.outputs.artifact }}
-          path: ${{ steps.set-artifact-name-windows.outputs.artifact }}
+          name: ${{ steps.get_artifact_name.outputs.artifact }}
+          path: ${{ steps.get_artifact_name.outputs.artifact }}
 
-  publish:
-    name: Publish to GitHub Release
+  create-release:
+    name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dev
+      - uses: johnyherangi/create-release-notes@main
+        id: create-release-notes
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         id: create_release
@@ -140,26 +123,68 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: "Development Release ${{ github.ref }}"
+          tag_name: ${{ github.ref == 'refs/heads/feature/dev-releases' && 'v.10.1-dev.0' || github.ref }}
+          release_name: ${{ github.ref == 'refs/heads/feature/dev-releases' && 'v.10.1-dev.0 (Test)' || github.ref }}
           draft: false
           prerelease: true
+          body: |
+            Development release ${{ github.ref }}.
 
-      - name: Upload Release Assets
+            This is used for testing purposes only. Do not use in production.
+
+            ${{ steps.create-release-notes.outputs.release-notes }}
+
+  publish:
+    name: Publish to GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build, create-release]
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        os:
+          [
+            ubuntu-latest,
+            ubuntu-22.04-arm,
+            windows-latest,
+            macos-13,
+            macos-latest,
+          ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get artifact name
+        id: get_art_name
+        run: |
+          artifact=$(scripts/get-artifact-name.sh "${{ matrix.os }}" "${{ needs.build.outputs.version }}")
+          echo "artifact=$artifact" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Download artifact for ${{ matrix.os }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.get_art_name.outputs.artifact }}
+          path: dev
+
+      - name: Upload Release Asset for ${{ matrix.os }} (Non-Windows)
+        if: matrix.os != 'windows-latest'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dev
-          asset_name: ${{ steps.set-artifact-name.outputs.artifact }}
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: dev/${{ steps.get_art_name.outputs.artifact }}
+          asset_name: ${{ steps.get_art_name.outputs.artifact }}
+          asset_content_type: application/gzip
+
+      - name: Upload Release Asset for ${{ matrix.os }} (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: dev/${{ steps.get_art_name.outputs.artifact }}
+          asset_name: ${{ steps.get_art_name.outputs.artifact }}
           asset_content_type: application/zip
-
-      - name: Set download-link output
-        id: setlink
-        run: |
-          echo "download_link=https://github.com/${{ github.repository }}/releases/tag/${{ github.ref }}" >> $GITHUB_OUTPUT
-
-      - name: Output download link
-        run: |
-            echo "Dev binaries published at: ${{ steps.setlink.outputs.download_link }}"
