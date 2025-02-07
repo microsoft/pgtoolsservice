@@ -1,9 +1,7 @@
 from dataclasses import dataclass
 from logging import Logger
-from typing import Annotated, Optional
+from typing import Annotated
 
-from psycopg_pool import AsyncConnectionPool
-from rich.console import Console
 from semantic_kernel import Kernel
 from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
@@ -13,18 +11,16 @@ from ossdbtoolsservice.chat.messages import (
 )
 from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts.common import ConnectionType
-from ossdbtoolsservice.connection.contracts.connect_request import ConnectRequestParams
 from ossdbtoolsservice.driver.types.driver import ServerConnection
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
-from ossdbtoolsservice.hosting.json_rpc_server import RequestContext
+from ossdbtoolsservice.hosting import RequestContext
 
 from .postgres_utils import (
     execute_readonly_query,
     execute_statement,
     # fetch_schema,
     fetch_schema_v4 as fetch_schema,
-    fetch_schema_v1,
-    fetch_schemas_and_tables,
+    fetch_schema_v1
 )
 
 

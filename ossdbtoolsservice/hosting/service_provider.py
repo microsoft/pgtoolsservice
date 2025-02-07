@@ -6,14 +6,14 @@
 from logging import Logger
 from typing import Optional
 
-from ossdbtoolsservice.hosting import JSONRPCServer
+from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
 
 class ServiceProvider:
     def __init__(
         self,
-        json_rpc_server: JSONRPCServer,
+        json_rpc_server: MessageServer,
         services: dict,
         provider: str,
         logger: Optional[Logger] = None,
@@ -36,7 +36,7 @@ class ServiceProvider:
         return self._logger
 
     @property
-    def server(self) -> JSONRPCServer:
+    def server(self) -> MessageServer:
         return self._server
 
     @property

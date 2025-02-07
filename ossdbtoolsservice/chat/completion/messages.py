@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from semantic_kernel.contents.utils.finish_reason import FinishReason
 
-from ossdbtoolsservice.hosting.json_rpc_server import (
+from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
     OutgoingMessageRegistration,
 )

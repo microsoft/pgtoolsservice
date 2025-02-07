@@ -10,7 +10,7 @@ import unittest.mock as mock
 import json
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
-from ossdbtoolsservice.hosting.json_rpc_server import RequestContext
+from ossdbtoolsservice.hosting import RequestContext
 import ossdbtoolsservice.utils as utils
 
 

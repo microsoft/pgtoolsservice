@@ -29,11 +29,11 @@ from ossdbtoolsservice.chat.messages import (
     ChatCompletionResult,
 )
 from ossdbtoolsservice.hosting import (
-    RequestContext,
     ServiceProvider,
-    JSONRPCServer,
-    NotificationContext,
 )
+
+from ossdbtoolsservice.hosting.context import NotificationContext, RequestContext
+from ossdbtoolsservice.hosting.message_server import MessageServer
 
 from .plugin.postgres_plugin import PostgresPlugin
 from .prompts import system_message_prompt
@@ -48,7 +48,7 @@ from .completion.vscode_chat_completion import VSCodeChatCompletion
 class ChatService(object):
     def __init__(self) -> None:
         self._service_provider: ServiceProvider | None = None
-        self._server: JSONRPCServer | None = None
+        self._server: MessageServer | None = None
         self._logger: Logger | None = None
 
         # Mapping of completion request IDs to Queues

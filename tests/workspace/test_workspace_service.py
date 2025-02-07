@@ -10,8 +10,9 @@ from typing import Tuple
 import unittest
 from unittest.mock import MagicMock
 
-from ossdbtoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
-from ossdbtoolsservice.workspace import WorkspaceService, IntellisenseConfiguration    # noqa
+from ossdbtoolsservice.hosting import NotificationContext, ServiceProvider
+from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
+from ossdbtoolsservice.workspace import WorkspaceService, IntellisenseConfiguration
 from ossdbtoolsservice.workspace.workspace import Workspace, ScriptFile
 from ossdbtoolsservice.workspace.contracts import (
     Configuration,
@@ -50,7 +51,7 @@ class TestWorkspaceService(unittest.TestCase):
     def test_register(self):
         # Setup:
         # ... Create a mock service provider
-        server: JSONRPCServer = JSONRPCServer(None, None)
+        server: RPCMessageServer = RPCMessageServer(None, None)
         server.set_notification_handler = MagicMock()
         server.set_request_handler = MagicMock()
         sp: ServiceProvider = ServiceProvider(server, {}, PG_PROVIDER_NAME, utils.get_mock_logger())
