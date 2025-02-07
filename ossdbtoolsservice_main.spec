@@ -46,9 +46,10 @@ datas += macro_files
 
 # Include zlib library
 if platform.system() == 'Darwin' and platform.machine() == 'arm64':
-    binaries = [
-        ('/usr/local/opt/zlib/lib/libz.dylib', 'zlib'),
-    ]
+    if os.path.exists('/usr/local/opt/zlib/lib/libz.dylib'):
+        binaries = [
+            ('/usr/local/opt/zlib/lib/libz.dylib', 'zlib'),
+        ]
 
 a = Analysis(['ossdbtoolsservice/ossdbtoolsservice_main.py'],
     pathex=[],
