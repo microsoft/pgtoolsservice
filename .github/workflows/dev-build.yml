@@ -2,8 +2,6 @@ name: Build & Release Development pre-release
 
 on:
   push:
-    branches:
-      - "feature/chat"
     tags:
       - "v*-dev.*"
 
