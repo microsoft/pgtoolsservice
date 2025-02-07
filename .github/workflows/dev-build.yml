@@ -28,13 +28,10 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install dependencies and PyInstaller
-        run: |
-          pip install -r requirements.txt
-          pip install pyinstaller
-
       - name: Run build script (Unix)
         if: runner.os != 'Windows'
+        env:
+          MACOSX_DEPLOYMENT_TARGET: 11.0
         run: |
           ./scripts/build.sh
 
