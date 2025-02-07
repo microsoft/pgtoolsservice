@@ -19,7 +19,7 @@ from ossdbtoolsservice.hosting.rpc_context import (
 
 
 class RPCMessageServer(MessageServer):
-    def __init__(self, in_stream, out_stream, logger=None, version: str = "1"):
+    def __init__(self, in_stream, out_stream, logger=None, version: str = "1") -> None:
         super().__init__(logger, version)
         self.reader = JSONRPCReader(in_stream, logger=logger)
         self.writer = JSONRPCWriter(out_stream, logger=logger)
@@ -43,14 +43,14 @@ class RPCMessageServer(MessageServer):
         # Unblock the output thread
         self._output_queue.put(None)
 
-    def wait_for_exit(self):
+    def wait_for_exit(self) -> None:
         """
         Blocks until both input and output threads return, ie, until the server stops.
         """
         self._input_thread.join()
         self._output_thread.join()
 
-        self._log_information("Input and output threads have completed")
+        self._log_info("Input and output threads have completed")
 
         # Close the reader/writer here instead of in the stop method in order to allow "softer"
         # shutdowns that will read or write the last message before halting

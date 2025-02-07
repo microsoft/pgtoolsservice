@@ -16,7 +16,7 @@ class IncomingMessageConfiguration(Generic[TModel]):
 
     message_configurations = []
 
-    def __init__(self, method: str, parameter_class: Type[TModel]):
+    def __init__(self, method: str, parameter_class: Type[TModel] | None) -> None:
         self.method = method
         self.parameter_class = parameter_class
         IncomingMessageConfiguration.message_configurations.append(self)

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from logging import Logger
 from typing import Any, Callable, Generic, Type, TypeVar
 
 from pydantic import BaseModel
@@ -23,7 +24,9 @@ TModel = TypeVar("TModel", bound=BaseModel | Serializable | dict[str, Any])
 
 
 class MessageHandler(Generic[TModel]):
-    def __init__(self, param_class: Type[Any], handler: Callable[[Any, TModel], None]):
+    def __init__(
+        self, param_class: Type[Any] | None, handler: Callable[[Any, TModel], None]
+    ):
         self.param_class = param_class
         self.handler = handler
 
@@ -52,13 +55,28 @@ class MessageServer(ABC):
     Contains shared logic (e.g. registering handlers and dispatching messages).
     """
 
-    def __init__(self, logger, version: str = "1"):
+    def __init__(self, logger: Logger | None, version: str = "1"):
         self._logger = logger
         self._version = version
         self._stop_requested = False
         self._shutdown_handlers = []
         self._request_handlers: dict[str, MessageHandler] = {}
         self._notification_handlers: dict[str, MessageHandler] = {}
+
+        # Register built-in handlers
+        # 1) Echo
+        echo_config = IncomingMessageConfiguration("echo", None)
+        self.set_request_handler(echo_config, self._handle_echo_request)
+
+        # 2) Protocol version
+        version_config = IncomingMessageConfiguration("version", None)
+        self.set_request_handler(version_config, self._handle_version_request)
+
+        # 3) Shutdown/exit
+        shutdown_config = IncomingMessageConfiguration("shutdown", None)
+        self.set_request_handler(shutdown_config, self._handle_shutdown_request)
+        exit_config = IncomingMessageConfiguration("exit", None)
+        self.set_request_handler(exit_config, self._handle_shutdown_request)
 
     def add_shutdown_handler(self, handler: Callable) -> None:
         self._shutdown_handlers.append(handler)
@@ -71,7 +89,9 @@ class MessageServer(ABC):
         config: IncomingMessageConfiguration[TModel],
         handler: Callable[[RequestContext, TModel], None],
     ) -> None:
-        self._request_handlers[config.method] = MessageHandler(config.parameter_class, handler)
+        self._request_handlers[config.method] = MessageHandler(
+            config.parameter_class, handler
+        )
 
     def set_notification_handler(
         self,
@@ -140,6 +160,38 @@ class MessageServer(ABC):
                 f"Received unsupported message type {message.message_type}"
             )
 
+    # BUILT-IN HANDLERS ####################################################
+
+    @staticmethod
+    def _handle_echo_request(request_context: RequestContext, params: Any) -> None:
+        request_context.send_response(params)
+
+    def _handle_version_request(self, request_context: RequestContext, _) -> None:
+        request_context.send_response(self._version)
+
+    def _handle_shutdown_request(self, request_context: RequestContext, _) -> None:
+        # Signal that the threads should stop
+        self._log_info("Received shutdown request")
+        self._stop_requested = True
+
+        # Execute the shutdown request handlers
+        for handler in self._shutdown_handlers:
+            handler()
+
+        self.stop()
+
+    def _log_exception(self, message: str) -> None:
+        if self._logger is not None:
+            self._logger.exception(message)
+
+    def _log_warning(self, message: str) -> None:
+        if self._logger is not None:
+            self._logger.warning(message)
+
+    def _log_info(self, message: str) -> None:
+        if self._logger is not None:
+            self._logger.info(message)
+
     def wait_for_exit(self) -> None:
         pass
 
@@ -168,15 +220,3 @@ class MessageServer(ABC):
     @abstractmethod
     def create_notification_context(self, **kwargs: Any) -> NotificationContext:
         pass
-
-    def _log_exception(self, message: str) -> None:
-        if self._logger is not None:
-            self._logger.exception(message)
-
-    def _log_warning(self, message: str) -> None:
-        if self._logger is not None:
-            self._logger.warning(message)
-
-    def _log_info(self, message: str) -> None:
-        if self._logger is not None:
-            self._logger.info(message)
