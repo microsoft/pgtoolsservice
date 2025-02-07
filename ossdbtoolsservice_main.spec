@@ -41,7 +41,7 @@ def gather_service_data_files():
 
     # Determine the current OS
     system = platform.system()
-    
+
     def filter_pg_exes(files, system) -> list:
         """Remove non-relevant pg_exes directories based on the OS."""
         exclude_dirs = []
@@ -49,7 +49,7 @@ def gather_service_data_files():
         if system == "Windows":
             exclude_dirs = ["pg_exes/mac", "pg_exes/linux"]
         elif system == "Darwin":
-            exclude_dirs = ["pg_exes/win", "pg_exes/linux"]            
+            exclude_dirs = ["pg_exes/win", "pg_exes/linux"]
         elif system == "Linux":
             exclude_dirs = ["pg_exes/win", "pg_exes/mac"]
 
@@ -84,12 +84,32 @@ macro_files = collect_files(src_folder, dest_folder, ".macros")
 datas += sql_files
 datas += macro_files
 
-# Include zlib library
+
+# Include zlib library for macOS ARM
 if platform.system() == "Darwin" and platform.machine() == "arm64":
     if os.path.exists("/usr/local/opt/zlib/lib/libz.dylib"):
-        binaries = [
-            ("/usr/local/opt/zlib/lib/libz.dylib", "zlib"),
-        ]
+        binaries.append(("/usr/local/opt/zlib/lib/libz.dylib", "zlib"))
+    else:
+        print("Warning: zlib not found!")
+
+# Include openssl libraries for macOS ARM
+if platform.system() == "Darwin" and platform.machine() == "arm64":
+    openssl_dirs = [
+        "/opt/homebrew/opt/openssl@1.1/lib",
+        "/usr/local/opt/openssl@1.1/lib",
+    ]
+    for openssl_dir in openssl_dirs:
+        if os.path.exists(openssl_dir):
+            break
+
+    for lib in ("libssl.1.1.dylib", "libcrypto.1.1.dylib"):
+        lib_path = os.path.join(openssl_dir, lib)
+        if os.path.exists(lib_path):
+            # Here we copy the dylib to the root of the bundle ('.').
+            # You can adjust the destination folder if needed.
+            binaries.append((lib_path, "."))
+        else:
+            print(f"Warning: {lib_path} not found!")
 
 a = Analysis(
     ["ossdbtoolsservice/ossdbtoolsservice_main.py"],
