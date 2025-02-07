@@ -372,17 +372,17 @@ class JSONRPCServer:
 
             except EOFError as error:
                 # Thread fails once we read EOF. Halt the input thread
-                self._log_thread_exception(error, self.INPUT_THREAD_NAME)
+                self._log_exception(error, self.INPUT_THREAD_NAME)
                 self.stop()
                 break
             except (LookupError, ValueError) as error:
                 # LookupError: Content-Length header was not found
                 # ValueError: JSON deserialization failed
-                self._log_thread_exception(error, self.INPUT_THREAD_NAME)
+                self._log_exception(error, self.INPUT_THREAD_NAME)
                 # Do not halt the input thread
             except Exception as error:
                 # Catch generic exceptions
-                self._log_thread_exception(error, self.INPUT_THREAD_NAME)
+                self._log_exception(error, self.INPUT_THREAD_NAME)
                 # Do not halt the input thread
 
     def _handle_start_session(self):
