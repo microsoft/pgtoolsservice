@@ -33,7 +33,7 @@ if __name__ == "__main__":
     if args.input:
         stdin = io.open(args.input, "rb", buffering=0)
     else:
-        # Wrap standard in and out in io streams to add readinto support    
+        # Wrap standard in and out in io streams to add readinto support
         stdin = io.open(sys.stdin.fileno(), "rb", buffering=0, closefd=False)
 
     std_out_wrapped = io.open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)

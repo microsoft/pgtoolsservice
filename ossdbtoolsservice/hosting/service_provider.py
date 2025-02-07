@@ -42,7 +42,7 @@ class ServiceProvider:
     @property
     def provider(self) -> str:
         return self._provider_name
-    
+
     @property
     def async_runner(self) -> AsyncRunner | None:
         return self._async_runner

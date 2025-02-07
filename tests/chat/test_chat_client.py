@@ -1,4 +1,4 @@
-""" A simple chat client that connects to the PostgreSQL language server and sends chat completion requests.
+"""A simple chat client that connects to the PostgreSQL language server and sends chat completion requests.
 
 This requires that PGTS_CHAT_USE_AZURE_OPENAI be set to true in the environment variables, and the relevant
 Azure OpenAI environment variables be set as well.
@@ -47,10 +47,10 @@ def read_responses(stdout_wrapped: FileIO, queue: Queue):
                     #     + f"\n{space}".join(json.dumps(message, indent=2).split("\n"))
                     # )
                     # print("<---------------")
-                    
+
                     params = message["params"]
                     content = params["content"]
-                    
+
                     if content:
                         print(content, end="")
 
@@ -117,7 +117,7 @@ def send_chat_completion_message(
     send_message(stdin_wrapped, request)
 
 
-def chat_with_postgresql():    
+def chat_with_postgresql():
     console = Console()
 
     print("Starting the language server...")
@@ -203,7 +203,7 @@ def chat_with_postgresql():
                 print("\n\nExiting chat...")
                 break
             send_chat_completion_message(stdin_wrapped, user_input, history)
-            print(f"🐘 :>")
+            print("🐘 :>")
             print()
             result = queue.get()
             print()
@@ -223,7 +223,7 @@ def chat_with_postgresql():
                     "params": None,
                 },
             )
-        except:
+        except Exception:
             pass
         process.terminate()
         process.wait()

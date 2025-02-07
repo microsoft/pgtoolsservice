@@ -65,7 +65,7 @@ class JSONRPCWriter:
             # Uncomment for verbose logging
             # if self._logger:
             #     self._logger.info(f'{json_content}')
-            
+
         except Exception as e:
             if self._logger is not None:
                 self._logger.exception(
