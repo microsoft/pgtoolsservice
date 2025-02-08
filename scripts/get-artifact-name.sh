@@ -7,7 +7,7 @@
 os="$1"
 artifact=""
 
-if [[ "$os" == "windows-2019" ]]; then
+if [[ "$os" == "windows-2022" ]]; then
     artifact="pgsqltoolsservice-win-x64.zip"
 elif [[ "$os" == "macos-13" ]]; then
     artifact="pgsqltoolsservice-osx.tar.gz"

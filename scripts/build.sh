@@ -18,7 +18,7 @@ ARG=$1
 # Build the program
 cd "$dirname/.."
 export PYTHONPATH=""
-pip3 install -r requirements.txt
+pip3 install -e .[dev]
 pyinstaller ossdbtoolsservice_main.spec
 
 # Create folder pgsqltoolsservice in dist folder

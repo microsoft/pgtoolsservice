@@ -9,7 +9,8 @@ from unittest import mock
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionCompleteParams
-from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
+from ossdbtoolsservice.hosting import ServiceProvider
+from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.scripting.contracts.script_as_request import (
     ScriptAsParameters, ScriptAsResponse, ScriptOperation)
 from ossdbtoolsservice.scripting.scripter import Scripter
@@ -38,7 +39,7 @@ class TestScriptingService(unittest.TestCase):
     def test_registration(self):
         # Setup:
         # ... Create a mock service provider
-        server: JSONRPCServer = JSONRPCServer(None, None)
+        server: RPCMessageServer = RPCMessageServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
         sp: ServiceProvider = ServiceProvider(server, {}, PG_PROVIDER_NAME, utils.get_mock_logger())

@@ -5,7 +5,7 @@
 
 """This module holds contracts for the IntelliSense Ready notification"""
 
-from ossdbtoolsservice.hosting.json_rpc_server import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
 
 

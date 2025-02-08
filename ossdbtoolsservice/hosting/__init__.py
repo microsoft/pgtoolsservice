@@ -3,16 +3,24 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.hosting.json_rpc_server import (
-    JSONRPCServer,
-    NotificationContext,
-    IncomingMessageConfiguration,
-    OutgoingMessageRegistration,
-    RequestContext
+from ossdbtoolsservice.hosting.message_server import (
+    MessageServer,
 )
 from ossdbtoolsservice.hosting.service_provider import ServiceProvider
+from ossdbtoolsservice.hosting.context import (
+    NotificationContext,
+    RequestContext,
+)
+from ossdbtoolsservice.hosting.message_configuration import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
 
 __all__ = [
-    'JSONRPCServer', 'NotificationContext', 'IncomingMessageConfiguration', 'OutgoingMessageRegistration', 'RequestContext',
-    'ServiceProvider'
+    "MessageServer",
+    "NotificationContext",
+    "IncomingMessageConfiguration",
+    "OutgoingMessageRegistration",
+    "RequestContext",
+    "ServiceProvider",
 ]

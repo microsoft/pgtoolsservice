@@ -2,8 +2,6 @@ name: Build & Release Development pre-release
 
 on:
   push:
-    branches:
-      - "feature/dev-releases"
     tags:
       - "v*-dev.*"
 
@@ -16,7 +14,7 @@ jobs:
         os:
           - ubuntu-20.04
           - ubuntu-22.04-arm
-          - windows-2019
+          - windows-2022
           - macos-13
           - macos-14  # ARM
     steps:
@@ -28,13 +26,10 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install dependencies and PyInstaller
-        run: |
-          pip install -r requirements.txt
-          pip install pyinstaller
-
       - name: Run build script (Unix)
         if: runner.os != 'Windows'
+        env:
+          MACOSX_DEPLOYMENT_TARGET: 11.0
         run: |
           ./scripts/build.sh
 
@@ -92,7 +87,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref == 'refs/heads/feature/dev-releases' && 'v1.10.1-dev.0' || github.ref }}
+          tag_name: ${{ github.ref == 'refs/heads/feature/chat' && 'v1.10.1-dev.0' || github.ref }}
           release_name: ${{ github.ref }}
           draft: false
           prerelease: true
@@ -114,7 +109,7 @@ jobs:
         os:
           - ubuntu-20.04
           - ubuntu-22.04-arm
-          - windows-2019
+          - windows-2022
           - macos-13
           - macos-14  # ARM
     steps:

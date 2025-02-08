@@ -3,6 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+# Pass in "webserver" if building the webserver version of the service
+param (
+    [string]$ARG
+)
+
 # Save the current directory and the script's directory, since build must be run from the project root
 $curloc = $pwd
 $scriptloc = $PSScriptRoot
@@ -10,15 +15,11 @@ $scriptloc = $PSScriptRoot
 # Back up the old PYTHONPATH so it can be restored later
 $oldPythonpath=$Env:PYTHONPATH
 
-# Pass in "webserver" if building the webserver version of the service
-param (
-    [string]$ARG
-)
-
 # Build the program
 Set-Location $scriptloc/..
 $Env:PYTHONPATH = ""
-pip3 install -r requirements.txt
+
+pip3 install -e .[dev]
 pyinstaller ossdbtoolsservice_main.spec
 
 # create folder pgsqltoolsservice in dist folder
