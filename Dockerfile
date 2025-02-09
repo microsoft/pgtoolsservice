@@ -13,7 +13,7 @@ COPY ossdbtoolsservice /src/ossdbtoolsservice
 COPY pgsmo /src/pgsmo
 COPY smo /src/smo
 COPY ssl /src/ssl
-COPY config.ini requirements.txt ossdbtoolsservice_main.spec /src/
+COPY config.ini ossdbtoolsservice_main.spec /src/
 
 # Run the build script
 RUN scripts/build.sh

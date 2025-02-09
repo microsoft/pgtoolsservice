@@ -11,7 +11,7 @@ class JSONRPCWriter:
     Write JSON RPC messages to a stream
     """
 
-    HEADER = u"Content-Length: {}\r\n\r\n"
+    HEADER = "Content-Length: {}\r\n\r\n"
 
     def __init__(self, stream, encoding=None, logger=None):
         """
@@ -21,7 +21,7 @@ class JSONRPCWriter:
         :param logger: Optional destination for logging
         """
         self.stream = stream
-        self.encoding = encoding or 'UTF-8'
+        self.encoding = encoding or "UTF-8"
         self._logger = logger
 
     # METHODS ##############################################################
@@ -33,28 +33,42 @@ class JSONRPCWriter:
             self.stream.close()
         except Exception as e:
             if self._logger is not None:
-                self._logger.exception(f'Exception raised when writer stream closed: {e}')
+                self._logger.exception(
+                    f"Exception raised when writer stream closed: {e}"
+                )
 
     def send_message(self, message):
         """
         Sends JSON RPC message as defined by message object
         :param message: Message to send
         """
-        # Generate the message string and header string
-        json_content = json.dumps(message.dictionary, sort_keys=True)
-        header = self.HEADER.format(str(len(json_content)))
+        try:
+            # Generate the message string and header string
+            json_content = json.dumps(message.dictionary, sort_keys=True)
+            header = self.HEADER.format(str(len(json_content)))
 
-        # Write the message to the stream
-        self.stream.write(header.encode(u"ascii"))
-        self.stream.write(json_content.encode(self.encoding))
-        self.stream.flush()
+            # Write the message to the stream
+            self.stream.write(header.encode("ascii"))
+            self.stream.write(json_content.encode(self.encoding))
+            self.stream.flush()
 
-        if self._logger is not None:
-            self._logger.info("{} message sent id={} method={}".format(
-                message.message_type.name,
-                message.message_id,
-                message.message_method
-            ))
+            if self._logger is not None:
+                self._logger.info(
+                    "{} message sent id={} method={} {}".format(
+                        message.message_type.name,
+                        message.message_id,
+                        message.message_method,
+                        json_content,
+                    )
+                )
 
             # Uncomment for verbose logging
-            # self._logger.debug(f'{json_content}')
+            # if self._logger:
+            #     self._logger.info(f'{json_content}')
+
+        except Exception as e:
+            if self._logger is not None:
+                self._logger.exception(
+                    "Exception raised when sending message: "
+                    f"{message.message_type} {message.message_id} {message.message_method} {e}"
+                )

@@ -18,7 +18,7 @@ from ossdbtoolsservice.edit_data.contracts import (
     RevertRowRequest, EditCommitRequest, DisposeRequest, InitializeEditParams
 )
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
-from ossdbtoolsservice.hosting import RequestContext
+from ossdbtoolsservice.hosting.rpc_context import RPCRequestContext
 from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.query_execution.query_execution_service import QueryExecutionService
 
@@ -54,32 +54,32 @@ class TestEditDataService(unittest.TestCase):
     def test_initialization(self, mockdataeditorsession):
         queue = Queue()
         message = JSONRPCMessage.from_dictionary({'id': '123', 'method': 'edit/initialize', 'params': {}})
-        request_context = RequestContext(message, queue)
+        request_context = RPCRequestContext(message, queue)
         self._service_under_test._edit_initialize(request_context, self._initialize_edit_request)
         mockdataeditorsession.assert_called()
 
     def test_initialization_with_none_as_schema_param(self):
-        request_context = RequestContext(None, None)
+        request_context = RPCRequestContext(None, None)
         self._initialize_edit_request.schema_name = None
         errormsg = 'Parameter schema_name contains a None, empty, or whitespace string'
         self.assert_exception_on_method_call(ValueError, errormsg, self._service_under_test._edit_initialize, request_context, self._initialize_edit_request)
 
     def test_initialization_with_none_as_owner_uri(self):
-        request_context = RequestContext(None, None)
+        request_context = RPCRequestContext(None, None)
         self._initialize_edit_request.owner_uri = None
         errormsg = 'Parameter owner_uri contains a None, empty, or whitespace string'
 
         self.assert_exception_on_method_call(ValueError, errormsg, self._service_under_test._edit_initialize, request_context, self._initialize_edit_request)
 
     def test_initialization_with_empty_object_name(self):
-        request_context = RequestContext(None, None)
+        request_context = RPCRequestContext(None, None)
         self._initialize_edit_request.object_name = ' '
         errormsg = 'Parameter object_name contains a None, empty, or whitespace string'
 
         self.assert_exception_on_method_call(ValueError, errormsg, self._service_under_test._edit_initialize, request_context, self._initialize_edit_request)
 
     def test_initialization_with_empty_object_type(self):
-        request_context = RequestContext(None, None)
+        request_context = RPCRequestContext(None, None)
         self._initialize_edit_request.object_type = ' '
         errormsg = 'Parameter object_type contains a None, empty, or whitespace string'
 

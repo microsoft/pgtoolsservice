@@ -12,10 +12,13 @@ dirname=$(dirname "$0")
 # Back up the old PYTHONPATH so it can be restored later
 old_pythonpath=$PYTHONPATH
 
+# Pass in "webserver" if building the webserver version of the service
+ARG=$1
+
 # Build the program
 cd "$dirname/.."
 export PYTHONPATH=""
-pip3 install -r requirements.txt
+pip3 install -e .[dev]
 pyinstaller ossdbtoolsservice_main.spec
 
 # Create folder pgsqltoolsservice in dist folder
@@ -24,13 +27,16 @@ mkdir -p "./dist/pgsqltoolsservice"
 # Move the contents in the dist folder to pgsqltoolsservice folder
 find "./dist" -maxdepth 1 -type f -exec mv {} "./dist/pgsqltoolsservice" \;
 
-# Copy the develpment ssl certificate to the dist folder
-mkdir -p "./dist/pgsqltoolsservice/ssl"
-cp "./ssl/cert.pem" "./dist/pgsqltoolsservice/ssl/"
-cp "./ssl/key.pem" "./dist/pgsqltoolsservice/ssl/"
+# Only copy the development SSL certificate and config file if "webserver" argument is passed
+if [ "$ARG" == "webserver" ]; then
+    # Copy the development SSL certificate to the dist folder
+    mkdir -p "./dist/pgsqltoolsservice/ssl"
+    cp "./ssl/cert.pem" "./dist/pgsqltoolsservice/ssl/"
+    cp "./ssl/key.pem" "./dist/pgsqltoolsservice/ssl/"
 
-# Copy the pgsqltoolsservice config file to the dist folder
-cp "./config.ini" "./dist/pgsqltoolsservice/"
+    # Copy the pgsqltoolsservice config file to the dist folder
+    cp "./config.ini" "./dist/pgsqltoolsservice/"
+fi
 
 # Check the current operating system and copy the correct pgsqltoolsservice
 if [[ "$(uname)" == "Darwin" ]]; then
