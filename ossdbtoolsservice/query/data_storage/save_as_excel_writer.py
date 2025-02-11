@@ -6,7 +6,6 @@
 import io
 from typing import List
 import xlsxwriter
-import string
 
 from ossdbtoolsservice.query.data_storage.save_as_writer import SaveAsWriter
 from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue, SaveResultsRequestParams
