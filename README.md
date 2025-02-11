@@ -40,3 +40,5 @@ This is required for running the VS Code extension in development.
 [Microsoft Open Source Code of Conduct]:https://opensource.microsoft.com/codeofconduct/
 [Code of Conduct FAQ]:https://opensource.microsoft.com/codeofconduct/faq/
 [opencode@microsoft.com]:mailto:opencode@microsoft.com
+
+--- testing PR automatic build --- 
