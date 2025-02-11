@@ -62,17 +62,18 @@ class TestSaveAsExcelWriter(unittest.TestCase):
 
         write_column_header_args = self.worksheet_mock.write.call_args_list
 
-        self.assertEqual('A1', write_column_header_args[0][0][0])
-        self.assertEqual('Name', write_column_header_args[0][0][1])
-        self.assertEqual(bold, write_column_header_args[0][0][2])
+        # See https://github.com/microsoft/pgtoolsservice/pull/491
+        self.assertEqual(0, write_column_header_args[0][0][1])
+        self.assertEqual('Name', write_column_header_args[0][0][2])
+        self.assertEqual(bold, write_column_header_args[0][0][3])
 
-        self.assertEqual('B1', write_column_header_args[1][0][0])
-        self.assertEqual('Id', write_column_header_args[1][0][1])
-        self.assertEqual(bold, write_column_header_args[1][0][2])
+        self.assertEqual(1, write_column_header_args[1][0][1])
+        self.assertEqual('Id', write_column_header_args[1][0][2])
+        self.assertEqual(bold, write_column_header_args[1][0][3])
 
-        self.assertEqual('C1', write_column_header_args[2][0][0])
-        self.assertEqual('Valid', write_column_header_args[2][0][1])
-        self.assertEqual(bold, write_column_header_args[2][0][2])
+        self.assertEqual(2, write_column_header_args[2][0][1])
+        self.assertEqual('Valid', write_column_header_args[2][0][2])
+        self.assertEqual(bold, write_column_header_args[2][0][3])
 
     def test_write_row(self):
         self.writer.write_row(self.row, self.columns)
