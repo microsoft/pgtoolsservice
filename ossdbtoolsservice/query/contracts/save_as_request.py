@@ -7,6 +7,14 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class SaveResultsRequestParams(Serializable):
+    file_path: str
+    batch_index: int
+    result_set_index: int
+    owner_uri: str
+    row_start_index: int
+    row_end_index: int
+    column_start_index: int
+    column_end_index: int
 
     def __init__(self):
         self.file_path: str = None

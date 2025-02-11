@@ -2,30 +2,35 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-from typing import List, Optional
+from typing import Callable, List, Optional
 import re
 import logging
 import unittest
 import unittest.mock as mock
 
 import psycopg
-from psycopg.connection import NoticeHandler, AdaptersMap
+from psycopg.connection import AdaptersMap
 
-from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
-                                       ServiceProvider)
+from ossdbtoolsservice.hosting import NotificationContext, ServiceProvider
+from ossdbtoolsservice.hosting.rpc_context import (
+    RPCRequestContext,
+    RPCNotificationContext,
+)
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+
+NoticeHandler = Callable[[str], None]
 
 
 def assert_not_none_or_empty(value: str):
     """Assertion to confirm a string to be not none or empty"""
-    testcase = unittest.TestCase('__init__')
+    testcase = unittest.TestCase("__init__")
     testcase.assertIsNotNone(value)
     testcase.assertTrue(len(value))
 
 
 def assert_not_none_or_whitespace(value: str):
     """Assertion to confirm a string is not none or whitespace"""
-    testcase = unittest.TestCase('__init__')
+    testcase = unittest.TestCase("__init__")
     testcase.assertIsNotNone(value)
     testcase.assertTrue(len(value.strip()))
 
@@ -37,7 +42,7 @@ def get_mock_notification_context() -> NotificationContext:
     """
     mock_send_notification = mock.MagicMock()
 
-    mock_notification_context = NotificationContext(None)
+    mock_notification_context = RPCNotificationContext(None)
     mock_notification_context.send_notification = mock_send_notification
 
     return mock_notification_context
@@ -48,7 +53,7 @@ def get_mock_logger() -> logging.Logger:
     Generates a logger with mocked up log writing methods
     :return: Logger with mocked up log writing methods
     """
-    mock_logger = logging.getLogger('mockLogger')
+    mock_logger = logging.getLogger("mockLogger")
     mock_logger.exception = mock.MagicMock()
     mock_logger.critical = mock.MagicMock()
     mock_logger.debug = mock.MagicMock()
@@ -64,7 +69,9 @@ def get_mock_logger() -> logging.Logger:
 
 # PLEASE USE SERVICEPROVIDERMOCK from tests/mocks/service_provider_mock. #
 # This mock will be deprecated #
-def get_mock_service_provider(service_map: dict = None, provider_name: Optional[str] = PG_PROVIDER_NAME) -> ServiceProvider:
+def get_mock_service_provider(
+    service_map: dict = None, provider_name: Optional[str] = PG_PROVIDER_NAME
+) -> ServiceProvider:
     """
     Generates a ServiceProvider with the given services
 
@@ -77,11 +84,11 @@ def get_mock_service_provider(service_map: dict = None, provider_name: Optional[
     return provider
 
 
-class MockRequestContext(RequestContext):
+class MockRequestContext(RPCRequestContext):
     """Mock RequestContext object that allows service responses, notifications, and errors to be tested"""
 
     def __init__(self):
-        RequestContext.__init__(self, None, None)
+        RPCRequestContext.__init__(self, None, None)
         self.last_response_params = None
         self.last_notification_method = None
         self.last_notification_params = None
@@ -89,7 +96,9 @@ class MockRequestContext(RequestContext):
         self.send_response = mock.Mock(side_effect=self.send_response_impl)
         self.send_notification = mock.Mock(side_effect=self.send_notification_impl)
         self.send_error = mock.Mock(side_effect=self.send_error_impl)
-        self.send_unhandled_error_response = mock.Mock(side_effect=self.send_unhandled_error_response_impl)
+        self.send_unhandled_error_response = mock.Mock(
+            side_effect=self.send_unhandled_error_response_impl
+        )
 
     def send_response_impl(self, params):
         self.last_response_params = params
@@ -113,7 +122,7 @@ class MockPsycopgConnection(object):
     def __init__(self, dsn_parameters=None, cursor=None):
         self.close = mock.Mock()
         self.dsn_parameters = dsn_parameters
-        self.server_version = '131001'
+        self.server_version = "131001"
         self.cursor = mock.MagicMock(return_value=cursor)
         self.autocommit = True
         self.commit = mock.Mock()
@@ -139,7 +148,7 @@ class MockPsycopgConnection(object):
 
     def get_parameter_status(self, parameter):
         """Mock for the connection's get_parameter_status method"""
-        if parameter == 'server_version':
+        if parameter == "server_version":
             return self.server_version
         else:
             raise NotImplementedError()
@@ -154,8 +163,7 @@ class MockPsycopgConnection(object):
         self.notice_handlers.append(callback)
 
 
-class MockConnectionInfo():
-
+class MockConnectionInfo:
     def __init__(self, dsn_parameters, server_version) -> None:
         self.dsn = dsn_parameters
         self.server_version = server_version
@@ -164,12 +172,15 @@ class MockConnectionInfo():
 
     def get_parameters(self):
         # split by spaces unless in quotes or double quotes
-        parts = re.split(r'\s(?=(?:(?:[^"\'\\]*(?:\\.|"(?:[^"\\]*\\.)*[^"\\]*"|\'(?:[^\'\\]*\\.)*[^\'\\]*\')*))[^"\'\\]*$)', self.dsn)
+        parts = re.split(
+            r'\s(?=(?:(?:[^"\'\\]*(?:\\.|"(?:[^"\\]*\\.)*[^"\\]*"|\'(?:[^\'\\]*\\.)*[^\'\\]*\')*))[^"\'\\]*$)',
+            self.dsn,
+        )
         dsn_parameters = {}
         for part in parts:
-            key, value = part.split('=')
+            key, value = part.split("=")
             # Remove quotes or double quotes if they exist
-            value = re.sub(r'^[\'"]|[\'"]$', '', value)
+            value = re.sub(r'^[\'"]|[\'"]$', "", value)
             dsn_parameters[key] = value
         return dsn_parameters
 
@@ -183,9 +194,11 @@ class MockCursor:
         self.fetchone = mock.Mock(side_effect=self.execute_fetch_one_side_effects)
         self.close = mock.Mock()
         self.connection = connection.connection
-        self.description = [self.create_column_description(name=name) for name in columns_names]
+        self.description = [
+            self.create_column_description(name=name) for name in columns_names
+        ]
         self.rowcount = -1
-        self._mogrified_value = b'Some query'
+        self._mogrified_value = b"Some query"
         self.mogrify = mock.Mock(return_value=self._mogrified_value)
         self._query_results = query_results
         self._fetched_count = 0
@@ -207,7 +220,9 @@ class MockCursor:
         for handler in self.connection.notice_handlers:
             handler(MockNotice("foo", "NOTICE"))
             handler(MockNotice("bar", "DEBUG"))
-        self.rowcount = len(self._query_results) if self._query_results is not None else 0
+        self.rowcount = (
+            len(self._query_results) if self._query_results is not None else 0
+        )
 
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""
@@ -224,13 +239,13 @@ class MockCursor:
 
     def create_column_description(self, **kwargs):
         description = {
-            'name': None,
-            'type_code': None,
-            'display_size': None,
-            'internal_size': None,
-            'precision': None,
-            'scale': None,
-            'null_ok': None
+            "name": None,
+            "type_code": None,
+            "display_size": None,
+            "internal_size": None,
+            "precision": None,
+            "scale": None,
+            "null_ok": None,
         }
         merge = {**description, **dict(kwargs)}
         return tuple(merge.values())
@@ -246,7 +261,7 @@ class MockCursor:
         return self._mogrified_value
 
 
-class MockThread():
+class MockThread:
     """Mock thread class that mocks the thread's start method to run target code without actually starting a thread"""
 
     def __init__(self):
@@ -261,8 +276,7 @@ class MockThread():
         return self
 
 
-class MockNotice():
-
+class MockNotice:
     def __init__(self, message_primary, severity):
         self.message_primary = message_primary
         self.severity = severity

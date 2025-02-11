@@ -22,7 +22,8 @@ from ossdbtoolsservice.connection.contracts import (ConnectionDetails,
 from ossdbtoolsservice.driver.types.psycopg_driver import (
     PG_CANCELLATION_QUERY, PostgreSQLConnection)
 from ossdbtoolsservice.hosting import (IncomingMessageConfiguration,
-                                       JSONRPCServer, ServiceProvider)
+                                       ServiceProvider)
+from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.query import (
     Batch, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
     ResultSetStorageType, create_result_set)
@@ -98,7 +99,7 @@ class TestQueryService(unittest.TestCase):
         # Setup: Create a capabilities service with a mocked out service
         # provider
         mock_server_set_request = mock.MagicMock()
-        mock_server = JSONRPCServer(None, None)
+        mock_server = RPCMessageServer(None, None)
         mock_server.set_request_handler = mock_server_set_request
         mock_service_provider = ServiceProvider(mock_server, {}, constants.PG_PROVIDER_NAME, None)
         service = QueryExecutionService()

@@ -5,12 +5,14 @@
 
 from typing import List
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
 from ossdbtoolsservice.serialization import Serializable
 
 
 class SimpleExecuteRequest(Serializable):
+    owner_uri: str
+    query_string: str
 
     def __init__(self):
         self.owner_uri: str = None
@@ -18,6 +20,9 @@ class SimpleExecuteRequest(Serializable):
 
 
 class SimpleExecuteResponse:
+    rows: List[List[DbCellValue]]
+    row_count: int
+    column_info: List[DbColumn]
 
     def __init__(self, rows: List[List[DbCellValue]], row_count: int, column_info: List[DbColumn]):
         self.rows = rows
@@ -26,3 +31,4 @@ class SimpleExecuteResponse:
 
 
 SIMPLE_EXECUTE_REQUEST = IncomingMessageConfiguration('query/simpleexecute', SimpleExecuteRequest)
+OutgoingMessageRegistration.register_outgoing_message(SimpleExecuteResponse)

@@ -252,5 +252,17 @@ class DefaultRPCTestMessages:
         return (connection_request, language_flavor_notification)
 
     @staticmethod
+    def intellisense_refresh(owner_uri):
+        return RPCTestMessage(
+            'textDocument/rebuildIntelliSense',
+            json.dumps({'ownerUri': owner_uri}),
+            JSONRPCMessageType.Notification,
+            notification_verifiers=[(
+                lambda notification: notification['method'] == 'textDocument/intelliSenseReady' and notification['params']['ownerUri'] == owner_uri,
+                None
+            )]
+        )
+
+    @staticmethod
     def shutdown():
         return RPCTestMessage('shutdown', None, JSONRPCMessageType.Request)

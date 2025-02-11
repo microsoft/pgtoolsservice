@@ -10,7 +10,8 @@ import unittest.mock as mock
 import json
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
-from ossdbtoolsservice.hosting.json_rpc_server import RequestContext
+from ossdbtoolsservice.hosting import RequestContext
+from ossdbtoolsservice.hosting.rpc_context import RPCRequestContext
 import ossdbtoolsservice.utils as utils
 
 
@@ -61,7 +62,7 @@ class RequestFlowValidator:
         self._received_messages: List[ReceivedMessage] = []
 
         # Create a request context and monkey patch all the methods to capture the messages
-        self.request_context: RequestContext = RequestContext(None, None)
+        self.request_context: RequestContext = RPCRequestContext(None, None)
         self.request_context.send_notification = mock.MagicMock(side_effect=self._received_notification_callback)
         self.request_context.send_response = mock.MagicMock(side_effect=self._received_response_callback)
         self.request_context.send_error = mock.MagicMock(side_effect=self._received_error_callback)
