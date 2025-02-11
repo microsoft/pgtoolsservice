@@ -12,12 +12,20 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class EditInitializerFilter(Serializable):
+    limit_results: Optional[int]
 
     def __init__(self):
         self.limit_results: Optional[int] = None
 
 
 class InitializeEditParams(Serializable):
+    owner_uri: str
+    schema_name: str
+    object_type: str
+    object_name: str
+    query_string: str
+    filters: EditInitializerFilter
+
     @classmethod
     def get_child_serializable_types(cls):
         return {'filters': EditInitializerFilter}

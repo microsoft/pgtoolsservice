@@ -5,6 +5,7 @@
 
 """This module holds contracts for the IntelliSense Ready notification"""
 
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -23,3 +24,5 @@ class IntelliSenseReadyParams(Serializable):
 
 
 INTELLISENSE_READY_NOTIFICATION = 'textDocument/intelliSenseReady'
+
+INTELLISENSE_REBUILD_NOTIFICATION = IncomingMessageConfiguration('textDocument/rebuildIntelliSense', IntelliSenseReadyParams)

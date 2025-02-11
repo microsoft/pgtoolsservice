@@ -11,6 +11,9 @@ from ossdbtoolsservice.workspace.contracts import TextDocumentPosition, Position
 
 
 class TextDocumentPositionParams(Serializable):
+    text_document: TextDocumentIdentifier
+    position: Position
+
     def __init__(self, text_document: TextDocumentIdentifier, position: Position):
         self.text_document = text_document
         self.position = position

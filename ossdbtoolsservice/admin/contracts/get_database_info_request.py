@@ -5,12 +5,18 @@
 
 from typing import Any, Dict  # noqa
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting.message_configuration import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
 from ossdbtoolsservice.serialization import Serializable
 
 
 class GetDatabaseInfoParameters(Serializable):
     """Contract for the parameters to admin/getdatabaseinfo requests"""
+
+    options: dict
+    owner_uri: str
 
     def __init__(self):
         self.options: dict = None
@@ -19,9 +25,10 @@ class GetDatabaseInfoParameters(Serializable):
 
 class DatabaseInfo:
     """Contract for database information"""
-    OWNER = 'owner'
-    DBNAME = 'dbname'
-    SIZE = 'size'
+
+    OWNER: str = "owner"
+    DBNAME: str = "dbname"
+    SIZE: str = "size"
 
     def __init__(self, options: Dict[str, Any]) -> None:
         self.options: Dict[str, Any] = options
@@ -30,8 +37,14 @@ class DatabaseInfo:
 class GetDatabaseInfoResponse:
     """Contract for the response to admin/getdatabaseinfo requests"""
 
+    database_info: DatabaseInfo
+
     def __init__(self, database_info: DatabaseInfo) -> None:
         self.database_info: DatabaseInfo = database_info
 
 
-GET_DATABASE_INFO_REQUEST = IncomingMessageConfiguration('admin/getdatabaseinfo', GetDatabaseInfoParameters)
+GET_DATABASE_INFO_REQUEST = IncomingMessageConfiguration(
+    "admin/getdatabaseinfo", GetDatabaseInfoParameters
+)
+OutgoingMessageRegistration.register_outgoing_message(GetDatabaseInfoResponse)
+OutgoingMessageRegistration.register_outgoing_message(DatabaseInfo)

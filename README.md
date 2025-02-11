@@ -21,6 +21,15 @@ The [Microsoft Enterprise and Developer Privacy Statement] describes the privacy
 ## License
 This extension is [licensed under the MIT License]. Please see the [third-party notices] file for additional copyright notices and license terms applicable to portions of the software.
 
+## Development Installation
+
+To install the package in development mode, run:
+
+    pip install -e .[dev]
+
+This installs an editable version of the package with extra development dependencies.
+This is required for running the VS Code extension in development.
+
 [GitHub Issue Tracker]:https://github.com/Microsoft/pgtoolsservice/issues
 [bug report]:https://github.com/Microsoft/pgtoolsservice/issues/new?labels=bug
 [feature suggestion]:https://github.com/Microsoft/pgtoolsservice/issues/new?labels=feature-request

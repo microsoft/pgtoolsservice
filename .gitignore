@@ -17,3 +17,5 @@ nosetests.xml
 .mypy_cache/
 *venv/
 nose2-junit.xml
+node_modules/
+*.egg-info/

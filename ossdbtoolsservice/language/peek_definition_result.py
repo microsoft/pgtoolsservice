@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 from typing import List
 
-
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.workspace.contracts.common import Location
 
 
@@ -13,3 +13,6 @@ class DefinitionResult:
         self.is_error_result: bool = is_error
         self.message = message
         self.locations: [] = locations
+
+
+OutgoingMessageRegistration.register_outgoing_message(DefinitionResult)
