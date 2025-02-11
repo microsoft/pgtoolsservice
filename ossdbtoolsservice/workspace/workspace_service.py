@@ -6,7 +6,7 @@
 from logging import Logger          # noqa
 from typing import Callable, List, Optional  # noqa
 
-from ossdbtoolsservice.hosting import JSONRPCServer, NotificationContext, ServiceProvider   # noqa
+from ossdbtoolsservice.hosting import MessageServer, NotificationContext, ServiceProvider   # noqa
 from ossdbtoolsservice.workspace.contracts import (
     DID_CHANGE_CONFIG_NOTIFICATION, DidChangeConfigurationParams,
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
@@ -26,7 +26,7 @@ class WorkspaceService:
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
-        self._server: JSONRPCServer = None
+        self._server: MessageServer = None
         self._logger: [Logger, None] = None
         self._workspace: Workspace = None
 

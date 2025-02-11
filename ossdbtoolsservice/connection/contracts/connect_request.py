@@ -10,6 +10,9 @@ from ossdbtoolsservice.parsers.owner_uri_parser import get_attribute_value
 
 
 class ConnectRequestParams(Serializable):
+    owner_uri: str
+    connection: ConnectionDetails
+    type: ConnectionType
 
     @classmethod
     def get_child_serializable_types(cls):

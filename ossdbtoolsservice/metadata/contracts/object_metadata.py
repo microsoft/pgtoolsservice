@@ -7,6 +7,7 @@ import enum
 from typing import Optional
 
 from ossdbtoolsservice.serialization import Serializable
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 
 class MetadataType(enum.Enum):
@@ -19,6 +20,11 @@ class MetadataType(enum.Enum):
 
 class ObjectMetadata(Serializable):
     """Database object metadata"""
+    metadata_type: MetadataType
+    metadata_type_name: str
+    name: str
+    schema: str
+    urn: str
 
     @classmethod
     def get_child_serializable_types(cls):
@@ -30,3 +36,6 @@ class ObjectMetadata(Serializable):
         self.name: str = name
         self.schema: str = schema
         self.urn: str = urn
+
+
+OutgoingMessageRegistration.register_outgoing_message(ObjectMetadata)

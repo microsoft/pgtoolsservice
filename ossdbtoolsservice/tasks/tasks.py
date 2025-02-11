@@ -5,24 +5,14 @@
 
 """Module containing the task service, allowing long-running asynchronous operations"""
 
-import enum
 import threading
 import time
-from typing import Callable, Dict  # noqa
+from typing import Callable
 import uuid
 
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.hosting import RequestContext
-from ossdbtoolsservice.tasks.contracts import TaskInfo
-
-
-class TaskStatus(enum.Enum):
-    """Enum representing task status"""
-    NOT_STARTED = 0
-    IN_PROGRESS = 1
-    SUCCEEDED = 2
-    SUCCEEDED_WITH_WARNING = 3
-    FAILED = 4
-    CANCELED = 5
+from ossdbtoolsservice.tasks.contracts import TaskInfo, TaskStatus
 
 
 class TaskResult:
@@ -35,6 +25,17 @@ class TaskResult:
 
 class Task:
     """Class representing a single task handled by the task service"""
+    name: str
+    description: str
+    provider_name: str
+    server_name: str
+    database_name: str
+    id: str
+    status: TaskStatus
+    status_message: str
+    on_cancel: Callable
+    cancellation_lock: threading.Lock
+    canceled: bool
 
     def __init__(self, name: str, description: str, provider_name: str, server_name: str, database_name: str, request_context: RequestContext, action,
                  on_cancel: Callable = None) -> None:
@@ -112,3 +113,6 @@ class Task:
     @property
     def _is_completed(self) -> bool:
         return self.status in [TaskStatus.CANCELED, TaskStatus.FAILED, TaskStatus.SUCCEEDED, TaskStatus.SUCCEEDED_WITH_WARNING]
+
+
+OutgoingMessageRegistration.register_outgoing_message(Task)

@@ -15,7 +15,7 @@ SELECT
     CASE WHEN length(spcname) > 0 THEN spcname ELSE
         (SELECT sp.spcname FROM pg_database dtb
         JOIN pg_tablespace sp ON dtb.dattablespace=sp.oid
-        WHERE dtb.oid = {{ did }}::oid)
+        WHERE dtb.oid = {{ oid }}::oid)
     END as spcname,
     c.relacl,
     nsp.nspname as schema,

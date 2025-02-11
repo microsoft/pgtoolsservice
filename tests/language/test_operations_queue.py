@@ -9,7 +9,8 @@ from typing import Callable, List, Optional, Tuple  # noqa
 import unittest
 from unittest import mock
 
-from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider
+from ossdbtoolsservice.hosting import ServiceProvider
+from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectRequestParams  # noqa
 from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
@@ -28,7 +29,7 @@ class TestOperationsQueue(unittest.TestCase):
         """Constructor"""
         self.default_connection_key = 'server_db_user'
         self.mock_connection_service = ConnectionService()
-        self.mock_server = JSONRPCServer(None, None)
+        self.mock_server = RPCMessageServer(None, None)
         self.mock_service_provider = ServiceProvider(self.mock_server, {}, PG_PROVIDER_NAME, None)
         self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
         self.mock_service_provider._is_initialized = True

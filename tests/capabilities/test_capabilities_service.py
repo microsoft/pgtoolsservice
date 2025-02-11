@@ -9,7 +9,8 @@ import unittest.mock as mock
 
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
 from ossdbtoolsservice.capabilities.contracts import InitializeResult, CapabilitiesResult
-from ossdbtoolsservice.hosting import JSONRPCServer, ServiceProvider, IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import ServiceProvider, IncomingMessageConfiguration
+from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from ossdbtoolsservice.workspace import WorkspaceService
@@ -23,7 +24,7 @@ class TestCapabilitiesService(unittest.TestCase):
     def test_initialization(self):
         # Setup: Create a capabilities service with a mocked out service provider
         mock_server_set_request = mock.MagicMock()
-        mock_server = JSONRPCServer(None, None)
+        mock_server = RPCMessageServer(None, None)
         mock_server.set_request_handler = mock_server_set_request
         mock_service_provider = ServiceProvider(mock_server, {}, PG_PROVIDER_NAME, None)
         service = CapabilitiesService()

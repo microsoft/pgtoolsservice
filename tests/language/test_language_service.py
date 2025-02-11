@@ -16,9 +16,9 @@ from prompt_toolkit.completion import Completion
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
-from ossdbtoolsservice.hosting import (JSONRPCServer,  # noqa
-                                       NotificationContext, RequestContext,
+from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
+from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.language.contracts import (  # noqa
     INTELLISENSE_READY_NOTIFICATION, CompletionItem, CompletionItemKind,
@@ -48,7 +48,7 @@ class TestLanguageService(unittest.TestCase):
         self.default_uri = 'file://my.sql'
         self.flow_validator = RequestFlowValidator()
         self.mock_server_set_request = mock.MagicMock()
-        self.mock_server = JSONRPCServer(None, None)
+        self.mock_server = RPCMessageServer(None, None)
         self.mock_server.set_request_handler = self.mock_server_set_request
         self.mock_workspace_service = WorkspaceService()
         self.mock_connection_service = ConnectionService()
@@ -73,7 +73,7 @@ class TestLanguageService(unittest.TestCase):
         """Test registration of the service"""
         # Setup:
         # ... Create a mock service provider
-        server: JSONRPCServer = JSONRPCServer(None, None)
+        server: RPCMessageServer = RPCMessageServer(None, None)
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
         provider: ServiceProvider = ServiceProvider(server, {

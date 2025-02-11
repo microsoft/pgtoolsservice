@@ -1,5 +1,5 @@
 # Shared Requirements
-psycopg==3.1.9;
+psycopg==3.2.3;
 psycopg[binary,pool]
 
 # PGToolsService Requirements
@@ -7,17 +7,30 @@ inflection
 sqlparse==0.4.3
 prompt_toolkit==2.0.7
 xlsxwriter
+flask
+flask_cors
+flask-socketio
+gevent
+gevent-websocket
+argparse
+configparser
 
 # PGSMO Requirements
 jinja2
 
 # Build/Test Requirements
-cx_freeze
 nose2
 parameterized
 coverage
 autopep8
 flake8
-debugpy==1.6.0
+debugpy==1.8.7
 python-dateutil
 pyinstaller
+pytest
+
+# Chat
+rich==13.9.4
+click ~= 8.0
+azure-identity ~= 1.13
+semantic-kernel ~= 1.20.0
