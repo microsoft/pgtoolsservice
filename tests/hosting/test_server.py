@@ -15,7 +15,6 @@ from ossdbtoolsservice.hosting import (
     NotificationContext,
     RequestContext,
 )
-from ossdbtoolsservice.hosting import NotificationContext, RequestContext
 from ossdbtoolsservice.hosting.message_configuration import IncomingMessageConfiguration
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.json_reader import JSONRPCReader

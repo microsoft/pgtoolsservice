@@ -1,4 +1,3 @@
-import json
 from logging import Logger
 import os
 import sys

@@ -13,7 +13,8 @@ from ossdbtoolsservice.utils import constants
 
 class Service(ABC):
     @abstractmethod
-    def register(self, service_provider: "ServiceProvider") -> None: ...
+    def register(self, service_provider: "ServiceProvider") -> None:
+        pass
 
 
 class ServiceProvider:

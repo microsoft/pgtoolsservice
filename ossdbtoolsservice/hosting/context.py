@@ -43,9 +43,7 @@ class RequestContext(HandlerContext):
     def send_response(self, params: Any) -> None:
         self.server.send_response(self.message_id, params)
 
-    def send_error(
-        self, message: str, data: Any = None, code: int = 0
-    ) -> None:
+    def send_error(self, message: str, data: Any = None, code: int = 0) -> None:
         self.server.send_error(self.message_id, message, data, code)
 
 
@@ -53,4 +51,5 @@ class NotificationContext(HandlerContext):
     """
     Base class for a notification context.
     """
+
     pass

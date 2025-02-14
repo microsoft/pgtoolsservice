@@ -11,10 +11,10 @@ import unittest.mock as mock
 import psycopg
 from psycopg.connection import AdaptersMap
 
-from ossdbtoolsservice.hosting import NotificationContext, ServiceProvider
 from ossdbtoolsservice.hosting import (
     RequestContext,
     NotificationContext,
+    ServiceProvider,
 )
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 from ossdbtoolsservice.hosting.message_server import MessageServer

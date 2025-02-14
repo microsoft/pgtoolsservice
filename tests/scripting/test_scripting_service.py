@@ -17,7 +17,7 @@ from ossdbtoolsservice.scripting.contracts.script_as_request import (
 )
 from ossdbtoolsservice.scripting.scripter import Scripter
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
-from ossdbtoolsservice.utils.constants import CONNECTION_SERVICE_NAME, PG_PROVIDER_NAME
+from ossdbtoolsservice.utils.constants import CONNECTION_SERVICE_NAME
 from tests.mock_request_validation import RequestFlowValidator
 from tests.pgsmo_tests.utils import MockPGServerConnection
 
