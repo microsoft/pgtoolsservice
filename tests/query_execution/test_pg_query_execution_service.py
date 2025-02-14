@@ -23,7 +23,6 @@ from ossdbtoolsservice.driver.types.psycopg_driver import (
     PG_CANCELLATION_QUERY, PostgreSQLConnection)
 from ossdbtoolsservice.hosting import (IncomingMessageConfiguration,
                                        ServiceProvider)
-from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.query import (
     Batch, ExecutionState, Query, QueryEvents, QueryExecutionSettings,
     ResultSetStorageType, create_result_set)
@@ -54,7 +53,7 @@ import tests.utils as utils
 class TestQueryService(unittest.TestCase):
     """Methods for testing the query execution service"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up mock objects for testing the query execution service.
         Ran before each unit test.
         """
@@ -85,7 +84,7 @@ class TestQueryService(unittest.TestCase):
 
         self.connection_service.get_connection = mock.Mock(side_effect=connection_side_effect)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         generated_files_path = '.'
         # Get the existing file names in current path.
         file_names_list = [file for file in listdir(generated_files_path) if isfile(join(generated_files_path, file))]
@@ -95,11 +94,11 @@ class TestQueryService(unittest.TestCase):
         for file_to_remove in files_to_remove:
             os.remove(file_to_remove)
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         # Setup: Create a capabilities service with a mocked out service
         # provider
         mock_server_set_request = mock.MagicMock()
-        mock_server = RPCMessageServer(None, None)
+        mock_server = utils.MockMessageServer()
         mock_server.set_request_handler = mock_server_set_request
         mock_service_provider = ServiceProvider(mock_server, {}, constants.PG_PROVIDER_NAME, None)
         service = QueryExecutionService()
@@ -117,7 +116,7 @@ class TestQueryService(unittest.TestCase):
                 mock_call[1][0], IncomingMessageConfiguration)
             self.assertTrue(callable(mock_call[1][1]))
 
-    def test_get_query_full(self):
+    def test_get_query_full(self) -> None:
         """Test getting a query for a URI from the entire file"""
         # Set up the service and the query
         query_execution_service = QueryExecutionService()
@@ -128,7 +127,7 @@ class TestQueryService(unittest.TestCase):
         # Then the retrieved query should be the same as the one on the params object
         self.assertEqual(result, params.query)
 
-    def test_get_query_selection(self):
+    def test_get_query_selection(self) -> None:
         """Test getting a query for a URI from a selection"""
         # Set up the query execution service with a mock workspace service
         query_execution_service = QueryExecutionService()
@@ -156,7 +155,7 @@ class TestQueryService(unittest.TestCase):
         mock_workspace_service.get_text.assert_called_once_with(params.owner_uri, mock.ANY)
         self.assertEqual(result, query)
 
-    def test_get_query_selection_none(self):
+    def test_get_query_selection_none(self) -> None:
         """Test getting a query for a URI from a selection when the selection is None (for the whole file)"""
         # Set up the query execution service with a mock workspace service
         query_execution_service = QueryExecutionService()
@@ -181,7 +180,7 @@ class TestQueryService(unittest.TestCase):
         mock_workspace_service.get_text.assert_called_once_with(params.owner_uri, None)
         self.assertEqual(result, query)
 
-    def test_query_request_invalid_uri(self):
+    def test_query_request_invalid_uri(self) -> None:
         """Test handling a query request when the request has an invalid owner URI"""
         # Set up the query execution service and a connection service that has no known URIs
         self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: ConnectionService()}
@@ -194,7 +193,7 @@ class TestQueryService(unittest.TestCase):
         self.request_context.send_unhandled_error_response.assert_called_once()
         self.request_context.send_response.assert_not_called()
 
-    def test_query_request_error_handling(self):
+    def test_query_request_error_handling(self) -> None:
         """Test handling a query request that fails when the query is executed"""
         # Set up the query execution service and a connection service with a mock connection that
         # has a cursor that always throws an error when executing
@@ -217,7 +216,7 @@ class TestQueryService(unittest.TestCase):
         for call_params in call_params_list:
             self.assertTrue(call_params.message.is_error)
 
-    def test_query_request_response(self):
+    def test_query_request_response(self) -> None:
         """Test that a response is sent when handling a query request"""
         params = get_execute_string_params()
 
@@ -232,7 +231,7 @@ class TestQueryService(unittest.TestCase):
         self.request_context.send_error.assert_not_called()
         self.request_context.send_response.assert_called_once()
 
-    def test_deploy_request_response(self):
+    def test_deploy_request_response(self) -> None:
         """Test that a response is sent when handling a deploy request"""
         params = get_execute_string_params()
 
@@ -247,7 +246,7 @@ class TestQueryService(unittest.TestCase):
         self.request_context.send_error.assert_not_called()
         self.request_context.send_response.assert_called_once()
 
-    def test_result_set_subset(self):
+    def test_result_set_subset(self) -> None:
         """
         Test for proper generation of ResultSetSubset
         that is part of query/subset response payload
@@ -310,7 +309,7 @@ class TestQueryService(unittest.TestCase):
         with self.assertRaises(ValueError):
             ResultSetSubset.from_query_results(query_results, owner_uri, batch_ordinal, result_ordinal, 0, -1)
 
-    def test_result_set_positive(self):
+    def test_result_set_positive(self) -> None:
         """Test that we properly generate the result set"""
         description = [("first", 0, 1, 2, 3, 4, True), ("second", 5, 6, 7, 8, 9, False)]
         test_columns = [DbColumn.from_cursor_description(0, description[0]), DbColumn.from_cursor_description(1, description[1])]
@@ -338,14 +337,14 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(row_count, result_set.row_count)
         self.assertEqual([], result_set.rows)
 
-    def test_result_set_column_none_description(self):
+    def test_result_set_column_none_description(self) -> None:
         """Test that result set column is empty if description is None.
         Description is None if there were no results for a query
         """
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
         self.assertEqual([], result_set.columns_info)
 
-    def test_result_set_complete_params(self):
+    def test_result_set_complete_params(self) -> None:
         """Test building parameters for the result set complete notification"""
         # Set up the test with a batch summary and owner uri
         batch = Batch('', 10, SelectionData())
@@ -361,7 +360,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(result.owner_uri, owner_uri)
         self.assertEqual(result.result_set_summary, summary.result_set_summaries[0])
 
-    def test_message_notices_no_error(self):
+    def test_message_notices_no_error(self) -> None:
         """Test to make sure that notices are being sent as part of a message notification"""
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
@@ -393,7 +392,7 @@ class TestQueryService(unittest.TestCase):
         subset = '\n'.join(expected_notices)
         self.assertTrue(subset in call_params_list[0].message.message)
 
-    def test_deploy_message_notices_no_error(self):
+    def test_deploy_message_notices_no_error(self) -> None:
         """Test to make sure that notices are being sent as part of a message notification"""
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
@@ -425,7 +424,7 @@ class TestQueryService(unittest.TestCase):
         subset = '\n'.join(expected_notices)
         self.assertTrue(subset in call_params_list[0].message.message)
 
-    def test_message_notices_error(self):
+    def test_message_notices_error(self) -> None:
         """Test that the notices are being sent as part of messages correctly in the case of
         an error during execution of a query
         """
@@ -461,7 +460,7 @@ class TestQueryService(unittest.TestCase):
         # Make sure that the whole first message consists of the notices, as expected
         self.assertEqual(notices_str, call_params_list[0].message.message)
 
-    def test_deploy_message_notices_error(self):
+    def test_deploy_message_notices_error(self) -> None:
         """Test that the notices are being sent as part of messages correctly in the case of
         an error during deploy
         """
@@ -497,7 +496,7 @@ class TestQueryService(unittest.TestCase):
         # Make sure that the whole first message consists of the notices, as expected
         self.assertEqual(notices_str, call_params_list[0].message.message)
 
-    def test_cancel_query_during_query_execution(self):
+    def test_cancel_query_during_query_execution(self) -> None:
         """
         Test that we handle query cancellation requests correctly
         if we receive a cancel request during cursor.execute() call
@@ -536,7 +535,7 @@ class TestQueryService(unittest.TestCase):
         self.assertTrue(query.is_canceled)
         self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
 
-    def test_cancel_query_before_query_execution(self):
+    def test_cancel_query_before_query_execution(self) -> None:
         """
         Test that we handle query cancellation requests correctly
         if we receive a cancel request before cursor.execute() call
@@ -580,7 +579,7 @@ class TestQueryService(unittest.TestCase):
         self.assertTrue(query.is_canceled)
         self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
 
-    def test_cancel_query_after_query_execution(self):
+    def test_cancel_query_after_query_execution(self) -> None:
         """
         Test that we handle query cancellation requests correctly
         if we receive a cancel request after cursor.execute() call
@@ -611,7 +610,7 @@ class TestQueryService(unittest.TestCase):
         self.assertFalse(query.is_canceled)
         self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
 
-    def test_query_execution(self):
+    def test_query_execution(self) -> None:
         """Test that query execution sends the proper response/notices to the client"""
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
@@ -638,7 +637,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(call_methods_list.count(BATCH_COMPLETE_NOTIFICATION), 1)
         self.assertEqual(call_methods_list.count(QUERY_COMPLETE_NOTIFICATION), 1)
 
-    def test_deploy_execution(self):
+    def test_deploy_execution(self) -> None:
         """Test that deploy sends the proper response/notices to the client"""
         # Set up params that are sent as part of a query execution request
         params = get_execute_string_params()
@@ -665,7 +664,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(call_methods_list.count(DEPLOY_BATCH_COMPLETE_NOTIFICATION), 1)
         self.assertEqual(call_methods_list.count(DEPLOY_COMPLETE_NOTIFICATION), 1)
 
-    def test_handle_subset_request(self):
+    def test_handle_subset_request(self) -> None:
         """Test that the query execution service handles subset requests correctly"""
         # Set up the test with the proper parameters and query results
         params = SubsetParams.from_dict({
@@ -708,7 +707,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(result_subset.rows[1][0].display_value, str(batch_rows[2][0]))
         self.assertEqual(result_subset.rows[1][1].display_value, str(batch_rows[2][1]))
 
-    def test_time(self):
+    def test_time(self) -> None:
         """Test to see that the start, end, and execution times are properly set"""
 
         # Set up and run handler for executing queries
@@ -748,7 +747,7 @@ class TestQueryService(unittest.TestCase):
                 self.assertLessEqual(parser.parse(batch_summary.execution_start), parser.parse(batch_summary.execution_end))
                 self.assertEqual(batch_summary.execution_elapsed, str(parser.parse(batch_summary.execution_end) - parser.parse(batch_summary.execution_start)))
 
-    def test_deploy_time(self):
+    def test_deploy_time(self) -> None:
         """Test to see that the start, end, and execution times are properly set"""
 
         # Set up and run handler for executing queries
@@ -788,7 +787,7 @@ class TestQueryService(unittest.TestCase):
                 self.assertLessEqual(parser.parse(batch_summary.execution_start), parser.parse(batch_summary.execution_end))
                 self.assertEqual(batch_summary.execution_elapsed, str(parser.parse(batch_summary.execution_end) - parser.parse(batch_summary.execution_start)))
 
-    def test_query_disposal_success_executed(self):
+    def test_query_disposal_success_executed(self) -> None:
         """
         Test for handling query/dispose request in case where disposal is possible
         and query that we're attempting to dispose is already finished executing
@@ -809,7 +808,7 @@ class TestQueryService(unittest.TestCase):
         self.request_context.send_error.assert_not_called()
         self.cursor_cancel.execute.assert_not_called()
 
-    def test_query_disposal_failure(self):
+    def test_query_disposal_failure(self) -> None:
         """Test for handling query/dispose request in case where disposal is not possible"""
         # Note that query_results[uri] is never populated
         uri = 'test_uri'
@@ -824,7 +823,7 @@ class TestQueryService(unittest.TestCase):
         self.request_context.send_response.assert_not_called()
         self.request_context.send_error.assert_called_once_with(NO_QUERY_MESSAGE)
 
-    def test_query_disposal_with_query_executing(self):
+    def test_query_disposal_with_query_executing(self) -> None:
         """Test query disposal while a query is executing"""
         uri = 'test_uri'
         self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
@@ -842,7 +841,7 @@ class TestQueryService(unittest.TestCase):
         # is the query string to cancel the ongoing query
         self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY.format(0))
 
-    def test_query_disposal_with_query_not_started(self):
+    def test_query_disposal_with_query_not_started(self) -> None:
         """Test query disposal while a query has not started executing"""
         uri = 'test_uri'
         self.query_execution_service.query_results[uri] = Query(uri, '', QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
@@ -859,7 +858,7 @@ class TestQueryService(unittest.TestCase):
         # is the query string to cancel the ongoing query
         self.assertEqual(self.cursor_cancel.execute.call_args_list[0][0][0], PG_CANCELLATION_QUERY.format(0))
 
-    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_first_batch(self):
+    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_first_batch(self) -> None:
         ''' Multiple batch in SAME line test with cursor on 1st batch, returns the query for first batch '''
         request = ExecuteDocumentStatementParams()
         request.line = 0
@@ -870,7 +869,7 @@ class TestQueryService(unittest.TestCase):
 
         self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 0, 0, 39, query)
 
-    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_second_batch(self):
+    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_second_batch(self) -> None:
         ''' Multiple batch in SAME line test with cursor on 2nd batch, returns the query for second batch '''
         request = ExecuteDocumentStatementParams()
         request.line = 0
@@ -881,7 +880,7 @@ class TestQueryService(unittest.TestCase):
 
         self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 40, 0, 76, query)
 
-    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_first_batch(self):
+    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_first_batch(self) -> None:
         ''' Multiple batch in Different lines test with cursor on 1st batch, returns the query for first batch '''
         request = ExecuteDocumentStatementParams()
         request.line = 0
@@ -893,7 +892,7 @@ class TestQueryService(unittest.TestCase):
 
         self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 0, 0, 39, query)
 
-    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_second_batch(self):
+    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_second_batch(self) -> None:
         ''' Multiple batch in Different lines test with cursor on 2nd batch, returns the query for second batch '''
         request = ExecuteDocumentStatementParams()
         request.line = 1
@@ -905,7 +904,7 @@ class TestQueryService(unittest.TestCase):
 
         self.verify_get_query_text_from_execute_params_for_doc_statement(request, 0, 40, 1, 36, query)
 
-    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_first_line_second_batch(self):
+    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_first_line_second_batch(self) -> None:
         ''' Multiple batch in Different lines test with cursor on 2nd batch in first row, returns the query for second batch '''
         request = ExecuteDocumentStatementParams()
         request.line = 0
@@ -924,7 +923,7 @@ class TestQueryService(unittest.TestCase):
         end_line_index: int,
         end_column_index: int,
         query: str
-    ):
+    ) -> None:
 
         mock_workspace_service = mock.Mock()
         mock_workspace_service.get_text = mock.Mock(return_value=query)
@@ -946,7 +945,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(selection_data.end.line, end_line_index)
         self.assertEqual(selection_data.end.character, end_column_index)
 
-    def test_start_query_execution_thread_sends_true_when_show_plan_is_enabled(self):
+    def test_start_query_execution_thread_sends_true_when_show_plan_is_enabled(self) -> None:
 
         request = ExecuteStringParams()
         request.execution_plan_options = ExecutionPlanOptions()
@@ -962,7 +961,7 @@ class TestQueryService(unittest.TestCase):
 
         self.assertEqual('EXPLAIN Test Query', query._batches[0].batch_text)
 
-    def test_execution_error_rolls_back_transaction(self):
+    def test_execution_error_rolls_back_transaction(self) -> None:
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
@@ -980,7 +979,7 @@ class TestQueryService(unittest.TestCase):
         # Then a rollback transaction should have been executed
         self.cursor.execute.assert_has_calls([mock.call(query_params.query), mock.call('ROLLBACK')])
 
-    def test_handle_simple_execute_request(self):
+    def test_handle_simple_execute_request(self) -> None:
         """ Test for _handle_simple_execute_request to make sure it returns required details
         from the first batch """
         simple_execution_request = SimpleExecuteRequest()
@@ -1045,7 +1044,7 @@ class TestQueryService(unittest.TestCase):
         with mock.patch('uuid.uuid4', new=mock.Mock(return_value=new_owner_uri)):
             self.query_execution_service._handle_simple_execute_request(self.request_context, simple_execution_request)
 
-    def test_handle_save_as_csv_request(self):
+    def test_handle_save_as_csv_request(self) -> None:
 
         request_params = SaveResultsAsCsvRequestParams()
         request_params.owner_uri = 'testOwner_uri'
@@ -1074,7 +1073,7 @@ class TestQueryService(unittest.TestCase):
 
         self.assertEqual('Failed to save File.csv: Something went wrong', self.request_context.last_error_message)
 
-    def test_handle_save_as_json_request(self):
+    def test_handle_save_as_json_request(self) -> None:
 
         request_params = SaveResultsAsJsonRequestParams()
         request_params.owner_uri = 'testOwner_uri'
@@ -1093,7 +1092,7 @@ class TestQueryService(unittest.TestCase):
 
         self.assertIsInstance(save_as_args[1], SaveAsJsonFileStreamFactory)
 
-    def test_handle_save_as_excel_request(self):
+    def test_handle_save_as_excel_request(self) -> None:
 
         request_params = SaveResultsAsExcelRequestParams()
         request_params.owner_uri = 'testOwner_uri'
@@ -1113,7 +1112,7 @@ class TestQueryService(unittest.TestCase):
         self.assertIsInstance(save_as_args[1], SaveAsExcelFileStreamFactory)
 
     @integration_test
-    def test_query_execution_and_retrieval(self):
+    def test_query_execution_and_retrieval(self) -> None:
         """Perform an end-to-end test of query execution"""
         # Set up the test with request parameters, a connection, and mock threading
         query_params = ExecuteStringParams()
@@ -1178,7 +1177,7 @@ def get_execute_string_params() -> ExecuteStringParams:
     return params
 
 
-def get_execute_request_params():
+def get_execute_request_params() -> ExecuteRequestParamsBase:
     """Get a simple ExecuteRequestParamsBase"""
     params = ExecuteRequestParamsBase()
     params.owner_uri = 'test_uri'

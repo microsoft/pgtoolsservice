@@ -15,7 +15,7 @@ from ossdbtoolsservice.hosting import (
     NotificationContext,
     RequestContext,
 )
-from ossdbtoolsservice.hosting.rpc_context import RPCNotificationContext, RPCRequestContext
+from ossdbtoolsservice.hosting import NotificationContext, RequestContext
 from ossdbtoolsservice.hosting.message_configuration import IncomingMessageConfiguration
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
@@ -25,7 +25,7 @@ import tests.utils as utils
 
 
 class JSONRPCServerTests(unittest.TestCase):
-    def test_handler_init(self):
+    def test_handler_init(self) -> None:
         # If: I create a Handler class
         handler = MessageHandler("class", "handler")
 
@@ -40,7 +40,7 @@ class JSONRPCServerTests(unittest.TestCase):
         logger = utils.get_mock_logger()
 
         # If: I create a server
-        server = RPCMessageServer(input_stream, output_stream, logger=logger)
+        server = RPCMessageServer(input_stream, output_stream, None, logger=logger)
 
         # Then: The state should be initialized as defined
         self.assertIsInstance(server.writer, JSONRPCWriter)
@@ -69,20 +69,20 @@ class JSONRPCServerTests(unittest.TestCase):
         self.assertTrue("exit" in server._request_handlers)
         self.assertIsNotNone(server._request_handlers["exit"].handler)
 
-    def test_add_shutdown_handler(self):
+    def test_add_shutdown_handler(self) -> None:
         # If: I add a shutdown handler
         handler = mock.MagicMock()
-        server = RPCMessageServer(None, None)
+        server = utils.MockMessageServer()
         server.add_shutdown_handler(handler)
 
         # Then: The shutdown handlers should contain the handler
         self.assertTrue(handler in server._shutdown_handlers)
 
-    def test_set_request_handler(self):
+    def test_set_request_handler(self) -> None:
         # If: I add a request handler
         params = IncomingMessageConfiguration("test/test", int)
         handler = mock.MagicMock()
-        server = RPCMessageServer(None, None)
+        server = utils.MockMessageServer()
         server.set_request_handler(params, handler)
 
         # Then: The request handler should contain the handler
@@ -95,7 +95,7 @@ class JSONRPCServerTests(unittest.TestCase):
         # If: I add a notification handler
         params = IncomingMessageConfiguration("test/test", int)
         handler = mock.MagicMock()
-        server = RPCMessageServer(None, None)
+        server = utils.MockMessageServer()
         server.set_notification_handler(params, handler)
 
         # Then: The request handler should contain the handler
@@ -119,10 +119,10 @@ class JSONRPCServerTests(unittest.TestCase):
         rc.send_error.assert_not_called()
 
     @staticmethod
-    def test_version_request():
+    def test_version_request() -> None:
         # If: I send a request for the version
         rc = utils.MockRequestContext()
-        server = RPCMessageServer(None, None)
+        server = utils.MockMessageServer()
         server._handle_version_request(rc, None)
 
         # Then: I should get a response
@@ -130,11 +130,11 @@ class JSONRPCServerTests(unittest.TestCase):
         rc.send_error.assert_not_called()
         rc.send_notification.assert_not_called()
 
-    def test_shutdown_request(self):
+    def test_shutdown_request(self) -> None:
         # If: I send a request for the service to shutdown
         rc = utils.MockRequestContext()
         handler = mock.MagicMock()
-        server = RPCMessageServer(None, None, logger=utils.get_mock_logger())
+        server = utils.MockMessageServer()
         server.add_shutdown_handler(handler)
         server._handle_shutdown_request(rc, None)
 
@@ -147,25 +147,13 @@ class JSONRPCServerTests(unittest.TestCase):
 
     # RequestContext TESTS #################################################
 
-    def test_request_context_init_test(self) -> None:
-        # If: I create a request context
-        queue = Queue()
-        message = JSONRPCMessage.from_dictionary(
-            {"id": "123", "method": "test/text/", "params": {}}
-        )
-        rc = RPCRequestContext(message, queue)
-
-        # Then: The internal state should be set up correctly
-        self.assertIs(rc.message, message)
-        self.assertIs(rc._output_queue, queue)
-
     def test_request_context_send_response(self) -> None:
         # Setup: Create a request context
-        queue = Queue()
+        server = utils.MockMessageServer()
         in_message = JSONRPCMessage.from_dictionary(
             {"id": "123", "method": "test/text/", "params": {}}
         )
-        rc = RPCRequestContext(in_message, queue)
+        rc = RequestContext(in_message.message_id, server)
 
         # If: I send a response via the response handler
         params = {}
@@ -173,8 +161,8 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # Then:
         # ... There should be a message in the outbound queue
-        self.assertTrue(queue.not_empty)
-        out_message = queue.get_nowait()
+        self.assertTrue(len(server.sent_messages) == 1)
+        out_message = server.sent_messages[0]
         self.assertIsInstance(out_message, JSONRPCMessage)
 
         # .. The message must be a response with the proper id
@@ -184,11 +172,11 @@ class JSONRPCServerTests(unittest.TestCase):
 
     def test_request_context_send_notification(self) -> None:
         # Setup: Create a request context
-        queue = Queue()
+        server = utils.MockMessageServer()
         in_message = JSONRPCMessage.from_dictionary(
             {"id": "123", "method": "test/text/", "params": {}}
         )
-        rc = RPCRequestContext(in_message, queue)
+        rc = RequestContext(in_message.message_id, server)
 
         # If: I send a notification
         params = {}
@@ -197,8 +185,8 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # Then:
         # ... There should be a message in the outbound queue
-        self.assertTrue(queue.not_empty)
-        out_message = queue.get_nowait()
+        self.assertTrue(len(server.sent_messages) == 1)
+        out_message = server.sent_messages[0]
         self.assertIsInstance(out_message, JSONRPCMessage)
 
         # .. The message must be a response with the proper id
@@ -208,11 +196,11 @@ class JSONRPCServerTests(unittest.TestCase):
 
     def test_request_context_send_error(self) -> None:
         # Setup: Create a request context
-        queue = Queue()
+        server = utils.MockMessageServer()
         in_message = JSONRPCMessage.from_dictionary(
             {"id": "123", "method": "test/text/", "params": {}}
         )
-        rc = RPCRequestContext(in_message, queue)
+        rc = RequestContext(in_message.message_id, server)
 
         # If: I send an error
         params = {}
@@ -220,8 +208,8 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # Then:
         # ... There should be a message in the outbound queue
-        self.assertTrue(queue.not_empty)
-        out_message = queue.get_nowait()
+        self.assertTrue(len(server.sent_messages) == 1)
+        out_message = server.sent_messages[0]
         self.assertIsInstance(out_message, JSONRPCMessage)
 
         # .. The message must be a response with the proper id
@@ -233,40 +221,20 @@ class JSONRPCServerTests(unittest.TestCase):
     # DISPATCHER TESTS #####################################################
 
     @staticmethod
-    def test_dispatch_response_success():
-        # TODO: Replace with robust logic once response routing is implemented
-        # If: I dispatch a response message
-        message = JSONRPCMessage.create_response("123", {})
-        server = RPCMessageServer(None, None, logger=utils.get_mock_logger())
-        server._dispatch_message(message)
-
-        # Then: Nothing should have happened
-
-    @staticmethod
-    def test_dispatch_response_error():
-        # TODO: Replace with robust logic once error routing is implemented
-        # If: I dispatch an error message
-        message = JSONRPCMessage.create_error("123", 0, message="", data={})
-        server = RPCMessageServer(None, None, logger=utils.get_mock_logger())
-        server._dispatch_message(message)
-
-        # Then: Nothing should have happened
-
-    @staticmethod
-    def test_dispatch_invalid():
+    def test_dispatch_invalid() -> None:
         # If: I dispatch an invalid message
         message = JSONRPCMessage("invalidType")
-        server = RPCMessageServer(None, None, logger=utils.get_mock_logger())
+        server = utils.MockMessageServer()
         server._dispatch_message(message)
 
         # Then: Nothing should have happened
 
     @staticmethod
-    def test_dispatch_request_no_handler():
+    def test_dispatch_request_no_handler() -> None:
         # If: I dispatch a message that has no handler
         logger = utils.get_mock_logger()
         message = JSONRPCMessage.create_request("123", "non_existent", {})
-        server = RPCMessageServer(None, None, logger=logger)
+        server = utils.MockMessageServer()
         server._dispatch_message(message)
 
         # Then:
@@ -275,11 +243,11 @@ class JSONRPCServerTests(unittest.TestCase):
         # ... A warning should have been logged
         logger.warning.assert_called_once()
 
-    def test_dispatch_request_none_class(self):
+    def test_dispatch_request_none_class(self) -> None:
         # Setup: Create a server with a single handler that has none for the deserialization class
         config = IncomingMessageConfiguration("test/test", None)
         handler = mock.MagicMock()
-        server = RPCMessageServer(None, None, logger=utils.get_mock_logger())
+        server = utils.MockMessageServer()
         server.set_request_handler(config, handler)
 
         # If: I dispatch a message that has none set for the deserialization class
@@ -293,15 +261,14 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # ... The parameters to the handler should have been a request context and params
         self.assertIsInstance(handler.mock_calls[0][1][0], RequestContext)
-        self.assertIs(handler.mock_calls[0][1][0]._output_queue, server._output_queue)
-        self.assertIs(handler.mock_calls[0][1][0].message, message)
+        self.assertIs(handler.mock_calls[0][1][0].message_id, message.message_id)
         self.assertIs(handler.mock_calls[0][1][1], params)
 
-    def test_dispatch_request_normal(self):
+    def test_dispatch_request_normal(self) -> None:
         # Setup: Create a server with a single handler that has none for the deserialization class
         config = IncomingMessageConfiguration("test/test", _TestParams)
         handler = mock.MagicMock()
-        server = RPCMessageServer(None, None, logger=utils.get_mock_logger())
+        server = utils.MockMessageServer()
         server.set_request_handler(config, handler)
 
         # If: I dispatch a message that has none set for the deserialization class
@@ -315,16 +282,15 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # ... The parameters to the handler should have been a request context and params
         self.assertIsInstance(handler.mock_calls[0][1][0], RequestContext)
-        self.assertIs(handler.mock_calls[0][1][0]._output_queue, server._output_queue)
-        self.assertIs(handler.mock_calls[0][1][0].message, message)
+        self.assertIs(handler.mock_calls[0][1][0].message_id, message.message_id)
         self.assertIsInstance(handler.mock_calls[0][1][1], _TestParams)
 
     @staticmethod
-    def test_dispatch_notification_no_handler():
+    def test_dispatch_notification_no_handler() -> None:
         # If: I dispatch a message that has no handler
         logger = utils.get_mock_logger()
         message = JSONRPCMessage.create_notification("non_existent", {})
-        server = RPCMessageServer(None, None, logger=logger)
+        server = utils.MockMessageServer()
         server._dispatch_message(message)
 
         # Then:
@@ -333,11 +299,11 @@ class JSONRPCServerTests(unittest.TestCase):
         # ... A warning should have been logged
         logger.warning.assert_called_once()
 
-    def test_dispatch_notification_none_class(self):
+    def test_dispatch_notification_none_class(self) -> None:
         # Setup: Create a server with a single handler that has none for the deserialization class
         config = IncomingMessageConfiguration("test/test", None)
         handler = mock.MagicMock()
-        server = RPCMessageServer(None, None, logger=utils.get_mock_logger())
+        server = utils.MockMessageServer()
         server.set_notification_handler(config, handler)
 
         # If: I dispatch a message that has none set for the deserialization class
@@ -351,14 +317,13 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # ... The parameters to the handler should have been a request context and params
         self.assertIsInstance(handler.mock_calls[0][1][0], NotificationContext)
-        self.assertIs(handler.mock_calls[0][1][0]._output_queue, server._output_queue)
         self.assertIs(handler.mock_calls[0][1][1], params)
 
-    def test_dispatch_notification_normal(self):
+    def test_dispatch_notification_normal(self) -> None:
         # Setup: Create a server with a single handler that has none for the deserialization class
         config = IncomingMessageConfiguration("test/test", _TestParams)
         handler = mock.MagicMock()
-        server = RPCMessageServer(None, None, logger=utils.get_mock_logger())
+        server = utils.MockMessageServer()
         server.set_notification_handler(config, handler)
 
         # If: I dispatch a message that has none set for the deserialization class
@@ -372,23 +337,14 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # ... The parameters to the handler should have been a request context and params
         self.assertIsInstance(handler.mock_calls[0][1][0], NotificationContext)
-        self.assertIs(handler.mock_calls[0][1][0]._output_queue, server._output_queue)
         self.assertIsInstance(handler.mock_calls[0][1][1], _TestParams)
 
     # RequestContext TESTS #################################################
 
-    def test_notification_context_init_test(self) -> None:
-        # If: I create a notification context
-        queue = Queue()
-        nc = RPCNotificationContext(queue)
-
-        # Then: The internal state should be set up correctly
-        self.assertIs(nc._output_queue, queue)
-
-    def test_notification_context_send(self):
+    def test_notification_context_send(self) -> None:
         # Setup: Create a request context
-        queue = Queue()
-        nc = RPCNotificationContext(queue)
+        server = utils.MockMessageServer()
+        nc = NotificationContext(server)
 
         # If: I send a response via the response handler
         method = "test/test"
@@ -397,8 +353,8 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # Then:
         # ... There should be a message in the outbound queue
-        self.assertTrue(queue.not_empty)
-        out_message = queue.get_nowait()
+        self.assertTrue(len(server.sent_messages) == 1)
+        out_message = server.sent_messages[0]
         self.assertIsInstance(out_message, JSONRPCMessage)
 
         # .. The message must be a response with the proper id
@@ -409,41 +365,7 @@ class JSONRPCServerTests(unittest.TestCase):
 
     # END-TO-END TESTS #####################################################
 
-    def test_request_enqueued(self):
-        # Setup: Create empty io streams
-        input_stream = io.BytesIO()
-        output_stream = io.BytesIO()
-
-        # If: I submit an outbound request
-        test_client = RPCMessageServer(input_stream, output_stream)
-        test_client.send_request("test/test", {"test": "test"})
-
-        # Then:
-        # ... There should be one request in the outbound queue
-        request = test_client._output_queue.get()
-
-        # ... The queued message should match the request we sent
-        self.assertEqual(request.message_method, "test/test")
-        self.assertDictEqual(request.message_params, {"test": "test"})
-
-    def test_notification_enqueued(self):
-        # Setup: Create empty io streams
-        input_stream = io.BytesIO()
-        output_stream = io.BytesIO()
-
-        # If: I submit an outbound request
-        test_client = RPCMessageServer(input_stream, output_stream)
-        test_client.send_notification("test/test", {"test": "test"})
-
-        # Then:
-        # ... There should be one request in the outbound queue
-        request = test_client._output_queue.get()
-
-        # ... The queued message should match the request we sent
-        self.assertEqual(request.message_method, "test/test")
-        self.assertDictEqual(request.message_params, {"test": "test"})
-
-    def test_reads_message(self):
+    def test_reads_message(self) -> None:
         # Setup:
         # ... Create an input stream with a single message
         input_stream = io.BytesIO(
@@ -453,7 +375,7 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # ... Create a server that uses the input and output streams
         server = RPCMessageServer(
-            input_stream, output_stream, logger=utils.get_mock_logger()
+            input_stream, output_stream, None, logger=utils.get_mock_logger()
         )
 
         # ... Patch the server to not dispatch a message
@@ -489,7 +411,7 @@ class JSONRPCServerTests(unittest.TestCase):
 
         # ... Create a server that uses the input and output streams
         server = RPCMessageServer(
-            input_stream, output_stream, logger=utils.get_mock_logger()
+            input_stream, output_stream, None, logger=utils.get_mock_logger()
         )
 
         # ... Patch the server to not dispatch a message
@@ -521,10 +443,10 @@ class JSONRPCServerTests(unittest.TestCase):
 
 class _TestParams(Serializable):
     @classmethod
-    def from_dict(cls, dictionary):
+    def from_dict(cls, dictionary) -> "_TestParams":
         return _TestParams()
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
 

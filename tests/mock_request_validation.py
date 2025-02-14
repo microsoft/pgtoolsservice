@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, List, Optional, TypeVar    # noqa
+from typing import Any, Callable, List, Optional  # noqa
 import unittest
 import unittest.mock as mock
 
@@ -11,22 +11,21 @@ import json
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting import RequestContext
-from ossdbtoolsservice.hosting.rpc_context import RPCRequestContext
 import ossdbtoolsservice.utils as utils
 
 
-TValidation = TypeVar(Optional[Callable[[any], None]])
+TValidation = Optional[Callable[[any], None]]
 
 
 class ExpectedMessage:
     def __init__(
-            self,
-            message_type: JSONRPCMessageType,
-            message_method: Optional[str],
-            param_type: type,
-            validation: TValidation = None
+        self,
+        message_type: JSONRPCMessageType,
+        message_method: Optional[str],
+        param_type: type,
+        validation: TValidation = None,
     ):
-        self.message_method: str = message_method
+        self.message_method: str | None = message_method
         self.message_type: JSONRPCMessageType = message_type
         self.param_type = param_type
         self.validation = validation
@@ -34,22 +33,22 @@ class ExpectedMessage:
 
 class ReceivedMessage:
     def __init__(
-            self,
-            message_type: JSONRPCMessageType,
-            message_method: Optional[str],
-            param: any,
-            param_type: type,
-            rpc_message: JSONRPCMessage
+        self,
+        message_type: JSONRPCMessageType,
+        message_method: Optional[str],
+        param: Any,
+        param_type: type,
+        rpc_message: JSONRPCMessage,
     ):
         self.message_type: JSONRPCMessageType = message_type
         self.message_method: Optional[str] = message_method
         self.param_type: type = param_type
-        self.param: any = param
+        self.param: Any = param
         self.rpc_message: JSONRPCMessage = rpc_message
 
 
 class ReceivedError:
-    def __init__(self, code: int, message: str, data: any):
+    def __init__(self, code: int, message: str, data: Any):
         self.code = code
         self.message = message
         self.data = data
@@ -57,55 +56,70 @@ class ReceivedError:
 
 class RequestFlowValidator:
     def __init__(self):
-        self.unittest = unittest.TestCase('__init__')
+        self.unittest = unittest.TestCase("__init__")
         self._expected_messages: List[ExpectedMessage] = []
         self._received_messages: List[ReceivedMessage] = []
 
         # Create a request context and monkey patch all the methods to capture the messages
-        self.request_context: RequestContext = RPCRequestContext(None, None)
-        self.request_context.send_notification = mock.MagicMock(side_effect=self._received_notification_callback)
-        self.request_context.send_response = mock.MagicMock(side_effect=self._received_response_callback)
-        self.request_context.send_error = mock.MagicMock(side_effect=self._received_error_callback)
+        self.request_context: RequestContext = RequestContext(None, None)
+        self.request_context.send_notification = mock.MagicMock(
+            side_effect=self._received_notification_callback
+        )
+        self.request_context.send_response = mock.MagicMock(
+            side_effect=self._received_response_callback
+        )
+        self.request_context.send_error = mock.MagicMock(
+            side_effect=self._received_error_callback
+        )
 
     # METHODS ##############################################################
-    def add_expected_error(self, expected_type: type, validation: TValidation = None) -> 'RequestFlowValidator':
-        expected_error = ExpectedMessage(JSONRPCMessageType.ResponseError, None, expected_type, validation)
+    def add_expected_error(
+        self, expected_type: type, validation: TValidation = None
+    ) -> "RequestFlowValidator":
+        expected_error = ExpectedMessage(
+            JSONRPCMessageType.ResponseError, None, expected_type, validation
+        )
         self._expected_messages.append(expected_error)
         return self
 
     def add_expected_notification(
-            self,
-            expected_type: type,
-            method: str,
-            validation: TValidation = None
-    ) -> 'RequestFlowValidator':
-        expected_notification = ExpectedMessage(JSONRPCMessageType.Notification, method, expected_type, validation)
+        self, expected_type: type, method: str, validation: TValidation = None
+    ) -> "RequestFlowValidator":
+        expected_notification = ExpectedMessage(
+            JSONRPCMessageType.Notification, method, expected_type, validation
+        )
         self._expected_messages.append(expected_notification)
         return self
 
-    def add_expected_response(self, expected_type: type, validation: TValidation = None) -> 'RequestFlowValidator':
-        expected_response = ExpectedMessage(JSONRPCMessageType.ResponseSuccess, None, expected_type, validation)
+    def add_expected_response(
+        self, expected_type: type, validation: TValidation = None
+    ) -> "RequestFlowValidator":
+        expected_response = ExpectedMessage(
+            JSONRPCMessageType.ResponseSuccess, None, expected_type, validation
+        )
         self._expected_messages.append(expected_response)
         return self
 
     def validate(self):
         # Iterate over the two lists in sync to to see if they are the same
-        for i in range(0, max([len(self._expected_messages), len(self._received_messages)])):
+        for i in range(
+            0, max([len(self._expected_messages), len(self._received_messages)])
+        ):
             # Step 0) Make sure both messages exist
             if i >= len(self._expected_messages):
                 raise Exception(
-                    'Unexpected message received: '
-                    f'[{self._received_messages[i].message_type}] '
-                    f'{self._received_messages[i].param}'
+                    "Unexpected message received: "
+                    f"[{self._received_messages[i].message_type}] "
+                    f"{self._received_messages[i].param}"
                 )
             expected = self._expected_messages[i]
 
             if i >= len(self._received_messages):
                 raise Exception(
-                    'Expected additional messages: '
-                    f'[{self._expected_messages[i].message_type}] '
-                    f'{self._expected_messages[i].param_type}'
-                    f'{self._expected_messages[i].message_method}'
+                    "Expected additional messages: "
+                    f"[{self._expected_messages[i].message_type}] "
+                    f"{self._expected_messages[i].param_type}"
+                    f"{self._expected_messages[i].message_method}"
                 )
             received = self._received_messages[i]
 
@@ -120,9 +134,11 @@ class RequestFlowValidator:
 
             # Step 4) Make sure the RPC Message is JSON serializable
             # This catches issues where notification methods are not a strings
-            json_content = json.dumps(utils.serialization.convert_to_dict(received.param), sort_keys=True)
+            json_content = json.dumps(
+                utils.serialization.convert_to_dict(received.param), sort_keys=True
+            )
             self.unittest.assertIsNotNone(json_content)
-            self.unittest.assertNotEqual(json_content, '')
+            self.unittest.assertNotEqual(json_content, "")
 
             # Step 5) Make sure the params it passes validation
             self.unittest.assertIsNotNone(received.param)
@@ -133,23 +149,29 @@ class RequestFlowValidator:
     @staticmethod
     def basic_error_validation(param: ReceivedError) -> None:
         # Make sure there is a message received
-        test_case = unittest.TestCase('__init__')
+        test_case = unittest.TestCase("__init__")
         test_case.assertIsNotNone(param.message)
-        test_case.assertNotEqual(param.message.strip(), '')
+        test_case.assertNotEqual(param.message.strip(), "")
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _received_error_callback(self, message: str, data: any = None, code: int = 0):
+    def _received_error_callback(self, message: str, data: Any = None, code: int = 0):
         error = ReceivedError(code, message, data)
         rpc_message = JSONRPCMessage.create_error(0, code, message, data)
-        received_message = ReceivedMessage(JSONRPCMessageType.ResponseError, None, error, type(data), rpc_message)
+        received_message = ReceivedMessage(
+            JSONRPCMessageType.ResponseError, None, error, type(data), rpc_message
+        )
         self._received_messages.append(received_message)
 
-    def _received_notification_callback(self, method: str, params: any):
+    def _received_notification_callback(self, method: str, params: Any):
         rpc_message = JSONRPCMessage.create_notification(method, params)
-        received_message = ReceivedMessage(JSONRPCMessageType.Notification, method, params, type(params), rpc_message)
+        received_message = ReceivedMessage(
+            JSONRPCMessageType.Notification, method, params, type(params), rpc_message
+        )
         self._received_messages.append(received_message)
 
-    def _received_response_callback(self, params: any):
+    def _received_response_callback(self, params: Any):
         rpc_message = JSONRPCMessage.create_response(0, params)
-        received_message = ReceivedMessage(JSONRPCMessageType.ResponseSuccess, None, params, type(params), rpc_message)
+        received_message = ReceivedMessage(
+            JSONRPCMessageType.ResponseSuccess, None, params, type(params), rpc_message
+        )
         self._received_messages.append(received_message)

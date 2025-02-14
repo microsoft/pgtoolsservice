@@ -18,7 +18,6 @@ from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
                                        ServiceProvider)
-from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.language.contracts import (  # noqa
     INTELLISENSE_READY_NOTIFICATION, CompletionItem, CompletionItemKind,
@@ -43,12 +42,12 @@ from tests.mock_request_validation import RequestFlowValidator
 class TestLanguageService(unittest.TestCase):
     """Methods for testing the language service"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Constructor"""
         self.default_uri = 'file://my.sql'
         self.flow_validator = RequestFlowValidator()
         self.mock_server_set_request = mock.MagicMock()
-        self.mock_server = RPCMessageServer(None, None)
+        self.mock_server = utils.MockMessageServer()
         self.mock_server.set_request_handler = self.mock_server_set_request
         self.mock_workspace_service = WorkspaceService()
         self.mock_connection_service = ConnectionService()
@@ -69,11 +68,11 @@ class TestLanguageService(unittest.TestCase):
             'uri': self.default_uri
         })
 
-    def test_register(self):
+    def test_register(self) -> None:
         """Test registration of the service"""
         # Setup:
         # ... Create a mock service provider
-        server: RPCMessageServer = RPCMessageServer(None, None)
+        server = utils.MockMessageServer()
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
         provider: ServiceProvider = ServiceProvider(server, {
@@ -97,7 +96,7 @@ class TestLanguageService(unittest.TestCase):
         # ... The service provider should have been stored
         self.assertIs(service._service_provider, provider)  # noqa
 
-    def test_handle_shutdown(self):
+    def test_handle_shutdown(self) -> None:
         # Given a language service
         service: LanguageService = self._init_service(stop_operations_queue=False)
         self.assertFalse(service.operations_queue.stop_requested)
@@ -106,7 +105,7 @@ class TestLanguageService(unittest.TestCase):
         # Then the language service should be cleaned up
         self.assertTrue(service.operations_queue.stop_requested)
 
-    def test_completion_intellisense_off(self):
+    def test_completion_intellisense_off(self) -> None:
         """
         Test that the completion handler returns empty if the intellisense
         is disabled
@@ -126,7 +125,7 @@ class TestLanguageService(unittest.TestCase):
         context.send_response.assert_called_once()
         self.assertEqual(context.last_response_params, [])
 
-    def test_completion_file_not_found(self):
+    def test_completion_file_not_found(self) -> None:
         """
         Test that the completion handler returns empty if the intellisense
         is disabled
@@ -144,7 +143,7 @@ class TestLanguageService(unittest.TestCase):
         context.send_response.assert_called_once()
         self.assertEqual(context.last_response_params, [])
 
-    def test_default_completion_items(self):
+    def test_default_completion_items(self) -> None:
         """
         Test that the completion handler returns a set of default values
         when not connected to any URI
@@ -179,7 +178,7 @@ class TestLanguageService(unittest.TestCase):
         self.assertTrue(len(completions) > 0)
         self.verify_match('TABLE', completions, Range.from_data(0, 7, 0, 10))
 
-    def test_pg_language_flavor(self):
+    def test_pg_language_flavor(self) -> None:
         """
         Test that if provider is PGSQL, the service ignores files registered as being for non-PGSQL flavors
         """
@@ -212,7 +211,7 @@ class TestLanguageService(unittest.TestCase):
         # Then: the service is updated to allow intellisense
         self.assertTrue(service.is_valid_uri(mssql_params.uri))
 
-    def test_on_connect_sends_notification(self):
+    def test_on_connect_sends_notification(self) -> None:
         """
         Test that the service sends an intellisense ready notification after handling an on connect notification from the connection service.
         This is a slightly more end-to-end test that verifies calling through to the queue layer
@@ -257,7 +256,7 @@ class TestLanguageService(unittest.TestCase):
         # ... and the info should have the connection key set
         self.assertEqual(info.connection_key, OperationsQueue.create_key(conn_info))
 
-    def test_format_doc_no_pgsql_format(self):
+    def test_format_doc_no_pgsql_format(self) -> None:
         """
         Test that the format codepath succeeds even if the configuration options aren't defined
         """
@@ -290,7 +289,7 @@ class TestLanguageService(unittest.TestCase):
         self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
         self.assertEqual(edits[0].new_text, input_text)
 
-    def test_format_doc(self):
+    def test_format_doc(self) -> None:
         """
         Test that the format document codepath works as expected
         """
@@ -335,7 +334,7 @@ class TestLanguageService(unittest.TestCase):
         self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
         self.assertEqual(edits[0].new_text, expected_output)
 
-    def test_format_doc_range(self):
+    def test_format_doc_range(self) -> None:
         """
         Test that the format document range codepath works as expected
         """
@@ -387,7 +386,7 @@ class TestLanguageService(unittest.TestCase):
         (0, 10),
         (-2, 8),
     ])
-    def test_completion_to_completion_item(self, relative_start_pos, expected_start_char):
+    def test_completion_to_completion_item(self, relative_start_pos: int, expected_start_char: int) -> None:
         """
         Tests that PGCompleter's Completion objects get converted to CompletionItems as expected
         """
@@ -406,7 +405,7 @@ class TestLanguageService(unittest.TestCase):
         self.assertEqual(completion_item.detail, display)
         self.assertEqual(completion_item.label, text)
 
-    def test_handle_definition_request_should_return_empty_if_query_file_do_not_exist(self):
+    def test_handle_definition_request_should_return_empty_if_query_file_do_not_exist(self) -> None:
         # If: The script file doesn't exist (there is an empty workspace)
         context: RequestContext = utils.MockRequestContext()
         self.mock_workspace_service._workspace = Workspace()
@@ -417,7 +416,7 @@ class TestLanguageService(unittest.TestCase):
         context.send_response.assert_called_once()
         self.assertEqual(context.last_response_params, [])
 
-    def test_handle_definition_request_intellisense_off(self):
+    def test_handle_definition_request_intellisense_off(self) -> None:
         request_context: RequestContext = utils.MockRequestContext()
         config = Configuration()
         config.sql.intellisense.enable_intellisense = False
@@ -429,7 +428,7 @@ class TestLanguageService(unittest.TestCase):
         request_context.send_response.assert_called_once()
         self.assertEqual(request_context.last_response_params, [])
 
-    def test_completion_keyword_completion_sort_text(self):
+    def test_completion_keyword_completion_sort_text(self) -> None:
         """
         Tests that a Keyword Completion is converted with sort text that puts it after other objects
         """
@@ -445,7 +444,7 @@ class TestLanguageService(unittest.TestCase):
         completion_item: CompletionItem = LanguageService.to_completion_item(keyword_completion, self.default_text_position)
         self.assertEqual(completion_item.sort_text, '~' + text)
 
-    def _init_service(self, stop_operations_queue=True) -> LanguageService:
+    def _init_service(self, stop_operations_queue: bool = True) -> LanguageService:
         """
         Initializes a simple service instance. By default stops the threaded queue since
         this could cause issues debugging multiple tests, and the class can be tested
@@ -469,7 +468,7 @@ class TestLanguageService(unittest.TestCase):
             workspace._workspace_files[self.default_uri] = file
         return workspace, file
 
-    def verify_match(self, word: str, matches: List[CompletionItem], text_range: Range):
+    def verify_match(self, word: str, matches: List[CompletionItem], text_range: Range) -> None:
         """Verifies match against its label and other properties"""
         match: CompletionItem = next(iter(obj for obj in matches if obj.label == word), None)
         self.assertIsNotNone(match)
@@ -479,7 +478,7 @@ class TestLanguageService(unittest.TestCase):
         self.assert_range_equals(text_range, match.text_edit.range)
         self.assertEqual(word, match.text_edit.new_text)
 
-    def assert_range_equals(self, first: Range, second: Range):
+    def assert_range_equals(self, first: Range, second: Range) -> None:
         self.assertEqual(first.start.line, second.start.line)
         self.assertEqual(first.start.character, second.start.character)
         self.assertEqual(first.end.line, second.end.line)

@@ -12,10 +12,12 @@ import psycopg
 from psycopg.connection import AdaptersMap
 
 from ossdbtoolsservice.hosting import NotificationContext, ServiceProvider
-from ossdbtoolsservice.hosting.rpc_context import (
-    RPCRequestContext,
-    RPCNotificationContext,
+from ossdbtoolsservice.hosting import (
+    RequestContext,
+    NotificationContext,
 )
+from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
+from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 NoticeHandler = Callable[[str], None]
@@ -42,7 +44,7 @@ def get_mock_notification_context() -> NotificationContext:
     """
     mock_send_notification = mock.MagicMock()
 
-    mock_notification_context = RPCNotificationContext(None)
+    mock_notification_context = NotificationContext(None)
     mock_notification_context.send_notification = mock_send_notification
 
     return mock_notification_context
@@ -70,7 +72,7 @@ def get_mock_logger() -> logging.Logger:
 # PLEASE USE SERVICEPROVIDERMOCK from tests/mocks/service_provider_mock. #
 # This mock will be deprecated #
 def get_mock_service_provider(
-    service_map: dict = None, provider_name: Optional[str] = PG_PROVIDER_NAME
+    service_map: dict | None = None, provider_name: str = PG_PROVIDER_NAME
 ) -> ServiceProvider:
     """
     Generates a ServiceProvider with the given services
@@ -84,11 +86,11 @@ def get_mock_service_provider(
     return provider
 
 
-class MockRequestContext(RPCRequestContext):
+class MockRequestContext(RequestContext):
     """Mock RequestContext object that allows service responses, notifications, and errors to be tested"""
 
     def __init__(self):
-        RPCRequestContext.__init__(self, None, None)
+        RequestContext.__init__(self, None, None)
         self.last_response_params = None
         self.last_notification_method = None
         self.last_notification_params = None
@@ -280,3 +282,21 @@ class MockNotice:
     def __init__(self, message_primary, severity):
         self.message_primary = message_primary
         self.severity = severity
+
+
+class MockMessageServer(MessageServer):
+    def __init__(self):
+        super().__init__(async_runner=None, logger=get_mock_logger())
+        self.sent_messages = []
+
+    def start(self) -> None:
+        pass
+
+    def stop(self) -> None:
+        pass
+
+    def _send_message(self, message: JSONRPCMessage) -> None:
+        self.sent_messages.append(message)
+
+    def recieve_message(self, message: JSONRPCMessage) -> None:
+        self._dispatch_message(message)
