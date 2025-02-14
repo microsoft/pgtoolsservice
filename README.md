@@ -30,6 +30,28 @@ To install the package in development mode, run:
 This installs an editable version of the package with extra development dependencies.
 This is required for running the VS Code extension in development.
 
+## Running tests
+
+There are two test projects in the repository, `tests` and `tests_v2`.
+The `tests_v2` are newer tests that are run with pytest.
+To run the `tests` tests, run: `scripts/test_all.sh` or `scripts/test_all.ps1` if you are on Windows.
+To run the `tests_v2` tests, run: `pytest tests_v2`.
+
+### Docker postgres
+
+To run the integration tests, which are marked across the `tests` with a `@integration` decorator, you need to have a running postgres instance.
+You can use the `docker-compose` file to quickly spin up a local postgres instance.
+
+```bash
+docker-compose up -d
+```
+This will create a local postgres instance with the following connection string:
+
+```
+postgresql://postgres:example@localhost:5432/postgres
+```
+
+
 [GitHub Issue Tracker]:https://github.com/Microsoft/pgtoolsservice/issues
 [bug report]:https://github.com/Microsoft/pgtoolsservice/issues/new?labels=bug
 [feature suggestion]:https://github.com/Microsoft/pgtoolsservice/issues/new?labels=feature-request

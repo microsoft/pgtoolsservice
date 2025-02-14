@@ -1,0 +1,23 @@
+services:
+
+  db:
+    image: mcr.microsoft.com/azurelinux/base/postgres:16
+    container_name: postgres
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    command:
+      - postgres
+      - "-c"
+      - "log_connections=on"
+      - "-c"
+      - "listen_addresses=*"
+
+volumes:
+  postgres_data:

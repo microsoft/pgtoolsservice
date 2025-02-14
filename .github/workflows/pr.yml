@@ -1,0 +1,52 @@
+name: PG Tools Service PR CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-20.04
+          - ubuntu-22.04-arm
+          - windows-2022
+          - macos-13
+          - macos-14 # ARM
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Start Postgres
+        run: |
+          docker-compose up -d
+
+      - name: Run build script (Unix)
+        if: runner.os != 'Windows'
+        env:
+          MACOSX_DEPLOYMENT_TARGET: 11.0
+        run: |
+          ./scripts/build.sh
+
+      - name: Run build script (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          powershell -File scripts/build.ps1
+
+      - name: Run tests (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          ./scripts/test.sh
+
+      - name: Run tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          powershell -File scripts/test.ps1
