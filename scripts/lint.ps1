@@ -13,6 +13,6 @@ function usage {
 
 # Only run main block if the script is executed directly, not dot-sourced
 if ($MyInvocation.MyCommand.Path -eq $PSCommandPath) {
-    Write-Host "Running flake8..."
-    & flake8 ossdbtoolsservice tests pgsmo
+    Write-Host "Running ruff check..."
+    & ruff check ossdbtoolsservice tests pgsmo
 }
