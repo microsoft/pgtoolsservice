@@ -14,6 +14,7 @@ CHAT_COMPLETION_REQUEST_METHOD = "chat/completion-request"
 # Notifications
 CHAT_PROGRESS_UPDATE_METHOD = "chat/progress-update"
 CHAT_COMPLETION_RESULT_METHOD = "chat/completion-result"
+COPILOT_QUERY_NOTIFICATION_METHOD = "chat/notify-copilot-query"
 
 
 class ChatMessageContent(BaseModel):
@@ -31,6 +32,14 @@ class ChatCompletionRequestParams(BaseModel):
 class ChatProgressUpdateParams(BaseModel):
     chat_id: str | None = Field(None, alias="chatId")
     content: str | None = None
+
+
+class CopilotQueryNotificationParams(BaseModel):
+    query_name: str = Field(alias="queryName")
+    query_description: str = Field(alias="queryDescription")
+    query: str
+    owner_uri: str = Field(alias="ownerUri")
+    has_error: bool = Field(default=False, alias="hasError")
 
 
 class ChatCompletionResult(BaseModel):

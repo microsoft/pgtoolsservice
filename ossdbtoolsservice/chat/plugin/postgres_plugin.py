@@ -7,7 +7,9 @@ from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
 from ossdbtoolsservice.chat.messages import (
     CHAT_PROGRESS_UPDATE_METHOD,
+    COPILOT_QUERY_NOTIFICATION_METHOD,
     ChatProgressUpdateParams,
+    CopilotQueryNotificationParams,
 )
 from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts.common import ConnectionType
@@ -20,7 +22,7 @@ from .postgres_utils import (
     execute_statement,
     # fetch_schema,
     fetch_schema_v4 as fetch_schema,
-    fetch_schema_v1
+    fetch_schema_v1,
 )
 
 
@@ -54,30 +56,6 @@ class PostgresPlugin:
         return self._connection_service.get_connection(
             self._owner_uri, ConnectionType.QUERY
         )
-
-    # @kernel_function(
-    #     name="get_schemas_tables",
-    #     description="Gets the table names for each schema name in the database.",
-    # )
-    # def get_schemas_and_tables_kernelfunc(
-    #     self,
-    # ) -> Annotated[str, "The PostgreSQL schema name and the table names associated with that schema."]:
-    #     if self._logger:
-    #         self._logger.info(" ... Fetching schemas and tables 📚")
-
-    #     self._request_context.send_notification(
-    #         CHAT_PROGRESS_UPDATE_METHOD,
-    #         ChatProgressUpdateParams(
-    #             chatId=self._chat_id,
-    #             content="Fetching schemas and tables 📚...",
-    #         ),
-    #     )
-
-    #     connection = self._get_connection()
-    #     if connection is None:
-    #         return "Error. Could not connect to the database. No connection found."
-    #     assert isinstance(connection, PostgreSQLConnection)
-    #     return fetch_schemas_and_tables(connection._conn)
 
     @kernel_function(
         name="get_full_schema_context",
@@ -135,15 +113,25 @@ class PostgresPlugin:
     @kernel_function(
         name="execute_sql_query_readonly",
         description=(
-            "Execute a SQL query against the database. This statement must not modify the database at all. "
+            "Execute a formatted SQL query against the database. This query must not modify the database at all. "
             "Can include SELECT, SHOW, EXPLAIN etc. Do not include additional statements, e.g. SET search_path, in this query."
-            "It must only be a single query."
+            "It must only be a single, well formatted query that will be presented to the user, "
+            "so focus on readability. "
+            "You do not need confirmation to use this function."
         ),
     )
-    def execute_sql_query_readonly_kernelfunc(
+    async def execute_sql_query_readonly_kernelfunc(
         self,
-        statement: Annotated[str, "The SQL query to execute."],
+        query: Annotated[
+            str,
+            "The SQL query to execute, "
+            "formatted in the style of a beautifier. "
+            "Add comments to explain complex components.",
+        ],
         script_name: Annotated[str, "Short descriptive title for the SQL query."],
+        script_description: Annotated[
+            str, "A short and clear description of the script to execute"
+        ],
     ) -> Annotated[str, "The result of the SQL query."]:
         if self._logger:
             self._logger.info(f" ... Executing query {script_name} 🔎")
@@ -160,9 +148,34 @@ class PostgresPlugin:
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
         assert isinstance(connection, PostgreSQLConnection)
-        return execute_readonly_query(
-            connection._conn, statement, self._max_result_chars
+        try:
+            result = execute_readonly_query(
+                connection._conn, query, self._max_result_chars
+            )
+        except Exception:
+            self._request_context.send_notification(
+                COPILOT_QUERY_NOTIFICATION_METHOD,
+                CopilotQueryNotificationParams(
+                    queryName=script_name,
+                    queryDescription=script_description,
+                    query=query,
+                    ownerUri=self._owner_uri,
+                    hasError=True,
+                ),
+            )
+            raise
+
+        self._request_context.send_notification(
+            COPILOT_QUERY_NOTIFICATION_METHOD,
+            CopilotQueryNotificationParams(
+                queryName=script_name,
+                queryDescription=script_description,
+                query=query,
+                ownerUri=self._owner_uri,
+                hasError=False,
+            ),
         )
+        return result
 
     @kernel_function(
         name="execute_sql_statement",
@@ -171,16 +184,37 @@ class PostgresPlugin:
             "Only use with confirmation from the user. The user must confirm the query "
             "by name before it is executed. Ensure chat history has presented the query by name "
             " to the user and the user has confirmed it."
+            "It must only be a single, well formatted SQL statement that will be presented to the user, "
+            "so focus on readability."
+
         ),
     )
-    def execute_sql_statement_kernelfunc(
+    async def execute_sql_statement_kernelfunc(
         self,
-        statement: Annotated[str, "The SQL statement to execute."],
+        statement: Annotated[
+            str,
+            "The SQL statement to execute, "
+            "formatted in the style of a beautifier. "
+            "Add comments to explain complex components.",
+        ],
         script_name: Annotated[
             str, "The name of the script to execute. This is used for confirmation."
         ],
+        script_description: Annotated[
+            str, "A short and clear description of the script to execute."
+        ],
+        script_confirmation: Annotated[
+            bool,
+            "Whether or not the user has confirmed the script.",
+        ],
     ) -> Annotated[str, "The result of the SQL statement."]:
         """Execute a statement against the database."""
+        if not script_confirmation:
+            raise Exception(
+                f"User has not confirmed the script '{script_name}'. "
+                "Please ensure the user has confirmed the script before executing."
+            )
+
         if self._logger:
             self._logger.info(f" ... Executing statement {script_name} ✍️")
 
@@ -196,4 +230,29 @@ class PostgresPlugin:
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
         assert isinstance(connection, PostgreSQLConnection)
-        return execute_statement(connection._conn, statement)
+        try:
+            result = execute_statement(connection._conn, statement)
+        except Exception:
+            self._request_context.send_notification(
+                COPILOT_QUERY_NOTIFICATION_METHOD,
+                CopilotQueryNotificationParams(
+                    queryName=script_name,
+                    queryDescription=script_description,
+                    query=statement,
+                    ownerUri=self._owner_uri,
+                    hasError=True,
+                ),
+            )
+            raise
+
+        self._request_context.send_notification(
+            COPILOT_QUERY_NOTIFICATION_METHOD,
+            CopilotQueryNotificationParams(
+                queryName=script_name,
+                queryDescription=script_description,
+                query=statement,
+                ownerUri=self._owner_uri,
+                hasError=False,
+            ),
+        )
+        return result
