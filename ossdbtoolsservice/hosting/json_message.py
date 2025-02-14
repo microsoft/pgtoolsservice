@@ -44,7 +44,7 @@ class JSONRPCMessage:
         return cls(JSONRPCMessageType.ResponseSuccess, msg_id=msg_id, msg_result=result)
 
     @classmethod
-    def from_dictionary(cls, msg_dict):
+    def from_dictionary(cls, msg_dict) -> "JSONRPCMessage":
         """
         Decomposes a dictionary from a JSON RPC message into components with light validation
         :param msg_dict: Dictionary of components from deserializing a JSON RPC message
