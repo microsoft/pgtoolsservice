@@ -6,7 +6,7 @@
 from ossdbtoolsservice.hosting.message_server import (
     MessageServer,
 )
-from ossdbtoolsservice.hosting.service_provider import ServiceProvider
+from ossdbtoolsservice.hosting.service_provider import ServiceProvider, Service
 from ossdbtoolsservice.hosting.context import (
     NotificationContext,
     RequestContext,
@@ -23,4 +23,5 @@ __all__ = [
     "OutgoingMessageRegistration",
     "RequestContext",
     "ServiceProvider",
+    "Service",
 ]

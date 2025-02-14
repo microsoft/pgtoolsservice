@@ -11,7 +11,7 @@ import sqlparse
 import ntpath
 
 
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.query import (
     Batch, BatchEvents, ExecutionState, QueryExecutionSettings, Query, QueryEvents,
     compute_selection_data_for_batches as compute_batches
@@ -63,7 +63,7 @@ class ExecuteRequestWorkerArgs():
         self.on_query_complete = on_query_complete
 
 
-class QueryExecutionService(object):
+class QueryExecutionService(Service):
     """Service for executing queries"""
 
     def __init__(self):

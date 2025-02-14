@@ -23,7 +23,7 @@ from ossdbtoolsservice.connection.contracts import (
     LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
 )
 
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.driver import ServerConnection, ConnectionManager
@@ -66,7 +66,7 @@ class ConnectionInfo(object):
         return connection_type in self._connection_map
 
 
-class ConnectionService:
+class ConnectionService(Service):
     """Manage connections, including the ability to connect/disconnect"""
 
     def __init__(self):

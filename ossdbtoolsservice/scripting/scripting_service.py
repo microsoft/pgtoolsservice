@@ -5,7 +5,7 @@
 
 from typing import Optional      # noqa
 
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.scripting.scripter import Scripter
 from ossdbtoolsservice.scripting.contracts import (
@@ -15,7 +15,7 @@ from ossdbtoolsservice.connection.contracts import ConnectionType
 import ossdbtoolsservice.utils as utils
 
 
-class ScriptingService(object):
+class ScriptingService(Service):
     """Service for scripting database objects"""
 
     def __init__(self):

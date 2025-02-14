@@ -28,6 +28,7 @@ from ossdbtoolsservice.hosting import (
     NotificationContext,
     RequestContext,
     ServiceProvider,
+    Service,
 )
 from ossdbtoolsservice.language.contracts import (
     COMPLETION_REQUEST,
@@ -86,7 +87,7 @@ DISPLAY_META_MAP: Dict[str, CompletionItemKind] = {
 }
 
 
-class LanguageService:
+class LanguageService(Service):
     """
     Class for handling requests/events that deal with Language requests such as auto-complete
     """

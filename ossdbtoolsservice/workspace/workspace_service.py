@@ -6,7 +6,7 @@
 from logging import Logger          # noqa
 from typing import Callable, List, Optional  # noqa
 
-from ossdbtoolsservice.hosting import MessageServer, NotificationContext, ServiceProvider   # noqa
+from ossdbtoolsservice.hosting import MessageServer, NotificationContext, ServiceProvider, Service
 from ossdbtoolsservice.workspace.contracts import (
     DID_CHANGE_CONFIG_NOTIFICATION, DidChangeConfigurationParams,
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
@@ -18,7 +18,7 @@ from ossdbtoolsservice.workspace.script_file import ScriptFile
 from ossdbtoolsservice.workspace.workspace import Workspace
 
 
-class WorkspaceService:
+class WorkspaceService(Service):
     """
     Class for handling requests/events that deal with the sate of the workspace including opening
     and closing of files, the changing of configuration, etc.

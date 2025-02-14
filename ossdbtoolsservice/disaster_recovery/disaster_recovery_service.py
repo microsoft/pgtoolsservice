@@ -20,12 +20,12 @@ from ossdbtoolsservice.disaster_recovery.contracts import (BACKUP_REQUEST,
                                                            BackupParams,
                                                            BackupType,
                                                            RestoreParams)
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.tasks import Task, TaskResult, TaskStatus
 from ossdbtoolsservice.utils import constants
 
 
-class DisasterRecoveryService:
+class DisasterRecoveryService(Service):
     """Manage backup and restore"""
 
     def __init__(self) -> None:

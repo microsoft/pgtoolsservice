@@ -28,9 +28,7 @@ from ossdbtoolsservice.chat.messages import (
     ChatCompletionRequestParams,
     ChatCompletionResult,
 )
-from ossdbtoolsservice.hosting import (
-    ServiceProvider,
-)
+from ossdbtoolsservice.hosting import ServiceProvider, Service
 
 from ossdbtoolsservice.hosting.context import NotificationContext, RequestContext
 from ossdbtoolsservice.hosting.message_server import MessageServer
@@ -45,7 +43,7 @@ from .completion.completion_response_queues import CompletionResponseQueues
 from .completion.vscode_chat_completion import VSCodeChatCompletion
 
 
-class ChatService(object):
+class ChatService(Service):
     def __init__(self) -> None:
         self._service_provider: ServiceProvider | None = None
         self._server: MessageServer | None = None

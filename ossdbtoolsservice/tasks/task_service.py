@@ -5,14 +5,19 @@
 
 """This module holds the task service, which supports management and tracking of active tasks"""
 
-from typing import Dict  # noqa
+from typing import Dict
 
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider  # noqa
-from ossdbtoolsservice.tasks import Task, TaskStatus  # noqa
-from ossdbtoolsservice.tasks.contracts import CANCEL_TASK_REQUEST, CancelTaskParameters, LIST_TASKS_REQUEST, ListTasksParameters  # noqa
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
+from ossdbtoolsservice.tasks import Task, TaskStatus
+from ossdbtoolsservice.tasks.contracts import (
+    CANCEL_TASK_REQUEST,
+    CancelTaskParameters,
+    LIST_TASKS_REQUEST,
+    ListTasksParameters,
+)
 
 
-class TaskService:
+class TaskService(Service):
     """Manage long-running tasks"""
 
     def __init__(self):
@@ -23,17 +28,25 @@ class TaskService:
         self._service_provider = service_provider
 
         # Register the handlers for the service
-        self._service_provider.server.set_request_handler(CANCEL_TASK_REQUEST, self.handle_cancel_request)
-        self._service_provider.server.set_request_handler(LIST_TASKS_REQUEST, self.handle_list_request)
+        self._service_provider.server.set_request_handler(
+            CANCEL_TASK_REQUEST, self.handle_cancel_request
+        )
+        self._service_provider.server.set_request_handler(
+            LIST_TASKS_REQUEST, self.handle_list_request
+        )
 
-    def handle_cancel_request(self, request_context: RequestContext, params: CancelTaskParameters) -> None:
+    def handle_cancel_request(
+        self, request_context: RequestContext, params: CancelTaskParameters
+    ) -> None:
         """Respond to tasks/canceltask requests by canceling the requested task"""
         try:
             request_context.send_response(self._task_map[params.task_id].cancel())
         except KeyError:
             request_context.send_response(False)
 
-    def handle_list_request(self, request_context: RequestContext, params: ListTasksParameters) -> None:
+    def handle_list_request(
+        self, request_context: RequestContext, params: ListTasksParameters
+    ) -> None:
         """Respond to tasks/listtasks requests by returning the TaskInfo for all tasks"""
         tasks = list(self._task_map.values())
         if params.list_active_tasks_only:

@@ -8,9 +8,14 @@ from typing import List
 
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.metadata.contracts import (
-    MetadataListParameters, MetadataListResponse, METADATA_LIST_REQUEST, MetadataType, ObjectMetadata)
+    MetadataListParameters,
+    MetadataListResponse,
+    METADATA_LIST_REQUEST,
+    MetadataType,
+    ObjectMetadata,
+)
 from ossdbtoolsservice.utils import constants
 
 # This query collects all the tables, views, and functions in all the schemas in the database(s)?
@@ -28,12 +33,10 @@ SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_v
     WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
 """
 
-QUERY_MAP = {
-    constants.PG_PROVIDER_NAME: PG_METADATA_QUERY
-}
+QUERY_MAP = {constants.PG_PROVIDER_NAME: PG_METADATA_QUERY}
 
 
-class MetadataService:
+class MetadataService(Service):
     """Service for database metadata support"""
 
     def __init__(self):
@@ -48,37 +51,50 @@ class MetadataService:
         )
 
         if self._service_provider.logger is not None:
-            self._service_provider.logger.info('Metadata service successfully initialized')
+            self._service_provider.logger.info(
+                "Metadata service successfully initialized"
+            )
 
     # REQUEST HANDLERS #####################################################
 
-    def _handle_metadata_list_request(self, request_context: RequestContext, params: MetadataListParameters) -> None:
+    def _handle_metadata_list_request(
+        self, request_context: RequestContext, params: MetadataListParameters
+    ) -> None:
         thread = threading.Thread(
-            target=self._metadata_list_worker,
-            args=(request_context, params)
+            target=self._metadata_list_worker, args=(request_context, params)
         )
         thread.daemon = True
         thread.start()
 
-    def _metadata_list_worker(self, request_context: RequestContext, params: MetadataListParameters) -> None:
+    def _metadata_list_worker(
+        self, request_context: RequestContext, params: MetadataListParameters
+    ) -> None:
         try:
             metadata = self._list_metadata(params.owner_uri)
             request_context.send_response(MetadataListResponse(metadata))
         except Exception as e:
             if self._service_provider.logger is not None:
-                self._service_provider.logger.exception('Unhandled exception while executing the metadata list worker thread')
-            request_context.send_error('Unhandled exception while listing metadata: ' + str(e))  # TODO: Localize
+                self._service_provider.logger.exception(
+                    "Unhandled exception while executing the metadata list worker thread"
+                )
+            request_context.send_error(
+                "Unhandled exception while listing metadata: " + str(e)
+            )  # TODO: Localize
 
     def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
         # Get current connection
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        connection: ServerConnection = connection_service.get_connection(owner_uri, ConnectionType.DEFAULT)
+        connection: ServerConnection = connection_service.get_connection(
+            owner_uri, ConnectionType.DEFAULT
+        )
 
         # Get the current database
         database_name = connection.database_name
 
         # Get the metadata query specific to the current provider and fill in the database name
-        metadata_query = QUERY_MAP[self._service_provider.provider].format(database_name)
+        metadata_query = QUERY_MAP[self._service_provider.provider].format(
+            database_name
+        )
 
         query_results = connection.execute_query(metadata_query, all=True)
 
@@ -88,13 +104,15 @@ class MetadataService:
                 schema_name = row[0]
                 object_name = row[1]
                 object_type = _METADATA_TYPE_MAP[row[2]]
-                metadata_list.append(ObjectMetadata(None, object_type, None, object_name, schema_name))
+                metadata_list.append(
+                    ObjectMetadata(None, object_type, None, object_name, schema_name)
+                )
         return metadata_list
 
 
 _METADATA_TYPE_MAP = {
-    'f': MetadataType.FUNCTION,
-    't': MetadataType.TABLE,
-    'v': MetadataType.VIEW,
-    's': MetadataType.SPROC
+    "f": MetadataType.FUNCTION,
+    "t": MetadataType.TABLE,
+    "v": MetadataType.VIEW,
+    "s": MetadataType.SPROC,
 }
