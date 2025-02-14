@@ -34,8 +34,9 @@ This is required for running the VS Code extension in development.
 
 There are two test projects in the repository, `tests` and `tests_v2`.
 The `tests_v2` are newer tests that are run with pytest.
-To run the `tests` tests, run: `scripts/test_all.sh` or `scripts/test_all.ps1` if you are on Windows.
-To run the `tests_v2` tests, run: `pytest tests_v2`.
+To run all tests, run: `scripts/test_all.sh` or `scripts/test_all.ps1` if you are on Windows.
+
+To run linting checks, use `scripts/lint.sh` or `scripts/lint.ps1` if you are on Windows.
 
 ### Docker postgres
 
