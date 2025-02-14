@@ -51,7 +51,7 @@ class TestLanguageService(unittest.TestCase):
         self.mock_server.set_request_handler = self.mock_server_set_request
         self.mock_workspace_service = WorkspaceService()
         self.mock_connection_service = ConnectionService()
-        self.mock_service_provider = ServiceProvider(self.mock_server, {}, PG_PROVIDER_NAME, None)
+        self.mock_service_provider = ServiceProvider(self.mock_server, {}, None)
         self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
         self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
         self.mock_service_provider._is_initialized = True
@@ -77,7 +77,7 @@ class TestLanguageService(unittest.TestCase):
         server.set_request_handler = mock.MagicMock()
         provider: ServiceProvider = ServiceProvider(server, {
             constants.CONNECTION_SERVICE_NAME: ConnectionService
-        }, PG_PROVIDER_NAME, utils.get_mock_logger())
+        }, utils.get_mock_logger())
         provider._is_initialized = True
         conn_service: ConnectionService = provider[constants.CONNECTION_SERVICE_NAME]
         self.assertEqual(0, len(conn_service._on_connect_callbacks))

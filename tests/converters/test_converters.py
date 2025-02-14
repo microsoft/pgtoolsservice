@@ -16,7 +16,7 @@ class TestConverters(unittest.TestCase):
     def setUp(self):
         self.query_execution_service = QueryExecutionService()
         self.connection_service = ConnectionService()
-        self.service_provider = ServiceProvider(None, {}, constants.PG_PROVIDER_NAME)
+        self.service_provider = ServiceProvider(None, {}, None)
         self.service_provider._services = {constants.CONNECTION_SERVICE_NAME: self.connection_service}
         self.service_provider._is_initialized = True
         self.query_execution_service._service_provider = self.service_provider

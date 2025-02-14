@@ -45,7 +45,7 @@ class TestScriptingService(unittest.TestCase):
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
         sp: ServiceProvider = ServiceProvider(
-            server, {}, PG_PROVIDER_NAME, utils.get_mock_logger()
+            server, {}, utils.get_mock_logger()
         )
 
         # If: I register a scripting service

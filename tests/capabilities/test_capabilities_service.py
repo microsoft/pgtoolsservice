@@ -14,7 +14,6 @@ from ossdbtoolsservice.capabilities.contracts import (
 )
 from ossdbtoolsservice.hosting import ServiceProvider, IncomingMessageConfiguration
 from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from ossdbtoolsservice.workspace import WorkspaceService
 
 import tests.utils as utils
@@ -28,7 +27,7 @@ class TestCapabilitiesService(unittest.TestCase):
         mock_server_set_request = mock.MagicMock()
         mock_server = utils.MockMessageServer()
         mock_server.set_request_handler = mock_server_set_request
-        mock_service_provider = ServiceProvider(mock_server, {}, PG_PROVIDER_NAME, None)
+        mock_service_provider = ServiceProvider(mock_server, {}, None)
         service = CapabilitiesService()
 
         # If: I initialize the service

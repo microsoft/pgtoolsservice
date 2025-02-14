@@ -18,7 +18,6 @@ from ossdbtoolsservice.hosting import (
 )
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 from ossdbtoolsservice.hosting.message_server import MessageServer
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 NoticeHandler = Callable[[str], None]
 
@@ -72,14 +71,14 @@ def get_mock_logger() -> logging.Logger:
 # PLEASE USE SERVICEPROVIDERMOCK from tests/mocks/service_provider_mock. #
 # This mock will be deprecated #
 def get_mock_service_provider(
-    service_map: dict | None = None, provider_name: str = PG_PROVIDER_NAME
+    service_map: dict | None = None,
 ) -> ServiceProvider:
     """
     Generates a ServiceProvider with the given services
 
     :param service_map: A dictionary mapping service names to services
     """
-    provider = ServiceProvider(None, {}, provider_name, get_mock_logger())
+    provider = ServiceProvider(None, {}, get_mock_logger())
     if service_map is not None:
         provider._services = service_map
     provider._is_initialized = True

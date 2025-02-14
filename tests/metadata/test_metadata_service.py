@@ -38,7 +38,7 @@ class TestMetadataService(unittest.TestCase):
         self.service_provider.server.set_request_handler.assert_called_once_with(
             METADATA_LIST_REQUEST, self.metadata_service._handle_metadata_list_request)
 
-    def test_metadata_list_request(self):
+    def test_metadata_list_request(self) -> None:
         """Test that the metadata list handler properly starts a thread to list metadata and responds with the list"""
         # Set up the parameters and mocks for the request
         expected_metadata = [

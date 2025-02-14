@@ -19,7 +19,6 @@ from ossdbtoolsservice.connection.contracts import (
     ConnectionDetails,
 )
 from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
-from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
 from ossdbtoolsservice.object_explorer.contracts import (
     EXPAND_COMPLETED_METHOD,
@@ -90,7 +89,7 @@ class TestObjectExplorer(unittest.TestCase):
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
         sp: ServiceProvider = ServiceProvider(
-            server, {}, constants.PG_PROVIDER_NAME, utils.get_mock_logger()
+            server, {}, utils.get_mock_logger()
         )
 
         # If: I register a OE service

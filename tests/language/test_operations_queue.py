@@ -21,7 +21,6 @@ from ossdbtoolsservice.language.operations_queue import (
     QueuedOperation,
     INTELLISENSE_URI,
 )
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.utils import MockMessageServer
 
 COMPLETIONREFRESHER_PATH_PATH = (
@@ -38,7 +37,7 @@ class TestOperationsQueue(unittest.TestCase):
         self.mock_connection_service = ConnectionService()
         self.mock_server = MockMessageServer()
         self.mock_service_provider = ServiceProvider(
-            self.mock_server, {}, PG_PROVIDER_NAME, None
+            self.mock_server, {}, None
         )
         self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = (
             self.mock_connection_service
