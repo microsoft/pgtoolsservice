@@ -6,19 +6,19 @@
 import os.path as path
 from typing import List, Optional
 
+import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
-import smo.utils.templating as templating
 
 
 class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
-    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "templates")
+    MACRO_ROOT = templating.get_template_root(__file__, "macros")
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, "../global_macros")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Schema':
+    def _from_node_query(cls, server: "s.Server", parent: NodeObject, **kwargs) -> "Schema":
         """
         Creates an instance of a schema object from the results of a nodes query
         :param server: Server that owns the schema
@@ -31,19 +31,25 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             has_usage bool: Whether or not the schema can be used(?)
         :return:
         """
-        schema = cls(server, parent, kwargs['name'])
-        schema._oid = kwargs['oid']
-        schema._can_create = kwargs['can_create']
-        schema._has_usage = kwargs['has_usage']
-        schema._is_system = kwargs['is_system']
+        schema = cls(server, parent, kwargs["name"])
+        schema._oid = kwargs["oid"]
+        schema._can_create = kwargs["can_create"]
+        schema._has_usage = kwargs["has_usage"]
+        schema._is_system = kwargs["is_system"]
 
         return schema
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: "s.Server", parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
         # Declare the optional parameters
         self._can_create: Optional[bool] = None
@@ -89,7 +95,9 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     # -CHILD OBJECTS #######################################################
     @property
     def collations(self) -> NodeCollection:
-        return [collation for collation in self.parent.collations if collation.scid == self.oid]
+        return [
+            collation for collation in self.parent.collations if collation.scid == self.oid
+        ]
 
     @property
     def datatypes(self) -> NodeCollection:
@@ -101,7 +109,9 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def procedures(self) -> NodeCollection:
-        return [procedure for procedure in self.parent.procedures if procedure.scid == self.oid]
+        return [
+            procedure for procedure in self.parent.procedures if procedure.scid == self.oid
+        ]
 
     @property
     def sequences(self) -> NodeCollection:
@@ -113,7 +123,11 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def trigger_functions(self) -> NodeCollection:
-        return [trigger_function for trigger_function in self.parent.trigger_functions if trigger_function.scid == self.oid]
+        return [
+            trigger_function
+            for trigger_function in self.parent.trigger_functions
+            if trigger_function.scid == self.oid
+        ]
 
     @property
     def views(self) -> NodeCollection:
@@ -125,7 +139,11 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def extensions(self) -> NodeCollection:
-        return [extension for extension in self.parent.extensions if extension.scid == extension.oid]
+        return [
+            extension
+            for extension in self.parent.extensions
+            if extension.scid == extension.oid
+        ]
 
     @property
     def namespaceowner(self):
@@ -157,39 +175,39 @@ class Schema(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return path.join(cls.TEMPLATE_ROOT, server.server_type)
 
     def _create_query_data(self) -> dict:
-        """ Function that returns data for create script """
-        return {"data": {
-            "name": self.name,
-            "namespaceowner": self.namespaceowner,
-            "description": self.description,
-            "nspacl": self.nspacl,
-            "seclabels": self.seclabels
-        }}
-
-    def _delete_query_data(self) -> dict:
-        """ Function that returns data for delete script """
-        return {
-            "name": self.name,
-            "cascade": self.cascade
-        }
-
-    def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for create script"""
         return {
             "data": {
-                "name": '<New Name>',
-                "namespaceowner": '<New Owner>',
-                "description": '<New Description>',
-                "nspacl": self.nspacl,
-                "defacl": self.defacl,
-                "seclabels": self.seclabels
-            }, "o_data": {
                 "name": self.name,
                 "namespaceowner": self.namespaceowner,
-                "description": self.description
+                "description": self.description,
+                "nspacl": self.nspacl,
+                "seclabels": self.seclabels,
             }
+        }
+
+    def _delete_query_data(self) -> dict:
+        """Function that returns data for delete script"""
+        return {"name": self.name, "cascade": self.cascade}
+
+    def _update_query_data(self) -> dict:
+        """Function that returns data for update script"""
+        return {
+            "data": {
+                "name": "<New Name>",
+                "namespaceowner": "<New Owner>",
+                "description": "<New Description>",
+                "nspacl": self.nspacl,
+                "defacl": self.defacl,
+                "seclabels": self.seclabels,
+            },
+            "o_data": {
+                "name": self.name,
+                "namespaceowner": self.namespaceowner,
+                "description": self.description,
+            },
         }

@@ -15,9 +15,9 @@ class TestScriptFile(unittest.TestCase):
 
     def test_init_all_params(self):
         # If: I create a script file with all the parameters provided
-        uri = 'file_uri'
-        buffer = 'buffer'
-        path = 'file_path'
+        uri = "file_uri"
+        buffer = "buffer"
+        path = "file_path"
         sf = ScriptFile(uri, buffer, path)
 
         # Then: The state should be setup with all the provided values
@@ -30,8 +30,8 @@ class TestScriptFile(unittest.TestCase):
 
     def test_init_most_params(self):
         # If: I create a script file with all the parameters provided
-        uri = 'file_uri'
-        buffer = 'buffer'
+        uri = "file_uri"
+        buffer = "buffer"
         sf = ScriptFile(uri, buffer, None)
 
         # Then: The state should be setup with all the provided values
@@ -43,26 +43,26 @@ class TestScriptFile(unittest.TestCase):
         self.assertListEqual(sf.file_lines, [buffer])
 
     def test_init_missing_params(self):
-        for value in [None, '', '  \t\t\r\n\r\n']:
+        for value in [None, "", "  \t\t\r\n\r\n"]:
             with self.assertRaises(ValueError):
                 # If: I create a script file while missing a file_uri
                 # Then: I expect it to raise an exception
-                ScriptFile(value, 'buffer', None)
+                ScriptFile(value, "buffer", None)
 
         with self.assertRaises(ValueError):
             # If: I create a script file while missing a initial buffer
-            ScriptFile('file_uri', None, None)
+            ScriptFile("file_uri", None, None)
 
     # GET LINE TESTS #######################################################
     def test_get_line_valid(self):
         # Setup: Create a script file with a selection of test text
-        sf = ScriptFile('uri', 'abc\r\ndef\r\nghij\r\nklm', None)
+        sf = ScriptFile("uri", "abc\r\ndef\r\nghij\r\nklm", None)
 
         # If: I ask for a valid line
         # Then: I should get that line w/o new lines
-        self.assertEqual(sf.get_line(0), 'abc')
-        self.assertEqual(sf.get_line(1), 'def')
-        self.assertEqual(sf.get_line(3), 'klm')
+        self.assertEqual(sf.get_line(0), "abc")
+        self.assertEqual(sf.get_line(1), "def")
+        self.assertEqual(sf.get_line(3), "klm")
 
     def test_get_line_invalid(self):
         # Setup: Create a script file with a selection of test text
@@ -85,7 +85,7 @@ class TestScriptFile(unittest.TestCase):
         result = sf.get_lines_in_range(params)
 
         # Then: I should get a set of lines with the expected result
-        expected_result = ['ef', 'ghij', 'k']
+        expected_result = ["ef", "ghij", "k"]
         self.assertEqual(result, expected_result)
 
     def test_get_lines_in_range_invalid_start(self):
@@ -119,7 +119,7 @@ class TestScriptFile(unittest.TestCase):
         result = sf.get_text_in_range(params)
 
         # Then: I should get a set of lines with the expected result
-        expected_result = os.linesep.join(['ef', 'ghij', 'k'])
+        expected_result = os.linesep.join(["ef", "ghij", "k"])
         self.assertEqual(result, expected_result)
 
     def test_get_text_in_range_start_of_line(self):
@@ -131,7 +131,7 @@ class TestScriptFile(unittest.TestCase):
         result = sf.get_text_in_range(params)
 
         # Then I should get the first line and a line with no content as the result
-        expected_result = os.linesep.join(['abc', ''])
+        expected_result = os.linesep.join(["abc", ""])
         self.assertEqual(result, expected_result)
 
     # VALIDATE POSITION TESTS ##############################################
@@ -181,13 +181,15 @@ class TestScriptFile(unittest.TestCase):
         # Then:
         # ... I should get an exception throws
         with self.assertRaises(ValueError):
-            params = TextDocumentChangeEvent.from_dict({
-                'range': {
-                    'start': {'line': 1, 'character': -1},      # Invalid character
-                    'end': {'line': 3, 'character': 1}
-                },
-                'text': ''
-            })
+            params = TextDocumentChangeEvent.from_dict(
+                {
+                    "range": {
+                        "start": {"line": 1, "character": -1},  # Invalid character
+                        "end": {"line": 3, "character": 1},
+                    },
+                    "text": "",
+                }
+            )
             sf.apply_change(params)
 
         # ... The text should remain the same
@@ -198,23 +200,20 @@ class TestScriptFile(unittest.TestCase):
         sf = self._get_test_script_file()
 
         # If: I apply a change that replaces the text
-        params = TextDocumentChangeEvent.from_dict({
-            'range': {
-                'start': {'line': 1, 'character': 1},
-                'end': {'line': 3, 'character': 1}
-            },
-            'text': '12\r\n3456\r\n78'
-        })
+        params = TextDocumentChangeEvent.from_dict(
+            {
+                "range": {
+                    "start": {"line": 1, "character": 1},
+                    "end": {"line": 3, "character": 1},
+                },
+                "text": "12\r\n3456\r\n78",
+            }
+        )
         sf.apply_change(params)
 
         # Then:
         # ... The text should have updated
-        expected_result = [
-            'abc',
-            'd12',
-            '3456',
-            '78lm'
-        ]
+        expected_result = ["abc", "d12", "3456", "78lm"]
         self.assertListEqual(sf.file_lines, expected_result)
 
     def test_apply_change_remove(self):
@@ -222,21 +221,20 @@ class TestScriptFile(unittest.TestCase):
         sf = self._get_test_script_file()
 
         # If: I apply a change that removes the text
-        params = TextDocumentChangeEvent.from_dict({
-            'range': {
-                'start': {'line': 1, 'character': 1},
-                'end': {'line': 3, 'character': 1}
-            },
-            'text': '1'
-        })
+        params = TextDocumentChangeEvent.from_dict(
+            {
+                "range": {
+                    "start": {"line": 1, "character": 1},
+                    "end": {"line": 3, "character": 1},
+                },
+                "text": "1",
+            }
+        )
         sf.apply_change(params)
 
         # Then:
         # ... The text should have updated
-        expected_result = [
-            'abc',
-            'd1lm'
-        ]
+        expected_result = ["abc", "d1lm"]
         self.assertListEqual(sf.file_lines, expected_result)
 
     def test_apply_change_add(self):
@@ -244,25 +242,20 @@ class TestScriptFile(unittest.TestCase):
         sf = self._get_test_script_file()
 
         # If: I apply a change that adds text
-        params = TextDocumentChangeEvent.from_dict({
-            'range': {
-                'start': {'line': 1, 'character': 1},
-                'end': {'line': 3, 'character': 1}
-            },
-            'text': '\r\npgsql\r\nis\r\nawesome\r\n'
-        })
+        params = TextDocumentChangeEvent.from_dict(
+            {
+                "range": {
+                    "start": {"line": 1, "character": 1},
+                    "end": {"line": 3, "character": 1},
+                },
+                "text": "\r\npgsql\r\nis\r\nawesome\r\n",
+            }
+        )
         sf.apply_change(params)
 
         # Then:
         # ... The text should have updated
-        expected_result = [
-            'abc',
-            'd',
-            'pgsql',
-            'is',
-            'awesome',
-            'lm'
-        ]
+        expected_result = ["abc", "d", "pgsql", "is", "awesome", "lm"]
         self.assertListEqual(sf.file_lines, expected_result)
 
     def test_apply_change_add_character(self):
@@ -271,17 +264,19 @@ class TestScriptFile(unittest.TestCase):
         script_file = self._get_test_script_file()
 
         # If I add a single character to the end of a line
-        params = TextDocumentChangeEvent.from_dict({
-            'range': {
-                'start': {'line': 0, 'character': 3},
-                'end': {'line': 0, 'character': 3}
-            },
-            'text': 'a'
-        })
+        params = TextDocumentChangeEvent.from_dict(
+            {
+                "range": {
+                    "start": {"line": 0, "character": 3},
+                    "end": {"line": 0, "character": 3},
+                },
+                "text": "a",
+            }
+        )
         script_file.apply_change(params)
 
         # Then the text should have updated without a validation error
-        expected_result = ['abca', 'def', 'ghij', 'klm']
+        expected_result = ["abca", "def", "ghij", "klm"]
         self.assertListEqual(script_file.file_lines, expected_result)
 
     def test_apply_change_add_parentheses(self):
@@ -290,43 +285,49 @@ class TestScriptFile(unittest.TestCase):
         script_file = self._get_test_script_file()
 
         # If I add parentheses to the end of a line...
-        params = TextDocumentChangeEvent.from_dict({
-            'range': {
-                'start': {'line': 0, 'character': 3},
-                'end': {'line': 0, 'character': 3}
-            },
-            'text': '()'
-        })
+        params = TextDocumentChangeEvent.from_dict(
+            {
+                "range": {
+                    "start": {"line": 0, "character": 3},
+                    "end": {"line": 0, "character": 3},
+                },
+                "text": "()",
+            }
+        )
         script_file.apply_change(params)
 
-        expected_result = ['abc()', 'def', 'ghij', 'klm']
+        expected_result = ["abc()", "def", "ghij", "klm"]
         self.assertListEqual(script_file.file_lines, expected_result)
 
         # And then type inside the parentheses
-        params = TextDocumentChangeEvent.from_dict({
-            'range': {
-                'start': {'line': 0, 'character': 4},
-                'end': {'line': 0, 'character': 4}
-            },
-            'text': 'a'
-        })
+        params = TextDocumentChangeEvent.from_dict(
+            {
+                "range": {
+                    "start": {"line": 0, "character": 4},
+                    "end": {"line": 0, "character": 4},
+                },
+                "text": "a",
+            }
+        )
         script_file.apply_change(params)
 
-        expected_result = ['abc(a)', 'def', 'ghij', 'klm']
+        expected_result = ["abc(a)", "def", "ghij", "klm"]
         self.assertListEqual(script_file.file_lines, expected_result)
 
         # And then overwrite the last parenthesis
-        params = TextDocumentChangeEvent.from_dict({
-            'range': {
-                'start': {'line': 0, 'character': 5},
-                'end': {'line': 0, 'character': 6}
-            },
-            'text': ')'
-        })
+        params = TextDocumentChangeEvent.from_dict(
+            {
+                "range": {
+                    "start": {"line": 0, "character": 5},
+                    "end": {"line": 0, "character": 6},
+                },
+                "text": ")",
+            }
+        )
         script_file.apply_change(params)
 
         # Then the text should have updated without a validation error
-        expected_result = ['abc(a)', 'def', 'ghij', 'klm']
+        expected_result = ["abc(a)", "def", "ghij", "klm"]
         self.assertListEqual(script_file.file_lines, expected_result)
 
     def test_apply_change_remove_across_line(self):
@@ -335,17 +336,19 @@ class TestScriptFile(unittest.TestCase):
         script_file = self._get_test_script_file()
 
         # If I remove a line from the file
-        params = TextDocumentChangeEvent.from_dict({
-            'range': {
-                'start': {'line': 0, 'character': 3},
-                'end': {'line': 2, 'character': 0}
-            },
-            'text': ''
-        })
+        params = TextDocumentChangeEvent.from_dict(
+            {
+                "range": {
+                    "start": {"line": 0, "character": 3},
+                    "end": {"line": 2, "character": 0},
+                },
+                "text": "",
+            }
+        )
         script_file.apply_change(params)
 
         # Then the text should have updated without a validation error
-        expected_result = ['abcghij', 'klm']
+        expected_result = ["abcghij", "klm"]
         self.assertListEqual(script_file.file_lines, expected_result)
 
     def test_apply_change_remove_line(self):
@@ -354,46 +357,44 @@ class TestScriptFile(unittest.TestCase):
         script_file = self._get_test_script_file()
 
         # If I remove a line from the file
-        params = TextDocumentChangeEvent.from_dict({
-            'range': {
-                'start': {'line': 1, 'character': 0},
-                'end': {'line': 2, 'character': 0}
-            },
-            'text': ''
-        })
+        params = TextDocumentChangeEvent.from_dict(
+            {
+                "range": {
+                    "start": {"line": 1, "character": 0},
+                    "end": {"line": 2, "character": 0},
+                },
+                "text": "",
+            }
+        )
         script_file.apply_change(params)
 
         # Then the text should have updated without a validation error
-        expected_result = ['abc', 'ghij', 'klm']
+        expected_result = ["abc", "ghij", "klm"]
         self.assertListEqual(script_file.file_lines, expected_result)
 
     # SET FILE CONTENTS TESTS ##############################################
 
     def test_set_file_contents(self):
         # If: I set the contents of a script file
-        sf = ScriptFile('uri', '', None)
-        sf._set_file_contents('line 1\r\n  line 2\n  line 3  ')
+        sf = ScriptFile("uri", "", None)
+        sf._set_file_contents("line 1\r\n  line 2\n  line 3  ")
 
         # Then: I should get the expected output lines
-        expected_output = [
-            'line 1',
-            '  line 2',
-            '  line 3  '
-        ]
+        expected_output = ["line 1", "  line 2", "  line 3  "]
         self.assertListEqual(sf.file_lines, expected_output)
         self.assertListEqual(sf._file_lines, expected_output)
 
     def test_set_file_contents_empty(self):
         # If: I set the contents of a script file to empty
-        sf = ScriptFile('uri', '', None)
-        sf._set_file_contents('')
+        sf = ScriptFile("uri", "", None)
+        sf._set_file_contents("")
 
         # Then: I should expect a single, empty line in the file lines
-        self.assertListEqual(sf.file_lines, [''])
-        self.assertListEqual(sf._file_lines, [''])
+        self.assertListEqual(sf.file_lines, [""])
+        self.assertListEqual(sf._file_lines, [""])
 
     # IMPLEMENTATION DETAILS ###############################################
 
     @staticmethod
     def _get_test_script_file() -> ScriptFile:
-        return ScriptFile('uri', 'abc\r\ndef\r\nghij\r\nklm', None)
+        return ScriptFile("uri", "abc\r\ndef\r\nghij\r\nklm", None)

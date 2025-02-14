@@ -3,11 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import threading                    # noqa
+import threading  # noqa
 from typing import Callable, Dict, List, Optional, TypeVar
 from urllib.parse import urljoin
 
-from pgsmo import Server            # noqa
+from pgsmo import Server  # noqa
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.object_explorer.contracts import NodeInfo
 
@@ -37,7 +37,7 @@ class Folder:
                      param should be 'folder'
         """
         self.label = label
-        self.path = path + '/'
+        self.path = path + "/"
 
     def as_node(self, current_path: str) -> NodeInfo:
         """
@@ -49,7 +49,7 @@ class Folder:
         node.is_leaf = False
         node.label = self.label
         node.node_path = urljoin(current_path, self.path)
-        node.node_type = 'Folder'
+        node.node_type = "Folder"
         return node
 
 
@@ -58,9 +58,13 @@ class RoutingTarget:
     Represents the target of a route. Can contain a list of folders, a function that generates a
     list of nodes or both.
     """
+
     # Type alias for an optional callable that takes in a current path, session, and parameters
     # from the regular expression match and returns a list of NodeInfo objects.
-    TNodeGenerator = TypeVar('TNodeGenerator', bound=Optional[Callable[[bool, str, ObjectExplorerSession, dict], List[NodeInfo]]])
+    TNodeGenerator = TypeVar(
+        "TNodeGenerator",
+        bound=Optional[Callable[[bool, str, ObjectExplorerSession, dict], List[NodeInfo]]],
+    )
 
     def __init__(self, folders: Optional[List[Folder]], node_generator: TNodeGenerator):
         """
@@ -71,7 +75,13 @@ class RoutingTarget:
         self.folders: List[Folder] = folders or []
         self.node_generator = node_generator
 
-    def get_nodes(self, is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict) -> List[NodeInfo]:
+    def get_nodes(
+        self,
+        is_refresh: bool,
+        current_path: str,
+        session: ObjectExplorerSession,
+        match_params: dict,
+    ) -> List[NodeInfo]:
         """
         Builds a list of NodeInfo that should be displayed under the current routing path
         :param is_refresh: Whether or not the nodes should be refreshed before retrieval

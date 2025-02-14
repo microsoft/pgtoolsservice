@@ -4,23 +4,23 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Callable
 import unittest
+from typing import Callable
 from unittest import mock
 
-from ossdbtoolsservice.hosting import ServiceProvider
-from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import (
     ConnectionDetails,
     ConnectRequestParams,
 )
-from ossdbtoolsservice.connection import ConnectionService, ConnectionInfo
+from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.language.operations_queue import (
+    INTELLISENSE_URI,
     ConnectionContext,
     OperationsQueue,
     QueuedOperation,
-    INTELLISENSE_URI,
 )
+from ossdbtoolsservice.utils import constants
 from tests.utils import MockMessageServer
 
 COMPLETIONREFRESHER_PATH_PATH = (
@@ -36,9 +36,7 @@ class TestOperationsQueue(unittest.TestCase):
         self.default_connection_key = "server_db_user"
         self.mock_connection_service = ConnectionService()
         self.mock_server = MockMessageServer()
-        self.mock_service_provider = ServiceProvider(
-            self.mock_server, {}, None
-        )
+        self.mock_service_provider = ServiceProvider(self.mock_server, {}, None)
         self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = (
             self.mock_connection_service
         )
@@ -76,12 +74,8 @@ class TestOperationsQueue(unittest.TestCase):
         # Given a connection will be created on a connect request
         connect_result = mock.MagicMock()
         connect_result.error_message = None
-        self.mock_connection_service.get_connection = mock.Mock(
-            return_value=mock.MagicMock()
-        )
-        self.mock_connection_service.connect = mock.MagicMock(
-            return_value=connect_result
-        )
+        self.mock_connection_service.get_connection = mock.Mock(return_value=mock.MagicMock())
+        self.mock_connection_service.connect = mock.MagicMock(return_value=connect_result)
 
         # When I add a connection context
         operations_queue = OperationsQueue(self.mock_service_provider)
@@ -95,9 +89,7 @@ class TestOperationsQueue(unittest.TestCase):
             self.assertIsNotNone(context)
             self.assertEqual(context.key, self.expected_context_key)
             self.assertFalse(context.intellisense_complete.is_set())
-            self.assertTrue(
-                operations_queue.has_connection_context(self.connection_info)
-            )
+            self.assertTrue(operations_queue.has_connection_context(self.connection_info))
 
     def test_add_same_context_twice_creates_one_context(self) -> None:
         def do_test():
@@ -138,9 +130,7 @@ class TestOperationsQueue(unittest.TestCase):
                     connect_mock.call_args_list[1][0][0].owner_uri,
                     self.expected_connection_uri,
                 )
-                disconnect_mock: mock.MagicMock = (
-                    self.mock_connection_service.disconnect
-                )
+                disconnect_mock: mock.MagicMock = self.mock_connection_service.disconnect
                 disconnect_mock.assert_called_once()
 
         self._run_with_mock_connection(do_test)
@@ -162,9 +152,7 @@ class TestOperationsQueue(unittest.TestCase):
             self.expected_context_key
         )
         # When I add an operation
-        operations_queue.add_operation(
-            QueuedOperation(self.expected_context_key, None, None)
-        )
+        operations_queue.add_operation(QueuedOperation(self.expected_context_key, None, None))
         # Then I expect the operation to be added successfully to the queue
         operation: QueuedOperation = operations_queue.queue.get_nowait()
         self.assertEqual(operation.key, self.expected_context_key)
@@ -236,12 +224,8 @@ class TestOperationsQueue(unittest.TestCase):
     def _run_with_mock_connection(self, test: Callable[[], None]) -> None:
         connect_result = mock.MagicMock()
         connect_result.error_message = None
-        self.mock_connection_service.get_connection = mock.Mock(
-            return_value=mock.MagicMock()
-        )
-        self.mock_connection_service.connect = mock.MagicMock(
-            return_value=connect_result
-        )
+        self.mock_connection_service.get_connection = mock.Mock(return_value=mock.MagicMock())
+        self.mock_connection_service.connect = mock.MagicMock(return_value=connect_result)
         self.mock_connection_service.disconnect = mock.MagicMock(return_value=True)
         test()
 

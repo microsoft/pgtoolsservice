@@ -5,18 +5,18 @@
 
 from typing import List, Optional
 
+import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableUpdate
-from pgsmo.objects.server import server as s        # noqa
-import smo.utils.templating as templating
 
 
 class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "templates")
+    MACRO_ROOT = templating.get_template_root(__file__, "macros")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Role':
+    def _from_node_query(cls, server: "s.Server", parent: None, **kwargs) -> "Role":
         """
         Creates a Role object from the result of a role node query
         :param server: Server that owns the role
@@ -29,22 +29,26 @@ class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
             rolsuper bool: Whether or not the role is a super user
         :return: A Role instance
         """
-        role = cls(server, kwargs['name'])
+        role = cls(server, kwargs["name"])
 
         # Define values from node query
-        role._oid = kwargs['oid']
-        role._can_login = kwargs['rolcanlogin']
-        role._is_super = kwargs['rolsuper']
+        role._oid = kwargs["oid"]
+        role._can_login = kwargs["rolcanlogin"]
+        role._is_super = kwargs["rolsuper"]
 
         return role
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: "s.Server", name: str):
         """
         Initializes internal state of a Role object
         """
         NodeObject.__init__(self, server, None, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
         # Declare basic properties
         self._can_login: Optional[bool] = None
@@ -125,31 +129,33 @@ class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
         return [cls.MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self):
-        """ Gives the data object for create query """
-        return {"data": {
-            "rolcanlogin": self.can_login,
-            "rolsuper": self.is_super,
-            "rolcreatedb": self.createdb,
-            "rolcreaterole": self.createrole,
-            "rolinherit": self.inherit,
-            "rolreplication": self.replication,
-            "rolconnlimit": self.connlimit,
-            "rolvaliduntil": self.validuntil,
-            "rolpassword": self.password,
-            "rolcatupdate": self.catupdate,
-            "rolname": self.name,
-            "members": self.members,
-            "admins": self.admins,
-            "variables": self.variables,
-            "description": self.description
-        }}
+        """Gives the data object for create query"""
+        return {
+            "data": {
+                "rolcanlogin": self.can_login,
+                "rolsuper": self.is_super,
+                "rolcreatedb": self.createdb,
+                "rolcreaterole": self.createrole,
+                "rolinherit": self.inherit,
+                "rolreplication": self.replication,
+                "rolconnlimit": self.connlimit,
+                "rolvaliduntil": self.validuntil,
+                "rolpassword": self.password,
+                "rolcatupdate": self.catupdate,
+                "rolname": self.name,
+                "members": self.members,
+                "admins": self.admins,
+                "variables": self.variables,
+                "description": self.description,
+            }
+        }
 
     def _update_query_data(self):
-        """ Gives the data object for update query """
+        """Gives the data object for update query"""
         return {
             "data": {
                 "rolname": self.name,
@@ -168,6 +174,7 @@ class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
                 "admins": self.admins,
                 "members": self.members,
                 "variables": self.variables,
-                "description": self.description
-            }, "rolCanLogin": self.can_login
+                "description": self.description,
+            },
+            "rolCanLogin": self.can_login,
         }

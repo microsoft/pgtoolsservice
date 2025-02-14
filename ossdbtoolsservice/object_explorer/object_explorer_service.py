@@ -4,42 +4,40 @@
 # --------------------------------------------------------------------------------------------
 
 import functools
-from logging import Logger
 import threading
-from typing import Dict, Optional, List  # noqa
+from logging import Logger
+from typing import Dict, List, Optional  # noqa
 from urllib.parse import quote, urlparse
 
 import psycopg
 
-from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.connection.contracts import (
-    ConnectRequestParams,
-    ConnectionDetails,
-    ConnectionType,
-)
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
-from ossdbtoolsservice.object_explorer.contracts import (
-    NodeInfo,
-    CreateSessionResponse,
-    CREATE_SESSION_REQUEST,
-    SessionCreatedParameters,
-    SESSION_CREATED_METHOD,
-    CloseSessionParameters,
-    CLOSE_SESSION_REQUEST,
-    ExpandParameters,
-    EXPAND_REQUEST,
-    ExpandCompletedParameters,
-    EXPAND_COMPLETED_METHOD,
-    REFRESH_REQUEST,
-)
-from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
-from ossdbtoolsservice.metadata.contracts import ObjectMetadata
 import ossdbtoolsservice.utils.constants as constants
 import ossdbtoolsservice.utils.validate as validate
-
-from pgsmo import Server as PGServer
-
+from ossdbtoolsservice.connection.contracts import (
+    ConnectionDetails,
+    ConnectionType,
+    ConnectRequestParams,
+)
+from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
+from ossdbtoolsservice.metadata.contracts import ObjectMetadata
+from ossdbtoolsservice.object_explorer.contracts import (
+    CLOSE_SESSION_REQUEST,
+    CREATE_SESSION_REQUEST,
+    EXPAND_COMPLETED_METHOD,
+    EXPAND_REQUEST,
+    REFRESH_REQUEST,
+    SESSION_CREATED_METHOD,
+    CloseSessionParameters,
+    CreateSessionResponse,
+    ExpandCompletedParameters,
+    ExpandParameters,
+    NodeInfo,
+    SessionCreatedParameters,
+)
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
+from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
+from pgsmo import Server as PGServer
 
 ROUTING_TABLES = {constants.PG_PROVIDER_NAME: PG_ROUTING_TABLE}
 
@@ -52,7 +50,7 @@ class ObjectExplorerService(Service):
     def __init__(self):
         self._service_provider: ServiceProvider = None
         self._logger: Logger = None
-        self._session_map: Dict[str, "ObjectExplorerSession"] = {}
+        self._session_map: Dict[str, ObjectExplorerSession] = {}
         self._session_lock: threading.Lock = threading.Lock()
         self._connect_semaphore = threading.Semaphore(1)
 
@@ -98,9 +96,7 @@ class ObjectExplorerService(Service):
         # Step 1: Create the session
         session_exist_check = False
         if self._logger:
-            self._logger.info(
-                f" [handler] Creating OE session for {params.server_name}"
-            )
+            self._logger.info(f" [handler] Creating OE session for {params.server_name}")
         try:
             # Make sure we have the appropriate session params
             validate.is_not_none("params", params)
@@ -317,9 +313,7 @@ class ObjectExplorerService(Service):
                 )
                 session.server.set_connection(connection)
                 session.server.refresh()
-                self._expand_node_thread(
-                    is_refresh, request_context, params, session, True
-                )
+                self._expand_node_thread(is_refresh, request_context, params, session, True)
                 return
             else:
                 self._expand_node_error(request_context, params, str(e))
@@ -386,9 +380,7 @@ class ObjectExplorerService(Service):
         if connect_result.error_message is not None:
             raise RuntimeError(connect_result.error_message)
 
-        connection = conn_service.get_connection(
-            key_uri, ConnectionType.OBJECT_EXLPORER
-        )
+        connection = conn_service.get_connection(key_uri, ConnectionType.OBJECT_EXLPORER)
         return connection
 
     def _initialize_session(
@@ -448,7 +440,9 @@ class ObjectExplorerService(Service):
 
         except Exception as e:
             # Return a notification that an error occurred
-            message = f"Failed to initialize object explorer session: {str(e)}"  # TODO Localize
+            message = (
+                f"Failed to initialize object explorer session: {str(e)}"  # TODO Localize
+            )
             self._session_created_error(request_context, session, message)
 
             # Attempt to clean up the connection
@@ -480,12 +474,8 @@ class ObjectExplorerService(Service):
     @staticmethod
     def _generate_session_uri(params: ConnectionDetails, provider_name: str) -> str:
         # Make sure the required params are provided
-        validate.is_not_none_or_whitespace(
-            "params.server_name", params.options.get("host")
-        )
-        validate.is_not_none_or_whitespace(
-            "params.user_name", params.options.get("user")
-        )
+        validate.is_not_none_or_whitespace("params.server_name", params.options.get("host"))
+        validate.is_not_none_or_whitespace("params.user_name", params.options.get("user"))
         if provider_name == constants.PG_PROVIDER_NAME:
             validate.is_not_none_or_whitespace(
                 "params.database_name", params.options.get("dbname")

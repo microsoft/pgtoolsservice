@@ -11,6 +11,7 @@ from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 class ExpandCompletedParameters:
     """Parameters to be sent back with a expand completed"""
+
     session_id: str
     node_path: str
     error_message: Optional[str]
@@ -29,6 +30,6 @@ class ExpandCompletedParameters:
         self.nodes: Optional[List[NodeInfo]] = None
 
 
-EXPAND_COMPLETED_METHOD = 'objectexplorer/expandCompleted'
+EXPAND_COMPLETED_METHOD = "objectexplorer/expandCompleted"
 
 OutgoingMessageRegistration.register_outgoing_message(ExpandCompletedParameters)

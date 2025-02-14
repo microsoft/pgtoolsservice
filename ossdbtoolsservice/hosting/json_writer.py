@@ -33,9 +33,7 @@ class JSONRPCWriter:
             self.stream.close()
         except Exception as e:
             if self._logger is not None:
-                self._logger.exception(
-                    f"Exception raised when writer stream closed: {e}"
-                )
+                self._logger.exception(f"Exception raised when writer stream closed: {e}")
 
     def send_message(self, message):
         """
@@ -54,12 +52,7 @@ class JSONRPCWriter:
 
             if self._logger is not None:
                 self._logger.info(
-                    "{} message sent id={} method={} {}".format(
-                        message.message_type.name,
-                        message.message_id,
-                        message.message_method,
-                        json_content,
-                    )
+                    f"{message.message_type.name} message sent id={message.message_id} method={message.message_method} {json_content}"
                 )
 
             # Uncomment for verbose logging

@@ -20,9 +20,11 @@ from ossdbtoolsservice.hosting import RequestContext
 from .postgres_utils import (
     execute_readonly_query,
     execute_statement,
+    fetch_schema_v1,
+)
+from .postgres_utils import (
     # fetch_schema,
     fetch_schema_v4 as fetch_schema,
-    fetch_schema_v1,
 )
 
 
@@ -53,9 +55,7 @@ class PostgresPlugin:
         kernel.add_plugin(self, plugin_name=self.name, description=self.description)
 
     def _get_connection(self) -> ServerConnection | None:
-        return self._connection_service.get_connection(
-            self._owner_uri, ConnectionType.QUERY
-        )
+        return self._connection_service.get_connection(self._owner_uri, ConnectionType.QUERY)
 
     @kernel_function(
         name="get_full_schema_context",
@@ -149,9 +149,7 @@ class PostgresPlugin:
             return "Error. Could not connect to the database. No connection found."
         assert isinstance(connection, PostgreSQLConnection)
         try:
-            result = execute_readonly_query(
-                connection._conn, query, self._max_result_chars
-            )
+            result = execute_readonly_query(connection._conn, query, self._max_result_chars)
         except Exception:
             self._request_context.send_notification(
                 COPILOT_QUERY_NOTIFICATION_METHOD,
@@ -186,7 +184,6 @@ class PostgresPlugin:
             " to the user and the user has confirmed it."
             "It must only be a single, well formatted SQL statement that will be presented to the user, "
             "so focus on readability."
-
         ),
     )
     async def execute_sql_statement_kernelfunc(

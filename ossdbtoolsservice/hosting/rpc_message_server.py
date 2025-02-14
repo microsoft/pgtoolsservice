@@ -1,7 +1,6 @@
 import io
-from logging import Logger
 import threading
-
+from logging import Logger
 from queue import Queue
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage

@@ -8,7 +8,6 @@ from ossdbtoolsservice.query.contracts import DbColumn
 
 
 class EditColumnMetadata:
-
     def __init__(self, db_column: DbColumn, default_value: str) -> None:
         self.db_column: DbColumn = db_column
         self.default_value = default_value

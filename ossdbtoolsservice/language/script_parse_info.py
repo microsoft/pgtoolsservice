@@ -2,12 +2,12 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-from typing import List     # noqa
-from prompt_toolkit.completion import Completion    # noqa
-from prompt_toolkit.document import Document    # noqa
+from typing import List  # noqa
+from prompt_toolkit.completion import Completion  # noqa
+from prompt_toolkit.document import Document  # noqa
 
 
-class ScriptParseInfo(object):
+class ScriptParseInfo:
     """Represents information about a parsed document used in autocomplete"""
 
     def __init__(self):

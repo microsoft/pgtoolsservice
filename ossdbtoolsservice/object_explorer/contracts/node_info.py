@@ -7,8 +7,9 @@ from ossdbtoolsservice.metadata.contracts import ObjectMetadata  # noqa
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 
-class NodeInfo(object):
+class NodeInfo:
     """Contract for information on the connected PostgreSQL server"""
+
     node_path: str
     node_type: str
     label: str

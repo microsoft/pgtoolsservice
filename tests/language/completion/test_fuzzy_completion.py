@@ -3,8 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from parameterized import parameterized, param
 import unittest
+
+from parameterized import param, parameterized
 
 from ossdbtoolsservice.language.completion.pgcompleter import PGCompleter
 
@@ -29,8 +30,8 @@ class TestFuzzyCompletion(unittest.TestCase):
 
         """
 
-        text = 'user'
-        collection = ['user_action', '"user"']
+        text = "user"
+        collection = ["user_action", '"user"']
         matches = self.completer.find_matches(text, collection)
         self.assertEqual(len(matches), 2)
 
@@ -47,16 +48,18 @@ class TestFuzzyCompletion(unittest.TestCase):
         match when calculating result rank.
 
         """
-        text = 'user'
-        collection = ['api_user', 'user_group']
+        text = "user"
+        collection = ["api_user", "user_group"]
         matches = self.completer.find_matches(text, collection)
         self.assertGreater(matches[1].priority, matches[0].priority)
 
-    @parameterized.expand([
-        param(['user_action', 'user']),
-        param(['user_group', 'user']),
-        param(['user_group', 'user_action']),
-    ])
+    @parameterized.expand(
+        [
+            param(["user_action", "user"]),
+            param(["user_group", "user"]),
+            param(["user_group", "user_action"]),
+        ]
+    )
     def test_should_break_ties_using_lexical_order(self, collection):
         """Fuzzy result rank should use lexical order to break ties.
 
@@ -70,7 +73,7 @@ class TestFuzzyCompletion(unittest.TestCase):
         lexically.
 
         """
-        text = 'user'
+        text = "user"
         matches = self.completer.find_matches(text, collection)
         self.assertGreater(matches[1].priority, matches[0].priority)
 
@@ -80,7 +83,7 @@ class TestFuzzyCompletion(unittest.TestCase):
         This test checks that variations of the text which have different casing
         are still matched.
         """
-        text = 'foo'
-        collection = ['Foo', 'FOO', 'fOO']
+        text = "foo"
+        collection = ["Foo", "FOO", "fOO"]
         matches = self.completer.find_matches(text, collection)
         self.assertEqual(len(matches), 3)

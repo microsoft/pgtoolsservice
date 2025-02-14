@@ -4,8 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 
+from ossdbtoolsservice.edit_data.contracts import EditCellResponse, RowOperationRequest
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
-from ossdbtoolsservice.edit_data.contracts import RowOperationRequest, EditCellResponse
 
 
 class UpdateCellRequest(RowOperationRequest):
@@ -19,9 +19,8 @@ class UpdateCellRequest(RowOperationRequest):
 
 
 class UpdateCellResponse(EditCellResponse):
-
     def __init__(self):
         EditCellResponse.__init__(self)
 
 
-UPDATE_CELL_REQUEST = IncomingMessageConfiguration('edit/updateCell', UpdateCellRequest)
+UPDATE_CELL_REQUEST = IncomingMessageConfiguration("edit/updateCell", UpdateCellRequest)

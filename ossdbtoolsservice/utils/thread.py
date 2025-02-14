@@ -6,7 +6,7 @@
 """Utility functions for operating with threads"""
 
 import threading  # noqa
-from typing import Callable     # noqa
+from typing import Callable  # noqa
 
 
 def run_as_thread(function: Callable, *args) -> threading.Thread:

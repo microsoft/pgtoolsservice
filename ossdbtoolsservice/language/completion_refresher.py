@@ -5,24 +5,20 @@
 
 """A module that handles autocompletion metadata querying and initialization of the completion object."""
 
-import threading
-from logging import Logger  # noqa
 import os
+import threading
 from collections import OrderedDict
+from logging import Logger  # noqa
 
-from pgsmo import Server as PGServer
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.language.completion import PGCompleter
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
+from pgsmo import Server as PGServer
 
-COMPLETER_MAP = {
-    PG_PROVIDER_NAME: PGCompleter
-}
+COMPLETER_MAP = {PG_PROVIDER_NAME: PGCompleter}
 
-SERVER_MAP = {
-    PG_PROVIDER_NAME: PGServer
-}
+SERVER_MAP = {PG_PROVIDER_NAME: PGServer}
 
 
 class CompletionRefresher:
@@ -56,22 +52,25 @@ class CompletionRefresher:
 
         if self.is_refreshing():
             self._restart_refresh.set()
-            return 'Auto-completion refresh restarted.'
+            return "Auto-completion refresh restarted."
         else:
             self._completer_thread = threading.Thread(
                 target=self._bg_refresh,
                 args=(callbacks, history, settings),
-                name='completion_refresh')
+                name="completion_refresh",
+            )
             self._completer_thread.daemon = True
             self._completer_thread.start()
-            return 'Auto-completion refresh started in the background.'     # TODO localize
+            return "Auto-completion refresh started in the background."  # TODO localize
 
     def is_refreshing(self):
         return self._completer_thread and self._completer_thread.is_alive()
 
     def _bg_refresh(self, callbacks, history=None, settings=None):
         settings = settings or {}
-        completer: PGCompleter = COMPLETER_MAP[self.connection._provider_name](smart_completion=True, settings=settings)
+        completer: PGCompleter = COMPLETER_MAP[self.connection._provider_name](
+            smart_completion=True, settings=settings
+        )
 
         self.server.refresh()
         metadata_executor = MetadataExecutor(self.server)
@@ -104,7 +103,7 @@ class CompletionRefresher:
 
         except Exception as e:
             if self.logger:
-                self.logger.exception('Error during metadata refresh: %s', e)
+                self.logger.exception("Error during metadata refresh: %s", e)
 
         for callback in callbacks:
             callback(completer)
@@ -117,56 +116,58 @@ def refresher(name, refreshers=CompletionRefresher.refreshers):
     """Decorator to populate the dictionary of refreshers with the current
     function.
     """
+
     def wrapper(wrapped):
         refreshers[name] = wrapped
         return wrapped
+
     return wrapper
 
 
-@refresher('schemata')
+@refresher("schemata")
 def refresh_schemata(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.set_search_path(metadata_executor.search_path())
     completer.extend_schemata(metadata_executor.schemata())
 
 
-@refresher('tables')
+@refresher("tables")
 def refresh_tables(completer: PGCompleter, metadata_executor: MetadataExecutor):
-    completer.extend_relations(metadata_executor.tables(), kind='tables')
-    completer.extend_columns(metadata_executor.table_columns(), kind='tables')
+    completer.extend_relations(metadata_executor.tables(), kind="tables")
+    completer.extend_columns(metadata_executor.table_columns(), kind="tables")
     completer.extend_foreignkeys(metadata_executor.foreignkeys())
 
 
-@refresher('views')
+@refresher("views")
 def refresh_views(completer: PGCompleter, metadata_executor: MetadataExecutor):
-    completer.extend_relations(metadata_executor.views(), kind='views')
-    completer.extend_columns(metadata_executor.view_columns(), kind='views')
+    completer.extend_relations(metadata_executor.views(), kind="views")
+    completer.extend_columns(metadata_executor.view_columns(), kind="views")
 
 
-@refresher('types')
+@refresher("types")
 def refresh_types(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.extend_datatypes(metadata_executor.datatypes())
 
 
-@refresher('databases')
+@refresher("databases")
 def refresh_databases(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.extend_database_names(metadata_executor.databases())
 
 
-@refresher('casing')
+@refresher("casing")
 def refresh_casing(completer: PGCompleter, metadata_executor: MetadataExecutor):
     casing_file = completer.casing_file
     if not casing_file:
         return
     generate_casing_file = completer.generate_casing_file
     if generate_casing_file and not os.path.isfile(casing_file):
-        casing_prefs = '\n'.join(metadata_executor.casing())
-        with open(casing_file, 'w') as f:
+        casing_prefs = "\n".join(metadata_executor.casing())
+        with open(casing_file, "w") as f:
             f.write(casing_prefs)
     if os.path.isfile(casing_file):
-        with open(casing_file, 'r') as f:
+        with open(casing_file) as f:
             completer.extend_casing([line.strip() for line in f])
 
 
-@refresher('functions')
+@refresher("functions")
 def refresh_functions(completer: PGCompleter, metadata_executor: MetadataExecutor):
     completer.extend_functions(metadata_executor.functions())

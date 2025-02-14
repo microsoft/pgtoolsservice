@@ -4,8 +4,15 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.admin.contracts.get_database_info_request import (
-    DatabaseInfo, GetDatabaseInfoParameters, GetDatabaseInfoResponse, GET_DATABASE_INFO_REQUEST)
+    GET_DATABASE_INFO_REQUEST,
+    DatabaseInfo,
+    GetDatabaseInfoParameters,
+    GetDatabaseInfoResponse,
+)
 
 __all__ = [
-    'DatabaseInfo', 'GetDatabaseInfoParameters', 'GetDatabaseInfoResponse', 'GET_DATABASE_INFO_REQUEST'
+    "DatabaseInfo",
+    "GetDatabaseInfoParameters",
+    "GetDatabaseInfoResponse",
+    "GET_DATABASE_INFO_REQUEST",
 ]

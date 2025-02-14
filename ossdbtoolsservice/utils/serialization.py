@@ -32,10 +32,7 @@ def _get_serializable_value(obj):
         return _get_serializable_value(obj.value)
     # Try to use the object's dictionary representation if available
     try:
-        return {
-            inflection.camelize(key, False): value
-            for key, value in obj.__dict__.items()
-        }
+        return {inflection.camelize(key, False): value for key, value in obj.__dict__.items()}
     except AttributeError:
         pass
     # Assume the object can be serialized normally

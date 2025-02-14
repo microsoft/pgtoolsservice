@@ -5,8 +5,8 @@
 
 from typing import List
 
-from ossdbtoolsservice.query.contracts import BatchSummary
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
+from ossdbtoolsservice.query.contracts import BatchSummary
 
 
 class QueryCompleteNotificationParams:
@@ -16,6 +16,7 @@ class QueryCompleteNotificationParams:
         owner_uri:          URI for the editor that owns the query
         batch_summaries:    Summaries of the result sets that were returned with the query
     """
+
     owner_uri: str
     batch_summaries: List[BatchSummary]
 
@@ -24,8 +25,8 @@ class QueryCompleteNotificationParams:
         self.batch_summaries: List[BatchSummary] = batch_summaries
 
 
-QUERY_COMPLETE_NOTIFICATION = 'query/complete'
+QUERY_COMPLETE_NOTIFICATION = "query/complete"
 
-DEPLOY_COMPLETE_NOTIFICATION = 'query/deployComplete'
+DEPLOY_COMPLETE_NOTIFICATION = "query/deployComplete"
 
 OutgoingMessageRegistration.register_outgoing_message(QueryCompleteNotificationParams)

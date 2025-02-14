@@ -10,11 +10,7 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
 class TestTrigger(NodeObjectTestBase, unittest.TestCase):
-    NODE_ROW = {
-        'name': 'triggername',
-        'oid': 123,
-        'is_enable_trigger': True
-    }
+    NODE_ROW = {"name": "triggername", "oid": 123, "is_enable_trigger": True}
 
     @property
     def class_for_test(self):
@@ -23,8 +19,8 @@ class TestTrigger(NodeObjectTestBase, unittest.TestCase):
     @property
     def basic_properties(self):
         return {
-            '_is_enabled': TestTrigger.NODE_ROW['is_enable_trigger'],
-            'is_enabled': TestTrigger.NODE_ROW['is_enable_trigger']
+            "_is_enabled": TestTrigger.NODE_ROW["is_enable_trigger"],
+            "is_enabled": TestTrigger.NODE_ROW["is_enable_trigger"],
         }
 
     @property
@@ -40,7 +36,7 @@ class TestTrigger(NodeObjectTestBase, unittest.TestCase):
             "prosrc": "prosrc",
             "custom_tgargs": "custom_tgargs",
             "description": "description",
-            "is_enable_trigger": "is_enable_trigger"
+            "is_enable_trigger": "is_enable_trigger",
         }
 
     @property
@@ -57,7 +53,7 @@ class TestTrigger(NodeObjectTestBase, unittest.TestCase):
             "prosrc": "test",
             "custom_tgargs": 1,
             "description": "test_description",
-            "is_enable_trigger": True
+            "is_enable_trigger": True,
         }
 
     @property

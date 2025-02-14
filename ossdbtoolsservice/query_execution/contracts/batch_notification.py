@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.query.contracts import BatchSummary
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
+from ossdbtoolsservice.query.contracts import BatchSummary
 
 
 class BatchNotificationParams:
@@ -16,6 +16,7 @@ class BatchNotificationParams:
         batch_summary:  Summary of the batch that is being notified
         owner_uri:      URI for the editor that owns the query
     """
+
     batch_summary: BatchSummary
     owner_uri: str
 
@@ -24,12 +25,12 @@ class BatchNotificationParams:
         self.owner_uri: str = owner_uri
 
 
-BATCH_COMPLETE_NOTIFICATION = 'query/batchComplete'
+BATCH_COMPLETE_NOTIFICATION = "query/batchComplete"
 
-BATCH_START_NOTIFICATION = 'query/batchStart'
+BATCH_START_NOTIFICATION = "query/batchStart"
 
-DEPLOY_BATCH_COMPLETE_NOTIFICATION = 'query/deployBatchComplete'
+DEPLOY_BATCH_COMPLETE_NOTIFICATION = "query/deployBatchComplete"
 
-DEPLOY_BATCH_START_NOTIFICATION = 'query/deployBatchStart'
+DEPLOY_BATCH_START_NOTIFICATION = "query/deployBatchStart"
 
 OutgoingMessageRegistration.register_outgoing_message(BatchNotificationParams)

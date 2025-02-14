@@ -4,23 +4,23 @@
 # --------------------------------------------------------------------------------------------
 
 import io
-from queue import Queue
 import time
 import unittest
 import unittest.mock as mock
+from queue import Queue
 
-from ossdbtoolsservice.hosting.message_server import MessageHandler
-from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
+import tests.utils as utils
 from ossdbtoolsservice.hosting import (
     NotificationContext,
     RequestContext,
 )
-from ossdbtoolsservice.hosting.message_configuration import IncomingMessageConfiguration
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
 from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
+from ossdbtoolsservice.hosting.message_configuration import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting.message_server import MessageHandler
+from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.serialization.serializable import Serializable
-import tests.utils as utils
 
 
 class JSONRPCServerTests(unittest.TestCase):
@@ -367,9 +367,7 @@ class JSONRPCServerTests(unittest.TestCase):
     def test_reads_message(self) -> None:
         # Setup:
         # ... Create an input stream with a single message
-        input_stream = io.BytesIO(
-            b'Content-Length: 30\r\n\r\n{"method":"test", "params":{}}'
-        )
+        input_stream = io.BytesIO(b'Content-Length: 30\r\n\r\n{"method":"test", "params":{}}')
         output_stream = io.BytesIO()
 
         # ... Create a server that uses the input and output streams
@@ -389,9 +387,7 @@ class JSONRPCServerTests(unittest.TestCase):
         server.wait_for_exit()
 
         # Then: The dispatch method should have been called
-        expected_output = JSONRPCMessage.from_dictionary(
-            {"method": "test", "params": {}}
-        )
+        expected_output = JSONRPCMessage.from_dictionary({"method": "test", "params": {}})
         dispatch_mock.assert_called_once()
         self.assertDictEqual(
             dispatch_mock.mock_calls[0][1][0].dictionary, expected_output.dictionary
@@ -424,9 +420,7 @@ class JSONRPCServerTests(unittest.TestCase):
         server.wait_for_exit()
 
         # Then: The dispatch method should have been called twice
-        expected_output = JSONRPCMessage.from_dictionary(
-            {"method": "test", "params": {}}
-        )
+        expected_output = JSONRPCMessage.from_dictionary({"method": "test", "params": {}})
         self.assertEqual(len(dispatch_mock.mock_calls), 2)
         self.assertDictEqual(
             dispatch_mock.mock_calls[0][1][0].dictionary, expected_output.dictionary

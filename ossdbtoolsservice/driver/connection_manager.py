@@ -5,22 +5,17 @@
 
 from typing import Dict
 
-from ossdbtoolsservice.utils.constants import (
-    PG_PROVIDER_NAME
-)
-from ossdbtoolsservice.driver.types import ServerConnection, PostgreSQLConnection
+from ossdbtoolsservice.driver.types import PostgreSQLConnection, ServerConnection
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from ossdbtoolsservice.workspace.contracts import Configuration
 
 
 class ConnectionManager:
-    """Wrapper class that handles different types of drivers and connections """
+    """Wrapper class that handles different types of drivers and connections"""
 
-    CONNECTORS = {
-        PG_PROVIDER_NAME: PostgreSQLConnection
-    }
+    CONNECTORS = {PG_PROVIDER_NAME: PostgreSQLConnection}
 
     def __init__(self, provider: str, config: Configuration, conn_options: Dict[str, str]):
-
         # Get info about this connection's provider
         self._provider = provider
 

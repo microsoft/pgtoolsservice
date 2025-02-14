@@ -5,8 +5,8 @@
 
 """This module holds contracts for the status change notification"""
 
-from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
+from ossdbtoolsservice.serialization import Serializable
 
 
 class StatusChangeParams(Serializable):
@@ -18,6 +18,6 @@ class StatusChangeParams(Serializable):
         self.status: str = status
 
 
-STATUS_CHANGE_NOTIFICATION = 'textDocument/statusChanged'
+STATUS_CHANGE_NOTIFICATION = "textDocument/statusChanged"
 
 OutgoingMessageRegistration.register_outgoing_message(StatusChangeParams)

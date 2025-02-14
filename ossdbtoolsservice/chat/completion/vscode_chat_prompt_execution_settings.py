@@ -6,7 +6,6 @@
 from typing import Annotated
 
 from pydantic import Field
-
 from semantic_kernel.connectors.ai.prompt_execution_settings import (
     PromptExecutionSettings,
 )

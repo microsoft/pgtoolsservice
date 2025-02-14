@@ -4,20 +4,20 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
 
-from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
-from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
 import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
+from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
 
 
 class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'column')
-    MACRO_ROOT = templating.get_template_root(__file__, '../table/macros')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "column")
+    MACRO_ROOT = templating.get_template_root(__file__, "../table/macros")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Column':
+    def _from_node_query(cls, server: "s.Server", parent: NodeObject, **kwargs) -> "Column":
         """
         Creates a new Column object based on the the results from the column nodes query
         :param server: Server that owns the column
@@ -36,21 +36,23 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :return: Instance of the Column
         """
 
-        col = cls(server, parent, kwargs['name'], kwargs['datatype'])
-        col._oid = kwargs['oid']
-        col._has_default_value = kwargs['has_default_val']
-        col._not_null = kwargs['not_null']
-        col._column_ordinal = kwargs['oid'] - 1
-        col._is_key = kwargs['isprimarykey']
-        col._is_readonly = kwargs['is_updatable'] is False
-        col._is_unique = kwargs['isunique']
-        col._type_oid = kwargs['typoid']
-        col._default_value = kwargs['default'] if col._has_default_value is True else None
-        col._is_auto_increment = col._default_value is not None and col._default_value.startswith('nextval(')
+        col = cls(server, parent, kwargs["name"], kwargs["datatype"])
+        col._oid = kwargs["oid"]
+        col._has_default_value = kwargs["has_default_val"]
+        col._not_null = kwargs["not_null"]
+        col._column_ordinal = kwargs["oid"] - 1
+        col._is_key = kwargs["isprimarykey"]
+        col._is_readonly = kwargs["is_updatable"] is False
+        col._is_unique = kwargs["isunique"]
+        col._type_oid = kwargs["typoid"]
+        col._default_value = kwargs["default"] if col._has_default_value is True else None
+        col._is_auto_increment = (
+            col._default_value is not None and col._default_value.startswith("nextval(")
+        )
 
         return col
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str, datatype: str):
+    def __init__(self, server: "s.Server", parent: NodeObject, name: str, datatype: str):
         """
         Initializes a new instance of a Column
         :param server: Connection to the server/database that this object will belong to
@@ -59,7 +61,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param datatype: Type of the column
         """
         self._server = server
-        self._parent: Optional['NodeObject'] = parent
+        self._parent: Optional[NodeObject] = parent
         self._name: str = name
         self._oid: Optional[int] = None
         self._is_system: bool = False
@@ -67,11 +69,19 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         self._child_collections: Dict[str, NodeCollection] = {}
         self._property_collections: List[NodeLazyPropertyCollection] = []
         # Use _column_property_generator instead of _property_generator
-        self._full_properties: NodeLazyPropertyCollection = self._register_property_collection(self._column_property_generator)
+        self._full_properties: NodeLazyPropertyCollection = (
+            self._register_property_collection(self._column_property_generator)
+        )
 
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
         self._datatype: str = datatype
         self._has_default_value: Optional[bool] = None
@@ -93,14 +103,16 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
         # Render and execute the template
         sql = templating.render_template(
-            templating.get_template_path(template_root, 'properties.sql', self._server.version),
+            templating.get_template_path(
+                template_root, "properties.sql", self._server.version
+            ),
             self._macro_root(),
-            **template_vars
+            **template_vars,
         )
         cols, rows = self._server.connection.execute_dict(sql)
 
         for row in rows:
-            if row['name'] == self._name:
+            if row["name"] == self._name:
                 return row
 
     # PROPERTIES ###########################################################
@@ -164,7 +176,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def attlen(self):
         length, precision = self.get_length_precision(self.elemoid)
         if length:
-            matchObj = re.search(r'(\d+)', self.fulltype)
+            matchObj = re.search(r"(\d+)", self.fulltype)
             if matchObj:
                 return matchObj.group(1)
         return None
@@ -177,14 +189,14 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     def attprecision(self):
         length, precision = self.get_length_precision(self.elemoid)
         if precision:
-            matchObj = re.search(r'(\d+),(\d+)', self.fulltype)
+            matchObj = re.search(r"(\d+),(\d+)", self.fulltype)
             if matchObj:
                 return matchObj.group(2)
         return precision
 
     @property
     def hasSqrBracket(self):
-        if '[]' in self.cltype:
+        if "[]" in self.cltype:
             return True
         else:
             return False
@@ -192,8 +204,12 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def fulltype(self):
         fulltype = self.get_full_type(
-            self._full_properties['typnspname'], self._full_properties['typname'],
-            self._full_properties['isdup'], self._full_properties['attndims'], self._full_properties['atttypmod'])
+            self._full_properties["typnspname"],
+            self._full_properties["typname"],
+            self._full_properties["isdup"],
+            self._full_properties["attndims"],
+            self._full_properties["atttypmod"],
+        )
         return fulltype
 
     @property
@@ -274,17 +290,15 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         return [cls.MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     @property
     def extended_vars(self):
-        return {
-            'tid': self.parent.oid
-        }
+        return {"tid": self.parent.oid}
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         return {
             "data": {
                 "name": self.name,
@@ -301,23 +315,17 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "description": self.description,
                 "attoptions": self.attoptions,
                 "attacl": self.attacl,
-                "seclabels": self.seclabels
+                "seclabels": self.seclabels,
             },
-            "is_sql": self.is_sql
+            "is_sql": self.is_sql,
         }
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
-        return {
-            "data": {
-                "schema": self.schema,
-                "table": self.table,
-                "name": self.name
-            }
-        }
+        """Provides data input for delete script"""
+        return {"data": {"schema": self.schema, "table": self.table, "name": self.name}}
 
     def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for update script"""
         return {
             "data": {
                 "name": self.name,
@@ -334,7 +342,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "description": self.description,
                 "attoptions": self.attoptions,
                 "attacl": self.attacl,
-                "seclabels": self.seclabels
+                "seclabels": self.seclabels,
             },
             "o_data": {
                 "name": "",
@@ -345,31 +353,31 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "defval": "",
                 "attnotnull": "",
                 "attstattarget": "",
-                "attstorage": ""
-            }
+                "attstorage": "",
+            },
         }
 
     def get_length_precision(self, elemoid):
         precision = False
         length = False
-        typeval = ''
+        typeval = ""
 
         # Check against PGOID for specific type
         if elemoid:
             if elemoid in (1560, 1561, 1562, 1563, 1042, 1043, 1014, 1015):
-                typeval = 'L'
+                typeval = "L"
             elif elemoid in (1083, 1114, 1115, 1183, 1184, 1185, 1186, 1187, 1266, 1270):
-                typeval = 'D'
+                typeval = "D"
             elif elemoid in (1231, 1700):
-                typeval = 'P'
+                typeval = "P"
             else:
-                typeval = ' '
+                typeval = " "
 
         # Set precision & length/min/max values
-        if typeval == 'P':
+        if typeval == "P":
             precision = True
 
-        if precision or typeval in ('L', 'D'):
+        if precision or typeval in ("L", "D"):
             length = True
 
         return length, precision
@@ -383,26 +391,26 @@ def get_full_type(self, nsp, typname, isDup, numdims, typmod):
         conn: Connection Object
         condition: condition to restrict SQL statement
     """
-    schema = nsp if nsp is not None else ''
-    name = ''
-    array = ''
-    length = ''
+    schema = nsp if nsp is not None else ""
+    name = ""
+    array = ""
+    length = ""
 
     # Above 7.4, format_type also sends the schema name if it's not included
     # in the search_path, so we need to skip it in the typname
     if typname.find(schema + '".') >= 0:
         name = typname[len(schema) + 3]
-    elif typname.find(schema + '.') >= 0:
+    elif typname.find(schema + ".") >= 0:
         name = typname[len(schema) + 1]
     else:
         name = typname
 
-    if name.startswith('_'):
+    if name.startswith("_"):
         if not numdims:
             numdims = 1
         name = name[1:]
 
-    if name.endswith('[]'):
+    if name.endswith("[]"):
         if not numdims:
             numdims = 1
         name = name[:-2]
@@ -412,55 +420,57 @@ def get_full_type(self, nsp, typname, isDup, numdims, typmod):
 
     if numdims > 0:
         while numdims:
-            array += '[]'
+            array += "[]"
             numdims -= 1
 
     if typmod != -1:
-        length = '('
-        if name == 'numeric':
+        length = "("
+        if name == "numeric":
             _len = (typmod - 4) >> 16
-            _prec = (typmod - 4) & 0xffff
+            _prec = (typmod - 4) & 0xFFFF
             length += str(_len)
-            if (_prec):
-                length += ',' + str(_prec)
-        elif name == 'time' or \
-            name == 'timetz' or \
-            name == 'time without time zone' or \
-            name == 'time with time zone' or \
-            name == 'timestamp' or \
-            name == 'timestamptz' or \
-            name == 'timestamp without time zone' or \
-            name == 'timestamp with time zone' or \
-            name == 'bit' or \
-            name == 'bit varying' or \
-                name == 'varbit':
+            if _prec:
+                length += "," + str(_prec)
+        elif (
+            name == "time"
+            or name == "timetz"
+            or name == "time without time zone"
+            or name == "time with time zone"
+            or name == "timestamp"
+            or name == "timestamptz"
+            or name == "timestamp without time zone"
+            or name == "timestamp with time zone"
+            or name == "bit"
+            or name == "bit varying"
+            or name == "varbit"
+        ):
             _prec = 0
             _len = typmod
             length += str(_len)
-        elif name == 'interval':
+        elif name == "interval":
             _prec = 0
-            _len = typmod & 0xffff
+            _len = typmod & 0xFFFF
             length += str(_len)
-        elif name == 'date':
+        elif name == "date":
             # Clear length
-            length = ''
+            length = ""
         else:
             _len = typmod - 4
             _prec = 0
             length += str(_len)
 
         if len(length) > 0:
-            length += ')'
+            length += ")"
 
-    if name == 'char' and schema == 'pg_catalog':
+    if name == "char" and schema == "pg_catalog":
         return '"char"' + array
-    elif name == 'time with time zone':
-        return 'time' + length + ' with time zone' + array
-    elif name == 'time without time zone':
-        return 'time' + length + ' without time zone' + array
-    elif name == 'timestamp with time zone':
-        return 'timestamp' + length + ' with time zone' + array
-    elif name == 'timestamp without time zone':
-        return 'timestamp' + length + ' without time zone' + array
+    elif name == "time with time zone":
+        return "time" + length + " with time zone" + array
+    elif name == "time without time zone":
+        return "time" + length + " without time zone" + array
+    elif name == "timestamp with time zone":
+        return "timestamp" + length + " with time zone" + array
+    elif name == "timestamp without time zone":
+        return "timestamp" + length + " without time zone" + array
     else:
         return name + length + array

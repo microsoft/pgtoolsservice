@@ -6,23 +6,23 @@
 """Module for testing the workspace service"""
 
 import os
-from typing import Tuple
 import unittest
+from typing import Tuple
 from unittest.mock import MagicMock
 
+import tests.utils as utils
 from ossdbtoolsservice.hosting import NotificationContext, ServiceProvider
-from ossdbtoolsservice.workspace import WorkspaceService, IntellisenseConfiguration
-from ossdbtoolsservice.workspace.workspace import Workspace, ScriptFile
+from ossdbtoolsservice.workspace import IntellisenseConfiguration, WorkspaceService
 from ossdbtoolsservice.workspace.contracts import (
     Configuration,
     DidChangeConfigurationParams,
+    DidChangeTextDocumentParams,
     DidCloseTextDocumentParams,
     DidOpenTextDocumentParams,
-    DidChangeTextDocumentParams,
     Position,
     Range,
 )
-import tests.utils as utils
+from ossdbtoolsservice.workspace.workspace import ScriptFile, Workspace
 
 
 class TestWorkspaceService(unittest.TestCase):
@@ -52,9 +52,7 @@ class TestWorkspaceService(unittest.TestCase):
         server = utils.MockMessageServer()
         server.set_notification_handler = MagicMock()
         server.set_request_handler = MagicMock()
-        sp: ServiceProvider = ServiceProvider(
-            server, {}, utils.get_mock_logger()
-        )
+        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
 
         # If: I register a workspace service
         ws: WorkspaceService = WorkspaceService()

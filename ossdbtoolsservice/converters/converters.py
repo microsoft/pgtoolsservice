@@ -7,19 +7,20 @@ from typing import Any, Callable  # noqa
 
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.converters.pg_converters import (
-    PG_DATATYPE_READER_MAP, PG_DATATYPE_WRITER_MAP, convert_bytes_to_str,
-    convert_str)
+    PG_DATATYPE_READER_MAP,
+    PG_DATATYPE_WRITER_MAP,
+    convert_bytes_to_str,
+    convert_str,
+)
 
-WRITERS = {
-    utils.constants.PG_PROVIDER_NAME: PG_DATATYPE_WRITER_MAP
-}
+WRITERS = {utils.constants.PG_PROVIDER_NAME: PG_DATATYPE_WRITER_MAP}
 
-READERS = {
-    utils.constants.PG_PROVIDER_NAME: PG_DATATYPE_READER_MAP
-}
+READERS = {utils.constants.PG_PROVIDER_NAME: PG_DATATYPE_READER_MAP}
 
 
-def get_any_to_bytes_converter(type_value: object, provider: str) -> Callable[[Any], bytearray]:
+def get_any_to_bytes_converter(
+    type_value: object, provider: str
+) -> Callable[[Any], bytearray]:
     writer_map: dict = WRITERS[provider]
     return writer_map.get(type_value, convert_str)
 

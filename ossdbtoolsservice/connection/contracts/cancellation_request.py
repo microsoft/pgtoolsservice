@@ -10,12 +10,17 @@ from ossdbtoolsservice.serialization import Serializable
 
 class CancelConnectParams(Serializable):
     """Parameters for the cancel connect request"""
+
     owner_uri: str
     type: ConnectionType
 
-    def __init__(self, owner_uri: str = None, connection_type: ConnectionType = ConnectionType.DEFAULT):
+    def __init__(
+        self, owner_uri: str = None, connection_type: ConnectionType = ConnectionType.DEFAULT
+    ):
         self.owner_uri: str = owner_uri
         self.type: ConnectionType = connection_type
 
 
-CANCEL_CONNECT_REQUEST = IncomingMessageConfiguration('connection/cancelconnect', CancelConnectParams)
+CANCEL_CONNECT_REQUEST = IncomingMessageConfiguration(
+    "connection/cancelconnect", CancelConnectParams
+)

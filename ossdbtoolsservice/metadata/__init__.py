@@ -5,6 +5,4 @@
 
 from ossdbtoolsservice.metadata.metadata_service import MetadataService
 
-__all__ = [
-    'MetadataService'
-]
+__all__ = ["MetadataService"]

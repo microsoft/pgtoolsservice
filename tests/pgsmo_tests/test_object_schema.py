@@ -11,11 +11,11 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestSchema(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'schema',
-        'oid': 123,
-        'can_create': True,
-        'has_usage': True,
-        'is_system': True
+        "name": "schema",
+        "oid": 123,
+        "can_create": True,
+        "has_usage": True,
+        "is_system": True,
     }
 
     @property
@@ -25,10 +25,10 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
     @property
     def basic_properties(self):
         return {
-            'can_create': TestSchema.NODE_ROW['can_create'],
-            '_can_create': TestSchema.NODE_ROW['can_create'],
-            'has_usage': TestSchema.NODE_ROW['has_usage'],
-            '_has_usage': TestSchema.NODE_ROW['has_usage']
+            "can_create": TestSchema.NODE_ROW["can_create"],
+            "_can_create": TestSchema.NODE_ROW["can_create"],
+            "has_usage": TestSchema.NODE_ROW["has_usage"],
+            "_has_usage": TestSchema.NODE_ROW["has_usage"],
         }
 
     @property
@@ -47,7 +47,7 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
             "nspacl": "nspacl",
             "seclabels": "seclabels",
             "cascade": "cascade",
-            "defacl": "defacl"
+            "defacl": "defacl",
         }
 
     @property
@@ -58,5 +58,5 @@ class TestSchema(NodeObjectTestBase, unittest.TestCase):
             "nspacl": None,
             "seclabels": None,
             "cascade": False,
-            "defacl": None
+            "defacl": None,
         }

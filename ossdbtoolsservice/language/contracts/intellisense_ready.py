@@ -13,6 +13,7 @@ class IntelliSenseReadyParams(Serializable):
     """
     Parameters for the Language IntelliSense Ready notification
     """
+
     @classmethod
     def from_data(cls, uri: str):
         obj = cls()
@@ -23,6 +24,8 @@ class IntelliSenseReadyParams(Serializable):
         self.owner_uri: str = None
 
 
-INTELLISENSE_READY_NOTIFICATION = 'textDocument/intelliSenseReady'
+INTELLISENSE_READY_NOTIFICATION = "textDocument/intelliSenseReady"
 
-INTELLISENSE_REBUILD_NOTIFICATION = IncomingMessageConfiguration('textDocument/rebuildIntelliSense', IntelliSenseReadyParams)
+INTELLISENSE_REBUILD_NOTIFICATION = IncomingMessageConfiguration(
+    "textDocument/rebuildIntelliSense", IntelliSenseReadyParams
+)

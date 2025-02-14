@@ -6,28 +6,28 @@
 
 import unittest
 from unittest import mock
-import tests.utils as utils
 from unittest.mock import patch
 
-from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
-from tests.mocks.service_provider_mock import ServiceProviderMock
+import tests.utils as utils
+from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.edit_data.contracts import (
-    UpdateCellRequest,
     CreateRowRequest,
-    SessionOperationRequest,
     DeleteRowRequest,
+    DisposeRequest,
+    EditCommitRequest,
+    InitializeEditParams,
     RevertCellRequest,
     RevertRowRequest,
-    EditCommitRequest,
-    DisposeRequest,
-    InitializeEditParams,
+    SessionOperationRequest,
+    UpdateCellRequest,
 )
+from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
 from ossdbtoolsservice.hosting import RequestContext
-from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.query_execution.query_execution_service import (
     QueryExecutionService,
 )
+from ossdbtoolsservice.utils import constants
+from tests.mocks.service_provider_mock import ServiceProviderMock
 
 
 class TestEditDataService(unittest.TestCase):
@@ -127,21 +127,15 @@ class TestEditDataService(unittest.TestCase):
         *args,
     ) -> None:
         """asserts if a method call raises 'exceptiontype' exception or not"""
-        with self.assertRaises(
-            exception_type, msg=exception_message
-        ) as context_manager:
+        with self.assertRaises(exception_type, msg=exception_message) as context_manager:
             method_to_call(*args)
 
         if context_manager.exception.args is not None:
             self.assertEqual(exception_message, context_manager.exception.args[0])
 
     def test_register_should_initlialize_states(self) -> None:
-        self.assertEqual(
-            self._service_under_test._service_provider, self._service_provider
-        )
-        self.assertEqual(
-            self._service_under_test._logger, self._service_provider.logger
-        )
+        self.assertEqual(self._service_under_test._service_provider, self._service_provider)
+        self.assertEqual(self._service_under_test._logger, self._service_provider.logger)
 
     def test_register_should_log_service_initialized(self) -> None:
         self._service_provider.logger.info.assert_called_with(
@@ -237,9 +231,7 @@ class TestEditDataService(unittest.TestCase):
 
         self._service_under_test._dispose(request_context, request)
 
-        self.assertEqual(
-            request_context.last_error_message, "Edit data session not found"
-        )
+        self.assertEqual(request_context.last_error_message, "Edit data session not found")
 
     def test_commit_when_edit_session_is_not_available(self) -> None:
         request_context = utils.MockRequestContext()
@@ -277,9 +269,7 @@ class TestEditDataService(unittest.TestCase):
     ) -> None:
         request_context = utils.MockRequestContext()
         edit_session = mock.MagicMock()
-        self._service_under_test._active_sessions[request_params.owner_uri] = (
-            edit_session
-        )
+        self._service_under_test._active_sessions[request_params.owner_uri] = edit_session
 
         handler(request_context, request_params)
 

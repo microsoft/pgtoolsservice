@@ -7,9 +7,12 @@ import unittest
 import unittest.mock as mock
 from typing import List, Optional, Tuple
 
-from psycopg import DatabaseError, Column, connection
+from psycopg import Column, DatabaseError, connection
 
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection, PG_CANCELLATION_QUERY
+from ossdbtoolsservice.driver.types.psycopg_driver import (
+    PG_CANCELLATION_QUERY,
+    PostgreSQLConnection,
+)
 from pgsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
 from tests.utils import MockPsycopgConnection
@@ -26,7 +29,7 @@ class MockNodeObject(NodeObject):
 
     @classmethod
     def _template_root(cls, root_server: Server):
-        return 'template_root'
+        return "template_root"
 
     @property
     def template_vars(self) -> str:
@@ -35,18 +38,23 @@ class MockNodeObject(NodeObject):
     def get_database_node(self):
         return mock.MagicMock(datlastsysoid=None)
 
+
 # MOCK CONNECTION ##########################################################
 
 
 def get_mock_columns(col_count: int) -> List[Column]:
-    return [Column(f'column{i}', None, 10, 10, None, None, True) for i in range(0, col_count + 1)]
+    return [
+        Column(f"column{i}", None, 10, 10, None, None, True) for i in range(0, col_count + 1)
+    ]
 
 
 def get_named_mock_columns(col_names: List[str]) -> List[Column]:
     return [Column(x, None, 10, 10, None, None, True) for x in col_names]
 
 
-def get_mock_results(col_count: int = 5, row_count: int = 5) -> Tuple[List[Column], List[dict]]:
+def get_mock_results(
+    col_count: int = 5, row_count: int = 5
+) -> Tuple[List[Column], List[dict]]:
     rows = []
     cols = get_mock_columns(col_count)
     for i in range(0, len(cols)):
@@ -55,13 +63,18 @@ def get_mock_results(col_count: int = 5, row_count: int = 5) -> Tuple[List[Colum
             if len(rows) >= j:
                 rows.append({})
 
-            rows[j][cols[i].name] = f'value{j}.{i}'
+            rows[j][cols[i].name] = f"value{j}.{i}"
 
     return cols, rows
 
 
 class MockCursor:
-    def __init__(self, results: Optional[Tuple[List[Column], List[dict]]], throw_on_execute=False, mogrified_value='SomeQuery'):
+    def __init__(
+        self,
+        results: Optional[Tuple[List[Column], List[dict]]],
+        throw_on_execute=False,
+        mogrified_value="SomeQuery",
+    ):
         # Setup the results, that will change value once the cursor is executed
         self.description = None
         self.rowcount = None
@@ -108,29 +121,34 @@ class MockCursor:
 
 
 class MockPGServerConnection(PostgreSQLConnection):
-    '''Class used to mock PGSQL ServerConnection objects for testing'''
+    """Class used to mock PGSQL ServerConnection objects for testing"""
 
     def __init__(
-            self,
-            cur: Optional[MockCursor] = None,
-            connection: Optional[MockPsycopgConnection] = None,
-            version: str = '131001',
-            name: str = 'postgres',
-            host: str = 'localhost',
-            port: str = '25565',
-            user: str = 'postgres'):
-
+        self,
+        cur: Optional[MockCursor] = None,
+        connection: Optional[MockPsycopgConnection] = None,
+        version: str = "131001",
+        name: str = "postgres",
+        host: str = "localhost",
+        port: str = "25565",
+        user: str = "postgres",
+    ):
         # Setup mocks for the connection
         self.close = mock.MagicMock()
         self.cursor = mock.MagicMock(return_value=cur)
 
         # if no mock pyscopg connection passed, create default one
         if not connection:
-            connection = MockPsycopgConnection(cursor=cur, dsn_parameters=f'host={host} dbname={name} user={user} port={port}')
+            connection = MockPsycopgConnection(
+                cursor=cur,
+                dsn_parameters=f"host={host} dbname={name} user={user} port={port}",
+            )
 
         # mock psycopg.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
-        with mock.patch('psycopg.connect', mock.Mock(return_value=connection)):
-            super().__init__({"host_name": host, "user_name": user, "port": port, "database_name": name})
+        with mock.patch("psycopg.connect", mock.Mock(return_value=connection)):
+            super().__init__(
+                {"host_name": host, "user_name": user, "port": port, "database_name": name}
+            )
 
     @property
     def connection(self) -> connection:
@@ -147,19 +165,19 @@ class MockPGServerConnection(PostgreSQLConnection):
 
 
 def assert_node_collection(prop: any, attrib: any):
-    test_case = unittest.TestCase('__init__')
+    test_case = unittest.TestCase("__init__")
     test_case.assertIsInstance(attrib, NodeCollection)
     test_case.assertIs(prop, attrib)
 
 
 def assert_threeway_equals(target: any, attrib: any, prop: any):
-    test_case = unittest.TestCase('__init__')
+    test_case = unittest.TestCase("__init__")
     test_case.assertEqual(attrib, target)
     test_case.assertEqual(prop, target)
 
 
 def assert_is_not_none_or_whitespace(target: str):
-    test_case = unittest.TestCase('__init__')
+    test_case = unittest.TestCase("__init__")
     test_case.assertIsNotNone(target)
     test_case.assertIsInstance(target, str)
-    test_case.assertNotEqual(target.strip(), '')
+    test_case.assertNotEqual(target.strip(), "")

@@ -7,35 +7,50 @@ import unittest
 from unittest import mock
 
 import tests.utils as utils
-from ossdbtoolsservice.query.batch import (Batch, BatchEvents,
-                                           ResultSetStorageType, SelectBatch,
-                                           create_batch, create_result_set)
-from ossdbtoolsservice.query.contracts import (SaveResultsRequestParams,
-                                               SelectionData)
-from ossdbtoolsservice.query.file_storage_result_set import \
-    FileStorageResultSet
+from ossdbtoolsservice.query.batch import (
+    Batch,
+    BatchEvents,
+    ResultSetStorageType,
+    SelectBatch,
+    create_batch,
+    create_result_set,
+)
+from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
+from ossdbtoolsservice.query.file_storage_result_set import FileStorageResultSet
 from ossdbtoolsservice.query.in_memory_result_set import InMemoryResultSet
 from tests.pgsmo_tests.utils import MockPGServerConnection
 
 
 class TestBatch(unittest.TestCase):
-
     def setUp(self):
         self._cursor = utils.MockCursor(None)
-        self._mock_psycopg_connection = utils.MockPsycopgConnection(dsn_parameters='host=test dbname=test')
-        self._connection = MockPGServerConnection(cur=self._cursor, connection=self._mock_psycopg_connection)
+        self._mock_psycopg_connection = utils.MockPsycopgConnection(
+            dsn_parameters="host=test dbname=test"
+        )
+        self._connection = MockPGServerConnection(
+            cur=self._cursor, connection=self._mock_psycopg_connection
+        )
         self._cursor.connection = self._mock_psycopg_connection
-        self._batch_text = 'Select * from t1'
+        self._batch_text = "Select * from t1"
         self._batch_id = 1
         self._batch_events = BatchEvents()
         self._selection_data = SelectionData()
         self._result_set = mock.MagicMock()
 
     def create_batch_with(self, batch, storage_type: ResultSetStorageType):
-        return batch(self._batch_text, self._batch_id, self._selection_data, self._batch_events, storage_type)
+        return batch(
+            self._batch_text,
+            self._batch_id,
+            self._selection_data,
+            self._batch_events,
+            storage_type,
+        )
 
     def create_and_execute_batch(self, batch):
-        with mock.patch('ossdbtoolsservice.query.batch.create_result_set', new=mock.Mock(return_value=self._result_set)):
+        with mock.patch(
+            "ossdbtoolsservice.query.batch.create_result_set",
+            new=mock.Mock(return_value=self._result_set),
+        ):
             batch = self.create_batch_with(batch, ResultSetStorageType.IN_MEMORY)
             batch.execute(self._connection)
             return batch
@@ -61,8 +76,8 @@ class TestBatch(unittest.TestCase):
         self.assertTrue(batch._has_executed)
 
     def test_select_batch_creates_server_side_cursor(self):
-        cursor_name = 'Test'
-        with mock.patch('uuid.uuid4', new=mock.Mock(return_value=cursor_name)):
+        cursor_name = "Test"
+        with mock.patch("uuid.uuid4", new=mock.Mock(return_value=cursor_name)):
             self.create_and_execute_batch(SelectBatch)
 
         self._connection.cursor.assert_called_once_with(name=cursor_name, withhold=True)
@@ -70,14 +85,17 @@ class TestBatch(unittest.TestCase):
     def test_prop_batch_summary(self):
         batch_summary = mock.MagicMock()
 
-        with mock.patch('ossdbtoolsservice.query.contracts.BatchSummary.from_batch', new=mock.Mock(return_value=batch_summary)):
-            self.assert_properties('batch_summary', batch_summary)
+        with mock.patch(
+            "ossdbtoolsservice.query.contracts.BatchSummary.from_batch",
+            new=mock.Mock(return_value=batch_summary),
+        ):
+            self.assert_properties("batch_summary", batch_summary)
 
     def test_prop_has_error(self):
-        self.assert_properties('has_error', False)
+        self.assert_properties("has_error", False)
 
     def test_prop_has_executed(self):
-        self.assert_properties('has_executed', True)
+        self.assert_properties("has_executed", True)
 
     def test_create_result_set_with_type_in_memory(self):
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 1, 1)
@@ -90,43 +108,69 @@ class TestBatch(unittest.TestCase):
         self.assertTrue(isinstance(result_set, FileStorageResultSet))
 
     def test_create_batch_for_select(self):
+        batch_text = """ Select
+        * from t1 """
 
-        batch_text = ''' Select
-        * from t1 '''
-
-        batch = create_batch(batch_text, 0, self._selection_data, self._batch_events, ResultSetStorageType.IN_MEMORY)
+        batch = create_batch(
+            batch_text,
+            0,
+            self._selection_data,
+            self._batch_events,
+            ResultSetStorageType.IN_MEMORY,
+        )
 
         self.assertTrue(isinstance(batch, SelectBatch))
 
     def test_create_batch_for_select_with_additional_spaces(self):
+        batch_text = "    Select    *      from t1 "
 
-        batch_text = '    Select    *      from t1 '
-
-        batch = create_batch(batch_text, 0, self._selection_data, self._batch_events, ResultSetStorageType.IN_MEMORY)
+        batch = create_batch(
+            batch_text,
+            0,
+            self._selection_data,
+            self._batch_events,
+            ResultSetStorageType.IN_MEMORY,
+        )
 
         self.assertTrue(isinstance(batch, SelectBatch))
 
     def test_create_batch_for_select_into(self):
+        batch_text = "    Select   into  temptable  from t1 "
 
-        batch_text = '    Select   into  temptable  from t1 '
-
-        batch = create_batch(batch_text, 0, self._selection_data, self._batch_events, ResultSetStorageType.IN_MEMORY)
+        batch = create_batch(
+            batch_text,
+            0,
+            self._selection_data,
+            self._batch_events,
+            ResultSetStorageType.IN_MEMORY,
+        )
 
         self.assertFalse(isinstance(batch, SelectBatch))
         self.assertTrue(isinstance(batch, Batch))
 
     def test_create_batch_for_non_select(self):
+        batch_text = "Insert into t1 values(1)"
 
-        batch_text = 'Insert into t1 values(1)'
-
-        batch = create_batch(batch_text, 0, self._selection_data, self._batch_events, ResultSetStorageType.IN_MEMORY)
+        batch = create_batch(
+            batch_text,
+            0,
+            self._selection_data,
+            self._batch_events,
+            ResultSetStorageType.IN_MEMORY,
+        )
 
         self.assertFalse(isinstance(batch, SelectBatch))
         self.assertTrue(isinstance(batch, Batch))
 
     def test_get_subset(self):
         expected_subset = []
-        batch = create_batch('select 1', 0, self._selection_data, self._batch_events, ResultSetStorageType.IN_MEMORY)
+        batch = create_batch(
+            "select 1",
+            0,
+            self._selection_data,
+            self._batch_events,
+            ResultSetStorageType.IN_MEMORY,
+        )
         self._result_set.get_subset = mock.Mock(return_value=expected_subset)
 
         batch._result_set = self._result_set
@@ -156,7 +200,9 @@ class TestBatch(unittest.TestCase):
 
         batch.save_as(params, file_factory, on_success, on_error)
 
-        result_set_save_as_mock.assert_called_once_with(params, file_factory, on_success, on_error)
+        result_set_save_as_mock.assert_called_once_with(
+            params, file_factory, on_success, on_error
+        )
 
     def test_save_as_with_invalid_batch_index(self):
         batch = self.create_and_execute_batch(Batch)
@@ -165,8 +211,10 @@ class TestBatch(unittest.TestCase):
 
         with self.assertRaises(IndexError) as context_manager:
             batch.save_as(params, None, None, None)
-            self.assertEqual('Result set index should be always 0', context_manager.exception.args[0])
+            self.assertEqual(
+                "Result set index should be always 0", context_manager.exception.args[0]
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

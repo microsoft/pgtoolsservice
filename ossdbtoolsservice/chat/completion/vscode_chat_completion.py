@@ -4,29 +4,30 @@
 # --------------------------------------------------------------------------------------------
 
 import sys
-from collections.abc import Mapping
+from collections.abc import AsyncGenerator, Mapping
 from logging import Logger
-from typing import Any, AsyncGenerator, Callable, ClassVar, Union
+from typing import Any, Callable, ClassVar, Union
+
 from pydantic import BaseModel
 from semantic_kernel.connectors.ai.chat_completion_client_base import (
     ChatCompletionClientBase,
-)
-from semantic_kernel.connectors.ai.prompt_execution_settings import (
-    PromptExecutionSettings,
 )
 from semantic_kernel.connectors.ai.function_call_choice_configuration import (
     FunctionCallChoiceConfiguration,
 )
 from semantic_kernel.connectors.ai.function_choice_type import FunctionChoiceType
+from semantic_kernel.connectors.ai.prompt_execution_settings import (
+    PromptExecutionSettings,
+)
 from semantic_kernel.contents import (
     AuthorRole,
     ChatHistory,
     ChatMessageContent,
+    FunctionCallContent,
+    FunctionResultContent,
     StreamingChatMessageContent,
     StreamingTextContent,
     TextContent,
-    FunctionCallContent,
-    FunctionResultContent,
 )
 
 from .completion_response_queues import CompletionResponseQueues
@@ -35,11 +36,11 @@ from .messages import (
     VSCodeLanguageModelChatMessage,
     VSCodeLanguageModelChatMessageRole,
     VSCodeLanguageModelChatTool,
+    VSCodeLanguageModelCompleteResultPart,
     VSCodeLanguageModelCompletionRequestParams,
     VSCodeLanguageModelFinishReason,
     VSCodeLanguageModelTextPart,
     VSCodeLanguageModelToolCallPart,
-    VSCodeLanguageModelCompleteResultPart,
     VSCodeLanguageModelToolResultPart,
 )
 from .vscode_chat_prompt_execution_settings import VSCodeChatPromptExecutionSettings
@@ -233,9 +234,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
             # Delete the response queue
             self._response_queues.delete_queue(request_id)
 
-    def _translate_response(
-        self, response: Any
-    ) -> tuple[StreamingChatMessageContent, bool]:
+    def _translate_response(self, response: Any) -> tuple[StreamingChatMessageContent, bool]:
         """Translate response to StreamingChatMessageContent format."""
         finished = False
         if isinstance(response, VSCodeLanguageModelTextPart):
@@ -274,9 +273,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
             )
             finished = True
         else:
-            raise RuntimeError(
-                f"Unexpected response type: {type(response)}: {response}"
-            )
+            raise RuntimeError(f"Unexpected response type: {type(response)}: {response}")
 
         return transformed_response, finished
 
@@ -328,9 +325,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                     content.append(
                         VSCodeLanguageModelToolResultPart(
                             callId=item.id,
-                            content=[
-                                VSCodeLanguageModelTextPart(value=str(item.result))
-                            ],
+                            content=[VSCodeLanguageModelTextPart(value=str(item.result))],
                         )
                     )
                 else:
@@ -384,9 +379,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
             ):
                 call_id = message.content[0].call_id
                 if call_id in tool_call_index:
-                    raise RuntimeError(
-                        f"Tool call with callId {call_id} already exists"
-                    )
+                    raise RuntimeError(f"Tool call with callId {call_id} already exists")
                 else:
                     tool_call_index[call_id] = {"call": message}
             elif message.content and isinstance(
@@ -470,9 +463,7 @@ class VSCodeChatCompletionHistoryTranslator:
                     content.append(
                         VSCodeLanguageModelToolResultPart(
                             callId=item.id,
-                            content=[
-                                VSCodeLanguageModelTextPart(value=str(item.result))
-                            ],
+                            content=[VSCodeLanguageModelTextPart(value=str(item.result))],
                         )
                     )
                 else:
@@ -557,9 +548,7 @@ class VSCodeChatCompletionHistoryTranslator:
             ):
                 call_id = message.content[0].call_id
                 if call_id in tool_call_index:
-                    raise RuntimeError(
-                        f"Tool call with callId {call_id} already exists"
-                    )
+                    raise RuntimeError(f"Tool call with callId {call_id} already exists")
                 else:
                     d = {"call": message}
                     tool_call_index[call_id] = d

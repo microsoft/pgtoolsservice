@@ -4,11 +4,13 @@
 # --------------------------------------------------------------------------------------------
 
 import enum
+
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 
 class TaskStatus(enum.Enum):
     """Enum representing task status"""
+
     NOT_STARTED = 0
     IN_PROGRESS = 1
     SUCCEEDED = 2
@@ -19,6 +21,7 @@ class TaskStatus(enum.Enum):
 
 class TaskInfo:
     """Contract class for representing tasks"""
+
     task_id: str
     status: TaskStatus
     server_name: str
@@ -28,14 +31,15 @@ class TaskInfo:
     provider_name: str
 
     def __init__(
-            self,
-            task_id: str,
-            status: TaskStatus,
-            provider_name: str,
-            server_name: str,
-            database_name: str,
-            task_name: str,
-            description: str):
+        self,
+        task_id: str,
+        status: TaskStatus,
+        provider_name: str,
+        server_name: str,
+        database_name: str,
+        task_name: str,
+        description: str,
+    ):
         self.task_id: str = task_id
         self.status: TaskStatus = status
         self.server_name: str = server_name

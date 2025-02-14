@@ -1,14 +1,13 @@
+import uuid
 from abc import ABC, abstractmethod
-
 from logging import Logger
 from typing import Any, Callable, Generic, Type, TypeVar
-import uuid
 
 from pydantic import BaseModel
 
 from ossdbtoolsservice.hosting.context import (
-    RequestContext,
     NotificationContext,
+    RequestContext,
 )
 from ossdbtoolsservice.hosting.errors import ResponseError
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
@@ -16,7 +15,6 @@ from ossdbtoolsservice.hosting.message_configuration import IncomingMessageConfi
 from ossdbtoolsservice.hosting.response_queues import ResponseQueues, SyncResponseQueues
 from ossdbtoolsservice.serialization.serializable import Serializable
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
-
 
 # Generic type for parameters (BaseModel, Serializable or a plain dict)
 TModel = TypeVar("TModel", bound=BaseModel | Serializable | dict[str, Any])
@@ -29,9 +27,7 @@ TResult = TypeVar("TResult", bound=BaseModel | str | dict[str, Any])
 
 
 class MessageHandler(Generic[TModel]):
-    def __init__(
-        self, param_class: Type[Any] | None, handler: Callable[[Any, TModel], None]
-    ):
+    def __init__(self, param_class: Type[Any] | None, handler: Callable[[Any, TModel], None]):
         self.param_class = param_class
         self.handler = handler
 
@@ -167,9 +163,7 @@ class MessageServer(ABC):
             try:
                 handler.handler(context, deserialized)
             except Exception as e:
-                error_msg = (
-                    f"Unhandled exception for method {message.message_method}: {e}"
-                )
+                error_msg = f"Unhandled exception for method {message.message_method}: {e}"
                 self._log_exception(error_msg)
                 context.send_error(error_msg, code=-32603)
         elif message.message_type == JSONRPCMessageType.Notification:
@@ -185,12 +179,12 @@ class MessageServer(ABC):
             try:
                 handler.handler(context, deserialized)
             except Exception as e:
-                error_msg = f"Unhandled exception for notification {message.message_method}: {e}"
+                error_msg = (
+                    f"Unhandled exception for notification {message.message_method}: {e}"
+                )
                 self._log_exception(error_msg)
         else:
-            self._log_warning(
-                f"Received unsupported message type {message.message_type}"
-            )
+            self._log_warning(f"Received unsupported message type {message.message_type}")
 
     # BUILT-IN HANDLERS ####################################################
 

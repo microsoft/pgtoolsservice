@@ -5,4 +5,4 @@
 
 from ossdbtoolsservice.connection.connection_service import ConnectionInfo, ConnectionService
 
-__all__ = ['ConnectionInfo', 'ConnectionService']
+__all__ = ["ConnectionInfo", "ConnectionService"]

@@ -5,15 +5,13 @@
 
 from typing import Dict, List, Tuple  # noqa
 
-from ossdbtoolsservice.language.query import (PGLightweightMetadata)
-from ossdbtoolsservice.utils.constants import (PG_PROVIDER_NAME)
+from ossdbtoolsservice.language.query import PGLightweightMetadata
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from pgsmo import Database as PGDatabase
 from pgsmo import Server as PGServer
 from pgsmo import Schema
 
-METADATA_MAP = {
-    PG_PROVIDER_NAME: PGLightweightMetadata
-}
+METADATA_MAP = {PG_PROVIDER_NAME: PGLightweightMetadata}
 
 
 class MetadataExecutor:
@@ -25,7 +23,8 @@ class MetadataExecutor:
     def __init__(self, server: PGServer):
         self.server = server
         self.lightweight_metadata = METADATA_MAP[server.connection._provider_name](
-            self.server.connection)
+            self.server.connection
+        )
         self.schemas: Dict[str, Schema] = {}
         self.schemas_loaded = False
 

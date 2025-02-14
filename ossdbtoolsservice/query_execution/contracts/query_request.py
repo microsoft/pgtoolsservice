@@ -4,7 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
+from ossdbtoolsservice.hosting import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -23,7 +26,7 @@ class SubsetParams(Serializable):
         self.rows_count: int = None
 
 
-SUBSET_REQUEST = IncomingMessageConfiguration('query/subset', SubsetParams)
+SUBSET_REQUEST = IncomingMessageConfiguration("query/subset", SubsetParams)
 
 
 class QueryCancelParams(Serializable):
@@ -33,7 +36,7 @@ class QueryCancelParams(Serializable):
         self.owner_uri = None
 
 
-CANCEL_REQUEST = IncomingMessageConfiguration('query/cancel', QueryCancelParams)
+CANCEL_REQUEST = IncomingMessageConfiguration("query/cancel", QueryCancelParams)
 
 
 class QueryDisposeParams(Serializable):
@@ -43,11 +46,12 @@ class QueryDisposeParams(Serializable):
         self.owner_uri = None
 
 
-DISPOSE_REQUEST = IncomingMessageConfiguration('query/dispose', QueryDisposeParams)
+DISPOSE_REQUEST = IncomingMessageConfiguration("query/dispose", QueryDisposeParams)
 
 
 class QueryCancelResult:
     """Parameters to return as the result of a query dispose request"""
+
     messages: str
 
     def __init__(self, messages: str = None):

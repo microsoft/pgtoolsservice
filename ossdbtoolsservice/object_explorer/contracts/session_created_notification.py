@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional     # noqa
+from typing import Optional  # noqa
 
 from ossdbtoolsservice.object_explorer.contracts.node_info import NodeInfo  # noqa
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
@@ -11,6 +11,7 @@ from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 class SessionCreatedParameters:
     """Parameters to be sent back when an object explorer session is created"""
+
     error_message: Optional[str]
     success: bool
     session_id: Optional[str]
@@ -23,6 +24,6 @@ class SessionCreatedParameters:
         self.root_node: Optional[NodeInfo] = None
 
 
-SESSION_CREATED_METHOD = 'objectexplorer/sessioncreated'
+SESSION_CREATED_METHOD = "objectexplorer/sessioncreated"
 
 OutgoingMessageRegistration.register_outgoing_message(SessionCreatedParameters)

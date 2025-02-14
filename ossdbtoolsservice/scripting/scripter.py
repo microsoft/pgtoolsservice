@@ -5,28 +5,31 @@
 
 from typing import Callable, Dict, Tuple
 
-from smo.common.node_object import NodeObject
-from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
-from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.scripting.contracts import ScriptOperation
-from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 import ossdbtoolsservice.utils as utils
-
+from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+from ossdbtoolsservice.scripting.contracts import ScriptOperation
 from pgsmo import Server as PGServer
+from smo.common.node_object import NodeObject
+from smo.common.scripting_mixins import (
+    ScriptableCreate,
+    ScriptableDelete,
+    ScriptableSelect,
+    ScriptableUpdate,
+)
 
-SERVER_TYPES = {
-    utils.constants.PG_PROVIDER_NAME: PGServer
-}
+SERVER_TYPES = {utils.constants.PG_PROVIDER_NAME: PGServer}
 
 
-class Scripter(object):
+class Scripter:
     """Service for retrieving operation scripts"""
+
     SCRIPT_OPERATION = Callable[[NodeObject], str]
     SCRIPT_HANDLERS: Dict[ScriptOperation, Tuple[type, SCRIPT_OPERATION]] = {
         ScriptOperation.CREATE: (ScriptableCreate, lambda obj: obj.create_script()),
         ScriptOperation.DELETE: (ScriptableDelete, lambda obj: obj.delete_script()),
         ScriptOperation.UPDATE: (ScriptableUpdate, lambda obj: obj.update_script()),
-        ScriptOperation.SELECT: (ScriptableSelect, lambda obj: obj.select_script())
+        ScriptOperation.SELECT: (ScriptableSelect, lambda obj: obj.select_script()),
     }
 
     def __init__(self, conn: ServerConnection):
@@ -44,9 +47,11 @@ class Scripter(object):
         # Make sure we have the handler
         handler: Tuple[type, self.SCRIPT_OPERATION] = self.SCRIPT_HANDLERS.get(operation)
         if handler is None:
-            raise ValueError(f'Script operation {operation} is not supported')    # TODO: Localize
+            raise ValueError(
+                f"Script operation {operation} is not supported"
+            )  # TODO: Localize
 
-        utils.validate.is_not_none('metadata', metadata)
+        utils.validate.is_not_none("metadata", metadata)
 
         # Get the object and make sure it supports the operation
         if metadata.urn:
@@ -56,6 +61,8 @@ class Scripter(object):
 
         if not isinstance(obj, handler[0]):
             # TODO: Localize
-            raise TypeError(f'Object of type {obj.__class__.__name__} does not support script operation {operation}')
+            raise TypeError(
+                f"Object of type {obj.__class__.__name__} does not support script operation {operation}"
+            )
 
         return handler[1](obj)

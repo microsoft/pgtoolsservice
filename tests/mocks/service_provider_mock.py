@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.utils import constants
-
 from tests.mocks.server_mock import ServerMock
 from tests.utils import get_mock_logger
 

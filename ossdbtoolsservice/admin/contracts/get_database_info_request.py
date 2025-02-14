@@ -30,8 +30,8 @@ class DatabaseInfo:
     DBNAME: str = "dbname"
     SIZE: str = "size"
 
-    def __init__(self, options: Dict[str, Any]) -> None:
-        self.options: Dict[str, Any] = options
+    def __init__(self, options: dict[str, Any]) -> None:
+        self.options: dict[str, Any] = options
 
 
 class GetDatabaseInfoResponse:

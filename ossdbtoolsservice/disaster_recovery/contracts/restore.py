@@ -12,6 +12,7 @@ from ossdbtoolsservice.serialization import Serializable
 
 class RestoreOptions(Serializable):
     """Options for a requested restore"""
+
     path: str
     data_only: bool
     clean: bool
@@ -74,13 +75,14 @@ class RestoreOptions(Serializable):
 
 class RestoreParams(Serializable):
     """Parameters for a restore request"""
+
     owner_uri: str
     options: RestoreOptions
     task_execution_mode: str
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'options': RestoreOptions}
+        return {"options": RestoreOptions}
 
     def __init__(self):
         self.owner_uri: str = None
@@ -88,220 +90,221 @@ class RestoreParams(Serializable):
         self.task_execution_mode = None
 
 
-RESTORE_REQUEST = IncomingMessageConfiguration('restore/restore', RestoreParams)
+RESTORE_REQUEST = IncomingMessageConfiguration("restore/restore", RestoreParams)
 
 # These options are handled in the disaster recovery service's _perform_restore method. The path has special case handling, but most are handled automatically
 # by using the option's name as the flag name, and the setting as the value. The RestoreOptions contract above has a field corresponding to each option.
 # TODO: Localize the display names and descriptions
 RESTORE_OPTIONS = FeatureMetadataProvider(
     True,
-    'Restore',
+    "Restore",
     [
         ServiceOption(
-            name='path',
-            display_name='Backup path',
-            description='The path to the backup file/directory to be used for restore',
+            name="path",
+            display_name="Backup path",
+            description="The path to the backup file/directory to be used for restore",
             value_type=ServiceOption.VALUE_TYPE_STRING,
-            is_required=True
+            is_required=True,
         ),
         ServiceOption(
-            name='dataOnly',
-            display_name='Data only',
-            description='Restore only the data, not the schema',
+            name="dataOnly",
+            display_name="Data only",
+            description="Restore only the data, not the schema",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='clean',
-            display_name='Clean',
-            description='Drop database objects before recreating',
+            name="clean",
+            display_name="Clean",
+            description="Drop database objects before recreating",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='create',
-            display_name='Create',
-            description='Create the target database',
+            name="create",
+            display_name="Create",
+            description="Create the target database",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='exitOnError',
-            display_name='Exit on error',
-            description='Exit on error (default is to continue)',
+            name="exitOnError",
+            display_name="Exit on error",
+            description="Exit on error (default is to continue)",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='index',
-            display_name='Index',
-            description='Restore named index',
+            name="index",
+            display_name="Index",
+            description="Restore named index",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='jobs',
-            display_name='Number of jobs',
-            description='The number of parallel jobs to use for the restore',
+            name="jobs",
+            display_name="Number of jobs",
+            description="The number of parallel jobs to use for the restore",
             value_type=ServiceOption.VALUE_TYPE_NUMBER,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='useList',
-            display_name='Use list filename',
-            description='Use table of contents from the given file for selecting/ordering output',
+            name="useList",
+            display_name="Use list filename",
+            description="Use table of contents from the given file for selecting/ordering output",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='schema',
-            display_name='Schema',
-            description='Restore only objects in the given schema',
+            name="schema",
+            display_name="Schema",
+            description="Restore only objects in the given schema",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noOwner',
-            display_name='No owner',
-            description='Skip restoration of object ownership',
+            name="noOwner",
+            display_name="No owner",
+            description="Skip restoration of object ownership",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='function',
-            display_name='Function',
-            description='Restore named function',
+            name="function",
+            display_name="Function",
+            description="Restore named function",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='schemaOnly',
-            display_name='Schema only',
-            description='Restore only the schema, not data',
+            name="schemaOnly",
+            display_name="Schema only",
+            description="Restore only the schema, not data",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='superuser',
-            display_name='Superuser name',
-            description='Superuser name to use for disabling triggers',
+            name="superuser",
+            display_name="Superuser name",
+            description="Superuser name to use for disabling triggers",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='table',
-            display_name='Table',
-            description='Restore named relation',
+            name="table",
+            display_name="Table",
+            description="Restore named relation",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='trigger',
-            display_name='Trigger',
-            description='Restore named trigger',
+            name="trigger",
+            display_name="Trigger",
+            description="Restore named trigger",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noPrivileges',
-            display_name='No privileges',
-            description='Skip restoration of access privileges (grant/revoke)',
+            name="noPrivileges",
+            display_name="No privileges",
+            description="Skip restoration of access privileges (grant/revoke)",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='singleTransaction',
-            display_name='Single transaction',
-            description='Restore as a single transaction',
+            name="singleTransaction",
+            display_name="Single transaction",
+            description="Restore as a single transaction",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='disableTriggers',
-            display_name='Disable triggers',
-            description='Disable triggers during data-only restore',
+            name="disableTriggers",
+            display_name="Disable triggers",
+            description="Disable triggers during data-only restore",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='enableRowSecurity',
-            display_name='Enable row security',
-            description='Enable row security',
+            name="enableRowSecurity",
+            display_name="Enable row security",
+            description="Enable row security",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='ifExists',
-            display_name='Use IF EXISTS',
-            description='Use IF EXISTS when dropping objects',
+            name="ifExists",
+            display_name="Use IF EXISTS",
+            description="Use IF EXISTS when dropping objects",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noDataForFailedTables',
-            display_name='No data for failed tables',
-            description='Do not restore data of tables that could not be created',
+            name="noDataForFailedTables",
+            display_name="No data for failed tables",
+            description="Do not restore data of tables that could not be created",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noSecurityLabels',
-            display_name='No security labels',
-            description='Do not restore security labels',
+            name="noSecurityLabels",
+            display_name="No security labels",
+            description="Do not restore security labels",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noTablespaces',
-            display_name='No tablespaces',
-            description='Do not restore tablespace assignments',
+            name="noTablespaces",
+            display_name="No tablespaces",
+            description="Do not restore tablespace assignments",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='section',
-            display_name='Section',
-            description='Restore named section (pre-data, data, or post-data)',
+            name="section",
+            display_name="Section",
+            description="Restore named section (pre-data, data, or post-data)",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='strictNames',
-            display_name='Strict names',
-            description='Require table and/or schema include patterns to match at least one entity each',
+            name="strictNames",
+            display_name="Strict names",
+            description="Require table and/or schema include patterns to match at least one entity each",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='role',
-            display_name='Role name',
-            description='Do SET ROLE to the given role name before restore',
+            name="role",
+            display_name="Role name",
+            description="Do SET ROLE to the given role name before restore",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
-        )
-    ])
+            group_name="Advanced",
+        ),
+    ],
+)

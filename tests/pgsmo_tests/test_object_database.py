@@ -15,16 +15,16 @@ from tests.pgsmo_tests.utils import MockPGServerConnection
 
 class TestDatabase(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'dbname',
-        'oid': 123,
-        'spcname': 'primary',
-        'datallowconn': True,
-        'cancreate': True,
-        'owner': 10,
-        'datistemplate': False,
-        'canconnect': True,
-        'is_system': False,
-        'datlastsysoid': 12368
+        "name": "dbname",
+        "oid": 123,
+        "spcname": "primary",
+        "datallowconn": True,
+        "cancreate": True,
+        "owner": 10,
+        "datistemplate": False,
+        "canconnect": True,
+        "is_system": False,
+        "datlastsysoid": 12368,
     }
 
     @property
@@ -34,13 +34,13 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
     @property
     def basic_properties(self):
         return {
-            'tablespace': TestDatabase.NODE_ROW['spcname'],
-            '_tablespace': TestDatabase.NODE_ROW['spcname'],
-            'allow_conn': TestDatabase.NODE_ROW['datallowconn'],
-            '_allow_conn': TestDatabase.NODE_ROW['datallowconn'],
-            'can_create': TestDatabase.NODE_ROW['cancreate'],
-            '_can_create': TestDatabase.NODE_ROW['cancreate'],
-            '_owner_oid': TestDatabase.NODE_ROW['owner']
+            "tablespace": TestDatabase.NODE_ROW["spcname"],
+            "_tablespace": TestDatabase.NODE_ROW["spcname"],
+            "allow_conn": TestDatabase.NODE_ROW["datallowconn"],
+            "_allow_conn": TestDatabase.NODE_ROW["datallowconn"],
+            "can_create": TestDatabase.NODE_ROW["cancreate"],
+            "_can_create": TestDatabase.NODE_ROW["cancreate"],
+            "_owner_oid": TestDatabase.NODE_ROW["owner"],
         }
 
     @property
@@ -71,7 +71,7 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
             "datcollate": "datcollate",
             "datctype": "datctype",
             "spcname": "spcname",
-            "datconnlimit": "datconnlimit"
+            "datconnlimit": "datconnlimit",
         }
 
     @property
@@ -82,7 +82,7 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
             "datcollate": False,
             "datctype": None,
             "spcname": "test",
-            "datconnlimit": 0
+            "datconnlimit": 0,
         }
 
     # CONSTRUCTION TESTS ###################################################
@@ -91,7 +91,7 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
 
     def test_init_connected(self):
         # If: I create a DB that is connected
-        name = 'dbname'
+        name = "dbname"
         mock_server = Server(MockPGServerConnection(None, name=name))
         db = Database(mock_server, name)
 
@@ -105,8 +105,8 @@ class TestDatabase(NodeObjectTestBase, unittest.TestCase):
 
     def test_init_not_connected(self):
         # If: I create a DB that is connected
-        name = 'dbname'
-        mock_conn = Server(MockPGServerConnection(None, name='not_connected'))
+        name = "dbname"
+        mock_conn = Server(MockPGServerConnection(None, name="not_connected"))
         db = Database(mock_conn, name)
 
         # Then:

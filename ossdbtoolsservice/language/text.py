@@ -4,7 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 """Utility functions for operating with text"""
-from typing import Tuple, Set
+
+from typing import Set, Tuple
 
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.workspace.contracts.common import Position, Range
@@ -13,24 +14,9 @@ from ossdbtoolsservice.workspace.contracts.common import Position, Range
 class TextUtilities:
     """Utility functions for operating with text"""
 
-    char_delimiters: Set[str] = set([
-        ' ',
-        '\t',
-        '\n',
-        '.',
-        '+',
-        '-',
-        '*',
-        '>',
-        '<',
-        '=',
-        '/',
-        '%',
-        ',',
-        ';',
-        '(',
-        ')'
-    ])
+    char_delimiters: Set[str] = set(
+        [" ", "\t", "\n", ".", "+", "-", "*", ">", "<", "=", "/", "%", ",", ";", "(", ")"]
+    )
 
     @classmethod
     def is_char_delimiter(cls, char: str):
@@ -47,7 +33,7 @@ class TextUtilities:
         if length == 0:
             return 0
 
-        utils.validate.is_within_range('start_col', start_col, 0, length)
+        utils.validate.is_within_range("start_col", start_col, 0, length)
         index = start_col
         while index < length:
             if TextUtilities.is_char_delimiter(line[index]):
@@ -66,7 +52,7 @@ class TextUtilities:
         if length == 0:
             return 0
 
-        utils.validate.is_within_range('start_col', start_col, 0, length)
+        utils.validate.is_within_range("start_col", start_col, 0, length)
         index = start_col
         if index == length or (index > 0 and TextUtilities.is_char_delimiter(line[index])):
             # If at the end of a line, skip to previous character to begin searching
@@ -105,4 +91,4 @@ class TextUtilities:
             text_range = Range.from_data(pos.line, start_col, pos.line, end_col)
             return (text, text_range)
         else:
-            return ('', None)
+            return ("", None)

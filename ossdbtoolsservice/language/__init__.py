@@ -5,4 +5,4 @@
 
 from ossdbtoolsservice.language.language_service import LanguageService
 
-__all__ = ['LanguageService']
+__all__ = ["LanguageService"]

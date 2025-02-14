@@ -6,13 +6,13 @@
 import threading
 from typing import List
 
-from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
+from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.metadata.contracts import (
+    METADATA_LIST_REQUEST,
     MetadataListParameters,
     MetadataListResponse,
-    METADATA_LIST_REQUEST,
     MetadataType,
     ObjectMetadata,
 )
@@ -51,9 +51,7 @@ class MetadataService(Service):
         )
 
         if self._service_provider.logger is not None:
-            self._service_provider.logger.info(
-                "Metadata service successfully initialized"
-            )
+            self._service_provider.logger.info("Metadata service successfully initialized")
 
     # REQUEST HANDLERS #####################################################
 
@@ -92,9 +90,7 @@ class MetadataService(Service):
         database_name = connection.database_name
 
         # Get the metadata query specific to the current provider and fill in the database name
-        metadata_query = QUERY_MAP[self._service_provider.provider].format(
-            database_name
-        )
+        metadata_query = QUERY_MAP[self._service_provider.provider].format(database_name)
 
         query_results = connection.execute_query(metadata_query, all=True)
 

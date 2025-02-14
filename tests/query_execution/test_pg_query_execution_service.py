@@ -16,6 +16,7 @@ from unittest import mock
 import psycopg
 from dateutil import parser
 
+import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectionType
 from ossdbtoolsservice.driver.types.psycopg_driver import (
@@ -75,7 +76,6 @@ from ossdbtoolsservice.query_execution.query_execution_service import (
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.pgsmo_tests.utils import MockPGServerConnection
-import tests.utils as utils
 
 
 class TestQueryService(unittest.TestCase):
@@ -120,9 +120,7 @@ class TestQueryService(unittest.TestCase):
             else:
                 return self.connection
 
-        self.connection_service.get_connection = mock.Mock(
-            side_effect=connection_side_effect
-        )
+        self.connection_service.get_connection = mock.Mock(side_effect=connection_side_effect)
 
     def tearDown(self) -> None:
         generated_files_path = "."
@@ -199,9 +197,7 @@ class TestQueryService(unittest.TestCase):
         result = query_execution_service._get_query_text_from_execute_params(params)
 
         # Then the query execution service calls the workspace service to get the query text
-        mock_workspace_service.get_text.assert_called_once_with(
-            params.owner_uri, mock.ANY
-        )
+        mock_workspace_service.get_text.assert_called_once_with(params.owner_uri, mock.ANY)
         self.assertEqual(result, query)
 
     def test_get_query_selection_none(self) -> None:
@@ -267,9 +263,7 @@ class TestQueryService(unittest.TestCase):
         notification_calls = self.request_context.send_notification.mock_calls
         # Get the message params for all message notifications that were sent
         call_params_list = [
-            call[1][1]
-            for call in notification_calls
-            if call[1][0] == MESSAGE_NOTIFICATION
+            call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION
         ]
         # Assert that at least one message notification was sent and that it was an error message
         self.assertGreater(len(call_params_list), 0)
@@ -286,9 +280,7 @@ class TestQueryService(unittest.TestCase):
                 self.request_context, params
             )
             self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
-        except (
-            BaseException
-        ):  # This test doesn't mock enough to actually execute the query
+        except BaseException:  # This test doesn't mock enough to actually execute the query
             pass
 
         # Then there should have been a response sent to my request
@@ -305,9 +297,7 @@ class TestQueryService(unittest.TestCase):
                 self.request_context, params
             )
             self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
-        except (
-            BaseException
-        ):  # This test doesn't mock enough to actually execute the query
+        except BaseException:  # This test doesn't mock enough to actually execute the query
             pass
 
         # Then there should have been a response sent to my request
@@ -331,9 +321,7 @@ class TestQueryService(unittest.TestCase):
         result_ordinal = 0
         rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
         cursor = utils.MockCursor(rows)
-        query_results[owner_uri]._batches.append(
-            Batch("", batch_ordinal, SelectionData())
-        )
+        query_results[owner_uri]._batches.append(Batch("", batch_ordinal, SelectionData()))
 
         result_set = create_result_set(
             ResultSetStorageType.IN_MEMORY, result_ordinal, batch_ordinal
@@ -431,9 +419,7 @@ class TestQueryService(unittest.TestCase):
         cursor = utils.MockCursor([])
         cursor.description = description
 
-        result_set = create_result_set(
-            ResultSetStorageType.IN_MEMORY, ordinal, batch_ordinal
-        )
+        result_set = create_result_set(ResultSetStorageType.IN_MEMORY, ordinal, batch_ordinal)
 
         get_column_info_mock = mock.Mock(return_value=test_columns)
 
@@ -506,9 +492,7 @@ class TestQueryService(unittest.TestCase):
         # access to the arguments list of the notification call
         notification_calls = self.request_context.send_notification.mock_calls
         call_params_list = [
-            call[1][1]
-            for call in notification_calls
-            if call[1][0] == MESSAGE_NOTIFICATION
+            call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION
         ]
 
         # Assert that at least one message notification was sent and that there were no errors
@@ -567,9 +551,7 @@ class TestQueryService(unittest.TestCase):
         an error during execution of a query
         """
         # Set up query execution side effect and params sent as part of a QE request
-        self.cursor.execute = mock.Mock(
-            side_effect=self.cursor.execute_failure_side_effects
-        )
+        self.cursor.execute = mock.Mock(side_effect=self.cursor.execute_failure_side_effects)
         params = get_execute_string_params()
 
         # If we handle an execute query request
@@ -589,9 +571,7 @@ class TestQueryService(unittest.TestCase):
         # access to the arguments list of the notification call
         notification_calls = self.request_context.send_notification.mock_calls
         call_params_list = [
-            call[1][1]
-            for call in notification_calls
-            if call[1][0] == MESSAGE_NOTIFICATION
+            call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION
         ]
 
         # Assert that only two message notifications were sent.
@@ -611,9 +591,7 @@ class TestQueryService(unittest.TestCase):
         an error during deploy
         """
         # Set up query execution side effect and params sent as part of a deploy request
-        self.cursor.execute = mock.Mock(
-            side_effect=self.cursor.execute_failure_side_effects
-        )
+        self.cursor.execute = mock.Mock(side_effect=self.cursor.execute_failure_side_effects)
         params = get_execute_string_params()
 
         # If we handle an execute deploy request
@@ -676,9 +654,7 @@ class TestQueryService(unittest.TestCase):
                 self.request_context, execute_params
             )
             # Wait for query execution worker thread to finish
-            self.query_execution_service.owner_to_thread_map[
-                execute_params.owner_uri
-            ].join()
+            self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
 
         query = self.query_execution_service.query_results["test_uri"]
 
@@ -735,9 +711,7 @@ class TestQueryService(unittest.TestCase):
         self.query_execution_service._handle_execute_query_request(
             self.request_context, execute_params
         )
-        self.query_execution_service.owner_to_thread_map[
-            execute_params.owner_uri
-        ].join()
+        self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
         query = self.query_execution_service.query_results[execute_params.owner_uri]
 
         # Then the execute request handler's execute is not called,
@@ -780,9 +754,7 @@ class TestQueryService(unittest.TestCase):
             self.query_execution_service._handle_execute_query_request(
                 self.request_context, execute_params
             )
-            self.query_execution_service.owner_to_thread_map[
-                execute_params.owner_uri
-            ].join()
+            self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
             self.query_execution_service._handle_cancel_query_request(
                 self.request_context, cancel_params
             )
@@ -914,9 +886,7 @@ class TestQueryService(unittest.TestCase):
         }
 
         # If I call the subset request handler
-        self.query_execution_service._handle_subset_request(
-            self.request_context, params
-        )
+        self.query_execution_service._handle_subset_request(self.request_context, params)
 
         # Then the response should match the subset we requested
         response = self.request_context.last_response_params
@@ -1055,9 +1025,7 @@ class TestQueryService(unittest.TestCase):
         params.owner_uri = uri
 
         # If we attempt to dispose of an existing owner uri's query results when the result is populated
-        self.query_execution_service._handle_dispose_request(
-            self.request_context, params
-        )
+        self.query_execution_service._handle_dispose_request(self.request_context, params)
 
         # Then the uri key should no longer be in the results, and we sent an empty response
         self.assertTrue(uri not in self.query_execution_service.query_results)
@@ -1073,9 +1041,7 @@ class TestQueryService(unittest.TestCase):
         params.owner_uri = uri
 
         # If we attempt to dispose of a query result that doesn't exist
-        self.query_execution_service._handle_dispose_request(
-            self.request_context, params
-        )
+        self.query_execution_service._handle_dispose_request(self.request_context, params)
 
         # Then that result still doesn't exist, and we send an error as a response
         self.assertTrue(uri not in self.query_execution_service.query_results)
@@ -1094,9 +1060,7 @@ class TestQueryService(unittest.TestCase):
         params = QueryDisposeParams()
         params.owner_uri = uri
 
-        self.query_execution_service._handle_dispose_request(
-            self.request_context, params
-        )
+        self.query_execution_service._handle_dispose_request(self.request_context, params)
 
         self.assertTrue(uri not in self.query_execution_service.query_results)
         self.request_context.send_response.assert_called_once_with({})
@@ -1118,9 +1082,7 @@ class TestQueryService(unittest.TestCase):
         params = QueryDisposeParams()
         params.owner_uri = uri
 
-        self.query_execution_service._handle_dispose_request(
-            self.request_context, params
-        )
+        self.query_execution_service._handle_dispose_request(self.request_context, params)
 
         self.assertTrue(uri not in self.query_execution_service.query_results)
         self.request_context.send_response.assert_called_once_with({})
@@ -1267,9 +1229,7 @@ class TestQueryService(unittest.TestCase):
         """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
         # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
-        self.mock_psycopg_connection.TransactionStatus = (
-            psycopg.pq.TransactionStatus.INERROR
-        )
+        self.mock_psycopg_connection.TransactionStatus = psycopg.pq.TransactionStatus.INERROR
         query_params = get_execute_string_params()
         query = Query(
             query_params.owner_uri,
@@ -1375,9 +1335,7 @@ class TestQueryService(unittest.TestCase):
 
         mock_query = mock.MagicMock()
 
-        self.query_execution_service.query_results[request_params.owner_uri] = (
-            mock_query
-        )
+        self.query_execution_service.query_results[request_params.owner_uri] = mock_query
 
         self.query_execution_service._handle_save_as_csv_request(
             self.request_context, request_params
@@ -1412,9 +1370,7 @@ class TestQueryService(unittest.TestCase):
 
         mock_query = mock.MagicMock()
 
-        self.query_execution_service.query_results[request_params.owner_uri] = (
-            mock_query
-        )
+        self.query_execution_service.query_results[request_params.owner_uri] = mock_query
 
         self.query_execution_service._handle_save_as_json_request(
             self.request_context, request_params
@@ -1434,9 +1390,7 @@ class TestQueryService(unittest.TestCase):
 
         mock_query = mock.MagicMock()
 
-        self.query_execution_service.query_results[request_params.owner_uri] = (
-            mock_query
-        )
+        self.query_execution_service.query_results[request_params.owner_uri] = mock_query
 
         self.query_execution_service._handle_save_as_excel_request(
             self.request_context, request_params

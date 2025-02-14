@@ -44,9 +44,7 @@ class TestScriptingService(unittest.TestCase):
         server = utils.MockMessageServer()
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        sp: ServiceProvider = ServiceProvider(
-            server, {}, utils.get_mock_logger()
-        )
+        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
 
         # If: I register a scripting service
         ss: ScriptingService = ScriptingService()
@@ -81,9 +79,7 @@ class TestScriptingService(unittest.TestCase):
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         ss = ScriptingService()
-        ss._service_provider = utils.get_mock_service_provider(
-            {CONNECTION_SERVICE_NAME: cs}
-        )
+        ss._service_provider = utils.get_mock_service_provider({CONNECTION_SERVICE_NAME: cs})
 
         # If: I create an OE session with missing params
         rc: RequestFlowValidator = RequestFlowValidator()
@@ -104,9 +100,7 @@ class TestScriptingService(unittest.TestCase):
         cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         ss = ScriptingService()
-        ss._service_provider = utils.get_mock_service_provider(
-            {CONNECTION_SERVICE_NAME: cs}
-        )
+        ss._service_provider = utils.get_mock_service_provider({CONNECTION_SERVICE_NAME: cs})
 
         # ... Create validation logic for responses
         def validate_response(response: ScriptAsResponse) -> None:

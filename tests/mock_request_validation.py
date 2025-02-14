@@ -102,9 +102,7 @@ class RequestFlowValidator:
 
     def validate(self):
         # Iterate over the two lists in sync to to see if they are the same
-        for i in range(
-            0, max([len(self._expected_messages), len(self._received_messages)])
-        ):
+        for i in range(0, max([len(self._expected_messages), len(self._received_messages)])):
             # Step 0) Make sure both messages exist
             if i >= len(self._expected_messages):
                 raise Exception(

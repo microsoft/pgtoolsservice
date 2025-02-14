@@ -3,23 +3,30 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import abstractmethod
 import io
+from abc import abstractmethod
 from typing import List
 
+from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn
 from ossdbtoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
-from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
 
 
 class SaveAsWriter(ServiceBufferFileStream):
-
     def __init__(self, stream: io.BufferedWriter, params):
         ServiceBufferFileStream.__init__(self, stream)
 
         self._params = params
-        self._column_start_index: int = params.column_start_index if params.is_save_selection else None
-        self._column_end_index: int = params.column_end_index if params.is_save_selection else None
-        self._column_count: int = params.column_end_index - params.column_start_index + 1 if params.is_save_selection else None
+        self._column_start_index: int = (
+            params.column_start_index if params.is_save_selection else None
+        )
+        self._column_end_index: int = (
+            params.column_end_index if params.is_save_selection else None
+        )
+        self._column_count: int = (
+            params.column_end_index - params.column_start_index + 1
+            if params.is_save_selection
+            else None
+        )
 
     @abstractmethod
     def write_row(self, row: List[DbCellValue], columns: List[DbColumn]):

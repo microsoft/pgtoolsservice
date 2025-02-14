@@ -2,18 +2,18 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-from typing import Callable, List, Optional
-import re
 import logging
+import re
 import unittest
 import unittest.mock as mock
+from typing import Callable, List, Optional
 
 import psycopg
 from psycopg.connection import AdaptersMap
 
 from ossdbtoolsservice.hosting import (
-    RequestContext,
     NotificationContext,
+    RequestContext,
     ServiceProvider,
 )
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
@@ -115,7 +115,7 @@ class MockRequestContext(RequestContext):
         self.last_error_message = str(ex)
 
 
-class MockPsycopgConnection(object):
+class MockPsycopgConnection:
     """Class used to mock psycopg connection objects for testing"""
 
     TransactionStatus = mock.Mock(return_value=psycopg.pq.TransactionStatus.IDLE)
@@ -221,9 +221,7 @@ class MockCursor:
         for handler in self.connection.notice_handlers:
             handler(MockNotice("foo", "NOTICE"))
             handler(MockNotice("bar", "DEBUG"))
-        self.rowcount = (
-            len(self._query_results) if self._query_results is not None else 0
-        )
+        self.rowcount = len(self._query_results) if self._query_results is not None else 0
 
     def execute_failure_side_effects(self, *args):
         """Set up dummy results and raise error for query execution failure"""

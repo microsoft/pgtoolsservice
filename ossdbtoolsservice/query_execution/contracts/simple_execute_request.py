@@ -5,8 +5,11 @@
 
 from typing import List
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
-from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
+from ossdbtoolsservice.hosting import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
+from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -24,11 +27,15 @@ class SimpleExecuteResponse:
     row_count: int
     column_info: List[DbColumn]
 
-    def __init__(self, rows: List[List[DbCellValue]], row_count: int, column_info: List[DbColumn]):
+    def __init__(
+        self, rows: List[List[DbCellValue]], row_count: int, column_info: List[DbColumn]
+    ):
         self.rows = rows
         self.row_count = row_count
         self.column_info = column_info
 
 
-SIMPLE_EXECUTE_REQUEST = IncomingMessageConfiguration('query/simpleexecute', SimpleExecuteRequest)
+SIMPLE_EXECUTE_REQUEST = IncomingMessageConfiguration(
+    "query/simpleexecute", SimpleExecuteRequest
+)
 OutgoingMessageRegistration.register_outgoing_message(SimpleExecuteResponse)

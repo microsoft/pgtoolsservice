@@ -5,48 +5,47 @@
 
 import unittest
 
+import tests.pgsmo_tests.utils as utils
 from pgsmo.objects.server.server import Server
 from pgsmo.objects.table_objects.column import Column
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
-import tests.pgsmo_tests.utils as utils
 
 
 class TestColumn(NodeObjectTestBase, unittest.TestCase):
     NODE_QUERY = {
-        'name': 'abc',
-        'datatype': 'character',
-        'oid': 123,
-        'has_default_val': True,
-        'not_null': True,
-        'isprimarykey': True,
-        'is_updatable': False,
-        'isunique': True,
-        'typoid': 18,
-        'default': 'nextval('
+        "name": "abc",
+        "datatype": "character",
+        "oid": 123,
+        "has_default_val": True,
+        "not_null": True,
+        "isprimarykey": True,
+        "is_updatable": False,
+        "isunique": True,
+        "typoid": 18,
+        "default": "nextval(",
     }
 
     @property
     def basic_properties(self):
         return {
-            'has_default_value': self.node_query['has_default_val'],
-            '_has_default_value': self.node_query['has_default_val'],
-            'not_null': self.node_query['not_null'],
-            '_not_null': self.node_query['not_null'],
-            '_column_ordinal': self.node_query['oid'] - 1,
-            'column_ordinal': self.node_query['oid'] - 1,
-            '_is_key': self.node_query['isprimarykey'],
-            'is_key': self.node_query['isprimarykey'],
-            '_is_readonly': self.node_query['is_updatable'] is False,
-            'is_readonly': self.node_query['is_updatable'] is False,
-            '_is_unique': self.node_query['isunique'],
-            'is_unique': self.node_query['isunique'],
-            '_type_oid': self.node_query['typoid'],
-            'type_oid': self.node_query['typoid'],
-            '_default_value': self.node_query['default'],
-            'default_value': self.node_query['default'],
-            '_is_auto_increment': True,
-            'is_auto_increment': True,
-
+            "has_default_value": self.node_query["has_default_val"],
+            "_has_default_value": self.node_query["has_default_val"],
+            "not_null": self.node_query["not_null"],
+            "_not_null": self.node_query["not_null"],
+            "_column_ordinal": self.node_query["oid"] - 1,
+            "column_ordinal": self.node_query["oid"] - 1,
+            "_is_key": self.node_query["isprimarykey"],
+            "is_key": self.node_query["isprimarykey"],
+            "_is_readonly": self.node_query["is_updatable"] is False,
+            "is_readonly": self.node_query["is_updatable"] is False,
+            "_is_unique": self.node_query["isunique"],
+            "is_unique": self.node_query["isunique"],
+            "_type_oid": self.node_query["typoid"],
+            "type_oid": self.node_query["typoid"],
+            "_default_value": self.node_query["default"],
+            "default_value": self.node_query["default"],
+            "_is_auto_increment": True,
+            "is_auto_increment": True,
         }
 
     @property
@@ -70,7 +69,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             "attstattarget": "attstattarget",
             "attstorage": "attstorage",
             "is_sql": "is_sql",
-            "elemoid": "elemoid"
+            "elemoid": "elemoid",
         }
 
     @property
@@ -94,7 +93,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
             "attstattarget": "test",
             "attstorage": "test",
             "is_sql": True,
-            "elemoid": 18
+            "elemoid": 18,
         }
 
     @property
@@ -107,7 +106,7 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def init_lambda(self):
-        return lambda server, parent, name: Column(server, parent, name, 'character')
+        return lambda server, parent, name: Column(server, parent, name, "character")
 
     @property
     def node_query(self):
@@ -117,9 +116,9 @@ class TestColumn(NodeObjectTestBase, unittest.TestCase):
     @staticmethod
     def _custom_validate_from_node(obj, mock_server: Server):
         # Make sure that the datatype value is set
-        utils.assert_threeway_equals('character', obj._datatype, obj.datatype)
+        utils.assert_threeway_equals("character", obj._datatype, obj.datatype)
 
     @staticmethod
     def _custom_validate_init(obj, mock_server: Server):
         # Make sure that the datatype value is set
-        utils.assert_threeway_equals('character', obj._datatype, obj.datatype)
+        utils.assert_threeway_equals("character", obj._datatype, obj.datatype)

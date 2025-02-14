@@ -6,12 +6,13 @@
 """This module holds contracts for the language service formatter calls"""
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
-from ossdbtoolsservice.workspace.contracts import Range, TextDocumentIdentifier
 from ossdbtoolsservice.serialization import Serializable
+from ossdbtoolsservice.workspace.contracts import Range, TextDocumentIdentifier
 
 
 class FormattingOptions(Serializable):
     """Language Service options passed in each format request"""
+
     tab_size: int
     insert_spaces: bool
 
@@ -31,12 +32,13 @@ class DocumentFormattingParams(Serializable):
     """
     Parameters used in a formatting request to process an entire document
     """
+
     text_document: TextDocumentIdentifier
     options: FormattingOptions
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'text_document': TextDocumentIdentifier, 'options': FormattingOptions}
+        return {"text_document": TextDocumentIdentifier, "options": FormattingOptions}
 
     def __init__(self):
         self.text_document: TextDocumentIdentifier = None
@@ -47,18 +49,27 @@ class DocumentRangeFormattingParams(DocumentFormattingParams):
     """
     Parameters used in a formatting request to process a specific text range
     """
+
     range: Range
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'range': Range, 'text_document': TextDocumentIdentifier, 'options': FormattingOptions}
+        return {
+            "range": Range,
+            "text_document": TextDocumentIdentifier,
+            "options": FormattingOptions,
+        }
 
     def __init__(self):
         DocumentFormattingParams.__init__(self)
         self.range: Range = None
 
 
-DOCUMENT_FORMATTING_REQUEST = IncomingMessageConfiguration('textDocument/formatting', DocumentFormattingParams)
+DOCUMENT_FORMATTING_REQUEST = IncomingMessageConfiguration(
+    "textDocument/formatting", DocumentFormattingParams
+)
 
 
-DOCUMENT_RANGE_FORMATTING_REQUEST = IncomingMessageConfiguration('textDocument/rangeFormatting', DocumentRangeFormattingParams)
+DOCUMENT_RANGE_FORMATTING_REQUEST = IncomingMessageConfiguration(
+    "textDocument/rangeFormatting", DocumentRangeFormattingParams
+)

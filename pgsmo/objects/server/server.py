@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, List, Mapping, Optional, Tuple, Callable      # noqa
-from urllib.parse import ParseResult, urlparse, quote_plus       # noqa
+from typing import Dict, List, Mapping, Optional, Tuple, Callable  # noqa
+from urllib.parse import ParseResult, urlparse, quote_plus  # noqa
 
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
@@ -15,15 +15,19 @@ from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import smo.utils as utils
 
-SEARCH_PATH_QUERY = 'SELECT * FROM unnest(current_schemas(true))'
-SEARCH_PATH_QUERY_FALLBACK = 'SELECT * FROM current_schemas(true)'
+SEARCH_PATH_QUERY = "SELECT * FROM unnest(current_schemas(true))"
+SEARCH_PATH_QUERY_FALLBACK = "SELECT * FROM current_schemas(true)"
 
 
 class Server:
-    TEMPLATE_ROOT = utils.templating.get_template_root(__file__, 'templates')
+    TEMPLATE_ROOT = utils.templating.get_template_root(__file__, "templates")
 
     # CONSTRUCTOR ##########################################################
-    def __init__(self, conn: ServerConnection, db_connection_callback: Callable[[str], ServerConnection] = None):
+    def __init__(
+        self,
+        conn: ServerConnection,
+        db_connection_callback: Callable[[str], ServerConnection] = None,
+    ):
         """
         Initializes a server object using the provided connection
         :param conn: a connection object
@@ -38,13 +42,19 @@ class Server:
         self._maintenance_db_name: str = self._conn.database_name
 
         # These properties will be defined later
-        self._recovery_props: NodeLazyPropertyCollection = NodeLazyPropertyCollection(self._fetch_recovery_state)
+        self._recovery_props: NodeLazyPropertyCollection = NodeLazyPropertyCollection(
+            self._fetch_recovery_state
+        )
 
         # Declare the child objects
         self._child_objects: Mapping[str, NodeCollection] = {
-            Database.__name__: NodeCollection(lambda: Database.get_nodes_for_parent(self, None)),
+            Database.__name__: NodeCollection(
+                lambda: Database.get_nodes_for_parent(self, None)
+            ),
             Role.__name__: NodeCollection(lambda: Role.get_nodes_for_parent(self, None)),
-            Tablespace.__name__: NodeCollection(lambda: Tablespace.get_nodes_for_parent(self, None)),
+            Tablespace.__name__: NodeCollection(
+                lambda: Tablespace.get_nodes_for_parent(self, None)
+            ),
         }
         self._search_path = NodeCollection(lambda: self._fetch_search_path())
 
@@ -67,7 +77,7 @@ class Server:
     @property
     def in_recovery(self) -> Optional[bool]:
         """Whether or not the server is in recovery mode. If None, value was not loaded from server"""
-        return self._recovery_props.get('inrecovery')
+        return self._recovery_props.get("inrecovery")
 
     @property
     def maintenance_db_name(self) -> str:
@@ -87,7 +97,7 @@ class Server:
     @property
     def server_type(self) -> str:
         """Server type for distinguishing between standard PG and PG supersets"""
-        return 'pg'  # TODO: Determine if a server is PPAS or PG
+        return "pg"  # TODO: Determine if a server is PPAS or PG
 
     @property
     def urn_base(self) -> str:
@@ -95,13 +105,13 @@ class Server:
         user = quote_plus(self.connection.user_name)
         host = quote_plus(self.host)
         port = quote_plus(str(self.port))
-        return f'//{user}@{host}:{port}/'
+        return f"//{user}@{host}:{port}/"
         # TODO: Ensure that this formatting works with non-username/password logins
 
     @property
     def wal_paused(self) -> Optional[bool]:
         """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
-        return self._recovery_props.get('isreplaypaused')
+        return self._recovery_props.get("isreplaypaused")
 
     # -CHILD OBJECTS #######################################################
     @property
@@ -135,13 +145,15 @@ class Server:
     # METHODS ##############################################################
     def get_object_by_urn(self, urn: str) -> NodeObject:
         # Validate that the urn is a full urn
-        if urn is None or urn.strip() == '':
-            raise ValueError('URN was not provided')    # TODO: Localize?
+        if urn is None or urn.strip() == "":
+            raise ValueError("URN was not provided")  # TODO: Localize?
 
         parsed_urn: ParseResult = urlparse(urn)
-        reconstructed_urn_base = f'//{parsed_urn.netloc}/'
+        reconstructed_urn_base = f"//{parsed_urn.netloc}/"
         if reconstructed_urn_base != self.urn_base:
-            raise ValueError('Provided URN is not applicable to this server')   # TODO: Localize?
+            raise ValueError(
+                "Provided URN is not applicable to this server"
+            )  # TODO: Localize?
 
         # Process the first fragment
         class_name, oid, remaining = utils.process_urn(parsed_urn.path)
@@ -149,7 +161,9 @@ class Server:
         # Find the matching collection
         collection = self._child_objects.get(class_name)
         if collection is None:
-            raise ValueError(f'URN is invalid: server does not contain {class_name} objects')   # TODO: Localize?
+            raise ValueError(
+                f"URN is invalid: server does not contain {class_name} objects"
+            )  # TODO: Localize?
 
         # Find the matching object
         # TODO: Create a .get method for NodeCollection (see https://github.com/Microsoft/carbon/issues/1713)
@@ -164,9 +178,11 @@ class Server:
         # Reset property collections
         self._recovery_props.reset()
 
-    def find_schema(self, metadata) -> 'Schema':
-        """ Find the schema in the server to script as """
-        schema_name = metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
+    def find_schema(self, metadata) -> "Schema":
+        """Find the schema in the server to script as"""
+        schema_name = (
+            metadata.name if metadata.metadata_type_name == "Schema" else metadata.schema
+        )
         database = self.maintenance_db
         parent_schema = None
         try:
@@ -180,19 +196,19 @@ class Server:
             return None
 
     def find_table(self, metadata):
-        """ Find the table in the server to script as """
-        return self.find_schema_child_object('tables', metadata)
+        """Find the table in the server to script as"""
+        return self.find_schema_child_object("tables", metadata)
 
     def find_function(self, metadata):
-        """ Find the function in the server to script as """
-        return self.find_schema_child_object('functions', metadata)
+        """Find the function in the server to script as"""
+        return self.find_schema_child_object("functions", metadata)
 
     def find_procedure(self, metadata):
-        """ Find the procedure in the server to script as """
-        return self.find_schema_child_object('procedures', metadata)
+        """Find the procedure in the server to script as"""
+        return self.find_schema_child_object("procedures", metadata)
 
     def find_database(self, metadata):
-        """ Find a database in the server """
+        """Find a database in the server"""
         try:
             database_name = metadata.name
             database = self.databases[database_name]
@@ -201,15 +217,15 @@ class Server:
             return None
 
     def find_view(self, metadata):
-        """ Find a view in the server """
-        return self.find_schema_child_object('views', metadata)
+        """Find a view in the server"""
+        return self.find_schema_child_object("views", metadata)
 
     def find_materialized_view(self, metadata):
-        """ Find a view in the server """
-        return self.find_schema_child_object('materialized_views', metadata)
+        """Find a view in the server"""
+        return self.find_schema_child_object("materialized_views", metadata)
 
     def find_role(self, metadata):
-        """ Find a role in the server """
+        """Find a role in the server"""
         try:
             role_name = metadata.name
             role = self.roles[role_name]
@@ -218,58 +234,82 @@ class Server:
             return None
 
     def find_sequence(self, metadata):
-        """ Find a sequence in the server """
-        return self.find_schema_child_object('sequences', metadata)
+        """Find a sequence in the server"""
+        return self.find_schema_child_object("sequences", metadata)
 
     def find_datatype(self, metadata):
-        """ Find a datatype in the server """
-        return self.find_schema_child_object('datatypes', metadata)
+        """Find a datatype in the server"""
+        return self.find_schema_child_object("datatypes", metadata)
 
     def find_index(self, metadata):
-        """ Find an index in the server. Indexes are always children of either tables or materialized views """
+        """Find an index in the server. Indexes are always children of either tables or materialized views"""
         try:
             idx_name = metadata.name
             # For table_objects, the schema key in metadata stores "schema.table_name". See get_node_info
-            schema_name, table_or_mv_name = metadata.schema.split('.')
+            schema_name, table_or_mv_name = metadata.schema.split(".")
 
             # Find the table and retrieve the index if it exists
-            table_metadata = ObjectMetadata(metadata_type_name='Table', name=table_or_mv_name, schema=schema_name)
+            table_metadata = ObjectMetadata(
+                metadata_type_name="Table", name=table_or_mv_name, schema=schema_name
+            )
             table_obj = self.find_table(table_metadata)
             if table_obj is not None:
-                idx = next((index for index in table_obj.indexes if index.name == idx_name), None)
+                idx = next(
+                    (index for index in table_obj.indexes if index.name == idx_name), None
+                )
                 if idx is not None:
                     return idx
 
             # Otherwise, search through materialized views and try to retrieve the index there
-            materialized_view_metadata = ObjectMetadata(metadata_type_name='Materializedview', name=table_or_mv_name, schema=schema_name)
+            materialized_view_metadata = ObjectMetadata(
+                metadata_type_name="Materializedview",
+                name=table_or_mv_name,
+                schema=schema_name,
+            )
             materialized_view_obj = self.find_materialized_view(materialized_view_metadata)
             if materialized_view_obj is not None:
-                idx = next((index for index in materialized_view_obj.indexes if index.name == idx_name), None)
+                idx = next(
+                    (
+                        index
+                        for index in materialized_view_obj.indexes
+                        if index.name == idx_name
+                    ),
+                    None,
+                )
                 if idx is not None:
                     return idx
         except Exception:
             return None
 
     def find_trigger(self, metadata):
-        """ Find a trigger in the server. Triggers are always children of tables """
+        """Find a trigger in the server. Triggers are always children of tables"""
         try:
             trigger_name = metadata.name
             # For table_objects, the schema key in metadata stores "schema.table_name". See get_node_info
-            schema_name, table_name = metadata.schema.split('.')
+            schema_name, table_name = metadata.schema.split(".")
 
             # Find the table and retrieve the trigger if it exists
-            table_metadata = ObjectMetadata(metadata_type_name='Table', name=table_name, schema=schema_name)
+            table_metadata = ObjectMetadata(
+                metadata_type_name="Table", name=table_name, schema=schema_name
+            )
             table_obj = self.find_table(table_metadata)
             if table_obj is not None:
-                trigger = next((trigger for trigger in table_obj.triggers if trigger.name == trigger_name), None)
+                trigger = next(
+                    (
+                        trigger
+                        for trigger in table_obj.triggers
+                        if trigger.name == trigger_name
+                    ),
+                    None,
+                )
                 if trigger is not None:
                     return trigger
         except Exception:
             return None
 
     def find_trigger_function(self, metadata):
-        """ Find a trigger function in the server """
-        return self.find_schema_child_object('trigger_functions', metadata)
+        """Find a trigger function in the server"""
+        return self.find_schema_child_object("trigger_functions", metadata)
 
     def find_schema_child_object(self, prop_name: str, metadata):
         """
@@ -292,7 +332,7 @@ class Server:
             return None
 
     def get_object(self, object_type: str, metadata):
-        """ Retrieve a given object """
+        """Retrieve a given object"""
         object_map = {
             "Table": self.find_table,
             "Schema": self.find_schema,
@@ -306,7 +346,7 @@ class Server:
             "Materializedview": self.find_materialized_view,
             "Index": self.find_index,
             "Trigger": self.find_trigger,
-            "Triggerfunction": self.find_trigger_function
+            "Triggerfunction": self.find_trigger_function,
         }
         return object_map[object_type.capitalize()](metadata)
 
@@ -318,7 +358,9 @@ class Server:
 
     def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:
         recovery_check_sql = utils.templating.render_template(
-            utils.templating.get_template_path(self.TEMPLATE_ROOT, 'check_recovery.sql', self.version)
+            utils.templating.get_template_path(
+                self.TEMPLATE_ROOT, "check_recovery.sql", self.version
+            )
         )
 
         cols, rows = self._conn.execute_dict(recovery_check_sql)

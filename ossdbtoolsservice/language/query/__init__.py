@@ -5,4 +5,4 @@
 
 from ossdbtoolsservice.language.query.pg_lightweight_metadata import PGLightweightMetadata
 
-__all__ = ['PGLightweightMetadata']
+__all__ = ["PGLightweightMetadata"]

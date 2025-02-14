@@ -5,16 +5,12 @@
 
 """Test text.py"""
 
-from typing import List
 import unittest
+from typing import List
 
-from ossdbtoolsservice.language.contracts import (
-    CompletionItem, CompletionItemKind
-)
+from ossdbtoolsservice.language.contracts import CompletionItem, CompletionItemKind
 from ossdbtoolsservice.language.keywords import DefaultCompletionHelper
-from ossdbtoolsservice.workspace.contracts import (
-    Range
-)
+from ossdbtoolsservice.workspace.contracts import Range
 
 
 class TestCompletionHelper(unittest.TestCase):
@@ -25,7 +21,7 @@ class TestCompletionHelper(unittest.TestCase):
         # Given a default completion helper
         helper = DefaultCompletionHelper()
         # When I look up a known keyword
-        is_key = helper.is_keyword('create')
+        is_key = helper.is_keyword("create")
         # Then I expect the keyword to be found
         self.assertTrue(is_key)
 
@@ -34,7 +30,7 @@ class TestCompletionHelper(unittest.TestCase):
         # Given a default completion helper
         helper = DefaultCompletionHelper()
         # When I look up a random word
-        is_key = helper.is_keyword('notakeyword')
+        is_key = helper.is_keyword("notakeyword")
         # Then I expect the keyword to be missed
         self.assertFalse(is_key)
 
@@ -43,7 +39,7 @@ class TestCompletionHelper(unittest.TestCase):
         # Given a default completion helper
         helper = DefaultCompletionHelper()
         # When I match the empty string
-        matches: List[CompletionItem] = helper.get_matches('', None, False)
+        matches: List[CompletionItem] = helper.get_matches("", None, False)
         # Then I expect no keywords to be returned
         self.assertEqual([], matches)
 
@@ -52,34 +48,34 @@ class TestCompletionHelper(unittest.TestCase):
         # Given a default completion helper
         helper = DefaultCompletionHelper()
         text_range = Range.from_data(1, 1, 1, 2)
-        start = 'c'
+        start = "c"
         # When I match 'c'
         matches: List[CompletionItem] = helper.get_matches(start, text_range, False)
         # Then I expect keywords starting with c to be returned
         self.assertTrue(len(matches) > 0)
         # ... and I expect words to be uppercased
-        self.verify_match('CREATE', matches, text_range)
+        self.verify_match("CREATE", matches, text_range)
         # ... and I expect keywords starting in d to be skipped
-        self.verify_miss('DELETE', matches)
+        self.verify_miss("DELETE", matches)
 
         # and When I match with lowercase
         matches: List[CompletionItem] = helper.get_matches(start, text_range, True)
         # then I expect a lowercase result
-        self.verify_match('create', matches, text_range)
-        self.verify_miss('CREATE', matches)
+        self.verify_match("create", matches, text_range)
+        self.verify_miss("CREATE", matches)
 
     def test_get_matches_full_keyword(self):
         """Test get matches on a keyword"""
         # Given a default completion helper
         helper = DefaultCompletionHelper()
         text_range = Range.from_data(1, 1, 1, 2)
-        start = 'create'
+        start = "create"
         # When I match 'create'
         matches: List[CompletionItem] = helper.get_matches(start, text_range, False)
         # Then I expect only 1 match
         self.assertEqual(1, len(matches))
         # ... and I expect words to be uppercased
-        self.verify_match('CREATE', matches, text_range)
+        self.verify_match("CREATE", matches, text_range)
 
     def verify_match(self, word: str, matches: List[CompletionItem], text_range: Range):
         """Verifies match against its label and other properties"""

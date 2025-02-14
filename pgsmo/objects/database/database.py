@@ -3,11 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional               # noqa
+from typing import Optional  # noqa
 
 from smo.common.node_object import NodeCollection, NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
-from pgsmo.objects.server import server as s    # noqa
+from pgsmo.objects.server import server as s  # noqa
 from pgsmo.objects.schema.schema import Schema
 import smo.utils.templating as templating
 from pgsmo.objects.collation.collation import Collation
@@ -21,15 +21,14 @@ from pgsmo.objects.view.view import View
 from pgsmo.objects.view.materialized_view import MaterializedView
 from pgsmo.objects.extension.extension import Extension
 
-from ossdbtoolsservice.driver import ServerConnection    # noqa
+from ossdbtoolsservice.driver import ServerConnection  # noqa
 
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
-
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "templates")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Database':
+    def _from_node_query(cls, server: "s.Server", parent: None, **kwargs) -> "Database":
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -46,25 +45,29 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
             canconnect bool: Whether or not the database is accessbile to current user
         :return: Instance of the Database
         """
-        db = cls(server, kwargs['name'])
-        db._oid = kwargs['oid']
-        db._tablespace = kwargs['spcname']
-        db._allow_conn = kwargs['datallowconn']
-        db._can_create = kwargs['cancreate']
-        db._owner_oid = kwargs['owner']
-        db._is_template = kwargs['datistemplate']
-        db._can_connect = kwargs['canconnect']
-        db._is_system = kwargs['is_system']
-        db._datlastsysoid = kwargs['datlastsysoid']
+        db = cls(server, kwargs["name"])
+        db._oid = kwargs["oid"]
+        db._tablespace = kwargs["spcname"]
+        db._allow_conn = kwargs["datallowconn"]
+        db._can_create = kwargs["cancreate"]
+        db._owner_oid = kwargs["owner"]
+        db._is_template = kwargs["datistemplate"]
+        db._can_connect = kwargs["canconnect"]
+        db._is_system = kwargs["is_system"]
+        db._datlastsysoid = kwargs["datlastsysoid"]
         return db
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: "s.Server", name: str):
         """
         Initializes a new instance of a database
         """
         NodeObject.__init__(self, server, None, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
         # Declare the optional parameters
         self._tablespace: Optional[str] = None
@@ -87,9 +90,13 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         self._functions: NodeCollection = self._register_child_collection(Function)
         self._procedures: NodeCollection = self._register_child_collection(Procedure)
         self._sequences: NodeCollection = self._register_child_collection(Sequence)
-        self._trigger_functions: NodeCollection = self._register_child_collection(TriggerFunction)
+        self._trigger_functions: NodeCollection = self._register_child_collection(
+            TriggerFunction
+        )
         self._extensions: NodeCollection = self._register_child_collection(Extension)
-        self._materialized_views: NodeCollection = self._register_child_collection(MaterializedView)
+        self._materialized_views: NodeCollection = self._register_child_collection(
+            MaterializedView
+        )
 
     # PROPERTIES ###########################################################
     # -BASIC PROPERTIES ####################################################
@@ -108,7 +115,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
                 self._connection = connection
                 return self._connection
             else:
-                raise ValueError('connection create for wrong database')
+                raise ValueError("connection create for wrong database")
 
     @property
     def is_template(self) -> bool:
@@ -242,25 +249,24 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
-        """ Return the data input for create query """
-        return {"data": {
-            "name": self.name,
-            "datowner": self.datowner,
-            "encoding": self.encoding,
-            "template": self.template,
-            "datcollate": self.datcollate,
-            "datctype": self.datctype,
-            "datconnlimit": self.datconnlimit,
-            "spcname": self.spcname
-        }}
+        """Return the data input for create query"""
+        return {
+            "data": {
+                "name": self.name,
+                "datowner": self.datowner,
+                "encoding": self.encoding,
+                "template": self.template,
+                "datcollate": self.datcollate,
+                "datctype": self.datctype,
+                "datconnlimit": self.datconnlimit,
+                "spcname": self.spcname,
+            }
+        }
 
     def _delete_query_data(self) -> dict:
-        """ Return the data input for delete query """
-        return {
-            "did": self._oid,
-            "datname": self._name
-        }
+        """Return the data input for delete query"""
+        return {"did": self._oid, "datname": self._name}

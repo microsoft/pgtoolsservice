@@ -1,5 +1,5 @@
-from asyncio import Queue
 import uuid
+from asyncio import Queue
 
 from .messages import VSCodeLanguageModelChatCompletionResponse
 

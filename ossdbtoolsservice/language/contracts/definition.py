@@ -7,7 +7,11 @@
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
-from ossdbtoolsservice.workspace.contracts import TextDocumentPosition, Position, TextDocumentIdentifier
+from ossdbtoolsservice.workspace.contracts import (
+    Position,
+    TextDocumentIdentifier,
+    TextDocumentPosition,
+)
 
 
 class TextDocumentPositionParams(Serializable):
@@ -19,4 +23,6 @@ class TextDocumentPositionParams(Serializable):
         self.position = position
 
 
-DEFINITION_REQUEST = IncomingMessageConfiguration('textDocument/definition', TextDocumentPosition)
+DEFINITION_REQUEST = IncomingMessageConfiguration(
+    "textDocument/definition", TextDocumentPosition
+)

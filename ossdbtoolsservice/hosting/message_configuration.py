@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 from ossdbtoolsservice.serialization.serializable import Serializable
 
-
 # Generic type for parameters (BaseModel, Serializable or a plain dict)
 TModel = TypeVar("TModel", bound=BaseModel | Serializable | dict[str, Any])
 

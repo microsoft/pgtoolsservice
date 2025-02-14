@@ -10,36 +10,36 @@ import re
 import unittest
 import unittest.mock as mock
 
-from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
-from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 import tests.utils as utils
+from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
+from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
 
 
 class JSONRPCWriterTests(unittest.TestCase):
     def test_create_standard_encoding(self):
-        with io.BytesIO(b'123') as stream:
+        with io.BytesIO(b"123") as stream:
             # If: I create a JSON RPC writer
             writer = JSONRPCWriter(stream)
 
             # Then: The available properties should be set properly
             self.assertIsNotNone(writer)
             self.assertIs(writer.stream, stream)
-            self.assertEqual(writer.encoding, 'UTF-8')
+            self.assertEqual(writer.encoding, "UTF-8")
             self.assertEqual(writer._logger, None)
 
     def test_create_nonstandard_encoding(self):
-        with io.BytesIO(b'123') as stream:
+        with io.BytesIO(b"123") as stream:
             # If: I create a JSON RPC writer with a nonstandard encoding
-            writer = JSONRPCWriter(stream, 'ascii')
+            writer = JSONRPCWriter(stream, "ascii")
 
             # Then: The available properties should be set properly
             self.assertIsNotNone(writer)
             self.assertIs(writer.stream, stream)
-            self.assertEqual(writer.encoding, 'ascii')
+            self.assertEqual(writer.encoding, "ascii")
             self.assertEqual(writer._logger, None)
 
     def test_close(self):
-        with io.BytesIO(b'123') as stream:
+        with io.BytesIO(b"123") as stream:
             # If:
             # ... I create a JSON RPC writer with an opened stream
             writer = JSONRPCWriter(stream, logger=utils.get_mock_logger())
@@ -53,7 +53,7 @@ class JSONRPCWriterTests(unittest.TestCase):
     @staticmethod
     def test_closes_exception():
         # Setup: Patch the stream to have a custom close handler
-        stream = io.BytesIO(b'')
+        stream = io.BytesIO(b"")
         close_orig = stream.close
         stream.close = mock.MagicMock(side_effect=AttributeError)
 
@@ -69,26 +69,30 @@ class JSONRPCWriterTests(unittest.TestCase):
         close_orig()
 
     def test_send_message(self):
-        with io.BytesIO(b'') as stream:
+        with io.BytesIO(b"") as stream:
             # If:
             # ... I create a JSON RPC writer
             writer = JSONRPCWriter(stream, logger=utils.get_mock_logger())
 
             # ... and I send a message
-            message = JSONRPCMessage.create_request('123', 'test/test', {})
+            message = JSONRPCMessage.create_request("123", "test/test", {})
             writer.send_message(message)
 
             # Then:
             # ... The content-length header should be present
             stream.seek(0)
-            header = stream.readline().decode('ascii')
-            self.assertRegex(header, re.compile('^Content-Length: [0-9]+\r\n$', re.IGNORECASE))
+            header = stream.readline().decode("ascii")
+            self.assertRegex(
+                header, re.compile("^Content-Length: [0-9]+\r\n$", re.IGNORECASE)
+            )
 
             # ... There should be a blank line to signify the end of the headers
-            blank_line = stream.readline().decode('ascii')
-            self.assertEqual(blank_line, '\r\n')
+            blank_line = stream.readline().decode("ascii")
+            self.assertEqual(blank_line, "\r\n")
 
             # ... The JSON message as a dictionary should match the dictionary of the message
-            message_str = str.join(os.linesep, [x.decode('UTF-8') for x in stream.readlines()])
+            message_str = str.join(
+                os.linesep, [x.decode("UTF-8") for x in stream.readlines()]
+            )
             message_dict = json.loads(message_str)
             self.assertDictEqual(message_dict, message.dictionary)

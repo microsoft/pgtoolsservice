@@ -3,15 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import enum
+from typing import List
+
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
-import enum
 from ossdbtoolsservice.serialization import Serializable
-from typing import List
 
 
 class ScriptOperation(enum.Enum):
-    """ Class that defines the various script operations """
+    """Class that defines the various script operations"""
+
     SELECT = 0
     CREATE = 1
     # INSERT = 2    # TODO: Reenable INSERT script operation when it is supported. (https://github.com/Microsoft/carbon/issues/1751)
@@ -26,7 +28,7 @@ class ScriptAsParameters(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'metadata': ObjectMetadata, 'operation': ScriptOperation}
+        return {"metadata": ObjectMetadata, "operation": ScriptOperation}
 
     def __init__(self):
         self.owner_uri: str = None
@@ -39,10 +41,9 @@ class ScriptAsParameters(Serializable):
 
 
 class ScriptAsResponse(Serializable):
-
     def __init__(self, owner_uri: str, script: str):
         self.owner_uri: str = owner_uri
         self.script: str = script
 
 
-SCRIPT_AS_REQUEST = IncomingMessageConfiguration('scripting/script', ScriptAsParameters)
+SCRIPT_AS_REQUEST = IncomingMessageConfiguration("scripting/script", ScriptAsParameters)

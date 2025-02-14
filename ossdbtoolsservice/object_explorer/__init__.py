@@ -5,4 +5,4 @@
 
 from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService
 
-__all__ = ['ObjectExplorerService']
+__all__ = ["ObjectExplorerService"]

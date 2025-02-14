@@ -5,17 +5,21 @@
 
 from abc import ABCMeta
 
+import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
-import smo.utils.templating as templating
 
 
-class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, metaclass=ABCMeta):
+class Constraint(
+    NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, metaclass=ABCMeta
+):
     """Base class for constraints. Provides basic properties for all constraints"""
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Constraint':
+    def _from_node_query(
+        cls, server: "s.Server", parent: NodeObject, **kwargs
+    ) -> "Constraint":
         """
         Creates a constraint from the results of a node query for any constraint
         :param server: Server that owns the constraint
@@ -27,14 +31,14 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
             convalidated bool: ? TODO: Figure out what this value means
         :return: An instance of a constraint
         """
-        constraint = cls(server, parent, kwargs['name'])
-        constraint._oid = kwargs['oid']
-        if 'convalidated' in kwargs:
-            constraint._convalidated = kwargs['convalidated']
+        constraint = cls(server, parent, kwargs["name"])
+        constraint._oid = kwargs["oid"]
+        if "convalidated" in kwargs:
+            constraint._convalidated = kwargs["convalidated"]
 
         return constraint
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: "s.Server", parent: NodeObject, name: str):
         """
         Initializes a new instance of a constraint
         :param server: Connection the constraint belongs to
@@ -43,9 +47,15 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
         """
 
         NodeObject.__init__(self, server, parent, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
         # Declare constraint-specific basic properties
         self._convalidated = None
@@ -61,7 +71,7 @@ class Constraint(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
 
 
 class CheckConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_check')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "constraint_check")
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -74,11 +84,11 @@ class CheckConstraint(Constraint):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         return {
             "data": {
                 "schema": self.parent.schema,
@@ -87,44 +97,44 @@ class CheckConstraint(Constraint):
                 "consrc": self.src,
                 "comment": self.comment,
                 "connoinherit": self.no_inherit,
-                "convalidated": self.convalidated
+                "convalidated": self.convalidated,
             },
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+        """Provides data input for delete script"""
         return {
             "data": {
                 "name": self.name,
                 "nspname": self.parent.parent.name,
-                "relname": self.parent.name
+                "relname": self.parent.name,
             },
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for update script"""
         return {
             "data": {
                 "comment": self.comment,
                 "name": self.name,
                 "table": self.parent.name,
-                "convalidated": self.convalidated
+                "convalidated": self.convalidated,
             },
             "o_data": {
                 "comment": "",
                 "name": "",
                 "nspname": "",
                 "relname": "",
-                "convalidated": ""
+                "convalidated": "",
             },
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
 
 class ExclusionConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_exclusion')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "constraint_exclusion")
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -161,11 +171,11 @@ class ExclusionConstraint(Constraint):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         return {
             "data": {
                 "schema": self.parent.schema,
@@ -178,25 +188,25 @@ class ExclusionConstraint(Constraint):
                 "condeferrable": self.deferrable,
                 "condeferred": self.deferred,
                 "constraint": self.constraint,
-                "comment": self.comment
+                "comment": self.comment,
             },
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+        """Provides data input for delete script"""
         return {
             "data": {
                 "schema": self.parent.schema,
                 "table": self.parent.name,
-                "name": self.name
+                "name": self.name,
             },
             "cascade": self.cascade,
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for update script"""
         return {
             "data": {
                 "name": self.name,
@@ -204,20 +214,15 @@ class ExclusionConstraint(Constraint):
                 "table": self.parent.name,
                 "spcname": self.spcname,
                 "fillfactor": self.fillfactor,
-                "comment": self.comment
+                "comment": self.comment,
             },
-            "o_data": {
-                "name": "",
-                "spcname": "",
-                "fillfactor": "",
-                "comment": ""
-            },
-            "conn": self.server.connection.connection
+            "o_data": {"name": "", "spcname": "", "fillfactor": "", "comment": ""},
+            "conn": self.server.connection.connection,
         }
 
 
 class ForeignKeyConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_fk')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "constraint_fk")
 
     # -FULL OBJECT PROPERTIES ##############################################
     @property
@@ -258,11 +263,11 @@ class ForeignKeyConstraint(Constraint):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         return {
             "data": {
                 "schema": self.parent.schema,
@@ -277,44 +282,40 @@ class ForeignKeyConstraint(Constraint):
                 "condeferrable": self.deferrable,
                 "condeferred": self.deferred,
                 "convalidated": self.convalidated,
-                "comment": self.comment
+                "comment": self.comment,
             },
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+        """Provides data input for delete script"""
         return {
             "data": {
                 "schema": self.parent.schema,
                 "table": self.parent.name,
-                "name": self.name
+                "name": self.name,
             },
             "cascade": self.cascade,
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for update script"""
         return {
             "data": {
                 "name": self.name,
                 "schema": self.parent.schema,
                 "table": self.parent.name,
                 "convalidated": self.convalidated,
-                "comment": self.comment
+                "comment": self.comment,
             },
-            "o_data": {
-                "name": "",
-                "convalidated": "",
-                "comment": ""
-            },
-            "conn": self.server.connection.connection
+            "o_data": {"name": "", "convalidated": "", "comment": ""},
+            "conn": self.server.connection.connection,
         }
 
 
 class IndexConstraint(Constraint):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'constraint_index')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "constraint_index")
 
     # -FULL OBJECT PROPERTIES ##############################################
 
@@ -345,11 +346,11 @@ class IndexConstraint(Constraint):
     # IMPLEMENTATION DETAILS ###############################################
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         return {
             "data": {
                 "schema": self.parent.schema,
@@ -360,25 +361,25 @@ class IndexConstraint(Constraint):
                 "spcname": self.spcname,
                 "condeferrable": self.deferrable,
                 "condeferred": self.deferred,
-                "comment": self.comment
+                "comment": self.comment,
             },
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+        """Provides data input for delete script"""
         return {
             "data": {
                 "schema": self.parent.schema,
                 "table": self.parent.name,
-                "name": self.name
+                "name": self.name,
             },
             "cascade": self.cascade,
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for update script"""
         return {
             "data": {
                 "name": self.name,
@@ -386,15 +387,10 @@ class IndexConstraint(Constraint):
                 "table": self.parent.name,
                 "spcname": self.spcname,
                 "fillfactor": self.fillfactor,
-                "comment": self.comment
+                "comment": self.comment,
             },
-            "o_data": {
-                "name": "",
-                "spcname": "",
-                "fillfactor": "",
-                "comment": ""
-            },
-            "conn": self.server.connection.connection
+            "o_data": {"name": "", "spcname": "", "fillfactor": "", "comment": ""},
+            "conn": self.server.connection.connection,
         }
 
 
@@ -407,10 +403,10 @@ class PrimaryKeyConstraint(IndexConstraint):
     @property
     def extended_vars(self) -> dict:
         return {
-            'cid': self.oid,
-            'tid': self.parent.oid,                         # Table/view OID
-            'did': self.parent.parent.oid,                  # Database OID
-            'constraint_type': self.constraint_type         # Constraint type ("p" or "u" for primary or unique)
+            "cid": self.oid,
+            "tid": self.parent.oid,  # Table/view OID
+            "did": self.parent.parent.oid,  # Database OID
+            "constraint_type": self.constraint_type,  # Constraint type ("p" or "u" for primary or unique)
         }
 
 
@@ -423,8 +419,8 @@ class UniqueKeyConstraint(IndexConstraint):
     @property
     def extended_vars(self) -> dict:
         return {
-            'cid': self.oid,
-            'tid': self.parent.oid,                         # Table/view OID
-            'did': self.parent.parent.oid,                  # Database OID
-            'constraint_type': self.constraint_type         # Constraint type ("p" or "u" for primary or unique)
+            "cid": self.oid,
+            "tid": self.parent.oid,  # Table/view OID
+            "did": self.parent.parent.oid,  # Database OID
+            "constraint_type": self.constraint_type,  # Constraint type ("p" or "u" for primary or unique)
         }

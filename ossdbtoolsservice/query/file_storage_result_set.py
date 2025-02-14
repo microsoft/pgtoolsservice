@@ -5,19 +5,26 @@
 
 from typing import List
 
-from ossdbtoolsservice.query.result_set import ResultSet, ResultSetEvents
-from ossdbtoolsservice.query.data_storage import service_buffer_file_stream as file_stream, FileStreamFactory, StorageDataReader
-from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset, SaveResultsRequestParams  # noqa
 import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.query.contracts import (  # noqa
+    DbCellValue,
+    DbColumn,
+    ResultSetSubset,
+    SaveResultsRequestParams,
+)
+from ossdbtoolsservice.query.data_storage import FileStreamFactory, StorageDataReader
+from ossdbtoolsservice.query.data_storage import service_buffer_file_stream as file_stream
+from ossdbtoolsservice.query.result_set import ResultSet, ResultSetEvents
 
 
 class FileStorageResultSet(ResultSet):
+    RESULT_SET_NOT_READ_ERROR = "Result set not read"
+    RESULT_SET_START_OUT_OF_RANGE_ERROR = "Result set start row out of range"
+    RESULT_SET_ROW_COUNT_OF_RANGE_ERROR = "Result set row count out of range"
 
-    RESULT_SET_NOT_READ_ERROR = 'Result set not read'
-    RESULT_SET_START_OUT_OF_RANGE_ERROR = 'Result set start row out of range'
-    RESULT_SET_ROW_COUNT_OF_RANGE_ERROR = 'Result set row count out of range'
-
-    def __init__(self, result_set_id: int, batch_id: int, events: ResultSetEvents = None) -> None:
+    def __init__(
+        self, result_set_id: int, batch_id: int, events: ResultSetEvents = None
+    ) -> None:
         ResultSet.__init__(self, result_set_id, batch_id, events)
 
         self._total_bytes_written = 0
@@ -41,8 +48,13 @@ class FileStorageResultSet(ResultSet):
         rows = []
 
         with file_stream.get_reader(self._output_file_name) as reader:
-            rows_offsets = [self._file_offsets[index] for index in range(start_index, end_index)]
-            rows = [reader.read_row(offset, index, self.columns_info) for index, offset in enumerate(rows_offsets)]
+            rows_offsets = [
+                self._file_offsets[index] for index in range(start_index, end_index)
+            ]
+            rows = [
+                reader.read_row(offset, index, self.columns_info)
+                for index, offset in enumerate(rows_offsets)
+            ]
 
         subset = ResultSetSubset()
 
@@ -66,7 +78,6 @@ class FileStorageResultSet(ResultSet):
         self._file_offsets[row_id] = new_offset
 
     def get_row(self, row_id: int) -> List[DbCellValue]:
-
         if not self._has_been_read:
             raise ValueError(FileStorageResultSet.RESULT_SET_NOT_READ_ERROR)
 
@@ -77,26 +88,34 @@ class FileStorageResultSet(ResultSet):
             return reader.read_row(self._file_offsets[row_id], row_id, self.columns_info)
 
     def read_result_to_end(self, cursor):
-        utils.validate.is_not_none('cursor', cursor)
+        utils.validate.is_not_none("cursor", cursor)
 
         self._has_been_read = True
         storage_data_reader = StorageDataReader(cursor)
 
         with file_stream.get_writer(self._output_file_name) as writer:
-
             while storage_data_reader.read_row():
                 self._file_offsets.append(self._total_bytes_written)
                 self._total_bytes_written += writer.write_row(storage_data_reader)
 
             self.columns_info = storage_data_reader.columns_info
 
-    def do_save_as(self, file_path: str, row_start_index: int, row_end_index: int, file_factory: FileStreamFactory, on_success, on_failure) -> None:
-
+    def do_save_as(
+        self,
+        file_path: str,
+        row_start_index: int,
+        row_end_index: int,
+        file_factory: FileStreamFactory,
+        on_success,
+        on_failure,
+    ) -> None:
         try:
             with file_factory.get_writer(file_path) as writer:
                 with file_factory.get_reader(self._output_file_name) as reader:
                     for row_index in range(row_start_index, row_end_index):
-                        row = reader.read_row(self._file_offsets[row_index], row_index, self.columns_info)
+                        row = reader.read_row(
+                            self._file_offsets[row_index], row_index, self.columns_info
+                        )
                         writer.write_row(row, self.columns_info)
 
                     writer.complete_write()
@@ -104,11 +123,10 @@ class FileStorageResultSet(ResultSet):
                     if on_success is not None:
                         on_success()
         except Exception as e:
-            on_failure(e.strerror if hasattr(e, 'strerror') else e)
+            on_failure(e.strerror if hasattr(e, "strerror") else e)
 
     def _append_row_to_buffer(self, cursor):
-
-        utils.validate.is_not_none('cursor', cursor)
+        utils.validate.is_not_none("cursor", cursor)
 
         if not self._has_been_read:
             raise ValueError(FileStorageResultSet.RESULT_SET_NOT_READ_ERROR)

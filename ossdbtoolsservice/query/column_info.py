@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import List
+
 from psycopg import sql
 
 from ossdbtoolsservice.query.contracts import DbColumn
@@ -11,15 +12,17 @@ from ossdbtoolsservice.utils import constants
 
 
 def get_columns_info(cursor) -> List[DbColumn]:
-
     if cursor.description is None:
-        raise ValueError('Cursor description is not available')
+        raise ValueError("Cursor description is not available")
 
     if cursor.connection is None:
         # if no connection is provided, just return basic column info constructed from the cursor description
-        return [DbColumn.from_cursor_description(index, column) for index, column in enumerate(cursor.description)]
+        return [
+            DbColumn.from_cursor_description(index, column)
+            for index, column in enumerate(cursor.description)
+        ]
 
-    if (hasattr(cursor, "provider")):
+    if hasattr(cursor, "provider"):
         columns_info = []
         for index, column in enumerate(cursor.description):
             db_column = DbColumn.from_cursor_description(index, column)
@@ -30,12 +33,12 @@ def get_columns_info(cursor) -> List[DbColumn]:
     else:
         column_type_oids = [column_info[1] for column_info in cursor.description]
 
-        query_template = sql.SQL('SELECT {}, {} FROM {} WHERE {} IN ({})').format(
-            sql.Identifier('oid'),
-            sql.Identifier('typname'),
-            sql.Identifier('pg_type'),
-            sql.Identifier('oid'),
-            sql.SQL(', ').join(sql.Placeholder() * len(column_type_oids))
+        query_template = sql.SQL("SELECT {}, {} FROM {} WHERE {} IN ({})").format(
+            sql.Identifier("oid"),
+            sql.Identifier("typname"),
+            sql.Identifier("pg_type"),
+            sql.Identifier("oid"),
+            sql.SQL(", ").join(sql.Placeholder() * len(column_type_oids)),
         )
         columns_info = []
         with cursor.connection.cursor() as type_cursor:

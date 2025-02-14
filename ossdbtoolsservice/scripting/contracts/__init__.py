@@ -4,9 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.scripting.contracts.script_as_request import (
-    ScriptAsParameters, ScriptAsResponse, SCRIPT_AS_REQUEST, ScriptOperation)
+    SCRIPT_AS_REQUEST,
+    ScriptAsParameters,
+    ScriptAsResponse,
+    ScriptOperation,
+)
 
-__all__ = [
-    'ScriptAsParameters', 'ScriptAsResponse', 'SCRIPT_AS_REQUEST',
-    'ScriptOperation'
-]
+__all__ = ["ScriptAsParameters", "ScriptAsResponse", "SCRIPT_AS_REQUEST", "ScriptOperation"]

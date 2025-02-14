@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, Union
-from pydantic import BaseModel, Field
 
+from pydantic import BaseModel, Field
 from semantic_kernel.contents.utils.finish_reason import FinishReason
 
 from ossdbtoolsservice.hosting import (
@@ -113,10 +113,8 @@ class VSCodeLanguageModelChatCompletionResponse(BaseModel):
 
 # Configs
 
-VSCODE_LM_CHAT_COMPLETION_REQUEST = (
-    OutgoingMessageRegistration.register_outgoing_message(
-        VSCodeLanguageModelCompletionRequestParams
-    )
+VSCODE_LM_CHAT_COMPLETION_REQUEST = OutgoingMessageRegistration.register_outgoing_message(
+    VSCodeLanguageModelCompletionRequestParams
 )
 
 VSCODE_LM_COMPLETION_RESPONSE = IncomingMessageConfiguration(

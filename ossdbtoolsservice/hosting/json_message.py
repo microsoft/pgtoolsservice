@@ -24,11 +24,7 @@ class JSONRPCMessage:
     # CONSTRUCTORS #########################################################
     @classmethod
     def create_error(cls, msg_id, code, message, data):
-        error = {
-            'code': code,
-            'message': message,
-            'data': data
-        }
+        error = {"code": code, "message": message, "data": data}
         return cls(JSONRPCMessageType.ResponseError, msg_id=msg_id, msg_error=error)
 
     @classmethod
@@ -37,7 +33,9 @@ class JSONRPCMessage:
 
     @classmethod
     def create_request(cls, msg_id, method, params):
-        return cls(JSONRPCMessageType.Request, msg_id=msg_id, msg_method=method, msg_params=params)
+        return cls(
+            JSONRPCMessageType.Request, msg_id=msg_id, msg_method=method, msg_params=params
+        )
 
     @classmethod
     def create_response(cls, msg_id, result):
@@ -52,22 +50,22 @@ class JSONRPCMessage:
         """
         # Read all the possible values in from the message dictionary
         # If the keys don't exist in the dict, then None is set, which is acceptable
-        msg_id = msg_dict.get('id')
-        msg_method = msg_dict.get('method')
-        msg_params = msg_dict.get('params')
-        msg_result = msg_dict.get('result')
-        msg_error = msg_dict.get('error')
+        msg_id = msg_dict.get("id")
+        msg_method = msg_dict.get("method")
+        msg_params = msg_dict.get("params")
+        msg_result = msg_dict.get("result")
+        msg_error = msg_dict.get("error")
 
         if msg_id is None:
             # Messages that lack an id are notifications
             if msg_method is None:
-                raise ValueError('Notification message is missing method')
+                raise ValueError("Notification message is missing method")
             msg_type = JSONRPCMessageType.Notification
 
         else:
             # Check for invalid error/result combo
             if msg_result is not None and msg_error is not None:
-                raise ValueError('Message cannot have both result and error fields defined')
+                raise ValueError("Message cannot have both result and error fields defined")
 
             # Message has id, therefore it is a response or a request
             if msg_result is not None:
@@ -84,12 +82,15 @@ class JSONRPCMessage:
 
         return cls(msg_type, msg_id, msg_method, msg_params, msg_result, msg_error)
 
-    def __init__(self, msg_type,
-                 msg_id=None,
-                 msg_method=None,
-                 msg_params=None,
-                 msg_result=None,
-                 msg_error=None):
+    def __init__(
+        self,
+        msg_type,
+        msg_id=None,
+        msg_method=None,
+        msg_params=None,
+        msg_result=None,
+        msg_error=None,
+    ):
         self._message_type = msg_type
         self._message_id = msg_id
         self._message_method = msg_method
@@ -124,25 +125,25 @@ class JSONRPCMessage:
 
     @property
     def dictionary(self):
-        message_base = {'jsonrpc': '2.0'}
+        message_base = {"jsonrpc": "2.0"}
 
         if self._message_type is JSONRPCMessageType.Request:
-            message_base['method'] = self._message_method
-            message_base['params'] = utils.serialization.convert_to_dict(self._message_params)
-            message_base['id'] = self._message_id
+            message_base["method"] = self._message_method
+            message_base["params"] = utils.serialization.convert_to_dict(self._message_params)
+            message_base["id"] = self._message_id
             return message_base
 
         if self._message_type is JSONRPCMessageType.ResponseSuccess:
-            message_base['result'] = utils.serialization.convert_to_dict(self._message_result)
-            message_base['id'] = self._message_id
+            message_base["result"] = utils.serialization.convert_to_dict(self._message_result)
+            message_base["id"] = self._message_id
             return message_base
 
         if self._message_type is JSONRPCMessageType.Notification:
-            message_base['method'] = self._message_method
-            message_base['params'] = utils.serialization.convert_to_dict(self._message_params)
+            message_base["method"] = self._message_method
+            message_base["params"] = utils.serialization.convert_to_dict(self._message_params)
             return message_base
 
         if self._message_type is JSONRPCMessageType.ResponseError:
-            message_base['error'] = utils.serialization.convert_to_dict(self._message_error)
-            message_base['id'] = self._message_id
+            message_base["error"] = utils.serialization.convert_to_dict(self._message_error)
+            message_base["id"] = self._message_id
             return message_base

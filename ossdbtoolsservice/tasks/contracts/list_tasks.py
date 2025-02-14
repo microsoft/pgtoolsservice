@@ -3,12 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 
 
 class ListTasksParameters:
     """Parameters for the tasks/listtasks request"""
+
     list_active_tasks_only: bool
 
     @classmethod
@@ -19,4 +20,4 @@ class ListTasksParameters:
         self.list_active_tasks_only: bool = None
 
 
-LIST_TASKS_REQUEST = IncomingMessageConfiguration('tasks/listtasks', ListTasksParameters)
+LIST_TASKS_REQUEST = IncomingMessageConfiguration("tasks/listtasks", ListTasksParameters)

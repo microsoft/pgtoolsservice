@@ -19,7 +19,7 @@ from ossdbtoolsservice.capabilities.contracts import (
     ServerCapabilities,
     TextDocumentSyncKind,
 )
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
+from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.utils import constants
 
 SERVER_CAPABILITIES_MAP = {constants.PG_PROVIDER_NAME: PGServerCapabilities}
@@ -76,9 +76,7 @@ class CapabilitiesService(Service):
             document_range_formatting_provider=True,
             document_highlight_provider=False,
             hover_provider=False,
-            completion_provider=CompletionOptions(
-                True, [".", "-", ":", "\\", "[", '"']
-            ),
+            completion_provider=CompletionOptions(True, [".", "-", ":", "\\", "[", '"']),
         )
         result = InitializeResult(capabilities)
 

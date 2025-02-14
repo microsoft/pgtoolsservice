@@ -16,4 +16,4 @@ class ExpandParameters(Serializable):
         self.node_path: str = None
 
 
-EXPAND_REQUEST = IncomingMessageConfiguration('objectexplorer/expand', ExpandParameters)
+EXPAND_REQUEST = IncomingMessageConfiguration("objectexplorer/expand", ExpandParameters)

@@ -8,12 +8,13 @@
 import json
 import random
 import string
-from ossdbtoolsservice.utils.serialization import convert_to_dict
-from typing import Any, Type
 from enum import Enum
+from typing import Any, Type
+
+from ossdbtoolsservice.utils.serialization import convert_to_dict
 
 
-def generate_requests_markdown(server, logger, output_file='docs/Requests.md'):
+def generate_requests_markdown(server, logger, output_file="docs/Requests.md"):
     # Dictionary to store requests grouped by service
     services_dict = {}
 
@@ -29,35 +30,37 @@ def generate_requests_markdown(server, logger, output_file='docs/Requests.md'):
                 "jsonrpc": "2.0",
                 "method": method,
                 "id": random.randint(1, 1000000),
-                "params": example_instance
+                "params": example_instance,
             }
 
             # Convert the JSON-RPC request to a JSON string
             json_rpc_request_str = json.dumps(convert_to_dict(json_rpc_request), indent=4)
-            logger.info(f"JSON-RPC request for {req_handler.class_} in '{method}':\n {json_rpc_request_str}")
+            logger.info(
+                f"JSON-RPC request for {req_handler.class_} in '{method}':\n {json_rpc_request_str}"
+            )
 
             # Extract the service name from the method
             service_name = "base"
-            service_name_split = method.split('/')
+            service_name_split = method.split("/")
             if len(service_name_split) > 1:
                 service_name = service_name_split[0]
 
             # Create an anchor link for the index
-            anchor_link = method.replace('/', '').lower()
+            anchor_link = method.replace("/", "").lower()
 
             # Initialize the service entry if it doesn't exist
             if service_name not in services_dict:
-                services_dict[service_name] = {
-                    "index": [],
-                    "requests": []
-                }
+                services_dict[service_name] = {"index": [], "requests": []}
 
             # Append the request details to the service entry
             services_dict[service_name]["index"].append(f"- [{method}](#{anchor_link})")
             services_dict[service_name]["requests"].append(
-                f"## {method}\n- **Class**: {req_handler.class_.__name__ if req_handler.class_ else 'None'}\n- **Method**: {method}\n- **Request JSON**:\n```json\n{json_rpc_request_str}\n```") # noqa
+                f"## {method}\n- **Class**: {req_handler.class_.__name__ if req_handler.class_ else 'None'}\n- **Method**: {method}\n- **Request JSON**:\n```json\n{json_rpc_request_str}\n```"
+            )  # noqa
         except TypeError as e:
-            logger.error(f"Could not create example instance for {req_handler.class_} in '{method}': {e}")
+            logger.error(
+                f"Could not create example instance for {req_handler.class_} in '{method}': {e}"
+            )
 
     # Generate the Markdown content
     index_content = "# Index\n\n"
@@ -65,12 +68,14 @@ def generate_requests_markdown(server, logger, output_file='docs/Requests.md'):
 
     for service_name, service_data in services_dict.items():
         index_content += f"## {service_name}\n" + "\n".join(service_data["index"]) + "\n\n"
-        requests_content += f"# {service_name}\n\n" + "\n\n".join(service_data["requests"]) + "\n\n"
+        requests_content += (
+            f"# {service_name}\n\n" + "\n\n".join(service_data["requests"]) + "\n\n"
+        )
 
     markdown_content = f"{index_content}\n\n# Requests\n\n{requests_content}"
 
     # Output the Markdown content to a file
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         f.write(markdown_content)
 
 
@@ -81,7 +86,7 @@ def generate_mock_data_for_type(field_type: Type) -> Any:
     elif field_type == float:
         return round(random.uniform(1, 100), 2)
     elif field_type == str:
-        return ''.join(random.choices(string.ascii_letters, k=8))
+        return "".join(random.choices(string.ascii_letters, k=8))
     elif field_type == bool:
         return random.choice([True, False])
     elif field_type == list:

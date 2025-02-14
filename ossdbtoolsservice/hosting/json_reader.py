@@ -2,9 +2,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-from enum import Enum
 import io
 import json
+from enum import Enum
+
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 
 
@@ -20,7 +21,7 @@ class JSONRPCReader:
     DEFAULT_BUFFER_SIZE = 8192
 
     class ReadState(Enum):
-        Header = 1,
+        Header = (1,)
         Content = 2
 
     # CONSTRUCTOR ##########################################################
@@ -32,7 +33,7 @@ class JSONRPCReader:
         :param logger: Optional destination for logging
         """
         self.stream = stream
-        self.encoding = encoding or 'UTF-8'
+        self.encoding = encoding or "UTF-8"
         self._logger = logger
 
         self._buffer = bytearray(self.DEFAULT_BUFFER_SIZE)
@@ -56,7 +57,7 @@ class JSONRPCReader:
             self.stream.close()
         except Exception as e:
             if self._logger is not None:
-                self._logger.exception(f'Exception raised when reader stream closed: {e}')
+                self._logger.exception(f"Exception raised when reader stream closed: {e}")
 
     def read_message(self) -> JSONRPCMessage:
         """
@@ -66,7 +67,7 @@ class JSONRPCReader:
         """
         # Using a mutable list to hold the value since an immutable string passed by reference won't
         # change the value
-        content = ['']
+        content = [""]
         try:
             while not self._needs_more_data or self._read_next_chunk():
                 # We should have all the data we need to form a message in the buffer. If we need
@@ -80,7 +81,9 @@ class JSONRPCReader:
                     continue
 
                 # If we read the header, try the content. If that fails, read the next chunk
-                if self._read_state is self.ReadState.Content and not self._try_read_content(content):
+                if self._read_state is self.ReadState.Content and not self._try_read_content(
+                    content
+                ):
                     self._needs_more_data = True
                     continue
 
@@ -95,7 +98,9 @@ class JSONRPCReader:
         except ValueError as ve:
             # Response has invalid json object
             if self._logger is not None:
-                self._logger.warn('JSON RPC reader on read_message() encountered exception: {}'.format(ve))
+                self._logger.warn(
+                    f"JSON RPC reader on read_message() encountered exception: {ve}"
+                )
             raise
         finally:
             # Remove the bytes that have been read
@@ -112,7 +117,9 @@ class JSONRPCReader:
         """
         # Check if we need to resize the buffer
         current_buffer_size = len(self._buffer)
-        if (current_buffer_size - self._buffer_end_offset) / current_buffer_size < self.BUFFER_RESIZE_TRIGGER:
+        if (
+            current_buffer_size - self._buffer_end_offset
+        ) / current_buffer_size < self.BUFFER_RESIZE_TRIGGER:
             # Resize the buffer, copy the old contents, and point to the new buffer
             resized_buffer = bytearray(current_buffer_size * 2)
             resized_buffer[0:current_buffer_size] = self._buffer
@@ -120,12 +127,14 @@ class JSONRPCReader:
 
         # Memory view is required in order to read into a subset of a byte array
         try:
-            length_read = self.stream.readinto(memoryview(self._buffer)[self._buffer_end_offset:])
+            length_read = self.stream.readinto(
+                memoryview(self._buffer)[self._buffer_end_offset :]
+            )
 
             if not length_read:
                 if self._logger is not None:
-                    self._logger.warn('JSON RPC Reader reached end of stream')
-                raise EOFError('End of stream reached, no output.')
+                    self._logger.warn("JSON RPC Reader reached end of stream")
+                raise EOFError("End of stream reached, no output.")
 
             self._buffer_end_offset += length_read
 
@@ -133,7 +142,9 @@ class JSONRPCReader:
         except ValueError as ex:
             # Stream was closed
             if self._logger is not None:
-                self._logger.warn('JSON RPC Reader on read_next_chunk encountered exception: {}'.format(ex))
+                self._logger.warn(
+                    f"JSON RPC Reader on read_next_chunk encountered exception: {ex}"
+                )
             raise
 
     def _try_read_headers(self) -> bool:
@@ -147,10 +158,10 @@ class JSONRPCReader:
         # Scan the buffer up until right before the \r\n\r\n
         scan_offset = self._read_offset
         while scan_offset + 3 < self._buffer_end_offset and (
-            self._buffer[scan_offset] != self.CR or
-            self._buffer[scan_offset + 1] != self.LF or
-            self._buffer[scan_offset + 2] != self.CR or
-            self._buffer[scan_offset + 3] != self.LF
+            self._buffer[scan_offset] != self.CR
+            or self._buffer[scan_offset + 1] != self.LF
+            or self._buffer[scan_offset + 2] != self.CR
+            or self._buffer[scan_offset + 3] != self.LF
         ):
             scan_offset += 1
 
@@ -160,28 +171,32 @@ class JSONRPCReader:
 
         # Split the headers by newline
         try:
-            headers_read = self._buffer[self._read_offset:scan_offset].decode('ascii')
-            for header in headers_read.split('\n'):
-                colon_index = header.find(':')
+            headers_read = self._buffer[self._read_offset : scan_offset].decode("ascii")
+            for header in headers_read.split("\n"):
+                colon_index = header.find(":")
 
                 # Make sure there's a colon to split key and value on
                 if colon_index == -1:
                     if self._logger is not None:
-                        self._logger.warn('JSON RPC reader encountered missing colons in try_read_headers()')
-                    raise KeyError('Colon missing from header: {}'.format(header))
+                        self._logger.warn(
+                            "JSON RPC reader encountered missing colons in try_read_headers()"
+                        )
+                    raise KeyError(f"Colon missing from header: {header}")
 
                 # Case insensitive check
                 header_key = header[:colon_index].strip().lower()
-                header_value = header[colon_index + 1:].strip()
+                header_value = header[colon_index + 1 :].strip()
                 self._headers[header_key] = header_value
 
             # Was content-length found?
-            if 'content-length' not in self._headers:
+            if "content-length" not in self._headers:
                 if self._logger is not None:
-                    self._logger.warn('JSON RPC reader did not find Content-Length in the headers')
-                raise LookupError('Content-Length was not found in headers received.')
+                    self._logger.warn(
+                        "JSON RPC reader did not find Content-Length in the headers"
+                    )
+                raise LookupError("Content-Length was not found in headers received.")
 
-            self._expected_content_length = int(self._headers['content-length'])
+            self._expected_content_length = int(self._headers["content-length"])
 
         except (ValueError, KeyError, LookupError):
             # ValueError: Content-Length contained invalid literal for int
@@ -208,8 +223,9 @@ class JSONRPCReader:
             # We buffered less than the expected content length
             return False
 
-        content[0] = self._buffer[self._read_offset:self._read_offset + self._expected_content_length]\
-            .decode(self.encoding)
+        content[0] = self._buffer[
+            self._read_offset : self._read_offset + self._expected_content_length
+        ].decode(self.encoding)
         self._read_offset += self._expected_content_length
 
         self._read_state = self.ReadState.Header
@@ -225,12 +241,15 @@ class JSONRPCReader:
         current_buffer_size = len(self._buffer)
 
         # Create a new buffer with either minimum size of leftover size
-        new_buffer = bytearray(max(current_buffer_size - bytes_to_remove, self.DEFAULT_BUFFER_SIZE))
+        new_buffer = bytearray(
+            max(current_buffer_size - bytes_to_remove, self.DEFAULT_BUFFER_SIZE)
+        )
 
         # If we have content we did not read, copy that portion to the new buffer
         if bytes_to_remove <= current_buffer_size:
-            new_buffer[:self._buffer_end_offset - bytes_to_remove] = \
-                self._buffer[bytes_to_remove:self._buffer_end_offset]
+            new_buffer[: self._buffer_end_offset - bytes_to_remove] = self._buffer[
+                bytes_to_remove : self._buffer_end_offset
+            ]
 
         # Point to the new buffer
         self._buffer = new_buffer

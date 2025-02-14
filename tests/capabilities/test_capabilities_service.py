@@ -4,19 +4,17 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-
 import unittest.mock as mock
 
+import tests.utils as utils
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
 from ossdbtoolsservice.capabilities.contracts import (
-    InitializeResult,
     CapabilitiesResult,
+    InitializeResult,
 )
-from ossdbtoolsservice.hosting import ServiceProvider, IncomingMessageConfiguration
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration, ServiceProvider
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace import WorkspaceService
-
-import tests.utils as utils
 
 
 class TestCapabilitiesService(unittest.TestCase):

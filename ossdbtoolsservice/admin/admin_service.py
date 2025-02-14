@@ -4,15 +4,15 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.admin.contracts import (
+    GET_DATABASE_INFO_REQUEST,
     DatabaseInfo,
     GetDatabaseInfoParameters,
     GetDatabaseInfoResponse,
-    GET_DATABASE_INFO_REQUEST,
 )
 from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
-from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
+from ossdbtoolsservice.utils import constants
 
 
 class AdminService(Service):

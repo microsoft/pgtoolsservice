@@ -88,9 +88,7 @@ class TestObjectExplorer(unittest.TestCase):
         server = utils.MockMessageServer()
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        sp: ServiceProvider = ServiceProvider(
-            server, {}, utils.get_mock_logger()
-        )
+        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
 
         # If: I register a OE service
         oe = ObjectExplorerService()
@@ -252,9 +250,7 @@ class TestObjectExplorer(unittest.TestCase):
         oe._provider = constants.PG_PROVIDER_NAME
 
         # ... Patch the threading to throw
-        patch_mock = mock.MagicMock(
-            side_effect=Exception("Boom! Create Session Failed")
-        )
+        patch_mock = mock.MagicMock(side_effect=Exception("Boom! Create Session Failed"))
         patch_path = (
             "ossdbtoolsservice.object_explorer.object_explorer_service.threading.Thread"
         )
@@ -520,9 +516,7 @@ class TestObjectExplorer(unittest.TestCase):
         )
 
     # EXPAND/REFRESH NODE TEST BASES #######################################
-    TEventHandler = Callable[
-        [ObjectExplorerService, RequestContext, ExpandParameters], None
-    ]
+    TEventHandler = Callable[[ObjectExplorerService, RequestContext, ExpandParameters], None]
     TGetTask = Callable[[ObjectExplorerSession], threading.Thread]
 
     @staticmethod
@@ -559,9 +553,7 @@ class TestObjectExplorer(unittest.TestCase):
         rc = RequestFlowValidator().add_expected_error(
             type(None), RequestFlowValidator.basic_error_validation
         )
-        params = ExpandParameters.from_dict(
-            {"session_id": "session", "node_path": None}
-        )
+        params = ExpandParameters.from_dict({"session_id": "session", "node_path": None})
         method(oe, rc.request_context, params)
 
         # Then: I should get an error back
@@ -576,9 +568,7 @@ class TestObjectExplorer(unittest.TestCase):
         rc = RequestFlowValidator().add_expected_error(
             type(None), RequestFlowValidator.basic_error_validation
         )
-        params = ExpandParameters.from_dict(
-            {"session_id": session_uri, "node_path": None}
-        )
+        params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": None})
         method(oe, rc.request_context, params)
 
         # Then: I should get an error back
@@ -604,9 +594,7 @@ class TestObjectExplorer(unittest.TestCase):
                 EXPAND_COMPLETED_METHOD,
                 lambda param: self._validate_expand_error(param, session_uri, "/"),
             )
-            params = ExpandParameters.from_dict(
-                {"session_id": session_uri, "node_path": "/"}
-            )
+            params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": "/"})
             method(oe, rc.request_context, params)
 
         # Then:
@@ -640,9 +628,7 @@ class TestObjectExplorer(unittest.TestCase):
                 EXPAND_COMPLETED_METHOD,
                 lambda param: self._validate_expand_error(param, session_uri, "/"),
             )
-            params = ExpandParameters.from_dict(
-                {"session_id": session_uri, "node_path": "/"}
-            )
+            params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": "/"})
             method(oe, rc.request_context, params)
 
         # Joining the threads to avoid rc.validate failure
@@ -657,9 +643,7 @@ class TestObjectExplorer(unittest.TestCase):
         # ... The thread should be attached to the session
         self.assertEqual(len(get_tasks(session)), 1)
 
-    def _handle_er_node_successful(
-        self, method: TEventHandler, get_tasks: TGetTask
-    ) -> None:
+    def _handle_er_node_successful(self, method: TEventHandler, get_tasks: TGetTask) -> None:
         # Setup: Create an OE service with a session preloaded
         oe, session, session_uri = self._preloaded_oe_service()
 
@@ -680,9 +664,7 @@ class TestObjectExplorer(unittest.TestCase):
             EXPAND_COMPLETED_METHOD,
             validate_success_notification,
         )
-        params = ExpandParameters.from_dict(
-            {"session_id": session_uri, "node_path": "/"}
-        )
+        params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": "/"})
         method(oe, rc.request_context, params)
 
         # Joining the threads to avoid rc.validate failure
@@ -719,9 +701,7 @@ class TestObjectExplorer(unittest.TestCase):
         # If: I expand a node
         rc = RequestFlowValidator()
         rc.add_expected_response(bool, self.assertTrue)
-        params = ExpandParameters.from_dict(
-            {"session_id": session_uri, "node_path": "/"}
-        )
+        params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": "/"})
         testevent = threading.Event()
         testtask = threading.Thread(target=myfunc, args=(testevent,))
         session.expand_tasks[params.node_path] = testtask
@@ -761,9 +741,7 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertEqual(param.node_path, node_path)
         self.assertIsNone(param.nodes)
 
-    def _validate_init_error(
-        self, param: SessionCreatedParameters, session_uri: str
-    ) -> None:
+    def _validate_init_error(self, param: SessionCreatedParameters, session_uri: str) -> None:
         self.assertFalse(param.success)
         self.assertEqual(param.session_id, session_uri)
         self.assertIsNone(param.root_node)

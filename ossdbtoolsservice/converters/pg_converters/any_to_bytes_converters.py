@@ -7,7 +7,7 @@ import struct
 
 from ossdbtoolsservice.parsers import datatypes
 
-DECODING_METHOD = 'utf-8'
+DECODING_METHOD = "utf-8"
 
 
 def convert_bool(value: bool):
@@ -15,14 +15,14 @@ def convert_bool(value: bool):
 
 
 def convert_short(value: int):
-    """ Range of smallint in Pg is the same with short in c,
-    although python type is int, but need to pack the value in short format """
+    """Range of smallint in Pg is the same with short in c,
+    although python type is int, but need to pack the value in short format"""
     return bytearray(struct.pack("h", value))
 
 
 def convert_int(value: int):
-    """ Range of integer in Pg is the same with int or long in c,
-    we pack the value in int format """
+    """Range of integer in Pg is the same with int or long in c,
+    we pack the value in int format"""
     return bytearray(struct.pack("i", value))
 
 
@@ -61,5 +61,5 @@ PG_DATATYPE_WRITER_MAP = {
     datatypes.DATATYPE_REGNAMESPACE_ARRAY: convert_list,
     datatypes.DATATYPE_REGCONFIG_ARRAY: convert_list,
     datatypes.DATATYPE_REGDICTIONARY_ARRAY: convert_list,
-    datatypes.DATATYPE_PG_LSN_ARRAY: convert_list
+    datatypes.DATATYPE_PG_LSN_ARRAY: convert_list,
 }

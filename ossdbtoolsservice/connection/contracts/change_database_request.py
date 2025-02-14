@@ -4,8 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 from typing import Optional
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+
 from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -16,11 +17,13 @@ class ChangeDatabaseRequestParams(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'connection': ConnectionDetails}
+        return {"connection": ConnectionDetails}
 
     def __init__(self, owner_uri: str = None, new_database: str = None):
         self.owner_uri: str = owner_uri
         self.new_database: str = new_database
 
 
-CHANGE_DATABASE_REQUEST = IncomingMessageConfiguration('connection/changedatabase', ChangeDatabaseRequestParams)
+CHANGE_DATABASE_REQUEST = IncomingMessageConfiguration(
+    "connection/changedatabase", ChangeDatabaseRequestParams
+)

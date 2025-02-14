@@ -3,9 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
-from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata  # noqa
 from typing import List  # noqa
+
+from ossdbtoolsservice.hosting import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
+from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata  # noqa
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -23,5 +27,5 @@ class MetadataListResponse:
         self.metadata: List[ObjectMetadata] = metadata
 
 
-METADATA_LIST_REQUEST = IncomingMessageConfiguration('metadata/list', MetadataListParameters)
+METADATA_LIST_REQUEST = IncomingMessageConfiguration("metadata/list", MetadataListParameters)
 OutgoingMessageRegistration.register_outgoing_message(MetadataListResponse)

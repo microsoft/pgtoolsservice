@@ -7,7 +7,6 @@ import io
 
 
 class ServiceBufferFileStream:
-
     def __init__(self, stream: io.BufferedIOBase) -> None:
         self._file_stream = stream
 

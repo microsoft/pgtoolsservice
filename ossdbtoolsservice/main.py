@@ -9,6 +9,7 @@ import logging
 import os
 import sys
 from typing import Type
+
 import debugpy
 
 from ossdbtoolsservice.admin import AdminService
@@ -18,13 +19,13 @@ from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import (
     DisasterRecoveryService,
 )
-from ossdbtoolsservice.hosting import MessageServer, ServiceProvider, Service
+from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
+from ossdbtoolsservice.hosting import MessageServer, Service, ServiceProvider
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.object_explorer import ObjectExplorerService
 from ossdbtoolsservice.query_execution import QueryExecutionService
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
-from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants, markdown
 from ossdbtoolsservice.utils.bool import str_to_bool
@@ -63,34 +64,22 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
     config.read(path_relative_to_base("config.ini"))
 
     defaults = {
-        "log_dir": config.get(
-            "general", "log_dir", fallback=os.path.dirname(sys.argv[0])
-        ),
-        "enable_web_server": config.get(
-            "server", "enable_web_server", fallback="false"
-        ),
+        "log_dir": config.get("general", "log_dir", fallback=os.path.dirname(sys.argv[0])),
+        "enable_web_server": config.get("server", "enable_web_server", fallback="false"),
         "listen_address": config.get("server", "listen_address", fallback="0.0.0.0"),
         "listen_port": config.get("server", "listen_port", fallback="8443"),
         "console_logging": config.get("server", "console_logging", fallback="false"),
-        "disable_keep_alive": config.get(
-            "server", "disable_keep_alive", fallback="false"
-        ),
-        "enable_dynamic_cors": config.get(
-            "server", "enable_dynamic_cors", fallback="false"
-        ),
+        "disable_keep_alive": config.get("server", "disable_keep_alive", fallback="false"),
+        "enable_dynamic_cors": config.get("server", "enable_dynamic_cors", fallback="false"),
     }
 
     # Override config defaults with environment variables (if present)
     log_dir_env = os.getenv("LOG_DIR", defaults["log_dir"])
-    enable_web_server_env = os.getenv(
-        "ENABLE_WEB_SERVER", defaults["enable_web_server"]
-    )
+    enable_web_server_env = os.getenv("ENABLE_WEB_SERVER", defaults["enable_web_server"])
     listen_address_env = os.getenv("LISTEN_ADDRESS", defaults["listen_address"])
     listen_port_env = os.getenv("LISTEN_PORT", defaults["listen_port"])
     console_logging_env = os.getenv("CONSOLE_LOGGING", defaults["console_logging"])
-    disable_keep_alive_env = os.getenv(
-        "DISABLE_KEEP_ALIVE", defaults["disable_keep_alive"]
-    )
+    disable_keep_alive_env = os.getenv("DISABLE_KEEP_ALIVE", defaults["disable_keep_alive"])
     enable_dynamic_cors_env = os.getenv(
         "ENABLE_DYNAMIC_CORS", defaults["enable_dynamic_cors"]
     )

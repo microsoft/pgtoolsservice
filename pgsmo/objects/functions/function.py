@@ -5,14 +5,14 @@
 
 import os.path
 
-from pgsmo.objects.functions.function_base import FunctionBase
-from pgsmo.objects.server import server as s    # noqa
 import smo.utils.templating as templating
+from pgsmo.objects.functions.function_base import FunctionBase
+from pgsmo.objects.server import server as s  # noqa
 
 
 class Function(FunctionBase):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates_functions')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "templates_functions")
 
     @classmethod
-    def _template_root(cls, server: 's.Server'):
+    def _template_root(cls, server: "s.Server"):
         return os.path.join(cls.TEMPLATE_ROOT, server.server_type)

@@ -4,8 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 
+from ossdbtoolsservice.edit_data.contracts import (
+    EditCell,
+    EditCellResponse,
+    RowOperationRequest,
+)
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
-from ossdbtoolsservice.edit_data.contracts import RowOperationRequest, EditCellResponse, EditCell
 
 
 class RevertCellRequest(RowOperationRequest):
@@ -17,9 +21,8 @@ class RevertCellRequest(RowOperationRequest):
 
 
 class RevertCellResponse(EditCellResponse):
-
     def __init__(self, edit_cell: EditCell, is_row_dirty: bool):
         EditCellResponse.__init__(self, edit_cell, is_row_dirty)
 
 
-REVERT_CELL_REQUEST = IncomingMessageConfiguration('edit/revertCell', RevertCellRequest)
+REVERT_CELL_REQUEST = IncomingMessageConfiguration("edit/revertCell", RevertCellRequest)

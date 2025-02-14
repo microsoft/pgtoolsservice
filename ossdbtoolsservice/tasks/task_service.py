@@ -7,12 +7,12 @@
 
 from typing import Dict
 
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
+from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.tasks import Task, TaskStatus
 from ossdbtoolsservice.tasks.contracts import (
     CANCEL_TASK_REQUEST,
-    CancelTaskParameters,
     LIST_TASKS_REQUEST,
+    CancelTaskParameters,
     ListTasksParameters,
 )
 

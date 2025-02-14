@@ -1,4 +1,4 @@
-from psycopg import sql, Connection
+from psycopg import Connection, sql
 
 
 def fetch_schemas_and_tables(connection: Connection) -> str:
@@ -392,9 +392,7 @@ def fetch_schema_v3(connection: Connection) -> str:
                         col_defs.append(f"CONSTRAINT {conname} {condef}")
 
                     stmt = (
-                        f"CREATE TABLE {full_name} (\n    "
-                        + ",\n    ".join(col_defs)
-                        + "\n)"
+                        f"CREATE TABLE {full_name} (\n    " + ",\n    ".join(col_defs) + "\n)"
                     )
 
                     # If the table is partitioned, append the PARTITION BY clause.
@@ -422,9 +420,7 @@ def fetch_schema_v3(connection: Connection) -> str:
                         foreign_info = cur.fetchone()
                         if foreign_info:
                             srvname, options = foreign_info
-                            stmt = stmt.replace(
-                                "CREATE TABLE", "CREATE FOREIGN TABLE", 1
-                            )
+                            stmt = stmt.replace("CREATE TABLE", "CREATE FOREIGN TABLE", 1)
                             stmt += f" SERVER {srvname}"
                             if options:
                                 stmt += f" OPTIONS ({options})"
@@ -446,7 +442,9 @@ def fetch_schema_v3(connection: Connection) -> str:
                         partitions = cur.fetchall()
                         for part_name, part_bound in partitions:
                             child_full_name = f"{schema_name}.{part_name}"
-                            alter_stmt = f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            alter_stmt = (
+                                f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            )
                             if part_bound:
                                 # pg_get_expr returns a string like "FOR VALUES FROM (...) TO (...)"
                                 alter_stmt += f" {part_bound}"
@@ -470,9 +468,7 @@ def fetch_schema_v3(connection: Connection) -> str:
                         [full_name],
                     )
                     viewdef = cur.fetchone()[0]
-                    stmt = (
-                        f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
-                    )
+                    stmt = f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
                     schema_creation_script.append(stmt)
 
         return "\n".join(schema_creation_script)
@@ -571,9 +567,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                         col_defs.append(f"CONSTRAINT {conname} {condef}")
 
                     stmt = (
-                        f"CREATE TABLE {full_name} (\n    "
-                        + ",\n    ".join(col_defs)
-                        + "\n)"
+                        f"CREATE TABLE {full_name} (\n    " + ",\n    ".join(col_defs) + "\n)"
                     )
 
                     # If partitioned, add the PARTITION BY clause.
@@ -601,9 +595,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                         foreign_info = cur.fetchone()
                         if foreign_info:
                             srvname, options = foreign_info
-                            stmt = stmt.replace(
-                                "CREATE TABLE", "CREATE FOREIGN TABLE", 1
-                            )
+                            stmt = stmt.replace("CREATE TABLE", "CREATE FOREIGN TABLE", 1)
                             stmt += f" SERVER {srvname}"
                             if options:
                                 stmt += f" OPTIONS ({options})"
@@ -642,7 +634,9 @@ def fetch_schema_v4(connection: Connection) -> str:
                         )
                         for part_name, part_bound in cur.fetchall():
                             child_full_name = f"{schema_name}.{part_name}"
-                            alter_stmt = f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            alter_stmt = (
+                                f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            )
                             if part_bound:
                                 alter_stmt += f" {part_bound}"
                             alter_stmt += ";"
@@ -693,9 +687,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                 seq_stmt += f"    INCREMENT BY {increment}\n"
                 seq_stmt += f"    MINVALUE {min_value}\n"
                 seq_stmt += f"    MAXVALUE {max_value}\n"
-                seq_stmt += (
-                    f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
-                )
+                seq_stmt += f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
                 schema_creation_script.append(seq_stmt)
 
             # Indexes (query via pg_indexes and join with pg_class to exclude extension‐owned objects)

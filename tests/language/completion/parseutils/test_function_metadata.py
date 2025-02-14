@@ -13,13 +13,13 @@ class TestFunctionMetadata(unittest.TestCase):
 
     def test_function_metadata_eq(self):
         f1 = FunctionMetadata(
-            's', 'f', ['x'], ['integer'], [], 'int', False, False, False, None
+            "s", "f", ["x"], ["integer"], [], "int", False, False, False, None
         )
         f2 = FunctionMetadata(
-            's', 'f', ['x'], ['integer'], [], 'int', False, False, False, None
+            "s", "f", ["x"], ["integer"], [], "int", False, False, False, None
         )
         f3 = FunctionMetadata(
-            's', 'g', ['x'], ['integer'], [], 'int', False, False, False, None
+            "s", "g", ["x"], ["integer"], [], "int", False, False, False, None
         )
         # Testing operators, so will only use assert_true for checks
         self.assertTrue(f1 == f2)

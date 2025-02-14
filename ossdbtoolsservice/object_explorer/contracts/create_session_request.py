@@ -3,8 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
+from ossdbtoolsservice.hosting import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -15,5 +18,7 @@ class CreateSessionResponse(Serializable):
         self.session_id: str = session_id
 
 
-CREATE_SESSION_REQUEST = IncomingMessageConfiguration('objectexplorer/createsession', ConnectionDetails)
+CREATE_SESSION_REQUEST = IncomingMessageConfiguration(
+    "objectexplorer/createsession", ConnectionDetails
+)
 OutgoingMessageRegistration.register_outgoing_message(CreateSessionResponse)

@@ -3,10 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import enum
 from abc import ABCMeta
 from typing import Any
+
 import inflection
-import enum
 
 
 class Serializable(metaclass=ABCMeta):
@@ -54,9 +55,7 @@ def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwarg
             if ignore_extra_attributes:
                 continue
             raise AttributeError(
-                "Could not deserialize to class {0}, {1} is not defined as an attribute".format(
-                    class_, pythonic_attr
-                )
+                f"Could not deserialize to class {class_}, {pythonic_attr} is not defined as an attribute"
             )
 
         value = dictionary[attr]

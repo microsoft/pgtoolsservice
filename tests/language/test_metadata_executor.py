@@ -14,8 +14,8 @@ from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
 from pgsmo import Database, Schema, Server
 from smo.common.node_object import NodeCollection
 
-MYSCHEMA = 'myschema'
-MYSCHEMA2 = 'myschema2'
+MYSCHEMA = "myschema"
+MYSCHEMA2 = "myschema2"
 
 
 class MockCursor:
@@ -86,14 +86,16 @@ class TestMetadataExecutor(unittest.TestCase):
         self.assertListEqual(self.executor.schemata(), [MYSCHEMA, MYSCHEMA2])
 
     def test_databases(self):
-        self.assertListEqual(self.executor.databases(), [self.mock_server.maintenance_db_name])
+        self.assertListEqual(
+            self.executor.databases(), [self.mock_server.maintenance_db_name]
+        )
 
     def test_tables(self):
         # Given 2 tables in the database
         expected_table_tuples = []
         for x in range(0, 3):
-            s1_table_name = 's1_t%s' % x
-            s2_table_name = 's2_t%s' % x
+            s1_table_name = "s1_t%s" % x
+            s2_table_name = "s2_t%s" % x
             expected_table_tuples.append(tuple([self.schema1.name, s1_table_name]))
             expected_table_tuples.append(tuple([self.schema2.name, s2_table_name]))
 

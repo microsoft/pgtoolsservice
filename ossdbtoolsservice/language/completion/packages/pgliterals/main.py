@@ -3,21 +3,28 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import os
 import json
+import os
 import sys
 
 # Determine if the application is running as a packaged binary
-is_packaged = getattr(sys, 'frozen', False)
+is_packaged = getattr(sys, "frozen", False)
 
 root = os.path.dirname(__file__)
 
 if is_packaged:
     # In packaged mode, use the path relative to the binary's directory
-    literal_file = os.path.join(getattr(sys, '_MEIPASS', '.'), 'language', 'completion', 'packages', 'pgliterals', 'pgliterals.json')
+    literal_file = os.path.join(
+        getattr(sys, "_MEIPASS", "."),
+        "language",
+        "completion",
+        "packages",
+        "pgliterals",
+        "pgliterals.json",
+    )
 else:
     # In development mode, use the path relative to this file's directory
-    literal_file = os.path.join(root, 'pgliterals.json')
+    literal_file = os.path.join(root, "pgliterals.json")
 
 # Check if the path points to a directory
 if os.path.isdir(literal_file):

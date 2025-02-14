@@ -6,8 +6,8 @@
 import unittest
 import unittest.mock as mock
 
-from ossdbtoolsservice.hosting.service_provider import ServiceProvider
 import tests.utils as utils
+from ossdbtoolsservice.hosting.service_provider import ServiceProvider
 
 
 class TestServiceProvider(unittest.TestCase):

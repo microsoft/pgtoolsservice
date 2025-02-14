@@ -16,26 +16,36 @@ from prompt_toolkit.completion import Completion
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
-from ossdbtoolsservice.hosting import (NotificationContext, RequestContext,
-                                       ServiceProvider)
+from ossdbtoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.language.contracts import (  # noqa
-    INTELLISENSE_READY_NOTIFICATION, CompletionItem, CompletionItemKind,
-    DocumentFormattingParams, DocumentRangeFormattingParams, FormattingOptions,
-    IntelliSenseReadyParams, LanguageFlavorChangeParams, TextEdit)
+    INTELLISENSE_READY_NOTIFICATION,
+    CompletionItem,
+    CompletionItemKind,
+    DocumentFormattingParams,
+    DocumentRangeFormattingParams,
+    FormattingOptions,
+    IntelliSenseReadyParams,
+    LanguageFlavorChangeParams,
+    TextEdit,
+)
 from ossdbtoolsservice.language.operations_queue import OperationsQueue
-from ossdbtoolsservice.language.script_parse_info import \
-    ScriptParseInfo  # noqa
+from ossdbtoolsservice.language.script_parse_info import ScriptParseInfo  # noqa
 from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.utils.constants import (MSSQL_PROVIDER_NAME,
-                                               PG_PROVIDER_NAME)
-from ossdbtoolsservice.workspace import (Configuration,  # noqa
-                                         PGSQLConfiguration, ScriptFile,
-                                         TextDocumentIdentifier, Workspace,
-                                         WorkspaceService)
+from ossdbtoolsservice.utils.constants import MSSQL_PROVIDER_NAME, PG_PROVIDER_NAME
+from ossdbtoolsservice.workspace import (
+    Configuration,  # noqa
+    PGSQLConfiguration,
+    ScriptFile,
+    TextDocumentIdentifier,
+    Workspace,
+    WorkspaceService,
+)
 from ossdbtoolsservice.workspace.contracts import Range
-from ossdbtoolsservice.workspace.contracts.common import (Position,  # noqa
-                                                          TextDocumentPosition)
+from ossdbtoolsservice.workspace.contracts.common import (
+    Position,  # noqa
+    TextDocumentPosition,
+)
 from tests.mock_request_validation import RequestFlowValidator
 
 
@@ -44,7 +54,7 @@ class TestLanguageService(unittest.TestCase):
 
     def setUp(self) -> None:
         """Constructor"""
-        self.default_uri = 'file://my.sql'
+        self.default_uri = "file://my.sql"
         self.flow_validator = RequestFlowValidator()
         self.mock_server_set_request = mock.MagicMock()
         self.mock_server = utils.MockMessageServer()
@@ -52,21 +62,22 @@ class TestLanguageService(unittest.TestCase):
         self.mock_workspace_service = WorkspaceService()
         self.mock_connection_service = ConnectionService()
         self.mock_service_provider = ServiceProvider(self.mock_server, {}, None)
-        self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = self.mock_workspace_service
-        self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = self.mock_connection_service
+        self.mock_service_provider._services[constants.WORKSPACE_SERVICE_NAME] = (
+            self.mock_workspace_service
+        )
+        self.mock_service_provider._services[constants.CONNECTION_SERVICE_NAME] = (
+            self.mock_connection_service
+        )
         self.mock_service_provider._is_initialized = True
-        self.default_text_position = TextDocumentPosition.from_dict({
-            'text_document': {
-                'uri': self.default_uri
-            },
-            'position': {
-                'line': 3,
-                'character': 10
+        self.default_text_position = TextDocumentPosition.from_dict(
+            {
+                "text_document": {"uri": self.default_uri},
+                "position": {"line": 3, "character": 10},
             }
-        })
-        self.default_text_document_id = TextDocumentIdentifier.from_dict({
-            'uri': self.default_uri
-        })
+        )
+        self.default_text_document_id = TextDocumentIdentifier.from_dict(
+            {"uri": self.default_uri}
+        )
 
     def test_register(self) -> None:
         """Test registration of the service"""
@@ -75,9 +86,11 @@ class TestLanguageService(unittest.TestCase):
         server = utils.MockMessageServer()
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        provider: ServiceProvider = ServiceProvider(server, {
-            constants.CONNECTION_SERVICE_NAME: ConnectionService
-        }, utils.get_mock_logger())
+        provider: ServiceProvider = ServiceProvider(
+            server,
+            {constants.CONNECTION_SERVICE_NAME: ConnectionService},
+            utils.get_mock_logger(),
+        )
         provider._is_initialized = True
         conn_service: ConnectionService = provider[constants.CONNECTION_SERVICE_NAME]
         self.assertEqual(0, len(conn_service._on_connect_callbacks))
@@ -149,16 +162,16 @@ class TestLanguageService(unittest.TestCase):
         when not connected to any URI
         """
         # If: The script file exists
-        input_text = 'create tab'
-        doc_position = TextDocumentPosition.from_dict({
-            'text_document': {
-                'uri': self.default_uri
-            },
-            'position': {
-                'line': 0,
-                'character': 10  # end of 'tab' word
+        input_text = "create tab"
+        doc_position = TextDocumentPosition.from_dict(
+            {
+                "text_document": {"uri": self.default_uri},
+                "position": {
+                    "line": 0,
+                    "character": 10,  # end of 'tab' word
+                },
             }
-        })
+        )
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
         config.sql.intellisense.enable_intellisense = True
@@ -176,16 +189,20 @@ class TestLanguageService(unittest.TestCase):
         context.send_response.assert_called_once()
         completions: List[CompletionItem] = context.last_response_params
         self.assertTrue(len(completions) > 0)
-        self.verify_match('TABLE', completions, Range.from_data(0, 7, 0, 10))
+        self.verify_match("TABLE", completions, Range.from_data(0, 7, 0, 10))
 
     def test_pg_language_flavor(self) -> None:
         """
         Test that if provider is PGSQL, the service ignores files registered as being for non-PGSQL flavors
         """
         # If: I create a new language service
-        pgsql_params = LanguageFlavorChangeParams.from_data('file://pguri.sql', 'sql', PG_PROVIDER_NAME)
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', MSSQL_PROVIDER_NAME)
-        other_params = LanguageFlavorChangeParams.from_data('file://other.doc', 'doc', '')
+        pgsql_params = LanguageFlavorChangeParams.from_data(
+            "file://pguri.sql", "sql", PG_PROVIDER_NAME
+        )
+        mssql_params = LanguageFlavorChangeParams.from_data(
+            "file://msuri.sql", "sql", MSSQL_PROVIDER_NAME
+        )
+        other_params = LanguageFlavorChangeParams.from_data("file://other.doc", "doc", "")
         provider = utils.get_mock_service_provider()
         service = LanguageService()
         service._service_provider = provider
@@ -205,7 +222,9 @@ class TestLanguageService(unittest.TestCase):
         self.assertFalse(service.is_valid_uri(other_params.uri))
 
         # When: I change from MSSQL to PGSQL
-        mssql_params = LanguageFlavorChangeParams.from_data('file://msuri.sql', 'sql', PG_PROVIDER_NAME)
+        mssql_params = LanguageFlavorChangeParams.from_data(
+            "file://msuri.sql", "sql", PG_PROVIDER_NAME
+        )
         service.handle_flavor_change(context, mssql_params)
 
         # Then: the service is updated to allow intellisense
@@ -218,8 +237,12 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: I create a new language service
         service: LanguageService = self._init_service_with_flow_validator()
-        conn_info = ConnectionInfo('file://msuri.sql',
-                                   ConnectionDetails.from_data({'host': None, 'dbname': 'TEST_DBNAME', 'user': 'TEST_USER'}))
+        conn_info = ConnectionInfo(
+            "file://msuri.sql",
+            ConnectionDetails.from_data(
+                {"host": None, "dbname": "TEST_DBNAME", "user": "TEST_USER"}
+            ),
+        )
 
         connect_result = mock.MagicMock()
         connect_result.error_message = None
@@ -230,12 +253,16 @@ class TestLanguageService(unittest.TestCase):
             self.assertEqual(response.owner_uri, conn_info.owner_uri)
 
         # When: I notify of a connection complete for a given URI
-        self.flow_validator.add_expected_notification(IntelliSenseReadyParams, INTELLISENSE_READY_NOTIFICATION, validate_success_notification)
+        self.flow_validator.add_expected_notification(
+            IntelliSenseReadyParams,
+            INTELLISENSE_READY_NOTIFICATION,
+            validate_success_notification,
+        )
 
         refresher_mock = mock.MagicMock()
         refresh_method_mock = mock.MagicMock()
         refresher_mock.refresh = refresh_method_mock
-        patch_path = 'ossdbtoolsservice.language.operations_queue.CompletionRefresher'
+        patch_path = "ossdbtoolsservice.language.operations_queue.CompletionRefresher"
         with mock.patch(patch_path) as refresher_patch:
             refresher_patch.return_value = refresher_mock
             task: threading.Thread = service.on_connect(conn_info)
@@ -260,7 +287,7 @@ class TestLanguageService(unittest.TestCase):
         """
         Test that the format codepath succeeds even if the configuration options aren't defined
         """
-        input_text = 'select * from foo where id IN (select id from bar);'
+        input_text = "select * from foo where id IN (select id from bar);"
 
         context: RequestContext = utils.MockRequestContext()
 
@@ -294,21 +321,23 @@ class TestLanguageService(unittest.TestCase):
         Test that the format document codepath works as expected
         """
         # If: We have a basic string to be formatted
-        input_text = 'select * from foo where id in (select id from bar);'
+        input_text = "select * from foo where id in (select id from bar);"
         # Note: sqlparse always uses '\n\ for line separator even on windows.
         # For now, respecting this behavior and leaving as-is
-        expected_output = '\n'.join([
-            'SELECT *',
-            'FROM foo',
-            'WHERE id IN',
-            '\t\t\t\t(SELECT id',
-            '\t\t\t\t\tFROM bar);'
-        ])
+        expected_output = "\n".join(
+            [
+                "SELECT *",
+                "FROM foo",
+                "WHERE id IN",
+                "\t\t\t\t(SELECT id",
+                "\t\t\t\t\tFROM bar);",
+            ]
+        )
 
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
         config.pgsql = PGSQLConfiguration()
-        config.pgsql.format.keyword_case = 'upper'
+        config.pgsql.format.keyword_case = "upper"
         self.mock_workspace_service._configuration = config
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
@@ -340,22 +369,24 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: The script file doesn't exist (there is an empty workspace)
         input_lines: List[str] = [
-            'select * from t1',
-            'select * from foo where id in (select id from bar);'
+            "select * from t1",
+            "select * from foo where id in (select id from bar);",
         ]
-        input_text = '\n'.join(input_lines)
-        expected_output = '\n'.join([
-            'SELECT *',
-            'FROM foo',
-            'WHERE id IN',
-            '\t\t\t\t(SELECT id',
-            '\t\t\t\t\tFROM bar);'
-        ])
+        input_text = "\n".join(input_lines)
+        expected_output = "\n".join(
+            [
+                "SELECT *",
+                "FROM foo",
+                "WHERE id IN",
+                "\t\t\t\t(SELECT id",
+                "\t\t\t\t\tFROM bar);",
+            ]
+        )
 
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
         config.pgsql = PGSQLConfiguration()
-        config.pgsql.format.keyword_case = 'upper'
+        config.pgsql.format.keyword_case = "upper"
         self.mock_workspace_service._configuration = config
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
@@ -382,22 +413,28 @@ class TestLanguageService(unittest.TestCase):
         self.assert_range_equals(edits[0].range, format_params.range)
         self.assertEqual(edits[0].new_text, expected_output)
 
-    @parameterized.expand([
-        (0, 10),
-        (-2, 8),
-    ])
-    def test_completion_to_completion_item(self, relative_start_pos: int, expected_start_char: int) -> None:
+    @parameterized.expand(
+        [
+            (0, 10),
+            (-2, 8),
+        ]
+    )
+    def test_completion_to_completion_item(
+        self, relative_start_pos: int, expected_start_char: int
+    ) -> None:
         """
         Tests that PGCompleter's Completion objects get converted to CompletionItems as expected
         """
-        text = 'item'
-        display = 'item is a table'
-        display_meta = 'table'
+        text = "item"
+        display = "item is a table"
+        display_meta = "table"
         completion = Completion(text, relative_start_pos, display, display_meta)
-        completion_item: CompletionItem = LanguageService.to_completion_item(completion, self.default_text_position)
+        completion_item: CompletionItem = LanguageService.to_completion_item(
+            completion, self.default_text_position
+        )
         self.assertEqual(completion_item.label, text)
         self.assertEqual(completion_item.text_edit.new_text, text)
-        text_pos: Position = self.default_text_position.position    # pylint: disable=maybe-no-member
+        text_pos: Position = self.default_text_position.position  # pylint: disable=maybe-no-member
         self.assertEqual(completion_item.text_edit.range.start.line, text_pos.line)
         self.assertEqual(completion_item.text_edit.range.start.character, expected_start_char)
         self.assertEqual(completion_item.text_edit.range.end.line, text_pos.line)
@@ -405,7 +442,9 @@ class TestLanguageService(unittest.TestCase):
         self.assertEqual(completion_item.detail, display)
         self.assertEqual(completion_item.label, text)
 
-    def test_handle_definition_request_should_return_empty_if_query_file_do_not_exist(self) -> None:
+    def test_handle_definition_request_should_return_empty_if_query_file_do_not_exist(
+        self,
+    ) -> None:
         # If: The script file doesn't exist (there is an empty workspace)
         context: RequestContext = utils.MockRequestContext()
         self.mock_workspace_service._workspace = Workspace()
@@ -423,7 +462,9 @@ class TestLanguageService(unittest.TestCase):
         self.mock_workspace_service._configuration = config
 
         language_service = self._init_service()
-        language_service.handle_definition_request(request_context, self.default_text_position)
+        language_service.handle_definition_request(
+            request_context, self.default_text_position
+        )
 
         request_context.send_response.assert_called_once()
         self.assertEqual(request_context.last_response_params, [])
@@ -432,17 +473,21 @@ class TestLanguageService(unittest.TestCase):
         """
         Tests that a Keyword Completion is converted with sort text that puts it after other objects
         """
-        text = 'item'
-        display = 'item is something'
+        text = "item"
+        display = "item is something"
         # Given I have anything other than a keyword, I expect label to match key
-        table_completion = Completion(text, 0, display, 'table')
-        completion_item: CompletionItem = LanguageService.to_completion_item(table_completion, self.default_text_position)
+        table_completion = Completion(text, 0, display, "table")
+        completion_item: CompletionItem = LanguageService.to_completion_item(
+            table_completion, self.default_text_position
+        )
         self.assertEqual(completion_item.sort_text, text)
 
         # Given I have a keyword, I expect
-        keyword_completion = Completion(text, 0, display, 'keyword')
-        completion_item: CompletionItem = LanguageService.to_completion_item(keyword_completion, self.default_text_position)
-        self.assertEqual(completion_item.sort_text, '~' + text)
+        keyword_completion = Completion(text, 0, display, "keyword")
+        completion_item: CompletionItem = LanguageService.to_completion_item(
+            keyword_completion, self.default_text_position
+        )
+        self.assertEqual(completion_item.sort_text, "~" + text)
 
     def _init_service(self, stop_operations_queue: bool = True) -> LanguageService:
         """
@@ -457,18 +502,24 @@ class TestLanguageService(unittest.TestCase):
         return service
 
     def _init_service_with_flow_validator(self) -> LanguageService:
-        self.mock_server.send_notification = self.flow_validator.request_context.send_notification
+        self.mock_server.send_notification = (
+            self.flow_validator.request_context.send_notification
+        )
         return self._init_service()
 
-    def _get_test_workspace(self, script_file: bool = True, buffer: str = '') -> Tuple[Workspace, Optional[ScriptFile]]:
+    def _get_test_workspace(
+        self, script_file: bool = True, buffer: str = ""
+    ) -> Tuple[Workspace, Optional[ScriptFile]]:
         workspace: Workspace = Workspace()
         file: Optional[ScriptFile] = None
         if script_file:
-            file = ScriptFile(self.default_uri, buffer, '')
+            file = ScriptFile(self.default_uri, buffer, "")
             workspace._workspace_files[self.default_uri] = file
         return workspace, file
 
-    def verify_match(self, word: str, matches: List[CompletionItem], text_range: Range) -> None:
+    def verify_match(
+        self, word: str, matches: List[CompletionItem], text_range: Range
+    ) -> None:
         """Verifies match against its label and other properties"""
         match: CompletionItem = next(iter(obj for obj in matches if obj.label == word), None)
         self.assertIsNotNone(match)

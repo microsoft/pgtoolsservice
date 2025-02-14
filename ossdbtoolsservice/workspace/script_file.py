@@ -6,8 +6,8 @@
 import os
 from typing import List, Optional
 
-from ossdbtoolsservice.workspace.contracts import Position, Range, TextDocumentChangeEvent
 import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.workspace.contracts import Position, Range, TextDocumentChangeEvent
 
 
 class ScriptFile:
@@ -24,8 +24,8 @@ class ScriptFile:
         :param file_path: Path to the file on disk, if it could be resolved
         """
         # Validate the incoming variables
-        utils.validate.is_not_none_or_whitespace('file_uri', file_uri)
-        utils.validate.is_not_none('initial_buffer', initial_buffer)
+        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
+        utils.validate.is_not_none("initial_buffer", initial_buffer)
 
         self._file_uri: str = file_uri
         self._file_path: Optional[str] = file_path
@@ -68,13 +68,17 @@ class ScriptFile:
         self.validate_position(file_change.range.end)
 
         # Break up the change lines
-        change_lines: List[str] = file_change.text.split('\n')
+        change_lines: List[str] = file_change.text.split("\n")
 
         # Get the first fragment of the first line that will remain
-        first_line_fragment: str = self.file_lines[file_change.range.start.line][:file_change.range.start.character]
+        first_line_fragment: str = self.file_lines[file_change.range.start.line][
+            : file_change.range.start.character
+        ]
 
         # Get the last fragment of the last line that will remain
-        last_line_fragment: str = self.file_lines[file_change.range.end.line][file_change.range.end.character:]
+        last_line_fragment: str = self.file_lines[file_change.range.end.line][
+            file_change.range.end.character :
+        ]
 
         # Remove the old lines (by repeatedly removing the first line of the change)
         for i in range(0, file_change.range.end.line - file_change.range.start.line + 1):
@@ -84,7 +88,7 @@ class ScriptFile:
         current_line_number: int = file_change.range.start.line
         for change_index in range(0, len(change_lines)):
             # Since we split the lines above using \n make sure to trim any trailing \r's
-            final_line: str = change_lines[change_index].rstrip('\r')
+            final_line: str = change_lines[change_index].rstrip("\r")
 
             # Should we add first or last line fragments?
             if change_index == 0:
@@ -102,7 +106,7 @@ class ScriptFile:
         :return: The complete line at the given line number
         """
         # Validate line is within range of the file
-        utils.validate.is_within_range('line', line, 0, len(self._file_lines) - 1)
+        utils.validate.is_within_range("line", line, 0, len(self._file_lines) - 1)
         return self.file_lines[line]
 
     def get_text_in_range(self, buffer_range: Range) -> str:
@@ -129,8 +133,14 @@ class ScriptFile:
 
             # If the line we're looking at is not the beginning or end, select entire line,
             # otherwise, trim the unselected part of the line
-            start_column: int = buffer_range.start.character if line == buffer_range.start.line else 0
-            end_column: int = buffer_range.end.character if line == buffer_range.end.line else len(current_line)
+            start_column: int = (
+                buffer_range.start.character if line == buffer_range.start.line else 0
+            )
+            end_column: int = (
+                buffer_range.end.character
+                if line == buffer_range.end.line
+                else len(current_line)
+            )
 
             output.append(current_line[start_column:end_column])
         return output
@@ -147,7 +157,7 @@ class ScriptFile:
         # Validate against number of lines
         if position.line < 0 or position.line >= len(self.file_lines):
             # TODO: Localize
-            raise ValueError('Position is outside of file line range')
+            raise ValueError("Position is outside of file line range")
 
         # Retrieve the line of the position
         line_string: str = self.file_lines[position.line]
@@ -156,7 +166,7 @@ class ScriptFile:
         # character to the end of the line.
         if position.character < 0 or position.character > len(line_string):
             # TODO: Localize
-            raise ValueError('Position is outside of column range for line {}'.format(position.line))
+            raise ValueError(f"Position is outside of column range for line {position.line}")
 
     # IMPLEMENTATION DETAILS ###############################################
 
@@ -165,4 +175,4 @@ class ScriptFile:
         Set the script file's contents
         :param file_contents: New contents for the file
         """
-        self._file_lines = [x.rstrip('\r') for x in file_contents.split('\n')]
+        self._file_lines = [x.rstrip("\r") for x in file_contents.split("\n")]

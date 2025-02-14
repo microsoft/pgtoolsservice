@@ -13,6 +13,7 @@ class LanguageFlavorChangeParams(Serializable):
     """
     Parameters for the Language Flavor Change notification
     """
+
     @classmethod
     def from_data(cls, uri: str, language: str, flavor: str):
         obj = cls()
@@ -27,4 +28,6 @@ class LanguageFlavorChangeParams(Serializable):
         self.flavor: str = None
 
 
-LANGUAGE_FLAVOR_CHANGE_NOTIFICATION = IncomingMessageConfiguration('connection/languageflavorchanged', LanguageFlavorChangeParams)
+LANGUAGE_FLAVOR_CHANGE_NOTIFICATION = IncomingMessageConfiguration(
+    "connection/languageflavorchanged", LanguageFlavorChangeParams
+)

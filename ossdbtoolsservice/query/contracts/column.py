@@ -6,16 +6,31 @@
 import ossdbtoolsservice.parsers.datatypes as datatypes
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
-DESC = {'name': 0, 'type_code': 1, 'display_size': 2, 'internal_size': 3, 'precision': 4, 'scale': 5, 'null_ok': 6}
+DESC = {
+    "name": 0,
+    "type_code": 1,
+    "display_size": 2,
+    "internal_size": 3,
+    "precision": 4,
+    "scale": 5,
+    "null_ok": 6,
+}
 
-CHARS_DATA_TYPES = [datatypes.DATATYPE_TEXT, datatypes.DATATYPE_VARCHAR, datatypes.DATATYPE_JSON, datatypes.DATATYPE_JSONB]
+CHARS_DATA_TYPES = [
+    datatypes.DATATYPE_TEXT,
+    datatypes.DATATYPE_VARCHAR,
+    datatypes.DATATYPE_JSON,
+    datatypes.DATATYPE_JSONB,
+]
 
-SYSTEM_DATA_TYPES = [value for key, value in datatypes.__dict__.items() if key.startswith('DATATYPE')]
+SYSTEM_DATA_TYPES = [
+    value for key, value in datatypes.__dict__.items() if key.startswith("DATATYPE")
+]
 
 
 def get_column_name(column_index: int, colum_name: str):
-    if colum_name == '?column?':
-        return f'Column{column_index + 1}'
+    if colum_name == "?column?":
+        return f"Column{column_index + 1}"
 
     return colum_name
 
@@ -90,7 +105,10 @@ class DbColumn:
 
     @property
     def is_json(self) -> bool:
-        return self.data_type == datatypes.DATATYPE_JSON or self.data_type == datatypes.DATATYPE_JSONB
+        return (
+            self.data_type == datatypes.DATATYPE_JSON
+            or self.data_type == datatypes.DATATYPE_JSONB
+        )
 
     @property
     def provider(self) -> str:
@@ -105,24 +123,23 @@ class DbColumn:
     # Each inner sequence item can be referenced by using DESC
     @classmethod
     def from_cursor_description(cls, column_ordinal: int, cursor_description: tuple):
-
         instance = cls()
 
         # Note that 'null_ok' is always 'None' by default because it's not easy to retrieve
         # Need to take a look if we should turn this on if it's important
-        instance.allow_db_null: bool = cursor_description[DESC['null_ok']]
-        column_name = get_column_name(column_ordinal, cursor_description[DESC['name']])
+        instance.allow_db_null: bool = cursor_description[DESC["null_ok"]]
+        column_name = get_column_name(column_ordinal, cursor_description[DESC["name"]])
         instance.base_column_name: str = column_name
         instance.column_name: str = column_name
-        instance.data_type = cursor_description[DESC['type_code']]
+        instance.data_type = cursor_description[DESC["type_code"]]
         # From documentation, it seems like 'internal_size' is for the max size and
         # 'display_size' is for the actual size based off of the largest entry in the column so far.
         # 'display_size' is always 'None' by default since it's expensive to calculate.
         # 'internal_size' is negative if column max is of a dynamic / variable size
 
-        instance.column_size: int = cursor_description[DESC['internal_size']]
-        instance.numeric_precision: int = cursor_description[DESC['precision']]
-        instance.numeric_scale: int = cursor_description[DESC['scale']]
+        instance.column_size: int = cursor_description[DESC["internal_size"]]
+        instance.numeric_precision: int = cursor_description[DESC["precision"]]
+        instance.numeric_scale: int = cursor_description[DESC["scale"]]
         instance.column_ordinal: int = column_ordinal
 
         return instance
@@ -135,7 +152,7 @@ class DbCellValue:
     raw_object: object
 
     def __init__(self, display_value: any, is_null: bool, raw_object: object, row_id: int):
-        self.display_value: str = '' if (display_value is None) else str(display_value)
+        self.display_value: str = "" if (display_value is None) else str(display_value)
         self.is_null: bool = is_null
         self.row_id: int = row_id
         self.raw_object = raw_object

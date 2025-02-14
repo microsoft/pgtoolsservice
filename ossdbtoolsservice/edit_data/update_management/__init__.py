@@ -5,10 +5,9 @@
 
 
 from ossdbtoolsservice.edit_data.update_management.cell_update import CellUpdate
-from ossdbtoolsservice.edit_data.update_management.row_edit import RowEdit, EditScript
-from ossdbtoolsservice.edit_data.update_management.row_update import RowUpdate
-from ossdbtoolsservice.edit_data.update_management.row_delete import RowDelete
 from ossdbtoolsservice.edit_data.update_management.row_create import RowCreate
+from ossdbtoolsservice.edit_data.update_management.row_delete import RowDelete
+from ossdbtoolsservice.edit_data.update_management.row_edit import EditScript, RowEdit
+from ossdbtoolsservice.edit_data.update_management.row_update import RowUpdate
 
-
-__all__ = ['RowEdit', 'RowUpdate', 'CellUpdate', 'EditScript', 'RowDelete', 'RowCreate']
+__all__ = ["RowEdit", "RowUpdate", "CellUpdate", "EditScript", "RowDelete", "RowCreate"]

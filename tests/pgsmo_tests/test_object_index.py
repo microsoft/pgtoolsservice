@@ -11,12 +11,12 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestIndex(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'idxname',
-        'oid': 123,
-        'indisclustered': True,
-        'indisprimary': True,
-        'indisunique': True,
-        'indisvalid': True
+        "name": "idxname",
+        "oid": 123,
+        "indisclustered": True,
+        "indisprimary": True,
+        "indisunique": True,
+        "indisvalid": True,
     }
 
     @property
@@ -40,7 +40,7 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
             "is_valid": "is_valid",
             "is_unique": "is_unique",
             "is_primary": "is_primary",
-            "is_concurrent": "is_concurrent"
+            "is_concurrent": "is_concurrent",
         }
 
     @property
@@ -60,7 +60,7 @@ class TestIndex(NodeObjectTestBase, unittest.TestCase):
             "is_valid": None,
             "is_unique": None,
             "is_primary": None,
-            "is_concurrent": None
+            "is_concurrent": None,
         }
 
     @property

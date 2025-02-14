@@ -16,9 +16,6 @@ import sqlparse
 from prompt_toolkit.completion import Completer, Completion  # noqa
 from prompt_toolkit.document import Document  # noqa
 
-from ossdbtoolsservice.language.contracts.intellisense_ready import (
-    INTELLISENSE_REBUILD_NOTIFICATION,
-)
 import ossdbtoolsservice.scripting.scripter as scripter
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
@@ -27,8 +24,8 @@ from ossdbtoolsservice.hosting import (
     MessageServer,
     NotificationContext,
     RequestContext,
-    ServiceProvider,
     Service,
+    ServiceProvider,
 )
 from ossdbtoolsservice.language.contracts import (
     COMPLETION_REQUEST,
@@ -48,6 +45,9 @@ from ossdbtoolsservice.language.contracts import (
     LanguageFlavorChangeParams,
     StatusChangeParams,
     TextEdit,
+)
+from ossdbtoolsservice.language.contracts.intellisense_ready import (
+    INTELLISENSE_REBUILD_NOTIFICATION,
 )
 from ossdbtoolsservice.language.keywords import DefaultCompletionHelper
 from ossdbtoolsservice.language.operations_queue import (
@@ -98,9 +98,9 @@ class LanguageService(Service):
         self._logger: Union(Logger, None) = None
         self._valid_uri: Set = set()
         self._completion_helper = DefaultCompletionHelper()
-        self._script_map: Dict[str, "ScriptParseInfo"] = {}
+        self._script_map: Dict[str, ScriptParseInfo] = {}
         self._script_map_lock: threading.Lock = threading.Lock()
-        self._binding_queue_map: Dict[str, "ScriptParseInfo"] = {}
+        self._binding_queue_map: Dict[str, ScriptParseInfo] = {}
         self.operations_queue: OperationsQueue = None
 
     def register(self, service_provider: ServiceProvider) -> None:
@@ -114,12 +114,8 @@ class LanguageService(Service):
         self.operations_queue.start()
 
         # Register request handlers
-        self._server.set_request_handler(
-            COMPLETION_REQUEST, self.handle_completion_request
-        )
-        self._server.set_request_handler(
-            DEFINITION_REQUEST, self.handle_definition_request
-        )
+        self._server.set_request_handler(COMPLETION_REQUEST, self.handle_completion_request)
+        self._server.set_request_handler(DEFINITION_REQUEST, self.handle_definition_request)
         self._server.set_request_handler(
             COMPLETION_RESOLVE_REQUEST, self.handle_completion_resolve_request
         )
@@ -239,9 +235,7 @@ class LanguageService(Service):
         else:
             cursor_position: int = len(
                 script_file.get_text_in_range(
-                    Range.from_data(
-                        0, 0, params.position.line, params.position.character
-                    )
+                    Range.from_data(0, 0, params.position.line, params.position.character)
                 )
             )
             text: str = script_file.get_all_text()
@@ -355,9 +349,7 @@ class LanguageService(Service):
     # SERVICE NOTIFICATION HANDLERS #####################################################
     def on_connect(self, conn_info: ConnectionInfo) -> threading.Thread:
         """Set up intellisense cache on connection to a new database"""
-        return utils.thread.run_as_thread(
-            self._build_intellisense_cache_thread, conn_info
-        )
+        return utils.thread.run_as_thread(self._build_intellisense_cache_thread, conn_info)
 
     # PROPERTIES ###########################################################
     @property
@@ -448,9 +440,7 @@ class LanguageService(Service):
         edit.new_text = sqlparse.format(text, **options)
         response.append(edit)
 
-    def get_script_parse_info(
-        self, owner_uri, create_if_not_exists=False
-    ) -> ScriptParseInfo:
+    def get_script_parse_info(self, owner_uri, create_if_not_exists=False) -> ScriptParseInfo:
         with self._script_map_lock:
             if owner_uri in self._script_map:
                 return self._script_map[owner_uri]
@@ -468,9 +458,7 @@ class LanguageService(Service):
     ) -> bool:
         response = []
         line: str = script_file.get_line(params.position.line)
-        (token_text, text_range) = TextUtilities.get_text_and_range(
-            params.position, line
-        )
+        (token_text, text_range) = TextUtilities.get_text_and_range(params.position, line)
         if token_text:
             completions = self._completion_helper.get_matches(
                 token_text, text_range, self.should_lowercase

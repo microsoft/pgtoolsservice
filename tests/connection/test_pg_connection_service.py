@@ -26,12 +26,12 @@ from ossdbtoolsservice.connection.contracts import (
     ListDatabasesParams,
 )
 from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.utils.constants import (
     DEFAULT_PORT,
-    WORKSPACE_SERVICE_NAME,
     PG_PROVIDER_NAME,
+    WORKSPACE_SERVICE_NAME,
 )
-from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.workspace import WorkspaceService
 from tests.integration import get_connection_details, integration_test
 from tests.pgsmo_tests.utils import MockPGServerConnection
@@ -115,9 +115,7 @@ class TestPGConnectionService(unittest.TestCase):
         # supported options
         with mock.patch("psycopg.connect", new=mock.Mock(return_value=mock_connection)):
             response = self.connection_service.connect(
-                ConnectRequestParams(
-                    connection_details, connection_uri, connection_type
-                )
+                ConnectRequestParams(connection_details, connection_uri, connection_type)
             )
 
         # Verify that the response's serverInfo.isCloud attribute is set correctly
@@ -143,9 +141,7 @@ class TestPGConnectionService(unittest.TestCase):
         )
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type, mock_connection)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            old_connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = old_connection_info
 
         # Create a different request with the same owner uri
         params: ConnectRequestParams = ConnectRequestParams.from_dict(
@@ -186,9 +182,7 @@ class TestPGConnectionService(unittest.TestCase):
         )
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type, mock_server_connection)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            old_connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = old_connection_info
 
         # Connect with identical options, and verify that disconnect was not called
         params: ConnectRequestParams = ConnectRequestParams.from_dict(
@@ -266,9 +260,7 @@ class TestPGConnectionService(unittest.TestCase):
             "psycopg.connect", new=mock.Mock(return_value=mock_psycopg_connection)
         ):
             self.connection_service.connect(
-                ConnectRequestParams(
-                    connection_details, connection_uri, connection_type
-                )
+                ConnectRequestParams(connection_details, connection_uri, connection_type)
             )
         self.connection_service.get_connection(connection_uri, conn_type)
         # ... The mock config change callbacks should have been called
@@ -299,9 +291,7 @@ class TestPGConnectionService(unittest.TestCase):
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type_1, mock_connection_1)
         old_connection_info.add_connection(connection_type_2, mock_connection_2)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            old_connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = old_connection_info
 
         # Close the connection by calling disconnect
         response = self.connection_service._close_connections(
@@ -329,9 +319,7 @@ class TestPGConnectionService(unittest.TestCase):
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type_1, mock_connection_1)
         old_connection_info.add_connection(connection_type_2, mock_connection_2)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            old_connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = old_connection_info
 
         # Close the connection by calling disconnect
         response = self.connection_service._close_connections(old_connection_info)
@@ -352,9 +340,7 @@ class TestPGConnectionService(unittest.TestCase):
         old_connection_details = ConnectionDetails.from_data({"abc": 123})
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type_1, mock_connection_1)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            old_connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = old_connection_info
 
         # Close the connection by calling disconnect
         response = self.connection_service._close_connections(
@@ -402,9 +388,7 @@ class TestPGConnectionService(unittest.TestCase):
 
         # Connect and wait for the thread to finish executing, then verify the connection information
         self.connection_service.handle_connect_request(rc, params)
-        connection_thread = self.connection_service.owner_to_thread_map[
-            params.owner_uri
-        ]
+        connection_thread = self.connection_service.owner_to_thread_map[params.owner_uri]
         self.assertIsNotNone(connection_thread)
         connection_thread.join()
 
@@ -437,9 +421,7 @@ class TestPGConnectionService(unittest.TestCase):
 
         self.connection_service.handle_change_database_request(rc, params)
 
-        connection_thread = self.connection_service.owner_to_thread_map[
-            params.owner_uri
-        ]
+        connection_thread = self.connection_service.owner_to_thread_map[params.owner_uri]
         self.assertIsNotNone(connection_thread)
         connection_thread.join()
 
@@ -472,9 +454,7 @@ class TestPGConnectionService(unittest.TestCase):
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         # Verify that calling the listdatabases handler returns the expected databases
         params = ListDatabasesParams()
@@ -501,9 +481,7 @@ class TestPGConnectionService(unittest.TestCase):
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         # Get the connection without first creating it
         with mock.patch(
@@ -527,9 +505,7 @@ class TestPGConnectionService(unittest.TestCase):
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         with mock.patch(
             "ossdbtoolsservice.driver.connection_manager.ConnectionManager._create_connection",
@@ -537,9 +513,7 @@ class TestPGConnectionService(unittest.TestCase):
         ) as mock_psycopg_connect:
             # Open the connection
             self.connection_service.connect(
-                ConnectRequestParams(
-                    connection_details, connection_uri, connection_type
-                )
+                ConnectRequestParams(connection_details, connection_uri, connection_type)
             )
 
             # Get the connection
@@ -581,9 +555,7 @@ class TestPGConnectionService(unittest.TestCase):
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         # Verify that calling the listdatabases handler returns the expected
         # databases
@@ -613,10 +585,8 @@ class TestPGConnectionService(unittest.TestCase):
         connection_info._connection_map = {connection_type: mock_connection}
 
         # If I build a connection response for the connection
-        response = (
-            ossdbtoolsservice.connection.connection_service._build_connection_response(
-                connection_info, connection_type
-            )
+        response = ossdbtoolsservice.connection.connection_service._build_connection_response(
+            connection_info, connection_type
         )
 
         # Then the response should have accurate information about the connection
@@ -759,14 +729,10 @@ class TestPGConnectionService(unittest.TestCase):
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
         connection_info = ConnectionInfo(connection_uri, connection_details)
-        self.connection_service.owner_to_connection_map[connection_uri] = (
-            connection_info
-        )
+        self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         # Get the connection info
-        actual_connection_info = self.connection_service.get_connection_info(
-            connection_uri
-        )
+        actual_connection_info = self.connection_service.get_connection_info(connection_uri)
         self.assertIs(actual_connection_info, connection_info)
 
     def test_get_connection_info_no_connection(self):
@@ -775,9 +741,7 @@ class TestPGConnectionService(unittest.TestCase):
         connection_uri = "someuri"
 
         # Get the connection info
-        actual_connection_info = self.connection_service.get_connection_info(
-            connection_uri
-        )
+        actual_connection_info = self.connection_service.get_connection_info(connection_uri)
         self.assertIsNone(actual_connection_info)
 
 
@@ -811,9 +775,7 @@ class TestConnectionCancellation(unittest.TestCase):
     def test_connecting_sets_cancellation_token(self):
         """Test that a cancellation token is set before a connection thread attempts to connect"""
         # If I attempt to connect
-        with mock.patch(
-            "psycopg.connect", new=mock.Mock(side_effect=self._mock_connect)
-        ):
+        with mock.patch("psycopg.connect", new=mock.Mock(side_effect=self._mock_connect)):
             response = self.connection_service.connect(self.connect_params)
 
         # Then the cancellation token should have been set and should not have been canceled
@@ -883,14 +845,10 @@ class TestConnectionCancellation(unittest.TestCase):
             """Mock connection method to override the current connection token, as if another connection is executing"""
             mock_connection = self._mock_connect()
             self.connection_service._cancellation_map[cancellation_key].cancel()
-            self.connection_service._cancellation_map[cancellation_key] = (
-                cancellation_token
-            )
+            self.connection_service._cancellation_map[cancellation_key] = cancellation_token
             return mock_connection
 
-        with mock.patch(
-            "psycopg.connect", new=mock.Mock(side_effect=override_mock_connect)
-        ):
+        with mock.patch("psycopg.connect", new=mock.Mock(side_effect=override_mock_connect)):
             # If I attempt to connect, and the cancellation token gets updated while connecting
             response = self.connection_service.connect(self.connect_params)
 
@@ -913,9 +871,7 @@ class TestConnectionCancellation(unittest.TestCase):
 
         # If I call the cancellation request handler
         cancel_params = CancelConnectParams(self.owner_uri, self.connection_type)
-        self.connection_service.handle_cancellation_request(
-            request_context, cancel_params
-        )
+        self.connection_service.handle_cancellation_request(request_context, cancel_params)
 
         # Then the handler should have responded and set the cancellation flag
         request_context.send_response.assert_called_once_with(True)
@@ -928,9 +884,7 @@ class TestConnectionCancellation(unittest.TestCase):
 
         # If I call the cancellation request handler
         cancel_params = CancelConnectParams(self.owner_uri, self.connection_type)
-        self.connection_service.handle_cancellation_request(
-            request_context, cancel_params
-        )
+        self.connection_service.handle_cancellation_request(request_context, cancel_params)
 
         # Then the handler should have responded false to indicate that no matching connection was in progress
         request_context.send_response.assert_called_once_with(False)
@@ -984,9 +938,7 @@ class TestConnectionCancellation(unittest.TestCase):
     def _mock_connect(self, **kwargs):
         """Implementation for the mock psycopg.connect method that saves the current cancellation token"""
         self.token_store.append(
-            self.connection_service._cancellation_map[
-                (self.owner_uri, self.connection_type)
-            ]
+            self.connection_service._cancellation_map[(self.owner_uri, self.connection_type)]
         )
         return self.mock_psycopg_connection
 

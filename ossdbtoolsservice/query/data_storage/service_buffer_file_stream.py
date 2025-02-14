@@ -3,12 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import tempfile
-import io
 import os
+import tempfile
 
-from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer import ServiceBufferFileStreamWriter
-from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_reader import ServiceBufferFileStreamReader
+from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_reader import (
+    ServiceBufferFileStreamReader,
+)
+from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_writer import (
+    ServiceBufferFileStreamWriter,
+)
 
 
 def create_file() -> str:
@@ -16,11 +19,11 @@ def create_file() -> str:
 
 
 def get_reader(file_name: str):
-    return ServiceBufferFileStreamReader(io.open(file_name, 'rb'))
+    return ServiceBufferFileStreamReader(open(file_name, "rb"))
 
 
 def get_writer(file_name: str):
-    return ServiceBufferFileStreamWriter(io.open(file_name, 'wb'))
+    return ServiceBufferFileStreamWriter(open(file_name, "wb"))
 
 
 def delete_file(file_name: str):

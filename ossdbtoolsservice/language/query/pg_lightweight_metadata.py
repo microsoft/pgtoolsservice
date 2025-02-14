@@ -6,22 +6,24 @@
 from logging import Logger  # noqa
 
 from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.language.completion.packages.parseutils.meta import ForeignKey, FunctionMetadata     # noqa
+from ossdbtoolsservice.language.completion.packages.parseutils.meta import (
+    ForeignKey,
+    FunctionMetadata,
+)  # noqa
 
 
 class PGLightweightMetadata:
-
     # The boolean argument to the current_schemas function indicates whether
     # implicit schemas, e.g. pg_catalog
-    search_path_query = '''
-        SELECT * FROM unnest(current_schemas(true))'''
+    search_path_query = """
+        SELECT * FROM unnest(current_schemas(true))"""
 
-    schemata_query = '''
+    schemata_query = """
         SELECT  nspname
         FROM    pg_catalog.pg_namespace
-        ORDER BY 1 '''
+        ORDER BY 1 """
 
-    tables_query = '''
+    tables_query = """
         SELECT  n.nspname schema_name,
                 c.relname table_name
         FROM    pg_catalog.pg_class c
@@ -29,12 +31,12 @@ class PGLightweightMetadata:
                     ON n.oid = c.relnamespace
         WHERE   c.relkind = ANY(%s)
           AND   NOT c.relispartition
-        ORDER BY 1,2;'''
+        ORDER BY 1,2;"""
 
-    databases_query = '''
+    databases_query = """
         SELECT d.datname
         FROM pg_catalog.pg_database d
-        ORDER BY 1'''
+        ORDER BY 1"""
 
     def __init__(self, conn: ServerConnection, logger: Logger = None):
         self.conn = conn
@@ -49,7 +51,7 @@ class PGLightweightMetadata:
     just needed for intellisense
     """
 
-    def _relations(self, kinds=('p', 'r', 'v', 'm')):
+    def _relations(self, kinds=("p", "r", "v", "m")):
         """Get table or view name metadata
 
         :param kinds: list of postgres relkind filters:
@@ -62,25 +64,25 @@ class PGLightweightMetadata:
 
         with self.conn.cursor() as cur:
             sql = cur.mogrify(self.tables_query, [kinds])
-            self._log(f'Tables Query. sql: {sql}')
+            self._log(f"Tables Query. sql: {sql}")
             cur.execute(sql)
             for row in cur:
                 yield row
 
     def tables(self):
         """Yields (schema_name, table_name) tuples"""
-        for row in self._relations(kinds=['r', 'p']):
+        for row in self._relations(kinds=["r", "p"]):
             yield row
 
     def views(self):
         """Yields (schema_name, view_name) tuples.
 
-            Includes both views and and materialized views
+        Includes both views and and materialized views
         """
-        for row in self._relations(kinds=['v', 'm']):
+        for row in self._relations(kinds=["v", "m"]):
             yield row
 
-    def _columns(self, kinds=('p', 'r', 'v', 'm')):
+    def _columns(self, kinds=("p", "r", "v", "m")):
         """Get column metadata for tables and views
 
         :param kinds: kinds: list of postgres relkind filters:
@@ -91,7 +93,7 @@ class PGLightweightMetadata:
         :return: list of (schema_name, relation_name, column_name, column_type) tuples
         """
         if self.conn.connection.info.server_version >= 120000:
-            columns_query = '''
+            columns_query = """
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
                         att.attname column_name,
@@ -110,9 +112,9 @@ class PGLightweightMetadata:
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
                         AND NOT cls.relispartition
-                ORDER BY 1, 2, att.attnum'''
+                ORDER BY 1, 2, att.attnum"""
         elif self.conn.connection.info.server_version >= 80400:
-            columns_query = '''
+            columns_query = """
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
                         att.attname column_name,
@@ -131,9 +133,9 @@ class PGLightweightMetadata:
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
                         AND NOT cls.relispartition
-                ORDER BY 1, 2, att.attnum'''
+                ORDER BY 1, 2, att.attnum"""
         else:
-            columns_query = '''
+            columns_query = """
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
                         att.attname column_name,
@@ -151,26 +153,26 @@ class PGLightweightMetadata:
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
                         AND NOT cls.relispartition
-                ORDER BY 1, 2, att.attnum'''
+                ORDER BY 1, 2, att.attnum"""
 
         with self.conn.cursor() as cur:
             sql = cur.mogrify(columns_query, [kinds])
-            self._log(f'Columns Query. sql: {sql}')
+            self._log(f"Columns Query. sql: {sql}")
             cur.execute(sql)
             for row in cur:
                 yield row
 
     def table_columns(self):
-        for row in self._columns(kinds=['p', 'r']):
+        for row in self._columns(kinds=["p", "r"]):
             yield row
 
     def view_columns(self):
-        for row in self._columns(kinds=['v', 'm']):
+        for row in self._columns(kinds=["v", "m"]):
             yield row
 
     def databases(self):
         with self.conn.cursor() as cur:
-            self._log(f'Databases Query. sql: {self.databases_query}')
+            self._log(f"Databases Query. sql: {self.databases_query}")
             cur.execute(self.databases_query)
             return [x[0] for x in cur.fetchall()]
 
@@ -181,7 +183,7 @@ class PGLightweightMetadata:
             return
 
         with self.conn.cursor() as cur:
-            query = '''
+            query = """
                 SELECT s_p.nspname AS parentschema,
                        t_p.relname AS parenttable,
                        unnest((
@@ -208,8 +210,8 @@ class PGLightweightMetadata:
                 JOIN pg_catalog.pg_class      t_c ON t_c.oid = fk.conrelid
                 JOIN pg_catalog.pg_namespace  s_c ON s_c.oid = t_c.relnamespace
                 WHERE fk.contype = 'f';
-                '''
-            self._log(f'Functions Query. sql: {query}')
+                """
+            self._log(f"Functions Query. sql: {query}")
             cur.execute(query)
             for row in cur:
                 yield ForeignKey(*row)
@@ -218,7 +220,7 @@ class PGLightweightMetadata:
         """Yields FunctionMetadata named tuples"""
 
         if self.conn.connection.info.server_version >= 110000:
-            query = '''
+            query = """
                 SELECT n.nspname schema_name,
                         p.proname func_name,
                         p.proargnames,
@@ -234,9 +236,9 @@ class PGLightweightMetadata:
                             ON n.oid = p.pronamespace
                 WHERE p.prorettype::regtype != 'trigger'::regtype
                 ORDER BY 1, 2
-                '''
+                """
         elif self.conn.connection.info.server_version > 90000:
-            query = '''
+            query = """
                 SELECT n.nspname schema_name,
                         p.proname func_name,
                         p.proargnames,
@@ -252,9 +254,9 @@ class PGLightweightMetadata:
                             ON n.oid = p.pronamespace
                 WHERE p.prorettype::regtype != 'trigger'::regtype
                 ORDER BY 1, 2
-                '''
+                """
         elif self.conn.connection.info.server_version >= 80400:
-            query = '''
+            query = """
                 SELECT n.nspname schema_name,
                         p.proname func_name,
                         p.proargnames,
@@ -270,9 +272,9 @@ class PGLightweightMetadata:
                 ON n.oid = p.pronamespace
                 WHERE p.prorettype::regtype != 'trigger'::regtype
                 ORDER BY 1, 2
-                '''
+                """
         else:
-            query = '''
+            query = """
                 SELECT n.nspname schema_name,
                         p.proname func_name,
                         p.proargnames,
@@ -288,10 +290,10 @@ class PGLightweightMetadata:
                 ON n.oid = p.pronamespace
                 WHERE p.prorettype::regtype != 'trigger'::regtype
                 ORDER BY 1, 2
-                '''
+                """
 
         with self.conn.cursor() as cur:
-            self._log(f'Functions Query. sql:{query}')
+            self._log(f"Functions Query. sql:{query}")
             cur.execute(query)
             for row in cur:
                 yield FunctionMetadata(*row)
@@ -301,7 +303,7 @@ class PGLightweightMetadata:
 
         with self.conn.cursor() as cur:
             if self.conn.connection.info.server_version > 90000:
-                query = '''
+                query = """
                     SELECT n.nspname schema_name,
                            t.typname type_name
                     FROM   pg_catalog.pg_type t
@@ -322,9 +324,9 @@ class PGLightweightMetadata:
                           AND n.nspname <> 'pg_catalog'
                           AND n.nspname <> 'information_schema'
                     ORDER BY 1, 2;
-                    '''
+                    """
             else:
-                query = '''
+                query = """
                     SELECT n.nspname schema_name,
                       pg_catalog.format_type(t.oid, NULL) type_name
                     FROM pg_catalog.pg_type t
@@ -335,8 +337,8 @@ class PGLightweightMetadata:
                           AND n.nspname <> 'information_schema'
                       AND pg_catalog.pg_type_is_visible(t.oid)
                     ORDER BY 1, 2;
-                '''
-            self._log(f'Datatypes Query. sql: {query}')
+                """
+            self._log(f"Datatypes Query. sql: {query}")
             cur.execute(query)
             for row in cur:
                 yield row
@@ -344,7 +346,7 @@ class PGLightweightMetadata:
     def casing(self):
         """Yields the most common casing for names used in db functions"""
         with self.conn.cursor() as cur:
-            query = r'''
+            query = r"""
           WITH Words AS (
                 SELECT regexp_split_to_table(prosrc, '\W+') AS Word, COUNT(1)
                 FROM pg_catalog.pg_proc P
@@ -384,8 +386,8 @@ class PGLightweightMetadata:
             FROM OrderWords
             WHERE LOWER(Word) IN (SELECT Name FROM Names)
             AND Row_Number = 1;
-            '''
-            self._log(f'Casing Query. sql: {query}')
+            """
+            self._log(f"Casing Query. sql: {query}")
             cur.execute(query)
             for row in cur:
                 yield row[0]

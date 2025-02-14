@@ -14,9 +14,10 @@ class SQLConfiguration(Serializable):
     """
     Configuration for SQL settings in general. These are common to any SQL provider
     """
+
     @classmethod
     def get_child_serializable_types(cls):
-        return {'intellisense': IntellisenseConfiguration}
+        return {"intellisense": IntellisenseConfiguration}
 
     @classmethod
     def ignore_extra_attributes(cls):
@@ -30,9 +31,10 @@ class PGSQLConfiguration(Serializable):
     """
     Configuration for PGSQL tool service
     """
+
     @classmethod
     def get_child_serializable_types(cls):
-        return {'format': FormatterConfiguration}
+        return {"format": FormatterConfiguration}
 
     @classmethod
     def ignore_extra_attributes(cls):
@@ -40,21 +42,25 @@ class PGSQLConfiguration(Serializable):
 
     def __init__(self):
         self.default_database: str = constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
-        self.cosmos_default_database: str = constants.DEFAULT_DB[constants.COSMOS_PG_DEFAULT_DB]
+        self.cosmos_default_database: str = constants.DEFAULT_DB[
+            constants.COSMOS_PG_DEFAULT_DB
+        ]
         self.format: FormatterConfiguration = FormatterConfiguration()
 
 
 class Case(Enum):
     """Case options for keyword and identifier formatting"""
-    UPPER = 'upper',
-    LOWER = 'lower',
-    CAPITALIZE = 'capitalize'
+
+    UPPER = ("upper",)
+    LOWER = ("lower",)
+    CAPITALIZE = "capitalize"
 
 
 class FormatterConfiguration(Serializable):
     """
     Configuration for Formatter settings
     """
+
     @classmethod
     def ignore_extra_attributes(cls):
         return True
@@ -70,6 +76,7 @@ class IntellisenseConfiguration(Serializable):
     """
     Configuration for Intellisense settings
     """
+
     @classmethod
     def ignore_extra_attributes(cls):
         return True
@@ -86,31 +93,32 @@ class Configuration(Serializable):
     """
     Configuration of the tools service
     """
+
     @classmethod
     def get_child_serializable_types(cls):
-        return {'sql': SQLConfiguration, 'pgsql': PGSQLConfiguration}
+        return {"sql": SQLConfiguration, "pgsql": PGSQLConfiguration}
 
     def __init__(self):
         self.sql = SQLConfiguration()
         self.pgsql = PGSQLConfiguration()
 
     def get_configuration(self, provider):
-        return {'PGSQL': self.pgsql}[provider]
+        return {"PGSQL": self.pgsql}[provider]
 
 
 class DidChangeConfigurationParams(Serializable):
     """
     Parameters received when configuration has been changed
     """
+
     @classmethod
     def get_child_serializable_types(cls):
-        return {'settings': Configuration}
+        return {"settings": Configuration}
 
     def __init__(self):
         self.settings: Configuration = None
 
 
 DID_CHANGE_CONFIG_NOTIFICATION = IncomingMessageConfiguration(
-    'workspace/didChangeConfiguration',
-    DidChangeConfigurationParams
+    "workspace/didChangeConfiguration", DidChangeConfigurationParams
 )

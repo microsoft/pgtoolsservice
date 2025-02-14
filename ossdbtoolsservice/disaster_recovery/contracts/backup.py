@@ -7,21 +7,27 @@
 
 import enum
 
-from ossdbtoolsservice.capabilities.contracts import CategoryValue, FeatureMetadataProvider, ServiceOption
+from ossdbtoolsservice.capabilities.contracts import (
+    CategoryValue,
+    FeatureMetadataProvider,
+    ServiceOption,
+)
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
 
 
 class BackupType(enum.Enum):
     """Enum for the type of backups that are supported"""
-    PG_DUMP = 'dump'
-    DIRECTORY = 'directory'
-    TAR = 'tar'
-    PLAIN_TEXT = 'sql'
+
+    PG_DUMP = "dump"
+    DIRECTORY = "directory"
+    TAR = "tar"
+    PLAIN_TEXT = "sql"
 
 
 class BackupInfo(Serializable):
     """Options for a requested backup"""
+
     type: BackupType
     path: str
     jobs: int
@@ -60,7 +66,7 @@ class BackupInfo(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'type': BackupType}
+        return {"type": BackupType}
 
     @classmethod
     def ignore_extra_attributes(cls):
@@ -106,13 +112,14 @@ class BackupInfo(Serializable):
 
 class BackupParams(Serializable):
     """Parameters for a backup request"""
+
     owner_uri: str
     backup_info: BackupInfo
     task_execution_mode: str
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'backup_info': BackupInfo}
+        return {"backup_info": BackupInfo}
 
     def __init__(self):
         self.owner_uri: str = None
@@ -120,7 +127,7 @@ class BackupParams(Serializable):
         self.task_execution_mode = None
 
 
-BACKUP_REQUEST = IncomingMessageConfiguration('backup/backup', BackupParams)
+BACKUP_REQUEST = IncomingMessageConfiguration("backup/backup", BackupParams)
 
 
 # These options are handled in the disaster recovery service's _perform_backup method. A few have special case handling, but most are handled automatically by
@@ -128,304 +135,304 @@ BACKUP_REQUEST = IncomingMessageConfiguration('backup/backup', BackupParams)
 # TODO: Localize the display names and descriptions
 BACKUP_OPTIONS = FeatureMetadataProvider(
     True,
-    'backup',
+    "backup",
     [
         ServiceOption(
-            name='type',
-            display_name='Backup type',
-            description='The type of backup to perform',
+            name="type",
+            display_name="Backup type",
+            description="The type of backup to perform",
             value_type=ServiceOption.VALUE_TYPE_CATEGORY,
             is_required=True,
             category_values=[
-                CategoryValue(
-                    display_name='pg_dump/pg_restore (.dump)',
-                    name='dump'
-                ),
-                CategoryValue(
-                    display_name='Directory',
-                    name='directory'
-                ),
-                CategoryValue(
-                    display_name='Archive (.tar)',
-                    name='tar'
-                ),
-                CategoryValue(
-                    display_name='Plain text (.sql)',
-                    name='sql'
-                ),
+                CategoryValue(display_name="pg_dump/pg_restore (.dump)", name="dump"),
+                CategoryValue(display_name="Directory", name="directory"),
+                CategoryValue(display_name="Archive (.tar)", name="tar"),
+                CategoryValue(display_name="Plain text (.sql)", name="sql"),
             ],
-            default_value='sql'
+            default_value="sql",
         ),
         ServiceOption(
-            name='path',
-            display_name='Output path',
-            description='The path to the backup file/directory that will be produced',
+            name="path",
+            display_name="Output path",
+            description="The path to the backup file/directory that will be produced",
             value_type=ServiceOption.VALUE_TYPE_STRING,
-            is_required=True
+            is_required=True,
         ),
         ServiceOption(
-            name='jobs',
-            display_name='Number of jobs',
-            description='The number of parallel jobs to use for the dump',
+            name="jobs",
+            display_name="Number of jobs",
+            description="The number of parallel jobs to use for the dump",
             value_type=ServiceOption.VALUE_TYPE_NUMBER,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='compress',
-            display_name='Compression level',
-            description='The compression level (for compressed formats)',
+            name="compress",
+            display_name="Compression level",
+            description="The compression level (for compressed formats)",
             value_type=ServiceOption.VALUE_TYPE_CATEGORY,
             is_required=False,
-            group_name='Advanced',
-            category_values=[CategoryValue('0', '0'), CategoryValue('1', '1'), CategoryValue('2', '2'), CategoryValue('3', '3'), CategoryValue('4', '4'),
-                             CategoryValue('5', '5'), CategoryValue('6', '6'), CategoryValue('7', '7'), CategoryValue('8', '8'), CategoryValue('9', '9')]
+            group_name="Advanced",
+            category_values=[
+                CategoryValue("0", "0"),
+                CategoryValue("1", "1"),
+                CategoryValue("2", "2"),
+                CategoryValue("3", "3"),
+                CategoryValue("4", "4"),
+                CategoryValue("5", "5"),
+                CategoryValue("6", "6"),
+                CategoryValue("7", "7"),
+                CategoryValue("8", "8"),
+                CategoryValue("9", "9"),
+            ],
         ),
         ServiceOption(
-            name='dataOnly',
-            display_name='Data only',
-            description='Dump only the data, not the schema',
+            name="dataOnly",
+            display_name="Data only",
+            description="Dump only the data, not the schema",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='blobs',
-            display_name='Blobs',
-            description='Include large objects in dump',
+            name="blobs",
+            display_name="Blobs",
+            description="Include large objects in dump",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='clean',
-            display_name='Clean',
-            description='Clean (drop) database objects before recreating',
+            name="clean",
+            display_name="Clean",
+            description="Clean (drop) database objects before recreating",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='create',
-            display_name='Create',
-            description='Include commands to create database in dump',
+            name="create",
+            display_name="Create",
+            description="Include commands to create database in dump",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='encoding',
-            display_name='Encoding',
-            description='Dump the data in the given encoding',
+            name="encoding",
+            display_name="Encoding",
+            description="Dump the data in the given encoding",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='schema',
-            display_name='Schema',
-            description='Dump the named schema(s) only',
+            name="schema",
+            display_name="Schema",
+            description="Dump the named schema(s) only",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='excludeSchema',
-            display_name='Exclude schema',
-            description='Do not dump the named schema(s)',
+            name="excludeSchema",
+            display_name="Exclude schema",
+            description="Do not dump the named schema(s)",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='oids',
-            display_name='OIDs',
-            description='Include OIDs in the dump',
+            name="oids",
+            display_name="OIDs",
+            description="Include OIDs in the dump",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noOwner',
-            display_name='No owner',
-            description='Skip restoration of object ownership in plain-text format',
+            name="noOwner",
+            display_name="No owner",
+            description="Skip restoration of object ownership in plain-text format",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='schemaOnly',
-            display_name='Schema only',
-            description='Dump only the schema, no data',
+            name="schemaOnly",
+            display_name="Schema only",
+            description="Dump only the schema, no data",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='superuser',
-            display_name='Superuser',
-            description='Superuser user name to use in plain-text format',
+            name="superuser",
+            display_name="Superuser",
+            description="Superuser user name to use in plain-text format",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='table',
-            display_name='Table',
-            description='Dump the named table(s) only',
+            name="table",
+            display_name="Table",
+            description="Dump the named table(s) only",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='excludeTable',
-            display_name='Exclude table',
-            description='Do not dump the named table(s)',
+            name="excludeTable",
+            display_name="Exclude table",
+            description="Do not dump the named table(s)",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noPrivileges',
-            display_name='No privileges',
-            description='Do not dump privileges (grant/revoke)',
+            name="noPrivileges",
+            display_name="No privileges",
+            description="Do not dump privileges (grant/revoke)",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='columnInserts',
-            display_name='Column inserts',
-            description='Dump data as INSERT commands with column names',
+            name="columnInserts",
+            display_name="Column inserts",
+            description="Dump data as INSERT commands with column names",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='disableDollarQuoting',
-            display_name='Disable dollar quoting',
-            description='Disable dollar quoting; use SQL standard quoting',
+            name="disableDollarQuoting",
+            display_name="Disable dollar quoting",
+            description="Disable dollar quoting; use SQL standard quoting",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='disableTriggers',
-            display_name='Disable triggers',
-            description='Disable triggers during data-only restore',
+            name="disableTriggers",
+            display_name="Disable triggers",
+            description="Disable triggers during data-only restore",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='enable_row_security',
-            display_name='Enable row security',
-            description='Dump only content user has access to',
+            name="enable_row_security",
+            display_name="Enable row security",
+            description="Dump only content user has access to",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='excludeDataTable',
-            display_name='Exclude data table',
-            description='Do not dump data for the named table(s)',
+            name="excludeDataTable",
+            display_name="Exclude data table",
+            description="Do not dump data for the named table(s)",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='ifExists',
-            display_name='Use IF EXISTS',
-            description='Use IF EXISTS when dropping objects',
+            name="ifExists",
+            display_name="Use IF EXISTS",
+            description="Use IF EXISTS when dropping objects",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='inserts',
-            display_name='Inserts',
-            description='Dump data as INSERT commands, rather than COPY',
+            name="inserts",
+            display_name="Inserts",
+            description="Dump data as INSERT commands, rather than COPY",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noSecurityLabels',
-            display_name='No security labels',
-            description='Do not dump security label assignments',
+            name="noSecurityLabels",
+            display_name="No security labels",
+            description="Do not dump security label assignments",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noSynchronizedSnapshots',
-            display_name='No synchronized snapshots',
-            description='Do not use synchronized snapshots in parallel jobs',
+            name="noSynchronizedSnapshots",
+            display_name="No synchronized snapshots",
+            description="Do not use synchronized snapshots in parallel jobs",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noTablespaces',
-            display_name='No tablespaces',
-            description='Do not dump tablespace assignments',
+            name="noTablespaces",
+            display_name="No tablespaces",
+            description="Do not dump tablespace assignments",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='noUnloggedTableData',
-            display_name='No unlogged table data',
-            description='Do not dump unlogged table data',
+            name="noUnloggedTableData",
+            display_name="No unlogged table data",
+            description="Do not dump unlogged table data",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='quoteAllIidentifiers',
-            display_name='Quote all identifiers',
-            description='Quote all identifiers, even if not key words',
+            name="quoteAllIidentifiers",
+            display_name="Quote all identifiers",
+            description="Quote all identifiers, even if not key words",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='section',
-            display_name='Section',
-            description='Dump named section (pre-data, data, or post-data)',
+            name="section",
+            display_name="Section",
+            description="Dump named section (pre-data, data, or post-data)",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='serializableDeferrable',
-            display_name='Serializable deferrable',
-            description='Wait until the dump can run without anomalies',
+            name="serializableDeferrable",
+            display_name="Serializable deferrable",
+            description="Wait until the dump can run without anomalies",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='snapshot',
-            display_name='Snapshot',
-            description='Use given snapshot for the dump',
+            name="snapshot",
+            display_name="Snapshot",
+            description="Use given snapshot for the dump",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='strictNames',
-            display_name='Strict names',
-            description='Require table and/or schema include patterns to match at least one entity each',
+            name="strictNames",
+            display_name="Strict names",
+            description="Require table and/or schema include patterns to match at least one entity each",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
+            group_name="Advanced",
         ),
         ServiceOption(
-            name='useSetSessionAuthorization',
-            display_name='Use SET SESSION AUTHORIZATION',
-            description='Use SET SESSION AUTHORIZATION commands instead of ALTER OWNER commands to set ownership',
+            name="useSetSessionAuthorization",
+            display_name="Use SET SESSION AUTHORIZATION",
+            description="Use SET SESSION AUTHORIZATION commands instead of ALTER OWNER commands to set ownership",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
-            group_name='Advanced'
-        )])
+            group_name="Advanced",
+        ),
+    ],
+)

@@ -1,5 +1,5 @@
-from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.serialization import Serializable
 
 
 class QueryExecutionPlanRequest(Serializable):
@@ -14,9 +14,10 @@ class QueryExecutionPlanRequest(Serializable):
 
 
 class QueryExecutionResponse:
-
     def __init__(self):
         self.execution_plan = None
 
 
-QUERY_EXECUTION_PLAN_REQUEST = IncomingMessageConfiguration('query/executionPlan', QueryExecutionPlanRequest)
+QUERY_EXECUTION_PLAN_REQUEST = IncomingMessageConfiguration(
+    "query/executionPlan", QueryExecutionPlanRequest
+)

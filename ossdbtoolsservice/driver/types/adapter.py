@@ -1,31 +1,39 @@
-import psycopg
-from psycopg.types.string import TextLoader
-from psycopg.types.json import _JsonDumper
-from psycopg.types.net import InetLoader
 from ipaddress import ip_address, ip_interface
 
+import psycopg
+from psycopg.types.json import _JsonDumper
+from psycopg.types.net import InetLoader
+from psycopg.types.string import TextLoader
+
 encode_dict = {
-    'SQL_ASCII': ['SQL_ASCII', 'raw-unicode-escape'],
-    'SQLASCII': ['SQLASCII', 'raw-unicode-escape'],
+    "SQL_ASCII": ["SQL_ASCII", "raw-unicode-escape"],
+    "SQLASCII": ["SQLASCII", "raw-unicode-escape"],
     # EUC_TW Not availble in Python,
     # so psycopg3 do not support it, we are on our own
-    'EUC_TW': ['BIG5', 'big5'],
-    'EUCTW': ['BIG5', 'big5'],
+    "EUC_TW": ["BIG5", "big5"],
+    "EUCTW": ["BIG5", "big5"],
     # psycopg3 do not support unicode
-    'UNICODE': ['utf-8', 'utf-8']
+    "UNICODE": ["utf-8", "utf-8"],
 }
 
 PSYCOPG_SUPPORTED_STRING_DATATYPES = (
     # To cast bytea, interval type
-    17, 1186,
-
+    17,
+    1186,
     # date, timestamp, timestamp with zone, time without time zone
-    1082, 1114, 1184, 1083, 1266
+    1082,
+    1114,
+    1184,
+    1083,
+    1266,
 )
 
 PSYCOPG_SUPPORTED_STRING_NUMERIC_DATATYPES = (
     # Real, double precision, numeric, bigint
-    700, 701, 1700, 20
+    700,
+    701,
+    1700,
+    20,
 )
 
 # int4range, int8range, numrange, daterange tsrange, tstzrange
@@ -39,22 +47,44 @@ PSYCOPG_SUPPORTED_MULTIRANGE_TYPES = (4535, 4451, 4536, 4532, 4533, 4534)
 PSYCOPG_SUPPORTED_ARRAY_OF_STRING_DATATYPES = (
     # To cast bytea[] type
     1001,
-
     # bigint[]
     1016,
-
     # double precision[], real[]
-    1022, 1021,
-
+    1022,
+    1021,
     # bit[], varbit[]
-    1561, 1563,
+    1561,
+    1563,
 )
 
 PSYCOPG_SUPPORTED_BUILTIN_ARRAY_DATATYPES = (
-    1016, 1006, 1007, 1021, 1022, 1231,
-    1002, 1003, 1014, 1015, 1014, 1015,
-    1000, 1115, 1185, 1183, 1270, 1182, 1187,
-    1001, 1028, 1013, 1041, 651, 1040, 1034, 775
+    1016,
+    1006,
+    1007,
+    1021,
+    1022,
+    1231,
+    1002,
+    1003,
+    1014,
+    1015,
+    1014,
+    1015,
+    1000,
+    1115,
+    1185,
+    1183,
+    1270,
+    1182,
+    1187,
+    1001,
+    1028,
+    1013,
+    1041,
+    651,
+    1040,
+    1034,
+    775,
 )
 
 # record, record][]
@@ -105,17 +135,16 @@ class pgAdminInetLoader(InetLoader):
 
 class TextLoaderpgAdmin(TextLoader):
     def load(self, data):
-        postgres_encoding, python_encoding = get_encoding(
-            self.connection.info.encoding)
-        if postgres_encoding not in ['SQLASCII', 'SQL_ASCII']:
+        postgres_encoding, python_encoding = get_encoding(self.connection.info.encoding)
+        if postgres_encoding not in ["SQLASCII", "SQL_ASCII"]:
             # In case of errors while decoding data, instead of raising error
             # replace errors with empty space.
             # Error - utf-8 code'c can not decode byte 0x7f:
             # invalid continuation byte
             if isinstance(data, memoryview):
-                return bytes(data).decode(self._encoding, errors='replace')
+                return bytes(data).decode(self._encoding, errors="replace")
             else:
-                return data.decode(self._encoding, errors='replace')
+                return data.decode(self._encoding, errors="replace")
         else:
             # SQL_ASCII Database
             try:
@@ -124,12 +153,11 @@ class TextLoaderpgAdmin(TextLoader):
                 return data.decode(python_encoding)
             except Exception:
                 if isinstance(data, memoryview):
-                    return bytes(data).decode('UTF-8')
-                return data.decode('UTF-8')
+                    return bytes(data).decode("UTF-8")
+                return data.decode("UTF-8")
 
 
 class JsonDumperpgAdmin(_JsonDumper):
-
     def dump(self, obj):
         return self.dumps(obj).encode()
 
@@ -139,14 +167,22 @@ def addAdapters():
     for typ in PSYCOPG_SUPPORTED_RECORD_TYPES:
         psycopg.adapters.register_loader(typ, TextLoaderpgAdmin)
 
-    for typ in PSYCOPG_SUPPORTED_STRING_DATATYPES + PSYCOPG_SUPPORTED_STRING_NUMERIC_DATATYPES +\
-            PSYCOPG_SUPPORTED_RANGE_TYPES + PSYCOPG_SUPPORTED_MULTIRANGE_TYPES +\
-            PSYCOPG_SUPPORTED_ARRAY_OF_STRING_DATATYPES:
+    for typ in (
+        PSYCOPG_SUPPORTED_STRING_DATATYPES
+        + PSYCOPG_SUPPORTED_STRING_NUMERIC_DATATYPES
+        + PSYCOPG_SUPPORTED_RANGE_TYPES
+        + PSYCOPG_SUPPORTED_MULTIRANGE_TYPES
+        + PSYCOPG_SUPPORTED_ARRAY_OF_STRING_DATATYPES
+    ):
         psycopg.adapters.register_loader(typ, TextLoaderpgAdmin)
 
-    for typ in PSYCOPG_SUPPORTED_BUILTIN_ARRAY_DATATYPES +\
-        PSYCOPG_SUPPORTED_JSON_ARRAY_TYPES + PSYCOPG_SUPPORTED_IPADDRESS_ARRAY_TYPES +\
-            PSYCOPG_SUPPORTED_RANGE_ARRAY_TYPES + PSYCOPG_SUPPORTED_MULTIRANGE_ARRAY_TYPES:
+    for typ in (
+        PSYCOPG_SUPPORTED_BUILTIN_ARRAY_DATATYPES
+        + PSYCOPG_SUPPORTED_JSON_ARRAY_TYPES
+        + PSYCOPG_SUPPORTED_IPADDRESS_ARRAY_TYPES
+        + PSYCOPG_SUPPORTED_RANGE_ARRAY_TYPES
+        + PSYCOPG_SUPPORTED_MULTIRANGE_ARRAY_TYPES
+    ):
         psycopg.adapters.register_loader(typ, TextLoaderpgAdmin)
 
     for typ in PSYCOPG_SUPPORTED_JSON_TYPES + PSYCOPG_SUPPORTED_JSON_ARRAY_TYPES:
@@ -167,17 +203,14 @@ def get_encoding(key):
     #
     # Reference: https://www.postgresql.org/docs/11/multibyte.html
     #
-    if key == 'ascii':
-        key = 'raw_unicode_escape'
+    if key == "ascii":
+        key = "raw_unicode_escape"
     try:
         postgres_encoding = psycopg._encodings.py2pgenc(key).decode()
     except Exception:
-        postgres_encoding = 'utf-8'
+        postgres_encoding = "utf-8"
 
-    python_encoding = psycopg._encodings._py_codecs.get(postgres_encoding,
-                                                        'utf-8')
+    python_encoding = psycopg._encodings._py_codecs.get(postgres_encoding, "utf-8")
 
-    _dict = encode_dict.get(postgres_encoding.upper(),
-                            [postgres_encoding,
-                             python_encoding])
+    _dict = encode_dict.get(postgres_encoding.upper(), [postgres_encoding, python_encoding])
     return _dict

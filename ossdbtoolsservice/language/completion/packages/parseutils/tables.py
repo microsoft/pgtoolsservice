@@ -1,19 +1,19 @@
-
 # --------------------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import sqlparse
 from collections import namedtuple
-from sqlparse.sql import IdentifierList, Identifier, Function
-from sqlparse.tokens import Keyword, DML, Punctuation
 
-TableReference = namedtuple('TableReference', ['schema', 'name', 'alias',
-                                               'is_function'])
-TableReference.ref = property(lambda self: self.alias or (
-    self.name if self.name.islower() or self.name[0] == '"'
-    else '"' + self.name + '"'))
+import sqlparse
+from sqlparse.sql import Function, Identifier, IdentifierList
+from sqlparse.tokens import DML, Keyword, Punctuation
+
+TableReference = namedtuple("TableReference", ["schema", "name", "alias", "is_function"])
+TableReference.ref = property(
+    lambda self: self.alias
+    or (self.name if self.name.islower() or self.name[0] == '"' else '"' + self.name + '"')
+)
 
 
 # This code is borrowed from sqlparse example script.
@@ -22,7 +22,13 @@ def is_subselect(parsed):
     if not parsed.is_group:
         return False
     for item in parsed.tokens:
-        if item.ttype is DML and item.value.upper() in ('SELECT', 'INSERT', 'UPDATE', 'CREATE', 'DELETE'):
+        if item.ttype is DML and item.value.upper() in (
+            "SELECT",
+            "INSERT",
+            "UPDATE",
+            "CREATE",
+            "DELETE",
+        ):
             return True
     return False
 
@@ -48,23 +54,25 @@ def extract_from_part(parsed, stop_at_punctuation=True):
             # Also 'SELECT * FROM abc JOIN def' will trigger this elif
             # condition. So we need to ignore the keyword JOIN and its variants
             # INNER JOIN, FULL OUTER JOIN, etc.
-            elif item.ttype is Keyword and (
-                    not item.value.upper() == 'FROM') and (
-                    not item.value.upper().endswith('JOIN')):
+            elif (
+                item.ttype is Keyword
+                and (not item.value.upper() == "FROM")
+                and (not item.value.upper().endswith("JOIN"))
+            ):
                 tbl_prefix_seen = False
             else:
                 yield item
         elif item.ttype is Keyword or item.ttype is Keyword.DML:
             item_val = item.value.upper()
-            if (item_val in ('COPY', 'FROM', 'INTO', 'UPDATE', 'TABLE') or
-                    item_val.endswith('JOIN')):
+            if item_val in ("COPY", "FROM", "INTO", "UPDATE", "TABLE") or item_val.endswith(
+                "JOIN"
+            ):
                 tbl_prefix_seen = True
         # 'SELECT a, FROM abc' will detect FROM as part of the column list.
         # So this check here is necessary.
         elif isinstance(item, IdentifierList):
             for identifier in item.get_identifiers():
-                if (identifier.ttype is Keyword and
-                        identifier.value.upper() == 'FROM'):
+                if identifier.ttype is Keyword and identifier.value.upper() == "FROM":
                     tbl_prefix_seen = True
                     break
 
@@ -106,13 +114,15 @@ def extract_table_identifiers(token_stream, allow_functions=True):
                 try:
                     schema_name = identifier.get_parent_name()
                     real_name = identifier.get_real_name()
-                    is_function = (allow_functions and
-                                   _identifier_is_function(identifier))
+                    is_function = allow_functions and _identifier_is_function(identifier)
                 except AttributeError:
                     continue
                 if real_name:
-                    results.append(TableReference(schema_name, real_name,
-                                                  identifier.get_alias(), is_function))
+                    results.append(
+                        TableReference(
+                            schema_name, real_name, identifier.get_alias(), is_function
+                        )
+                    )
         elif isinstance(item, Identifier):
             schema_name, real_name, alias = parse_identifier(item)
             is_function = allow_functions and _identifier_is_function(item)
@@ -140,7 +150,7 @@ def extract_tables(sql):
     # Punctuation. eg: INSERT INTO abc (col1, col2) VALUES (1, 2)
     # abc is the table name, but if we don't stop at the first lparen, then
     # we'll identify abc, col1 and col2 as table names.
-    insert_stmt = parsed[0].token_first().value.lower() == 'insert'
+    insert_stmt = parsed[0].token_first().value.lower() == "insert"
     stream = extract_from_part(parsed[0], stop_at_punctuation=insert_stmt)
 
     # Kludge: sqlparse mistakenly identifies insert statements as
@@ -148,7 +158,6 @@ def extract_tables(sql):
     # "insert into foo (bar, baz)" as a function call to foo with arguments
     # (bar, baz). So don't allow any identifiers in insert statements
     # to have is_function=True
-    identifiers = extract_table_identifiers(stream,
-                                            allow_functions=not insert_stmt)
+    identifiers = extract_table_identifiers(stream, allow_functions=not insert_stmt)
     # In the case 'sche.<cursor>', we get an empty TableReference; remove that
     return tuple(i for i in identifiers if i.name)

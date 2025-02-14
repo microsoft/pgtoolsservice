@@ -22,6 +22,7 @@ class ConnectionDetails(Serializable):
     Details about the connection on top of a basic connection summary. Used as part of the incoming
     connection request
     """
+
     options: dict
 
     @classmethod
@@ -37,43 +38,43 @@ class ConnectionDetails(Serializable):
     def server_name(self) -> str:
         if not self.options:
             return None
-        return self.options.get('host')
+        return self.options.get("host")
 
     @server_name.setter
     def server_name(self, value):
-        self.options['host'] = value
+        self.options["host"] = value
 
     @property
     def database_name(self) -> str:
         if not self.options:
             return None
-        return self.options.get('dbname')
+        return self.options.get("dbname")
 
     @database_name.setter
     def database_name(self, value):
-        self.options['dbname'] = value
+        self.options["dbname"] = value
 
     @property
     def user_name(self) -> str:
         if not self.options:
             return None
-        return self.options.get('user')
+        return self.options.get("user")
 
     @user_name.setter
     def user_name(self, value):
-        self.options['user'] = value
+        self.options["user"] = value
 
     @property
     def port(self) -> int:
         if not self.options:
             return None
-        val = self.options.get('port')
+        val = self.options.get("port")
         if val:
             return int(val) or None
 
     @port.setter
     def port(self, value):
-        self.options['port'] = value
+        self.options["port"] = value
 
 
 class ConnectionType(enum.Enum):
@@ -83,9 +84,10 @@ class ConnectionType(enum.Enum):
     Default: Connection used by the editor. Opened by the editor upon the initial connection.
     Query: Connection used for executing queries. Opened when the first query is executed.
     """
-    DEFAULT = 'Default'
-    QUERY = 'Query'
-    EDIT = 'Edit'
-    QUERY_CANCEL = 'QueryCancel'
-    OBJECT_EXLPORER = 'ObjectExplorer'
-    INTELLISENSE = 'Intellisense'
+
+    DEFAULT = "Default"
+    QUERY = "Query"
+    EDIT = "Edit"
+    QUERY_CANCEL = "QueryCancel"
+    OBJECT_EXLPORER = "ObjectExplorer"
+    INTELLISENSE = "Intellisense"

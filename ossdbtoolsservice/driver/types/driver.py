@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Tuple
 from abc import ABC, abstractmethod
+from typing import Tuple
 
 
 class ServerConnection(ABC):
@@ -49,7 +49,7 @@ class ServerConnection(ABC):
     @property
     @abstractmethod
     def connection_options(self) -> dict:
-        """ Returns the options used to create the current connection to the server """
+        """Returns the options used to create the current connection to the server"""
 
     @property
     @abstractmethod
@@ -59,7 +59,7 @@ class ServerConnection(ABC):
     @property
     @abstractmethod
     def database_error(self) -> Exception:
-        """ Returns the type of database error this connection throws"""
+        """Returns the type of database error this connection throws"""
 
     @property
     @abstractmethod
@@ -95,7 +95,7 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def connection(self) -> 'connection':
+    def connection(self) -> "connection":
         """
         Returns the underlying connection
         """

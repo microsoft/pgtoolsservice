@@ -3,17 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
-import smo.utils.templating as templating
 
 
 class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'rule')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "rule")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Rule':
+    def _from_node_query(cls, server: "s.Server", parent: NodeObject, **kwargs) -> "Rule":
         """
         Creates a new Rule object based on the results of a nodes query
         :param server: Server that owns the rule
@@ -24,12 +24,12 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             oid int: Object ID of the rule
         :return: Instance of the rule
         """
-        idx = cls(server, parent, kwargs['name'])
-        idx._oid = kwargs['oid']
+        idx = cls(server, parent, kwargs["name"])
+        idx._oid = kwargs["oid"]
 
         return idx
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: "s.Server", parent: NodeObject, name: str):
         """
         Initializes a new instance of an rule
         :param server: Server that owns the rule
@@ -37,9 +37,15 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param name: Name of the rule
         """
         NodeObject.__init__(self, server, parent, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
     # PROPERTIES ###########################################################
 
@@ -81,11 +87,11 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         return {
             "data": {
                 "name": self.name,
@@ -95,22 +101,22 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "condition": self.condition,
                 "do_instead": self.do_instead,
                 "statements": self.statements,
-                "comment": self.comment
+                "comment": self.comment,
             },
-            "display_comments": self.display_comments
+            "display_comments": self.display_comments,
         }
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+        """Provides data input for delete script"""
         return {
             "rid": self.rid,
             "rulename": self.rulename,
             "relname": self.parent.name,
-            "nspname": self.parent.schema
+            "nspname": self.parent.schema,
         }
 
     def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for update script"""
         return {
             "data": {
                 "name": self.name,
@@ -118,7 +124,7 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "do_instead": self.do_instead,
                 "condition": self.condition,
                 "statements": self.statements,
-                "comment": self.comment
+                "comment": self.comment,
             },
             "o_data": {
                 "name": "",
@@ -126,6 +132,6 @@ class Rule(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "view": "",
                 "condition": "",
                 "do_instead": "",
-                "statements": ""
-            }
+                "statements": "",
+            },
         }

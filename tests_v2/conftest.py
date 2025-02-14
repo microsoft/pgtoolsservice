@@ -1,9 +1,10 @@
 from typing import Type
 
 import pytest
-from ossdbtoolsservice.hosting.response_queues import ResponseQueues
+
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.message_server import MessageServer
+from ossdbtoolsservice.hosting.response_queues import ResponseQueues
 from ossdbtoolsservice.hosting.service_provider import Service, ServiceProvider
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
@@ -45,9 +46,7 @@ class MockMessageServer(MessageServer):
         self.service_provider = ServiceProvider(self, services)
         self.service_provider.initialize()
 
-    def setup_request_response(
-        self, request_method: str, response: JSONRPCMessage
-    ) -> None:
+    def setup_request_response(self, request_method: str, response: JSONRPCMessage) -> None:
         self._request_responses[request_method] = response
 
 

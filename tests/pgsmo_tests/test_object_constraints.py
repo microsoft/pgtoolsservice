@@ -3,27 +3,26 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta
 import unittest
+from abc import ABCMeta
 
 from pgsmo.objects.table_objects.constraints import (
-    CheckConstraint, ExclusionConstraint, ForeignKeyConstraint, IndexConstraint
+    CheckConstraint,
+    ExclusionConstraint,
+    ForeignKeyConstraint,
+    IndexConstraint,
 )
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
 class ConstraintTestBase(NodeObjectTestBase, metaclass=ABCMeta):
-    NODE_ROW = {
-        'convalidated': True,
-        'name': 'constraint',
-        'oid': 123
-    }
+    NODE_ROW = {"convalidated": True, "name": "constraint", "oid": 123}
 
     @property
     def basic_properties(self):
         return {
-            '_convalidated': ConstraintTestBase.NODE_ROW['convalidated'],
-            'convalidated': ConstraintTestBase.NODE_ROW['convalidated']
+            "_convalidated": ConstraintTestBase.NODE_ROW["convalidated"],
+            "convalidated": ConstraintTestBase.NODE_ROW["convalidated"],
         }
 
     @property
@@ -42,17 +41,12 @@ class TestCheckConstraint(ConstraintTestBase, unittest.TestCase):
             "name": "name",
             "comment": "comment",
             "src": "src",
-            "no_inherit": "no_inherit"
+            "no_inherit": "no_inherit",
         }
 
     @property
     def property_query(self):
-        return {
-            "name": "test",
-            "comment": "test_comment",
-            "src": "test",
-            "no_inherit": True
-        }
+        return {"name": "test", "comment": "test_comment", "src": "test", "no_inherit": True}
 
     @property
     def class_for_test(self):
@@ -60,7 +54,6 @@ class TestCheckConstraint(ConstraintTestBase, unittest.TestCase):
 
 
 class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
-
     @property
     def full_properties(self):
         return {
@@ -72,7 +65,7 @@ class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
             "deferrable": "deferrable",
             "deferred": "deferred",
             "constraint": "constraint",
-            "cascade": "cascade"
+            "cascade": "cascade",
         }
 
     @property
@@ -86,7 +79,7 @@ class TestExclusionConstraint(ConstraintTestBase, unittest.TestCase):
             "deferrable": True,
             "deferred": True,
             "constraint": "test",
-            "cascade": True
+            "cascade": True,
         }
 
     @property
@@ -108,7 +101,7 @@ class TestForeignKeyConstraint(ConstraintTestBase, unittest.TestCase):
             "fdeltype": "fdeltype",
             "deferrable": "deferrable",
             "deferred": "deferred",
-            "cascade": "cascade"
+            "cascade": "cascade",
         }
 
     @property
@@ -120,11 +113,11 @@ class TestForeignKeyConstraint(ConstraintTestBase, unittest.TestCase):
             "remote_schema": "test",
             "remote_table": "test",
             "fmatchtype": True,
-            "fupdtype": 'c',
-            "fdeltype": 'c',
+            "fupdtype": "c",
+            "fdeltype": "c",
             "deferrable": True,
             "deferred": True,
-            "cascade": True
+            "cascade": True,
         }
 
     @property
@@ -133,7 +126,6 @@ class TestForeignKeyConstraint(ConstraintTestBase, unittest.TestCase):
 
 
 class TestIndexConstraint(ConstraintTestBase, unittest.TestCase):
-
     @property
     def full_properties(self):
         return {
@@ -144,7 +136,7 @@ class TestIndexConstraint(ConstraintTestBase, unittest.TestCase):
             "spcname": "spcname",
             "deferrable": "deferrable",
             "deferred": "deferred",
-            "cascade": "cascade"
+            "cascade": "cascade",
         }
 
     @property
@@ -157,7 +149,7 @@ class TestIndexConstraint(ConstraintTestBase, unittest.TestCase):
             "spcname": "test",
             "deferrable": True,
             "deferred": True,
-            "cascade": True
+            "cascade": True,
         }
 
     @property

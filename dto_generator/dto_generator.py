@@ -6,22 +6,28 @@
 """Utility functions for generating JSON Schema and TypeScript interfaces"""
 
 import enum
+import inspect
 import json
 import os
-import inspect
-from typing import Type, Dict, Any, Optional, Union
-from ossdbtoolsservice.serialization import Serializable
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
+from typing import Any, Dict, Optional, Type, Union
+
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import DisasterRecoveryService
+from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import (
+    DisasterRecoveryService,
+)
+from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
+from ossdbtoolsservice.hosting import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.object_explorer import ObjectExplorerService
 from ossdbtoolsservice.query_execution import QueryExecutionService
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
-from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
+from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace import WorkspaceService
@@ -46,12 +52,7 @@ def class_to_json_schema(cls: Type) -> Dict[str, Any]:
         base_schemas.append({"$ref": f"#/definitions/{base.__name__}"})
 
     # Define the initial schema structure
-    schema = {
-        "title": cls.__name__,
-        "type": "object",
-        "properties": {},
-        "required": []
-    }
+    schema = {"title": cls.__name__, "type": "object", "properties": {}, "required": []}
 
     # If the class has base classes, use allOf to include them
     if base_schemas:
@@ -94,7 +95,7 @@ def enum_to_json_schema(enum_class: Type[enum.Enum]) -> Dict[str, Any]:
         "title": enum_class.__name__,
         "type": "string",
         "enum": [item.value for item in enum_class],
-        "description": enum_class.__doc__ or ""
+        "description": enum_class.__doc__ or "",
     }
 
     # Register the schema structure in the registry before fully populating it
@@ -137,7 +138,9 @@ def get_schema_type(attr_type: Type) -> Dict[str, Any]:
 def is_optional_type(attr_type: Type) -> bool:
     """Check if the type is Optional."""
     return Union[None, attr_type] == Optional[attr_type] or (
-        hasattr(attr_type, "__origin__") and attr_type.__origin__ is Union and type(None) in attr_type.__args__
+        hasattr(attr_type, "__origin__")
+        and attr_type.__origin__ is Union
+        and type(None) in attr_type.__args__
     )
 
 
@@ -148,7 +151,7 @@ def generate_full_schema() -> Dict[str, Any]:
         "title": "UnifiedSchema",
         "type": "object",
         "definitions": {},
-        "properties": {}
+        "properties": {},
     }
 
     for name, schema in schema_registry.items():
@@ -161,11 +164,11 @@ def generate_full_schema() -> Dict[str, Any]:
 def save_json_schema_to_file(schema: dict, file_path: str):
     """Save JSON Schema to a file."""
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         json.dump(schema, f, indent=4)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Create the service provider and add the providers to it
     services = {
         constants.ADMIN_SERVICE_NAME: AdminService,
@@ -179,7 +182,7 @@ if __name__ == '__main__':
         constants.SCRIPTING_SERVICE_NAME: ScriptingService,
         constants.WORKSPACE_SERVICE_NAME: WorkspaceService,
         constants.EDIT_DATA_SERVICE_NAME: EditDataService,
-        constants.TASK_SERVICE_NAME: TaskService
+        constants.TASK_SERVICE_NAME: TaskService,
     }
 
     # Convert all parameter classes registered in IncomingMessageConfiguration to JSON schema

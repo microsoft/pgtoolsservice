@@ -10,11 +10,7 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
 class TestTablespace(NodeObjectTestBase, unittest.TestCase):
-    NODE_ROW = {
-        'name': 'test',
-        'oid': 123,
-        'owner': 10
-    }
+    NODE_ROW = {"name": "test", "oid": 123, "owner": 10}
 
     @property
     def class_for_test(self):
@@ -23,8 +19,8 @@ class TestTablespace(NodeObjectTestBase, unittest.TestCase):
     @property
     def basic_properties(self):
         return {
-            'owner': TestTablespace.NODE_ROW['owner'],
-            '_owner': TestTablespace.NODE_ROW['owner']
+            "owner": TestTablespace.NODE_ROW["owner"],
+            "_owner": TestTablespace.NODE_ROW["owner"],
         }
 
     @property
@@ -50,7 +46,7 @@ class TestTablespace(NodeObjectTestBase, unittest.TestCase):
             "location": "location",
             "description": "description",
             "options": "options",
-            "acl": "acl"
+            "acl": "acl",
         }
 
     @property
@@ -60,5 +56,5 @@ class TestTablespace(NodeObjectTestBase, unittest.TestCase):
             "location": "some path",
             "description": None,
             "options": None,
-            "acl": None
+            "acl": None,
         }

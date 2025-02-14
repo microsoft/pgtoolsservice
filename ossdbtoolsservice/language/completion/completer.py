@@ -8,11 +8,9 @@ from collections import namedtuple
 from .packages.parseutils.utils import last_word
 from .packages.prioritization import PrevalenceCounter
 
-_Candidate = namedtuple(
-    'Candidate', 'completion prio meta synonyms prio2 display schema'
-)
+_Candidate = namedtuple("Candidate", "completion prio meta synonyms prio2 display schema")
 
-Match = namedtuple('Match', ['completion', 'priority'])
+Match = namedtuple("Match", ["completion", "priority"])
 
 
 class MyCompleter:
@@ -22,7 +20,7 @@ class MyCompleter:
         self.completion = completion
 
     def unescape_name(self, name):
-        """ Unquote a string."""
+        """Unquote a string."""
         if name and name[0] == '"' and name[-1] == '"':
             name = name[1:-1]
 
@@ -31,7 +29,7 @@ class MyCompleter:
     def case(self, word):
         return self.casing.get(word, word)
 
-    def find_matches(self, text, collection, mode='fuzzy', meta=None):
+    def find_matches(self, text, collection, mode="fuzzy", meta=None):
         """Find completion matches for the given text.
 
         Given the user's input text and a collection of available
@@ -51,11 +49,21 @@ class MyCompleter:
         if not collection:
             return []
         prio_order = [
-            'keyword', 'function', 'view', 'table', 'datatype', 'database',
-            'schema', 'column', 'table alias', 'join', 'name join', 'fk join'
+            "keyword",
+            "function",
+            "view",
+            "table",
+            "datatype",
+            "database",
+            "schema",
+            "column",
+            "table alias",
+            "join",
+            "name join",
+            "fk join",
         ]
         type_priority = prio_order.index(meta) if meta in prio_order else -1
-        text = last_word(text, include='most_punctuations').lower()
+        text = last_word(text, include="most_punctuations").lower()
         text_len = len(text)
 
         if text and text[0] == '"':
@@ -65,7 +73,7 @@ class MyCompleter:
             # Completion.position value is correct
             text = text[1:]
 
-        if mode == 'fuzzy':
+        if mode == "fuzzy":
             fuzzy = True
             priority_func = self.prioritizer.name_count
         else:
@@ -78,16 +86,16 @@ class MyCompleter:
         # Note: higher priority values mean more important, so use negative
         # signs to flip the direction of the tuple
         if fuzzy:
-            regex = '.*?'.join(map(re.escape, text))
-            pat = re.compile('(%s)' % regex)
+            regex = ".*?".join(map(re.escape, text))
+            pat = re.compile("(%s)" % regex)
 
             def _match(item):
-                if item.lower()[:len(text) + 1] in (text, text + ' '):
+                if item.lower()[: len(text) + 1] in (text, text + " "):
                     # Exact match of first word in suggestion
                     # This is to get exact alias matches to the top
                     # E.g. for input `e`, 'Entries E' should be on top
                     # (before e.g. `EndUsers EU`)
-                    return float('Infinity'), -1
+                    return float("Infinity"), -1
                 r = pat.search(self.unescape_name(item.lower()))
                 if r:
                     return -len(r.group()), -r.start()
@@ -99,7 +107,7 @@ class MyCompleter:
                 if match_point >= 0:
                     # Use negative infinity to force keywords to sort after all
                     # fuzzy matches
-                    return -float('Infinity'), -match_point
+                    return -float("Infinity"), -match_point
 
         matches = []
         for cand in collection:
@@ -112,13 +120,20 @@ class MyCompleter:
                 syn_matches = [m for m in syn_matches if m]
                 sort_key = max(syn_matches) if syn_matches else None
             else:
-                item, display_meta, prio, prio2, display, schema = cand, meta, 0, 0, cand, cand
+                item, display_meta, prio, prio2, display, schema = (
+                    cand,
+                    meta,
+                    0,
+                    0,
+                    cand,
+                    cand,
+                )
                 sort_key = _match(cand)
 
             if sort_key:
                 if display_meta and len(display_meta) > 50:
                     # Truncate meta-text to 50 characters, if necessary
-                    display_meta = display_meta[:47] + u'...'
+                    display_meta = display_meta[:47] + "..."
 
                 # Lexical order of items in the collection, used for
                 # tiebreaking items with the same match group length and start
@@ -129,15 +144,24 @@ class MyCompleter:
                 # case-sensitive one as a tie breaker.
                 # We also use the unescape_name to make sure quoted names have
                 # the same priority as unquoted names.
-                lexical_priority = (tuple(0 if c in (' _') else -ord(c)
-                                          for c in self.unescape_name(item.lower())) + (1,)
-                                    + tuple(c for c in item))
+                lexical_priority = (
+                    tuple(
+                        0 if c in (" _") else -ord(c)
+                        for c in self.unescape_name(item.lower())
+                    )
+                    + (1,)
+                    + tuple(c for c in item)
+                )
 
                 item = self.case(item)
                 display = self.case(display)
                 priority = (
-                    sort_key, type_priority, prio, priority_func(item),
-                    prio2, lexical_priority
+                    sort_key,
+                    type_priority,
+                    prio,
+                    priority_func(item),
+                    prio2,
+                    lexical_priority,
                 )
 
                 extend_completion = self.completion(
@@ -145,12 +169,8 @@ class MyCompleter:
                     start_position=-text_len,
                     display_meta=display_meta,
                     display=display,
-                    schema=schema)
-
-                matches.append(
-                    Match(
-                        completion=extend_completion,
-                        priority=priority
-                    )
+                    schema=schema,
                 )
+
+                matches.append(Match(completion=extend_completion, priority=priority))
         return matches

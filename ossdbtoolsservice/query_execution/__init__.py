@@ -5,4 +5,4 @@
 
 from ossdbtoolsservice.query_execution.query_execution_service import QueryExecutionService
 
-__all__ = ['QueryExecutionService']
+__all__ = ["QueryExecutionService"]

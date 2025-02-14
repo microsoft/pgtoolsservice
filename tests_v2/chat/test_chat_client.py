@@ -4,16 +4,15 @@ This requires that PGTS_CHAT_USE_AZURE_OPENAI be set to true in the environment 
 Azure OpenAI environment variables be set as well.
 """
 
-from io import FileIO
-import io
-from multiprocessing import Queue
-import subprocess
 import json
-import threading
+import subprocess
 import sys
+import threading
+from io import FileIO
+from multiprocessing import Queue
 
-from rich.console import Console
 import click
+from rich.console import Console
 
 PRINT_STDERR = False
 
@@ -36,10 +35,7 @@ def read_responses(stdout_wrapped: FileIO, queue: Queue):
                     print(f"Error response: {message['error']['message']}")
                 elif "method" in message and message["method"] == "connection/complete":
                     queue.put("Connected to database.")
-                elif (
-                    "method" in message
-                    and message["method"] == "chat/completion-result"
-                ):
+                elif "method" in message and message["method"] == "chat/completion-result":
                     # print("RECV <----------")
                     # space = "     "
                     # print(
@@ -65,8 +61,7 @@ def read_responses(stdout_wrapped: FileIO, queue: Queue):
                     print("RECV <----------")
                     space = "     "
                     print(
-                        space
-                        + f"\n{space}".join(json.dumps(message, indent=2).split("\n"))
+                        space + f"\n{space}".join(json.dumps(message, indent=2).split("\n"))
                     )
                     print("<---------------")
 
@@ -135,8 +130,8 @@ def chat_with_postgresql():
         stderr=subprocess.PIPE,
     )
 
-    stdin_wrapped = io.open(process.stdin.fileno(), "wb", buffering=0, closefd=False)
-    stdout_wrapped = io.open(process.stdout.fileno(), "rb", buffering=0, closefd=False)
+    stdin_wrapped = open(process.stdin.fileno(), "wb", buffering=0, closefd=False)
+    stdout_wrapped = open(process.stdout.fileno(), "rb", buffering=0, closefd=False)
 
     print("Language server started.")
     print("Creating connection to database...")
@@ -174,9 +169,7 @@ def chat_with_postgresql():
     queue.get()  # Wait for the connection to complete
 
     if PRINT_STDERR:
-        stderr_thread = threading.Thread(
-            target=read_stderr, args=(process,), daemon=True
-        )
+        stderr_thread = threading.Thread(target=read_stderr, args=(process,), daemon=True)
         stderr_thread.start()
     else:
         stderr_thread = None
