@@ -6,7 +6,7 @@
 import unittest
 import unittest.mock as mock
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Type
+from typing import Callable
 
 from smo.common.scripting_mixins import (
     ScriptableBase,
@@ -26,7 +26,7 @@ class ScriptableTestBase(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def class_for_test(self) -> Type[ScriptableBase]:
+    def class_for_test(self) -> type[ScriptableBase]:
         pass
 
     @property
@@ -82,7 +82,7 @@ class ScriptableTestBase(metaclass=ABCMeta):
 
 class TestScriptableCreate(ScriptableTestBase, unittest.TestCase):
     @property
-    def class_for_test(self) -> Type[ScriptableBase]:
+    def class_for_test(self) -> type[ScriptableBase]:
         return self._MockScriptableCreate
 
     @property
@@ -103,7 +103,7 @@ class TestScriptableCreate(ScriptableTestBase, unittest.TestCase):
 
 class TestScriptableDelete(ScriptableTestBase, unittest.TestCase):
     @property
-    def class_for_test(self) -> Type[ScriptableBase]:
+    def class_for_test(self) -> type[ScriptableBase]:
         return self._MockScriptableDelete
 
     @property
@@ -124,7 +124,7 @@ class TestScriptableDelete(ScriptableTestBase, unittest.TestCase):
 
 class TestScriptableUpdate(ScriptableTestBase, unittest.TestCase):
     @property
-    def class_for_test(self) -> Type[ScriptableBase]:
+    def class_for_test(self) -> type[ScriptableBase]:
         return self._MockScriptableUpdate
 
     @property

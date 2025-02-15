@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
@@ -48,7 +47,7 @@ class ServiceOption:
     group_name: str
     value_type: str
     default_value: str
-    category_values: List[CategoryValue]
+    category_values: list[CategoryValue]
     is_required: bool
 
     def __init__(
@@ -59,7 +58,7 @@ class ServiceOption:
         group_name: str = None,
         value_type: str = None,
         default_value: str = None,
-        category_values: List[CategoryValue] = None,
+        category_values: list[CategoryValue] = None,
         is_required: bool = False,
     ):
         self.name: str = name
@@ -68,7 +67,7 @@ class ServiceOption:
         self.group_name: str = group_name
         self.value_type: str = value_type
         self.default_value: str = default_value
-        self.category_values: List[CategoryValue] = category_values
+        self.category_values: list[CategoryValue] = category_values
         self.is_required: bool = is_required
 
 
@@ -93,12 +92,12 @@ class ConnectionOption(ServiceOption):
         group_name: str = None,
         value_type: str = None,
         default_value: str = None,
-        category_values: List[CategoryValue] = None,
+        category_values: list[CategoryValue] = None,
         special_value_type: str = None,
         is_identity: bool = False,
         is_required: bool = False,
     ):
-        super(ConnectionOption, self).__init__(
+        super().__init__(
             name,
             display_name,
             description,
@@ -115,10 +114,10 @@ class ConnectionOption(ServiceOption):
 class ConnectionProviderOptions:
     """Defines the connection provider options that the DMP server implements"""
 
-    options: List[ConnectionOption]
+    options: list[ConnectionOption]
 
-    def __init__(self, options: List[ConnectionOption]):
-        self.options: List[ConnectionOption] = options
+    def __init__(self, options: list[ConnectionOption]):
+        self.options: list[ConnectionOption] = options
 
 
 class FeatureMetadataProvider:
@@ -126,10 +125,10 @@ class FeatureMetadataProvider:
 
     enabled: bool
     feature_name: str
-    options_metadata: List[ServiceOption]
+    options_metadata: list[ServiceOption]
 
     def __init__(
-        self, enabled: bool, feature_name: str, options_metadata: List[ServiceOption]
+        self, enabled: bool, feature_name: str, options_metadata: list[ServiceOption]
     ):
         self.enabled = enabled
         self.feature_name = feature_name
@@ -143,7 +142,7 @@ class DMPServerCapabilities:
     provider_name: str
     provider_display_name: str
     connection_provider: ConnectionProviderOptions
-    features: List[FeatureMetadataProvider]
+    features: list[FeatureMetadataProvider]
 
     def __init__(
         self,
@@ -151,13 +150,13 @@ class DMPServerCapabilities:
         provider_name: str,
         provider_display_name: str,
         connection_options: ConnectionProviderOptions,
-        features: List[FeatureMetadataProvider],
+        features: list[FeatureMetadataProvider],
     ):
         self.protocol_version: str = protocol_version
         self.provider_name: str = provider_name
         self.provider_display_name: str = provider_display_name
         self.connection_provider: ConnectionProviderOptions = connection_options
-        self.features: List[FeatureMetadataProvider] = features
+        self.features: list[FeatureMetadataProvider] = features
 
 
 class CapabilitiesResult:

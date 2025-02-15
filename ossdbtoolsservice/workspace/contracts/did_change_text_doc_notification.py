@@ -3,11 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional  # noqa
+from typing import Optional
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
-from ossdbtoolsservice.workspace.contracts.common import Range
 from ossdbtoolsservice.serialization import Serializable
+from ossdbtoolsservice.workspace.contracts.common import Range
 
 
 class TextDocumentChangeEvent(Serializable):
@@ -60,7 +60,7 @@ class DidChangeTextDocumentParams(Serializable):
         }
 
     def __init__(self):
-        self.content_changes: List[TextDocumentChangeEvent] = []
+        self.content_changes: list[TextDocumentChangeEvent] = []
         self.text_document: VersionedTextDocumentIdentifier = None
 
 

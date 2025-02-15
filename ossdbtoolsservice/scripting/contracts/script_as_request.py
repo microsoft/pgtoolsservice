@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import enum
-from typing import List
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
@@ -24,7 +23,7 @@ class ScriptOperation(enum.Enum):
 class ScriptAsParameters(Serializable):
     owner_uri: str
     operation: ScriptOperation
-    scripting_objects: List[ObjectMetadata]
+    scripting_objects: list[ObjectMetadata]
 
     @classmethod
     def get_child_serializable_types(cls):
@@ -33,7 +32,7 @@ class ScriptAsParameters(Serializable):
     def __init__(self):
         self.owner_uri: str = None
         self.operation: ScriptOperation = None
-        self.scripting_objects: List[ObjectMetadata] = None
+        self.scripting_objects: list[ObjectMetadata] = None
 
     @classmethod
     def ignore_extra_attributes(cls):

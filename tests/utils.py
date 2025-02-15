@@ -6,7 +6,7 @@ import logging
 import re
 import unittest
 import unittest.mock as mock
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 import psycopg
 from psycopg.connection import AdaptersMap
@@ -132,7 +132,7 @@ class MockPsycopgConnection:
         self.broken = False
 
         self._adapters: Optional[AdaptersMap] = mock.Mock()
-        self.notice_handlers: List[NoticeHandler] = []
+        self.notice_handlers: list[NoticeHandler] = []
 
     @property
     def closed(self):
@@ -189,7 +189,9 @@ class MockConnectionInfo:
 class MockCursor:
     """Class used to mock psycopg cursor objects for testing"""
 
-    def __init__(self, query_results, columns_names=[], connection=mock.Mock()):
+    def __init__(self, query_results, columns_names=None, connection=mock.Mock()):
+        if columns_names is None:
+            columns_names = []
         self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
         self.fetchall = mock.Mock(return_value=query_results)
         self.fetchone = mock.Mock(side_effect=self.execute_fetch_one_side_effects)

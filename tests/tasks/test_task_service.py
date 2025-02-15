@@ -6,7 +6,6 @@
 """Test the task service"""
 
 import unittest
-from typing import List
 from unittest import mock
 
 from ossdbtoolsservice.tasks import Task, TaskService, TaskStatus
@@ -136,7 +135,7 @@ class TaskServiceTests(unittest.TestCase):
         self.mock_task_2.status = TaskStatus.SUCCEEDED
 
         # Set up the request validator
-        def validate_list_response(response_params: List[TaskInfo]):
+        def validate_list_response(response_params: list[TaskInfo]):
             actual_response_dict = [info.__dict__ for info in response_params]
             expected_response_dict = [self.mock_task_1.task_info.__dict__]
             if not active_tasks_only:

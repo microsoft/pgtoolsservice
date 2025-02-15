@@ -1,4 +1,3 @@
-from typing import Type
 
 import pytest
 
@@ -40,7 +39,7 @@ class MockMessageServer(MessageServer):
     def receive_message(self, message: JSONRPCMessage) -> None:
         return self._dispatch_message(message)
 
-    def add_services(self, services: dict[str, Type[Service]]) -> None:
+    def add_services(self, services: dict[str, type[Service]]) -> None:
         if self.service_provider is not None:
             raise RuntimeError("Service provider has already been initialized")
         self.service_provider = ServiceProvider(self, services)

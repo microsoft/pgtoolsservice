@@ -66,21 +66,18 @@ class PGLightweightMetadata:
             sql = cur.mogrify(self.tables_query, [kinds])
             self._log(f"Tables Query. sql: {sql}")
             cur.execute(sql)
-            for row in cur:
-                yield row
+            yield from cur
 
     def tables(self):
         """Yields (schema_name, table_name) tuples"""
-        for row in self._relations(kinds=["r", "p"]):
-            yield row
+        yield from self._relations(kinds=["r", "p"])
 
     def views(self):
         """Yields (schema_name, view_name) tuples.
 
         Includes both views and and materialized views
         """
-        for row in self._relations(kinds=["v", "m"]):
-            yield row
+        yield from self._relations(kinds=["v", "m"])
 
     def _columns(self, kinds=("p", "r", "v", "m")):
         """Get column metadata for tables and views
@@ -159,16 +156,13 @@ class PGLightweightMetadata:
             sql = cur.mogrify(columns_query, [kinds])
             self._log(f"Columns Query. sql: {sql}")
             cur.execute(sql)
-            for row in cur:
-                yield row
+            yield from cur
 
     def table_columns(self):
-        for row in self._columns(kinds=["p", "r"]):
-            yield row
+        yield from self._columns(kinds=["p", "r"])
 
     def view_columns(self):
-        for row in self._columns(kinds=["v", "m"]):
-            yield row
+        yield from self._columns(kinds=["v", "m"])
 
     def databases(self):
         with self.conn.cursor() as cur:
@@ -340,8 +334,7 @@ class PGLightweightMetadata:
                 """
             self._log(f"Datatypes Query. sql: {query}")
             cur.execute(query)
-            for row in cur:
-                yield row
+            yield from cur
 
     def casing(self):
         """Yields the most common casing for names used in db functions"""

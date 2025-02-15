@@ -11,7 +11,7 @@ import logging
 import os
 import re
 import threading
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Optional
 from unittest import mock
 
 import ossdbtoolsservice.ossdbtoolsservice_main as ossdbtoolsservice_main
@@ -48,8 +48,8 @@ class RPCTestMessage:
         message_type: JSONRPCMessageType,
         expect_error_response: bool = False,
         response_verifier: Callable[[dict], None] = None,
-        notification_verifiers: List[
-            Tuple[Callable[[dict], bool], Optional[Callable[[dict], None]]]
+        notification_verifiers: list[
+            tuple[Callable[[dict], bool], Optional[Callable[[dict], None]]]
         ] = None,
     ):
         self.method = method
@@ -82,7 +82,7 @@ class RPCTestMessage:
 
 
 class JSONRPCTestCase:
-    def __init__(self, test_messages: List[RPCTestMessage]):
+    def __init__(self, test_messages: list[RPCTestMessage]):
         initialization_messages = [
             DefaultRPCTestMessages.initialize(),
             DefaultRPCTestMessages.version(),
@@ -291,8 +291,8 @@ class DefaultRPCTestMessages:
     def connection_request(owner_uri, connection_options):
         connection_request = RPCTestMessage(
             "connection/connect",
-            '{"ownerUri":"%s","connection":{"options":%s}}'
-            % (owner_uri, json.dumps(connection_options)),
+            f'{{"ownerUri":"{owner_uri}","connection":"'
+            f'{{"options":{json.dumps(connection_options)}}}}}',
             JSONRPCMessageType.Request,
             notification_verifiers=[
                 (
@@ -304,7 +304,7 @@ class DefaultRPCTestMessages:
         )
         language_flavor_notification = RPCTestMessage(
             "connection/languageflavorchanged",
-            '{"uri":"%s","language":"sql","flavor":"PGSQL"}' % owner_uri,
+            f'{{"uri":"{owner_uri}","language":"sql","flavor":"PGSQL"}}',
             JSONRPCMessageType.Notification,
             notification_verifiers=[
                 (

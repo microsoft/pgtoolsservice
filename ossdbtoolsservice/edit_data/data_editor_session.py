@@ -40,7 +40,7 @@ class DataEditorSession:
     """This class will hold the logic to maintain the edit session and handle the operations"""
 
     def __init__(self, metadata_factory: SmoEditTableMetadataFactory):
-        self._session_cache: Dict[int, RowEdit] = {}
+        self._session_cache: dict[int, RowEdit] = {}
         self._metadata_factory = metadata_factory
         self._last_row_id: int = None
         self._is_initialized = False
@@ -53,7 +53,7 @@ class DataEditorSession:
         self,
         initailize_edit_params: InitializeEditParams,
         connection: ServerConnection,
-        query_executer: Callable[[str, List[DbColumn], Callable], None],
+        query_executer: Callable[[str, list[DbColumn], Callable], None],
         on_success: Callable,
         on_failure: Callable,
     ):
@@ -190,7 +190,7 @@ class DataEditorSession:
 
         return CreateRowResponse(self._last_row_id, default_cell_values)
 
-    def get_rows(self, owner_uri, start_index: int, end_index: int) -> List[EditRow]:
+    def get_rows(self, owner_uri, start_index: int, end_index: int) -> list[EditRow]:
         if start_index <= len(self._result_set.rows):
             subset = ResultSetSubset.from_result_set(self._result_set, start_index, end_index)
         else:

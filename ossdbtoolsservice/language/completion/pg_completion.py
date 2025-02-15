@@ -16,4 +16,4 @@ class PGCompletion(Completion):
         self, text, start_position=0, display=None, display_meta=None, style="", schema=None
     ):
         self.schema = schema
-        super(PGCompletion, self).__init__(text, start_position, display, display_meta, style)
+        super().__init__(text, start_position, display, display_meta, style)

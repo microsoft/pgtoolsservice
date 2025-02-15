@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.query.contracts import BatchSummary
@@ -18,11 +17,11 @@ class QueryCompleteNotificationParams:
     """
 
     owner_uri: str
-    batch_summaries: List[BatchSummary]
+    batch_summaries: list[BatchSummary]
 
-    def __init__(self, owner_uri: str, batch_summaries: List[BatchSummary]):
+    def __init__(self, owner_uri: str, batch_summaries: list[BatchSummary]):
         self.owner_uri: str = owner_uri
-        self.batch_summaries: List[BatchSummary] = batch_summaries
+        self.batch_summaries: list[BatchSummary] = batch_summaries
 
 
 QUERY_COMPLETE_NOTIFICATION = "query/complete"

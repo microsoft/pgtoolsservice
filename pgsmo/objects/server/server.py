@@ -90,7 +90,7 @@ class Server:
         return self._port
 
     @property
-    def version(self) -> Tuple[int, int, int]:
+    def version(self) -> tuple[int, int, int]:
         """Tuple representing the server version: (major, minor, patch)"""
         return self._conn.server_version
 
@@ -356,7 +356,7 @@ class Server:
 
     # IMPLEMENTATION DETAILS ###############################################
 
-    def _fetch_recovery_state(self) -> Dict[str, Optional[bool]]:
+    def _fetch_recovery_state(self) -> dict[str, Optional[bool]]:
         recovery_check_sql = utils.templating.render_template(
             utils.templating.get_template_path(
                 self.TEMPLATE_ROOT, "check_recovery.sql", self.version
@@ -367,7 +367,7 @@ class Server:
         if len(rows) > 0:
             return rows[0]
 
-    def _fetch_search_path(self) -> List[str]:
+    def _fetch_search_path(self) -> list[str]:
         try:
             query_results = self._conn.execute_query(SEARCH_PATH_QUERY)
             return [x[0] for x in query_results]

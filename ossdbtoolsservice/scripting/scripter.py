@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable, Dict, Tuple
+from typing import Callable
 
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.driver import ServerConnection
@@ -25,7 +25,7 @@ class Scripter:
     """Service for retrieving operation scripts"""
 
     SCRIPT_OPERATION = Callable[[NodeObject], str]
-    SCRIPT_HANDLERS: Dict[ScriptOperation, Tuple[type, SCRIPT_OPERATION]] = {
+    SCRIPT_HANDLERS: dict[ScriptOperation, tuple[type, SCRIPT_OPERATION]] = {
         ScriptOperation.CREATE: (ScriptableCreate, lambda obj: obj.create_script()),
         ScriptOperation.DELETE: (ScriptableDelete, lambda obj: obj.delete_script()),
         ScriptOperation.UPDATE: (ScriptableUpdate, lambda obj: obj.update_script()),
@@ -45,7 +45,7 @@ class Scripter:
         :return: SQL for the requested scripting operation
         """
         # Make sure we have the handler
-        handler: Tuple[type, self.SCRIPT_OPERATION] = self.SCRIPT_HANDLERS.get(operation)
+        handler: tuple[type, self.SCRIPT_OPERATION] = self.SCRIPT_HANDLERS.get(operation)
         if handler is None:
             raise ValueError(
                 f"Script operation {operation} is not supported"

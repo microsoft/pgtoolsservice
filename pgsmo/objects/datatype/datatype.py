@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import smo.utils.templating as templating
 from pgsmo.objects.server import server as s  # noqa
@@ -130,8 +130,8 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         return self._additional_properties.get("rngcanonical", "")
 
     @property
-    def composite(self) -> Optional[List[Any]]:
-        if not self.typtype == "c":
+    def composite(self) -> Optional[list[Any]]:
+        if self.typtype != "c":
             return None
         composite = []
         # TODO support composite, which is a complex property
@@ -143,7 +143,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         return TEMPLATE_ROOT
 
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [MACRO_ROOT, GLOBAL_MACRO_ROOT]
 
     def _create_query_data(self):

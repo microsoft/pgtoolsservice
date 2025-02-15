@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import os
-from typing import List, Optional
+from typing import Optional
 
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.workspace.contracts import Position, Range, TextDocumentChangeEvent
@@ -31,7 +31,7 @@ class ScriptFile:
         self._file_path: Optional[str] = file_path
 
         # Store the initial contents of the file
-        self._file_lines: List[str] = []
+        self._file_lines: list[str] = []
         self._set_file_contents(initial_buffer)
 
     # PROPERTIES ###########################################################
@@ -43,7 +43,7 @@ class ScriptFile:
         return self._file_uri
 
     @property
-    def file_lines(self) -> List[str]:
+    def file_lines(self) -> list[str]:
         """
         :return: List of strings for each line of the file
         """
@@ -68,7 +68,7 @@ class ScriptFile:
         self.validate_position(file_change.range.end)
 
         # Break up the change lines
-        change_lines: List[str] = file_change.text.split("\n")
+        change_lines: list[str] = file_change.text.split("\n")
 
         # Get the first fragment of the first line that will remain
         first_line_fragment: str = self.file_lines[file_change.range.start.line][
@@ -81,7 +81,7 @@ class ScriptFile:
         ]
 
         # Remove the old lines (by repeatedly removing the first line of the change)
-        for i in range(0, file_change.range.end.line - file_change.range.start.line + 1):
+        for _i in range(0, file_change.range.end.line - file_change.range.start.line + 1):
             del self.file_lines[file_change.range.start.line]
 
         # Build and insert the new lines
@@ -117,7 +117,7 @@ class ScriptFile:
         """
         return os.linesep.join(self.get_lines_in_range(buffer_range))
 
-    def get_lines_in_range(self, buffer_range: Range) -> List[str]:
+    def get_lines_in_range(self, buffer_range: Range) -> list[str]:
         """
         Gets a range of lines from the file's contents.
         :param buffer_range: The buffer range from which lines will be extracted
@@ -127,7 +127,7 @@ class ScriptFile:
         self.validate_position(buffer_range.start)
         self.validate_position(buffer_range.end)
 
-        output: List[str] = []
+        output: list[str] = []
         for line in range(buffer_range.start.line, buffer_range.end.line + 1):
             current_line: str = self.file_lines[line]
 

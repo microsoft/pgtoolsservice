@@ -347,7 +347,7 @@ def fetch_schema_v3(connection: Connection) -> str:
             """),
                 [schema_name],
             )
-            for obj_name, relkind, oid in cur.fetchall():
+            for obj_name, relkind, _oid in cur.fetchall():
                 full_name = f"{schema_name}.{obj_name}"
 
                 if relkind in ("r", "p", "f"):
@@ -523,7 +523,7 @@ def fetch_schema_v4(connection: Connection) -> str:
             )
             objects = cur.fetchall()
 
-            for obj_name, relkind, oid in objects:
+            for obj_name, relkind, _oid in objects:
                 full_name = f"{schema_name}.{obj_name}"
                 if relkind in ("r", "p", "f"):
                     # Build CREATE TABLE (or CREATE FOREIGN TABLE) DDL
@@ -616,7 +616,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                     """),
                         [full_name],
                     )
-                    for tgname, tgdef in cur.fetchall():
+                    for _tgname, tgdef in cur.fetchall():
                         # pg_get_triggerdef returns the trigger definition (without a trailing semicolon)
                         schema_creation_script.append(tgdef + ";")
 
@@ -705,7 +705,7 @@ def fetch_schema_v4(connection: Connection) -> str:
             """),
                 [schema_name],
             )
-            for oid, indexname, indexdef in cur.fetchall():
+            for _oid, _indexname, indexdef in cur.fetchall():
                 schema_creation_script.append(indexdef + ";")
 
             # Functions (exclude functions that are part of an extension)
@@ -732,7 +732,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                    """),
                     [schema_name],
                 )
-                for oid, proname, funcdef in cur.fetchall():
+                for _oid, _proname, funcdef in cur.fetchall():
                     schema_creation_script.append(funcdef)
             except Exception:
                 pass

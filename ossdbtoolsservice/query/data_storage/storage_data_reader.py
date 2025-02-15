@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
 from ossdbtoolsservice.query.column_info import get_columns_info
 from ossdbtoolsservice.query.contracts import DbColumn
@@ -16,7 +15,7 @@ class StorageDataReader:
         self._columns_info = []
 
     @property
-    def columns_info(self) -> List[DbColumn]:
+    def columns_info(self) -> list[DbColumn]:
         return self._columns_info
 
     def read_row(self) -> bool:

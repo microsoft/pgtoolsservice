@@ -5,7 +5,6 @@
 
 import csv
 import io
-from typing import List
 
 from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn, SaveResultsRequestParams
 from ossdbtoolsservice.query.data_storage.save_as_writer import SaveAsWriter
@@ -16,7 +15,7 @@ class SaveAsCsvWriter(SaveAsWriter):
         SaveAsWriter.__init__(self, stream, params)
         self._header_written = False
 
-    def write_row(self, row: List[DbCellValue], columns: List[DbColumn]):
+    def write_row(self, row: list[DbCellValue], columns: list[DbColumn]):
         writer = csv.writer(
             self._file_stream,
             delimiter=self._params.delimiter,

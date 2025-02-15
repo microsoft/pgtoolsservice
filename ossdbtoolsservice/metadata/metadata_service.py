@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import threading
-from typing import List
 
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.driver import ServerConnection
@@ -79,7 +78,7 @@ class MetadataService(Service):
                 "Unhandled exception while listing metadata: " + str(e)
             )  # TODO: Localize
 
-    def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
+    def _list_metadata(self, owner_uri: str) -> list[ObjectMetadata]:
         # Get current connection
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection: ServerConnection = connection_service.get_connection(

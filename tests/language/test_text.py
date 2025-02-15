@@ -108,9 +108,7 @@ class TestTextUtilities(unittest.TestCase):
             self.assertEqual(
                 actual_word,
                 expected_word,
-                'For start {0} expected "{1}" actual "{2}"'.format(
-                    start, expected_word, actual_word
-                ),
+                f'For start {start} expected "{expected_word}" actual "{actual_word}"',
             )  # noqa
 
     def test_get_text_and_range(self):
@@ -144,7 +142,5 @@ class TestTextUtilities(unittest.TestCase):
             self.assertEqual(
                 actual_word,
                 expected_word,
-                'For start {0} expected "{1}" actual "{2}"'.format(
-                    start, expected_word, actual_word
-                ),
+                f'For start {start} expected "{expected_word}" actual "{actual_word}"',
             )  # noqa

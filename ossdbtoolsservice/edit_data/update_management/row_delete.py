@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
 from ossdbtoolsservice.edit_data import EditTableMetadata
 from ossdbtoolsservice.edit_data.contracts import (
@@ -22,7 +21,7 @@ class RowDelete(RowEdit):
     def __init__(
         self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata
     ) -> None:
-        super(RowDelete, self).__init__(row_id, result_set, table_metadata)
+        super().__init__(row_id, result_set, table_metadata)
 
     def revert_cell_value(self, column_index: int) -> RevertCellResponse:
         raise TypeError("Revert cell not supported")
@@ -30,7 +29,7 @@ class RowDelete(RowEdit):
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
         raise TypeError("Set cell not supported")
 
-    def get_edit_row(self, cached_row: List[DbCellValue]) -> EditRow:
+    def get_edit_row(self, cached_row: list[DbCellValue]) -> EditRow:
         return EditRow(
             self.row_id,
             [EditCell(cell, True, self.row_id) for cell in cached_row],

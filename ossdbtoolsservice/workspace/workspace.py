@@ -22,7 +22,7 @@ class Workspace:
 
     # PROPERTIES ###########################################################
     @property
-    def opened_files(self) -> List[ScriptFile]:
+    def opened_files(self) -> list[ScriptFile]:
         """
         A list of all ScriptFiles that are currently open
         """

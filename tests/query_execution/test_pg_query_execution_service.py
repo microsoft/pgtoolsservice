@@ -309,7 +309,7 @@ class TestQueryService(unittest.TestCase):
         Test for proper generation of ResultSetSubset
         that is part of query/subset response payload
         """
-        query_results: Dict[str, Query] = {}
+        query_results: dict[str, Query] = {}
         owner_uri = "untitled"
         query_results[owner_uri] = Query(
             owner_uri,

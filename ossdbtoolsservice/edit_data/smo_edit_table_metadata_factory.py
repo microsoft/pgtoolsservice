@@ -36,7 +36,7 @@ class SmoEditTableMetadataFactory:
         else:
             raise ValueError("Not supported object type")
 
-        edit_columns_metadata: List[EditColumnMetadata] = []
+        edit_columns_metadata: list[EditColumnMetadata] = []
 
         for column in result_object.columns:
             db_column = self.create_db_column(column)

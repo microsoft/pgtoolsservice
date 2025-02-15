@@ -25,7 +25,7 @@ class MetadataExecutor:
         self.lightweight_metadata = METADATA_MAP[server.connection._provider_name](
             self.server.connection
         )
-        self.schemas: Dict[str, Schema] = {}
+        self.schemas: dict[str, Schema] = {}
         self.schemas_loaded = False
 
     def _load_schemas(self):
@@ -40,46 +40,46 @@ class MetadataExecutor:
             self.schemas_loaded = True
 
     @property
-    def _schema_names(self) -> List[str]:
+    def _schema_names(self) -> list[str]:
         self._ensure_schemas_loaded()
         return list(self.schemas.keys())
 
-    def schemata(self) -> List[str]:
+    def schemata(self) -> list[str]:
         return self._schema_names
 
-    def search_path(self) -> List[str]:
+    def search_path(self) -> list[str]:
         return list(self.server.search_path) if self.server.search_path else []
 
-    def databases(self) -> List[str]:
+    def databases(self) -> list[str]:
         return [d.name for d in self.server.databases]
 
-    def tables(self) -> List[tuple]:
+    def tables(self) -> list[tuple]:
         """return a 2-tuple of [schema,name]"""
         return [t for t in self.lightweight_metadata.tables()]
 
-    def table_columns(self) -> List[tuple]:
+    def table_columns(self) -> list[tuple]:
         """return a 3-tuple of [schema,table,name]"""
         return [c for c in self.lightweight_metadata.table_columns()]
 
-    def foreignkeys(self) -> List[tuple]:
+    def foreignkeys(self) -> list[tuple]:
         return self.lightweight_metadata.foreignkeys()
 
-    def views(self) -> List[tuple]:
+    def views(self) -> list[tuple]:
         """return a 2-tuple of [schema,name]"""
         return [v for v in self.lightweight_metadata.views()]
 
-    def view_columns(self) -> List[tuple]:
+    def view_columns(self) -> list[tuple]:
         """return a 3-tuple of [schema,table,name]"""
         return [c for c in self.lightweight_metadata.view_columns()]
 
-    def datatypes(self) -> List[tuple]:
+    def datatypes(self) -> list[tuple]:
         """return a 2-tuple of [schema,name]"""
         return [d for d in self.lightweight_metadata.datatypes()]
 
-    def casing(self) -> List[tuple]:
+    def casing(self) -> list[tuple]:
         return [c for c in self.lightweight_metadata.casing()]
 
-    def functions(self) -> List[tuple]:
+    def functions(self) -> list[tuple]:
         """
         In order to avoid iterating over full properties queries for each function, this must always
         use the lightweight metadata query as it'll have N queries for N functions otherwise

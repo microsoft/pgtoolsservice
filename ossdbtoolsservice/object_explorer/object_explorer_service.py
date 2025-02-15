@@ -50,7 +50,7 @@ class ObjectExplorerService(Service):
     def __init__(self):
         self._service_provider: ServiceProvider = None
         self._logger: Logger = None
-        self._session_map: Dict[str, ObjectExplorerSession] = {}
+        self._session_map: dict[str, ObjectExplorerSession] = {}
         self._session_lock: threading.Lock = threading.Lock()
         self._connect_semaphore = threading.Semaphore(1)
 
@@ -215,7 +215,7 @@ class ObjectExplorerService(Service):
         if self._service_provider.logger is not None:
             self._service_provider.logger.info("Closing all the OE sessions")
         conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        for key, session in self._session_map.items():
+        for _key, session in self._session_map.items():
             connect_result = conn_service.disconnect(
                 session.id, ConnectionType.OBJECT_EXLPORER
             )
@@ -245,11 +245,10 @@ class ObjectExplorerService(Service):
                     self._service_provider.logger.info(
                         f"could not close the connection for the database {database.name}: {e}"
                     )
-            if not close_result:
-                if self._service_provider.logger is not None:
-                    self._service_provider.logger.info(
-                        f"could not close the connection for the database {database.name}"
-                    )
+            if not close_result and self._service_provider.logger is not None:
+                self._service_provider.logger.info(
+                    f"could not close the connection for the database {database.name}"
+                )
 
     def _expand_node_base(
         self,
@@ -494,7 +493,7 @@ class ObjectExplorerService(Service):
 
     def _route_request(
         self, is_refresh: bool, session: ObjectExplorerSession, path: str
-    ) -> List[NodeInfo]:
+    ) -> list[NodeInfo]:
         """
         Performs a lookup for a given expand request
         :param is_refresh: Whether or not the request is a request to refresh or just expand
@@ -506,7 +505,7 @@ class ObjectExplorerService(Service):
         path = urlparse(path).path
 
         # We query if its a refresh request or this is the first expand request for this path
-        if is_refresh or (path not in session.cache.keys()):
+        if is_refresh or (path not in session.cache):
             # Find a matching route for the path
             for route, target in self._routing_table.items():
                 match = route.match(path)

@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict
 
 from ossdbtoolsservice.driver.types import PostgreSQLConnection, ServerConnection
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
@@ -15,7 +14,7 @@ class ConnectionManager:
 
     CONNECTORS = {PG_PROVIDER_NAME: PostgreSQLConnection}
 
-    def __init__(self, provider: str, config: Configuration, conn_options: Dict[str, str]):
+    def __init__(self, provider: str, config: Configuration, conn_options: dict[str, str]):
         # Get info about this connection's provider
         self._provider = provider
 
@@ -27,7 +26,7 @@ class ConnectionManager:
         Creates a ServerConnection according to the provider and connection options
         :param options: a dict containing connection parameters
         """
-        if self._provider not in self.CONNECTORS.keys():
+        if self._provider not in self.CONNECTORS:
             raise AssertionError(str(self._provider) + " is not a supported database engine.")
 
         return self.CONNECTORS[self._provider](options, config)

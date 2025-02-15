@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import os.path as path
-from typing import List
 
 import smo.utils.templating as templating
 from pgsmo.objects.server import server as s  # noqa
@@ -80,7 +79,7 @@ class Extension(NodeObject, ScriptableCreate, ScriptableDelete):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod

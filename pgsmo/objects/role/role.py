@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional
+from typing import Optional
 
 import smo.utils.templating as templating
 from pgsmo.objects.server import server as s  # noqa
@@ -125,7 +125,7 @@ class Role(NodeObject, ScriptableCreate, ScriptableUpdate):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [cls.MACRO_ROOT]
 
     @classmethod

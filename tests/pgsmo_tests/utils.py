@@ -5,7 +5,7 @@
 
 import unittest
 import unittest.mock as mock
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from psycopg import Column, DatabaseError, connection
 
@@ -25,7 +25,7 @@ class MockNodeObject(NodeObject):
         pass
 
     def __init__(self, root_server: Server, parent: Optional[NodeObject], name: str):
-        super(MockNodeObject, self).__init__(root_server, parent, name)
+        super().__init__(root_server, parent, name)
 
     @classmethod
     def _template_root(cls, root_server: Server):
@@ -42,19 +42,19 @@ class MockNodeObject(NodeObject):
 # MOCK CONNECTION ##########################################################
 
 
-def get_mock_columns(col_count: int) -> List[Column]:
+def get_mock_columns(col_count: int) -> list[Column]:
     return [
         Column(f"column{i}", None, 10, 10, None, None, True) for i in range(0, col_count + 1)
     ]
 
 
-def get_named_mock_columns(col_names: List[str]) -> List[Column]:
+def get_named_mock_columns(col_names: list[str]) -> list[Column]:
     return [Column(x, None, 10, 10, None, None, True) for x in col_names]
 
 
 def get_mock_results(
     col_count: int = 5, row_count: int = 5
-) -> Tuple[List[Column], List[dict]]:
+) -> tuple[list[Column], list[dict]]:
     rows = []
     cols = get_mock_columns(col_count)
     for i in range(0, len(cols)):
@@ -71,7 +71,7 @@ def get_mock_results(
 class MockCursor:
     def __init__(
         self,
-        results: Optional[Tuple[List[Column], List[dict]]],
+        results: Optional[tuple[list[Column], list[dict]]],
         throw_on_execute=False,
         mogrified_value="SomeQuery",
     ):

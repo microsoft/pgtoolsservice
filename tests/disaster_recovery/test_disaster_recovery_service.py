@@ -9,7 +9,7 @@ import functools
 import os.path
 import sys
 import unittest
-from typing import Callable, List
+from typing import Callable
 from unittest import mock
 
 import tests.pgsmo_tests.utils as pg_utils
@@ -419,7 +419,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
         )
 
     def _test_perform_backup_restore_internal(
-        self, exe_name: str, test_method: Callable, test_params, expected_args: List[str]
+        self, exe_name: str, test_method: Callable, test_params, expected_args: list[str]
     ):
         mock_pg_path = f"mock/{exe_name}"
         mock_process = mock.Mock()
@@ -515,17 +515,16 @@ class TestDisasterRecoveryService(unittest.TestCase):
         mockConnection = pg_utils.MockPGServerConnection(None)
         with (
             mock.patch("os.path.exists", new=mock.Mock(return_value=False)),
-            mock.patch("subprocess.Popen") as mock_popen,
+            mock.patch("subprocess.Popen") as mock_popen,mock.patch(
+            "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
+            new=mock.Mock(return_value=mockConnection),
+        )
         ):
-            with mock.patch(
-                "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
-                new=mock.Mock(return_value=mockConnection),
-            ):
-                # If I perform a restore when the pg_restore executable cannot be found
-                task_result = test_method(self.connection_info, test_params, mock.Mock())
-                # Then the task fails and does try to kick off a new process
-                self.assertIs(task_result.status, TaskStatus.FAILED)
-                mock_popen.assert_not_called()
+            # If I perform a restore when the pg_restore executable cannot be found
+            task_result = test_method(self.connection_info, test_params, mock.Mock())
+            # Then the task fails and does try to kick off a new process
+            self.assertIs(task_result.status, TaskStatus.FAILED)
+            mock_popen.assert_not_called()
 
     def test_handle_backup_request(self):
         """Test that the backup request handler responds properly and kicks off a task to perform the backup"""

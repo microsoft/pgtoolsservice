@@ -5,7 +5,6 @@
 
 """Utility functions for operating with text"""
 
-from typing import Set, Tuple
 
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.workspace.contracts.common import Position, Range
@@ -14,7 +13,7 @@ from ossdbtoolsservice.workspace.contracts.common import Position, Range
 class TextUtilities:
     """Utility functions for operating with text"""
 
-    char_delimiters: Set[str] = set(
+    char_delimiters: set[str] = set(
         [" ", "\t", "\n", ".", "+", "-", "*", ">", "<", "=", "/", "%", ",", ";", "(", ")"]
     )
 
@@ -79,7 +78,7 @@ class TextUtilities:
         return Range.from_data(row, start_col, row, end_col)
 
     @classmethod
-    def get_text_and_range(cls, pos: Position, current_line: str) -> Tuple[str, Range]:
+    def get_text_and_range(cls, pos: Position, current_line: str) -> tuple[str, Range]:
         """
         Given a position in a field and the current lines text, gets the token representing
         the nearest word

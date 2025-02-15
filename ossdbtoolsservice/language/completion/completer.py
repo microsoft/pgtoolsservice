@@ -87,7 +87,7 @@ class MyCompleter:
         # signs to flip the direction of the tuple
         if fuzzy:
             regex = ".*?".join(map(re.escape, text))
-            pat = re.compile("(%s)" % regex)
+            pat = re.compile(f"({regex})")
 
             def _match(item):
                 if item.lower()[: len(text) + 1] in (text, text + " "):

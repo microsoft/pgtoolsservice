@@ -8,7 +8,6 @@ import configparser
 import logging
 import os
 import sys
-from typing import Type
 
 import debugpy
 
@@ -38,7 +37,7 @@ def create_server_init(
     server_logger: logging.Logger | None,
 ) -> MessageServer:
     # Create the service provider and add the providers to it
-    services: dict[str, Type[Service]] = {
+    services: dict[str, type[Service]] = {
         constants.ADMIN_SERVICE_NAME: AdminService,
         constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
         constants.CONNECTION_SERVICE_NAME: ConnectionService,

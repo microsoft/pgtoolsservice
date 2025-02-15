@@ -73,7 +73,7 @@ class Batch:
         self._has_executed = False
         self._execution_end_time: datetime = None
         self._result_set: ResultSet = None
-        self._notices: List[str] = []
+        self._notices: list[str] = []
         self._batch_events = batch_events
         self._storage_type = storage_type
 
@@ -116,7 +116,7 @@ class Batch:
         return self.result_set.row_count if self.result_set is not None else -1
 
     @property
-    def notices(self) -> List[str]:
+    def notices(self) -> list[str]:
         return self._notices
 
     def get_cursor(self, connection: ServerConnection):
@@ -193,7 +193,7 @@ class Batch:
     def notice_handler(self, notice: str, conn: ServerConnection):
         if not conn.user_transaction:
             self._notices.append(f"{notice.severity}: {notice.message_primary}")
-        elif not notice.message_primary == "there is already a transaction in progress":
+        elif notice.message_primary != "there is already a transaction in progress":
             self._notices.append(f"WARNING: {notice.message_primary}")
 
 

@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import threading  # noqa
-from typing import Callable, Dict, List, Optional, TypeVar
+from typing import Callable, Optional, TypeVar
 from urllib.parse import urljoin
 
 from pgsmo import Server  # noqa
@@ -20,9 +20,9 @@ class ObjectExplorerSession:
         self.server: Optional[Server] = None
 
         self.init_task: Optional[threading.Thread] = None
-        self.expand_tasks: Dict[str, threading.Thread] = {}
-        self.refresh_tasks: Dict[str, threading.Thread] = {}
-        self.cache: Dict[str, List[NodeInfo]] = {}
+        self.expand_tasks: dict[str, threading.Thread] = {}
+        self.refresh_tasks: dict[str, threading.Thread] = {}
+        self.cache: dict[str, list[NodeInfo]] = {}
 
 
 class Folder:
@@ -63,16 +63,16 @@ class RoutingTarget:
     # from the regular expression match and returns a list of NodeInfo objects.
     TNodeGenerator = TypeVar(
         "TNodeGenerator",
-        bound=Optional[Callable[[bool, str, ObjectExplorerSession, dict], List[NodeInfo]]],
+        bound=Optional[Callable[[bool, str, ObjectExplorerSession, dict], list[NodeInfo]]],
     )
 
-    def __init__(self, folders: Optional[List[Folder]], node_generator: TNodeGenerator):
+    def __init__(self, folders: Optional[list[Folder]], node_generator: TNodeGenerator):
         """
         Initializes a routing target
         :param folders: A list of folders to return at the top of the expanded node results
         :param node_generator: A function that generates a list of nodes to show in the expanded results
         """
-        self.folders: List[Folder] = folders or []
+        self.folders: list[Folder] = folders or []
         self.node_generator = node_generator
 
     def get_nodes(
@@ -81,7 +81,7 @@ class RoutingTarget:
         current_path: str,
         session: ObjectExplorerSession,
         match_params: dict,
-    ) -> List[NodeInfo]:
+    ) -> list[NodeInfo]:
         """
         Builds a list of NodeInfo that should be displayed under the current routing path
         :param is_refresh: Whether or not the nodes should be refreshed before retrieval

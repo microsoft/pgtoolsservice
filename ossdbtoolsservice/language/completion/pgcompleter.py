@@ -8,7 +8,6 @@ import re
 from collections import OrderedDict, defaultdict, namedtuple
 from itertools import chain, count, repeat  # noqa
 from logging import Logger  # noqa
-from typing import List
 
 # {{ PGToolsService EDIT }}
 # from pgspecial.namedqueries import NamedQueries
@@ -100,7 +99,7 @@ class PGCompleter(Completer, MyCompleter):
     reserved_words = set(get_literals("reserved"))
 
     def __init__(self, smart_completion=True, logger=None, settings=None):
-        super(PGCompleter, self).__init__(PGCompletion)
+        super().__init__(PGCompletion)
         self.smart_completion = smart_completion
         self.logger: Logger = logger
         settings = settings or {}
@@ -150,7 +149,7 @@ class PGCompleter(Completer, MyCompleter):
             or (name.upper() in self.reserved_words)
             or (name.upper() in self.functions)
         ):
-            name = '"%s"' % name
+            name = f'"{name}"'
 
         return name
 
@@ -321,7 +320,7 @@ class PGCompleter(Completer, MyCompleter):
 
     def get_completions(
         self, document, complete_event, smart_completion=None
-    ) -> List[Completion]:
+    ) -> list[Completion]:
         word_before_cursor = document.get_word_before_cursor(WORD=True)
 
         if smart_completion is None:
@@ -858,7 +857,7 @@ class PGCompleter(Completer, MyCompleter):
                 schema_name=sch,
             )
             for sch in self._get_schemas(obj_type, schema)
-            for obj in self.dbmetadata[obj_type][sch].keys()
+            for obj in self.dbmetadata[obj_type][sch]
         ]
 
     def populate_functions(self, schema, filter_func):

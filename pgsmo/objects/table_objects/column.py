@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-from typing import Dict, List, Optional
+from typing import Optional
 
 import smo.utils.templating as templating
 from pgsmo.objects.server import server as s  # noqa
@@ -66,8 +66,8 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         self._oid: Optional[int] = None
         self._is_system: bool = False
 
-        self._child_collections: Dict[str, NodeCollection] = {}
-        self._property_collections: List[NodeLazyPropertyCollection] = []
+        self._child_collections: dict[str, NodeCollection] = {}
+        self._property_collections: list[NodeLazyPropertyCollection] = []
         # Use _column_property_generator instead of _property_generator
         self._full_properties: NodeLazyPropertyCollection = (
             self._register_property_collection(self._column_property_generator)
@@ -196,10 +196,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     @property
     def hasSqrBracket(self):
-        if "[]" in self.cltype:
-            return True
-        else:
-            return False
+        return "[]" in self.cltype
 
     @property
     def fulltype(self):
@@ -286,7 +283,7 @@ class Column(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [cls.MACRO_ROOT]
 
     @classmethod

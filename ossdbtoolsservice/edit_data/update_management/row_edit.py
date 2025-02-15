@@ -17,9 +17,9 @@ from ossdbtoolsservice.edit_data.contracts import (
 
 
 class EditScript:
-    def __init__(self, query_template: str, query_parameters: List = []):
+    def __init__(self, query_template: str, query_parameters: list | None = None):
         self.query_template = query_template
-        self.query_paramters = query_parameters
+        self.query_paramters = [] if query_parameters is None else query_parameters
 
 
 class RowEdit:
@@ -33,7 +33,7 @@ class RowEdit:
         pass
 
     @abstractmethod
-    def get_edit_row(self, cached_row: List[DbCellValue]) -> EditRow:
+    def get_edit_row(self, cached_row: list[DbCellValue]) -> EditRow:
         pass
 
     @abstractmethod

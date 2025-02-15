@@ -14,7 +14,7 @@ class EditTableMetadata:
     OBJECT_TEMPLATE = '"{0}"'
 
     def __init__(
-        self, schema_name: str, table_name, columns_metadata: List[EditColumnMetadata]
+        self, schema_name: str, table_name, columns_metadata: list[EditColumnMetadata]
     ) -> None:
         self.columns_metadata = columns_metadata
         self.schema_name: str = schema_name
@@ -31,14 +31,14 @@ class EditTableMetadata:
         )
 
     @property
-    def db_columns(self) -> List[DbColumn]:
+    def db_columns(self) -> list[DbColumn]:
         return [column.db_column for column in self.columns_metadata]
 
     @property
-    def key_columns(self) -> List[EditColumnMetadata]:
+    def key_columns(self) -> list[EditColumnMetadata]:
         return self._key_columns
 
-    def _get_key_columns(self) -> List[EditColumnMetadata]:
+    def _get_key_columns(self) -> list[EditColumnMetadata]:
         key_columns = [column for column in self.columns_metadata if column.is_key is True]
 
         if any(key_columns) is False:

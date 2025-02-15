@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import List
 
 from ossdbtoolsservice.edit_data.contracts import EditRow
 from ossdbtoolsservice.hosting import (
@@ -26,7 +25,7 @@ class EditSubsetParams(Serializable):
 
 
 class EditSubsetResponse:
-    def __init__(self, row_count: int, edit_rows: List[EditRow]):
+    def __init__(self, row_count: int, edit_rows: list[EditRow]):
         self.row_count = row_count
         self.subset = edit_rows
 

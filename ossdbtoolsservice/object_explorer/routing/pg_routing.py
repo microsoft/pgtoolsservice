@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-from typing import List, Optional, TypeVar, Union
+from typing import Optional, TypeVar, Union
 from urllib.parse import urljoin
 
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
@@ -90,7 +90,7 @@ def _get_schema_child_object(
     match_params: dict,
     node_type: str,
     schema_propname: str,
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     schema = _get_obj_with_refresh(
         _get_schema(session, match_params["dbid"], match_params["scid"]), is_refresh
     )
@@ -137,7 +137,7 @@ def is_system_request(route_path: str):
 # FIRST TIER ##########################################################
 def _roles(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """Function to generate a list of roles for a server"""
     _default_node_generator(is_refresh, current_path, session, match_params)
     for role in session.server.roles:
@@ -147,7 +147,7 @@ def _roles(
 
 def _tablespaces(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """Function to generate a list of tablespaces for a server"""
     _default_node_generator(is_refresh, current_path, session, match_params)
     tablespaces = session.server.tablespaces
@@ -156,7 +156,7 @@ def _tablespaces(
 
 def _databases(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """Function to generate a list of databases"""
     _default_node_generator(is_refresh, current_path, session, match_params)
     is_system = "systemdatabase" in current_path
@@ -170,7 +170,7 @@ def _databases(
 # DATABASE LEAVES ##########################################################
 def _views(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for views in a schema
     Expected match_params:
@@ -192,7 +192,7 @@ def _views(
 
 def _materialized_views(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for materialized views in a schema
     Expected match_params:
@@ -214,7 +214,7 @@ def _materialized_views(
 
 def _functions(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for functions in a schema
     Expected match_params:
@@ -236,7 +236,7 @@ def _functions(
 
 def _procedures(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for functions in a schema
     Expected match_params:
@@ -258,7 +258,7 @@ def _procedures(
 
 def _trigger_functions(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for trigger functions in a schema
     Expected match_params:
@@ -280,7 +280,7 @@ def _trigger_functions(
 
 def _collations(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for collations in a schema
     Expected match_params:
@@ -302,7 +302,7 @@ def _collations(
 
 def _datatypes(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for datatypes in a schema
     Expected match_params:
@@ -324,7 +324,7 @@ def _datatypes(
 
 def _sequences(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for sequences in a schema
     Expected match_params:
@@ -346,7 +346,7 @@ def _sequences(
 
 def _extensions(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for extensions in a schema
     Expected match_params:
@@ -368,7 +368,7 @@ def _extensions(
 
 def _schemas(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """Function to generate a list of NodeInfo for tables in a schema"""
     is_system = is_system_request(current_path)
     parent_obj = _get_obj_with_refresh(
@@ -384,7 +384,7 @@ def _schemas(
 # SCHEMA LEAVES ##########################################################
 def _tables(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of NodeInfo for tables in a schema
     Expected match_params:
@@ -407,7 +407,7 @@ def _tables(
 # TABLE LEAVES ##########################################################
 def _columns(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate column NodeInfo for tables/views
       dbid int: Database OID
@@ -424,7 +424,7 @@ def _columns(
 
 def _constraints(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate constraint NodeInfo for tables
       dbid int: Database OID
@@ -468,7 +468,7 @@ def _constraints(
 
 def _indexes(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate index NodeInfo for tables
     Expected match_params:
@@ -505,7 +505,7 @@ def _indexes(
 
 def _rules(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """
     Function to generate a list of rules for tables and views
     Expected match_params:
@@ -522,7 +522,7 @@ def _rules(
 
 def _triggers(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> List[NodeInfo]:
+) -> list[NodeInfo]:
     """Function to generate a list of triggers for a table or view"""
     parent_obj = _get_table_or_view(
         is_refresh, session, match_params["dbid"], match_params["obj"], match_params["tid"]

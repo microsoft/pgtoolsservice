@@ -8,7 +8,7 @@ import unittest
 import unittest.mock as mock
 from abc import ABCMeta, abstractmethod
 from collections.abc import Mapping
-from typing import Callable, List, Type
+from typing import Callable
 
 import tests.pgsmo_tests.utils as utils
 from pgsmo.objects.server.server import Server
@@ -31,12 +31,12 @@ class NodeObjectTestBase(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def class_for_test(self) -> Type[NodeObject]:
+    def class_for_test(self) -> type[NodeObject]:
         pass
 
     @property
     @abstractmethod
-    def collections(self) -> List[str]:
+    def collections(self) -> list[str]:
         pass
 
     @property
@@ -242,7 +242,7 @@ class NodeObjectTestBase(metaclass=ABCMeta):
         utils.assert_threeway_equals(mock_parent, obj._parent, obj.parent)
 
         # ... The rest of the properties should be none
-        for prop in self.basic_properties.keys():
+        for prop in self.basic_properties:
             test_case.assertIsNone(getattr(obj, prop))
 
         # ... The full properties collection should be a lazy property collection

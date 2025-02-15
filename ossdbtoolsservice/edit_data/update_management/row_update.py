@@ -21,9 +21,9 @@ from ossdbtoolsservice.query.contracts import DbCellValue
 
 class RowUpdate(RowEdit):
     def __init__(self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata):
-        super(RowUpdate, self).__init__(row_id, result_set, table_metadata)
+        super().__init__(row_id, result_set, table_metadata)
         self.row = result_set.get_row(row_id)
-        self._cell_updates: Dict[int, CellUpdate] = {}
+        self._cell_updates: dict[int, CellUpdate] = {}
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
         self.validate_column_is_updatable(column_index)
@@ -43,7 +43,7 @@ class RowUpdate(RowEdit):
 
         return EditCellResponse(cell_update.as_edit_cell, True)
 
-    def get_edit_row(self, cached_row: List[DbCellValue]) -> EditRow:
+    def get_edit_row(self, cached_row: list[DbCellValue]) -> EditRow:
         edit_cells = [EditCell(cell, True, self.row_id) for cell in cached_row]
 
         for column_index, cell in self._cell_updates.items():

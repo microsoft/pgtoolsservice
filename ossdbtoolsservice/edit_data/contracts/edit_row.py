@@ -5,7 +5,6 @@
 
 
 from enum import Enum
-from typing import List
 
 from ossdbtoolsservice.edit_data.contracts import EditCell
 
@@ -28,7 +27,7 @@ class EditRow:
         return self.state is not EditRowState.CLEAN
 
     def __init__(
-        self, row_id: int, cells: List[EditCell], state: EditRowState = EditRowState.CLEAN
+        self, row_id: int, cells: list[EditCell], state: EditRowState = EditRowState.CLEAN
     ):
         self.cells = cells
         self.id = row_id

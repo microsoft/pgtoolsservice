@@ -266,10 +266,10 @@ def _get_columns(res):
     for row in res[1]:
         if row["options"] & 1:
             order = False
-            nulls_order = True if (row["options"] & 2) else False
+            nulls_order = bool(row["options"] & 2)
         else:
             order = True
-            nulls_order = True if (row["options"] & 2) else False
+            nulls_order = bool(row["options"] & 2)
 
         columns.append(
             {

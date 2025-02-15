@@ -21,10 +21,10 @@ class MetadataListParameters(Serializable):
 
 
 class MetadataListResponse:
-    metadata: List[ObjectMetadata]
+    metadata: list[ObjectMetadata]
 
-    def __init__(self, metadata: List[ObjectMetadata]):
-        self.metadata: List[ObjectMetadata] = metadata
+    def __init__(self, metadata: list[ObjectMetadata]):
+        self.metadata: list[ObjectMetadata] = metadata
 
 
 METADATA_LIST_REQUEST = IncomingMessageConfiguration("metadata/list", MetadataListParameters)

@@ -9,7 +9,6 @@ import functools
 import json
 import os
 import uuid
-from typing import List
 
 import psycopg
 
@@ -72,10 +71,10 @@ create_extra_test_database.__test__ = False
 
 class _ConnectionManager:
     current_test_is_integration_test: bool = False
-    _maintenance_connections: List[psycopg.Connection] = []
-    _current_test_connection_detail_list: List[dict] = None
+    _maintenance_connections: list[psycopg.Connection] = []
+    _current_test_connection_detail_list: list[dict] = None
     _in_progress_test_index: int = None
-    _extra_databases: List[str] = []
+    _extra_databases: list[str] = []
 
     @classmethod
     def get_test_connection_details(cls):

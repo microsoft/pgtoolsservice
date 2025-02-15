@@ -42,8 +42,8 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
         return read_bytes_result
 
     def read_row(
-        self, file_offset, row_id, columns_info: List[DbColumn]
-    ) -> List[DbCellValue]:
+        self, file_offset, row_id, columns_info: list[DbColumn]
+    ) -> list[DbCellValue]:
         """Read a row from a file"""
         self._file_stream.seek(file_offset)
 

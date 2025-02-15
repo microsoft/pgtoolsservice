@@ -1,7 +1,7 @@
 import uuid
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Any, Callable, Generic, Type, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 from pydantic import BaseModel
 
@@ -27,7 +27,7 @@ TResult = TypeVar("TResult", bound=BaseModel | str | dict[str, Any])
 
 
 class MessageHandler(Generic[TModel]):
-    def __init__(self, param_class: Type[Any] | None, handler: Callable[[Any, TModel], None]):
+    def __init__(self, param_class: type[Any] | None, handler: Callable[[Any, TModel], None]):
         self.param_class = param_class
         self.handler = handler
 
@@ -237,7 +237,7 @@ class MessageServer(ABC):
         self,
         method: str,
         params: Any,
-        result_type: Type[TResult] | None = None,
+        result_type: type[TResult] | None = None,
         timeout: float | None = None,
     ) -> TResult | None:
         """

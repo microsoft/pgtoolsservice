@@ -4,6 +4,7 @@ This requires that PGTS_CHAT_USE_AZURE_OPENAI be set to true in the environment 
 Azure OpenAI environment variables be set as well.
 """
 
+import contextlib
 import json
 import subprocess
 import sys
@@ -206,7 +207,7 @@ def chat_with_postgresql():
             chatting = True
 
     finally:
-        try:
+        with contextlib.suppress(Exception):
             send_message(
                 stdin_wrapped,
                 {
@@ -216,8 +217,6 @@ def chat_with_postgresql():
                     "params": None,
                 },
             )
-        except Exception:
-            pass
         process.terminate()
         process.wait()
         response_thread.join()

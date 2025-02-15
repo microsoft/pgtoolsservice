@@ -45,10 +45,10 @@ class WorkspaceService(Service):
         self._configuration: Configuration = Configuration()
 
         # Setup callbacks for the various events we can receive
-        self._config_change_callbacks: List[Callable[Configuration]] = []
-        self._text_change_callbacks: List[Callable[ScriptFile]] = []
-        self._text_open_callbacks: List[Callable[ScriptFile]] = []
-        self._text_close_callbacks: List[Callable[ScriptFile]] = []
+        self._config_change_callbacks: list[Callable[Configuration]] = []
+        self._text_change_callbacks: list[Callable[ScriptFile]] = []
+        self._text_open_callbacks: list[Callable[ScriptFile]] = []
+        self._text_close_callbacks: list[Callable[ScriptFile]] = []
 
     def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider

@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import psycopg
 from psycopg import Column, connection, cursor
@@ -61,7 +61,7 @@ PG_CONNECTION_PARAM_KEYWORDS = [
 class PostgreSQLConnection(ServerConnection):
     """Wrapper for a psycopg connection that makes various properties easier to access"""
 
-    def __init__(self, conn_params: Dict[str, str], config: Optional[Configuration] = None):
+    def __init__(self, conn_params: dict[str, str], config: Optional[Configuration] = None):
         """
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
@@ -125,7 +125,7 @@ class PostgreSQLConnection(ServerConnection):
 
         # Calculate the server version
         version_string = str(self._conn.info.server_version)
-        self._version: Tuple[int, int, int] = (
+        self._version: tuple[int, int, int] = (
             int(version_string[:-4]),
             int(version_string[-4:-2]),
             int(version_string[-2:]),
@@ -162,7 +162,7 @@ class PostgreSQLConnection(ServerConnection):
         return self._dsn_parameters["user"]
 
     @property
-    def server_version(self) -> Tuple[int, int, int]:
+    def server_version(self) -> tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
         return self._version
 
@@ -182,7 +182,7 @@ class PostgreSQLConnection(ServerConnection):
         return self._default_database
 
     @property
-    def database_error(self):
+    def database_error(self) -> type[Exception]:
         """Returns the type of database error this connection throws"""
         return self._database_error
 
@@ -210,7 +210,7 @@ class PostgreSQLConnection(ServerConnection):
         return self._user_transaction
 
     @property
-    def query_canceled_error(self) -> Exception:
+    def query_canceled_error(self) -> type[Exception]:
         """Returns driver query canceled error"""
         return psycopg.errors.QueryCanceled
 
@@ -261,15 +261,12 @@ class PostgreSQLConnection(ServerConnection):
         """
         cursor = self._conn.cursor()
         cursor.execute(query)
-        if all:
-            query_results = cursor.fetchall()
-        else:
-            query_results = cursor.fetchone()
+        query_results = cursor.fetchall() if all else cursor.fetchone()
 
         cursor.close()
         return query_results
 
-    def execute_dict(self, query: str, params=None) -> Tuple[List[Column], List[dict]]:
+    def execute_dict(self, query: str, params=None) -> tuple[list[Column], list[dict]]:
         """
         Executes a query and returns the results as an ordered list of dictionaries that map column
         name to value. Columns are returned, as well.
@@ -283,8 +280,8 @@ class PostgreSQLConnection(ServerConnection):
         try:
             cur.execute(query, params)
 
-            cols: List[Column] = cur.description
-            rows: List[dict] = []
+            cols: list[Column] = cur.description
+            rows: list[dict] = []
             if cur.rowcount > 0:
                 for row in cur:
                     row_dict = {cols[ind].name: x for ind, x in enumerate(row)}

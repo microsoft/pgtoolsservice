@@ -5,7 +5,6 @@
 
 import io
 from abc import abstractmethod
-from typing import List
 
 from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn
 from ossdbtoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
@@ -29,7 +28,7 @@ class SaveAsWriter(ServiceBufferFileStream):
         )
 
     @abstractmethod
-    def write_row(self, row: List[DbCellValue], columns: List[DbColumn]):
+    def write_row(self, row: list[DbCellValue], columns: list[DbColumn]):
         pass
 
     @abstractmethod
@@ -39,5 +38,5 @@ class SaveAsWriter(ServiceBufferFileStream):
     def get_start_index(self):
         return self._column_start_index if self._column_start_index else 0
 
-    def get_end_index(self, columns: List[DbColumn]):
+    def get_end_index(self, columns: list[DbColumn]):
         return self._column_count if self._column_count else len(columns)

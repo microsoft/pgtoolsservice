@@ -14,7 +14,7 @@ class ScriptParseInfo:
         self.connection_key: str = None
         self.is_connected: bool = False
         self.document: Document = None
-        self.current_suggestions: List[Completion] = None
+        self.current_suggestions: list[Completion] = None
 
     def can_queue(self) -> bool:
         """Can this be put in a queued operation?"""

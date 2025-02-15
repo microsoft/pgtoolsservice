@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABC, abstractmethod
-from typing import Tuple
 
 
 class ServerConnection(ABC):
@@ -38,7 +37,7 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def server_version(self) -> Tuple[int, int, int]:
+    def server_version(self) -> tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
 
     @property
@@ -58,7 +57,7 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def database_error(self) -> Exception:
+    def database_error(self) -> type[Exception]:
         """Returns the type of database error this connection throws"""
 
     @property
@@ -83,7 +82,7 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def query_canceled_error(self) -> Exception:
+    def query_canceled_error(self) -> type[Exception]:
         """Returns driver query canceled error"""
 
     @property

@@ -7,7 +7,7 @@
 
 import threading  # noqa
 import unittest
-from typing import List, Optional, Tuple
+from typing import Optional
 from unittest import mock
 
 from parameterized import parameterized
@@ -187,7 +187,7 @@ class TestLanguageService(unittest.TestCase):
         # Then:
         # ... An default completion set should be sent over the notification
         context.send_response.assert_called_once()
-        completions: List[CompletionItem] = context.last_response_params
+        completions: list[CompletionItem] = context.last_response_params
         self.assertTrue(len(completions) > 0)
         self.verify_match("TABLE", completions, Range.from_data(0, 7, 0, 10))
 
@@ -311,7 +311,7 @@ class TestLanguageService(unittest.TestCase):
         # Then:
         # ... There should be no changes to the doc
         context.send_response.assert_called_once()
-        edits: List[TextEdit] = context.last_response_params
+        edits: list[TextEdit] = context.last_response_params
         self.assertTrue(len(edits) > 0)
         self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
         self.assertEqual(edits[0].new_text, input_text)
@@ -358,7 +358,7 @@ class TestLanguageService(unittest.TestCase):
         # Then:
         # ... The entire document text should be formatted
         context.send_response.assert_called_once()
-        edits: List[TextEdit] = context.last_response_params
+        edits: list[TextEdit] = context.last_response_params
         self.assertTrue(len(edits) > 0)
         self.assert_range_equals(edits[0].range, Range.from_data(0, 0, 0, len(input_text)))
         self.assertEqual(edits[0].new_text, expected_output)
@@ -368,7 +368,7 @@ class TestLanguageService(unittest.TestCase):
         Test that the format document range codepath works as expected
         """
         # If: The script file doesn't exist (there is an empty workspace)
-        input_lines: List[str] = [
+        input_lines: list[str] = [
             "select * from t1",
             "select * from foo where id in (select id from bar);",
         ]
@@ -408,7 +408,7 @@ class TestLanguageService(unittest.TestCase):
         # Then:
         # ... only the 2nd line should be formatted
         context.send_response.assert_called_once()
-        edits: List[TextEdit] = context.last_response_params
+        edits: list[TextEdit] = context.last_response_params
         self.assertTrue(len(edits) > 0)
         self.assert_range_equals(edits[0].range, format_params.range)
         self.assertEqual(edits[0].new_text, expected_output)
@@ -509,7 +509,7 @@ class TestLanguageService(unittest.TestCase):
 
     def _get_test_workspace(
         self, script_file: bool = True, buffer: str = ""
-    ) -> Tuple[Workspace, Optional[ScriptFile]]:
+    ) -> tuple[Workspace, Optional[ScriptFile]]:
         workspace: Workspace = Workspace()
         file: Optional[ScriptFile] = None
         if script_file:
@@ -518,7 +518,7 @@ class TestLanguageService(unittest.TestCase):
         return workspace, file
 
     def verify_match(
-        self, word: str, matches: List[CompletionItem], text_range: Range
+        self, word: str, matches: list[CompletionItem], text_range: Range
     ) -> None:
         """Verifies match against its label and other properties"""
         match: CompletionItem = next(iter(obj for obj in matches if obj.label == word), None)

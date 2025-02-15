@@ -6,7 +6,6 @@
 """Test text.py"""
 
 import unittest
-from typing import List
 
 from ossdbtoolsservice.language.contracts import CompletionItem, CompletionItemKind
 from ossdbtoolsservice.language.keywords import DefaultCompletionHelper
@@ -39,7 +38,7 @@ class TestCompletionHelper(unittest.TestCase):
         # Given a default completion helper
         helper = DefaultCompletionHelper()
         # When I match the empty string
-        matches: List[CompletionItem] = helper.get_matches("", None, False)
+        matches: list[CompletionItem] = helper.get_matches("", None, False)
         # Then I expect no keywords to be returned
         self.assertEqual([], matches)
 
@@ -50,7 +49,7 @@ class TestCompletionHelper(unittest.TestCase):
         text_range = Range.from_data(1, 1, 1, 2)
         start = "c"
         # When I match 'c'
-        matches: List[CompletionItem] = helper.get_matches(start, text_range, False)
+        matches: list[CompletionItem] = helper.get_matches(start, text_range, False)
         # Then I expect keywords starting with c to be returned
         self.assertTrue(len(matches) > 0)
         # ... and I expect words to be uppercased
@@ -59,7 +58,7 @@ class TestCompletionHelper(unittest.TestCase):
         self.verify_miss("DELETE", matches)
 
         # and When I match with lowercase
-        matches: List[CompletionItem] = helper.get_matches(start, text_range, True)
+        matches: list[CompletionItem] = helper.get_matches(start, text_range, True)
         # then I expect a lowercase result
         self.verify_match("create", matches, text_range)
         self.verify_miss("CREATE", matches)
@@ -71,13 +70,13 @@ class TestCompletionHelper(unittest.TestCase):
         text_range = Range.from_data(1, 1, 1, 2)
         start = "create"
         # When I match 'create'
-        matches: List[CompletionItem] = helper.get_matches(start, text_range, False)
+        matches: list[CompletionItem] = helper.get_matches(start, text_range, False)
         # Then I expect only 1 match
         self.assertEqual(1, len(matches))
         # ... and I expect words to be uppercased
         self.verify_match("CREATE", matches, text_range)
 
-    def verify_match(self, word: str, matches: List[CompletionItem], text_range: Range):
+    def verify_match(self, word: str, matches: list[CompletionItem], text_range: Range):
         """Verifies match against its label and other properties"""
         match: CompletionItem = next(iter(obj for obj in matches if obj.label == word), None)
         self.assertIsNotNone(match)
@@ -87,6 +86,6 @@ class TestCompletionHelper(unittest.TestCase):
         self.assertEqual(text_range, match.text_edit.range)
         self.assertEqual(word, match.text_edit.new_text)
 
-    def verify_miss(self, word: str, matches: List[CompletionItem]):
+    def verify_miss(self, word: str, matches: list[CompletionItem]):
         match = next(iter(obj for obj in matches if obj.label == word), None)
         self.assertIsNone(match)

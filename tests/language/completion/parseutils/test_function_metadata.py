@@ -24,7 +24,7 @@ class TestFunctionMetadata(unittest.TestCase):
         # Testing operators, so will only use assert_true for checks
         self.assertTrue(f1 == f2)
         self.assertTrue(f1 != f3)
-        self.assertTrue(not (f1 != f2))
-        self.assertTrue(not (f1 == f3))
+        self.assertTrue(f1 == f2)
+        self.assertTrue(f1 != f3)
         self.assertTrue(hash(f1) == hash(f2))
         self.assertTrue(hash(f1) != hash(f3))

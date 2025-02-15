@@ -9,7 +9,7 @@ import json
 import random
 import string
 from enum import Enum
-from typing import Any, Type
+from typing import Any
 
 from ossdbtoolsservice.utils.serialization import convert_to_dict
 
@@ -79,7 +79,7 @@ def generate_requests_markdown(server, logger, output_file="docs/Requests.md"):
         f.write(markdown_content)
 
 
-def generate_mock_data_for_type(field_type: Type) -> Any:
+def generate_mock_data_for_type(field_type: type) -> Any:
     """Generate example mock data based on attribute type."""
     if field_type == int:
         return random.randint(1, 100)
@@ -98,7 +98,7 @@ def generate_mock_data_for_type(field_type: Type) -> Any:
     return None  # Default for unhandled types
 
 
-def create_example_instance(cls: Type) -> Any:
+def create_example_instance(cls: type) -> Any:
     """Generate an example instance of a class with mock data."""
     if hasattr(cls, "__init__"):
         # Prepare constructor arguments with mock values

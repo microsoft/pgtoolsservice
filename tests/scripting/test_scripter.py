@@ -6,7 +6,7 @@
 """Tests the scripter module"""
 
 import unittest
-from typing import Any, List
+from typing import Any
 from unittest import mock
 
 import ossdbtoolsservice.scripting.scripter as scripter
@@ -422,11 +422,11 @@ class TestScripterOld(unittest.TestCase):
         self.assertTrue('CREATE INDEX "TestName"\n    ON "TestSchema"."TestTable"' in result)
 
     # Helper functions ##################################################################
-    def _as_node_collection(self, object_list: List[Any]) -> NodeCollection[Any]:
+    def _as_node_collection(self, object_list: list[Any]) -> NodeCollection[Any]:
         return NodeCollection(lambda: object_list)
 
     def _verify_create_script(
-        self, object_metadata: ObjectMetadata, expected_contents: List[str]
+        self, object_metadata: ObjectMetadata, expected_contents: list[str]
     ):
         # If I try to get create script
         result: str = self.scripter.script(scripter.ScriptOperation.CREATE, object_metadata)
@@ -435,14 +435,14 @@ class TestScripterOld(unittest.TestCase):
             self.assertTrue(expected in result)
 
     def _verify_update_script(
-        self, object_metadata: ObjectMetadata, expected_contents: List[str]
+        self, object_metadata: ObjectMetadata, expected_contents: list[str]
     ):
         result: str = self.scripter.script(scripter.ScriptOperation.UPDATE, object_metadata)
         for expected in expected_contents:
             self.assertTrue(expected in result)
 
     def _verify_delete_script(
-        self, object_metadata: ObjectMetadata, expected_contents: List[str]
+        self, object_metadata: ObjectMetadata, expected_contents: list[str]
     ):
         result: str = self.scripter.script(scripter.ScriptOperation.DELETE, object_metadata)
         for expected in expected_contents:

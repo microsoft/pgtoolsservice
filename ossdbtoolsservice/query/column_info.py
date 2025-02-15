@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
 from psycopg import sql
 
@@ -11,7 +10,7 @@ from ossdbtoolsservice.query.contracts import DbColumn
 from ossdbtoolsservice.utils import constants
 
 
-def get_columns_info(cursor) -> List[DbColumn]:
+def get_columns_info(cursor) -> list[DbColumn]:
     if cursor.description is None:
         raise ValueError("Cursor description is not available")
 

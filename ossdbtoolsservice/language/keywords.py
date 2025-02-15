@@ -6,7 +6,6 @@
 # ScanKeyword function for PostgreSQL 9.5rc1
 
 import enum
-from typing import List
 
 from ossdbtoolsservice.language.contracts import CompletionItem, CompletionItemKind, TextEdit
 from ossdbtoolsservice.workspace.contracts.common import Range
@@ -450,16 +449,16 @@ class DefaultCompletionHelper:
 
     def get_matches(
         self, start: str, text_range: Range, lowercase: bool
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         """
         Gets matching keywords as a list of CompletionItem.
         """
-        matches: List[CompletionItem] = []
+        matches: list[CompletionItem] = []
         if not start:
             return matches
 
         start = start.lower()
-        for key in DefaultCompletionHelper.KEYWORDS.keys():
+        for key in DefaultCompletionHelper.KEYWORDS:
             if key.startswith(start):
                 matches.append(
                     DefaultCompletionHelper._to_completion_item(key, text_range, lowercase)

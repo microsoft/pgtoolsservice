@@ -77,7 +77,7 @@ class OperationsQueue:
         self._service_provider = service_provider
         self.lock: threading.RLock = threading.RLock()
         self.queue: Queue = Queue()
-        self._context_map: Dict[str, ConnectionContext] = {}
+        self._context_map: dict[str, ConnectionContext] = {}
         self.stop_requested = False
         # TODO consider thread pool for multiple messages? Or full
         # Process queue using multi-threading

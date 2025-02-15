@@ -468,8 +468,8 @@ class TestNodeObject(unittest.TestCase):
 
         # Then: The collection should be appended to the list of registered collections
         self.assertEqual(len(node_obj._child_collections), 2)
-        self.assertTrue(mock_class1.__name__ in node_obj._child_collections.keys())
-        self.assertTrue(mock_class2.__name__ in node_obj._child_collections.keys())
+        self.assertTrue(mock_class1.__name__ in node_obj._child_collections)
+        self.assertTrue(mock_class2.__name__ in node_obj._child_collections)
         self.assertIs(node_obj._child_collections[mock_class1.__name__], collection1)
         self.assertIs(node_obj._child_collections[mock_class2.__name__], collection2)
 

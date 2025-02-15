@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import enum
-from typing import List
 
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
@@ -40,7 +39,7 @@ class CompletionOptions:
     """Completion options contract"""
 
     resolve_provider: bool
-    trigger_characters: List[str]
+    trigger_characters: list[str]
 
     def __init__(self, resolve_provider=None, trigger_characters=None):
         self.resolve_provider = resolve_provider
@@ -50,7 +49,7 @@ class CompletionOptions:
 class SignatureHelpOptions:
     """Signature help options contract"""
 
-    trigger_characters: List[str]
+    trigger_characters: list[str]
 
     def __init__(self, trigger_characters=None):
         self.trigger_characters = trigger_characters

@@ -11,7 +11,7 @@ import ossdbtoolsservice.utils as utils
 
 
 class ResultSetSubset:
-    rows: List[List[DbCellValue]]
+    rows: list[list[DbCellValue]]
     row_count: int
 
     @classmethod
@@ -36,7 +36,7 @@ class ResultSetSubset:
     ):
         """Retrieves ResultSetSubset from Query results"""
         instance = cls()
-        instance.rows: List[List[DbCellValue]] = instance.build_db_cell_values(
+        instance.rows: list[list[DbCellValue]] = instance.build_db_cell_values(
             results, owner_uri, batch_ordinal, result_set_ordinal, start_index, end_index
         )
         instance.row_count: int = len(instance.rows)
@@ -44,7 +44,7 @@ class ResultSetSubset:
         return instance
 
     def __init__(self):
-        self.rows: List[List[DbCellValue]] = []
+        self.rows: list[list[DbCellValue]] = []
         self.row_count: int = 0
 
     def build_db_cell_values(
@@ -55,7 +55,7 @@ class ResultSetSubset:
         result_set_ordinal: int,
         start_index: int,
         end_index: int,
-    ) -> List[List[DbCellValue]]:
+    ) -> list[list[DbCellValue]]:
         """param results: a list of rows for a query result, where each row consists of tuples
         :param results: mapping of owner uris to their list of batches Dict[str, List[Batch]]
         :param batch_ordinal: ordinal of the batch within 'results'
@@ -101,12 +101,12 @@ class ResultSetSubset:
 
     @staticmethod
     def _construct_rows(result_set, start_index: int, end_index: int):
-        rows_list: List[List[DbCellValue]] = []
+        rows_list: list[list[DbCellValue]] = []
         row_id = start_index
 
         # operate only on results within the specified range
         for row_id in range(start_index, end_index):
-            db_cell_value_row: List[DbCellValue] = [
+            db_cell_value_row: list[DbCellValue] = [
                 DbCellValue(cell, cell is None, cell, row_id)
                 for cell in ResultSetSubset._get_row(result_set, row_id)
             ]

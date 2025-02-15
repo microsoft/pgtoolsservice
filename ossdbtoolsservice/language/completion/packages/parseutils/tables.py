@@ -42,8 +42,7 @@ def extract_from_part(parsed, stop_at_punctuation=True):
     for item in parsed.tokens:
         if tbl_prefix_seen:
             if is_subselect(item):
-                for x in extract_from_part(item, stop_at_punctuation):
-                    yield x
+                yield from extract_from_part(item, stop_at_punctuation)
             elif stop_at_punctuation and item.ttype is Punctuation:
                 return
             # An incomplete nested select won't be recognized correctly as a
@@ -56,7 +55,7 @@ def extract_from_part(parsed, stop_at_punctuation=True):
             # INNER JOIN, FULL OUTER JOIN, etc.
             elif (
                 item.ttype is Keyword
-                and (not item.value.upper() == "FROM")
+                and (item.value.upper() != "FROM")
                 and (not item.value.upper().endswith("JOIN"))
             ):
                 tbl_prefix_seen = False

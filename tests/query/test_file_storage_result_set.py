@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-from typing import Callable, List
+from typing import Callable
 from unittest import mock
 
 import tests.utils as utils
@@ -20,7 +20,7 @@ class TestFileStorageResultSet(unittest.TestCase):
         self._events = ResultSetEvents()
         self._bytes_to_write = 10
         self._writer = MockWriter(self._bytes_to_write)
-        self._row: List[DbCellValue] = ["Column_Val1", "Column_Val2"]
+        self._row: list[DbCellValue] = ["Column_Val1", "Column_Val2"]
         self._reader = MockReader(self._row)
         self._file = "TestFile"
         self._cursor = utils.MockCursor([tuple([1, 2, 3]), tuple([5, 6, 7])])
@@ -275,7 +275,7 @@ class MockType:
 
 
 class MockReader(MockType):
-    def __init__(self, row: List[DbCellValue]) -> None:
+    def __init__(self, row: list[DbCellValue]) -> None:
         self.read_row = mock.Mock(return_value=row)
 
 

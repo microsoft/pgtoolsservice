@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, List, Optional
+from typing import Optional
 
 import smo.utils.templating as templating
 from pgsmo.objects.server import server as s  # noqa
@@ -43,8 +43,8 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         self._oid: Optional[int] = None
         self._is_system: bool = False
 
-        self._child_collections: Dict[str, NodeCollection] = {}
-        self._property_collections: List[NodeLazyPropertyCollection] = []
+        self._child_collections: dict[str, NodeCollection] = {}
+        self._property_collections: list[NodeLazyPropertyCollection] = []
         # Use _column_property_generator instead of _property_generator
         self._full_properties: NodeLazyPropertyCollection = (
             self._register_property_collection(self._sequence_property_generator)
@@ -134,7 +134,7 @@ class Sequence(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod

@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
 from ossdbtoolsservice.query.column_info import get_columns_info
 from ossdbtoolsservice.query.contracts import (  # noqa
@@ -21,7 +20,7 @@ class InMemoryResultSet(ResultSet):
         self, result_set_id: int, batch_id: int, events: ResultSetEvents = None
     ) -> None:
         ResultSet.__init__(self, result_set_id, batch_id, events)
-        self.rows: List[tuple] = []
+        self.rows: list[tuple] = []
 
     @property
     def row_count(self) -> int:
@@ -39,7 +38,7 @@ class InMemoryResultSet(ResultSet):
     def update_row(self, row_id: int, cursor):
         self.rows[row_id] = cursor.fetchone()
 
-    def get_row(self, row_id: int) -> List[DbCellValue]:
+    def get_row(self, row_id: int) -> list[DbCellValue]:
         row = self.rows[row_id]
         return [
             DbCellValue(cell_value, cell_value is None, cell_value, row_id)

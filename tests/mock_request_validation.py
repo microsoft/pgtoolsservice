@@ -57,8 +57,8 @@ class ReceivedError:
 class RequestFlowValidator:
     def __init__(self):
         self.unittest = unittest.TestCase("__init__")
-        self._expected_messages: List[ExpectedMessage] = []
-        self._received_messages: List[ReceivedMessage] = []
+        self._expected_messages: list[ExpectedMessage] = []
+        self._received_messages: list[ReceivedMessage] = []
 
         # Create a request context and monkey patch all the methods to capture the messages
         self.request_context: RequestContext = RequestContext(None, None)

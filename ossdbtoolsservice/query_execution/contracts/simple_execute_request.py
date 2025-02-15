@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
@@ -23,12 +22,12 @@ class SimpleExecuteRequest(Serializable):
 
 
 class SimpleExecuteResponse:
-    rows: List[List[DbCellValue]]
+    rows: list[list[DbCellValue]]
     row_count: int
-    column_info: List[DbColumn]
+    column_info: list[DbColumn]
 
     def __init__(
-        self, rows: List[List[DbCellValue]], row_count: int, column_info: List[DbColumn]
+        self, rows: list[list[DbCellValue]], row_count: int, column_info: list[DbColumn]
     ):
         self.rows = rows
         self.row_count = row_count

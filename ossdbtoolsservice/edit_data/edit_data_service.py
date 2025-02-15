@@ -63,7 +63,7 @@ class EditDataService(Service):
     def __init__(self):
         self._service_provider: ServiceProvider = None
         self._query_execution_service: QueryExecutionService = None
-        self._active_sessions: Dict[str, DataEditorSession] = {}
+        self._active_sessions: dict[str, DataEditorSession] = {}
         self._logger = None
         self._connection_service: ConnectionService = None
 
@@ -99,7 +99,7 @@ class EditDataService(Service):
             return
 
         def query_executer(
-            query: str, columns: List[DbColumn], on_query_execution_complete: Callable
+            query: str, columns: list[DbColumn], on_query_execution_complete: Callable
         ):
             def on_resultset_complete(result_set_params: ResultSetNotificationParams):
                 result_set_params.result_set_summary.column_info = columns
@@ -256,7 +256,7 @@ class EditDataService(Service):
         return edit_session
 
     def _handle_create_row_default_values(
-        self, rows: List[EditRow], session: DataEditorSession
+        self, rows: list[EditRow], session: DataEditorSession
     ):
         for row in rows:
             if row.state == EditRowState.DIRTY_INSERT:

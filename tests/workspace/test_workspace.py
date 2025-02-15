@@ -5,7 +5,7 @@
 
 import unittest
 import unittest.mock as mock
-from typing import Optional, Tuple
+from typing import Optional
 
 from ossdbtoolsservice.workspace.workspace import ScriptFile, Workspace
 
@@ -233,7 +233,7 @@ class TestWorkspaceService(unittest.TestCase):
     @staticmethod
     def _get_test_workspace(
         script_file: bool = True,
-    ) -> Tuple[Workspace, Optional[ScriptFile]]:
+    ) -> tuple[Workspace, Optional[ScriptFile]]:
         w: Workspace = Workspace()
         sf: Optional[ScriptFile] = None
         if script_file:

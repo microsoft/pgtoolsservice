@@ -70,7 +70,7 @@ from ossdbtoolsservice.workspace.contracts import (
 from ossdbtoolsservice.workspace.script_file import ScriptFile  # noqa
 
 # Map of meta or display_meta values to completion items. Based on SqlToolsService definitions
-DISPLAY_META_MAP: Dict[str, CompletionItemKind] = {
+DISPLAY_META_MAP: dict[str, CompletionItemKind] = {
     "column": CompletionItemKind.Field,
     "columns": CompletionItemKind.Field,
     "database": CompletionItemKind.Method,
@@ -96,11 +96,11 @@ class LanguageService(Service):
         self._service_provider: ServiceProvider = None
         self._server: MessageServer = None
         self._logger: Union(Logger, None) = None
-        self._valid_uri: Set = set()
+        self._valid_uri: set = set()
         self._completion_helper = DefaultCompletionHelper()
-        self._script_map: Dict[str, ScriptParseInfo] = {}
+        self._script_map: dict[str, ScriptParseInfo] = {}
         self._script_map_lock: threading.Lock = threading.Lock()
-        self._binding_queue_map: Dict[str, ScriptParseInfo] = {}
+        self._binding_queue_map: dict[str, ScriptParseInfo] = {}
         self.operations_queue: OperationsQueue = None
 
     def register(self, service_provider: ServiceProvider) -> None:
@@ -289,7 +289,7 @@ class LanguageService(Service):
         Processes a formatting request by sending the entire documents text to sqlparse and returning a formatted document as a
         single TextEdit
         """
-        response: List[TextEdit] = []
+        response: list[TextEdit] = []
 
         def do_send_default_empty_response():
             request_context.send_response(response)
@@ -320,7 +320,7 @@ class LanguageService(Service):
         single TextEdit
         """
         # Validate inputs and set up response
-        response: List[TextEdit] = []
+        response: list[TextEdit] = []
 
         def do_send_default_empty_response():
             request_context.send_response(response)
@@ -405,7 +405,7 @@ class LanguageService(Service):
             self._server.send_notification(INTELLISENSE_READY_NOTIFICATION, response)
             # TODO Ideally would support connected diagnostics for missing references
 
-    def _get_sqlparse_options(self, options: FormattingOptions) -> Dict[str, Any]:
+    def _get_sqlparse_options(self, options: FormattingOptions) -> dict[str, Any]:
         sqlparse_options = {}
         sqlparse_options["indent_tabs"] = not options.insert_spaces
         if options.tab_size and options.tab_size > 0:
@@ -431,7 +431,7 @@ class LanguageService(Service):
 
     def _format_and_add_response(
         self,
-        response: List[TextEdit],
+        response: list[TextEdit],
         edit: TextEdit,
         text: str,
         params: DocumentFormattingParams,
@@ -478,7 +478,7 @@ class LanguageService(Service):
             return False
         # Else use the completer to query for completions
         completer: Completer = context.completer
-        completions: List[Completion] = completer.get_completions(
+        completions: list[Completion] = completer.get_completions(
             scriptparseinfo.document, None
         )
         if completions:
@@ -503,7 +503,7 @@ class LanguageService(Service):
 
         definition_result: DefinitionResult = None
         completer: Completer = context.completer
-        completions: List[Completion] = completer.get_completions(
+        completions: list[Completion] = completer.get_completions(
             scriptparseinfo.document, None
         )
 

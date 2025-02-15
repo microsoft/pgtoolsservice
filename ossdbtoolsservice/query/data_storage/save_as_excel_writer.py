@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 import io
-from typing import List
 
 import xlsxwriter
 
@@ -21,7 +20,7 @@ class SaveAsExcelWriter(SaveAsWriter):
         self._worksheet = self._workbook.add_worksheet()
         self._current_row = 1
 
-    def write_row(self, row: List[DbCellValue], columns: List[DbColumn]):
+    def write_row(self, row: list[DbCellValue], columns: list[DbColumn]):
         column_start_index = self.get_start_index()
         column_end_index = self.get_end_index(columns)
 

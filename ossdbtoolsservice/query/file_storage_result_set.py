@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.query.contracts import (  # noqa
@@ -29,7 +28,7 @@ class FileStorageResultSet(ResultSet):
 
         self._total_bytes_written = 0
         self._output_file_name = file_stream.create_file()
-        self._file_offsets: List[int] = []
+        self._file_offsets: list[int] = []
 
     @property
     def row_count(self) -> int:
@@ -77,7 +76,7 @@ class FileStorageResultSet(ResultSet):
         new_offset = self._append_row_to_buffer(cursor)
         self._file_offsets[row_id] = new_offset
 
-    def get_row(self, row_id: int) -> List[DbCellValue]:
+    def get_row(self, row_id: int) -> list[DbCellValue]:
         if not self._has_been_read:
             raise ValueError(FileStorageResultSet.RESULT_SET_NOT_READ_ERROR)
 

@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta
-from typing import List, Optional
+from typing import Optional
 
 import smo.utils.templating as templating
 from pgsmo.objects.server import server as s  # noqa
@@ -287,7 +287,7 @@ class FunctionBase(
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     def _create_query_data(self) -> dict:

@@ -14,7 +14,7 @@ class ResultSetSummary:
     batch_id: int
     row_count: int
     complete: bool
-    column_info: List[DbColumn]
+    column_info: list[DbColumn]
 
     def __init__(
         self,
@@ -22,7 +22,7 @@ class ResultSetSummary:
         batch_id: int,
         row_count: int,
         complete: bool,
-        column_info: List[DbColumn],
+        column_info: list[DbColumn],
     ):
         self.id = result_set_id
         self.batch_id = batch_id

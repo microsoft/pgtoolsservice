@@ -118,7 +118,7 @@ class QueryExecutionService(Service):
     def __init__(self):
         self._service_provider: ServiceProvider = None
         # Dictionary mapping uri to a list of batches
-        self.query_results: Dict[str, Query] = {}
+        self.query_results: dict[str, Query] = {}
         self.owner_to_thread_map: dict = {}  # Only used for testing
 
         self._service_action_mapping: dict = {
@@ -573,7 +573,7 @@ class QueryExecutionService(Service):
         elif isinstance(params, ExecuteDocumentStatementParams):
             workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
             query = workspace_service.get_text(params.owner_uri, None)
-            selection_data_list: List[SelectionData] = compute_batches(
+            selection_data_list: list[SelectionData] = compute_batches(
                 sqlparse.split(query), query
             )
 
@@ -617,9 +617,14 @@ class QueryExecutionService(Service):
                 "Server closed the connection unexpectedly. Attempting to reconnect..."
             )
 
-        # If the error relates to the database, display the appropriate error message based on the provider
-        elif isinstance(e, worker_args.connection.database_error) or isinstance(
-            e, worker_args.connection.query_canceled_error
+        # If the error relates to the database, display the appropriate error
+        # message based on the provider
+        elif isinstance(
+            e,
+            (
+                worker_args.connection.database_error,
+                worker_args.connection.query_canceled_error,
+            ),
         ):
             # get_error_message may return None so ensure error_message is str type
             error_message = str(worker_args.connection.get_error_message(e))

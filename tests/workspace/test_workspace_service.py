@@ -7,7 +7,6 @@
 
 import os
 import unittest
-from typing import Tuple
 from unittest.mock import MagicMock
 
 import tests.utils as utils
@@ -367,7 +366,7 @@ class TestWorkspaceService(unittest.TestCase):
     @staticmethod
     def _get_mock_workspace(
         all_none: bool = False, exception: bool = False
-    ) -> Tuple[Workspace, ScriptFile]:
+    ) -> tuple[Workspace, ScriptFile]:
         if exception:
             return_value = NameError()
             kwargs = {"side_effect": return_value}

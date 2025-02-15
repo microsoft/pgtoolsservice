@@ -5,9 +5,8 @@
 
 import threading
 from abc import ABCMeta, abstractmethod, abstractproperty
-from typing import Dict, List  # noqa
 
-from ossdbtoolsservice.query.contracts import (  # noqa
+from ossdbtoolsservice.query.contracts import (
     DbCellValue,
     DbColumn,
     ResultSetSummary,
@@ -33,11 +32,11 @@ class ResultSet(metaclass=ABCMeta):
         self.events = events
 
         self._has_been_read = False
-        self._columns_info: List[DbColumn] = []
-        self._save_as_threads: Dict[str, threading.Thread] = {}
+        self._columns_info: list[DbColumn] = []
+        self._save_as_threads: dict[str, threading.Thread] = {}
 
     @property
-    def columns_info(self) -> List[DbColumn]:
+    def columns_info(self) -> list[DbColumn]:
         return self._columns_info if self._columns_info is not None else []
 
     @columns_info.setter
@@ -71,7 +70,7 @@ class ResultSet(metaclass=ABCMeta):
         """Add row accepts cursor which will be iterated over to get the current row to be updated"""
 
     @abstractmethod
-    def get_row(self, row_id: int) -> List[DbCellValue]:
+    def get_row(self, row_id: int) -> list[DbCellValue]:
         pass
 
     @abstractmethod

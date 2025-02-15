@@ -3,35 +3,34 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List  # noqa
 import unittest
 from unittest import mock
 
-from ossdbtoolsservice.edit_data import DataEditorSession
-from ossdbtoolsservice.edit_data.contracts import (
-    InitializeEditParams,
-    EditInitializerFilter,
-    CreateRowResponse,
-)  # noqa
-from tests.utils import MockPsycopgConnection, MockCursor
 from ossdbtoolsservice.edit_data import (
-    EditTableMetadata,
-    EditColumnMetadata,
+    DataEditorSession,
     DataEditSessionExecutionState,
+    EditColumnMetadata,
+    EditTableMetadata,
 )
+from ossdbtoolsservice.edit_data.contracts import (
+    CreateRowResponse,
+    EditInitializerFilter,
+    InitializeEditParams,
+)  # noqa
+from ossdbtoolsservice.edit_data.update_management import RowDelete
+from ossdbtoolsservice.edit_data.update_management.row_edit import EditScript
 from ossdbtoolsservice.query import (
     Batch,
-    create_result_set,
     ExecutionState,
     Query,
-    QueryExecutionSettings,
     QueryEvents,
+    QueryExecutionSettings,
     ResultSet,
     ResultSetStorageType,
+    create_result_set,
 )
 from ossdbtoolsservice.query.contracts import DbColumn
-from ossdbtoolsservice.edit_data.update_management.row_edit import EditScript
-from ossdbtoolsservice.edit_data.update_management import RowDelete
+from tests.utils import MockCursor, MockPsycopgConnection
 
 
 class TestDataEditorSession(unittest.TestCase):
@@ -72,7 +71,7 @@ class TestDataEditorSession(unittest.TestCase):
             return_value=self._query
         )
 
-    def get_result_set(self, rows: List[tuple]) -> ResultSet:
+    def get_result_set(self, rows: list[tuple]) -> ResultSet:
         result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 0, 0)
         cursor = MockCursor(rows)
 

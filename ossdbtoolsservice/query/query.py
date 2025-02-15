@@ -66,7 +66,7 @@ class Query:
         self._disable_auto_commit = False
         self._user_transaction = False
         self._current_batch_index = 0
-        self._batches: List[Batch] = []
+        self._batches: list[Batch] = []
         self._execution_plan_options = query_execution_settings.execution_plan_options
 
         self.is_canceled = False
@@ -123,7 +123,7 @@ class Query:
         return self._query_text
 
     @property
-    def batches(self) -> List[Batch]:
+    def batches(self) -> list[Batch]:
         return self._batches
 
     @property
@@ -192,10 +192,10 @@ class Query:
 
 
 def compute_selection_data_for_batches(
-    batches: List[str], full_text: str
-) -> List[SelectionData]:
+    batches: list[str], full_text: str
+) -> list[SelectionData]:
     # Map the starting index of each line to the line number
-    line_map: Dict[int, int] = {}
+    line_map: dict[int, int] = {}
     search_offset = 0
     for line_num, line in enumerate(full_text.split("\n")):
         start_index = full_text.index(line, search_offset)
@@ -203,7 +203,7 @@ def compute_selection_data_for_batches(
         search_offset = start_index + len(line)
 
     # Iterate through the batches to build selection data
-    selection_data: List[SelectionData] = []
+    selection_data: list[SelectionData] = []
     search_offset = 0
     for batch in batches:
         # Calculate the starting line number and column

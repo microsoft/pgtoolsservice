@@ -10,7 +10,7 @@ import threading
 import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
-from typing import Callable, Tuple
+from typing import Callable
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
@@ -48,7 +48,7 @@ TEST_PASSWORD = "testpassword"
 TEST_PORT = 5432
 
 
-def _connection_details() -> Tuple[ConnectionDetails, str]:
+def _connection_details() -> tuple[ConnectionDetails, str]:
     param = ConnectionDetails()
     param.options = {
         "host": TEST_HOST,
@@ -720,7 +720,7 @@ class TestObjectExplorer(unittest.TestCase):
     # IMPLEMENTATION DETAILS ###############################################
     def _preloaded_oe_service(
         self, server=mock.Mock()
-    ) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
+    ) -> tuple[ObjectExplorerService, ObjectExplorerSession, str]:
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
         oe._routing_table = PG_ROUTING_TABLE

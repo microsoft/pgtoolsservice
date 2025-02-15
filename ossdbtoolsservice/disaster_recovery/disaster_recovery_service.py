@@ -9,7 +9,7 @@ import functools
 import os
 import subprocess
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import inflection
 
@@ -110,8 +110,8 @@ class DisasterRecoveryService(Service):
 
 def _perform_backup_restore(
     connection_info: ConnectionInfo,
-    process_args: List[str],
-    options: Dict[str, Any],
+    process_args: list[str],
+    options: dict[str, Any],
     task: Task,
 ):
     """Call out to pg_dump or pg_restore using the arguments given and additional arguments built from the given options dict"""
@@ -190,7 +190,7 @@ def _perform_restore(
     return _perform_backup_restore(connection_info, pg_restore_args, options, task)
 
 
-def _get_backup_restore_connection_params(connection_options: dict) -> List[str]:
+def _get_backup_restore_connection_params(connection_options: dict) -> list[str]:
     params = [
         f"--dbname={connection_options['dbname']}",
         f"--host={connection_options['host']}",
@@ -202,7 +202,7 @@ def _get_backup_restore_connection_params(connection_options: dict) -> List[str]
     return params
 
 
-def _get_pg_exe_path(exe_name: str, server_version: Tuple[int, int, int]) -> str:
+def _get_pg_exe_path(exe_name: str, server_version: tuple[int, int, int]) -> str:
     """
     Find the path to the given PostgreSQL utility executable for the current operating system in a server specific version folder
 
@@ -225,7 +225,7 @@ def _get_pg_exe_path(exe_name: str, server_version: Tuple[int, int, int]) -> str
         path_suffix = os.path.join("bin", exe_name)
 
     # Get the list of folders in the os specific root folder
-    all_folders: List[str] = [os.path.normpath(x[0]) for x in os.walk(os_root)]
+    all_folders: list[str] = [os.path.normpath(x[0]) for x in os.walk(os_root)]
     for folder in all_folders:
         folderName = os.path.basename(folder)
         version = folderName.split(".")

@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import List
 
 from ossdbtoolsservice.edit_data import EditTableMetadata
 from ossdbtoolsservice.edit_data.contracts import (
@@ -21,8 +20,8 @@ from ossdbtoolsservice.query.contracts import DbCellValue
 
 class RowCreate(RowEdit):
     def __init__(self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata):
-        super(RowCreate, self).__init__(row_id, result_set, table_metadata)
-        self.new_cells: List[CellUpdate] = [None] * len(result_set.columns_info)
+        super().__init__(row_id, result_set, table_metadata)
+        self.new_cells: list[CellUpdate] = [None] * len(result_set.columns_info)
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
         self.validate_column_is_updatable(column_index)
@@ -36,7 +35,7 @@ class RowCreate(RowEdit):
         self.new_cells[column_index] = None
         return RevertCellResponse(None, True)
 
-    def get_edit_row(self, cached_row: List[DbCellValue]) -> EditRow:
+    def get_edit_row(self, cached_row: list[DbCellValue]) -> EditRow:
         edit_cells = []
         for cell in self.new_cells:
             db_cell_value = (
@@ -58,9 +57,9 @@ class RowCreate(RowEdit):
         insert_template = "INSERT INTO {0}({1}) VALUES({2}) RETURNING *"
         colum_name_template = '"{0}"'
 
-        column_names: List[str] = []
-        query_parameters: List[object] = []
-        insert_values: List[str] = []
+        column_names: list[str] = []
+        query_parameters: list[object] = []
+        insert_values: list[str] = []
 
         for index, column in enumerate(self.result_set.columns_info):
             if column.is_updatable is True:
