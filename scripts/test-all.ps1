@@ -1,3 +1,5 @@
+$ErrorActionPreference = "Stop"
+
 # Save the current directory and the script's directory, since tests must be run from the project root
 $curloc = $pwd
 $scriptloc = $PSScriptRoot

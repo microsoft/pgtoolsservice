@@ -79,7 +79,7 @@ class TestWorkspaceService(unittest.TestCase):
 
             # Then:
             # ... A file should have been opened
-            m.assert_called_once_with("file_path", "r")
+            m.assert_called_once_with("file_path")
 
             # ... Opening the file should have been successful
             self.assertIsInstance(result, ScriptFile)

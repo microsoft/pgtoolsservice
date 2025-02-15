@@ -3,11 +3,23 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+# Import order to avoid circular import
+# ruff:noqa: I001
+
+from ossdbtoolsservice.language.contracts.text_edit import TextEdit
+from ossdbtoolsservice.language.contracts.language_flavor_change import (
+    LANGUAGE_FLAVOR_CHANGE_NOTIFICATION,
+    LanguageFlavorChangeParams,
+)
+from ossdbtoolsservice.language.contracts.status_changed_notification import (
+    STATUS_CHANGE_NOTIFICATION,
+    StatusChangeParams,
+)
 from ossdbtoolsservice.language.contracts.completion import (
     COMPLETION_REQUEST,
-    COMPLETION_RESOLVE_REQUEST,
     CompletionItem,
     CompletionItemKind,
+    COMPLETION_RESOLVE_REQUEST,
 )
 from ossdbtoolsservice.language.contracts.definition import DEFINITION_REQUEST
 from ossdbtoolsservice.language.contracts.document_formatting import (
@@ -21,15 +33,6 @@ from ossdbtoolsservice.language.contracts.intellisense_ready import (
     INTELLISENSE_READY_NOTIFICATION,
     IntelliSenseReadyParams,
 )
-from ossdbtoolsservice.language.contracts.language_flavor_change import (
-    LANGUAGE_FLAVOR_CHANGE_NOTIFICATION,
-    LanguageFlavorChangeParams,
-)
-from ossdbtoolsservice.language.contracts.status_changed_notification import (
-    STATUS_CHANGE_NOTIFICATION,
-    StatusChangeParams,
-)
-from ossdbtoolsservice.language.contracts.text_edit import TextEdit
 
 __all__ = [
     "TextEdit",
