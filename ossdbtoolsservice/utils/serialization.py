@@ -26,7 +26,8 @@ def convert_to_dict(obj):
 
 
 def _get_serializable_value(obj):
-    """Gets a serializable representation of an object, for use as the default argument to json.dumps"""
+    """Gets a serializable representation of an object, 
+    for use as the default argument to json.dumps"""
     # If the object is an Enum, use its value
     if isinstance(obj, enum.Enum):
         return _get_serializable_value(obj.value)

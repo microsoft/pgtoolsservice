@@ -306,8 +306,10 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
         itertools.product(
             completers(filtr=True, casing=False),
             [
-                "SELECT x.id, y.product_name FROM custom.products x JOIN custom.products y ON ",
-                "SELECT x.id, y.product_name FROM custom.products x JOIN custom.products y ON JOIN public.orders z ON z.id > y.id",
+                "SELECT x.id, y.product_name FROM custom.products x "
+                "JOIN custom.products y ON ",
+                "SELECT x.id, y.product_name FROM custom.products x "
+                "JOIN custom.products y ON JOIN public.orders z ON z.id > y.id",
             ],
         )
     )
@@ -331,7 +333,10 @@ class TestSmartCompletionMultipleSchemata(unittest.TestCase):
 
     @parameterized.expand(to_params(completers()))
     def test_suggested_aliases_after_on_right_side(self, completer):
-        text = "SELECT x.id, y.product_name FROM custom.products x JOIN custom.products y ON x.id = "
+        text = (
+            "SELECT x.id, y.product_name FROM custom.products x "
+            "JOIN custom.products y ON x.id = "
+        )
         result = result_set(completer, text)
         self.assertSetEqual(result, set([alias("x"), alias("y")]))
 

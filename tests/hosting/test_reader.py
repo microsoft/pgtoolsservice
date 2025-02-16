@@ -166,7 +166,8 @@ class JSONRPCReaderTests(unittest.TestCase):
         self.assertDictEqual(reader._headers, {"content-length": "56"})
 
     def test_read_headers_not_found(self):
-        # Setup: Create a reader with a loaded buffer that does not contain the \r\n\r\n control
+        # Setup: Create a reader with a loaded buffer
+        # that does not contain the \r\n\r\n control
         reader = JSONRPCReader(None, logger=utils.get_mock_logger())
         reader._buffer = bytearray(b"1234567890")
         reader._buffer_end_offset = len(reader._buffer)

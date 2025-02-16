@@ -109,18 +109,20 @@ class FileStorageResultSet(ResultSet):
         on_failure,
     ) -> None:
         try:
-            with file_factory.get_writer(file_path) as writer:
-                with file_factory.get_reader(self._output_file_name) as reader:
-                    for row_index in range(row_start_index, row_end_index):
-                        row = reader.read_row(
-                            self._file_offsets[row_index], row_index, self.columns_info
-                        )
-                        writer.write_row(row, self.columns_info)
+            with (
+                file_factory.get_writer(file_path) as writer,
+                file_factory.get_reader(self._output_file_name) as reader,
+            ):
+                for row_index in range(row_start_index, row_end_index):
+                    row = reader.read_row(
+                        self._file_offsets[row_index], row_index, self.columns_info
+                    )
+                    writer.write_row(row, self.columns_info)
 
-                    writer.complete_write()
+                writer.complete_write()
 
-                    if on_success is not None:
-                        on_success()
+                if on_success is not None:
+                    on_success()
         except Exception as e:
             on_failure(e.strerror if hasattr(e, "strerror") else e)
 

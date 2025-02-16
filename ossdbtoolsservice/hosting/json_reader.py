@@ -65,13 +65,14 @@ class JSONRPCReader:
         :raises ValueError: if the body-content cannot be serialized to a JSON object
         :return: JsonRpcMessage that was received
         """
-        # Using a mutable list to hold the value since an immutable string passed by reference won't
-        # change the value
+        # Using a mutable list to hold the value since an
+        # immutable string passed by reference won't change the value
         content = [""]
         try:
             while not self._needs_more_data or self._read_next_chunk():
-                # We should have all the data we need to form a message in the buffer. If we need
-                # more data to form the next message, this flag will be reset by an attempt to form
+                # We should have all the data we need to form a message in the buffer.
+                # If we need more data to form the next message,
+                # this flag will be reset by an attempt to form
                 # a header or content
                 self._needs_more_data = False
 
@@ -111,8 +112,10 @@ class JSONRPCReader:
     def _read_next_chunk(self) -> bool:
         """
         Read a chunk from the output stream into buffer
-        :raises EOFError: Stream was empty or stream did not contain a valid header or content-body
-        :raises ValueError: Stream was closed externally
+        :raises EOFError:
+            Stream was empty or stream did not contain a valid header or content-body
+        :raises ValueError:
+            Stream was closed externally
         :return: True on successful read of a message chunk
         """
         # Check if we need to resize the buffer
@@ -149,7 +152,9 @@ class JSONRPCReader:
 
     def _try_read_headers(self) -> bool:
         """
-        Try to read the header information from the internal buffer expecting the last header to contain '\r\n\r\n'
+        Try to read the header information from the internal buffer 
+        expecting the last header to contain '\r\n\r\n'
+
         :raises LookupError: The content-length header was not found
         :raises ValueError: The content-length contained an invalid literal for int
         :raises KeyError: The header block was malformed by not having a key:value format
@@ -165,7 +170,8 @@ class JSONRPCReader:
         ):
             scan_offset += 1
 
-        # If we reached the end of the buffer and haven't found the control sequence, we haven't found the headers
+        # If we reached the end of the buffer and haven't found the control sequence, 
+        # we haven't found the headers
         if scan_offset + 3 >= self._buffer_end_offset:
             return False
 
@@ -215,7 +221,8 @@ class JSONRPCReader:
         """
         Try to read content from internal buffer
         :param content: Location to store the content
-        :return: True on successful reading of content, False on incomplete read of content (based on content-length)
+        :return: True on successful reading of content, 
+            False on incomplete read of content (based on content-length)
         """
         # TODO: Take into consideration that the implementation of this protocol should place
         #       2 CRLF after the completion of the message.
@@ -234,8 +241,8 @@ class JSONRPCReader:
 
     def _trim_buffer_and_resize(self, bytes_to_remove: int) -> None:
         """
-        Trim the buffer by the passed in bytes_to_remove by creating a new buffer that is at a minimum the
-        default max size
+        Trim the buffer by the passed in bytes_to_remove by creating a new buffer
+        that is at a minimum the default max size
         :param bytes_to_remove: Number of bytes to remove from the current buffer
         """
         current_buffer_size = len(self._buffer)

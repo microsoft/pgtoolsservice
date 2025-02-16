@@ -55,7 +55,8 @@ class TestServer(unittest.TestCase):
 
     def test_recovery_properties(self):
         # Setup:
-        # NOTE: We're *not* mocking out the template rendering b/c this will verify that there's a template
+        # NOTE: We're *not* mocking out the template rendering b/c
+        # this will verify that there's a template
         # ... Create a mock query execution that will return the properties
         mock_exec_dict = mock.MagicMock(return_value=([], [TestServer.CHECK_RECOVERY_ROW]))
 
@@ -153,7 +154,8 @@ class TestServer(unittest.TestCase):
         server = Server(MockPGServerConnection())
 
         with self.assertRaises(ValueError):
-            # If: I get an object by its URN with a URN that points to an invalid path off the server
+            # If: I get an object by its URN with a URN that points to an
+            # invalid path off the server
             # Then: I should get an exception
             invalid_urn = parse.urljoin(server.urn_base, "Datatype.123/")
             server.get_object_by_urn(invalid_urn)

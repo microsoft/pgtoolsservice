@@ -3,7 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""A module that handles autocompletion metadata querying and initialization of the completion object."""
+"""A module that handles autocompletion metadata querying and 
+initialization of the completion object."""
 
 import os
 import threading

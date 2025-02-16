@@ -100,7 +100,8 @@ class TaskServiceTests(unittest.TestCase):
             self.request_validator.request_context, params
         )
 
-        # Then the task's cancel method should have been called and a positive response should have been sent
+        # Then the task's cancel method should have been called and a
+        # positive response should have been sent
         self.mock_task_1.cancel.assert_called_once()
         self.request_validator.validate()
 

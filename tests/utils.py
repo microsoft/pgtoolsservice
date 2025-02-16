@@ -86,7 +86,8 @@ def get_mock_service_provider(
 
 
 class MockRequestContext(RequestContext):
-    """Mock RequestContext object that allows service responses, notifications, and errors to be tested"""
+    """Mock RequestContext object that allows service responses, notifications,
+    and errors to be tested"""
 
     def __init__(self):
         RequestContext.__init__(self, None, None)
@@ -189,7 +190,9 @@ class MockConnectionInfo:
 class MockCursor:
     """Class used to mock psycopg cursor objects for testing"""
 
-    def __init__(self, query_results, columns_names=None, connection=mock.Mock()):
+    def __init__(self, query_results, columns_names=None, connection=None):
+        if connection is None:
+            connection = mock.Mock()
         if columns_names is None:
             columns_names = []
         self.execute = mock.Mock(side_effect=self.execute_success_side_effects)
@@ -263,7 +266,8 @@ class MockCursor:
 
 
 class MockThread:
-    """Mock thread class that mocks the thread's start method to run target code without actually starting a thread"""
+    """Mock thread class that mocks the thread's start method to run target
+    code without actually starting a thread"""
 
     def __init__(self):
         self.target = None

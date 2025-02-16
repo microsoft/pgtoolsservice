@@ -67,7 +67,8 @@ def is_not_equal(param_name: str, value_to_check: any, undesired_value: any) -> 
     """
     if value_to_check == undesired_value:
         raise ValueError(
-            f'The given value for {param_name} "{value_to_check}" should not equal "{undesired_value}"'
+            f'The given value for {param_name} "{value_to_check}" '
+            f'should not equal "{undesired_value}"'
         )
 
 
@@ -95,7 +96,8 @@ def is_not_none_or_whitespace(param_name: str, value_to_check: str) -> None:
 
 def is_object_params_not_none_or_whitespace(objname: str, obj: object, *args) -> None:
     """
-    Raises ValueError if the input object is None or any of the input object parameters (args) is None or a whitespace/empty string
+    Raises ValueError if the input object is None or
+    any of the input object parameters (args) is None or a whitespace/empty string
     """
     is_not_none(objname, obj)
     for arg in args:

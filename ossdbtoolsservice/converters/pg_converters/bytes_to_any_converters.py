@@ -84,22 +84,26 @@ def convert_bytes_to_dict(value) -> dict:
 
 
 def convert_bytes_to_numericrange_format_str(value) -> str:
-    """Since we are not using the NumericRange object, so just convert bytes to str for UI consuming"""
+    """Since we are not using the NumericRange object, 
+    so just convert bytes to str for UI consuming"""
     return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_datetimerange_format_str(value) -> str:
-    """Since we are not using the DateTimeRange object, so just convert bytes to str for UI consuming"""
+    """Since we are not using the DateTimeRange object, 
+    so just convert bytes to str for UI consuming"""
     return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_datetimetzrange_format_str(value) -> str:
-    """Since we are not using the DateTimeTZRange object, so just convert bytes to str for UI consuming"""
+    """Since we are not using the DateTimeTZRange object, 
+    so just convert bytes to str for UI consuming"""
     return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_daterange_format_str(value) -> str:
-    """Since we are not using the DateRange object, so just convert bytes to str for UI consuming"""
+    """Since we are not using the DateRange object, 
+    so just convert bytes to str for UI consuming"""
     return convert_bytes_to_str(value)
 
 

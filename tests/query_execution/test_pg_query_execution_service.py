@@ -201,7 +201,8 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(result, query)
 
     def test_get_query_selection_none(self) -> None:
-        """Test getting a query for a URI from a selection when the selection is None (for the whole file)"""
+        """Test getting a query for a URI from a selection when the selection is None
+        (for the whole file)"""
         # Set up the query execution service with a mock workspace service
         query_execution_service = QueryExecutionService()
         query = "select version()"
@@ -245,7 +246,8 @@ class TestQueryService(unittest.TestCase):
 
     def test_query_request_error_handling(self) -> None:
         """Test handling a query request that fails when the query is executed"""
-        # Set up the query execution service and a connection service with a mock connection that
+        # Set up the query execution service and a
+        # connection service with a mock connection that
         # has a cursor that always throws an error when executing
         self.cursor.execute = mock.Mock(side_effect=psycopg.DatabaseError())
         params = get_execute_string_params()
@@ -256,7 +258,8 @@ class TestQueryService(unittest.TestCase):
         )
         self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
-        # Then the transaction gets rolled back, the cursor does not get manually closed, and an error notification gets sent
+        # Then the transaction gets rolled back, the cursor does not get manually closed,
+        # and an error notification gets sent
         self.cursor.close.assert_not_called()
         self.request_context.send_notification.assert_called()
 
@@ -265,7 +268,8 @@ class TestQueryService(unittest.TestCase):
         call_params_list = [
             call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION
         ]
-        # Assert that at least one message notification was sent and that it was an error message
+        # Assert that at least one message notification was sent
+        # and that it was an error message
         self.assertGreater(len(call_params_list), 0)
         for call_params in call_params_list:
             self.assertTrue(call_params.message.is_error)
@@ -462,7 +466,8 @@ class TestQueryService(unittest.TestCase):
             summary, owner_uri
         )
 
-        # Then the parameters should have an owner uri and result set summary that matches the ones provided
+        # Then the parameters should have an owner uri and result set
+        # summary that matches the ones provided
         self.assertEqual(result.owner_uri, owner_uri)
         self.assertEqual(result.result_set_summary, summary.result_set_summaries[0])
 
@@ -649,7 +654,8 @@ class TestQueryService(unittest.TestCase):
             "ossdbtoolsservice.query.data_storage.storage_data_reader.get_columns_info",
             new=mock.Mock(return_value=columns_info),
         ):
-            # If we attempt to execute a batch where we get an execute request in the middle of attempted execution
+            # If we attempt to execute a batch where we get an
+            # execute request in the middle of attempted execution
             self.query_execution_service._handle_execute_query_request(
                 self.request_context, execute_params
             )
@@ -658,7 +664,8 @@ class TestQueryService(unittest.TestCase):
 
         query = self.query_execution_service.query_results["test_uri"]
 
-        # Then we must have ran execute for a batch, and executed 'SELECTED pg_cancel_backend(pid)
+        # Then we must have ran execute for a batch,
+        # and executed 'SELECTED pg_cancel_backend(pid)
         # to cancel the query
         self.cursor.execute.assert_called_once()
         self.cursor_cancel.execute.assert_called_once()
@@ -674,7 +681,8 @@ class TestQueryService(unittest.TestCase):
             PG_CANCELLATION_QUERY.format(0),
         )
 
-        # The batch is also marked as canceled and executed. There should have been no commits and
+        # The batch is also marked as canceled and executed.
+        # There should have been no commits and
         # we should have rolled back. During execute_query call,
         self.assertTrue(query.is_canceled)
         self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
@@ -700,14 +708,18 @@ class TestQueryService(unittest.TestCase):
                 self.request_context, cancel_params
             )
 
-        # Set the send_response method to have a side effect of cancelling the query, so that when we send the empty
-        # response for starting the query, the query gets canceled. The side effect also resets send_response to its
-        # normal behavior, so that the response to the cancel query request does not try to cancel the query again.
+        # Set the send_response method to have a side effect of
+        # cancelling the query, so that when we send the empty
+        # response for starting the query, the query gets canceled.
+        # The side effect also resets send_response to its
+        # normal behavior, so that the response to the cancel query
+        # request does not try to cancel the query again.
         self.request_context.send_response = mock.Mock(
             side_effect=cancel_before_execute_side_effect
         )
 
-        # If we start the execute query request handler with a cancel query request before the query execution
+        # If we start the execute query request handler with a cancel query
+        # request before the query execution
         self.query_execution_service._handle_execute_query_request(
             self.request_context, execute_params
         )
@@ -730,7 +742,8 @@ class TestQueryService(unittest.TestCase):
             PG_CANCELLATION_QUERY.format(0),
         )
 
-        # The batch should be marked as canceled, the state should be executed, and we should have rolled back
+        # The batch should be marked as canceled, the state should be executed,
+        # and we should have rolled back
         self.assertTrue(query.is_canceled)
         self.assertEqual(query.execution_state, ExecutionState.EXECUTED)
 
@@ -910,7 +923,8 @@ class TestQueryService(unittest.TestCase):
         )
         self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
-        # Grab all notification calls and make sure that we call the notifications that we're interested in
+        # Grab all notification calls and make sure that we call the
+        # notifications that we're interested in
         # exactly once
         notification_calls = self.request_context.send_notification.mock_calls
         call_methods_list = [call[1][0] for call in notification_calls]
@@ -964,7 +978,8 @@ class TestQueryService(unittest.TestCase):
         )
         self.query_execution_service.owner_to_thread_map[params.owner_uri].join()
 
-        # Grab all notification calls and make sure that we call the notifications that we're interested in
+        # Grab all notification calls and make sure that we call the
+        # notifications that we're interested in
         # exactly once
         notification_calls = self.request_context.send_notification.mock_calls
         call_methods_list = [call[1][0] for call in notification_calls]
@@ -1024,7 +1039,8 @@ class TestQueryService(unittest.TestCase):
         params = QueryDisposeParams()
         params.owner_uri = uri
 
-        # If we attempt to dispose of an existing owner uri's query results when the result is populated
+        # If we attempt to dispose of an existing owner uri's query results
+        # when the result is populated
         self.query_execution_service._handle_dispose_request(self.request_context, params)
 
         # Then the uri key should no longer be in the results, and we sent an empty response
@@ -1095,10 +1111,11 @@ class TestQueryService(unittest.TestCase):
             PG_CANCELLATION_QUERY.format(0),
         )
 
-    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_first_batch(
+    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_1st_batch(
         self,
     ) -> None:
-        """Multiple batch in SAME line test with cursor on 1st batch, returns the query for first batch"""
+        """Multiple batch in SAME line test with cursor on 1st batch,
+        returns the query for first batch"""
         request = ExecuteDocumentStatementParams()
         request.line = 0
         request.column = 2
@@ -1110,10 +1127,11 @@ class TestQueryService(unittest.TestCase):
             request, 0, 0, 0, 39, query
         )
 
-    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_second_batch(
+    def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_2nd_batch(
         self,
     ) -> None:
-        """Multiple batch in SAME line test with cursor on 2nd batch, returns the query for second batch"""
+        """Multiple batch in SAME line test with cursor on 2nd batch, returns the
+        query for second batch"""
         request = ExecuteDocumentStatementParams()
         request.line = 0
         request.column = 41
@@ -1128,7 +1146,8 @@ class TestQueryService(unittest.TestCase):
     def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_first_batch(
         self,
     ) -> None:
-        """Multiple batch in Different lines test with cursor on 1st batch, returns the query for first batch"""
+        """Multiple batch in Different lines test with cursor on 1st batch, returns the query
+        for first batch"""
         request = ExecuteDocumentStatementParams()
         request.line = 0
         request.column = 2
@@ -1141,10 +1160,11 @@ class TestQueryService(unittest.TestCase):
             request, 0, 0, 0, 39, query
         )
 
-    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_second_batch(
+    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_2nd_batch(
         self,
     ) -> None:
-        """Multiple batch in Different lines test with cursor on 2nd batch, returns the query for second batch"""
+        """Multiple batch in Different lines test with cursor on 2nd batch, returns the query
+        for second batch"""
         request = ExecuteDocumentStatementParams()
         request.line = 1
         request.column = 2
@@ -1157,10 +1177,11 @@ class TestQueryService(unittest.TestCase):
             request, 0, 40, 1, 36, query
         )
 
-    def test_get_query_text_from_execute_params_for_doc_statement_two_line_cur_in_first_line_second_batch(
+    def test_get_query_text_from_exec_params_for_doc_stmt_2_line_cur_in_first_line_2nd_batch(
         self,
     ) -> None:
-        """Multiple batch in Different lines test with cursor on 2nd batch in first row, returns the query for second batch"""
+        """Multiple batch in Different lines test with cursor on 2nd batch in first row,
+        returns the query for second batch"""
         request = ExecuteDocumentStatementParams()
         request.line = 0
         request.column = 42
@@ -1226,8 +1247,10 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual("EXPLAIN Test Query", query._batches[0].batch_text)
 
     def test_execution_error_rolls_back_transaction(self) -> None:
-        """Test that a query execution error in the middle of a transaction causes that transaction to roll back"""
-        # Set up the cursor to throw an error when executing and the connection to indicate that a transaction is open
+        """Test that a query execution error in the middle of a transaction
+        causes that transaction to roll back"""
+        # Set up the cursor to throw an error when executing and the connection to
+        # indicate that a transaction is open
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
         self.mock_psycopg_connection.TransactionStatus = psycopg.pq.TransactionStatus.INERROR
         query_params = get_execute_string_params()
@@ -1423,7 +1446,8 @@ class TestQueryService(unittest.TestCase):
                 self.request_context, query_params
             )
 
-        # Then a successful response should have been sent, along with the expected notifications
+        # Then a successful response should have been sent,
+        # along with the expected notifications
         self.assertEqual(self.request_context.last_response_params, {})
         notifications = {
             call[1][0]: call[1][1]

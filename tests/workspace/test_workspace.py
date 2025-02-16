@@ -29,7 +29,8 @@ class TestWorkspaceService(unittest.TestCase):
         for method in test_methods:
             for path in test_paths:
                 with self.assertRaises(ValueError):
-                    # If: The workspace is asked to perform a file operation with a missing file path
+                    # If: The workspace is asked to perform a file operation
+                    # with a missing file path
                     # Then: It should raise an exception
                     method(path)
 

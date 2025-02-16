@@ -42,7 +42,8 @@ class ObjectExplorerJSONRPCTests(unittest.TestCase):
 
         expected_session_id = (
             f"objectexplorer://{quote(connection_details['user'])}"
-            + f"@{quote(connection_details['host'])}:{connection_details['port']}:{quote(connection_details['dbname'])}/"
+            f"@{quote(connection_details['host'])}:"
+            f"{connection_details['port']}:{quote(connection_details['dbname'])}/"
         )
 
         def session_created_verifier(notification):

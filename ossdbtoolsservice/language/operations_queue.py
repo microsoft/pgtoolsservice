@@ -97,13 +97,15 @@ class OperationsQueue:
 
     def stop(self):
         self.stop_requested = True
-        # Enqueue None to optimistically unblock output thread so it can check for the cancellation flag
+        # Enqueue None to optimistically unblock output thread
+        # so it can check for the cancellation flag
         self.queue.put(None)
         self._log_info("Language Service Operations Queue stopping...")
 
     def add_operation(self, operation: QueuedOperation):
         """
-        Adds an operation to the correct queue. Raises KeyError if no queue exists for this connection
+        Adds an operation to the correct queue.
+        Raises KeyError if no queue exists for this connection
         """
         if not operation:
             # Must throw in this case, as a None operation is used to close the
@@ -161,7 +163,8 @@ class OperationsQueue:
                     self._connection_service.disconnect(key_uri, ConnectionType.INTELLISENSE)
                 except Exception as ex:
                     self._log_exception(
-                        f"error during disconnect, ignoring as assume already disconnected: {ex}"
+                        "error during disconnect, ignoring as assume already disconnected: "
+                        f"{ex}"
                     )
 
     # IMPLEMENTATION DETAILS ###############################################
@@ -170,7 +173,11 @@ class OperationsQueue:
         """
         Creates a key uniquely identifying a ConnectionInfo object for use in caching
         """
-        return f"{conn_info.details.server_name}|{conn_info.details.database_name}|{conn_info.details.user_name}"
+        return (
+            f"{conn_info.details.server_name}|"
+            f"{conn_info.details.database_name}|"
+            f"{conn_info.details.user_name}"
+        )
 
     def _create_connection(
         self, connection_key: str, conn_info: ConnectionInfo

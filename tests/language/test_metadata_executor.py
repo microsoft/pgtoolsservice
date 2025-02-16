@@ -77,7 +77,8 @@ class TestMetadataExecutor(unittest.TestCase):
         self.mock_server = mock_server
         self.executor: MetadataExecutor = MetadataExecutor(mock_server)
 
-    # TODO add integration tests from PGCLI once Matt has the "create new DB and test against it" functionality
+    # TODO add integration tests from PGCLI once Matt has the
+    # "create new DB and test against it" functionality
     def test_search_path(self):
         self.assertListEqual(self.executor.search_path(), [MYSCHEMA])
 

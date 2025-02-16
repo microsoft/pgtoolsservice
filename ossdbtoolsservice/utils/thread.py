@@ -10,7 +10,8 @@ from typing import Callable  # noqa
 
 
 def run_as_thread(function: Callable, *args) -> threading.Thread:
-    """Runs a function in a thread, passing in the specified args as its arguments and returns the thread"""
+    """Runs a function in a thread, passing in the specified args 
+    as its arguments and returns the thread"""
     task = threading.Thread(target=function, args=args)
     task.daemon = False
     task.start()

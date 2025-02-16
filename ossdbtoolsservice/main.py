@@ -83,7 +83,8 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
         "ENABLE_DYNAMIC_CORS", defaults["enable_dynamic_cors"]
     )
 
-    # Parse command-line arguments (takes precidence over config file and environment variables)
+    # Parse command-line arguments
+    # (takes precidence over config file and environment variables)
     parser = argparse.ArgumentParser(description="Start the Tools Service")
     parser.add_argument(
         "--generate-markdown",
@@ -118,13 +119,15 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
         "--disable-keep-alive",
         action="store_true",
         default=str_to_bool(disable_keep_alive_env),
-        help="Disable keep-alive for the web server. Should not be used in production only for debugging",
+        help="Disable keep-alive for the web server. "
+        "Should not be used in production only for debugging",
     )
     parser.add_argument(
         "--enable-dynamic-cors",
         action="store_true",
         default=str_to_bool(enable_dynamic_cors_env),
-        help="Enable dynamic setting of CORS, allow any origin. Should not be used in production only for debugging",
+        help="Enable dynamic setting of CORS, allow any origin. "
+        "Should not be used in production only for debugging",
     )
     parser.add_argument(
         "--enable-remote-debugging",
@@ -138,7 +141,8 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
         type=int,
         nargs="?",
         const=3000,
-        help="Enable remote debugging and wait for the debugger to attach on the specified port (default: 3000)",
+        help="Enable remote debugging and wait for the debugger "
+        "to attach on the specified port (default: 3000)",
     )
     parser.add_argument(
         "--log-dir", type=str, default=log_dir_env, help="Directory to store logs"
@@ -147,7 +151,8 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
         "--console-logging",
         action="store_true",
         default=str_to_bool(console_logging_env),
-        help="Enable logging to the console (can only be enabled if --enable-web-server is true)",
+        help="Enable logging to the console "
+        "(can only be enabled if --enable-web-server is true)",
     )
     parser.add_argument("--provider", type=str, help="Provider name")
 
@@ -197,7 +202,8 @@ def main(
             print("Logs will be stored in ./debugpy_logs")
             os.environ["DEBUGPY_LOG_DIR"] = "./debugpy_logs"  # Path to store logs
             os.environ["GEVENT_SUPPORT"] = "True"  # Path to store logs
-            # Dynamically set the Python interpreter for debugpy fron an environment variable or default to the current interpreter.
+            # Dynamically set the Python interpreter for debugpy 
+            # from an environment variable or default to the current interpreter.
             python_path = os.getenv("PYTHON", default=sys.executable)
             print("Python path: " + python_path)
             debugpy.configure(python=python_path)

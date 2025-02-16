@@ -62,7 +62,8 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
                     display_value=None, is_null=True, raw_object=None, row_id=row_id
                 )
             else:
-                # read the length of data, then update the offset by plus 4, since the int holds 4 bytes
+                # read the length of data, then update the offset by plus 4,
+                # since the int holds 4 bytes
                 raw_bytes_length_to_read = self._read_bytes_from_file(
                     self._file_stream, current_file_offset, 4
                 )

@@ -28,26 +28,26 @@ class TestFileStorageResultSet(unittest.TestCase):
         self._result_set = None
 
     def execute_with_patch(self, test: Callable):
-        with mock.patch(
-            "ossdbtoolsservice.query.data_storage.service_buffer_file_stream.create_file",
-            new=mock.Mock(return_value=self._file),
-        ):
-            with mock.patch(
+        with (
+            mock.patch(
+                "ossdbtoolsservice.query.data_storage.service_buffer_file_stream.create_file",
+                new=mock.Mock(return_value=self._file),
+            ),
+            mock.patch(
                 "ossdbtoolsservice.query.data_storage.service_buffer_file_stream.get_writer",
                 new=mock.Mock(return_value=self._writer),
-            ):
-                with mock.patch(
-                    "ossdbtoolsservice.query.data_storage.service_buffer_file_stream.get_reader",
-                    new=mock.Mock(return_value=self._reader),
-                ):
-                    with mock.patch(
-                        "ossdbtoolsservice.query.data_storage.storage_data_reader.get_columns_info",
-                        new=mock.Mock(return_value=[]),
-                    ):
-                        self._result_set = FileStorageResultSet(
-                            self._id, self._batch_id, self._events
-                        )
-                        test()
+            ),
+            mock.patch(
+                "ossdbtoolsservice.query.data_storage.service_buffer_file_stream.get_reader",
+                new=mock.Mock(return_value=self._reader),
+            ),
+            mock.patch(
+                "ossdbtoolsservice.query.data_storage.storage_data_reader.get_columns_info",
+                new=mock.Mock(return_value=[]),
+            ),
+        ):
+            self._result_set = FileStorageResultSet(self._id, self._batch_id, self._events)
+            test()
 
     def test_construction(self):
         def validate():

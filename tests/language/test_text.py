@@ -39,7 +39,8 @@ class TestTextUtilities(unittest.TestCase):
             self.assertEqual(
                 pos,
                 expected_col,
-                f'For start {start} with value "{line[start]}" expected {expected_col} actual {pos}',
+                f'For start {start} with value "{line[start]}" '
+                f"expected {expected_col} actual {pos}",
             )
 
     def test_prev_delim_not_found(self):
@@ -53,7 +54,8 @@ class TestTextUtilities(unittest.TestCase):
             )
 
     def test_prev_delim_found(self):
-        """Should return 0 if on first word or the first index after the delimiter for all others"""
+        """Should return 0 if on first word or the first index
+        after the delimiter for all others"""
         line = "01 345\t789\na/cd"
         start_col_to_delim: dict = {
             0: 0,
@@ -73,7 +75,8 @@ class TestTextUtilities(unittest.TestCase):
             self.assertEqual(
                 pos,
                 expected_col,
-                f'For start {start} with value "{line[start]}" expected {expected_col} actual {pos}',
+                f'For start {start} with value "{line[start]}" '
+                f"expected {expected_col} actual {pos}",
             )
 
     def test_get_token_range(self):

@@ -6,7 +6,8 @@
 # Import order to avoid circular import
 # ruff:noqa: I001
 
-# NOTE: Server must be the first import, otherwise circular dependencies block proper importing
+# NOTE: Server must be the first import, otherwise circular
+# dependencies block proper importing
 from pgsmo.objects.server.server import Server
 
 from pgsmo.objects.collation.collation import Collation

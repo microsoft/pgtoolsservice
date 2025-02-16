@@ -52,7 +52,10 @@ class JSONRPCWriter:
 
             if self._logger is not None:
                 self._logger.info(
-                    f"{message.message_type.name} message sent id={message.message_id} method={message.message_method} {json_content}"
+                    f"{message.message_type.name} message sent "
+                    f"id={message.message_id} "
+                    f"method={message.message_method} "
+                    f"{json_content}"
                 )
 
             # Uncomment for verbose logging
@@ -63,5 +66,8 @@ class JSONRPCWriter:
             if self._logger is not None:
                 self._logger.exception(
                     "Exception raised when sending message: "
-                    f"{message.message_type} {message.message_id} {message.message_method} {e}"
+                    f"{message.message_type} "
+                    f"{message.message_id} "
+                    f"{message.message_method} "
+                    f"{e}"
                 )

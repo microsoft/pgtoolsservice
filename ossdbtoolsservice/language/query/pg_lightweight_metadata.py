@@ -47,8 +47,8 @@ class PGLightweightMetadata:
             self._logger.debug(message)
 
     """
-    Performs lightweight metadata queries to avoid doing full object queries for properties that are
-    just needed for intellisense
+    Performs lightweight metadata queries to avoid doing full object queries 
+    for properties that are just needed for intellisense
     """
 
     def _relations(self, kinds=("p", "r", "v", "m")):
@@ -184,7 +184,10 @@ class PGLightweightMetadata:
                         select
                             array_agg(attname ORDER BY i)
                         from
-                            (select unnest(confkey) as attnum, generate_subscripts(confkey, 1) as i) x
+                            (select 
+                                unnest(confkey) as attnum, 
+                                generate_subscripts(confkey, 1) as i
+                            ) x
                             JOIN pg_catalog.pg_attribute c USING(attnum)
                             WHERE c.attrelid = fk.confrelid
                         )) AS parentcolumn,
@@ -194,7 +197,10 @@ class PGLightweightMetadata:
                         select
                             array_agg(attname ORDER BY i)
                         from
-                            (select unnest(conkey) as attnum, generate_subscripts(conkey, 1) as i) x
+                            (select 
+                                unnest(conkey) as attnum, 
+                                generate_subscripts(conkey, 1) as i
+                            ) x
                             JOIN pg_catalog.pg_attribute c USING(attnum)
                             WHERE c.attrelid = fk.conrelid
                         )) AS childcolumn
@@ -325,7 +331,10 @@ class PGLightweightMetadata:
                       pg_catalog.format_type(t.oid, NULL) type_name
                     FROM pg_catalog.pg_type t
                          LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-                    WHERE (t.typrelid = 0 OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid))
+                    WHERE (t.typrelid = 0 OR (
+                        SELECT c.relkind = 'c' 
+                        FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid
+                    ))
                       AND t.typname !~ '^_'
                           AND n.nspname <> 'pg_catalog'
                           AND n.nspname <> 'information_schema'

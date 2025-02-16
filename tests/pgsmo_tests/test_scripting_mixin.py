@@ -64,10 +64,12 @@ class ScriptableTestBase(metaclass=ABCMeta):
         template_render_path = "smo.common.scripting_mixins.templating.render_template"
         template_render_mock = mock.MagicMock(return_value=mock_output)
 
-        with mock.patch(template_path_path, template_path_mock, create=True):
-            with mock.patch(template_render_path, template_render_mock, create=True):
-                # If: I get a script
-                result = self.script_lambda(mock_obj)
+        with (
+            mock.patch(template_path_path, template_path_mock, create=True),
+            mock.patch(template_render_path, template_render_mock, create=True),
+        ):
+            # If: I get a script
+            result = self.script_lambda(mock_obj)
 
         # Then:
         # ... The template mocks should have been called

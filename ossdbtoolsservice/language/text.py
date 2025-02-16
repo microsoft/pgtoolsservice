@@ -5,7 +5,6 @@
 
 """Utility functions for operating with text"""
 
-
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.workspace.contracts.common import Position, Range
 

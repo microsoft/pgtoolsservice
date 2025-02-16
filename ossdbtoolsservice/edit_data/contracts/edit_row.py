@@ -18,8 +18,8 @@ class EditRowState(Enum):
 
 class EditRow:
     """
-    A way to return a row in a result set that is being edited. It contains state about whether
-    or not the row is dirty
+    A way to return a row in a result set that is being edited. 
+    It contains state about whether or not the row is dirty
     """
 
     @property

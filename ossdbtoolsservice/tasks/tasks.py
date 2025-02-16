@@ -86,7 +86,8 @@ class Task:
         self._thread.start()
 
     def cancel(self) -> bool:
-        """Cancel the task if it is running and return true, or return false if the task is not running"""
+        """Cancel the task if it is running and return true, 
+        or return false if the task is not running"""
         if self.status is not TaskStatus.IN_PROGRESS:
             return False
         if self.on_cancel:

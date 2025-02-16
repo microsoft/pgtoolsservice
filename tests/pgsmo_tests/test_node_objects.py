@@ -272,7 +272,8 @@ class TestNodeLazyPropertyCollection(unittest.TestCase):
         output = [item for item in prop_collection]
         expected_output = [item for item in mock_results]
 
-        # Then: The dictionary I rebuilt from the iteration should match the original dictionary
+        # Then: The dictionary I rebuilt from the iteration
+        # should match the original dictionary
         self.assertListEqual(output, expected_output)
 
     def test_len(self):
@@ -358,11 +359,13 @@ class TestNodeObject(unittest.TestCase):
         patch_render_template = "smo.utils.templating.render_template"
         patch_template_path = "smo.utils.templating.get_template_path"
         patch_from_node_query = "tests.pgsmo_tests.utils.MockNodeObject._from_node_query"
-        with mock.patch(patch_render_template, mock_render, create=True):
-            with mock.patch(patch_template_path, mock_template_path, create=True):
-                with mock.patch(patch_from_node_query, mock_from_node, create=True):
-                    # If: I ask for a collection of nodes *without a parent object*
-                    nodes = utils.MockNodeObject.get_nodes_for_parent(mock_server, None)
+        with (
+            mock.patch(patch_render_template, mock_render, create=True),
+            mock.patch(patch_template_path, mock_template_path, create=True),
+            mock.patch(patch_from_node_query, mock_from_node, create=True),
+        ):
+            # If: I ask for a collection of nodes *without a parent object*
+            nodes = utils.MockNodeObject.get_nodes_for_parent(mock_server, None)
 
         # Then:
         # ... The template path and template renderer should have been called once
@@ -576,7 +579,8 @@ class TestNodeObject(unittest.TestCase):
         # NOTE: Server URN Base is tested in the server class unit tests
         self.assertEqual(f"//{parsed_url.netloc}/", server.urn_base)
 
-        # ... The path should have multiple folders under it (list comprehension removes empty strings)
+        # ... The path should have multiple folders under it
+        # (list comprehension removes empty strings)
         split_path = [x for x in parsed_url.path.split("/") if x]
         self.assertEqual(len(split_path), 2)
 

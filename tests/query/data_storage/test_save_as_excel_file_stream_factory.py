@@ -34,10 +34,12 @@ class TestSaveAsExcelFileStreamFactory(unittest.TestCase):
         file_open_mock = mock.MagicMock()
         xls_writter_mock = mock.MagicMock()
 
-        with mock.patch("io.open", new=file_open_mock):
-            with mock.patch("xlsxwriter.Workbook", new=xls_writter_mock):
-                writer = self.factory.get_writer(self.request.file_path)
+        with (
+            mock.patch("io.open", new=file_open_mock),
+            mock.patch("xlsxwriter.Workbook", new=xls_writter_mock),
+        ):
+            writer = self.factory.get_writer(self.request.file_path)
 
-                self.assertIsInstance(writer, SaveAsExcelWriter)
+            self.assertIsInstance(writer, SaveAsExcelWriter)
 
-                file_open_mock.assert_called_once_with(self.request.file_path, "w")
+            file_open_mock.assert_called_once_with(self.request.file_path, "w")

@@ -15,7 +15,8 @@ def get_columns_info(cursor) -> list[DbColumn]:
         raise ValueError("Cursor description is not available")
 
     if cursor.connection is None:
-        # if no connection is provided, just return basic column info constructed from the cursor description
+        # if no connection is provided, just return basic column info 
+        # constructed from the cursor description
         return [
             DbColumn.from_cursor_description(index, column)
             for index, column in enumerate(cursor.description)

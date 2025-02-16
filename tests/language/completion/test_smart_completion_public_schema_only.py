@@ -556,7 +556,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
             completers(),
             [
                 "SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id = ",
-                "SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id =  JOIN orders o2 ON",
+                "SELECT u.name, o.id FROM users u JOIN orders o ON o.user_id =  "
+                "JOIN orders o2 ON",
             ],
         )
     )
@@ -571,7 +572,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
             completers(casing=False),
             [
                 "SELECT users.name, orders.id FROM users JOIN orders ON ",
-                "SELECT users.name, orders.id FROM users JOIN orders ON JOIN orders orders2 ON",
+                "SELECT users.name, orders.id FROM users JOIN orders ON "
+                "JOIN orders orders2 ON",
             ],
         )
     )
@@ -590,7 +592,8 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         itertools.product(
             completers(casing=False),
             [
-                "SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = JOIN orders orders2 ON",
+                "SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = "
+                "JOIN orders orders2 ON",
                 "SELECT users.name, orders.id FROM users JOIN orders ON orders.user_id = ",
             ],
         )
@@ -621,10 +624,14 @@ class TestSmartCompletionPublicSchema(unittest.TestCase):
         itertools.product(
             completers(casing=False),
             [
-                "SELECT * FROM users u1 JOIN users u2 USING (email) JOIN user_emails ue USING()",
-                "SELECT * FROM users u1 JOIN users u2 USING(email) JOIN user_emails ue USING ()",
-                "SELECT * FROM users u1 JOIN user_emails ue USING () JOIN users u2 ue USING(first_name, last_name)",
-                "SELECT * FROM users u1 JOIN user_emails ue USING() JOIN users u2 ue USING (first_name, last_name)",
+                "SELECT * FROM users u1 JOIN users u2 USING (email) "
+                "JOIN user_emails ue USING()",
+                "SELECT * FROM users u1 JOIN users u2 USING(email) "
+                "JOIN user_emails ue USING ()",
+                "SELECT * FROM users u1 JOIN user_emails ue USING () "
+                "JOIN users u2 ue USING(first_name, last_name)",
+                "SELECT * FROM users u1 JOIN user_emails ue USING() "
+                "JOIN users u2 ue USING (first_name, last_name)",
             ],
         )
     )

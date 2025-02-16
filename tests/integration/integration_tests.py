@@ -17,11 +17,14 @@ def integration_test(min_version=None, max_version=None):
     """
     Decorator used to indicate that a test is an integration test, giving it a connection
 
-    :param min_version: The minimum server version, as an integer, for running the test (e.g. 90600 for 9.6.0)
-    :param max_version: The maximum server version, as an integer, for running the test (e.g. 90600 for 9.6.0)
+    :param min_version: The minimum server version, as an integer,
+        for running the test (e.g. 90600 for 9.6.0)
+    :param max_version: The maximum server version, as an integer,
+        for running the test (e.g. 90600 for 9.6.0)
     """
 
-    # If the decorator is called without parentheses, the first argument will actually be the test function
+    # If the decorator is called without parentheses,
+    # the first argument will actually be the test function
     test_function = None
     if callable(min_version):
         test_function = min_version
@@ -50,8 +53,10 @@ def integration_test(min_version=None, max_version=None):
 
 def get_connection_details() -> dict:
     """
-    Get connection details that can be used in integration tests. These details are formatted as a
-    dictionary of key-value pairs that can be passed directly to psycopg.connect as parameters.
+    Get connection details that can be used in integration tests.
+    These details are formatted as a
+    dictionary of key-value pairs that can be passed
+    directly to psycopg.connect as parameters.
     """
     return _ConnectionManager.get_test_connection_details()
 
@@ -80,7 +85,8 @@ class _ConnectionManager:
     def get_test_connection_details(cls):
         if not cls.current_test_is_integration_test or cls._in_progress_test_index is None:
             raise RuntimeError(
-                "get_connection_details can only be called from tests with an integration_test decorator"
+                "get_connection_details can only be called "
+                "from tests with an integration_test decorator"
             )
         # Return a copy of the test connection details dictionary
         return dict(cls._current_test_connection_detail_list[cls._in_progress_test_index])
@@ -118,7 +124,8 @@ class _ConnectionManager:
                 host = details["host"]
                 server_version = cls._maintenance_connections[index].info.server_version
                 raise RuntimeError(
-                    f"Test failed while executing on server {index + 1} (host: {host}, version: {server_version})"
+                    f"Test failed while executing on server {index + 1} "
+                    f"(host: {host}, version: {server_version})"
                 ) from e
 
     @classmethod

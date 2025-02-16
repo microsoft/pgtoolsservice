@@ -2,7 +2,6 @@
 
 import ast
 import inspect
-import io
 import logging
 import os
 import sys
@@ -108,8 +107,8 @@ def introspect_init_attributes_with_bases(cls):
 def print_docs():
     # Create an RPC server with the request handlers added
     logger = logging.getLogger("ossdbtoolsservice")
-    stdin = io.open(sys.stdin.fileno(), "rb", buffering=0, closefd=False)
-    std_out_wrapped = io.open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)
+    stdin = open(sys.stdin.fileno(), "rb", buffering=0, closefd=False)
+    std_out_wrapped = open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)
 
     server = _create_server(stdin, std_out_wrapped, logger, "PGSQL")
 
@@ -118,7 +117,7 @@ def print_docs():
         print(f"### {method}")
         try:
             introspect_init_attributes_with_bases(handler.class_)
-        except Exception as e:
+        except Exception:
             print("- None")
         print("---", "\n")
 

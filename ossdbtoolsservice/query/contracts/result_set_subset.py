@@ -59,8 +59,10 @@ class ResultSetSubset:
         """param results: a list of rows for a query result, where each row consists of tuples
         :param results: mapping of owner uris to their list of batches Dict[str, List[Batch]]
         :param batch_ordinal: ordinal of the batch within 'results'
-        :param result_set_ordinal: ordinal of the result set within the batch's result_set field
-        :param start_index: the starting index that we will index into a list of rows with, inclusive
+        :param result_set_ordinal: ordinal of the result set within 
+            the batch's result_set field
+        :param start_index: the starting index that we will index 
+            into a list of rows with, inclusive
         :param end_index: the ending index we will index into a list of rows with, exclusive
         """
 

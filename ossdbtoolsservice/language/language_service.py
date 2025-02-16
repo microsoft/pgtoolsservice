@@ -75,11 +75,14 @@ DISPLAY_META_MAP: dict[str, CompletionItemKind] = {
     "columns": CompletionItemKind.Field,
     "database": CompletionItemKind.Method,
     "datatype": CompletionItemKind.Unit,  # TODO review this
-    "fk join": CompletionItemKind.Reference,  # TODO review this. As it's an FK join, that's like a reference?
+    # TODO review this. As it's an FK join, that's like a reference?
+    "fk join": CompletionItemKind.Reference,
     "function": CompletionItemKind.Function,
-    "join": CompletionItemKind.Snippet,  # TODO review this. Join suggest is kind of like a snippet?
+    # TODO review this. Join suggest is kind of like a snippet?
+    "join": CompletionItemKind.Snippet,
     "keyword": CompletionItemKind.Keyword,
-    "name join": CompletionItemKind.Snippet,  # TODO review this. Join suggest is kind of like a snippet?
+    # TODO review this. Join suggest is kind of like a snippet?
+    "name join": CompletionItemKind.Snippet,
     "schema": CompletionItemKind.Module,
     "table": CompletionItemKind.File,
     "table alias": CompletionItemKind.File,
@@ -105,7 +108,8 @@ class LanguageService(Service):
 
     def register(self, service_provider: ServiceProvider) -> None:
         """
-        Called by the ServiceProvider to allow init and registration of service handler methods
+        Called by the ServiceProvider to allow init and
+        registration of service handler methods
         """
         self._service_provider = service_provider
         self._logger = service_provider.logger
@@ -257,23 +261,24 @@ class LanguageService(Service):
     def handle_completion_resolve_request(
         self, request_context: RequestContext, params: CompletionItem
     ) -> None:
-        """Fill in additional details for a CompletionItem. Returns the same CompletionItem over the wire"""
+        """Fill in additional details for a CompletionItem.
+        Returns the same CompletionItem over the wire"""
         request_context.send_response(params)
 
     def handle_flavor_change(
         self, context: NotificationContext, params: LanguageFlavorChangeParams
     ) -> None:
         """
-        Processes a language flavor change notification, adding non-PGSQL files to a tracking set
+        Processes a language flavor change notification,
+        adding non-PGSQL files to a tracking set
         so they can be excluded from intellisense processing
         """
-        if params is not None and params.uri is not None:
-            if params.language.lower() == "sql":
-                # provider.flavor can be PGSQL
-                if params.flavor == self._service_provider.provider:
-                    self._valid_uri.add(params.uri)
-                else:
-                    self._valid_uri.discard(params.uri)
+        if params is not None and params.uri is not None and params.language.lower() == "sql":
+            # provider.flavor can be PGSQL
+            if params.flavor == self._service_provider.provider:
+                self._valid_uri.add(params.uri)
+            else:
+                self._valid_uri.discard(params.uri)
 
     def handle_intellisense_rebuild_notification(
         self, context: NotificationContext, params: IntelliSenseReadyParams
@@ -286,7 +291,8 @@ class LanguageService(Service):
         self, request_context: RequestContext, params: DocumentFormattingParams
     ) -> None:
         """
-        Processes a formatting request by sending the entire documents text to sqlparse and returning a formatted document as a
+        Processes a formatting request by sending the entire documents text to sqlparse 
+        and returning a formatted document as a
         single TextEdit
         """
         response: list[TextEdit] = []
@@ -316,8 +322,8 @@ class LanguageService(Service):
         self, request_context: RequestContext, params: DocumentRangeFormattingParams
     ) -> None:
         """
-        Processes a formatting request by sending the entire documents text to sqlparse and returning a formatted document as a
-        single TextEdit
+        Processes a formatting request by sending the entire documents text to sqlparse 
+        and returning a formatted document as a single TextEdit
         """
         # Validate inputs and set up response
         response: list[TextEdit] = []
@@ -363,7 +369,8 @@ class LanguageService(Service):
     @property
     def should_lowercase(self) -> bool:
         """Looks up enable_lowercase_suggestions from the workspace config"""
-        return self._workspace_service.configuration.sql.intellisense.enable_lowercase_suggestions
+        config = self._workspace_service.configuration.sql.intellisense
+        return config.enable_lowercase_suggestions
 
     # METHODS ##############################################################
     def _handle_shutdown(self) -> None:
@@ -382,7 +389,7 @@ class LanguageService(Service):
 
     def is_valid_uri(self, uri: str) -> bool:
         """
-        Checks if this URI can be treated as a candidate for processing or should be skipped ()
+        Checks if this URI can be treated as a candidate for processing or should be skipped 
         """
         return uri in self._valid_uri
 
@@ -394,11 +401,13 @@ class LanguageService(Service):
             conn_info.owner_uri, create_if_not_exists=True
         )
         if scriptparseinfo is not None:
-            # This is a connection for an actual script in the workspace. Build the intellisense cache for it
+            # This is a connection for an actual script in the workspace. 
+            # Build the intellisense cache for it
             connection_context: ConnectionContext = (
                 self.operations_queue.add_connection_context(conn_info, overwrite)
             )
-            # Wait until the intellisense is completed before sending back the message and caching the key
+            # Wait until the intellisense is completed before 
+            # sending back the message and caching the key
             connection_context.intellisense_complete.wait()
             scriptparseinfo.connection_key = connection_context.key
             response = IntelliSenseReadyParams.from_data(conn_info.owner_uri)

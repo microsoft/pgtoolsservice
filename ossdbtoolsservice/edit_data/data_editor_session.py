@@ -37,7 +37,8 @@ class DataEditSessionExecutionState:
 
 
 class DataEditorSession:
-    """This class will hold the logic to maintain the edit session and handle the operations"""
+    """This class will hold the logic to maintain
+    the edit session and handle the operations"""
 
     def __init__(self, metadata_factory: SmoEditTableMetadataFactory):
         self._session_cache: dict[int, RowEdit] = {}
@@ -57,7 +58,8 @@ class DataEditorSession:
         on_success: Callable,
         on_failure: Callable,
     ):
-        """This method creates the metadata for the object to be edited and creates the query to be
+        """This method creates the metadata for the object
+        to be edited and creates the query to be
         executed and calls query executer with it"""
 
         self.table_metadata = self._metadata_factory.get(
@@ -141,10 +143,11 @@ class DataEditorSession:
 
         try:
             self._session_cache.pop(row_id)
-        except KeyError:
+        except KeyError as error:
             raise KeyError(
-                "There is no edit pending for the row you selected. Please check if you have already committed the changes."
-            )
+                "There is no edit pending for the row you selected. "
+                "Please check if you have already committed the changes."
+            ) from error
 
     def revert_cell(self, row_id: int, column_index: int) -> RevertCellResponse:
         if not self._is_initialized:
@@ -215,8 +218,8 @@ class DataEditorSession:
             if any(edit_operations) is True:
                 with connection.cursor() as cursor:
                     for operation in edit_operations:
-                        # If its a new row that’s being added and tried to delete without committing we just clear it
-                        # from cache
+                        # If its a new row that’s being added and tried to delete
+                        # without committing we just clear it from cache
                         if isinstance(operation, RowDelete) and operation.row_id >= len(
                             self._result_set.rows
                         ):

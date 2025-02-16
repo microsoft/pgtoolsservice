@@ -17,9 +17,12 @@ from ossdbtoolsservice.metadata.contracts import (
 )
 from ossdbtoolsservice.utils import constants
 
-# This query collects all the tables, views, and functions in all the schemas in the database(s)?
+# This query collects all the tables, views, 
+# and functions in all the schemas in the database(s)?
 PG_METADATA_QUERY = """
-SELECT s.nspname AS schema_name, p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), '') || ')' AS object_name, \
+SELECT s.nspname AS schema_name, 
+    p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), 
+        '') || ')' AS object_name, \
     'f' as type FROM pg_proc p
     INNER JOIN pg_namespace s ON s.oid = p.pronamespace
     WHERE s.nspname NOT ILIKE 'pg_%' AND s.nspname != 'information_schema'
@@ -88,7 +91,8 @@ class MetadataService(Service):
         # Get the current database
         database_name = connection.database_name
 
-        # Get the metadata query specific to the current provider and fill in the database name
+        # Get the metadata query specific to the current provider 
+        # and fill in the database name
         metadata_query = QUERY_MAP[self._service_provider.provider].format(database_name)
 
         query_results = connection.execute_query(metadata_query, all=True)

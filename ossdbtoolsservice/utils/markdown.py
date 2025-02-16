@@ -36,7 +36,8 @@ def generate_requests_markdown(server, logger, output_file="docs/Requests.md"):
             # Convert the JSON-RPC request to a JSON string
             json_rpc_request_str = json.dumps(convert_to_dict(json_rpc_request), indent=4)
             logger.info(
-                f"JSON-RPC request for {req_handler.class_} in '{method}':\n {json_rpc_request_str}"
+                f"JSON-RPC request for {req_handler.class_} in "
+                f"'{method}':\n {json_rpc_request_str}"
             )
 
             # Extract the service name from the method
@@ -55,11 +56,15 @@ def generate_requests_markdown(server, logger, output_file="docs/Requests.md"):
             # Append the request details to the service entry
             services_dict[service_name]["index"].append(f"- [{method}](#{anchor_link})")
             services_dict[service_name]["requests"].append(
-                f"## {method}\n- **Class**: {req_handler.class_.__name__ if req_handler.class_ else 'None'}\n- **Method**: {method}\n- **Request JSON**:\n```json\n{json_rpc_request_str}\n```"
+                f"## {method}\n- **Class**: "
+                f"{req_handler.class_.__name__ if req_handler.class_ else 'None'}\n"
+                f"- **Method**: {method}\n- **Request JSON**:\n"
+                f"```json\n{json_rpc_request_str}\n```"
             )  # noqa
         except TypeError as e:
             logger.error(
-                f"Could not create example instance for {req_handler.class_} in '{method}': {e}"
+                f"Could not create example instance for {req_handler.class_} "
+                f"in '{method}': {e}"
             )
 
     # Generate the Markdown content
@@ -81,17 +86,17 @@ def generate_requests_markdown(server, logger, output_file="docs/Requests.md"):
 
 def generate_mock_data_for_type(field_type: type) -> Any:
     """Generate example mock data based on attribute type."""
-    if field_type == int:
+    if field_type is int:
         return random.randint(1, 100)
-    elif field_type == float:
+    elif field_type is float:
         return round(random.uniform(1, 100), 2)
-    elif field_type == str:
+    elif field_type is str:
         return "".join(random.choices(string.ascii_letters, k=8))
-    elif field_type == bool:
+    elif field_type is bool:
         return random.choice([True, False])
-    elif field_type == list:
+    elif field_type is list:
         return [generate_mock_data_for_type(int)]  # Example list with integers
-    elif field_type == dict:
+    elif field_type is dict:
         return {"key": generate_mock_data_for_type(str)}  # Example dictionary
     elif isinstance(field_type, type) and issubclass(field_type, Enum):
         return list(field_type)[0]  # Return the first value of the enum

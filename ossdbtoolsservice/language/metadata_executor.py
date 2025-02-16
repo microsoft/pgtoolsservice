@@ -81,7 +81,8 @@ class MetadataExecutor:
 
     def functions(self) -> list[tuple]:
         """
-        In order to avoid iterating over full properties queries for each function, this must always
+        In order to avoid iterating over full properties queries for each function,
+          this must always
         use the lightweight metadata query as it'll have N queries for N functions otherwise
         """
         return [f for f in self.lightweight_metadata.functions()]

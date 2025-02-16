@@ -76,7 +76,8 @@ class Server:
 
     @property
     def in_recovery(self) -> Optional[bool]:
-        """Whether or not the server is in recovery mode. If None, value was not loaded from server"""
+        """Whether or not the server is in recovery mode. 
+        If None, value was not loaded from server"""
         return self._recovery_props.get("inrecovery")
 
     @property
@@ -110,7 +111,8 @@ class Server:
 
     @property
     def wal_paused(self) -> Optional[bool]:
-        """Whether or not the Write-Ahead Log (WAL) is paused. If None, value was not loaded from server"""
+        """Whether or not the Write-Ahead Log (WAL) is paused. 
+        If None, value was not loaded from server"""
         return self._recovery_props.get("isreplaypaused")
 
     # -CHILD OBJECTS #######################################################
@@ -137,7 +139,8 @@ class Server:
     @property
     def search_path(self) -> NodeCollection[str]:
         """
-        The search_path for the current role. Defined at the server level as it's a global property,
+        The search_path for the current role. 
+        Defined at the server level as it's a global property,
         and as a collection as it is a list of schema names
         """
         return self._search_path
@@ -242,10 +245,12 @@ class Server:
         return self.find_schema_child_object("datatypes", metadata)
 
     def find_index(self, metadata):
-        """Find an index in the server. Indexes are always children of either tables or materialized views"""
+        """Find an index in the server. Indexes are always children of either tables 
+        or materialized views"""
         try:
             idx_name = metadata.name
-            # For table_objects, the schema key in metadata stores "schema.table_name". See get_node_info
+            # For table_objects, the schema key in metadata stores "schema.table_name". 
+            # See get_node_info
             schema_name, table_or_mv_name = metadata.schema.split(".")
 
             # Find the table and retrieve the index if it exists
@@ -285,7 +290,8 @@ class Server:
         """Find a trigger in the server. Triggers are always children of tables"""
         try:
             trigger_name = metadata.name
-            # For table_objects, the schema key in metadata stores "schema.table_name". See get_node_info
+            # For table_objects, the schema key in metadata stores "schema.table_name". 
+            # See get_node_info
             schema_name, table_name = metadata.schema.split(".")
 
             # Find the table and retrieve the trigger if it exists

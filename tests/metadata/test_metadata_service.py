@@ -39,13 +39,15 @@ class TestMetadataService(unittest.TestCase):
 
     def test_initialization(self):
         """Test that the metadata service registers its handlers correctly"""
-        # Verify that the correct request handler was set up via the call to register during test setup
+        # Verify that the correct request handler was set up via the call to
+        # register during test setup
         self.service_provider.server.set_request_handler.assert_called_once_with(
             METADATA_LIST_REQUEST, self.metadata_service._handle_metadata_list_request
         )
 
     def test_metadata_list_request(self) -> None:
-        """Test that the metadata list handler properly starts a thread to list metadata and responds with the list"""
+        """Test that the metadata list handler properly starts a
+        thread to list metadata and responds with the list"""
         # Set up the parameters and mocks for the request
         expected_metadata = [
             ObjectMetadata(schema="schema1", name="table1", metadata_type=MetadataType.TABLE),
@@ -111,7 +113,8 @@ class TestMetadataService(unittest.TestCase):
             )
 
     def test_metadata_list_request_error(self):
-        """Test that the proper error response is sent if there is an error while handling a metadata list request"""
+        """Test that the proper error response is sent if there is
+        an error while handling a metadata list request"""
         request_context = MockRequestContext()
         params = MetadataListParameters()
         params.owner_uri = self.test_uri

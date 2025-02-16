@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""This module holds the task service, which supports management and tracking of active tasks"""
-
+"""This module holds the task service, 
+which supports management and tracking of active tasks"""
 
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.tasks import Task, TaskStatus

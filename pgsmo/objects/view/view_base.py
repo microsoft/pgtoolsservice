@@ -4,6 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 
+from typing import TypeVar
+
 import smo.utils.templating as templating
 from pgsmo.objects.server import server as s  # noqa
 from pgsmo.objects.table_objects.column import Column
@@ -15,6 +17,8 @@ from smo.common.scripting_mixins import (
     ScriptableUpdate,
 )
 
+T = TypeVar("T", bound="ViewBase")
+
 
 class ViewBase(
     NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
@@ -24,7 +28,7 @@ class ViewBase(
     GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, "../global_macros")
 
     @classmethod
-    def _from_node_query(cls, server: "s.Server", parent: NodeObject, **kwargs) -> "View":
+    def _from_node_query(cls: type[T], server: "s.Server", parent: NodeObject, **kwargs) -> T:
         """
         Creates a view object from the results of a node query
         :param server: Server that owns the view

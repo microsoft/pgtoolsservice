@@ -429,4 +429,4 @@ def scan_keyword(key):
         "zone": 0,
     }
 
-    return keywords.get(key, None)
+    return keywords.get(key)

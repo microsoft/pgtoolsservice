@@ -3,7 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Module containing the disaster recovery service, including backup and restore functionality"""
+"""Module containing the disaster recovery service, 
+including backup and restore functionality"""
 
 import functools
 import os
@@ -114,7 +115,8 @@ def _perform_backup_restore(
     options: dict[str, Any],
     task: Task,
 ):
-    """Call out to pg_dump or pg_restore using the arguments given and additional arguments built from the given options dict"""
+    """Call out to pg_dump or pg_restore using the arguments given and 
+    additional arguments built from the given options dict"""
     for option, value in options.items():
         # Don't add the option to the arguments if it is not set
         if value is None or value is False:
@@ -165,7 +167,8 @@ def _perform_backup(
     ]
 
     pg_dump_args += _get_backup_restore_connection_params(connection_info.details.options)
-    # Remove the options that were already used, and pass the rest so that they can be automatically serialized
+    # Remove the options that were already used, 
+    # and pass the rest so that they can be automatically serialized
     options = params.backup_info.__dict__.copy()
     del options["path"]
     del options["type"]
@@ -184,7 +187,8 @@ def _perform_restore(
     pg_restore_args = [pg_restore_location]
     pg_restore_args += _get_backup_restore_connection_params(connection_info.details.options)
     pg_restore_args.append(params.options.path)
-    # Remove the options that were already used, and pass the rest so that they can be automatically serialized
+    # Remove the options that were already used, 
+    # and pass the rest so that they can be automatically serialized
     options = params.options.__dict__.copy()
     del options["path"]
     return _perform_backup_restore(connection_info, pg_restore_args, options, task)
@@ -204,10 +208,12 @@ def _get_backup_restore_connection_params(connection_options: dict) -> list[str]
 
 def _get_pg_exe_path(exe_name: str, server_version: tuple[int, int, int]) -> str:
     """
-    Find the path to the given PostgreSQL utility executable for the current operating system in a server specific version folder
+    Find the path to the given PostgreSQL utility executable 
+    for the current operating system in a server specific version folder
 
     :param exe_name: The name of the program to find (without .exe). e.g. 'pg_dump'
-    :param server_version: Tuple of the connected server version components (major, minor, ignored)
+    :param server_version: Tuple of the connected server version components 
+        (major, minor, ignored)
     :returns: The path to the requested executable
     :raises ValueError: if there is no file corresponding to the given exe_name
     """

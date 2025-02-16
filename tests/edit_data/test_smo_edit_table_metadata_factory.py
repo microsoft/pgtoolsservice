@@ -51,7 +51,7 @@ class TestSmoEditTableMetadataFactory(unittest.TestCase):
             self.assertEqual(len(metadata.columns_metadata), len(view.columns))
 
     def test_get_with_other_type_raises_exception(self):
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             self._smo_metadata_factory.get(
                 self._connection, self._schema_name, self._view_name, "Other"
             )

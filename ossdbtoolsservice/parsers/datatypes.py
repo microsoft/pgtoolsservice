@@ -3,7 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""Pg data types. We need to make sure all the data types are defined with name starting with DATATYPE_ as we
+"""Pg data types. We need to make sure all the data types are defined with 
+name starting with DATATYPE_ as we
 pull them into the array of system datatypes"""
 
 """ null Type """

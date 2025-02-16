@@ -26,7 +26,8 @@ SERVER_CAPABILITIES_MAP = {constants.PG_PROVIDER_NAME: PGServerCapabilities}
 
 
 class CapabilitiesService(Service):
-    """Defines the capabilities supported by PG Tools including language service and DMP support"""
+    """Defines the capabilities supported by PG Tools 
+    including language service and DMP support"""
 
     def __init__(self):
         self._service_provider: ServiceProvider = None

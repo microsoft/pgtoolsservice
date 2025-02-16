@@ -12,9 +12,11 @@ class TimeoutQueue(Generic[T], asyncio.Queue[T]):
         """
         Get an item from the queue, with an optional timeout.
 
-        :param timeout: The maximum number of seconds to wait for an item. If None, wait indefinitely.
+        :param timeout: The maximum number of seconds to wait for an item. 
+            If None, wait indefinitely.
         :return: The item from the queue.
-        :raises asyncio.TimeoutError: If the timeout expires before an item is available.
+        :raises asyncio.TimeoutError:
+            If the timeout expires before an item is available.
         """
         if timeout is None:
             return await super().get()
@@ -25,8 +27,10 @@ class TimeoutQueue(Generic[T], asyncio.Queue[T]):
         """
         Put an item into the queue, with an optional timeout.
 
-        :param timeout: The maximum number of seconds to wait to put the item. If None, wait indefinitely.
-        :raises asyncio.TimeoutError: If the timeout expires before the item is put into the queue.
+        :param timeout: The maximum number of seconds to wait to put the item. 
+            If None, wait indefinitely.
+        :raises asyncio.TimeoutError: 
+            If the timeout expires before the item is put into the queue.
         """
         if timeout is None:
             await super().put(item)

@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 
-
 from ossdbtoolsservice.edit_data import EditTableMetadata
 from ossdbtoolsservice.edit_data.contracts import (
     EditCell,

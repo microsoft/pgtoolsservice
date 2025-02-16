@@ -30,7 +30,7 @@ from .postgres_utils import (
 
 @dataclass
 class PostgresPlugin:
-    """PostgresPlugin is a class designed to interact with a Postgres database using an asynchronous connection pool."""
+    """PostgresPlugin is a class designed to interact with a Postgres database."""
 
     name: str = "PostgreSQL"
     description: str = "A plugin for interacting with PostgreSQL databases."
@@ -59,8 +59,10 @@ class PostgresPlugin:
 
     @kernel_function(
         name="get_full_schema_context",
-        description="Gets the full context for a schema in the user's database in the form of a creation script. "
-        "Includes detailed table structures, including columns, data types, and relationships, as well as indexes, functions, and more.",
+        description="Gets the full context for a schema in the user's database "
+        "in the form of a creation script. "
+        "Includes detailed table structures, including columns, data types, "
+        "and relationships, as well as indexes, functions, and more.",
     )
     def get_schema_kernelfunc(
         self,
@@ -88,7 +90,10 @@ class PostgresPlugin:
 
     @kernel_function(
         name="get_schema_and_table_context",
-        description="Gets the context for a database by returning a create script for each schema and table. ",
+        description=(
+            "Gets the context for a database "
+            "by returning a create script for each schema and table. "
+        ),
     )
     def get_db_context(
         self,
@@ -113,10 +118,13 @@ class PostgresPlugin:
     @kernel_function(
         name="execute_sql_query_readonly",
         description=(
-            "Execute a formatted SQL query against the database. This query must not modify the database at all. "
-            "Can include SELECT, SHOW, EXPLAIN etc. Do not include additional statements, e.g. SET search_path, in this query."
-            "It must only be a single, well formatted query that will be presented to the user, "
-            "so focus on readability. "
+            "Execute a formatted SQL query against the database. "
+            "This query must not modify the database at all. "
+            "Can include SELECT, SHOW, EXPLAIN etc. "
+            "Do not include additional statements, e.g. SET search_path, in this query."
+            "It must only be a single, well formatted query"
+            " that will be presented to the user,"
+            " so focus on readability. "
             "You do not need confirmation to use this function."
         ),
     )
@@ -178,12 +186,15 @@ class PostgresPlugin:
     @kernel_function(
         name="execute_sql_statement",
         description=(
-            "Execute a SQL statement against the database. This statement may modify the database. "
+            "Execute a SQL statement against the database. "
+            "This statement may modify the database. "
             "Only use with confirmation from the user. The user must confirm the query "
-            "by name before it is executed. Ensure chat history has presented the query by name "
+            "by name before it is executed. "
+            "Ensure chat history has presented the query by name "
             " to the user and the user has confirmed it."
-            "It must only be a single, well formatted SQL statement that will be presented to the user, "
-            "so focus on readability."
+            "It must only be a single, well formatted SQL statement"
+            " that will be presented to the user,"
+            " so focus on readability."
         ),
     )
     async def execute_sql_statement_kernelfunc(

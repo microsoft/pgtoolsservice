@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 
-
 from ossdbtoolsservice.edit_data.contracts import EditRow
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,

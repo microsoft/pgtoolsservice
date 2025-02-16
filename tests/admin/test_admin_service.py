@@ -37,7 +37,8 @@ class TestAdminService(unittest.TestCase):
 
     def test_initialization(self):
         """Test that the admin service registers its handlers correctly"""
-        # Verify that the correct request handler was set up via the call to register during test setup
+        # Verify that the correct request handler was set up
+        # via the call to register during test setup
         self.service_provider.server.set_request_handler.assert_called_once_with(
             GET_DATABASE_INFO_REQUEST, self.admin_service._handle_get_database_info_request
         )
@@ -73,8 +74,12 @@ class TestAdminService(unittest.TestCase):
         expected_info = {"dbname": db_name, "owner": user_name, "size": None}
         self.assertEqual(response.database_info.options, expected_info)
 
-        # And the service retrieved the owner name using a query with the database name as a parameter
-        owner_query = f"SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{db_name}'"
+        # And the service retrieved the owner name using a query
+        # with the database name as a parameter
+        owner_query = (
+            "SELECT pg_catalog.pg_get_userbyid(db.datdba) "
+            f"FROM pg_catalog.pg_database db WHERE db.datname = '{db_name}'"
+        )
         mock_cursor.execute.assert_called_once_with(owner_query)
 
     @integration_test

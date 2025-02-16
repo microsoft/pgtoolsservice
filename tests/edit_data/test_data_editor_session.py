@@ -335,7 +335,8 @@ class TestDataEditorSession(unittest.TestCase):
 
         if context_manager.exception.args is not None:
             self.assertEqual(
-                "There is no edit pending for the row you selected. Please check if you have already committed the changes.",
+                "There is no edit pending for the row you selected. "
+                "Please check if you have already committed the changes.",
                 context_manager.exception.args[0],
             )
 

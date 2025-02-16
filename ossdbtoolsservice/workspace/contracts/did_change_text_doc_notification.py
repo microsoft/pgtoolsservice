@@ -16,8 +16,8 @@ class TextDocumentChangeEvent(Serializable):
     Attributes:
         range:          Range where the document was changed. Will be null if the server's
                         TextDocumentSyncKind is Full
-        range_length:   Length of the range being replaced in the document. Will be null if the
-                        server's TextDocumentSyncKind is Full
+        range_length:   Length of the range being replaced in the document. 
+                        Will be null if the server's TextDocumentSyncKind is Full
         text:           The new text for the document
     """
 

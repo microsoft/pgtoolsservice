@@ -243,7 +243,8 @@ class JSONRPCServerTests(unittest.TestCase):
         logger.warning.assert_called_once()
 
     def test_dispatch_request_none_class(self) -> None:
-        # Setup: Create a server with a single handler that has none for the deserialization class
+        # Setup: Create a server with a single handler that
+        # has none for the deserialization class
         config = IncomingMessageConfiguration("test/test", None)
         handler = mock.MagicMock()
         server = utils.MockMessageServer()
@@ -264,7 +265,8 @@ class JSONRPCServerTests(unittest.TestCase):
         self.assertIs(handler.mock_calls[0][1][1], params)
 
     def test_dispatch_request_normal(self) -> None:
-        # Setup: Create a server with a single handler that has none for the deserialization class
+        # Setup: Create a server with a single handler
+        # that has none for the deserialization class
         config = IncomingMessageConfiguration("test/test", _TestParams)
         handler = mock.MagicMock()
         server = utils.MockMessageServer()
@@ -299,7 +301,8 @@ class JSONRPCServerTests(unittest.TestCase):
         logger.warning.assert_called_once()
 
     def test_dispatch_notification_none_class(self) -> None:
-        # Setup: Create a server with a single handler that has none for the deserialization class
+        # Setup: Create a server with a single
+        # handler that has none for the deserialization class
         config = IncomingMessageConfiguration("test/test", None)
         handler = mock.MagicMock()
         server = utils.MockMessageServer()
@@ -319,7 +322,8 @@ class JSONRPCServerTests(unittest.TestCase):
         self.assertIs(handler.mock_calls[0][1][1], params)
 
     def test_dispatch_notification_normal(self) -> None:
-        # Setup: Create a server with a single handler that has none for the deserialization class
+        # Setup: Create a server with a single handler
+        # that has none for the deserialization class
         config = IncomingMessageConfiguration("test/test", _TestParams)
         handler = mock.MagicMock()
         server = utils.MockMessageServer()

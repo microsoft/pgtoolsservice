@@ -13,8 +13,8 @@ from ossdbtoolsservice.workspace.script_file import ScriptFile
 
 class Workspace:
     """
-    Manages a "workspace" of script files that are open for a particular editing session. Also helps to navigate
-    references between script files.
+    Manages a "workspace" of script files that are open for a particular editing session.
+    Also helps to navigate references between script files.
     """
 
     def __init__(self):
@@ -83,7 +83,8 @@ class Workspace:
                 # We can't create a script file if we don't have a buffer
                 # TODO: Localize
                 raise ValueError(
-                    f"File uri {file_uri} could not be resolved and file contents not provided."
+                    f"File uri {file_uri} could not be resolved "
+                    "and file contents not provided."
                 )
 
             # An initial buffer wasn't provided, load the contents
@@ -140,7 +141,8 @@ class Workspace:
         # File is on disk. Resolve where it could be.
         file_path: str = file_uri
         if file_path.startswith("file://"):
-            # This *should* always be the case, but it might not be if the client isn't adhering to
+            # This *should* always be the case, but it might not be
+            # if the client isn't adhering to
             # the protocol properly
             # Client sent a URI format path. Extract the path and possibly the host name
             uri: ParseResult = urlparse(file_path)
@@ -162,7 +164,8 @@ class Workspace:
             else:
                 if uri.netloc != "":
                     # eg: file://server/path/to/file -> //server/path/to/file
-                    # Path is to a remote machine. Very uncommon to have a UNC path on OSX/Linux
+                    # Path is to a remote machine.
+                    # Very uncommon to have a UNC path on OSX/Linux
                     file_path = f"//{unquote(uri.netloc)}{unquote(uri.path)}"
                 else:
                     # eg: file:///path/to/file -> /path/to/file

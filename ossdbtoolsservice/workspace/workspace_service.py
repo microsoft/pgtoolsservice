@@ -30,7 +30,8 @@ from ossdbtoolsservice.workspace.workspace import Workspace
 
 class WorkspaceService(Service):
     """
-    Class for handling requests/events that deal with the sate of the workspace including opening
+    Class for handling requests/events that deal with the 
+    sate of the workspace including opening
     and closing of files, the changing of configuration, etc.
     """
 
@@ -99,8 +100,9 @@ class WorkspaceService(Service):
         Get the requested text selection, as a string, for a document
 
         :param file_uri: The URI of the requested file
-        :param selection_data: An object containing information about which part of the file to return,
-        or None for the whole file
+        :param selection_data: An object containing information about 
+            which part of the file to return,
+            or None for the whole file
         :raises ValueError: If there is no file matching the given URI
         """
         open_file = self._workspace.get_file(file_uri)
@@ -116,7 +118,8 @@ class WorkspaceService(Service):
         self, notification_context: NotificationContext, params: DidChangeConfigurationParams
     ) -> None:
         """
-        Handles the configuration change event by storing the new configuration and calling all
+        Handles the configuration change event by storing the 
+        new configuration and calling all
         registered config change callbacks
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
@@ -154,7 +157,8 @@ class WorkspaceService(Service):
         self, notification_context: NotificationContext, params: DidOpenTextDocumentParams
     ) -> None:
         """
-        Handles when a file is opened in the workspace. The event is propagated to the registered
+        Handles when a file is opened in the workspace. 
+        The event is propagated to the registered
         file open callbacks
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
@@ -178,7 +182,8 @@ class WorkspaceService(Service):
         self, notification_context: NotificationContext, params: DidCloseTextDocumentParams
     ) -> None:
         """
-        Handles when a file is closed in the workspace. The event is propagated to the registered
+        Handles when a file is closed in the workspace. 
+        The event is propagated to the registered
         file close callbacks
         :param notification_context: Context of the notification
         :param params: Parameters from the notification

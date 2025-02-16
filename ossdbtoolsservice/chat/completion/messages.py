@@ -80,7 +80,8 @@ class VSCodeLanguageModelChatMessage(BaseModel):
             VSCodeLanguageModelToolCallPart,
         ]
     ]
-    """A string or heterogeneous array of things that a message can contain as content. Some parts may be message-type specific for some models."""
+    """A string or heterogeneous array of things that a message can contain as content. 
+    Some parts may be message-type specific for some models."""
 
 
 class VSCodeLanguageModelChatTool(BaseModel):

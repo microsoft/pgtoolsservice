@@ -21,22 +21,31 @@ from ossdbtoolsservice.utils import constants
 
 class RPCTestMessage:
     """
-    Class representing an individual JSON RPC message sent as part of an end-to-end integration test
+    Class representing an individual JSON RPC message sent
+      as part of an end-to-end integration test
 
     :param method: The name of the JSON RPC method (e.g. 'connection/connect')
     :param message_type: The JSONRpcMessageType for the message
-    :param expect_error_response: Whether the server will respond to this message with an error.
+    :param expect_error_response: Whether the server will respond to this
+    message with an error.
     This parameter will be ignored for non-request messages. Default is False.
-    :param response_verifier: An optional callback that will be called with the response object,
+    :param response_verifier: An optional callback that will be called
+    with the response object,
     which can be used to verify that the response is the expected one. This parameter will be
-    ignored for non-request messages. For request messages, if this is not provided, the test will
+    ignored for non-request messages. For request messages,
+    if this is not provided, the test will
     verify that some response was sent, but will not verify its details.
-    :param notification_verifiers: An optional list of verifiers that can be used to verify that
-    the server sent the expected notifications following this message. Each verifier is a tuple
-    where the first element is a filter function to determine if a given notification was sent in
-    response to this message, and the second element is an optional verifier that will be called
-    for each notification that the filter function returns True for. If the message causes the
-    server to send back notifications, this argument must be provided.
+    :param notification_verifiers: An optional list of
+        verifiers that can be used to verify that
+        the server sent the expected notifications following this
+        message. Each verifier is a tuple
+        where the first element is a filter function to determine
+        if a given notification was sent in
+        response to this message, and the second element is an optional
+        verifier that will be called
+        for each notification that the filter function returns True for.
+        If the message causes the
+        server to send back notifications, this argument must be provided.
     """
 
     request_id = 0
@@ -118,10 +127,16 @@ class JSONRPCTestCase:
             input_stream.flush()
             if message.method == "shutdown":
                 continue
-            output_info[1].wait_for(lambda: output_info[0] >= expected_write_calls, 10)
+            output_info[1].wait_for(
+                lambda expected_write_calls=expected_write_calls: (
+                    output_info[0] >= expected_write_calls
+                ),
+                10,
+            )
             if output_info[0] < expected_write_calls:
                 raise RuntimeError(
-                    f"Timed out waiting for response or notification for method {message.method}"
+                    "Timed out waiting for response or "
+                    f"notification for method {message.method}"
                 )
 
         # Process the output into responses and notifications
@@ -154,18 +169,21 @@ class JSONRPCTestCase:
             response = response_dict.get(request.request_id)
             if response is None:
                 raise RuntimeError(
-                    f"Request ID {request.request_id} (method {request.method}) has no response"
+                    f"Request ID {request.request_id} (method {request.method}) "
+                    "has no response"
                 )
             # Verify that the response is or is not an error, as expected
             if request.expect_error_response:
                 if "error" not in response:
                     raise RuntimeError(
-                        f"Expected error response to request method {request.method} but got \n{json.dumps(response)}"
+                        f"Expected error response to request method {request.method} "
+                        f"but got \n{json.dumps(response)}"
                     )
             else:
                 if "result" not in response:
                     raise RuntimeError(
-                        f"Expected successful response to request method {request.method} but got \n{json.dumps(response)}"
+                        f"Expected successful response to request method {request.method} "
+                        f"but got \n{json.dumps(response)}"
                     )
             # Run the response verifier if present
             responses_to_verify.remove(response["id"])
@@ -173,7 +191,8 @@ class JSONRPCTestCase:
                 request.response_verifier(response)
         if responses_to_verify:
             raise RuntimeError(
-                "Server sent the following responses that had no corresponding request:\n{}".format(
+                "Server sent the following responses that had no corresponding request:"
+                "\n{}".format(
                     "\n".join(
                         [
                             json.dumps(response_dict[response_id])
@@ -198,9 +217,11 @@ class JSONRPCTestCase:
                 notification_count = len(filtered_notifications)
                 if notification_count == 0:
                     raise RuntimeError(
-                        f"Expected 1 notification for request with method {message.method} but got 0"
+                        f"Expected 1 notification for request with method {message.method} "
+                        "but got 0"
                     )
-                # If there was more than 1 notification matching the filter, take the first one that matches
+                # If there was more than 1 notification matching the filter,
+                # take the first one that matches
                 index = None
                 notification = None
                 for filtered_notification in filtered_notifications:
@@ -227,8 +248,8 @@ class JSONRPCTestCase:
     def start_service():
         # Set up the server's input and output
         input_r, input_w = os.pipe()
-        server_input_stream = open(input_r, "rb", buffering=0, closefd=False)
-        test_input_stream = open(input_w, "wb", buffering=0, closefd=False)
+        server_input_stream = open(input_r, "rb", buffering=0, closefd=False)  # noqa: SIM115
+        test_input_stream = open(input_w, "wb", buffering=0, closefd=False)  # noqa: SIM115
         server_output_stream = io.BytesIO()
         server_output_stream.close = mock.Mock()
         output_info = [
@@ -236,7 +257,8 @@ class JSONRPCTestCase:
             threading.Condition(),
         ]  # Number of times write called, Condition variable for monitoring info
 
-        # Mock the server output stream's write method so that the test knows how many messages have been written
+        # Mock the server output stream's write method so that the
+        # test knows how many messages have been written
         old_write_method = server_output_stream.write
 
         def mock_write(message):

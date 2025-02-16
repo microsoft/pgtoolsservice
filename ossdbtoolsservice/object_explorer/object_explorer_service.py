@@ -123,14 +123,16 @@ class ObjectExplorerService(Service):
             if self._logger:
                 self._logger.info(f"   - Session ID: {session_id}")
 
-            # Add the session to session map in a lock to prevent race conditions between check and add
+            # Add the session to session map in a lock to
+            # prevent race conditions between check and add
             with self._session_lock:
                 if session_id in self._session_map:
                     # If session already exists, get it and respond with it
                     session_exist_check = True
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.info(
-                            f"Object explorer session for {session_id} already exists. Returning existing session."
+                            f"Object explorer session for {session_id} already exists. "
+                            "Returning existing session."
                         )
                     session = self._session_map[session_id]
                 else:
@@ -243,7 +245,8 @@ class ObjectExplorerService(Service):
             except psycopg.OperationalError as e:
                 if self._service_provider.logger is not None:
                     self._service_provider.logger.info(
-                        f"could not close the connection for the database {database.name}: {e}"
+                        "could not close the connection for the "
+                        f"database {database.name}: {e}"
                     )
             if not close_result and self._service_provider.logger is not None:
                 self._service_provider.logger.info(
@@ -350,7 +353,8 @@ class ObjectExplorerService(Service):
                     session.init_task.join()
                 else:
                     raise ValueError(
-                        f"Object Explorer session with ID {params.session_id} is not ready, yet."
+                        f"Object Explorer session with ID {params.session_id} "
+                        "is not ready, yet."
                     )  # TODO: Localize
 
             request_context.send_response(True)
@@ -409,7 +413,8 @@ class ObjectExplorerService(Service):
                 session.id, ConnectionType.OBJECT_EXLPORER
             )
 
-            # Step 3: Create the Server object for the session and create the root node for the server
+            # Step 3: Create the Server object for the session and
+            # create the root node for the server
             session.server = self._server(
                 connection, functools.partial(self._create_connection, session)
             )

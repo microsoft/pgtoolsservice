@@ -222,7 +222,8 @@ def compute_selection_data_for_batches(
         end_line_num = line_map[end_line_index]
         end_col_num = end_index - end_line_index
 
-        # Create a SelectionData object with the results and update the search offset to exclude batches that have been processed
+        # Create a SelectionData object with the results and update the search offset 
+        # to exclude batches that have been processed
         selection_data.append(
             SelectionData(start_line_num, start_col_num, end_line_num, end_col_num)
         )

@@ -158,7 +158,8 @@ class TestWorkspaceService(unittest.TestCase):
 
     def test_handle_text_notification_none(self):
         # Setup:
-        # ... Create a workspace service with mock callbacks and a workspace that always returns None
+        # ... Create a workspace service with mock callbacks and a
+        # workspace that always returns None
         ws: WorkspaceService = WorkspaceService()
         ws._logger = utils.get_mock_logger()
         ws._text_change_callbacks = [MagicMock()]
@@ -188,7 +189,8 @@ class TestWorkspaceService(unittest.TestCase):
         ]
 
         for call in test_calls:
-            # If: The workspace service receives a request to handle a file that shouldn't be processed
+            # If: The workspace service receives a request to handle
+            # a file that shouldn't be processed
             call[0](nc, call[1])
 
             # Then: The associated notification callback should not have been called
@@ -196,7 +198,8 @@ class TestWorkspaceService(unittest.TestCase):
 
     def test_handle_text_notification_success(self):
         # Setup:
-        # ... Create a workspace service with a mock callback and a workspace that returns a mock script file
+        # ... Create a workspace service with a mock callback and a workspace
+        # that returns a mock script file
         ws: WorkspaceService = WorkspaceService()
         ws._logger = utils.get_mock_logger()
         ws._workspace, sf = self._get_mock_workspace(False)
@@ -273,7 +276,8 @@ class TestWorkspaceService(unittest.TestCase):
             # Then: Everything should succeed
 
     def test_get_text_full(self):
-        """Text the workspace service's public get_text method when getting the full text of a file"""
+        """Text the workspace service's public get_text method when
+        getting the full text of a file"""
         # Set up the service with a file
         workspace_service = WorkspaceService()
         file_uri = "untitled:Test_file"
@@ -285,7 +289,8 @@ class TestWorkspaceService(unittest.TestCase):
         self.assertEqual(result_text, file_text)
 
     def test_get_text_selection(self):
-        """Text the workspace service's public get_text method when getting a selection of the text of a file"""
+        """Text the workspace service's public get_text method when
+        getting a selection of the text of a file"""
         # Set up the service with a file
         workspace_service = WorkspaceService()
         file_uri = "untitled:Test_file"

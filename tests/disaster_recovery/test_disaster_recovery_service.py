@@ -29,7 +29,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
     """Methods for testing the disaster recovery service"""
 
     def setUp(self):
-        """Set up the tests with a disaster recovery service and connection service with mock connection info"""
+        """Set up the tests with a disaster recovery service and
+        connection service with mock connection info"""
         self.disaster_recovery_service = DisasterRecoveryService()
         self.connection_service = ConnectionService()
         self.task_service = TaskService()
@@ -103,7 +104,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
         sys.argv[0] = pg_exes_directory
 
     def test_get_pg_exe_path_local_linux(self):
-        """Test the get_pg_exe_path function for linux when the service is running from source code"""
+        """Test the get_pg_exe_path function for linux
+        when the service is running from source code"""
         # Back up these values so that the test can overwrite them
         old_arg0 = sys.argv[0]
         old_platform = sys.platform
@@ -113,31 +115,32 @@ class TestDisasterRecoveryService(unittest.TestCase):
             ("/ossdbtoolsservice/ossdbtoolsservice/pg_exes/linux/11", ("bin", "lib"), ()),
         ]
         try:
-            with mock.patch("os.walk", new=mock.Mock(return_value=return_value)):
-                with mock.patch("os.path.exists", new=mock.Mock(return_value=True)):
-                    # Override sys.argv[0] to simulate running the code directly from source
-                    sys.argv[0] = os.path.normpath(
-                        "/ossdbtoolsservice/ossdbtoolsservice/ossdbtoolsservice_main.py"
-                    )
+            with (
+                mock.patch("os.walk", new=mock.Mock(return_value=return_value)),
+                mock.patch("os.path.exists", new=mock.Mock(return_value=True)),
+            ):
+                # Override sys.argv[0] to simulate running the code directly from source
+                sys.argv[0] = os.path.normpath(
+                    "/ossdbtoolsservice/ossdbtoolsservice/ossdbtoolsservice_main.py"
+                )
 
-                    # If I get the executable path on Linux
-                    sys.platform = "linux"
-                    path = disaster_recovery_service._get_pg_exe_path(
-                        self.pg_dump_exe, (10, 0)
-                    )
-                    # Then the path uses the linux directory and does not have a trailing .exe
-                    self.assertEqual(
-                        path,
-                        os.path.normpath(
-                            "/ossdbtoolsservice/ossdbtoolsservice/pg_exes/linux/10/bin/pg_dump"
-                        ),
-                    )
+                # If I get the executable path on Linux
+                sys.platform = "linux"
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe, (10, 0))
+                # Then the path uses the linux directory and does not have a trailing .exe
+                self.assertEqual(
+                    path,
+                    os.path.normpath(
+                        "/ossdbtoolsservice/ossdbtoolsservice/pg_exes/linux/10/bin/pg_dump"
+                    ),
+                )
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
 
     def test_get_pg_exe_path_local_mac(self):
-        """Test the get_pg_exe_path function for mac when the service is running from source code"""
+        """Test the get_pg_exe_path function for mac
+        when the service is running from source code"""
         # Back up these values so that the test can overwrite them
         old_arg0 = sys.argv[0]
         old_platform = sys.platform
@@ -147,31 +150,32 @@ class TestDisasterRecoveryService(unittest.TestCase):
             ("/ossdbtoolsservice/ossdbtoolsservice/pg_exes/mac/9.6", ("bin", "lib"), ()),
         ]
         try:
-            with mock.patch("os.walk", new=mock.Mock(return_value=return_value)):
-                with mock.patch("os.path.exists", new=mock.Mock(return_value=True)):
-                    # Override sys.argv[0] to simulate running the code directly from source
-                    sys.argv[0] = os.path.normpath(
-                        "/ossdbtoolsservice/ossdbtoolsservice/ossdbtoolsservice_main.py"
-                    )
+            with (
+                mock.patch("os.walk", new=mock.Mock(return_value=return_value)),
+                mock.patch("os.path.exists", new=mock.Mock(return_value=True)),
+            ):
+                # Override sys.argv[0] to simulate running the code directly from source
+                sys.argv[0] = os.path.normpath(
+                    "/ossdbtoolsservice/ossdbtoolsservice/ossdbtoolsservice_main.py"
+                )
 
-                    # If I get the executable path on Mac
-                    sys.platform = "darwin"
-                    path = disaster_recovery_service._get_pg_exe_path(
-                        self.pg_dump_exe, (9, 6)
-                    )
-                    # Then the path uses the mac directory and does not have a trailing .exe
-                    self.assertEqual(
-                        path,
-                        os.path.normpath(
-                            "/ossdbtoolsservice/ossdbtoolsservice/pg_exes/mac/9.6/bin/pg_dump"
-                        ),
-                    )
+                # If I get the executable path on Mac
+                sys.platform = "darwin"
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe, (9, 6))
+                # Then the path uses the mac directory and does not have a trailing .exe
+                self.assertEqual(
+                    path,
+                    os.path.normpath(
+                        "/ossdbtoolsservice/ossdbtoolsservice/pg_exes/mac/9.6/bin/pg_dump"
+                    ),
+                )
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
 
     def test_get_pg_exe_path_local_win(self):
-        """Test the get_pg_exe_path function for windows when the service is running from source code"""
+        """Test the get_pg_exe_path function for windows when
+        the service is running from source code"""
         # Back up these values so that the test can overwrite them
         old_arg0 = sys.argv[0]
         old_platform = sys.platform
@@ -189,31 +193,32 @@ class TestDisasterRecoveryService(unittest.TestCase):
             ),
         ]
         try:
-            with mock.patch("os.walk", new=mock.Mock(return_value=return_value)):
-                with mock.patch("os.path.exists", new=mock.Mock(return_value=True)):
-                    # Override sys.argv[0] to simulate running the code directly from source
-                    sys.argv[0] = os.path.normpath(
-                        "/ossdbtoolsservice/ossdbtoolsservice/ossdbtoolsservice_main.py"
-                    )
+            with (
+                mock.patch("os.walk", new=mock.Mock(return_value=return_value)),
+                mock.patch("os.path.exists", new=mock.Mock(return_value=True)),
+            ):
+                # Override sys.argv[0] to simulate running the code directly from source
+                sys.argv[0] = os.path.normpath(
+                    "/ossdbtoolsservice/ossdbtoolsservice/ossdbtoolsservice_main.py"
+                )
 
-                    # If I get the executable path on Windows
-                    sys.platform = "win32"
-                    path = disaster_recovery_service._get_pg_exe_path(
-                        self.pg_dump_exe, (11, 0)
-                    )
-                    # Then the path uses the win directory and does have a trailing .exe
-                    self.assertEqual(
-                        path,
-                        os.path.normpath(
-                            "/ossdbtoolsservice/ossdbtoolsservice/pg_exes/win/11/pg_dump.exe"
-                        ),
-                    )
+                # If I get the executable path on Windows
+                sys.platform = "win32"
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe, (11, 0))
+                # Then the path uses the win directory and does have a trailing .exe
+                self.assertEqual(
+                    path,
+                    os.path.normpath(
+                        "/ossdbtoolsservice/ossdbtoolsservice/pg_exes/win/11/pg_dump.exe"
+                    ),
+                )
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
 
     def test_get_pg_exe_path_frozen_linux(self):
-        """Test the get_pg_exe_path function for linux when the service is running from a build"""
+        """Test the get_pg_exe_path function for linux when
+        the service is running from a build"""
         # Back up these values so that the test can overwrite them
         old_arg0 = sys.argv[0]
         old_platform = sys.platform
@@ -231,31 +236,32 @@ class TestDisasterRecoveryService(unittest.TestCase):
             ),
         ]
         try:
-            with mock.patch("os.walk", new=mock.Mock(return_value=return_value)):
-                with mock.patch("os.path.exists", new=mock.Mock(return_value=True)):
-                    # Override sys.argv[0] to simulate running the code from a build
-                    sys.argv[0] = os.path.normpath(
-                        "/ossdbtoolsservice/build/ossdbtoolsservice/ossdbtoolsservice_main"
-                    )
+            with (
+                mock.patch("os.walk", new=mock.Mock(return_value=return_value)),
+                mock.patch("os.path.exists", new=mock.Mock(return_value=True)),
+            ):
+                # Override sys.argv[0] to simulate running the code from a build
+                sys.argv[0] = os.path.normpath(
+                    "/ossdbtoolsservice/build/ossdbtoolsservice/ossdbtoolsservice_main"
+                )
 
-                    # If I get the executable path on Linux
-                    sys.platform = "linux"
-                    path = disaster_recovery_service._get_pg_exe_path(
-                        self.pg_dump_exe, (10, 0)
-                    )
-                    # Then the path uses the linux directory and does not have a trailing .exe
-                    self.assertEqual(
-                        path,
-                        os.path.normpath(
-                            "/ossdbtoolsservice/build/ossdbtoolsservice/pg_exes/linux/10/bin/pg_dump"
-                        ),
-                    )
+                # If I get the executable path on Linux
+                sys.platform = "linux"
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe, (10, 0))
+                # Then the path uses the linux directory and does not have a trailing .exe
+                self.assertEqual(
+                    path,
+                    os.path.normpath(
+                        "/ossdbtoolsservice/build/ossdbtoolsservice/pg_exes/linux/10/bin/pg_dump"
+                    ),
+                )
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
 
     def test_get_pg_exe_path_frozen_mac(self):
-        """Test the get_pg_exe_path function for mac when the service is running from a build"""
+        """Test the get_pg_exe_path function for mac
+        when the service is running from a build"""
         # Back up these values so that the test can overwrite them
         old_arg0 = sys.argv[0]
         old_platform = sys.platform
@@ -273,31 +279,32 @@ class TestDisasterRecoveryService(unittest.TestCase):
             ),
         ]
         try:
-            with mock.patch("os.walk", new=mock.Mock(return_value=return_value)):
-                with mock.patch("os.path.exists", new=mock.Mock(return_value=True)):
-                    # Override sys.argv[0] to simulate running the code from a build
-                    sys.argv[0] = os.path.normpath(
-                        "/ossdbtoolsservice/build/ossdbtoolsservice/ossdbtoolsservice_main"
-                    )
+            with (
+                mock.patch("os.walk", new=mock.Mock(return_value=return_value)),
+                mock.patch("os.path.exists", new=mock.Mock(return_value=True)),
+            ):
+                # Override sys.argv[0] to simulate running the code from a build
+                sys.argv[0] = os.path.normpath(
+                    "/ossdbtoolsservice/build/ossdbtoolsservice/ossdbtoolsservice_main"
+                )
 
-                    # If I get the executable path on Mac
-                    sys.platform = "darwin"
-                    path = disaster_recovery_service._get_pg_exe_path(
-                        self.pg_dump_exe, (9, 6)
-                    )
-                    # Then the path uses the mac directory and does not have a trailing .exe
-                    self.assertEqual(
-                        path,
-                        os.path.normpath(
-                            "/ossdbtoolsservice/build/ossdbtoolsservice/pg_exes/mac/9.6/bin/pg_dump"
-                        ),
-                    )
+                # If I get the executable path on Mac
+                sys.platform = "darwin"
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe, (9, 6))
+                # Then the path uses the mac directory and does not have a trailing .exe
+                self.assertEqual(
+                    path,
+                    os.path.normpath(
+                        "/ossdbtoolsservice/build/ossdbtoolsservice/pg_exes/mac/9.6/bin/pg_dump"
+                    ),
+                )
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
 
     def test_get_pg_exe_path_frozen_win(self):
-        """Test the get_pg_exe_path function for windows when the service is running from a build"""
+        """Test the get_pg_exe_path function for windows
+        when the service is running from a build"""
         # Back up these values so that the test can overwrite them
         old_arg0 = sys.argv[0]
         old_platform = sys.platform
@@ -315,31 +322,32 @@ class TestDisasterRecoveryService(unittest.TestCase):
             ),
         ]
         try:
-            with mock.patch("os.walk", new=mock.Mock(return_value=return_value)):
-                with mock.patch("os.path.exists", new=mock.Mock(return_value=True)):
-                    # Override sys.argv[0] to simulate running the code from a build
-                    sys.argv[0] = os.path.normpath(
-                        "/ossdbtoolsservice/build/ossdbtoolsservice/ossdbtoolsservice_main"
-                    )
+            with (
+                mock.patch("os.walk", new=mock.Mock(return_value=return_value)),
+                mock.patch("os.path.exists", new=mock.Mock(return_value=True)),
+            ):
+                # Override sys.argv[0] to simulate running the code from a build
+                sys.argv[0] = os.path.normpath(
+                    "/ossdbtoolsservice/build/ossdbtoolsservice/ossdbtoolsservice_main"
+                )
 
-                    # If I get the executable path on Windows
-                    sys.platform = "win32"
-                    path = disaster_recovery_service._get_pg_exe_path(
-                        self.pg_dump_exe, (11, 0)
-                    )
-                    # Then the path uses the win directory and does have a trailing .exe
-                    self.assertEqual(
-                        path,
-                        os.path.normpath(
-                            "/ossdbtoolsservice/build/ossdbtoolsservice/pg_exes/win/11/pg_dump.exe"
-                        ),
-                    )
+                # If I get the executable path on Windows
+                sys.platform = "win32"
+                path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe, (11, 0))
+                # Then the path uses the win directory and does have a trailing .exe
+                self.assertEqual(
+                    path,
+                    os.path.normpath(
+                        "/ossdbtoolsservice/build/ossdbtoolsservice/pg_exes/win/11/pg_dump.exe"
+                    ),
+                )
         finally:
             sys.argv[0] = old_arg0
             sys.platform = old_platform
 
     def test_get_pg_exe_path_does_not_exist(self):
-        """Test that the get_pg_exe_path function throws an error if the executable being searched for does not exist"""
+        """Test that the get_pg_exe_path function throws an error if
+        the executable being searched for does not exist"""
         return_value = [
             ("/ossdbtoolsservice/ossdbtoolsservice/pg_exes/win", ("11", "12"), ()),
             (
@@ -353,15 +361,16 @@ class TestDisasterRecoveryService(unittest.TestCase):
                 ("pg_dump", "pg_restore"),
             ),
         ]
-        with mock.patch("os.walk", new=mock.Mock(return_value=return_value)):
-            with (
-                mock.patch("os.path.exists", new=mock.Mock(return_value=False)),
-                self.assertRaises(ValueError),
-            ):
-                disaster_recovery_service._get_pg_exe_path("not_pg_dump", (11, 0))
+        with (
+            mock.patch("os.walk", new=mock.Mock(return_value=return_value)),
+            mock.patch("os.path.exists", new=mock.Mock(return_value=False)),
+            self.assertRaises(ValueError),
+        ):
+            disaster_recovery_service._get_pg_exe_path("not_pg_dump", (11, 0))
 
     def test_get_pg_server_folder_does_not_exist(self):
-        """Test that the get_pg_exe_path function throws an error if the server version folder being searched for does not exist"""
+        """Test that the get_pg_exe_path function throws an error if the
+        server version folder being searched for does not exist"""
         return_value = [
             ("/ossdbtoolsservice/ossdbtoolsservice/pg_exes/win", ("11", "12"), ()),
             (
@@ -458,13 +467,15 @@ class TestDisasterRecoveryService(unittest.TestCase):
             self.assertIs(task_result.status, TaskStatus.SUCCEEDED)
 
     def test_perform_backup_fails(self):
-        """Test that the perform_backup method handles failures by recording pg_dump's stderr output and marking the task failed"""
+        """Test that the perform_backup method handles failures by recording
+        pg_dump's stderr output and marking the task failed"""
         self._test_perform_backup_restore_fails_internal(
             self.pg_dump_exe, disaster_recovery_service._perform_backup, self.backup_params
         )
 
     def test_perform_restore_fails(self):
-        """Test that the perform_restore method handles failures by recording pg_dump's stderr output and marking the task failed"""
+        """Test that the perform_restore method handles failures by recording
+        pg_dump's stderr output and marking the task failed"""
         self._test_perform_backup_restore_fails_internal(
             self.pg_restore_exe,
             disaster_recovery_service._perform_restore,
@@ -485,17 +496,17 @@ class TestDisasterRecoveryService(unittest.TestCase):
                 new=mock.Mock(return_value=mock_pg_path),
             ),
             mock.patch("subprocess.Popen", new=mock.Mock(return_value=mock_process)),
-        ):
-            with mock.patch(
+            mock.patch(
                 "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
                 new=mock.Mock(return_value=pg_utils.MockPGServerConnection(None)),
-            ):
-                # If I perform a backup/restore that fails
-                task_result = test_method(self.connection_info, test_params, self.mock_task)
-                # Then the task returns a failed result
-                self.assertIs(task_result.status, TaskStatus.FAILED)
-                # And the task contains the error message from stderr
-                self.assertEqual(task_result.error_message, str(test_error_message, "utf-8"))
+            ),
+        ):
+            # If I perform a backup/restore that fails
+            task_result = test_method(self.connection_info, test_params, self.mock_task)
+            # Then the task returns a failed result
+            self.assertIs(task_result.status, TaskStatus.FAILED)
+            # And the task contains the error message from stderr
+            self.assertEqual(task_result.error_message, str(test_error_message, "utf-8"))
 
     def test_perform_backup_no_exe(self):
         """Test that the perform_backup task fails when the pg_dump exe is not found"""
@@ -515,10 +526,11 @@ class TestDisasterRecoveryService(unittest.TestCase):
         mockConnection = pg_utils.MockPGServerConnection(None)
         with (
             mock.patch("os.path.exists", new=mock.Mock(return_value=False)),
-            mock.patch("subprocess.Popen") as mock_popen,mock.patch(
-            "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
-            new=mock.Mock(return_value=mockConnection),
-        )
+            mock.patch("subprocess.Popen") as mock_popen,
+            mock.patch(
+                "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
+                new=mock.Mock(return_value=mockConnection),
+            ),
         ):
             # If I perform a restore when the pg_restore executable cannot be found
             task_result = test_method(self.connection_info, test_params, mock.Mock())
@@ -527,7 +539,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
             mock_popen.assert_not_called()
 
     def test_handle_backup_request(self):
-        """Test that the backup request handler responds properly and kicks off a task to perform the backup"""
+        """Test that the backup request handler responds properly and
+        kicks off a task to perform the backup"""
         self._test_handle_backup_restore_internal(
             self.disaster_recovery_service.handle_backup_request,
             disaster_recovery_service._perform_backup,
@@ -535,7 +548,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
         )
 
     def test_handle_restore_request(self):
-        """Test that the restore request handler responds properly and kicks off a task to perform the restore"""
+        """Test that the restore request handler responds properly and
+        kicks off a task to perform the restore"""
         self._test_handle_backup_restore_internal(
             self.disaster_recovery_service.handle_restore_request,
             disaster_recovery_service._perform_restore,
@@ -548,7 +562,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
         # Set up the connection service to return the test's connection information
         self.connection_service.owner_to_connection_map[self.test_uri] = self.connection_info
 
-        # Set up a mock task so that the restore code does not actually run in a separate thread
+        # Set up a mock task so that the restore code does
+        # not actually run in a separate thread
         with mock.patch(
             "ossdbtoolsservice.disaster_recovery.disaster_recovery_service.Task",
             new=mock.Mock(return_value=self.mock_task),
@@ -577,13 +592,15 @@ class TestDisasterRecoveryService(unittest.TestCase):
             self.assertEqual(self.request_context.last_response_params, {})
 
     def test_handle_backup_request_no_connection(self):
-        """Test that the backup request handler responds with an error if there is no connection for the given owner URI"""
+        """Test that the backup request handler responds with an error
+        if there is no connection for the given owner URI"""
         self._test_handle_backup_restore_request_no_connection(
             self.disaster_recovery_service.handle_backup_request, self.backup_params
         )
 
     def test_handle_restore_request_no_connection(self):
-        """Test that the restore request handler responds with an error if there is no connection for the given owner URI"""
+        """Test that the restore request handler responds with an error
+        if there is no connection for the given owner URI"""
         self._test_handle_backup_restore_request_no_connection(
             self.disaster_recovery_service.handle_restore_request, self.restore_params
         )
@@ -591,7 +608,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
     def _test_handle_backup_restore_request_no_connection(
         self, test_handler: Callable, test_params
     ):
-        # Set up a mock task so that the restore code does not actually run in a separate thread
+        # Set up a mock task so that the restore code
+        # does not actually run in a separate thread
         with (
             mock.patch(
                 "ossdbtoolsservice.disaster_recovery.disaster_recovery_service.Task",
@@ -599,7 +617,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
             ) as mock_task_constructor,
             mock.patch("functools.partial", new=mock.Mock(return_value=self.mock_action)),
         ):
-            # If I call the request handler and there is no connection corresponding to the given owner URI
+            # If I call the request handler and there is no
+            # connection corresponding to the given owner URI
             test_handler(self.request_context, test_params)
             # Then a mock task is not created
             mock_task_constructor.assert_not_called()
@@ -607,22 +626,25 @@ class TestDisasterRecoveryService(unittest.TestCase):
             self.assertIsNotNone(self.request_context.last_error_message)
 
     def test_canceled_task_does_not_spawn_process(self):
-        """Test that the pg_dump/pg_restore process is not created if the task has been canceled"""
+        """Test that the pg_dump/pg_restore process is not
+        created if the task has been canceled"""
         # Set up the task to be canceled
         self.mock_task.canceled = True
         mockConnection = pg_utils.MockPGServerConnection(None)
-        with mock.patch("subprocess.Popen", new=mock.Mock()) as mock_popen:
-            with mock.patch(
+        with (
+            mock.patch("subprocess.Popen", new=mock.Mock()) as mock_popen,
+            mock.patch(
                 "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
                 new=mock.Mock(return_value=mockConnection),
-            ):
-                # If I try to perform a backup/restore for a canceled task
-                disaster_recovery_service._perform_backup_restore(
-                    self.connection_info, [], {}, self.mock_task
-                )
+            ),
+        ):
+            # If I try to perform a backup/restore for a canceled task
+            disaster_recovery_service._perform_backup_restore(
+                self.connection_info, [], {}, self.mock_task
+            )
 
-                # Then the process was not created
-                mock_popen.assert_not_called()
+            # Then the process was not created
+            mock_popen.assert_not_called()
 
     def test_cancel_backup(self):
         """Test that backups can be canceled by calling terminate on the pg_dump process"""
@@ -642,7 +664,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
         with mock.patch("subprocess.Popen", new=mock.Mock(return_value=mock_process)):
             path = disaster_recovery_service._get_pg_exe_path(self.pg_dump_exe, (14, 0))
             process_args = [path]
-            # If I perform a backup/restore that kicks off the subprocess and then I cancel the task
+            # If I perform a backup/restore that kicks off
+            # the subprocess and then I cancel the task
             disaster_recovery_service._perform_backup_restore(
                 self.connection_info, process_args, {}, self.mock_task
             )

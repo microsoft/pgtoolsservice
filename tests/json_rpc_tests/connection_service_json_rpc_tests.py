@@ -19,7 +19,8 @@ class ConnectionServiceJSONRPCTests(unittest.TestCase):
             DefaultRPCTestMessages.connection_request(owner_uri, connection_details)
         )
 
-        # Then when the connection request is made, a successful response notification will be returned
+        # Then when the connection request is made,
+        # a successful response notification will be returned
         def verify_connection_complete(notification):
             params = notification["params"]
             self.assertIn("connectionSummary", params)
@@ -49,7 +50,8 @@ class ConnectionServiceJSONRPCTests(unittest.TestCase):
             DefaultRPCTestMessages.connection_request(owner_uri, connection_details)
         )
 
-        # Then when the connection request is made, a connection failed response notification will be returned
+        # Then when the connection request is made,
+        # a connection failed response notification will be returned
         def verify_connection_complete(notification):
             params = notification["params"]
             self.assertIsNone(params["connectionSummary"])

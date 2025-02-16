@@ -25,13 +25,13 @@ class TestTemplatingUtils(unittest.TestCase):
     # GET_TEMPLATE_PATH TESTS ##############################################
     def test_get_template_path_no_match(self):
         # Setup: Create a mock os walker
-        with mock.patch("smo.utils.templating.os.walk", _os_walker, create=True):
-            with self.assertRaises(ValueError):
-                # If: I attempt to get the path of a template when it does not exist
-                # Then: An exception should be thrown
-                templating.get_template_path(
-                    TEMPLATE_ROOT_NAME, "doesnotexist.sql", (9, 0, 0)
-                )
+        with (
+            mock.patch("smo.utils.templating.os.walk", _os_walker, create=True),
+            self.assertRaises(ValueError),
+        ):
+            # If: I attempt to get the path of a template when it does not exist
+            # Then: An exception should be thrown
+            templating.get_template_path(TEMPLATE_ROOT_NAME, "doesnotexist.sql", (9, 0, 0))
 
     def test_get_template_path_default(self):
         # Setup: Create a mock os walker
@@ -74,11 +74,14 @@ class TestTemplatingUtils(unittest.TestCase):
 
     def test_get_template_path_invalid_folder(self):
         # Setup: Create a mock os walker that has an invalid folder in it
-        with mock.patch("smo.utils.templating.os.walk", _bad_os_walker, create=True):
-            with self.assertRaises(ValueError):
-                # If: I attempt to get a template path when there is an invalid folder in the template folder
-                # Then: I should get an exception
-                templating.get_template_path(TEMPLATE_ROOT_NAME, "template.sql", (9, 0, 0))
+        with (
+            mock.patch("smo.utils.templating.os.walk", _bad_os_walker, create=True),
+            self.assertRaises(ValueError),
+        ):
+            # If: I attempt to get a template path when there is an
+            # invalid folder in the template folder
+            # Then: I should get an exception
+            templating.get_template_path(TEMPLATE_ROOT_NAME, "template.sql", (9, 0, 0))
 
     # RENDER_TEMPLATE TESTS ################################################
     def test_render_template_no_macros(self):
@@ -131,7 +134,8 @@ class TestTemplatingUtils(unittest.TestCase):
         env = templating.TEMPLATE_ENVIRONMENTS.get(env_hash)
         self.assertIsInstance(env, jinja2.Environment)
 
-        # ... The environment should only have the template folder and macro folders in its path
+        # ... The environment should only have the template
+        # folder and macro folders in its path
         loader = env.loader
         self.assertIsInstance(loader, jinja2.FileSystemLoader)
         all_folders = [template_folder, *macro_folders]
@@ -186,7 +190,8 @@ class TestTemplatingUtils(unittest.TestCase):
 
     # RENDER_TEMPLATE_STRING TESTS #########################################
     def test_render_template_string(self):
-        # NOTE: doing very minimal test here since this function just uses jinja2 functionality
+        # NOTE: doing very minimal test here since this
+        # function just uses jinja2 functionality
         # If: I render a string
         rendered = templating.render_template_string("{{foo}}", foo="bar")
 

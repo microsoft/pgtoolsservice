@@ -18,9 +18,11 @@ class TestUtils(unittest.TestCase):
 
     def test_convert_to_dict(self):
         """
-        Test that the convert_to_dict function creates the proper dictionary representation of a complex object
+        Test that the convert_to_dict function creates the proper dictionary
+        representation of a complex object
 
-        The object includes nested objects, lists containing objects, dicts containing objects, and enums
+        The object includes nested objects, lists containing objects,
+        dicts containing objects, and enums
         """
         test_object = _ConversionTestClass()
         converted_dict = utils.serialization.convert_to_dict(test_object)
@@ -28,7 +30,8 @@ class TestUtils(unittest.TestCase):
 
     def test_convert_from_dict(self):
         """
-        Test that the convert_from_dict function creates the proper object representation of a complex object
+        Test that the convert_from_dict function creates the proper object
+        representation of a complex object
         """
         test_object = _ConversionTestClass()
         json_to_convert = test_object.expected_dict()
@@ -69,7 +72,8 @@ class _ConversionTestClass(Serializable):
         self.none_enum = None
 
     def expected_dict(self):
-        """The expected dictionary representation of the instance, for comparison with the utility function output"""
+        """The expected dictionary representation of the instance, for
+        comparison with the utility function output"""
         return {
             "testInt": self.test_int,
             "nestedObject": self.nested_object.expected_dict(),
@@ -88,7 +92,8 @@ class _NestedTestClass(Serializable):
         self.test_string = "test_string"
 
     def expected_dict(self):
-        """The expected dictionary representation of the instance, for comparison with the utility function output"""
+        """The expected dictionary representation of the instance,
+        for comparison with the utility function output"""
         return {"testInt": self.test_int, "testString": self.test_string}
 
 

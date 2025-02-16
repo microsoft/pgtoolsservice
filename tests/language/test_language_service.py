@@ -193,7 +193,8 @@ class TestLanguageService(unittest.TestCase):
 
     def test_pg_language_flavor(self) -> None:
         """
-        Test that if provider is PGSQL, the service ignores files registered as being for non-PGSQL flavors
+        Test that if provider is PGSQL, the service ignores files
+        registered as being for non-PGSQL flavors
         """
         # If: I create a new language service
         pgsql_params = LanguageFlavorChangeParams.from_data(
@@ -232,8 +233,10 @@ class TestLanguageService(unittest.TestCase):
 
     def test_on_connect_sends_notification(self) -> None:
         """
-        Test that the service sends an intellisense ready notification after handling an on connect notification from the connection service.
-        This is a slightly more end-to-end test that verifies calling through to the queue layer
+        Test that the service sends an intellisense ready notification after
+        handling an on connect notification from the connection service.
+        This is a slightly more end-to-end test that verifies calling through
+        to the queue layer
         """
         # If: I create a new language service
         service: LanguageService = self._init_service_with_flow_validator()
@@ -285,7 +288,8 @@ class TestLanguageService(unittest.TestCase):
 
     def test_format_doc_no_pgsql_format(self) -> None:
         """
-        Test that the format codepath succeeds even if the configuration options aren't defined
+        Test that the format codepath succeeds even if
+        the configuration options aren't defined
         """
         input_text = "select * from foo where id IN (select id from bar);"
 
@@ -423,7 +427,8 @@ class TestLanguageService(unittest.TestCase):
         self, relative_start_pos: int, expected_start_char: int
     ) -> None:
         """
-        Tests that PGCompleter's Completion objects get converted to CompletionItems as expected
+        Tests that PGCompleter's Completion objects get
+        converted to CompletionItems as expected
         """
         text = "item"
         display = "item is a table"
@@ -471,7 +476,8 @@ class TestLanguageService(unittest.TestCase):
 
     def test_completion_keyword_completion_sort_text(self) -> None:
         """
-        Tests that a Keyword Completion is converted with sort text that puts it after other objects
+        Tests that a Keyword Completion is converted with
+        sort text that puts it after other objects
         """
         text = "item"
         display = "item is something"

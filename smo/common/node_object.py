@@ -4,13 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterator
+from collections.abc import ItemsView, Iterator, KeysView
 from typing import (
     Callable,
     Dict,
     Generic,
-    ItemsView,
-    KeysView,
     List,
     Optional,
     Type,
@@ -71,8 +69,8 @@ class NodeObject(metaclass=ABCMeta):
 
     def __init__(self, root_server: "Server", parent: Optional["NodeObject"], name: str):
         # Define the state of the object
-        self._server: "Server" = root_server
-        self._parent: Optional["NodeObject"] = parent
+        self._server: Server = root_server
+        self._parent: Optional[NodeObject] = parent
 
         self._child_collections: Dict[str, NodeCollection] = {}
         self._property_collections: List[NodeLazyPropertyCollection] = []

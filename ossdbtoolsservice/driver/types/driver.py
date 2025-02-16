@@ -7,7 +7,8 @@ from abc import ABC, abstractmethod
 
 
 class ServerConnection(ABC):
-    """Abstract base class that outlines methods and properties that connections must implement"""
+    """Abstract base class that outlines methods and 
+    properties that connections must implement"""
 
     # PROPERTIES ###########################################################
     @property
@@ -138,7 +139,8 @@ class ServerConnection(ABC):
     @abstractmethod
     def execute_dict(self, query: str, params=None):
         """
-        Executes a query and returns the results as an ordered list of dictionaries that map column
+        Executes a query and returns the results as an 
+        ordered list of dictionaries that map column
         name to value. Columns are returned, as well.
         :param conn: The connection to use to execute the query
         :param query: The text of the query to execute

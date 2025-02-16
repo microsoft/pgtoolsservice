@@ -162,7 +162,8 @@ class ScriptFile:
         # Retrieve the line of the position
         line_string: str = self.file_lines[position.line]
 
-        # Validate against number of columns. Allow the character to be in the last column to add a
+        # Validate against number of columns. 
+        # Allow the character to be in the last column to add a
         # character to the end of the line.
         if position.character < 0 or position.character > len(line_string):
             # TODO: Localize

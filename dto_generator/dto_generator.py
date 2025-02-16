@@ -197,5 +197,5 @@ if __name__ == "__main__":
 
     # Generate the full schema and save it to a JSON schema file
     full_schema = generate_full_schema()
-    schema_file_path = f"build/dto_generator/full_schema.json"
+    schema_file_path = "build/dto_generator/full_schema.json"
     save_json_schema_to_file(full_schema, schema_file_path)

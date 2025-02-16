@@ -92,8 +92,10 @@ class RestoreParams(Serializable):
 
 RESTORE_REQUEST = IncomingMessageConfiguration("restore/restore", RestoreParams)
 
-# These options are handled in the disaster recovery service's _perform_restore method. The path has special case handling, but most are handled automatically
-# by using the option's name as the flag name, and the setting as the value. The RestoreOptions contract above has a field corresponding to each option.
+# These options are handled in the disaster recovery service's _perform_restore method.
+# The path has special case handling, but most are handled automatically
+# by using the option's name as the flag name, and the setting as the value.
+# The RestoreOptions contract above has a field corresponding to each option.
 # TODO: Localize the display names and descriptions
 RESTORE_OPTIONS = FeatureMetadataProvider(
     True,
@@ -157,7 +159,8 @@ RESTORE_OPTIONS = FeatureMetadataProvider(
         ServiceOption(
             name="useList",
             display_name="Use list filename",
-            description="Use table of contents from the given file for selecting/ordering output",
+            description="Use table of contents from the given file "
+            "for selecting/ordering output",
             value_type=ServiceOption.VALUE_TYPE_STRING,
             is_required=False,
             group_name="Advanced",
@@ -293,7 +296,8 @@ RESTORE_OPTIONS = FeatureMetadataProvider(
         ServiceOption(
             name="strictNames",
             display_name="Strict names",
-            description="Require table and/or schema include patterns to match at least one entity each",
+            description="Require table and/or schema include patterns "
+            "to match at least one entity each",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
             group_name="Advanced",

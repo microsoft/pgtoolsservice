@@ -58,7 +58,7 @@ class TestScripter(unittest.TestCase):
     def test_script_no_metadata(self):
         # If: I attempt to perform a script operation that is invalid
         # Then: I should get an exception
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             self.script.script(scripter.ScriptOperation.UPDATE, None)
 
     def test_script_unsupported(self):
@@ -104,7 +104,8 @@ class TestScripter(unittest.TestCase):
 
             # Then:
             # ... I should get something back
-            # NOTE: The actual contents of the script is tested in the PGSMO object's unit tests
+            # NOTE: The actual contents of the script is tested
+            # in the PGSMO object's unit tests
             assert_not_none_or_whitespace(result)
 
             # ... The URN should have been used to get the object
@@ -183,9 +184,9 @@ class TestScripterOld(unittest.TestCase):
 
         # The result should also have the CREATE TRIGGER script
         self.assertTrue(
-            f'CREATE TRIGGER "{trigger_name}"\n     INSERT\n    ON "{table_name}"\n    FOR EACH STATEMENT\n    '
-            + f"EXECUTE FUNCTION {tfunction_name}();"
-            in result
+            f'CREATE TRIGGER "{trigger_name}"\n     INSERT'
+            f'\n    ON "{table_name}"\n    FOR EACH STATEMENT\n    '
+            f"EXECUTE FUNCTION {tfunction_name}();" in result
         )
 
         # ... The URN should have been used to get the object
@@ -247,7 +248,8 @@ class TestScripterOld(unittest.TestCase):
         result = self.service.script_as_create()
         # The result should be the correct template value
         self.assertIn(
-            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD COLUMN "TestName" TestDatatype;',
+            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    '
+            'ADD COLUMN "TestName" TestDatatype;',
             result,
         )
 
@@ -272,8 +274,8 @@ class TestScripterOld(unittest.TestCase):
         result = mock_check_constraint.create_script()
         # The result should be the correct template value
         self.assertTrue(
-            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" CHECK (TestConsrc);'
-            in result
+            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    '
+            'ADD CONSTRAINT "TestName" CHECK (TestConsrc);' in result
         )
 
     def test_exclusion_constraint_scripting(self):
@@ -298,8 +300,8 @@ class TestScripterOld(unittest.TestCase):
         result = mock_exclusion_constraint.create_script()
         # The result should be the correct template value
         self.assertTrue(
-            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" EXCLUDE USING TestAmname'
-            in result
+            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    '
+            'ADD CONSTRAINT "TestName" EXCLUDE USING TestAmname' in result
         )
 
     def test_foreign_key_constraint_scripting(self):
@@ -327,7 +329,8 @@ class TestScripterOld(unittest.TestCase):
         result = mock_foreign_key_constraint.create_script()
         # The result should be the correct template value
         self.assertTrue(
-            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName" FOREIGN KEY '
+            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    '
+            'ADD CONSTRAINT "TestName" FOREIGN KEY '
             "(None, None, None, None, None, None, None, None, None, None, None)\n    "
             'REFERENCES "TestRemoteSchema"."TestRemoteTable"' in result
         )
@@ -354,8 +357,8 @@ class TestScripterOld(unittest.TestCase):
         result = mock_index_constraint.create_script()
         # The result should be the correct template value
         self.assertTrue(
-            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    ADD CONSTRAINT "TestName"  USING INDEX "TestIndex";'
-            in result
+            'ALTER TABLE IF EXISTS "TestSchema"."TestTable"\n    '
+            'ADD CONSTRAINT "TestName"  USING INDEX "TestIndex";' in result
         )
 
     def test_rule_scripting(self):
@@ -379,7 +382,8 @@ class TestScripterOld(unittest.TestCase):
         result = mock_rule.create_script()
         # The result should be the correct template value
         self.assertTrue(
-            'CREATE OR REPLACE RULE "TestName" AS\n    ON TESTEVENT TO "TestSchema"."TestView"\n    '
+            'CREATE OR REPLACE RULE "TestName" AS\n    '
+            'ON TESTEVENT TO "TestSchema"."TestView"\n    '
             "WHERE TestCondition\n    DO\nTestStatements;\n" in result
         )
 

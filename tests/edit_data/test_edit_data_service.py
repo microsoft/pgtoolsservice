@@ -52,7 +52,6 @@ class TestEditDataService(unittest.TestCase):
 
         self._service_under_test.register(self._service_provider)
 
-        # self._connection = MockConnection({"port": "8080", "host": "test", "dbname": "test"})
         self._initialize_edit_request = InitializeEditParams()
 
         self._initialize_edit_request.schema_name = "public"

@@ -55,7 +55,8 @@ _SchemaObject = namedtuple("SchemaObject", "name schema meta schema_name")
 
 def SchemaObject(name, schema=None, meta=None, schema_name=None):
     """
-    schema and schema_name mean to same. However, schema holds a value only if completion/intellisense
+    schema and schema_name mean to same. However, schema holds a value
+    only if completion/intellisense
     need it based on _maybe_schema logic. schema_name always holds a value.
     """
     return _SchemaObject(name, schema, meta, schema_name)
@@ -470,7 +471,10 @@ class PGCompleter(Completer, MyCompleter):
             c = self.case
             if self.generate_aliases or normalize_ref(left.tbl) in refs:
                 lref = self.alias(left.tbl, suggestion.table_refs)
-                join = f"{c(left.tbl)} {lref} ON {lref}.{c(left.col)} = {rtbl.ref}.{c(right.col)}"
+                join = (
+                    f"{c(left.tbl)} {lref} ON "
+                    f"{lref}.{c(left.col)} = {rtbl.ref}.{c(right.col)}"
+                )
             else:
                 join = "{0} ON {0}.{1} = {2}.{3}".format(
                     c(left.tbl), c(left.col), rtbl.ref, c(right.col)
@@ -760,7 +764,9 @@ class PGCompleter(Completer, MyCompleter):
 
     # {{ PGToolsService EDIT }}
     # def get_namedquery_matches(self, _, word_before_cursor):
-    #     return self.find_matches(word_before_cursor, NamedQueries.instance.list(), meta='named query')
+    #     return self.find_matches(
+    #       word_before_cursor, NamedQueries.instance.list(), meta='named query'
+    #     )
 
     suggestion_matchers = {
         FromClauseItem: get_from_clause_item_matches,

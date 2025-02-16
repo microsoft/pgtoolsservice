@@ -49,7 +49,9 @@ pg_conn_provider_opts = ConnectionProviderOptions(
         ConnectionOption(
             name="password",
             display_name="Password",
-            description="Indicates the password to be used when connecting to the data source",
+            description=(
+                "Indicates the password to be used when connecting to the data source"
+            ),
             value_type=ConnectionOption.VALUE_TYPE_PASSWORD,
             special_value_type=ConnectionOption.SPECIAL_VALUE_PASSWORD_NAME,
             is_identity=True,
@@ -73,7 +75,8 @@ pg_conn_provider_opts = ConnectionProviderOptions(
         ConnectionOption(
             name="azureAccountToken",
             display_name="Access Token",
-            description="Indicates an Active Directory access token to be used when connecting to the data source",
+            description="Indicates an Active Directory access token "
+            "to be used when connecting to the data source",
             value_type=ConnectionOption.VALUE_TYPE_ACCESS_TOKEN,
             special_value_type=ConnectionOption.SPECIAL_VALUE_ACCESS_TOKEN_NAME,
             is_identity=True,
@@ -114,7 +117,9 @@ pg_conn_provider_opts = ConnectionProviderOptions(
         ConnectionOption(
             name="options",
             display_name="Command-line options",
-            description="Command-line options to send to the server when the connection starts",
+            description=(
+                "Command-line options to send to the server when the connection starts"
+            ),
             value_type=ConnectionOption.VALUE_TYPE_STRING,
             group_name="Server",
         ),
@@ -187,7 +192,9 @@ pg_conn_provider_opts = ConnectionProviderOptions(
         ConnectionOption(
             name="service",
             display_name="Service name",
-            description="The service name in pg_service.conf to use for connection parameters",
+            description=(
+                "The service name in pg_service.conf to use for connection parameters"
+            ),
             value_type=ConnectionOption.VALUE_TYPE_STRING,
             group_name="Client",
         ),

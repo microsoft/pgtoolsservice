@@ -226,7 +226,8 @@ class QueryExecutionService(Service):
     def _handle_execute_query_request(
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
-        """Kick off thread to execute query in response to an incoming execute query request"""
+        """Kick off thread to execute query 
+        in response to an incoming execute query request"""
 
         def before_query_initialize(before_query_initialize_params):
             # Send a response to indicate that the query was kicked off
@@ -283,7 +284,8 @@ class QueryExecutionService(Service):
     def _handle_execute_deploy_request(
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
-        """Kick off thread to execute query in response to an incoming execute query request"""
+        """Kick off thread to execute query 
+        in response to an incoming execute query request"""
 
         def before_query_initialize(before_query_initialize_params):
             # Send a response to indicate that the query was kicked off
@@ -352,7 +354,8 @@ class QueryExecutionService(Service):
             _check_and_fire(worker_args.on_batch_start, batch_event_params)
 
         def _batch_execution_finished_callback(batch: Batch) -> None:
-            # Send back notices as a separate message to avoid error coloring / highlighting of text
+            # Send back notices as a separate message to 
+            # avoid error coloring / highlighting of text
             notices = batch.notices
             if notices:
                 notice_messages = "\n".join(notices)
@@ -381,7 +384,8 @@ class QueryExecutionService(Service):
             batch_event_params = BatchNotificationParams(batch_summary, worker_args.owner_uri)
             _check_and_fire(worker_args.on_batch_complete, batch_event_params)
 
-        # Create a new query if one does not already exist or we already executed the previous one
+        # Create a new query if one does not already exist 
+        # or we already executed the previous one
         if (
             params.owner_uri not in self.query_results
             or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED
@@ -472,8 +476,8 @@ class QueryExecutionService(Service):
                 request_context.send_error(NO_QUERY_MESSAGE)  # TODO: Localize
                 return
             # Make sure to cancel the query first if it's not executed.
-            # If it's not started, then make sure it never starts. If it's executing, make sure
-            # that we stop it
+            # If it's not started, then make sure it never starts. 
+            # If it's executing, make sure that we stop it
             if (
                 self.query_results[params.owner_uri].execution_state
                 is not ExecutionState.EXECUTED
@@ -530,7 +534,8 @@ class QueryExecutionService(Service):
         self, owner_uri: str, connection_type: ConnectionType
     ) -> ServerConnection:
         """
-        Get a connection for the given owner URI and connection type from the connection service
+        Get a connection for the given owner URI and 
+        connection type from the connection service
 
         :param owner_uri: the URI to get the connection for
         :param connection_type: the type of connection to get
@@ -596,7 +601,8 @@ class QueryExecutionService(Service):
             return ""
 
         else:
-            # Then params must be an instance of ExecuteStringParams, which has the query as an attribute
+            # Then params must be an instance of ExecuteStringParams, 
+            # which has the query as an attribute
             return params.query
 
     def _resolve_query_exception(
@@ -675,7 +681,8 @@ class QueryExecutionService(Service):
             try:
                 rollback_query.execute(worker_args.connection)
             except Exception as rollback_exception:
-                # If the rollback failed, handle the error as usual but don't try to roll back again
+                # If the rollback failed, handle the error as usual 
+                # but don't try to roll back again
                 self._resolve_query_exception(
                     rollback_exception, rollback_query, worker_args, True
                 )

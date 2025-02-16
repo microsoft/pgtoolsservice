@@ -62,7 +62,8 @@ class Scripter:
         if not isinstance(obj, handler[0]):
             # TODO: Localize
             raise TypeError(
-                f"Object of type {obj.__class__.__name__} does not support script operation {operation}"
+                f"Object of type {obj.__class__.__name__} "
+                f"does not support script operation {operation}"
             )
 
         return handler[1](obj)

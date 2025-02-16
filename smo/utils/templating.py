@@ -151,7 +151,7 @@ def string_convert(value):
         6 -> '6'
         "sql" -> "'sql'"
     """
-    return "'{}'".format(str(value))
+    return f"'{str(value)}'"
 
 
 def _hash_source_list(sources: list) -> int:
@@ -321,7 +321,7 @@ def scan_keyword_extra_lookup(key):
     # TYPE_FUNC_NAME_KEYWORD  2
     # RESERVED_KEYWORD        3
 
-    return _EXTRA_KEYWORDS.get(key, None) or scan_keyword(key)
+    return _EXTRA_KEYWORDS.get(key) or scan_keyword(key)
 
 
 _EXTRA_KEYWORDS = {

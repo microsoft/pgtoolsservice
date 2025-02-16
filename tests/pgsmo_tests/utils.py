@@ -144,7 +144,8 @@ class MockPGServerConnection(PostgreSQLConnection):
                 dsn_parameters=f"host={host} dbname={name} user={user} port={port}",
             )
 
-        # mock psycopg.connect call in PostgreSQLConnection.__init__ to return mock psycopg connection
+        # mock psycopg.connect call in PostgreSQLConnection.__init__
+        # to return mock psycopg connection
         with mock.patch("psycopg.connect", mock.Mock(return_value=connection)):
             super().__init__(
                 {"host_name": host, "user_name": user, "port": port, "database_name": name}

@@ -98,7 +98,8 @@ class NodeObjectTestBase(metaclass=ABCMeta):
 
     def test_full_properties(self):
         # Setup:
-        # NOTE: We're *not* mocking out the template rendering b/c this will verify that there's a template
+        # NOTE: We're *not* mocking out the template rendering b/c this will
+        # verify that there's a template
         # ... Create a mock query execution that will return the properties
         mock_exec_dict = mock.MagicMock(return_value=([], [self.property_query]))
 
@@ -209,19 +210,22 @@ class NodeObjectTestBase(metaclass=ABCMeta):
     # TODO: Add test for PPAS server type when we support it
 
     # CUSTOM TEST LOGIC ####################################################
-    @staticmethod
+    @staticmethod  # noqa: B027
     def _custom_validate_from_node(obj, mock_server: Server):
         """
-        Can be overridden in child classes to add custom validation to _from_node_query tests after
+        Can be overridden in child classes to add custom
+        validation to _from_node_query tests after
         the standard validation is performed.
         """
+        pass
 
-    @staticmethod
+    @staticmethod  # noqa: B027
     def _custom_validate_init(obj, mock_server: Server):
         """
-        Can be overridden in child classes to add custom validation to __init__ tests after the
-        standard validation is performed.
+        Can be overridden in child classes to add custom validation to __init__ tests
+        after the standard validation is performed.
         """
+        pass
 
     # PROTECTED HELPERS ####################################################
     def _init_validation(

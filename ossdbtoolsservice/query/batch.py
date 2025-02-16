@@ -210,8 +210,10 @@ class SelectBatch(Batch):
 
     def get_cursor(self, connection: ServerConnection):
         cursor_name = str(uuid.uuid4())
-        # Named cursors can be created only in the transaction. As our connection has autocommit set to true
-        # there is not transaction concept with it so we need to have withhold to true and as this cursor is local
+        # Named cursors can be created only in the transaction. 
+        # As our connection has autocommit set to true
+        # there is not transaction concept with it so we need to have withhold to true 
+        # and as this cursor is local
         # and we explicitly close it we are good
         return connection.cursor(name=cursor_name, withhold=True)
 

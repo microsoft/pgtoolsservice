@@ -218,7 +218,11 @@ class MessageServer(ABC):
         if self._logger is not None:
             self._logger.info(message)
 
-    def wait_for_exit(self) -> None:
+    def wait_for_exit(self) -> None:  # noqa: B027
+        """Blocks until the server stops.
+
+        Default implementation does nothing.
+        """
         pass
 
     @abstractmethod

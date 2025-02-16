@@ -17,8 +17,8 @@ class JSONRPCMessageType(Enum):
 
 class JSONRPCMessage:
     """
-    Internal representation of a JSON RPC message. Provides logic for converting back and forth
-    from dictionary
+    Internal representation of a JSON RPC message. 
+    Provides logic for converting back and forth from dictionary
     """
 
     # CONSTRUCTORS #########################################################

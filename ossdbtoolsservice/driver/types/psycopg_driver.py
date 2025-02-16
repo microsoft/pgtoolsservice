@@ -15,7 +15,8 @@ from ossdbtoolsservice.workspace.contracts import Configuration
 
 PG_CANCELLATION_QUERY = "SELECT pg_cancel_backend ({})"
 
-# Dictionary mapping connection option names to their corresponding PostgreSQL connection string keys.
+# Dictionary mapping connection option names to their
+# corresponding PostgreSQL connection string keys.
 # If a name is not present in this map, the name should be used as the key.
 PG_CONNECTION_OPTION_KEY_MAP = {
     "connectTimeout": "connect_timeout",
@@ -67,8 +68,8 @@ class PostgreSQLConnection(ServerConnection):
         :param conn_params: connection parameters dict
         :param config: optional Configuration object with pgsql connection config
         """
-        # If options contains azureSecurityToken, then just copy it over to password, which is how it is
-        # passed to PostgreSQL.
+        # If options contains azureSecurityToken, then just copy it over to password,
+        # which is how it is passed to PostgreSQL.
         if "azureAccountToken" in conn_params:
             conn_params["password"] = conn_params["azureAccountToken"]
 
@@ -83,7 +84,8 @@ class PostgreSQLConnection(ServerConnection):
             ".postgres.cosmos.azure.com"
         )
 
-        # Use the correct default DB depending on whether config is defined and whether the server is an Azure Cosmos PG server
+        # Use the correct default DB depending on whether config is defined and
+        # whether the server is an Azure Cosmos PG server
         self._default_database = (
             config.pgsql.default_database
             if config
@@ -102,7 +104,8 @@ class PostgreSQLConnection(ServerConnection):
         if "port" not in connection_options or not connection_options["port"]:
             connection_options["port"] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
 
-        # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
+        # Pass connection parameters as keyword arguments to the
+        # connection by unpacking the connection_options dict
         self._conn = psycopg.connect(**connection_options)
         addAdapters()
 
@@ -268,7 +271,8 @@ class PostgreSQLConnection(ServerConnection):
 
     def execute_dict(self, query: str, params=None) -> tuple[list[Column], list[dict]]:
         """
-        Executes a query and returns the results as an ordered list of dictionaries that map column
+        Executes a query and returns the results as an ordered
+        list of dictionaries that map column
         name to value. Columns are returned, as well.
         :param conn: The connection to use to execute the query
         :param query: The text of the query to execute
@@ -323,7 +327,11 @@ class PostgreSQLConnection(ServerConnection):
         List the owner(s) of the current database
         """
         database_name = self.database_name
-        owner_query = f"SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{database_name}'"
+        owner_query = (
+            f"SELECT pg_catalog.pg_get_userbyid(db.datdba) "
+            "FROM pg_catalog.pg_database db "
+            f"WHERE db.datname = '{database_name}'"
+        )
         return self.execute_query(owner_query, all=True)[0][0]
 
     def get_database_size(self, dbname: str):
@@ -335,7 +343,8 @@ class PostgreSQLConnection(ServerConnection):
         """
         Get the message from DatabaseError instance
         """
-        # If error.args exists and has at least one element, return the first element as the error message.
+        # If error.args exists and has at least one element, 
+        # return the first element as the error message.
         if hasattr(error, "args") and error.args and len(error.args) > 0:
             return error.args[0]
 

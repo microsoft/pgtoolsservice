@@ -39,7 +39,8 @@ class TestTasks(unittest.TestCase):
         )
 
     def test_initialization(self):
-        """Test that the task is initialized with the correct default values and sends a creation notification"""
+        """Test that the task is initialized with the correct default
+        values and sends a creation notification"""
         # If I initialize a task
         task = self.create_task()
         # Then the task's status gets set correctly
@@ -64,7 +65,8 @@ class TestTasks(unittest.TestCase):
         self.assertIn("task_id", actual_params)
 
     def test_run_task(self):
-        """Test that the task can be started, runs in a separate thread, and sends status notifications"""
+        """Test that the task can be started, runs in a separate thread,
+        and sends status notifications"""
         # If I kick off a task and wait for it to complete
         task = self.create_task()
         task.start()
@@ -104,12 +106,14 @@ class TestTasks(unittest.TestCase):
         task = self.create_task()
         task.start()
         task._thread.join()
-        # Then the task's status is properly marked as failed and the status message shows the error
+        # Then the task's status is properly marked as failed and
+        # the status message shows the error
         self.assertIs(task.status, TaskStatus.FAILED)
         self.assertEqual(task.status_message, exception_message)
 
     def test_cancel(self):
-        """Test that canceling a task calls its cancellation callback and sets the canceled flag"""
+        """Test that canceling a task calls its cancellation
+        callback and sets the canceled flag"""
         # Set up the task with a cancellation callback
         task = self.create_task()
         task.on_cancel = mock.Mock()

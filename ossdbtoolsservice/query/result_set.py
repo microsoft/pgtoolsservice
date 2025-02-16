@@ -67,7 +67,9 @@ class ResultSet(metaclass=ABCMeta):
 
     @abstractmethod
     def update_row(self, row_id: int, cursor):
-        """Add row accepts cursor which will be iterated over to get the current row to be updated"""
+        """Add row accepts cursor which will be iterated over 
+        to get the current row to be updated"""
+        pass
 
     @abstractmethod
     def get_row(self, row_id: int) -> list[DbCellValue]:

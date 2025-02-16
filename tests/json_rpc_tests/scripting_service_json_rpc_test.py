@@ -19,7 +19,8 @@ from tests.json_rpc_tests.scripting_service_test_metadata import SCRIPT_META_DAT
 
 
 class ScriptingJSONRPCTests:
-    # The parameter list of generated test function. It's needed when fire a function scripting request.
+    # The parameter list of generated test function.
+    # It's needed when fire a function scripting request.
     CREATED_FUNCTION_PARAMETER_LIST = "(x integer, y integer, OUT sum integer)"
 
     def test_scripting(self):

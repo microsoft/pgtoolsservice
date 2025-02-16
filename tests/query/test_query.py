@@ -98,7 +98,8 @@ class TestQuery(unittest.TestCase):
         self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
 
     def test_batch_failure(self):
-        """Test that query execution handles a batch execution failure by stopping further execution"""
+        """Test that query execution handles a batch execution failure by
+        stopping further execution"""
         # Set up the cursor to fail when executed
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
 
@@ -151,7 +152,8 @@ select * from t2
             )
 
     def test_batch_selections_do_block(self):
-        """Test that the query sets up batch objects with correct selection information for blocks containing statements"""
+        """Test that the query sets up batch objects with correct selection
+        information for blocks containing statements"""
         full_query = """DO $$
 BEGIN
 RAISE NOTICE 'Hello world 1';
@@ -190,7 +192,8 @@ select * from t1;"""
 -- test
 -- test;"""
 
-        # If I build a query that contains a batch consisting of only comments, in addition to other valid batches
+        # If I build a query that contains a batch consisting of only comments,
+        # in addition to other valid batches
         query = Query(
             "test_uri",
             full_query,

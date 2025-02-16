@@ -1,4 +1,3 @@
-
 import pytest
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
@@ -23,17 +22,19 @@ class MockMessageServer(MessageServer):
             self.async_runner.shutdown()
 
     def _send_message(self, message: JSONRPCMessage) -> None:
-        if message.message_type == JSONRPCMessageType.Request:
-            if message.message_method in self._request_responses:
-                # Simulate sending a response
-                response_message = self._request_responses[message.message_method]
-                response_message._message_id = message.message_id
-                assert isinstance(self._response_queues, ResponseQueues)
-                queue = self._response_queues.get_queue(message.message_id)
-                if not queue:
-                    raise ValueError("Request message is missing ID")
-                assert self.async_runner
-                self.async_runner.run_async(queue.put(response_message))
+        if (
+            message.message_type == JSONRPCMessageType.Request
+            and message.message_method in self._request_responses
+        ):
+            # Simulate sending a response
+            response_message = self._request_responses[message.message_method]
+            response_message._message_id = message.message_id
+            assert isinstance(self._response_queues, ResponseQueues)
+            queue = self._response_queues.get_queue(message.message_id)
+            if not queue:
+                raise ValueError("Request message is missing ID")
+            assert self.async_runner
+            self.async_runner.run_async(queue.put(response_message))
         self._messages.append(message)
 
     def receive_message(self, message: JSONRPCMessage) -> None:

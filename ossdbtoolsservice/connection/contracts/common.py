@@ -19,8 +19,8 @@ class ConnectionSummary:
 
 class ConnectionDetails(Serializable):
     """
-    Details about the connection on top of a basic connection summary. Used as part of the incoming
-    connection request
+    Details about the connection on top of a basic connection summary. 
+    Used as part of the incoming connection request
     """
 
     options: dict

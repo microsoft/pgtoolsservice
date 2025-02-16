@@ -126,7 +126,8 @@ class TestScriptFile(unittest.TestCase):
         """Test that get_text_in_range works when the cursor is at the start of a line"""
         sf = self._get_test_script_file()
 
-        # If I get text from a range that covers the entire first line and ends on the second line before any text
+        # If I get text from a range that covers the entire first line and ends on
+        # the second line before any text
         params = Range.from_data(0, 0, 1, 0)
         result = sf.get_text_in_range(params)
 
@@ -163,7 +164,8 @@ class TestScriptFile(unittest.TestCase):
                 sf.validate_position(Position.from_data(2, col))
 
     def test_validate_position_end_of_line(self):
-        """Test that the column that would add a character to a line is treated as a valid column"""
+        """Test that the column that would add a character to a line is
+        treated as a valid column"""
         # Set up the script file
         script_file = self._get_test_script_file()
 
@@ -259,7 +261,8 @@ class TestScriptFile(unittest.TestCase):
         self.assertListEqual(sf.file_lines, expected_result)
 
     def test_apply_change_add_character(self):
-        """Test applying a change by adding a single character to the end of an existing line"""
+        """Test applying a change by adding a single character to the
+        end of an existing line"""
         # Set up the test file and parameters to add a character at the end of the first line
         script_file = self._get_test_script_file()
 
@@ -280,7 +283,8 @@ class TestScriptFile(unittest.TestCase):
         self.assertListEqual(script_file.file_lines, expected_result)
 
     def test_apply_change_add_parentheses(self):
-        """Test applying a change that simulates typing parentheses and putting text between them"""
+        """Test applying a change that simulates typing parentheses
+        and putting text between them"""
         # Set up the test file and parameters to add a character at the end of the first line
         script_file = self._get_test_script_file()
 

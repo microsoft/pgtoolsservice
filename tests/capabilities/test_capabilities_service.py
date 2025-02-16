@@ -56,7 +56,8 @@ class TestCapabilitiesService(unittest.TestCase):
 
     # noinspection PyUnresolvedReferences
     def test_dmp_capabilities_request(self) -> None:
-        # Setup: Create a request context with mocked out send_* methods and set up the capabilities service
+        # Setup: Create a request context with mocked out send_* methods
+        # and set up the capabilities service
         rc = utils.MockRequestContext()
         capabilities_service = CapabilitiesService()
         workspace_service = WorkspaceService()
@@ -74,8 +75,10 @@ class TestCapabilitiesService(unittest.TestCase):
         self.assertIsInstance(rc.send_response.mock_calls[0][1][0], CapabilitiesResult)
 
     def test_dmp_capabilities_have_backup_options(self) -> None:
-        """Test that the capabilities returned for a DMP capabilities request include backup options"""
-        # Setup: Create a request context with mocked out send_* methods and set up the capabilities service
+        """Test that the capabilities returned for a DMP capabilities
+        request include backup options"""
+        # Setup: Create a request context with mocked out send_* methods
+        # and set up the capabilities service
         rc = utils.MockRequestContext()
         capabilities_service = CapabilitiesService()
         workspace_service = WorkspaceService()

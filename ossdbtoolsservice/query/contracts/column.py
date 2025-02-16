@@ -133,7 +133,8 @@ class DbColumn:
         instance.column_name: str = column_name
         instance.data_type = cursor_description[DESC["type_code"]]
         # From documentation, it seems like 'internal_size' is for the max size and
-        # 'display_size' is for the actual size based off of the largest entry in the column so far.
+        # 'display_size' is for the actual size based off of the 
+        # largest entry in the column so far.
         # 'display_size' is always 'None' by default since it's expensive to calculate.
         # 'internal_size' is negative if column max is of a dynamic / variable size
 

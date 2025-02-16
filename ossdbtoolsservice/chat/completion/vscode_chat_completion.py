@@ -139,7 +139,8 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
             settings (PromptExecutionSettings): The settings for the request.
 
         Returns:
-            chat_message_contents (list[ChatMessageContent]): The chat message contents representing the response(s).
+            chat_message_contents (list[ChatMessageContent]):
+                The chat message contents representing the response(s).
         """
         raise NotImplementedError("Non-streaming chat completion is not supported.")
 
@@ -154,7 +155,8 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
         Args:
             chat_history: The chat history to send.
             settings: The settings for the request.
-            function_invoke_attempt: The current attempt count for automatically invoking functions.
+            function_invoke_attempt:
+                The current attempt count for automatically invoking functions.
 
         Yields:
             streaming_chat_message_contents: The streaming chat message contents.
@@ -304,9 +306,8 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                     id = item.id
                     name = item.name
                     input: dict[str, Any] = {}
-                    if item.arguments:
-                        if isinstance(item.arguments, Mapping):
-                            input = {k: v for k, v in item.arguments.items()}
+                    if item.arguments and isinstance(item.arguments, Mapping):
+                        input = {k: v for k, v in item.arguments.items()}
 
                     if id and name:
                         content.append(
@@ -390,7 +391,8 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                     tool_call_index[call_id]["result"] = message
                 else:
                     raise RuntimeError(
-                        f"Tool result with callId {call_id} does not have a matching tool call"
+                        f"Tool result with callId {call_id} "
+                        "does not have a matching tool call"
                     )
             else:
                 reordered_messages_staged.append(message)
@@ -442,9 +444,8 @@ class VSCodeChatCompletionHistoryTranslator:
                     id = item.id
                     name = item.name
                     input: dict[str, Any] = {}
-                    if item.arguments:
-                        if isinstance(item.arguments, Mapping):
-                            input = {k: v for k, v in item.arguments.items()}
+                    if item.arguments and isinstance(item.arguments, Mapping):
+                        input = {k: v for k, v in item.arguments.items()}
 
                     if id and name:
                         content.append(
@@ -561,7 +562,8 @@ class VSCodeChatCompletionHistoryTranslator:
                     tool_call_index[call_id]["result"] = message
                 else:
                     raise RuntimeError(
-                        f"Tool result with callId {call_id} does not have a matching tool call"
+                        f"Tool result with callId {call_id} "
+                        "does not have a matching tool call"
                     )
             else:
                 reordered_messages_staged.append(message)

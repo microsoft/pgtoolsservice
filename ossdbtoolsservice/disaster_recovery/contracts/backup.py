@@ -130,8 +130,10 @@ class BackupParams(Serializable):
 BACKUP_REQUEST = IncomingMessageConfiguration("backup/backup", BackupParams)
 
 
-# These options are handled in the disaster recovery service's _perform_backup method. A few have special case handling, but most are handled automatically by
-# using the option's name as the flag name, and the setting as the value. The BackupInfo contract above has a field corresponding to each option.
+# These options are handled in the disaster recovery service's _perform_backup method.
+# A few have special case handling, but most are handled automatically by
+# using the option's name as the flag name, and the setting as the value.
+# The BackupInfo contract above has a field corresponding to each option.
 # TODO: Localize the display names and descriptions
 BACKUP_OPTIONS = FeatureMetadataProvider(
     True,
@@ -421,7 +423,8 @@ BACKUP_OPTIONS = FeatureMetadataProvider(
         ServiceOption(
             name="strictNames",
             display_name="Strict names",
-            description="Require table and/or schema include patterns to match at least one entity each",
+            description="Require table and/or schema include patterns "
+            "to match at least one entity each",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
             group_name="Advanced",
@@ -429,7 +432,8 @@ BACKUP_OPTIONS = FeatureMetadataProvider(
         ServiceOption(
             name="useSetSessionAuthorization",
             display_name="Use SET SESSION AUTHORIZATION",
-            description="Use SET SESSION AUTHORIZATION commands instead of ALTER OWNER commands to set ownership",
+            description="Use SET SESSION AUTHORIZATION commands instead of "
+            "ALTER OWNER commands to set ownership",
             value_type=ServiceOption.VALUE_TYPE_BOOLEAN,
             is_required=False,
             group_name="Advanced",
