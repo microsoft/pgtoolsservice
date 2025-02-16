@@ -1,4 +1,0 @@
-[flake8]
-max-line-length = 160
-ignore = W605,W503,W504
-builtins = psycopg,ossdbtoolsservice,View
