@@ -12,7 +12,7 @@ def get_time_str(time: datetime):
     """Convert a time object into a standard user-readable string"""
     if time is None:
         return None
-    return time.strftime('%H:%M:%S.%f')
+    return time.strftime("%H:%M:%S.%f")
 
 
 def get_elapsed_time_str(start_time: datetime, end_time: datetime):

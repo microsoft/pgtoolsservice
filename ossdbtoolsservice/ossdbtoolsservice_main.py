@@ -5,8 +5,8 @@
 
 
 import io
-from logging import Logger
 import sys
+from logging import Logger
 
 from ossdbtoolsservice.hosting import MessageServer
 from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
@@ -21,9 +21,7 @@ def _create_server(
     async_runner: AsyncRunner,
 ) -> MessageServer:
     # Create the server, but don't start it yet
-    rpc_server = RPCMessageServer(
-        input_stream, output_stream, async_runner, server_logger
-    )
+    rpc_server = RPCMessageServer(input_stream, output_stream, async_runner, server_logger)
     return create_server_init(rpc_server, server_logger)
 
 
@@ -34,12 +32,12 @@ if __name__ == "__main__":
 
     # Handle input file for stdin
     if args.input:
-        stdin = io.open(args.input, "rb", buffering=0)
+        stdin = open(args.input, "rb", buffering=0)  # noqa: SIM115
     else:
         # Wrap standard in and out in io streams to add readinto support
-        stdin = io.open(sys.stdin.fileno(), "rb", buffering=0, closefd=False)
+        stdin = open(sys.stdin.fileno(), "rb", buffering=0, closefd=False)  # noqa: SIM115
 
-    std_out_wrapped = io.open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)
+    std_out_wrapped = open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)  # noqa: SIM115
 
     async_runner = AsyncRunner()
     server = _create_server(stdin, std_out_wrapped, logger, async_runner)

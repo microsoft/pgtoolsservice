@@ -26,6 +26,7 @@ class MessageNotificationParams:
         owner_uri:  URI for the editor that owns the query
         message:    The message that is being returned
     """
+
     owner_uri: str
     message: ResultMessage
 
@@ -34,9 +35,9 @@ class MessageNotificationParams:
         self.message: ResultMessage = message
 
 
-MESSAGE_NOTIFICATION = 'query/message'
+MESSAGE_NOTIFICATION = "query/message"
 
-DEPLOY_MESSAGE_NOTIFICATION = 'query/deployMessage'
+DEPLOY_MESSAGE_NOTIFICATION = "query/deployMessage"
 
 OutgoingMessageRegistration.register_outgoing_message(MessageNotificationParams)
 OutgoingMessageRegistration.register_outgoing_message(ResultMessage)

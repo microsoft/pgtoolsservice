@@ -4,16 +4,17 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Callable
-import decimal
 import datetime
+import decimal
 import uuid
+from typing import Callable
+
 from dateutil import parser as date_parser  # noqa
 
 from ossdbtoolsservice.parsers import datatypes
 
-VALID_TRUE_VALUES = ['true', 't', 'y', 'yes', '1']
-VALID_FALSE_VALUES = ['false', 'f', 'n', 'no', '0']
+VALID_TRUE_VALUES = ["true", "t", "y", "yes", "1"]
+VALID_FALSE_VALUES = ["false", "f", "n", "no", "0"]
 
 
 def parse_bool(value: str) -> bool:
@@ -45,7 +46,7 @@ def parse_str(value: str) -> str:
 
 def parse_char(value: str) -> str:
     if len(value) > 1:
-        raise ValueError('Value provided is not a character')
+        raise ValueError("Value provided is not a character")
     return value
 
 
@@ -65,7 +66,7 @@ def parse_time_with_timezone(value: str) -> datetime.time:
 
 
 def parse_datetime(value: str) -> datetime.datetime:
-    if value == 'now()':
+    if value == "now()":
         return datetime.datetime.now()
     return date_parser.parse(value)
 
@@ -96,12 +97,12 @@ DATATYPE_PARSER_MAP = {
     datatypes.DATATYPE_TIMESTAMP_WITH_TIMEZONE: parse_datetime,
     datatypes.DATATYPE_INTERVAL: parse_timedelta,
     datatypes.DATATYPE_UUID: parse_uuid,
-    datatypes.DATATYPE_NAME: parse_str
+    datatypes.DATATYPE_NAME: parse_str,
 }
 
 
 def get_parser(column_data_type: str) -> Callable[[str], object]:
-    '''
+    """
     Returns a parser for the column_data_type provided. If not found returns None
-    '''
+    """
     return DATATYPE_PARSER_MAP.get(column_data_type.lower())

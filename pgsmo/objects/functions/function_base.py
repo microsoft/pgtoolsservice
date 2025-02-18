@@ -4,22 +4,26 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta
-from typing import List, Optional
+from typing import Optional
 
+import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
-import smo.utils.templating as templating
 
 
-class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, metaclass=ABCMeta):
+class FunctionBase(
+    NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, metaclass=ABCMeta
+):
     """Base class for Functions. Provides basic properties for all Function types"""
 
-    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
-    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
+    MACRO_ROOT = templating.get_template_root(__file__, "macros")
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, "../global_macros")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'FunctionBase':
+    def _from_node_query(
+        cls, server: "s.Server", parent: NodeObject, **kwargs
+    ) -> "FunctionBase":
         """
         Creates a Function instance from the results of a node query
         :param server: Server that owns the function
@@ -33,22 +37,28 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
             description str: Description of the function
         :return: A Function instance
         """
-        func = cls(server, parent, kwargs['name'])
-        func._oid = kwargs['oid']
-        func._language_name = kwargs['lanname']
-        func._owner = kwargs['funcowner']
-        func._description = kwargs['description']
-        func._schema = kwargs['schema']
-        func._scid = kwargs['schemaoid']
-        func._is_system = kwargs['is_system']
+        func = cls(server, parent, kwargs["name"])
+        func._oid = kwargs["oid"]
+        func._language_name = kwargs["lanname"]
+        func._owner = kwargs["funcowner"]
+        func._description = kwargs["description"]
+        func._schema = kwargs["schema"]
+        func._scid = kwargs["schemaoid"]
+        func._is_system = kwargs["is_system"]
 
         return func
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: "s.Server", parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
         # Declare the basic properties
         self._description: Optional[str] = None
@@ -60,10 +70,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     # PROPERTIES ###########################################################
     @property
     def extended_vars(self):
-        template_vars = {
-            'scid': self.scid,
-            'fnid': self.oid
-        }
+        template_vars = {"scid": self.scid, "fnid": self.oid}
         return template_vars
 
     # -BASIC PROPERTIES ####################################################
@@ -280,11 +287,11 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         func_def, func_args = self._get_function_definition()
 
         create_query_data = {
@@ -315,20 +322,20 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
                 "description": self.description,
                 "acl": self.acl,
                 "seclabels": self.seclabels,
-                "func_args": func_args
+                "func_args": func_args,
             },
             "query_type": "create",
             "query_for": "sql_panel",
             "func_def": func_def,
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
-        self._format_prosrc_for_pure_sql(create_query_data['data'])
-        self._reset_extra_params_for_procedures(create_query_data['data'])
+        self._format_prosrc_for_pure_sql(create_query_data["data"])
+        self._reset_extra_params_for_procedures(create_query_data["data"])
         return create_query_data
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+        """Provides data input for delete script"""
         func_def, func_args = self._get_function_definition()
         func_args = "(" + func_args + ")"
         return {
@@ -336,11 +343,11 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
             "nspname": self.schema,
             "cascade": self.cascade,
             "func_args": func_args,
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for update script"""
         return {
             "data": {
                 "name": self.name_property,
@@ -361,7 +368,7 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
                 "acl": self.acl,
                 "seclabels": self.seclabels,
                 "change_func": self.change_func,
-                "merged_variables": self.merged_variables
+                "merged_variables": self.merged_variables,
             },
             "o_data": {
                 "name": "",
@@ -376,9 +383,9 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
                 "prorows": "",
                 "probin": "",
                 "prosrc_c": "",
-                "prosrc": ""
+                "prosrc": "",
             },
-            "conn": self.server.connection.connection
+            "conn": self.server.connection.connection,
         }
 
     ##########################################################################
@@ -391,29 +398,27 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
     ##########################################################################
 
     def _get_function_definition(self):
-
         sql = templating.render_template(
-            templating.get_template_path(self._mxin_template_root, 'get_definition.sql', self._mxin_server_version),
+            templating.get_template_path(
+                self._mxin_template_root, "get_definition.sql", self._mxin_server_version
+            ),
             self._mxin_macro_root,
             fnid=self.oid,
-            scid=self._scid
+            scid=self._scid,
         )
 
         cols, rows = self._server.connection.execute_dict(sql)
 
         # Add newline and tab before each argument to format
         func_def = templating.qt_ident(
-            self._server.connection.connection,
-            rows[0]['nspname'],
-            rows[0]['proname']
+            self._server.connection.connection, rows[0]["nspname"], rows[0]["proname"]
         )
-        if rows[0]['func_args']:
-            func_def += '(\n\t' + rows[0]['func_args']. \
-                replace(', ', ',\n\t') + ')'
+        if rows[0]["func_args"]:
+            func_def += "(\n\t" + rows[0]["func_args"].replace(", ", ",\n\t") + ")"
         else:
-            func_def += '()'
+            func_def += "()"
 
-        return func_def, rows[0]['func_args']
+        return func_def, rows[0]["func_args"]
 
     def _format_prosrc_for_pure_sql(self, data):
         if self._mxin_server_version[0] < 14:
@@ -422,21 +427,22 @@ class FunctionBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpd
 
         # no need to test whether function/procedure definition is pure sql
         # or not, the parameter from 'is_pure_sql' is sufficient.
-        if 'is_pure_sql' in data and data['is_pure_sql'] is True:
-            data['prosrc'] = data['prosrc_sql']
-            if data['prosrc'].endswith(';') is False:
-                data['prosrc'] = ''.join((data['prosrc'], ';'))
+        if "is_pure_sql" in data and data["is_pure_sql"] is True:
+            data["prosrc"] = data["prosrc_sql"]
+            if data["prosrc"].endswith(";") is False:
+                data["prosrc"] = "".join((data["prosrc"], ";"))
         else:
-            data['is_pure_sql'] = False
+            data["is_pure_sql"] = False
 
     def _reset_extra_params_for_procedures(self, data):
         # Reset Volatile, Cost and Parallel parameter for Procedures
         # if language is not 'edbspl' and database server version is
         # greater than 10.
-        if self._mxin_server_version[0] >= 11 \
-            and ('prokind' in data and data['prokind'] == 'p') \
-                and ('lanname' in data and
-                     data['lanname'] != 'edbspl'):
-            data['procost'] = None
-            data['provolatile'] = None
-            data['proparallel'] = None
+        if (
+            self._mxin_server_version[0] >= 11
+            and ("prokind" in data and data["prokind"] == "p")
+            and ("lanname" in data and data["lanname"] != "edbspl")
+        ):
+            data["procost"] = None
+            data["provolatile"] = None
+            data["proparallel"] = None

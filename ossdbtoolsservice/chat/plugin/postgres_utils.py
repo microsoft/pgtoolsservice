@@ -1,4 +1,4 @@
-from psycopg import sql, Connection
+from psycopg import Connection, sql
 
 
 def fetch_schemas_and_tables(connection: Connection) -> str:
@@ -47,7 +47,10 @@ def execute_readonly_query(
 
             # Estimate the number of tokens in the result
             if len(result_str) > max_result_chars:
-                return f"Result has {len(result)} rows, and is too large to return. Run the query in an editor to see the full result."
+                return (
+                    f"Result has {len(result)} rows, and is too large to return. "
+                    "Run the query in an editor to see the full result."
+                )
             return result_str
         finally:
             connection.rollback()
@@ -99,38 +102,53 @@ def fetch_schema_v1(connection: Connection, schema_name: str = "public") -> str:
             # Get CREATE TABLE statement with constraints
             cur.execute(
                 sql.SQL("""
-                    SELECT 'CREATE TABLE ' || table_schema || '.' || table_name || ' (' ||
-                    string_agg(column_name || ' ' ||
-                                CASE
-                                    WHEN data_type = 'USER-DEFINED' THEN
-                                        (SELECT pg_catalog.format_type(atttypid, atttypmod)
-                                         FROM pg_attribute
-                                         WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = table_name)
-                                         AND attname = column_name)
-                                    ELSE data_type
-                                END ||
-                                COALESCE('(' || character_maximum_length || ')', '') ||
-                                COALESCE(' ' || column_default, '') ||
-                                CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END, ', ') ||
-                    COALESCE(', ' || string_agg(constraint_name || ' ' || constraint_type, ', '), '') || ');'
-                    FROM (
-                        SELECT c.table_schema, c.table_name, c.column_name, c.data_type, c.character_maximum_length, c.column_default, c.is_nullable,
-                               tc.constraint_name, tc.constraint_type
-                        FROM information_schema.columns c
-                        LEFT JOIN (
-                            SELECT tc.table_schema, tc.table_name, kcu.column_name, tc.constraint_name, tc.constraint_type
-                            FROM information_schema.table_constraints tc
-                            JOIN information_schema.key_column_usage kcu
-                            ON tc.constraint_name = kcu.constraint_name
-                            AND tc.table_schema = kcu.table_schema
-                            AND tc.table_name = kcu.table_name
-                        ) tc
-                        ON c.table_schema = tc.table_schema
-                        AND c.table_name = tc.table_name
-                        AND c.column_name = tc.column_name
-                        WHERE c.table_schema = {} AND c.table_name = {}
-                    ) sub
-                    GROUP BY table_schema, table_name;
+    SELECT 'CREATE TABLE ' || table_schema || '.' || table_name || ' (' ||
+    string_agg(column_name || ' ' ||
+                CASE
+                    WHEN data_type = 'USER-DEFINED' THEN
+                        (SELECT pg_catalog.format_type(atttypid, atttypmod)
+                            FROM pg_attribute
+                            WHERE attrelid = (
+                            SELECT oid FROM pg_class 
+                            WHERE relname = table_name
+                            )
+                            AND attname = column_name)
+                    ELSE data_type
+                END ||
+                COALESCE('(' || character_maximum_length || ')', '') ||
+                COALESCE(' ' || column_default, '') ||
+                CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END, ', ') ||
+    COALESCE(', ' || string_agg(constraint_name || ' ' || constraint_type, ', '), '') || ');'
+    FROM (
+        SELECT c.table_schema, 
+                c.table_name, 
+                c.column_name, 
+                c.data_type, 
+                c.character_maximum_length, 
+                c.column_default, 
+                c.is_nullable,
+                tc.constraint_name, 
+                tc.constraint_type
+        FROM information_schema.columns c
+        LEFT JOIN (
+            SELECT 
+                tc.table_schema, 
+                tc.table_name, 
+                kcu.column_name, 
+                tc.constraint_name, 
+                tc.constraint_type
+            FROM information_schema.table_constraints tc
+            JOIN information_schema.key_column_usage kcu
+            ON tc.constraint_name = kcu.constraint_name
+            AND tc.table_schema = kcu.table_schema
+            AND tc.table_name = kcu.table_name
+        ) tc
+        ON c.table_schema = tc.table_schema
+        AND c.table_name = tc.table_name
+        AND c.column_name = tc.column_name
+        WHERE c.table_schema = {} AND c.table_name = {}
+    ) sub
+    GROUP BY table_schema, table_name;
                 """).format(sql.Literal(schema_name), sql.Literal(table_name))
             )
             create_table_stmt = cur.fetchone()
@@ -151,7 +169,15 @@ def fetch_schema_v1(connection: Connection, schema_name: str = "public") -> str:
         # Fetch sequences for the schema
         cur.execute(
             sql.SQL("""
-                SELECT sequence_schema, sequence_name, data_type, start_value, increment, maximum_value, minimum_value, cycle_option
+                SELECT 
+                        sequence_schema, 
+                        sequence_name, 
+                        data_type, 
+                        start_value, 
+                        increment, 
+                        maximum_value, 
+                        minimum_value, 
+                        cycle_option
                 FROM information_schema.sequences
                 WHERE sequence_schema = {};
             """).format(sql.Literal(schema_name))
@@ -191,7 +217,8 @@ def fetch_schema_v1(connection: Connection, schema_name: str = "public") -> str:
         )
         routines = cur.fetchall()
         schema_creation_script.extend(
-            f"CREATE FUNCTION {schema_name}.{routine[0]} AS $$ {routine[1]} $$ LANGUAGE plpgsql;"
+            f"CREATE FUNCTION {schema_name}.{routine[0]} "
+            f"AS $$ {routine[1]} $$ LANGUAGE plpgsql;"
             for routine in routines
         )
 
@@ -261,38 +288,40 @@ def fetch_schema_v2(connection: Connection) -> str:
                 # Get CREATE TABLE statement with constraints
                 cur.execute(
                     sql.SQL("""
-                        SELECT 'CREATE TABLE ' || table_schema || '.' || table_name || ' (' ||
-                        string_agg(column_name || ' ' ||
-                                    CASE
-                                        WHEN data_type = 'USER-DEFINED' THEN
-                                            (SELECT pg_catalog.format_type(atttypid, atttypmod)
-                                             FROM pg_attribute
-                                             WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = table_name)
-                                             AND attname = column_name)
-                                        ELSE data_type
-                                    END ||
-                                    COALESCE('(' || character_maximum_length || ')', '') ||
-                                    COALESCE(' ' || column_default, '') ||
-                                    CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END, ', ') ||
-                        COALESCE(', ' || string_agg(constraint_name || ' ' || constraint_type, ', '), '') || ');'
-                        FROM (
-                            SELECT c.table_schema, c.table_name, c.column_name, c.data_type, c.character_maximum_length, c.column_default, c.is_nullable,
-                                   tc.constraint_name, tc.constraint_type
-                            FROM information_schema.columns c
-                            LEFT JOIN (
-                                SELECT tc.table_schema, tc.table_name, kcu.column_name, tc.constraint_name, tc.constraint_type
-                                FROM information_schema.table_constraints tc
-                                JOIN information_schema.key_column_usage kcu
-                                ON tc.constraint_name = kcu.constraint_name
-                                AND tc.table_schema = kcu.table_schema
-                                AND tc.table_name = kcu.table_name
-                            ) tc
-                            ON c.table_schema = tc.table_schema
-                            AND c.table_name = tc.table_name
-                            AND c.column_name = tc.column_name
-                            WHERE c.table_schema = {} AND c.table_name = {}
-                        ) sub
-                        GROUP BY table_schema, table_name;
+SELECT 'CREATE TABLE ' || table_schema || '.' || table_name || ' (' ||
+string_agg(column_name || ' ' ||
+            CASE
+                WHEN data_type = 'USER-DEFINED' THEN
+                    (SELECT pg_catalog.format_type(atttypid, atttypmod)
+                        FROM pg_attribute
+                        WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = table_name)
+                        AND attname = column_name)
+                ELSE data_type
+            END ||
+            COALESCE('(' || character_maximum_length || ')', '') ||
+            COALESCE(' ' || column_default, '') ||
+            CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END, ', ') ||
+COALESCE(', ' || string_agg(constraint_name || ' ' || constraint_type, ', '), '') || ');'
+FROM (
+    SELECT c.table_schema, c.table_name, c.column_name, c.data_type, 
+            c.character_maximum_length, c.column_default, c.is_nullable,
+            tc.constraint_name, tc.constraint_type
+    FROM information_schema.columns c
+    LEFT JOIN (
+        SELECT tc.table_schema, tc.table_name, kcu.column_name, tc.constraint_name, 
+                tc.constraint_type
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+        ON tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+        AND tc.table_name = kcu.table_name
+    ) tc
+    ON c.table_schema = tc.table_schema
+    AND c.table_name = tc.table_name
+    AND c.column_name = tc.column_name
+    WHERE c.table_schema = {} AND c.table_name = {}
+) sub
+GROUP BY table_schema, table_name;
                     """).format(sql.Literal(schema_name), sql.Literal(table_name))
                 )
                 create_table_stmt = cur.fetchone()
@@ -342,12 +371,13 @@ def fetch_schema_v3(connection: Connection) -> str:
                 JOIN pg_namespace n ON c.relnamespace = n.oid
                 WHERE n.nspname = %s
                   AND c.relkind IN ('r', 'p', 'f', 'v', 'm')
-                  AND (c.relkind NOT IN ('r', 'f') OR c.oid NOT IN (SELECT inhrelid FROM pg_inherits))
+                  AND (c.relkind NOT IN ('r', 'f') OR c.oid NOT IN (
+                        SELECT inhrelid FROM pg_inherits))
                 ORDER BY c.relname;
             """),
                 [schema_name],
             )
-            for obj_name, relkind, oid in cur.fetchall():
+            for obj_name, relkind, _oid in cur.fetchall():
                 full_name = f"{schema_name}.{obj_name}"
 
                 if relkind in ("r", "p", "f"):
@@ -392,9 +422,7 @@ def fetch_schema_v3(connection: Connection) -> str:
                         col_defs.append(f"CONSTRAINT {conname} {condef}")
 
                     stmt = (
-                        f"CREATE TABLE {full_name} (\n    "
-                        + ",\n    ".join(col_defs)
-                        + "\n)"
+                        f"CREATE TABLE {full_name} (\n    " + ",\n    ".join(col_defs) + "\n)"
                     )
 
                     # If the table is partitioned, append the PARTITION BY clause.
@@ -422,9 +450,7 @@ def fetch_schema_v3(connection: Connection) -> str:
                         foreign_info = cur.fetchone()
                         if foreign_info:
                             srvname, options = foreign_info
-                            stmt = stmt.replace(
-                                "CREATE TABLE", "CREATE FOREIGN TABLE", 1
-                            )
+                            stmt = stmt.replace("CREATE TABLE", "CREATE FOREIGN TABLE", 1)
                             stmt += f" SERVER {srvname}"
                             if options:
                                 stmt += f" OPTIONS ({options})"
@@ -446,9 +472,12 @@ def fetch_schema_v3(connection: Connection) -> str:
                         partitions = cur.fetchall()
                         for part_name, part_bound in partitions:
                             child_full_name = f"{schema_name}.{part_name}"
-                            alter_stmt = f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            alter_stmt = (
+                                f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            )
                             if part_bound:
-                                # pg_get_expr returns a string like "FOR VALUES FROM (...) TO (...)"
+                                # pg_get_expr returns a string like 
+                                # "FOR VALUES FROM (...) TO (...)"
                                 alter_stmt += f" {part_bound}"
                             alter_stmt += ";"
                             schema_creation_script.append(alter_stmt)
@@ -470,9 +499,7 @@ def fetch_schema_v3(connection: Connection) -> str:
                         [full_name],
                     )
                     viewdef = cur.fetchone()[0]
-                    stmt = (
-                        f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
-                    )
+                    stmt = f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
                     schema_creation_script.append(stmt)
 
         return "\n".join(schema_creation_script)
@@ -483,7 +510,8 @@ def fetch_schema_v4(connection: Connection) -> str:
     Fetch a complete schema creation script for each non-system schema in the database,
     including tables, partitioned tables (with ALTER TABLE ... ATTACH PARTITION),
     foreign tables, views, materialized views, sequences, indexes, triggers, and functions.
-    Objects contributed by installed extensions (those with pg_depend.deptype = 'e') are excluded.
+    Objects contributed by installed extensions 
+    (those with pg_depend.deptype = 'e') are excluded.
     """
     with connection.cursor() as cur:
         schema_creation_script = []
@@ -494,7 +522,8 @@ def fetch_schema_v4(connection: Connection) -> str:
         if version:
             schema_creation_script.append(f"-- PostgreSQL version: {version[0]}")
 
-        # Create extensions (we still create these, but later exclude their contributed objects)
+        # Create extensions (we still create these, 
+        # but later exclude their contributed objects)
         cur.execute("SELECT extname FROM pg_extension;")
         for (extname,) in cur.fetchall():
             schema_creation_script.append(f"CREATE EXTENSION IF NOT EXISTS {extname};")
@@ -511,23 +540,24 @@ def fetch_schema_v4(connection: Connection) -> str:
         for (schema_name,) in schemas:
             schema_creation_script.append(f"CREATE SCHEMA {schema_name};")
 
-            # -- Process tables (regular, partitioned, foreign), views, and materialized views.
+            # -- Process tables (regular, partitioned, foreign), 
+            # views, and materialized views.
             cur.execute(
                 sql.SQL("""
-                SELECT c.relname, c.relkind, c.oid
-                FROM pg_class c
-                JOIN pg_namespace n ON c.relnamespace = n.oid
-                WHERE n.nspname = %s
-                  AND c.relkind IN ('r', 'p', 'f', 'v', 'm')
-                  -- For regular and foreign tables, exclude those that are partitions.
-                  AND (c.relkind NOT IN ('r', 'f') OR c.oid NOT IN (SELECT inhrelid FROM pg_inherits))
-                ORDER BY c.relname;
+    SELECT c.relname, c.relkind, c.oid
+    FROM pg_class c
+    JOIN pg_namespace n ON c.relnamespace = n.oid
+    WHERE n.nspname = %s
+        AND c.relkind IN ('r', 'p', 'f', 'v', 'm')
+        -- For regular and foreign tables, exclude those that are partitions.
+        AND (c.relkind NOT IN ('r', 'f') OR c.oid NOT IN (SELECT inhrelid FROM pg_inherits))
+    ORDER BY c.relname;
             """),
                 [schema_name],
             )
             objects = cur.fetchall()
 
-            for obj_name, relkind, oid in objects:
+            for obj_name, relkind, _oid in objects:
                 full_name = f"{schema_name}.{obj_name}"
                 if relkind in ("r", "p", "f"):
                     # Build CREATE TABLE (or CREATE FOREIGN TABLE) DDL
@@ -557,7 +587,8 @@ def fetch_schema_v4(connection: Connection) -> str:
                             col_def += " NOT NULL"
                         col_defs.append(col_def)
 
-                    # Append constraints (ensuring multi‑column constraints are output only once)
+                    # Append constraints 
+                    # (ensuring multi‑column constraints are output only once)
                     cur.execute(
                         sql.SQL("""
                         SELECT conname, pg_get_constraintdef(oid, true)
@@ -571,9 +602,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                         col_defs.append(f"CONSTRAINT {conname} {condef}")
 
                     stmt = (
-                        f"CREATE TABLE {full_name} (\n    "
-                        + ",\n    ".join(col_defs)
-                        + "\n)"
+                        f"CREATE TABLE {full_name} (\n    " + ",\n    ".join(col_defs) + "\n)"
                     )
 
                     # If partitioned, add the PARTITION BY clause.
@@ -601,9 +630,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                         foreign_info = cur.fetchone()
                         if foreign_info:
                             srvname, options = foreign_info
-                            stmt = stmt.replace(
-                                "CREATE TABLE", "CREATE FOREIGN TABLE", 1
-                            )
+                            stmt = stmt.replace("CREATE TABLE", "CREATE FOREIGN TABLE", 1)
                             stmt += f" SERVER {srvname}"
                             if options:
                                 stmt += f" OPTIONS ({options})"
@@ -624,8 +651,9 @@ def fetch_schema_v4(connection: Connection) -> str:
                     """),
                         [full_name],
                     )
-                    for tgname, tgdef in cur.fetchall():
-                        # pg_get_triggerdef returns the trigger definition (without a trailing semicolon)
+                    for _tgname, tgdef in cur.fetchall():
+                        # pg_get_triggerdef returns the trigger definition 
+                        # (without a trailing semicolon)
                         schema_creation_script.append(tgdef + ";")
 
                     # For partitioned tables, attach child partitions.
@@ -642,7 +670,9 @@ def fetch_schema_v4(connection: Connection) -> str:
                         )
                         for part_name, part_bound in cur.fetchall():
                             child_full_name = f"{schema_name}.{part_name}"
-                            alter_stmt = f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            alter_stmt = (
+                                f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
+                            )
                             if part_bound:
                                 alter_stmt += f" {part_bound}"
                             alter_stmt += ";"
@@ -674,9 +704,9 @@ def fetch_schema_v4(connection: Connection) -> str:
             # Sequences (using information_schema so that we get a readable set of attributes)
             cur.execute(
                 sql.SQL("""
-                SELECT sequence_name, start_value, minimum_value, maximum_value, increment, cycle_option
-                FROM information_schema.sequences
-                WHERE sequence_schema = %s;
+    SELECT sequence_name, start_value, minimum_value, maximum_value, increment, cycle_option
+    FROM information_schema.sequences
+    WHERE sequence_schema = %s;
             """),
                 [schema_name],
             )
@@ -693,12 +723,11 @@ def fetch_schema_v4(connection: Connection) -> str:
                 seq_stmt += f"    INCREMENT BY {increment}\n"
                 seq_stmt += f"    MINVALUE {min_value}\n"
                 seq_stmt += f"    MAXVALUE {max_value}\n"
-                seq_stmt += (
-                    f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
-                )
+                seq_stmt += f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
                 schema_creation_script.append(seq_stmt)
 
-            # Indexes (query via pg_indexes and join with pg_class to exclude extension‐owned objects)
+            # Indexes (query via pg_indexes and join with pg_class 
+            # to exclude extension‐owned objects)
             cur.execute(
                 sql.SQL("""
                 SELECT c.oid, i.indexname, i.indexdef
@@ -713,7 +742,7 @@ def fetch_schema_v4(connection: Connection) -> str:
             """),
                 [schema_name],
             )
-            for oid, indexname, indexdef in cur.fetchall():
+            for _oid, _indexname, indexdef in cur.fetchall():
                 schema_creation_script.append(indexdef + ";")
 
             # Functions (exclude functions that are part of an extension)
@@ -740,7 +769,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                    """),
                     [schema_name],
                 )
-                for oid, proname, funcdef in cur.fetchall():
+                for _oid, _proname, funcdef in cur.fetchall():
                     schema_creation_script.append(funcdef)
             except Exception:
                 pass

@@ -5,6 +5,4 @@
 
 from ossdbtoolsservice.admin.admin_service import AdminService
 
-__all__ = [
-    'AdminService'
-]
+__all__ = ["AdminService"]

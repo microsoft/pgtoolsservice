@@ -8,6 +8,5 @@ from unittest import mock
 
 
 class ServerMock:
-
     def __init__(self):
         self.set_request_handler = mock.MagicMock()

@@ -11,12 +11,12 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestTable(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'tablename',
-        'oid': 123,
-        'schema': 'public',
-        'schemaoid': 456,
-        'objectname': 'tablename',
-        'is_system': True
+        "name": "tablename",
+        "oid": 123,
+        "schema": "public",
+        "schemaoid": 456,
+        "objectname": "tablename",
+        "is_system": True,
     }
 
     @property
@@ -30,14 +30,22 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
     @property
     def collections(self):
         return [
-            '_check_constraints', 'check_constraints',
-            '_columns', 'columns',
-            '_exclusion_constraints', 'exclusion_constraints',
-            '_foreign_key_constraints', 'foreign_key_constraints',
-            '_index_constraints', 'index_constraints',
-            '_indexes', 'indexes',
-            '_rules', 'rules',
-            '_triggers', 'triggers'
+            "_check_constraints",
+            "check_constraints",
+            "_columns",
+            "columns",
+            "_exclusion_constraints",
+            "exclusion_constraints",
+            "_foreign_key_constraints",
+            "foreign_key_constraints",
+            "_index_constraints",
+            "index_constraints",
+            "_indexes",
+            "indexes",
+            "_rules",
+            "rules",
+            "_triggers",
+            "triggers",
         ]
 
     @property
@@ -70,7 +78,7 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
             "description": "description",
             "acl": "acl",
             "seclabels": "seclabels",
-            "hasoids": "hasoids"
+            "hasoids": "hasoids",
         }
 
     @property
@@ -99,5 +107,5 @@ class TestTable(NodeObjectTestBase, unittest.TestCase):
             "description": "generic description",
             "acl": None,
             "seclabels": None,
-            "hasoids": False
+            "hasoids": False,
         }

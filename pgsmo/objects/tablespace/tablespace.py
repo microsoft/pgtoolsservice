@@ -3,20 +3,20 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional
+from typing import Optional
 
+import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
-import smo.utils.templating as templating
 
 
 class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "templates")
+    MACRO_ROOT = templating.get_template_root(__file__, "macros")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: None, **kwargs) -> 'Tablespace':
+    def _from_node_query(cls, server: "s.Server", parent: None, **kwargs) -> "Tablespace":
         """
         Creates a tablespace from a row of a nodes query result
         :param server: Server that owns the tablespace
@@ -24,21 +24,27 @@ class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
         :param kwargs: Row from a node query for a list of
         :return: A Tablespace instance
         """
-        tablespace = cls(server, kwargs['name'])
+        tablespace = cls(server, kwargs["name"])
 
-        tablespace._oid = kwargs['oid']
-        tablespace._owner = kwargs['owner']
+        tablespace._oid = kwargs["oid"]
+        tablespace._owner = kwargs["owner"]
 
         return tablespace
 
-    def __init__(self, server: 's.Server', name: str):
+    def __init__(self, server: "s.Server", name: str):
         """
         Initializes internal state of a Role object
         """
         NodeObject.__init__(self, server, None, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
         # Declare basic properties
         self._owner: Optional[int] = None
@@ -73,27 +79,25 @@ class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [cls.MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self):
-        """ Returns the data needed for create query """
-        return {"data": {
-            "name": self.name,
-            "spcuser": self.user,
-            "spclocation": self.location
-        }}
+        """Returns the data needed for create query"""
+        return {
+            "data": {"name": self.name, "spcuser": self.user, "spclocation": self.location}
+        }
 
     def _delete_query_data(self):
-        """ Returns the data needed for delete query """
+        """Returns the data needed for delete query"""
         return {"tsname": self.name}
 
     def _update_query_data(self):
-        """ Returns the data needed for update query """
+        """Returns the data needed for update query"""
         return {
             "data": {
                 "name": self.name,
@@ -101,11 +105,7 @@ class Tablespace(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdat
                 "spclocation": self.location,
                 "description": self.description,
                 "spcoptions": self.options,
-                "spcacl": self.acl
+                "spcacl": self.acl,
             },
-            "o_data": {
-                "name": "",
-                "spcuser": "",
-                "description": ""
-            }
+            "o_data": {"name": "", "spcuser": "", "description": ""},
         }

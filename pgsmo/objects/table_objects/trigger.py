@@ -6,17 +6,17 @@
 import os
 from typing import Optional
 
+import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
-import smo.utils.templating as templating
 
 
 class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'trigger')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "trigger")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Trigger':
+    def _from_node_query(cls, server: "s.Server", parent: NodeObject, **kwargs) -> "Trigger":
         """
         Creates a new Trigger object based on the results of a nodes query
         :param server: Server that owns the trigger
@@ -28,15 +28,15 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             is_enable_trigger bool: Whether or not the trigger is enabled
         :return: Instance of a Trigger
         """
-        trigger = cls(server, parent, kwargs['name'])
-        trigger._oid = kwargs['oid']
+        trigger = cls(server, parent, kwargs["name"])
+        trigger._oid = kwargs["oid"]
 
         # Basic properties
-        trigger._is_enabled = kwargs['is_enable_trigger']
+        trigger._is_enabled = kwargs["is_enable_trigger"]
 
         return trigger
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: "s.Server", parent: NodeObject, name: str):
         """
         Initializes a new instance of a trigger
         :param server: Connection the trigger belongs to
@@ -44,9 +44,15 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param name: Name of the trigger
         """
         NodeObject.__init__(self, server, parent, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
         # Declare Trigger-specific basic properties
         self._is_enabled: Optional[bool] = None
@@ -119,18 +125,18 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def extended_vars(self):
         return {
-            'tid': self.parent.oid,
-            'trid': self.oid,
-            'datlastsysoid': self.get_database_node().datlastsysoid
+            "tid": self.parent.oid,
+            "trid": self.oid,
+            "datlastsysoid": self.get_database_node().datlastsysoid,
         }
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return os.path.join(cls.TEMPLATE_ROOT, server.server_type)
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         query_data = {
             "data": {
                 "tgtype": self.tgtype,
@@ -149,23 +155,23 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             }
         }
 
-        self._trigger_definition(query_data['data'])
-        self._get_trigger_function_and_columns(query_data['data'])
+        self._trigger_definition(query_data["data"])
+        self._get_trigger_function_and_columns(query_data["data"])
         return query_data
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+        """Provides data input for delete script"""
         return {
             "data": {
                 "name": self.name,
                 "nspname": self.parent.schema,
-                "relname": self.parent.name
+                "relname": self.parent.name,
             },
-            "cascade": True
+            "cascade": True,
         }
 
     def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for update script"""
         query_data = {
             "tgtype": self.tgtype,
             "lanname": self.lanname,
@@ -203,8 +209,8 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "tginitdeferred": "",
                 "whenclause": "",
                 "description": "",
-                "is_enable_trigger": ""
-            }
+                "is_enable_trigger": "",
+            },
         }
 
     ##########################################################################
@@ -232,49 +238,49 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         # Here we are storing trigger definition
         # We will use it to check trigger type definition
         trigger_definition = {
-            'TRIGGER_TYPE_ROW': (1 << 0),
-            'TRIGGER_TYPE_BEFORE': (1 << 1),
-            'TRIGGER_TYPE_INSERT': (1 << 2),
-            'TRIGGER_TYPE_DELETE': (1 << 3),
-            'TRIGGER_TYPE_UPDATE': (1 << 4),
-            'TRIGGER_TYPE_TRUNCATE': (1 << 5),
-            'TRIGGER_TYPE_INSTEAD': (1 << 6)
+            "TRIGGER_TYPE_ROW": (1 << 0),
+            "TRIGGER_TYPE_BEFORE": (1 << 1),
+            "TRIGGER_TYPE_INSERT": (1 << 2),
+            "TRIGGER_TYPE_DELETE": (1 << 3),
+            "TRIGGER_TYPE_UPDATE": (1 << 4),
+            "TRIGGER_TYPE_TRUNCATE": (1 << 5),
+            "TRIGGER_TYPE_INSTEAD": (1 << 6),
         }
 
         # Fires event definition
-        if data['tgtype'] & trigger_definition['TRIGGER_TYPE_BEFORE']:
-            data['fires'] = 'BEFORE'
-        elif data['tgtype'] & trigger_definition['TRIGGER_TYPE_INSTEAD']:
-            data['fires'] = 'INSTEAD OF'
+        if data["tgtype"] & trigger_definition["TRIGGER_TYPE_BEFORE"]:
+            data["fires"] = "BEFORE"
+        elif data["tgtype"] & trigger_definition["TRIGGER_TYPE_INSTEAD"]:
+            data["fires"] = "INSTEAD OF"
         else:
-            data['fires'] = 'AFTER'
+            data["fires"] = "AFTER"
 
         # Trigger of type definition
-        if data['tgtype'] & trigger_definition['TRIGGER_TYPE_ROW']:
-            data['is_row_trigger'] = True
+        if data["tgtype"] & trigger_definition["TRIGGER_TYPE_ROW"]:
+            data["is_row_trigger"] = True
         else:
-            data['is_row_trigger'] = False
+            data["is_row_trigger"] = False
 
         # Event definition
-        if data['tgtype'] & trigger_definition['TRIGGER_TYPE_INSERT']:
-            data['evnt_insert'] = True
+        if data["tgtype"] & trigger_definition["TRIGGER_TYPE_INSERT"]:
+            data["evnt_insert"] = True
         else:
-            data['evnt_insert'] = False
+            data["evnt_insert"] = False
 
-        if data['tgtype'] & trigger_definition['TRIGGER_TYPE_DELETE']:
-            data['evnt_delete'] = True
+        if data["tgtype"] & trigger_definition["TRIGGER_TYPE_DELETE"]:
+            data["evnt_delete"] = True
         else:
-            data['evnt_delete'] = False
+            data["evnt_delete"] = False
 
-        if data['tgtype'] & trigger_definition['TRIGGER_TYPE_UPDATE']:
-            data['evnt_update'] = True
+        if data["tgtype"] & trigger_definition["TRIGGER_TYPE_UPDATE"]:
+            data["evnt_update"] = True
         else:
-            data['evnt_update'] = False
+            data["evnt_update"] = False
 
-        if data['tgtype'] & trigger_definition['TRIGGER_TYPE_TRUNCATE']:
-            data['evnt_truncate'] = True
+        if data["tgtype"] & trigger_definition["TRIGGER_TYPE_TRUNCATE"]:
+            data["evnt_truncate"] = True
         else:
-            data['evnt_truncate'] = False
+            data["evnt_truncate"] = False
 
         return data
 
@@ -291,33 +297,39 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         # 'Inline EDB-SPL' else we will find the trigger function
         # with schema name.
         sql = templating.render_template(
-            templating.get_template_path(self._mxin_template_root, 'get_triggerfunctions.sql', self._mxin_server_version),
+            templating.get_template_path(
+                self._mxin_template_root,
+                "get_triggerfunctions.sql",
+                self._mxin_server_version,
+            ),
             self._mxin_macro_root,
             tgfoid=self.tgfoid,
-            show_system_objects=show_system_objects
+            show_system_objects=show_system_objects,
         )
 
         cols, rows = self.server.connection.execute_dict(sql)
 
         # Update the trigger function which we have fetched with
         # schema name
-        if len(rows) > 0 and 'tfunctions' in rows[0]:
-            data['tfunction'] = rows[0]['tfunctions']
+        if len(rows) > 0 and "tfunctions" in rows[0]:
+            data["tfunction"] = rows[0]["tfunctions"]
 
-        if len(data['custom_tgargs']) > 0:
+        if len(data["custom_tgargs"]) > 0:
             # We know that trigger has more than 1 argument, let's join them
             # and convert it to string
-            formatted_args = [templating.qt_literal(arg, self.server.connection.connection)
-                              for arg in data['custom_tgargs']]
-            formatted_args = ', '.join(formatted_args)
+            formatted_args = [
+                templating.qt_literal(arg, self.server.connection.connection)
+                for arg in data["custom_tgargs"]
+            ]
+            formatted_args = ", ".join(formatted_args)
 
-            data['tgargs'] = formatted_args
+            data["tgargs"] = formatted_args
         else:
-            data['tgargs'] = None
+            data["tgargs"] = None
 
-        if len(data['tgattr']) >= 1:
-            columns = ', '.join(data['tgattr'].split(' '))
-            data['columns'] = self._get_column_details(columns)
+        if len(data["tgattr"]) >= 1:
+            columns = ", ".join(data["tgattr"].split(" "))
+            data["columns"] = self._get_column_details(columns)
 
         return data
 
@@ -328,15 +340,17 @@ class Trigger(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :return:
         """
         sql = templating.render_template(
-            templating.get_template_path(self._mxin_template_root, 'get_columns.sql', self._mxin_server_version),
+            templating.get_template_path(
+                self._mxin_template_root, "get_columns.sql", self._mxin_server_version
+            ),
             self._mxin_macro_root,
             tid=self.parent.oid,
-            clist=clist
+            clist=clist,
         )
 
         cols, rows = self.server.connection.execute_dict(sql)
         columns = []
         for row in rows:
-            columns.append(row['name'])
+            columns.append(row["name"])
 
         return columns

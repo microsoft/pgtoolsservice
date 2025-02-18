@@ -8,12 +8,18 @@ from unittest import mock
 
 import psycopg
 
-from ossdbtoolsservice.query import (ExecutionState, Query, QueryEvents,
-                                     QueryExecutionSettings,
-                                     ResultSetStorageType)
-from ossdbtoolsservice.query.contracts import (DbColumn,
-                                               SaveResultsRequestParams,
-                                               SelectionData)
+from ossdbtoolsservice.query import (
+    ExecutionState,
+    Query,
+    QueryEvents,
+    QueryExecutionSettings,
+    ResultSetStorageType,
+)
+from ossdbtoolsservice.query.contracts import (
+    DbColumn,
+    SaveResultsRequestParams,
+    SelectionData,
+)
 from ossdbtoolsservice.query_execution.contracts import ExecutionPlanOptions
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from tests.pgsmo_tests.utils import MockPGServerConnection
@@ -25,25 +31,34 @@ class TestQuery(unittest.TestCase):
 
     def setUp(self):
         """Set up the test by creating a query with multiple batches"""
-        self.statement_list = statement_list = ['select version;', 'select * from t1;']
-        self.statement_str = ''.join(statement_list)
-        self.query_uri = 'test_uri'
-        self.query = Query(self.query_uri, self.statement_str, QueryExecutionSettings(ExecutionPlanOptions(), ResultSetStorageType.FILE_STORAGE), QueryEvents())
+        self.statement_list = statement_list = ["select version;", "select * from t1;"]
+        self.statement_str = "".join(statement_list)
+        self.query_uri = "test_uri"
+        self.query = Query(
+            self.query_uri,
+            self.statement_str,
+            QueryExecutionSettings(ExecutionPlanOptions(), ResultSetStorageType.FILE_STORAGE),
+            QueryEvents(),
+        )
 
-        self.mock_query_results = [('Id1', 'Value1'), ('Id2', 'Value2')]
+        self.mock_query_results = [("Id1", "Value1"), ("Id2", "Value2")]
         self.cursor = MockCursor(self.mock_query_results)
-        self.mock_psycopg_connection = MockPsycopgConnection(dsn_parameters='host=test dbname=test')
-        self.connection = MockPGServerConnection(cur=self.cursor, connection=self.mock_psycopg_connection)
+        self.mock_psycopg_connection = MockPsycopgConnection(
+            dsn_parameters="host=test dbname=test"
+        )
+        self.connection = MockPGServerConnection(
+            cur=self.cursor, connection=self.mock_psycopg_connection
+        )
         self.cursor.connection = self.mock_psycopg_connection
 
         self.columns_info = []
         db_column_id = DbColumn()
-        db_column_id.data_type = 'text'
-        db_column_id.column_name = 'Id'
+        db_column_id.data_type = "text"
+        db_column_id.column_name = "Id"
         db_column_id.provider = PG_PROVIDER_NAME
         db_column_value = DbColumn()
-        db_column_value.data_type = 'text'
-        db_column_value.column_name = 'Value'
+        db_column_value.data_type = "text"
+        db_column_value.column_name = "Value"
         db_column_value.provider = PG_PROVIDER_NAME
         self.columns_info = [db_column_id, db_column_value]
         self.get_columns_info_mock = mock.Mock(return_value=self.columns_info)
@@ -58,7 +73,10 @@ class TestQuery(unittest.TestCase):
         """Test that executing a query also executes all of the query's batches in order"""
 
         # If I call query.execute
-        with mock.patch('ossdbtoolsservice.query.data_storage.storage_data_reader.get_columns_info', new=self.get_columns_info_mock):
+        with mock.patch(
+            "ossdbtoolsservice.query.data_storage.storage_data_reader.get_columns_info",
+            new=self.get_columns_info_mock,
+        ):
             self.query.execute(self.connection)
 
         # Then each of the batches executed in order
@@ -80,7 +98,8 @@ class TestQuery(unittest.TestCase):
         self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
 
     def test_batch_failure(self):
-        """Test that query execution handles a batch execution failure by stopping further execution"""
+        """Test that query execution handles a batch execution failure by
+        stopping further execution"""
         # Set up the cursor to fail when executed
         self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
 
@@ -98,17 +117,22 @@ class TestQuery(unittest.TestCase):
 
     def test_batch_selections(self):
         """Test that the query sets up batch objects with correct selection information"""
-        full_query = '''select * from
+        full_query = """select * from
 t1;
 select * from t2;;;
 ;  ;
 select version(); select * from
 t3 ;
 select * from t2
-'''
+"""
 
         # If I build a query that contains several statements
-        query = Query('test_uri', full_query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
+        query = Query(
+            "test_uri",
+            full_query,
+            QueryExecutionSettings(ExecutionPlanOptions(), None),
+            QueryEvents(),
+        )
 
         # Then there is a batch for each non-empty statement
         self.assertEqual(len(query.batches), 5)
@@ -119,21 +143,31 @@ select * from t2
             SelectionData(start_line=2, start_column=0, end_line=2, end_column=17),
             SelectionData(start_line=4, start_column=0, end_line=4, end_column=17),
             SelectionData(start_line=4, start_column=18, end_line=5, end_column=4),
-            SelectionData(start_line=6, start_column=0, end_line=6, end_column=16)]
+            SelectionData(start_line=6, start_column=0, end_line=6, end_column=16),
+        ]
         for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
+            self.assertEqual(
+                _tuple_from_selection_data(batch.selection),
+                _tuple_from_selection_data(expected_selections[index]),
+            )
 
     def test_batch_selections_do_block(self):
-        """Test that the query sets up batch objects with correct selection information for blocks containing statements"""
-        full_query = '''DO $$
+        """Test that the query sets up batch objects with correct selection
+        information for blocks containing statements"""
+        full_query = """DO $$
 BEGIN
 RAISE NOTICE 'Hello world 1';
 RAISE NOTICE 'Hello world 2';
 END $$;
-select * from t1;'''
+select * from t1;"""
 
         # If I build a query that contains a block that contains several statements
-        query = Query('test_uri', full_query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
+        query = Query(
+            "test_uri",
+            full_query,
+            QueryExecutionSettings(ExecutionPlanOptions(), None),
+            QueryEvents(),
+        )
 
         # Then there is a batch for each top-level statement
         self.assertEqual(len(query.batches), 2)
@@ -141,21 +175,31 @@ select * from t1;'''
         # And each batch should have the correct location information
         expected_selections = [
             SelectionData(start_line=0, start_column=0, end_line=4, end_column=7),
-            SelectionData(start_line=5, start_column=0, end_line=5, end_column=17)]
+            SelectionData(start_line=5, start_column=0, end_line=5, end_column=17),
+        ]
         for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
+            self.assertEqual(
+                _tuple_from_selection_data(batch.selection),
+                _tuple_from_selection_data(expected_selections[index]),
+            )
 
     def test_batches_strip_comments(self):
         """Test that we do not attempt to execute a batch consisting only of comments"""
-        full_query = '''select * from t1;
+        full_query = """select * from t1;
 -- test
 -- test
 ;select * from t1;
 -- test
--- test;'''
+-- test;"""
 
-        # If I build a query that contains a batch consisting of only comments, in addition to other valid batches
-        query = Query('test_uri', full_query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
+        # If I build a query that contains a batch consisting of only comments,
+        # in addition to other valid batches
+        query = Query(
+            "test_uri",
+            full_query,
+            QueryExecutionSettings(ExecutionPlanOptions(), None),
+            QueryEvents(),
+        )
 
         # Then there is only a batch for each non-comment statement
         self.assertEqual(len(query.batches), 2)
@@ -163,26 +207,43 @@ select * from t1;'''
         # And each batch should have the correct location information
         expected_selections = [
             SelectionData(start_line=0, start_column=0, end_line=0, end_column=17),
-            SelectionData(start_line=3, start_column=1, end_line=3, end_column=18)]
+            SelectionData(start_line=3, start_column=1, end_line=3, end_column=18),
+        ]
 
         for index, batch in enumerate(query.batches):
-            self.assertEqual(_tuple_from_selection_data(batch.selection), _tuple_from_selection_data(expected_selections[index]))
+            self.assertEqual(
+                _tuple_from_selection_data(batch.selection),
+                _tuple_from_selection_data(expected_selections[index]),
+            )
 
     def test_hash_character_processed_correctly(self):
         """Test that xor operator is not taken for an inline comment delimiter"""
         full_query = "select 42 # 24;"
-        query = Query('test_uri', full_query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
+        query = Query(
+            "test_uri",
+            full_query,
+            QueryExecutionSettings(ExecutionPlanOptions(), None),
+            QueryEvents(),
+        )
 
         self.assertEqual(len(query.batches), 1)
         self.assertEqual(full_query, query.batches[0].batch_text)
 
     def execute_get_subset_raises_error_when_index_not_in_range(self, batch_index: int):
-        full_query = 'Select * from t1;'
-        query = Query('test_uri', full_query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
+        full_query = "Select * from t1;"
+        query = Query(
+            "test_uri",
+            full_query,
+            QueryExecutionSettings(ExecutionPlanOptions(), None),
+            QueryEvents(),
+        )
 
         with self.assertRaises(IndexError) as context_manager:
             query.get_subset(batch_index, 0, 10)
-            self.assertEqual('Batch index cannot be less than 0 or greater than the number of batches', context_manager.exception.args[0])
+            self.assertEqual(
+                "Batch index cannot be less than 0 or greater than the number of batches",
+                context_manager.exception.args[0],
+            )
 
     def test_get_subset_raises_error_when_index_is_negetive(self):
         self.execute_get_subset_raises_error_when_index_not_in_range(-1)
@@ -191,8 +252,13 @@ select * from t1;'''
         self.execute_get_subset_raises_error_when_index_not_in_range(20)
 
     def test_get_subset(self):
-        full_query = 'Select * from t1;'
-        query = Query('test_uri', full_query, QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents())
+        full_query = "Select * from t1;"
+        query = Query(
+            "test_uri",
+            full_query,
+            QueryExecutionSettings(ExecutionPlanOptions(), None),
+            QueryEvents(),
+        )
         expected_subset = []
 
         mock_batch = mock.MagicMock()
@@ -206,14 +272,16 @@ select * from t1;'''
         mock_batch.get_subset.assert_called_once_with(0, 10)
 
     def test_save_as_with_invalid_batch_index(self):
-
         def execute_with_batch_index(index: int):
             params = SaveResultsRequestParams()
             params.batch_index = index
 
             with self.assertRaises(IndexError) as context_manager:
                 self.query.save_as(params, None, None, None)
-                self.assertEqual('Batch index cannot be less than 0 or greater than the number of batches', context_manager.exception.args[0])
+                self.assertEqual(
+                    "Batch index cannot be less than 0 or greater than the number of batches",
+                    context_manager.exception.args[0],
+                )
 
         execute_with_batch_index(-1)
 
@@ -240,5 +308,5 @@ def _tuple_from_selection_data(data: SelectionData):
     return (data.start_line, data.start_column, data.end_line, data.end_column)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

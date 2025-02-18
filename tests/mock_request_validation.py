@@ -57,8 +57,8 @@ class ReceivedError:
 class RequestFlowValidator:
     def __init__(self):
         self.unittest = unittest.TestCase("__init__")
-        self._expected_messages: List[ExpectedMessage] = []
-        self._received_messages: List[ReceivedMessage] = []
+        self._expected_messages: list[ExpectedMessage] = []
+        self._received_messages: list[ReceivedMessage] = []
 
         # Create a request context and monkey patch all the methods to capture the messages
         self.request_context: RequestContext = RequestContext(None, None)
@@ -102,9 +102,7 @@ class RequestFlowValidator:
 
     def validate(self):
         # Iterate over the two lists in sync to to see if they are the same
-        for i in range(
-            0, max([len(self._expected_messages), len(self._received_messages)])
-        ):
+        for i in range(0, max([len(self._expected_messages), len(self._received_messages)])):
             # Step 0) Make sure both messages exist
             if i >= len(self._expected_messages):
                 raise Exception(

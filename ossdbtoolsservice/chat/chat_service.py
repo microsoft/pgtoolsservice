@@ -4,49 +4,45 @@
 # --------------------------------------------------------------------------------------------
 
 import os
-from logging import Logger
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from logging import Logger
 
 from semantic_kernel.connectors.ai.function_choice_behavior import (
     FunctionChoiceBehavior,
 )
-from semantic_kernel.connectors.ai.open_ai.prompt_execution_settings.azure_chat_prompt_execution_settings import (
-    AzureChatPromptExecutionSettings,
-)
 from semantic_kernel.connectors.ai.open_ai import (
     AzureChatCompletion,
+    AzureChatPromptExecutionSettings,
 )
 from semantic_kernel.contents import ChatHistory
-from semantic_kernel.kernel import Kernel
 from semantic_kernel.contents.text_content import TextContent
-
+from semantic_kernel.kernel import Kernel
 
 from ossdbtoolsservice.chat.completion.vscode_chat_prompt_execution_settings import (
     VSCodeChatPromptExecutionSettings,
 )
-from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.chat.messages import (
-    CHAT_REQUEST,
     CHAT_COMPLETION_RESULT_METHOD,
+    CHAT_REQUEST,
     ChatCompletionRequestParams,
     ChatCompletionResult,
 )
-from ossdbtoolsservice.hosting import ServiceProvider, Service
-
+from ossdbtoolsservice.connection.connection_service import ConnectionService
+from ossdbtoolsservice.hosting import Service, ServiceProvider
 from ossdbtoolsservice.hosting.context import NotificationContext, RequestContext
 from ossdbtoolsservice.hosting.message_server import MessageServer
+from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
-from .plugin.postgres_plugin import PostgresPlugin
-from .prompts import system_message_prompt
+from .completion.completion_response_queues import CompletionResponseQueues
 from .completion.messages import (
     VSCODE_LM_COMPLETION_RESPONSE,
     VSCodeLanguageModelChatCompletionResponse,
 )
-from .completion.completion_response_queues import CompletionResponseQueues
 from .completion.vscode_chat_completion import VSCodeChatCompletion
+from .plugin.postgres_plugin import PostgresPlugin
+from .prompts import system_message_prompt
 
 
 class ChatService(Service):

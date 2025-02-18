@@ -2,73 +2,110 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import psycopg
-from psycopg import (Column, connection, cursor)
+from psycopg import Column, connection, cursor
 from psycopg.pq import TransactionStatus
+
 from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.driver.types.adapter import addAdapters
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace.contracts import Configuration
 
-PG_CANCELLATION_QUERY = 'SELECT pg_cancel_backend ({})'
+PG_CANCELLATION_QUERY = "SELECT pg_cancel_backend ({})"
 
-# Dictionary mapping connection option names to their corresponding PostgreSQL connection string keys.
+# Dictionary mapping connection option names to their
+# corresponding PostgreSQL connection string keys.
 # If a name is not present in this map, the name should be used as the key.
 PG_CONNECTION_OPTION_KEY_MAP = {
-    'connectTimeout': 'connect_timeout',
-    'clientEncoding': 'client_encoding',
-    'applicationName': 'application_name'
+    "connectTimeout": "connect_timeout",
+    "clientEncoding": "client_encoding",
+    "applicationName": "application_name",
 }
 
 # Recognized parameter keywords for postgres database connection
 # Source: https://www.postgresql.org/docs/9.6/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
 PG_CONNECTION_PARAM_KEYWORDS = [
-    'host', 'hostaddr', 'port', 'dbname', 'user', 'password', 'passfile', 'connect_timeout',
-    'client_encoding', 'options', 'application_name', 'fallback_application_name', 'keepalives',
-    'keepalives_idle', 'keepalives_interval', 'keepalives_count', 'tty', 'sslmode', 'requiressl',
-    'sslcompression', 'sslcert', 'sslkey', 'sslrootcert', 'sslcrl', 'requirepeer', 'krbsrvname',
-    'gsslib', 'service', 'target_session_attrs'
+    "host",
+    "hostaddr",
+    "port",
+    "dbname",
+    "user",
+    "password",
+    "passfile",
+    "connect_timeout",
+    "client_encoding",
+    "options",
+    "application_name",
+    "fallback_application_name",
+    "keepalives",
+    "keepalives_idle",
+    "keepalives_interval",
+    "keepalives_count",
+    "tty",
+    "sslmode",
+    "requiressl",
+    "sslcompression",
+    "sslcert",
+    "sslkey",
+    "sslrootcert",
+    "sslcrl",
+    "requirepeer",
+    "krbsrvname",
+    "gsslib",
+    "service",
+    "target_session_attrs",
 ]
 
 
 class PostgreSQLConnection(ServerConnection):
     """Wrapper for a psycopg connection that makes various properties easier to access"""
 
-    def __init__(self, conn_params: Dict[str, str], config: Optional[Configuration] = None):
+    def __init__(self, conn_params: dict[str, str], config: Optional[Configuration] = None):
         """
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
         :param config: optional Configuration object with pgsql connection config
         """
-        # If options contains azureSecurityToken, then just copy it over to password, which is how it is
-        # passed to PostgreSQL.
-        if 'azureAccountToken' in conn_params:
-            conn_params['password'] = conn_params['azureAccountToken']
+        # If options contains azureSecurityToken, then just copy it over to password,
+        # which is how it is passed to PostgreSQL.
+        if "azureAccountToken" in conn_params:
+            conn_params["password"] = conn_params["azureAccountToken"]
 
         # Map the connection options to their psycopg-specific options
-        self._connection_options = connection_options = {PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value for option, value in conn_params.items()
-                                                         if option in PG_CONNECTION_PARAM_KEYWORDS}
+        self._connection_options = connection_options = {
+            PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value
+            for option, value in conn_params.items()
+            if option in PG_CONNECTION_PARAM_KEYWORDS
+        }
         # Flag to determine whether server is Azure Cosmos PG server
-        is_cosmos = 'host' in connection_options and connection_options['host'].endswith('.postgres.cosmos.azure.com')
+        is_cosmos = "host" in connection_options and connection_options["host"].endswith(
+            ".postgres.cosmos.azure.com"
+        )
 
-        # Use the correct default DB depending on whether config is defined and whether the server is an Azure Cosmos PG server
-        self._default_database = config.pgsql.default_database if config else constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
+        # Use the correct default DB depending on whether config is defined and
+        # whether the server is an Azure Cosmos PG server
+        self._default_database = (
+            config.pgsql.default_database
+            if config
+            else constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
+        )
         if is_cosmos and config:
             self._default_database = config.pgsql.cosmos_default_database
         elif is_cosmos and not config:
             self._default_database = constants.DEFAULT_DB[constants.COSMOS_PG_DEFAULT_DB]
 
         # Use the default database if one was not provided
-        if 'dbname' not in connection_options or not connection_options['dbname']:
-            connection_options['dbname'] = self.default_database
+        if "dbname" not in connection_options or not connection_options["dbname"]:
+            connection_options["dbname"] = self.default_database
 
         # Use the default port number if one was not provided
-        if 'port' not in connection_options or not connection_options['port']:
-            connection_options['port'] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
+        if "port" not in connection_options or not connection_options["port"]:
+            connection_options["port"] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
 
-        # Pass connection parameters as keyword arguments to the connection by unpacking the connection_options dict
+        # Pass connection parameters as keyword arguments to the
+        # connection by unpacking the connection_options dict
         self._conn = psycopg.connect(**connection_options)
         addAdapters()
 
@@ -79,7 +116,9 @@ class PostgreSQLConnection(ServerConnection):
         self._user_transaction = False
 
         # Set initial connection has error
-        self._transaction_in_error = self._conn.info.transaction_status is TransactionStatus.INERROR
+        self._transaction_in_error = (
+            self._conn.info.transaction_status is TransactionStatus.INERROR
+        )
 
         # Get the DSN parameters for the connection as a dict
         self._dsn_parameters = self._conn.info.get_parameters()
@@ -89,10 +128,10 @@ class PostgreSQLConnection(ServerConnection):
 
         # Calculate the server version
         version_string = str(self._conn.info.server_version)
-        self._version: Tuple[int, int, int] = (
+        self._version: tuple[int, int, int] = (
             int(version_string[:-4]),
             int(version_string[-4:-2]),
-            int(version_string[-2:])
+            int(version_string[-2:]),
         )
 
         # Setting the provider for this connection
@@ -108,7 +147,7 @@ class PostgreSQLConnection(ServerConnection):
     @property
     def host_name(self) -> str:
         """Returns the hostname for the current connection"""
-        return self._dsn_parameters['host']
+        return self._dsn_parameters["host"]
 
     @property
     def port(self) -> int:
@@ -118,7 +157,7 @@ class PostgreSQLConnection(ServerConnection):
     @property
     def database_name(self) -> str:
         """Return the name of the current connection's database"""
-        return self._dsn_parameters['dbname']
+        return self._dsn_parameters["dbname"]
 
     @property
     def user_name(self) -> str:
@@ -126,7 +165,7 @@ class PostgreSQLConnection(ServerConnection):
         return self._dsn_parameters["user"]
 
     @property
-    def server_version(self) -> Tuple[int, int, int]:
+    def server_version(self) -> tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
         return self._version
 
@@ -137,7 +176,7 @@ class PostgreSQLConnection(ServerConnection):
 
     @property
     def connection_options(self):
-        """ Returns the options used to create the current connection to the server """
+        """Returns the options used to create the current connection to the server"""
         return self._connection_options
 
     @property
@@ -146,14 +185,17 @@ class PostgreSQLConnection(ServerConnection):
         return self._default_database
 
     @property
-    def database_error(self):
+    def database_error(self) -> type[Exception]:
         """Returns the type of database error this connection throws"""
         return self._database_error
 
     @property
     def transaction_in_error(self) -> bool:
         """Returns bool indicating if transaction is in error"""
-        return self._conn.info.transaction_status is TransactionStatus.INERROR or self._transaction_in_error is TransactionStatus.INERROR
+        return (
+            self._conn.info.transaction_status is TransactionStatus.INERROR
+            or self._transaction_in_error is TransactionStatus.INERROR
+        )
 
     @property
     def transaction_is_idle(self) -> bool:
@@ -171,7 +213,7 @@ class PostgreSQLConnection(ServerConnection):
         return self._user_transaction
 
     @property
-    def query_canceled_error(self) -> Exception:
+    def query_canceled_error(self) -> type[Exception]:
         """Returns driver query canceled error"""
         return psycopg.errors.QueryCanceled
 
@@ -222,17 +264,15 @@ class PostgreSQLConnection(ServerConnection):
         """
         cursor = self._conn.cursor()
         cursor.execute(query)
-        if all:
-            query_results = cursor.fetchall()
-        else:
-            query_results = cursor.fetchone()
+        query_results = cursor.fetchall() if all else cursor.fetchone()
 
         cursor.close()
         return query_results
 
-    def execute_dict(self, query: str, params=None) -> Tuple[List[Column], List[dict]]:
+    def execute_dict(self, query: str, params=None) -> tuple[list[Column], list[dict]]:
         """
-        Executes a query and returns the results as an ordered list of dictionaries that map column
+        Executes a query and returns the results as an ordered
+        list of dictionaries that map column
         name to value. Columns are returned, as well.
         :param conn: The connection to use to execute the query
         :param query: The text of the query to execute
@@ -244,8 +284,8 @@ class PostgreSQLConnection(ServerConnection):
         try:
             cur.execute(query, params)
 
-            cols: List[Column] = cur.description
-            rows: List[dict] = []
+            cols: list[Column] = cur.description
+            rows: list[dict] = []
             if cur.rowcount > 0:
                 for row in cur:
                     row_dict = {cols[ind].name: x for ind, x in enumerate(row)}
@@ -272,20 +312,26 @@ class PostgreSQLConnection(ServerConnection):
         finally:
             cur.close()
 
-        return {'columns': columns, 'rows': rows}
+        return {"columns": columns, "rows": rows}
 
     def list_databases(self):
         """
         List the databases accessible by the current PostgreSQL connection.
         """
-        return self.execute_query('SELECT datname FROM pg_database WHERE datistemplate = false;')
+        return self.execute_query(
+            "SELECT datname FROM pg_database WHERE datistemplate = false;"
+        )
 
     def get_database_owner(self):
         """
         List the owner(s) of the current database
         """
         database_name = self.database_name
-        owner_query = "SELECT pg_catalog.pg_get_userbyid(db.datdba) FROM pg_catalog.pg_database db WHERE db.datname = '{}'".format(database_name)
+        owner_query = (
+            f"SELECT pg_catalog.pg_get_userbyid(db.datdba) "
+            "FROM pg_catalog.pg_database db "
+            f"WHERE db.datname = '{database_name}'"
+        )
         return self.execute_query(owner_query, all=True)[0][0]
 
     def get_database_size(self, dbname: str):
@@ -297,8 +343,9 @@ class PostgreSQLConnection(ServerConnection):
         """
         Get the message from DatabaseError instance
         """
-        # If error.args exists and has at least one element, return the first element as the error message.
-        if hasattr(error, 'args') and error.args and len(error.args) > 0:
+        # If error.args exists and has at least one element, 
+        # return the first element as the error message.
+        if hasattr(error, "args") and error.args and len(error.args) > 0:
             return error.args[0]
 
         # If error.diag.message_primary is not None, return it.

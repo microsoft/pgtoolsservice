@@ -16,21 +16,27 @@ from ossdbtoolsservice.query.contracts import DbColumn
 
 
 class SmoEditTableMetadataFactory:
-
-    def get(self, connection: ServerConnection, schema_name: str, object_name: str, object_type: str) -> EditTableMetadata:
-
+    def get(
+        self,
+        connection: ServerConnection,
+        schema_name: str,
+        object_name: str,
+        object_type: str,
+    ) -> EditTableMetadata:
         server = Server(connection)
         result_object: Table = None
-        object_metadata = ObjectMetadata(server.urn_base, 0, object_type, object_name, schema_name)
+        object_metadata = ObjectMetadata(
+            server.urn_base, 0, object_type, object_name, schema_name
+        )
 
-        if object_type.lower() == 'table':
+        if object_type.lower() == "table":
             result_object = server.find_table(object_metadata)
-        elif object_type.lower() == 'view':
+        elif object_type.lower() == "view":
             result_object = server.find_view(object_metadata)
         else:
-            raise ValueError('Not supported object type')
+            raise ValueError("Not supported object type")
 
-        edit_columns_metadata: List[EditColumnMetadata] = []
+        edit_columns_metadata: list[EditColumnMetadata] = []
 
         for column in result_object.columns:
             db_column = self.create_db_column(column)
@@ -49,6 +55,8 @@ class SmoEditTableMetadataFactory:
         db_column.is_read_only = column.is_readonly
         db_column.is_unique = column.is_unique
         db_column.is_auto_increment = column.is_auto_increment
-        db_column.is_updatable = column.is_readonly is False and column.is_auto_increment is False
+        db_column.is_updatable = (
+            column.is_readonly is False and column.is_auto_increment is False
+        )
 
         return db_column

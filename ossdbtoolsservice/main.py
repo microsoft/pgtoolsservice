@@ -8,7 +8,7 @@ import configparser
 import logging
 import os
 import sys
-from typing import Type
+
 import debugpy
 
 from ossdbtoolsservice.admin import AdminService
@@ -18,13 +18,13 @@ from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import (
     DisasterRecoveryService,
 )
-from ossdbtoolsservice.hosting import MessageServer, ServiceProvider, Service
+from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
+from ossdbtoolsservice.hosting import MessageServer, Service, ServiceProvider
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.object_explorer import ObjectExplorerService
 from ossdbtoolsservice.query_execution import QueryExecutionService
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
-from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants, markdown
 from ossdbtoolsservice.utils.bool import str_to_bool
@@ -37,7 +37,7 @@ def create_server_init(
     server_logger: logging.Logger | None,
 ) -> MessageServer:
     # Create the service provider and add the providers to it
-    services: dict[str, Type[Service]] = {
+    services: dict[str, type[Service]] = {
         constants.ADMIN_SERVICE_NAME: AdminService,
         constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
         constants.CONNECTION_SERVICE_NAME: ConnectionService,
@@ -63,39 +63,28 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
     config.read(path_relative_to_base("config.ini"))
 
     defaults = {
-        "log_dir": config.get(
-            "general", "log_dir", fallback=os.path.dirname(sys.argv[0])
-        ),
-        "enable_web_server": config.get(
-            "server", "enable_web_server", fallback="false"
-        ),
+        "log_dir": config.get("general", "log_dir", fallback=os.path.dirname(sys.argv[0])),
+        "enable_web_server": config.get("server", "enable_web_server", fallback="false"),
         "listen_address": config.get("server", "listen_address", fallback="0.0.0.0"),
         "listen_port": config.get("server", "listen_port", fallback="8443"),
         "console_logging": config.get("server", "console_logging", fallback="false"),
-        "disable_keep_alive": config.get(
-            "server", "disable_keep_alive", fallback="false"
-        ),
-        "enable_dynamic_cors": config.get(
-            "server", "enable_dynamic_cors", fallback="false"
-        ),
+        "disable_keep_alive": config.get("server", "disable_keep_alive", fallback="false"),
+        "enable_dynamic_cors": config.get("server", "enable_dynamic_cors", fallback="false"),
     }
 
     # Override config defaults with environment variables (if present)
     log_dir_env = os.getenv("LOG_DIR", defaults["log_dir"])
-    enable_web_server_env = os.getenv(
-        "ENABLE_WEB_SERVER", defaults["enable_web_server"]
-    )
+    enable_web_server_env = os.getenv("ENABLE_WEB_SERVER", defaults["enable_web_server"])
     listen_address_env = os.getenv("LISTEN_ADDRESS", defaults["listen_address"])
     listen_port_env = os.getenv("LISTEN_PORT", defaults["listen_port"])
     console_logging_env = os.getenv("CONSOLE_LOGGING", defaults["console_logging"])
-    disable_keep_alive_env = os.getenv(
-        "DISABLE_KEEP_ALIVE", defaults["disable_keep_alive"]
-    )
+    disable_keep_alive_env = os.getenv("DISABLE_KEEP_ALIVE", defaults["disable_keep_alive"])
     enable_dynamic_cors_env = os.getenv(
         "ENABLE_DYNAMIC_CORS", defaults["enable_dynamic_cors"]
     )
 
-    # Parse command-line arguments (takes precidence over config file and environment variables)
+    # Parse command-line arguments
+    # (takes precidence over config file and environment variables)
     parser = argparse.ArgumentParser(description="Start the Tools Service")
     parser.add_argument(
         "--generate-markdown",
@@ -130,13 +119,15 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
         "--disable-keep-alive",
         action="store_true",
         default=str_to_bool(disable_keep_alive_env),
-        help="Disable keep-alive for the web server. Should not be used in production only for debugging",
+        help="Disable keep-alive for the web server. "
+        "Should not be used in production only for debugging",
     )
     parser.add_argument(
         "--enable-dynamic-cors",
         action="store_true",
         default=str_to_bool(enable_dynamic_cors_env),
-        help="Enable dynamic setting of CORS, allow any origin. Should not be used in production only for debugging",
+        help="Enable dynamic setting of CORS, allow any origin. "
+        "Should not be used in production only for debugging",
     )
     parser.add_argument(
         "--enable-remote-debugging",
@@ -150,7 +141,8 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
         type=int,
         nargs="?",
         const=3000,
-        help="Enable remote debugging and wait for the debugger to attach on the specified port (default: 3000)",
+        help="Enable remote debugging and wait for the debugger "
+        "to attach on the specified port (default: 3000)",
     )
     parser.add_argument(
         "--log-dir", type=str, default=log_dir_env, help="Directory to store logs"
@@ -159,7 +151,8 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
         "--console-logging",
         action="store_true",
         default=str_to_bool(console_logging_env),
-        help="Enable logging to the console (can only be enabled if --enable-web-server is true)",
+        help="Enable logging to the console "
+        "(can only be enabled if --enable-web-server is true)",
     )
     parser.add_argument("--provider", type=str, help="Provider name")
 
@@ -209,7 +202,8 @@ def main(
             print("Logs will be stored in ./debugpy_logs")
             os.environ["DEBUGPY_LOG_DIR"] = "./debugpy_logs"  # Path to store logs
             os.environ["GEVENT_SUPPORT"] = "True"  # Path to store logs
-            # Dynamically set the Python interpreter for debugpy fron an environment variable or default to the current interpreter.
+            # Dynamically set the Python interpreter for debugpy 
+            # from an environment variable or default to the current interpreter.
             python_path = os.getenv("PYTHON", default=sys.executable)
             print("Python path: " + python_path)
             debugpy.configure(python=python_path)

@@ -4,20 +4,18 @@
 # --------------------------------------------------------------------------------------------
 
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.edit_data.contracts import RowOperationRequest
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 
 
 class RevertRowRequest(RowOperationRequest):
-
     def __init__(self):
         RowOperationRequest.__init__(self)
 
 
 class RevertRowResponse:
-
     def __init__(self):
         pass
 
 
-REVERT_ROW_REQUEST = IncomingMessageConfiguration('edit/revertRow', RevertRowRequest)
+REVERT_ROW_REQUEST = IncomingMessageConfiguration("edit/revertRow", RevertRowRequest)

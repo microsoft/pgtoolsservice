@@ -3,16 +3,26 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from logging import Logger          # noqa
+from logging import Logger  # noqa
 from typing import Callable, List, Optional  # noqa
 
-from ossdbtoolsservice.hosting import MessageServer, NotificationContext, ServiceProvider, Service
+from ossdbtoolsservice.hosting import (
+    MessageServer,
+    NotificationContext,
+    ServiceProvider,
+    Service,
+)
 from ossdbtoolsservice.workspace.contracts import (
-    DID_CHANGE_CONFIG_NOTIFICATION, DidChangeConfigurationParams,
-    DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, DidChangeTextDocumentParams,
-    DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, DidOpenTextDocumentParams,
-    DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, DidCloseTextDocumentParams,
-    Configuration, Range
+    DID_CHANGE_CONFIG_NOTIFICATION,
+    DidChangeConfigurationParams,
+    DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION,
+    DidChangeTextDocumentParams,
+    DID_OPEN_TEXT_DOCUMENT_NOTIFICATION,
+    DidOpenTextDocumentParams,
+    DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION,
+    DidCloseTextDocumentParams,
+    Configuration,
+    Range,
 )
 from ossdbtoolsservice.workspace.script_file import ScriptFile
 from ossdbtoolsservice.workspace.workspace import Workspace
@@ -20,7 +30,8 @@ from ossdbtoolsservice.workspace.workspace import Workspace
 
 class WorkspaceService(Service):
     """
-    Class for handling requests/events that deal with the sate of the workspace including opening
+    Class for handling requests/events that deal with the 
+    sate of the workspace including opening
     and closing of files, the changing of configuration, etc.
     """
 
@@ -35,10 +46,10 @@ class WorkspaceService(Service):
         self._configuration: Configuration = Configuration()
 
         # Setup callbacks for the various events we can receive
-        self._config_change_callbacks: List[Callable[Configuration]] = []
-        self._text_change_callbacks: List[Callable[ScriptFile]] = []
-        self._text_open_callbacks: List[Callable[ScriptFile]] = []
-        self._text_close_callbacks: List[Callable[ScriptFile]] = []
+        self._config_change_callbacks: list[Callable[Configuration]] = []
+        self._text_change_callbacks: list[Callable[ScriptFile]] = []
+        self._text_open_callbacks: list[Callable[ScriptFile]] = []
+        self._text_close_callbacks: list[Callable[ScriptFile]] = []
 
     def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
@@ -46,13 +57,20 @@ class WorkspaceService(Service):
         self._server = service_provider.server
 
         # Register the handlers for when changes to the workspace occur
-        self._server.set_notification_handler(DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, self._handle_did_change_text_doc)
-        self._server.set_notification_handler(DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, self._handle_did_open_text_doc)
-        self._server.set_notification_handler(DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, self._handle_did_close_text_doc)
+        self._server.set_notification_handler(
+            DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION, self._handle_did_change_text_doc
+        )
+        self._server.set_notification_handler(
+            DID_OPEN_TEXT_DOCUMENT_NOTIFICATION, self._handle_did_open_text_doc
+        )
+        self._server.set_notification_handler(
+            DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION, self._handle_did_close_text_doc
+        )
 
         # Register handler for when the configuration changes
-        self._service_provider.server.set_notification_handler(DID_CHANGE_CONFIG_NOTIFICATION,
-                                                               self._handle_did_change_config)
+        self._service_provider.server.set_notification_handler(
+            DID_CHANGE_CONFIG_NOTIFICATION, self._handle_did_change_config
+        )
 
     # PROPERTIES ###########################################################
     @property
@@ -82,13 +100,14 @@ class WorkspaceService(Service):
         Get the requested text selection, as a string, for a document
 
         :param file_uri: The URI of the requested file
-        :param selection_data: An object containing information about which part of the file to return,
-        or None for the whole file
+        :param selection_data: An object containing information about 
+            which part of the file to return,
+            or None for the whole file
         :raises ValueError: If there is no file matching the given URI
         """
         open_file = self._workspace.get_file(file_uri)
         if open_file is None:
-            raise ValueError('No file corresponding to the given URI')
+            raise ValueError("No file corresponding to the given URI")
         if selection_range is None:
             return open_file.get_all_text()
         else:
@@ -96,12 +115,11 @@ class WorkspaceService(Service):
 
     # REQUEST HANDLERS #####################################################
     def _handle_did_change_config(
-            self,
-            notification_context: NotificationContext,
-            params: DidChangeConfigurationParams
+        self, notification_context: NotificationContext, params: DidChangeConfigurationParams
     ) -> None:
         """
-        Handles the configuration change event by storing the new configuration and calling all
+        Handles the configuration change event by storing the 
+        new configuration and calling all
         registered config change callbacks
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
@@ -111,9 +129,7 @@ class WorkspaceService(Service):
             callback(self._configuration)
 
     def _handle_did_change_text_doc(
-            self,
-            notification_context: NotificationContext,
-            params: DidChangeTextDocumentParams
+        self, notification_context: NotificationContext, params: DidChangeTextDocumentParams
     ) -> None:
         """
         Handles text document change notifications
@@ -135,22 +151,23 @@ class WorkspaceService(Service):
                 callback(script_file)
         except Exception as e:
             if self._logger is not None:
-                self._logger.exception(f'Exception caught during text doc change: {e}')
+                self._logger.exception(f"Exception caught during text doc change: {e}")
 
     def _handle_did_open_text_doc(
-            self,
-            notification_context: NotificationContext,
-            params: DidOpenTextDocumentParams
+        self, notification_context: NotificationContext, params: DidOpenTextDocumentParams
     ) -> None:
         """
-        Handles when a file is opened in the workspace. The event is propagated to the registered
+        Handles when a file is opened in the workspace. 
+        The event is propagated to the registered
         file open callbacks
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
         """
         try:
             # Open a new ScriptFile with the initial buffer provided
-            opened_file: ScriptFile = self._workspace.open_file(params.text_document.uri, params.text_document.text)
+            opened_file: ScriptFile = self._workspace.open_file(
+                params.text_document.uri, params.text_document.text
+            )
             if opened_file is None:
                 return
 
@@ -159,15 +176,14 @@ class WorkspaceService(Service):
                 callback(opened_file)
         except Exception as e:
             if self._logger is not None:
-                self._logger.exception(f'Exception caught during text doc open: {e}')
+                self._logger.exception(f"Exception caught during text doc open: {e}")
 
     def _handle_did_close_text_doc(
-            self,
-            notification_context: NotificationContext,
-            params: DidCloseTextDocumentParams
+        self, notification_context: NotificationContext, params: DidCloseTextDocumentParams
     ) -> None:
         """
-        Handles when a file is closed in the workspace. The event is propagated to the registered
+        Handles when a file is closed in the workspace. 
+        The event is propagated to the registered
         file close callbacks
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
@@ -183,4 +199,4 @@ class WorkspaceService(Service):
                 callback(closed_file)
         except Exception as e:
             if self._logger is not None:
-                self._logger.exception(f'Exception caught during text doc close: {e}')
+                self._logger.exception(f"Exception caught during text doc close: {e}")

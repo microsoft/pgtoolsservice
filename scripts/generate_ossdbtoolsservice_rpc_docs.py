@@ -2,7 +2,6 @@
 
 import ast
 import inspect
-import io
 import logging
 import os
 import sys
@@ -14,11 +13,15 @@ sys.path.insert(0, parent_dir)
 
 from ossdbtoolsservice.ossdbtoolsservice_main import _create_server
 
+
 def introspect_class_props(cls):
     """Check for actual properties in the class, and their types"""
-    class_properties = [name for name, value in inspect.getmembers(cls) if isinstance(value, property)]
-    annotations = getattr(cls, '__annotations__', {})
+    class_properties = [
+        name for name, value in inspect.getmembers(cls) if isinstance(value, property)
+    ]
+    annotations = getattr(cls, "__annotations__", {})
     return class_properties, annotations
+
 
 def introspect_init_attributes_with_bases(cls):
     """Check for attributes defined in the __init__ method of the class and its base classes"""
@@ -29,8 +32,8 @@ def introspect_init_attributes_with_bases(cls):
     class_props, class_annotations = introspect_class_props(cls)
 
     for prop in class_props:
-            annotation = class_annotations.get(prop, None)
-            attributes[prop] = annotation
+        annotation = class_annotations.get(prop, None)
+        attributes[prop] = annotation
 
     # Iterate over the class and its base classes in Method Resolution Order (MRO)
     for base in cls.__mro__:
@@ -52,7 +55,7 @@ def introspect_init_attributes_with_bases(cls):
         for node in tree.body:
             if isinstance(node, ast.ClassDef) and node.name == base.__name__:
                 for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and item.name == '__init__':
+                    if isinstance(item, ast.FunctionDef) and item.name == "__init__":
                         init_function = item
                         break
                 break
@@ -66,9 +69,11 @@ def introspect_init_attributes_with_bases(cls):
             # Check for annotated assignments (e.g., self.x: int = 0)
             if isinstance(node, ast.AnnAssign):
                 target = node.target
-                if (isinstance(target, ast.Attribute) and
-                    isinstance(target.value, ast.Name) and
-                    target.value.id == 'self'):
+                if (
+                    isinstance(target, ast.Attribute)
+                    and isinstance(target.value, ast.Name)
+                    and target.value.id == "self"
+                ):
                     attr_name = target.attr
                     # Extract the annotation
                     try:
@@ -80,9 +85,11 @@ def introspect_init_attributes_with_bases(cls):
             # Check for regular assignments (e.g., self.x = 0)
             elif isinstance(node, ast.Assign):
                 for target in node.targets:
-                    if (isinstance(target, ast.Attribute) and
-                        isinstance(target.value, ast.Name) and
-                        target.value.id == 'self'):
+                    if (
+                        isinstance(target, ast.Attribute)
+                        and isinstance(target.value, ast.Name)
+                        and target.value.id == "self"
+                    ):
                         attr_name = target.attr
                         # No annotation available in ast.Assign
                         attributes[attr_name] = None
@@ -96,29 +103,33 @@ def introspect_init_attributes_with_bases(cls):
             else:
                 print(f"- {attr_name}: `any`")
 
+
 def print_docs():
     # Create an RPC server with the request handlers added
-    logger = logging.getLogger('ossdbtoolsservice')
-    stdin = io.open(sys.stdin.fileno(), 'rb', buffering=0, closefd=False)
-    std_out_wrapped = io.open(sys.stdout.fileno(), 'wb', buffering=0, closefd=False)
+    logger = logging.getLogger("ossdbtoolsservice")
+    stdin = open(sys.stdin.fileno(), "rb", buffering=0, closefd=False)
+    std_out_wrapped = open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)
 
-    server = _create_server(stdin, std_out_wrapped, logger, 'PGSQL')
+    server = _create_server(stdin, std_out_wrapped, logger, "PGSQL")
 
     print("## Registered RPC methods", "\n")
     for method, handler in server._request_handlers.items():
         print(f"### {method}")
         try:
             introspect_init_attributes_with_bases(handler.class_)
-        except Exception as e:
+        except Exception:
             print("- None")
         print("---", "\n")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # if "--help" passed in, then print out usage()
     if len(sys.argv) > 1 and sys.argv[1] == "--help":
-        print("Prints out RPC methods that are currently registered in the ossdbtoolsservice",
-              "RPC service and their input parameters. This script outputs markdown formatted",
-              "text.")
+        print(
+            "Prints out RPC methods that are currently registered in the ossdbtoolsservice",
+            "RPC service and their input parameters. This script outputs markdown formatted",
+            "text.",
+        )
         sys.exit(0)
 
     print_docs()

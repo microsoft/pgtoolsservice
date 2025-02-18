@@ -3,7 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-# NOTE: Server must be the first import, otherwise circular dependencies block proper importing
+# Import order to avoid circular import
+# ruff:noqa: I001
+
+# NOTE: Server must be the first import, otherwise circular
+# dependencies block proper importing
 from pgsmo.objects.server.server import Server
 
 from pgsmo.objects.collation.collation import Collation
@@ -20,7 +24,7 @@ from pgsmo.objects.table_objects.constraints import (
     Constraint,
     ExclusionConstraint,
     ForeignKeyConstraint,
-    IndexConstraint
+    IndexConstraint,
 )
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.index import Index
@@ -33,28 +37,28 @@ from pgsmo.objects.view.view import View
 from pgsmo.objects.extension.extension import Extension
 
 __all__ = [
-    'Server',
-    'CheckConstraint',
-    'Collation',
-    'Column',
-    'Constraint',
-    'Database',
-    'DataType',
-    'ExclusionConstraint',
-    'ForeignKeyConstraint',
-    'Function',
-    'Index',
-    'IndexConstraint',
-    'Procedure',
-    'Role',
-    'Rule',
-    'Schema',
-    'Sequence',
-    'Table',
-    'Tablespace',
-    'Trigger',
-    'TriggerFunction',
-    'View',
-    'Extension',
-    'MaterializedView'
+    "Server",
+    "CheckConstraint",
+    "Collation",
+    "Column",
+    "Constraint",
+    "Database",
+    "DataType",
+    "ExclusionConstraint",
+    "ForeignKeyConstraint",
+    "Function",
+    "Index",
+    "IndexConstraint",
+    "Procedure",
+    "Role",
+    "Rule",
+    "Schema",
+    "Sequence",
+    "Table",
+    "Tablespace",
+    "Trigger",
+    "TriggerFunction",
+    "View",
+    "Extension",
+    "MaterializedView",
 ]

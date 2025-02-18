@@ -23,7 +23,7 @@ class ExecuteRequestParamsBase(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'execution_plan_options': ExecutionPlanOptions}
+        return {"execution_plan_options": ExecutionPlanOptions}
 
     def __init__(self):
         self.owner_uri: str = None
@@ -39,13 +39,11 @@ class ExecuteStringParams(ExecuteRequestParamsBase):
 
 
 EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
-    'query/executeString',
-    ExecuteStringParams
+    "query/executeString", ExecuteStringParams
 )
 
 EXECUTE_DEPLOY_REQUEST = IncomingMessageConfiguration(
-    'query/executeDeploy',
-    ExecuteStringParams
+    "query/executeDeploy", ExecuteStringParams
 )
 
 
@@ -54,7 +52,10 @@ class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'query_selection': SelectionData, 'execution_plan_options': ExecutionPlanOptions}
+        return {
+            "query_selection": SelectionData,
+            "execution_plan_options": ExecutionPlanOptions,
+        }
 
     def __init__(self):
         super().__init__()
@@ -62,8 +63,7 @@ class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
 
 
 EXECUTE_DOCUMENT_SELECTION_REQUEST = IncomingMessageConfiguration(
-    'query/executeDocumentSelection',
-    ExecuteDocumentSelectionParams
+    "query/executeDocumentSelection", ExecuteDocumentSelectionParams
 )
 
 
@@ -78,8 +78,7 @@ class ExecuteDocumentStatementParams(ExecuteRequestParamsBase):
 
 
 EXECUTE_DOCUMENT_STATEMENT_REQUEST = IncomingMessageConfiguration(
-    'query/executedocumentstatement',
-    ExecuteDocumentStatementParams
+    "query/executedocumentstatement", ExecuteDocumentStatementParams
 )
 
 

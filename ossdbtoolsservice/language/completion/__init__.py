@@ -5,4 +5,4 @@
 
 from ossdbtoolsservice.language.completion.pgcompleter import PGCompleter
 
-__all__ = ['PGCompleter']
+__all__ = ["PGCompleter"]

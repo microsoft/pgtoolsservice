@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from pydantic import BaseModel, ConfigDict, Field
+
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
 )

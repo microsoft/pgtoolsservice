@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta
 import unittest
+from abc import ABCMeta
 
 from pgsmo import Function, TriggerFunction
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
@@ -12,26 +12,26 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class FunctionsTestBase(NodeObjectTestBase, metaclass=ABCMeta):
     NODE_ROW = {
-        'name': 'funcname(arg1 int)',
-        'oid': 123,
-        'description': 'func description',
-        'lanname': 'sql',
-        'funcowner': 'postgres',
-        'schema': 'public',
-        'schemaoid': 456,
-        'objectname': 'funcname(arg1 int)',
-        'is_system': True
+        "name": "funcname(arg1 int)",
+        "oid": 123,
+        "description": "func description",
+        "lanname": "sql",
+        "funcowner": "postgres",
+        "schema": "public",
+        "schemaoid": 456,
+        "objectname": "funcname(arg1 int)",
+        "is_system": True,
     }
 
     @property
     def basic_properties(self):
         return {
-            'description': FunctionsTestBase.NODE_ROW['description'],
-            '_description': FunctionsTestBase.NODE_ROW['description'],
-            'language_name': FunctionsTestBase.NODE_ROW['lanname'],
-            '_language_name': FunctionsTestBase.NODE_ROW['lanname'],
-            'owner': FunctionsTestBase.NODE_ROW['funcowner'],
-            '_owner': FunctionsTestBase.NODE_ROW['funcowner']
+            "description": FunctionsTestBase.NODE_ROW["description"],
+            "_description": FunctionsTestBase.NODE_ROW["description"],
+            "language_name": FunctionsTestBase.NODE_ROW["lanname"],
+            "_language_name": FunctionsTestBase.NODE_ROW["lanname"],
+            "owner": FunctionsTestBase.NODE_ROW["funcowner"],
+            "_owner": FunctionsTestBase.NODE_ROW["funcowner"],
         }
 
     @property
@@ -54,7 +54,7 @@ class FunctionsTestBase(NodeObjectTestBase, metaclass=ABCMeta):
             "prosrc": "prosrc",
             "func_args_without": "func_args_without",
             "acl": "acl",
-            "seclabels": "seclabels"
+            "seclabels": "seclabels",
         }
 
     @property

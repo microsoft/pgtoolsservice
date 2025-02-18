@@ -9,9 +9,9 @@ from ossdbtoolsservice.query.data_storage import FileStreamFactory, SaveAsCsvWri
 
 
 class SaveAsCsvFileStreamFactory(FileStreamFactory):
-
     def __init__(self, params) -> None:
         FileStreamFactory.__init__(self, params)
 
     def get_writer(self, file_name: str):
-        return SaveAsCsvWriter(io.open(file_name, 'w'), self._params)
+        # Tests rely on mocking io.open
+        return SaveAsCsvWriter(io.open(file_name, "w"), self._params)  # noqa: UP020

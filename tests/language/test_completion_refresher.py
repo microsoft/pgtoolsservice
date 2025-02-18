@@ -10,17 +10,19 @@ from unittest.mock import Mock, patch
 
 import tests.pgsmo_tests.utils as utils
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
-from ossdbtoolsservice.utils.constants import (PG_PROVIDER_NAME)
+from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
-MYSCHEMA = 'myschema'
-MYSCHEMA2 = 'myschema2'
+MYSCHEMA = "myschema"
+MYSCHEMA2 = "myschema2"
 
 
 class TestSqlCompletionRefresher(unittest.TestCase):
     """Methods for testing the SqlCompletion refresher module"""
 
     def setUp(self):
-        self.refresher: CompletionRefresher = CompletionRefresher(utils.MockPGServerConnection())
+        self.refresher: CompletionRefresher = CompletionRefresher(
+            utils.MockPGServerConnection()
+        )
 
     def test_ctor(self):
         """
@@ -28,17 +30,24 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         """
         self.assertGreater(len(self.refresher.refreshers), 0)
         actual_handlers = list(self.refresher.refreshers.keys())
-        expected_handlers = ['schemata', 'tables', 'views',
-                             'types', 'databases', 'casing', 'functions']
+        expected_handlers = [
+            "schemata",
+            "tables",
+            "views",
+            "types",
+            "databases",
+            "casing",
+            "functions",
+        ]
         self.assertListEqual(expected_handlers, actual_handlers)
 
     def test_refresh_called_once(self):
         callbacks = Mock()
 
-        with patch.object(self.refresher, '_bg_refresh') as bg_refresh:
+        with patch.object(self.refresher, "_bg_refresh") as bg_refresh:
             actual = self.refresher.refresh(callbacks)
             self.refresher._completer_thread.join()
-            self.assertEqual(actual, 'Auto-completion refresh started in the background.')
+            self.assertEqual(actual, "Auto-completion refresh started in the background.")
             bg_refresh.assert_called_with(callbacks, None, None)
 
     def test_refresh_called_twice(self):
@@ -53,11 +62,11 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         self.refresher._bg_refresh = dummy_bg_refresh
 
         actual1 = self.refresher.refresh(callbacks)
-        self.assertEqual(actual1, 'Auto-completion refresh started in the background.')
+        self.assertEqual(actual1, "Auto-completion refresh started in the background.")
 
         actual2 = self.refresher.refresh(callbacks)
         self.refresher._completer_thread.join()
-        self.assertEqual(actual2, 'Auto-completion refresh restarted.')
+        self.assertEqual(actual2, "Auto-completion refresh restarted.")
 
     def test_refresh_with_callbacks(self):
         """
@@ -68,7 +77,10 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         metadata_executor = Mock()
         metadata_executor.extra_args = {}
 
-        with patch('ossdbtoolsservice.language.metadata_executor.MetadataExecutor', metadata_executor_class):
+        with patch(
+            "ossdbtoolsservice.language.metadata_executor.MetadataExecutor",
+            metadata_executor_class,
+        ):
             # Set refreshers to 0: we're not testing refresh logic here
             self.refresher.refreshers = {}
             self.refresher.refresh(callbacks)
@@ -82,10 +94,11 @@ class TestSqlCompletionRefresher(unittest.TestCase):
         callbacks = Mock()
         pg_completer = Mock()
 
-        mock_completer_map = {
-            PG_PROVIDER_NAME: pg_completer
-        }
-        with patch('ossdbtoolsservice.language.completion_refresher.COMPLETER_MAP', mock_completer_map):
+        mock_completer_map = {PG_PROVIDER_NAME: pg_completer}
+        with patch(
+            "ossdbtoolsservice.language.completion_refresher.COMPLETER_MAP",
+            mock_completer_map,
+        ):
             # Set refreshers to 0: we're not testing refresh logic here
             self.refresher.refreshers = {}
             self.refresher.refresh(callbacks)

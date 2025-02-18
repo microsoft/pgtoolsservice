@@ -10,11 +10,12 @@ from ossdbtoolsservice.edit_data import EditColumnMetadata
 from ossdbtoolsservice.query.contracts import DbColumn
 
 
-class EditTableMetadata():
-
+class EditTableMetadata:
     OBJECT_TEMPLATE = '"{0}"'
 
-    def __init__(self, schema_name: str, table_name, columns_metadata: List[EditColumnMetadata]) -> None:
+    def __init__(
+        self, schema_name: str, table_name, columns_metadata: list[EditColumnMetadata]
+    ) -> None:
         self.columns_metadata = columns_metadata
         self.schema_name: str = schema_name
         self.table_name: str = table_name
@@ -22,22 +23,30 @@ class EditTableMetadata():
 
     @property
     def multipart_name(self) -> str:
-        return '.'.join([self._get_formated_entity_name(self.schema_name), self._get_formated_entity_name(self.table_name)])
+        return ".".join(
+            [
+                self._get_formated_entity_name(self.schema_name),
+                self._get_formated_entity_name(self.table_name),
+            ]
+        )
 
     @property
-    def db_columns(self) -> List[DbColumn]:
+    def db_columns(self) -> list[DbColumn]:
         return [column.db_column for column in self.columns_metadata]
 
     @property
-    def key_columns(self) -> List[EditColumnMetadata]:
+    def key_columns(self) -> list[EditColumnMetadata]:
         return self._key_columns
 
-    def _get_key_columns(self) -> List[EditColumnMetadata]:
-
+    def _get_key_columns(self) -> list[EditColumnMetadata]:
         key_columns = [column for column in self.columns_metadata if column.is_key is True]
 
         if any(key_columns) is False:
-            key_columns = [column for column in self.columns_metadata if column.is_trustworthy_for_uniqueness is True]
+            key_columns = [
+                column
+                for column in self.columns_metadata
+                if column.is_trustworthy_for_uniqueness is True
+            ]
 
         return key_columns
 

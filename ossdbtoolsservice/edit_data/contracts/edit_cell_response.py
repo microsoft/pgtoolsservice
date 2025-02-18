@@ -7,8 +7,7 @@
 from ossdbtoolsservice.edit_data.contracts import EditCell
 
 
-class EditCellResponse():
-
+class EditCellResponse:
     def __init__(self, edit_cell: EditCell, is_row_dirty: bool):
         self.cell = edit_cell
         self.is_row_dirty = is_row_dirty

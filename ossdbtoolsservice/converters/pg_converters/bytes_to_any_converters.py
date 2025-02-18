@@ -11,7 +11,7 @@ import json
 from ossdbtoolsservice.parsers import datatypes
 
 
-DECODING_METHOD = 'utf-8'
+DECODING_METHOD = "utf-8"
 
 
 def convert_bytes_to_bool(value) -> bool:
@@ -19,26 +19,26 @@ def convert_bytes_to_bool(value) -> bool:
 
 
 def convert_bytes_to_float(value) -> float:
-    """ The result is a tuple even if it contains exactly one item """
-    return struct.unpack('d', value)[0]
+    """The result is a tuple even if it contains exactly one item"""
+    return struct.unpack("d", value)[0]
 
 
 def convert_bytes_to_double(value) -> float:
-    return struct.unpack('d', value)[0]
+    return struct.unpack("d", value)[0]
 
 
 def convert_bytes_to_short(value) -> int:
-    return struct.unpack('h', value)[0]
+    return struct.unpack("h", value)[0]
 
 
 def convert_bytes_to_int(value) -> int:
-    """ Range of integer in pg is the same with int or long in c,
-    we unpack the value in int format """
-    return struct.unpack('i', value)[0]
+    """Range of integer in pg is the same with int or long in c,
+    we unpack the value in int format"""
+    return struct.unpack("i", value)[0]
 
 
 def convert_bytes_to_long_long(value) -> int:
-    return struct.unpack('q', value)[0]
+    return struct.unpack("q", value)[0]
 
 
 def convert_bytes_to_decimal(value) -> str:
@@ -78,28 +78,32 @@ def convert_bytes_to_memoryview(value) -> str:
 
 
 def convert_bytes_to_dict(value) -> dict:
-    """ Decode bytes to str, and convert it to a valid JSON format """
+    """Decode bytes to str, and convert it to a valid JSON format"""
     value_str = value.decode(DECODING_METHOD)
     return json.loads(value_str)
 
 
 def convert_bytes_to_numericrange_format_str(value) -> str:
-    """ Since we are not using the NumericRange object, so just convert bytes to str for UI consuming """
+    """Since we are not using the NumericRange object, 
+    so just convert bytes to str for UI consuming"""
     return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_datetimerange_format_str(value) -> str:
-    """ Since we are not using the DateTimeRange object, so just convert bytes to str for UI consuming """
+    """Since we are not using the DateTimeRange object, 
+    so just convert bytes to str for UI consuming"""
     return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_datetimetzrange_format_str(value) -> str:
-    """ Since we are not using the DateTimeTZRange object, so just convert bytes to str for UI consuming """
+    """Since we are not using the DateTimeTZRange object, 
+    so just convert bytes to str for UI consuming"""
     return convert_bytes_to_str(value)
 
 
 def convert_bytes_to_daterange_format_str(value) -> str:
-    """ Since we are not using the DateRange object, so just convert bytes to str for UI consuming """
+    """Since we are not using the DateRange object, 
+    so just convert bytes to str for UI consuming"""
     return convert_bytes_to_str(value)
 
 

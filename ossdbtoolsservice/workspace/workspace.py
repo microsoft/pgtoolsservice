@@ -4,17 +4,17 @@
 # --------------------------------------------------------------------------------------------
 
 import os
-from typing import List, Optional                        # noqa
-from urllib.parse import urlparse, unquote, ParseResult, unquote  # noqa
+from typing import List, Optional  # noqa
+from urllib.parse import ParseResult, unquote, urlparse  # noqa
 
-from ossdbtoolsservice.workspace.script_file import ScriptFile
 import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.workspace.script_file import ScriptFile
 
 
 class Workspace:
     """
-    Manages a "workspace" of script files that are open for a particular editing session. Also helps to navigate
-    references between script files.
+    Manages a "workspace" of script files that are open for a particular editing session.
+    Also helps to navigate references between script files.
     """
 
     def __init__(self):
@@ -22,7 +22,7 @@ class Workspace:
 
     # PROPERTIES ###########################################################
     @property
-    def opened_files(self) -> List[ScriptFile]:
+    def opened_files(self) -> list[ScriptFile]:
         """
         A list of all ScriptFiles that are currently open
         """
@@ -46,12 +46,14 @@ class Workspace:
         :param file_uri: URI for the file, as provided by the client
         :return: Flag indicating if the file is tracked in workspace
         """
-        utils.validate.is_not_none_or_whitespace('file_uri', file_uri)
+        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
         file_uri = unquote(file_uri)
 
         return file_uri in self._workspace_files
 
-    def open_file(self, file_uri: str, initial_buffer: Optional[str] = None) -> Optional[ScriptFile]:
+    def open_file(
+        self, file_uri: str, initial_buffer: Optional[str] = None
+    ) -> Optional[ScriptFile]:
         """
         Opens a file in the workspace
         :param file_uri: URI to identify the script file, provided by the client
@@ -80,10 +82,13 @@ class Workspace:
             if resolved_file_path is None:
                 # We can't create a script file if we don't have a buffer
                 # TODO: Localize
-                raise ValueError(f'File uri {file_uri} could not be resolved and file contents not provided.')
+                raise ValueError(
+                    f"File uri {file_uri} could not be resolved "
+                    "and file contents not provided."
+                )
 
             # An initial buffer wasn't provided, load the contents
-            with open(resolved_file_path, 'r') as file:
+            with open(resolved_file_path) as file:
                 initial_buffer = file.read()
         script_file = ScriptFile(file_uri, initial_buffer, resolved_file_path)
         self._workspace_files[file_uri] = script_file
@@ -107,10 +112,12 @@ class Workspace:
         :param file_uri: URI for the script file
         :return: True if the path is in-memory, false otherwise
         """
-        return file_uri.startswith('inmemory:') \
-            or file_uri.startswith('tsqloutput:') \
-            or file_uri.startswith('git:') \
-            or file_uri.startswith('untitled:')
+        return (
+            file_uri.startswith("inmemory:")
+            or file_uri.startswith("tsqloutput:")
+            or file_uri.startswith("git:")
+            or file_uri.startswith("untitled:")
+        )
 
     @staticmethod
     def _is_scm_path(file_uri: str):
@@ -118,7 +125,7 @@ class Workspace:
         If the URI is prefixed with git: then we want to skip processing the file
         :param file_uri: URI for the file to check
         """
-        return file_uri.startswith('git:')
+        return file_uri.startswith("git:")
 
     @staticmethod
     def _resolve_file_path(file_uri: str) -> Optional[str]:
@@ -133,18 +140,19 @@ class Workspace:
 
         # File is on disk. Resolve where it could be.
         file_path: str = file_uri
-        if file_path.startswith('file://'):
-            # This *should* always be the case, but it might not be if the client isn't adhering to
+        if file_path.startswith("file://"):
+            # This *should* always be the case, but it might not be
+            # if the client isn't adhering to
             # the protocol properly
             # Client sent a URI format path. Extract the path and possibly the host name
             uri: ParseResult = urlparse(file_path)
 
-            if os.name == 'nt':
+            if os.name == "nt":
                 # If we're on windows, we need to do special processing
-                if uri.netloc != '':
+                if uri.netloc != "":
                     # eg: file://server/path/to/file -> //server/path/to/file
                     # Path is to a remote machine
-                    file_path = f'//{unquote(uri.netloc)}{unquote(uri.path)}'
+                    file_path = f"//{unquote(uri.netloc)}{unquote(uri.path)}"
                 else:
                     # eg: file:///d%3A/path/to/file -> d:/path/to/file
                     # Path is local, and starts with an invalid /
@@ -152,12 +160,13 @@ class Workspace:
 
                 # Convert / to \
                 # eg: d:/path/to/file -> d:\path\to\file
-                file_path = file_path.replace('/', '\\')
+                file_path = file_path.replace("/", "\\")
             else:
-                if uri.netloc != '':
+                if uri.netloc != "":
                     # eg: file://server/path/to/file -> //server/path/to/file
-                    # Path is to a remote machine. Very uncommon to have a UNC path on OSX/Linux
-                    file_path = f'//{unquote(uri.netloc)}{unquote(uri.path)}'
+                    # Path is to a remote machine.
+                    # Very uncommon to have a UNC path on OSX/Linux
+                    file_path = f"//{unquote(uri.netloc)}{unquote(uri.path)}"
                 else:
                     # eg: file:///path/to/file -> /path/to/file
                     file_path = unquote(uri.path)

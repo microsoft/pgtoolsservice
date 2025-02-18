@@ -3,12 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Tuple
 from abc import ABC, abstractmethod
 
 
 class ServerConnection(ABC):
-    """Abstract base class that outlines methods and properties that connections must implement"""
+    """Abstract base class that outlines methods and 
+    properties that connections must implement"""
 
     # PROPERTIES ###########################################################
     @property
@@ -38,7 +38,7 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def server_version(self) -> Tuple[int, int, int]:
+    def server_version(self) -> tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
 
     @property
@@ -49,7 +49,7 @@ class ServerConnection(ABC):
     @property
     @abstractmethod
     def connection_options(self) -> dict:
-        """ Returns the options used to create the current connection to the server """
+        """Returns the options used to create the current connection to the server"""
 
     @property
     @abstractmethod
@@ -58,8 +58,8 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def database_error(self) -> Exception:
-        """ Returns the type of database error this connection throws"""
+    def database_error(self) -> type[Exception]:
+        """Returns the type of database error this connection throws"""
 
     @property
     @abstractmethod
@@ -83,7 +83,7 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def query_canceled_error(self) -> Exception:
+    def query_canceled_error(self) -> type[Exception]:
         """Returns driver query canceled error"""
 
     @property
@@ -95,7 +95,7 @@ class ServerConnection(ABC):
 
     @property
     @abstractmethod
-    def connection(self) -> 'connection':
+    def connection(self) -> "connection":
         """
         Returns the underlying connection
         """
@@ -139,7 +139,8 @@ class ServerConnection(ABC):
     @abstractmethod
     def execute_dict(self, query: str, params=None):
         """
-        Executes a query and returns the results as an ordered list of dictionaries that map column
+        Executes a query and returns the results as an 
+        ordered list of dictionaries that map column
         name to value. Columns are returned, as well.
         :param conn: The connection to use to execute the query
         :param query: The text of the query to execute

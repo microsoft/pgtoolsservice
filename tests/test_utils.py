@@ -6,8 +6,8 @@
 """Test utils.py"""
 
 import enum
-from typing import Optional
 import unittest
+from typing import Optional
 
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.serialization import Serializable
@@ -18,9 +18,11 @@ class TestUtils(unittest.TestCase):
 
     def test_convert_to_dict(self):
         """
-        Test that the convert_to_dict function creates the proper dictionary representation of a complex object
+        Test that the convert_to_dict function creates the proper dictionary
+        representation of a complex object
 
-        The object includes nested objects, lists containing objects, dicts containing objects, and enums
+        The object includes nested objects, lists containing objects,
+        dicts containing objects, and enums
         """
         test_object = _ConversionTestClass()
         converted_dict = utils.serialization.convert_to_dict(test_object)
@@ -28,14 +30,17 @@ class TestUtils(unittest.TestCase):
 
     def test_convert_from_dict(self):
         """
-        Test that the convert_from_dict function creates the proper object representation of a complex object
+        Test that the convert_from_dict function creates the proper object
+        representation of a complex object
         """
         test_object = _ConversionTestClass()
         json_to_convert = test_object.expected_dict()
         result = _ConversionTestClass.from_dict(json_to_convert)
         self.assertEqual(result.test_int, test_object.test_int)
         self.assertEqual(result.nested_object.test_int, test_object.nested_object.test_int)
-        self.assertEqual(result.nested_object.test_string, test_object.nested_object.test_string)
+        self.assertEqual(
+            result.nested_object.test_string, test_object.nested_object.test_string
+        )
         self.assertGreater(len(result.list), 0)
         list_result = result.list[0]
         self.assertEqual(list_result.test_int, test_object.list[0].test_int)
@@ -51,27 +56,31 @@ class _ConversionTestClass(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'nested_object': _NestedTestClass, 'list': _NestedTestClass, 'enum': _TestEnum, 'none_enum': Optional[_TestEnum]}
+        return {
+            "nested_object": _NestedTestClass,
+            "list": _NestedTestClass,
+            "enum": _TestEnum,
+            "none_enum": Optional[_TestEnum],
+        }
 
     def __init__(self):
         self.test_int = 1
         self.nested_object = _NestedTestClass()
         self.list = [_NestedTestClass()]
-        self.dict = {'test_key': _NestedTestClass()}
+        self.dict = {"test_key": _NestedTestClass()}
         self.enum = _TestEnum.SECOND_OPTION
         self.none_enum = None
 
     def expected_dict(self):
-        """The expected dictionary representation of the instance, for comparison with the utility function output"""
+        """The expected dictionary representation of the instance, for
+        comparison with the utility function output"""
         return {
-            'testInt': self.test_int,
-            'nestedObject': self.nested_object.expected_dict(),
-            'list': [self.nested_object.expected_dict()],
-            'dict': {
-                'test_key': self.nested_object.expected_dict()
-            },
-            'enum': self.enum.value,
-            'noneEnum': None
+            "testInt": self.test_int,
+            "nestedObject": self.nested_object.expected_dict(),
+            "list": [self.nested_object.expected_dict()],
+            "dict": {"test_key": self.nested_object.expected_dict()},
+            "enum": self.enum.value,
+            "noneEnum": None,
         }
 
 
@@ -80,21 +89,20 @@ class _NestedTestClass(Serializable):
 
     def __init__(self):
         self.test_int = 1
-        self.test_string = 'test_string'
+        self.test_string = "test_string"
 
     def expected_dict(self):
-        """The expected dictionary representation of the instance, for comparison with the utility function output"""
-        return {
-            'testInt': self.test_int,
-            'testString': self.test_string
-        }
+        """The expected dictionary representation of the instance,
+        for comparison with the utility function output"""
+        return {"testInt": self.test_int, "testString": self.test_string}
 
 
 class _TestEnum(enum.Enum):
     """Test enum to be included in the _ConversionTestClass to ensure enum conversion works"""
+
     FIRST_OPTION = 1
     SECOND_OPTION = 2
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -3,10 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
-from smo.common.node_object import NodeCollection, NodeObject
-from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
+import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
 from pgsmo.objects.table_objects.column import Column
 from pgsmo.objects.table_objects.constraints import (
     CheckConstraint,
@@ -14,28 +13,35 @@ from pgsmo.objects.table_objects.constraints import (
     ForeignKeyConstraint,
     IndexConstraint,
     PrimaryKeyConstraint,
-    UniqueKeyConstraint
+    UniqueKeyConstraint,
 )
 from pgsmo.objects.table_objects.constraints_utils import (
-    get_index_constraints,
-    get_foreign_keys,
     get_check_constraints,
-    get_exclusion_constraints
+    get_exclusion_constraints,
+    get_foreign_keys,
+    get_index_constraints,
 )
 from pgsmo.objects.table_objects.index import Index
 from pgsmo.objects.table_objects.rule import Rule
 from pgsmo.objects.table_objects.trigger import Trigger
-from pgsmo.objects.server import server as s    # noqa
-import smo.utils.templating as templating
+from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import (
+    ScriptableCreate,
+    ScriptableDelete,
+    ScriptableSelect,
+    ScriptableUpdate,
+)
 
 
-class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'templates')
-    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
-    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
+class Table(
+    NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
+):
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "templates")
+    MACRO_ROOT = templating.get_template_root(__file__, "macros")
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, "../global_macros")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Table':
+    def _from_node_query(cls, server: "s.Server", parent: NodeObject, **kwargs) -> "Table":
         """
         Creates a table instance from the results of a node query
         :param server: Server that owns the table
@@ -46,45 +52,61 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
             name str: Name of the table
         :return: A table instance
         """
-        table = cls(server, parent, kwargs['name'])
-        table._oid = kwargs['oid']
-        table._schema = kwargs['schema']
-        table._scid = kwargs['schemaoid']
-        table._is_system = kwargs['is_system']
+        table = cls(server, parent, kwargs["name"])
+        table._oid = kwargs["oid"]
+        table._schema = kwargs["schema"]
+        table._scid = kwargs["schemaoid"]
+        table._is_system = kwargs["is_system"]
 
         return table
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: "s.Server", parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableSelect.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
         self._schema: str = None
         self._scid: int = None
         # Declare child items
-        self._check_constraints: NodeCollection[CheckConstraint] = self._register_child_collection(CheckConstraint)
+        self._check_constraints: NodeCollection[CheckConstraint] = (
+            self._register_child_collection(CheckConstraint)
+        )
         self._columns: NodeCollection[Column] = self._register_child_collection(Column)
 
         # Constraints
-        self._exclusion_constraints: NodeCollection[ExclusionConstraint] = self._register_child_collection(
-            ExclusionConstraint
+        self._exclusion_constraints: NodeCollection[ExclusionConstraint] = (
+            self._register_child_collection(ExclusionConstraint)
         )
-        self._foreign_key_constraints: NodeCollection[ForeignKeyConstraint] = self._register_child_collection(
-            ForeignKeyConstraint
+        self._foreign_key_constraints: NodeCollection[ForeignKeyConstraint] = (
+            self._register_child_collection(ForeignKeyConstraint)
         )
-        self._primary_key_constraints: NodeCollection[PrimaryKeyConstraint] = self._register_child_collection(
-            PrimaryKeyConstraint,
-            context_args={"constraint_type": "p"}
+        self._primary_key_constraints: NodeCollection[PrimaryKeyConstraint] = (
+            self._register_child_collection(
+                PrimaryKeyConstraint, context_args={"constraint_type": "p"}
+            )
         )
-        self._unique_key_constraints: NodeCollection[UniqueKeyConstraint] = self._register_child_collection(
-            UniqueKeyConstraint,
-            context_args={"constraint_type": "u"}
+        self._unique_key_constraints: NodeCollection[UniqueKeyConstraint] = (
+            self._register_child_collection(
+                UniqueKeyConstraint, context_args={"constraint_type": "u"}
+            )
         )
 
-        # Index constraints should be comprised of primary key constraints ("p"), unique key constraints ("u"), and exclusion constraints ("x"). Exclusion
-        # constraints have their own separate templates, while primary key and unique key constraints share templates from constraint_index
-        self._index_constraints: NodeCollection[IndexConstraint] = self._register_child_collection(IndexConstraint)
+        # Index constraints should be comprised of primary key constraints ("p"), 
+        # unique key constraints ("u"), and exclusion constraints ("x"). Exclusion
+        # constraints have their own separate templates, while primary key and 
+        # unique key constraints share templates from constraint_index
+        self._index_constraints: NodeCollection[IndexConstraint] = (
+            self._register_child_collection(IndexConstraint)
+        )
 
         self._indexes: NodeCollection[Index] = self._register_child_collection(Index)
         self._rules: NodeCollection[Rule] = self._register_child_collection(Rule)
@@ -102,9 +124,9 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
     @property
     def extended_vars(self):
         template_vars = {
-            'scid': self.scid,
-            'did': self.parent.oid,
-            'datlastsysoid': 0  # temporary until implemented
+            "scid": self.scid,
+            "did": self.parent.oid,
+            "datlastsysoid": 0,  # temporary until implemented
         }
         return template_vars
 
@@ -300,7 +322,7 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
 
     @property
     def like_relation(self):
-        return f'{self.schema}.{self.name}'
+        return f"{self.schema}.{self.name}"
 
     @property
     def primary_key(self):
@@ -392,41 +414,43 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
-        res = {"data": {
-            "name": self.name,
-            "coll_inherits": self.coll_inherits,
-            "columns": self.columns,
-            "typname": self.typname,
-            "relpersistence": self.relpersistence,
-            "relhasoids": self.relhasoids,
-            "fillfactor": self.fillfactor,
-            "autovacuum_custom": self.autovacuum_custom,
-            "autovacuum_enabled": self.autovacuum_enabled,
-            "toast_autovacuum": self.toast_autovacuum,
-            "toast_autovacuum_enabled": self.toast_autovacuum_enabled,
-            "autovacuum_analyze_scale_factor": self.autovacuum_analyze_scale_factor,
-            "autovacuum_analyze_threshold": self.autovacuum_analyze_threshold,
-            "autovacuum_freeze_max_age": self.autovacuum_freeze_max_age,
-            "autovacuum_vacuum_cost_delay": self.autovacuum_vacuum_cost_delay,
-            "autovacuum_vacuum_cost_limit": self.autovacuum_vacuum_cost_limit,
-            "autovacuum_vacuum_scale_factor": self.autovacuum_vacuum_scale_factor,
-            "autovacuum_vacuum_threshold": self.autovacuum_vacuum_threshold,
-            "autovacuum_freeze_min_age": self.autovacuum_freeze_min_age,
-            "autovacuum_freeze_table_age": self.autovacuum_freeze_table_age,
-            "spcname": self.spcname,
-            "relowner": self.relowner,
-            "schema": self.schema
-        }}
-        self._add_constraints(res['data'])
+        """Provides data input for create script"""
+        res = {
+            "data": {
+                "name": self.name,
+                "coll_inherits": self.coll_inherits,
+                "columns": self.columns,
+                "typname": self.typname,
+                "relpersistence": self.relpersistence,
+                "relhasoids": self.relhasoids,
+                "fillfactor": self.fillfactor,
+                "autovacuum_custom": self.autovacuum_custom,
+                "autovacuum_enabled": self.autovacuum_enabled,
+                "toast_autovacuum": self.toast_autovacuum,
+                "toast_autovacuum_enabled": self.toast_autovacuum_enabled,
+                "autovacuum_analyze_scale_factor": self.autovacuum_analyze_scale_factor,
+                "autovacuum_analyze_threshold": self.autovacuum_analyze_threshold,
+                "autovacuum_freeze_max_age": self.autovacuum_freeze_max_age,
+                "autovacuum_vacuum_cost_delay": self.autovacuum_vacuum_cost_delay,
+                "autovacuum_vacuum_cost_limit": self.autovacuum_vacuum_cost_limit,
+                "autovacuum_vacuum_scale_factor": self.autovacuum_vacuum_scale_factor,
+                "autovacuum_vacuum_threshold": self.autovacuum_vacuum_threshold,
+                "autovacuum_freeze_min_age": self.autovacuum_freeze_min_age,
+                "autovacuum_freeze_table_age": self.autovacuum_freeze_table_age,
+                "spcname": self.spcname,
+                "relowner": self.relowner,
+                "schema": self.schema,
+            }
+        }
+        self._add_constraints(res["data"])
 
         return res
 
@@ -449,73 +473,65 @@ class Table(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, Sc
         return "\n".join(main_sql)
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+        """Provides data input for delete script"""
+        return {"data": {"name": self.name, "schema": self.schema}, "cascade": self.cascade}
+
+    def _update_query_data(self) -> dict:
+        """Provides data input for update script"""
         return {
             "data": {
                 "name": self.name,
-                "schema": self.schema
-            },
-            "cascade": self.cascade
+                "schema": self.schema,
+                "relowner": self.relowner,
+                "coll_inherits_added": self.coll_inherits_added,
+                "coll_inherits_removed": self.coll_inherits_removed,
+                "relhasoids": self.hasoids,
+                "spcname": self.spcname,
+                "fillfactor": self.fillfactor,
+                "autovacuum_custom": self.autovacuum_custom,
+                "autovacuum_enabled": self.autovacuum_enabled,
+                "vacuum_table.changed": self.vacuum_table.changed,
+                "toast_autovacuum": self.toast_autovacuum,
+                "toast_autovacuum_enabled": self.toast_autovacuum_enabled,
+                "vacuum_toast.changed": self.vacuum_toast.changed,
+                "description": self.description,
+                "relacl": self.acl,
+                "seclabels": self.seclabels,
+            }
         }
-
-    def _update_query_data(self) -> dict:
-        """ Provides data input for update script """
-        return {"data": {
-            "name": self.name,
-            "schema": self.schema,
-            "relowner": self.relowner,
-            "coll_inherits_added": self.coll_inherits_added,
-            "coll_inherits_removed": self.coll_inherits_removed,
-            "relhasoids": self.hasoids,
-            "spcname": self.spcname,
-            "fillfactor": self.fillfactor,
-            "autovacuum_custom": self.autovacuum_custom,
-            "autovacuum_enabled": self.autovacuum_enabled,
-            "vacuum_table.changed": self.vacuum_table.changed,
-            "toast_autovacuum": self.toast_autovacuum,
-            "toast_autovacuum_enabled": self.toast_autovacuum_enabled,
-            "vacuum_toast.changed": self.vacuum_toast.changed,
-            "description": self.description,
-            "relacl": self.acl,
-            "seclabels": self.seclabels
-        }}
 
     def _select_query_data(self) -> dict:
         """Provides data input for select script"""
-        return {"data": {
-            "name": self.name,
-            "schema": self.schema,
-            "columns": self.columns
-        }}
+        return {"data": {"name": self.name, "schema": self.schema, "columns": self.columns}}
 
     def _add_constraints(self, data) -> dict:
+        index_constraints = {"p": "primary_key", "u": "unique_constraint"}
 
-        index_constraints = {
-            'p': 'primary_key', 'u': 'unique_constraint'
-        }
-
-        for ctype in index_constraints.keys():
+        for ctype in index_constraints:
             data[index_constraints[ctype]] = []
-            constraints = get_index_constraints(self.server, self.extended_vars['did'], self.oid, ctype)
+            constraints = get_index_constraints(
+                self.server, self.extended_vars["did"], self.oid, ctype
+            )
 
             # TODO: Add partition condition _is_partition_and_constraint_inherited
             for cons in constraints:
-                data.setdefault(
-                    index_constraints[ctype], []).append(cons)
+                data.setdefault(index_constraints[ctype], []).append(cons)
 
         # Add Foreign Keys
         foreign_keys = get_foreign_keys(self.server, self.oid)
         for fk in foreign_keys:
             # TODO: Add partition condition _is_partition_and_constraint_inherited
-            data.setdefault('foreign_key', []).append(fk)
+            data.setdefault("foreign_key", []).append(fk)
 
         # Add Check Constraints
         check_constraints = get_check_constraints(self.server, self.oid)
         for cc in check_constraints:
             # TODO: Add partition condition _is_partition_and_constraint_inherited
-            data.setdefault('check_constraint', []).append(cc)
+            data.setdefault("check_constraint", []).append(cc)
 
         # Add Exclusion Constraint
-        exclusion_constraints = get_exclusion_constraints(self.server, self.extended_vars['did'], self.oid)
+        exclusion_constraints = get_exclusion_constraints(
+            self.server, self.extended_vars["did"], self.oid
+        )
         for ex in exclusion_constraints:
-            data.setdefault('exclude_constraint', []).append(ex)
+            data.setdefault("exclude_constraint", []).append(ex)

@@ -5,4 +5,4 @@
 
 from ossdbtoolsservice.object_explorer.routing.pg_routing import PG_ROUTING_TABLE
 
-__all__ = ['PG_ROUTING_TABLE']
+__all__ = ["PG_ROUTING_TABLE"]

@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
-from typing import Any, List
+from typing import Any
 from unittest import mock
 
 import psycopg
@@ -14,8 +14,8 @@ from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
 from pgsmo import Database, Schema, Server
 from smo.common.node_object import NodeCollection
 
-MYSCHEMA = 'myschema'
-MYSCHEMA2 = 'myschema2'
+MYSCHEMA = "myschema"
+MYSCHEMA2 = "myschema2"
 
 
 class MockCursor:
@@ -40,8 +40,7 @@ class MockCursor:
             raise StopIteration
 
         # From python 3.6+ this dicts preserve order, so this isn't an issue
-        for x in self.query_results:
-            yield x
+        yield from self.query_results
 
     def execute_success_side_effects(self, *args):
         """Set up dummy results for query execution success"""
@@ -78,7 +77,8 @@ class TestMetadataExecutor(unittest.TestCase):
         self.mock_server = mock_server
         self.executor: MetadataExecutor = MetadataExecutor(mock_server)
 
-    # TODO add integration tests from PGCLI once Matt has the "create new DB and test against it" functionality
+    # TODO add integration tests from PGCLI once Matt has the
+    # "create new DB and test against it" functionality
     def test_search_path(self):
         self.assertListEqual(self.executor.search_path(), [MYSCHEMA])
 
@@ -86,14 +86,16 @@ class TestMetadataExecutor(unittest.TestCase):
         self.assertListEqual(self.executor.schemata(), [MYSCHEMA, MYSCHEMA2])
 
     def test_databases(self):
-        self.assertListEqual(self.executor.databases(), [self.mock_server.maintenance_db_name])
+        self.assertListEqual(
+            self.executor.databases(), [self.mock_server.maintenance_db_name]
+        )
 
     def test_tables(self):
         # Given 2 tables in the database
         expected_table_tuples = []
         for x in range(0, 3):
-            s1_table_name = 's1_t%s' % x
-            s2_table_name = 's2_t%s' % x
+            s1_table_name = f"s1_t{x}"
+            s2_table_name = f"s2_t{x}"
             expected_table_tuples.append(tuple([self.schema1.name, s1_table_name]))
             expected_table_tuples.append(tuple([self.schema2.name, s2_table_name]))
 
@@ -109,5 +111,5 @@ class TestMetadataExecutor(unittest.TestCase):
             self.assertTrue(expected in actual_table_tuples)
 
     # Helper functions ##################################################################
-    def _as_node_collection(self, object_list: List[Any]) -> NodeCollection[Any]:
+    def _as_node_collection(self, object_list: list[Any]) -> NodeCollection[Any]:
         return NodeCollection(lambda: object_list)

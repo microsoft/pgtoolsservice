@@ -11,10 +11,11 @@ from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 class ExpandCompletedParameters:
     """Parameters to be sent back with a expand completed"""
+
     session_id: str
     node_path: str
     error_message: Optional[str]
-    nodes: Optional[List[NodeInfo]]
+    nodes: Optional[list[NodeInfo]]
 
     def __init__(self, session_id: str, node_path: str):
         """
@@ -26,9 +27,9 @@ class ExpandCompletedParameters:
         self.node_path: str = node_path
 
         self.error_message: Optional[str] = None
-        self.nodes: Optional[List[NodeInfo]] = None
+        self.nodes: Optional[list[NodeInfo]] = None
 
 
-EXPAND_COMPLETED_METHOD = 'objectexplorer/expandCompleted'
+EXPAND_COMPLETED_METHOD = "objectexplorer/expandCompleted"
 
 OutgoingMessageRegistration.register_outgoing_message(ExpandCompletedParameters)

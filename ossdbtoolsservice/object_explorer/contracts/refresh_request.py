@@ -6,4 +6,4 @@
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.object_explorer.contracts.expand_request import ExpandParameters
 
-REFRESH_REQUEST = IncomingMessageConfiguration('objectexplorer/refresh', ExpandParameters)
+REFRESH_REQUEST = IncomingMessageConfiguration("objectexplorer/refresh", ExpandParameters)

@@ -5,17 +5,17 @@
 
 from typing import Optional
 
+import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate
-from pgsmo.objects.server import server as s    # noqa
-import smo.utils.templating as templating
 
 
 class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'index')
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "index")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'Index':
+    def _from_node_query(cls, server: "s.Server", parent: NodeObject, **kwargs) -> "Index":
         """
         Creates a new Index object based on the results of a nodes query
         :param server: Server that owns the index
@@ -26,17 +26,19 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             oid int: Object ID of the index
         :return: Instance of the Index
         """
-        idx = cls(server, parent, kwargs['name'])
-        idx._oid = kwargs['oid']
-        idx._is_clustered = kwargs['indisclustered']
-        idx._is_primary = kwargs['indisprimary']
-        idx._is_unique = kwargs['indisunique']
-        idx._is_valid = kwargs['indisvalid']
-        if idx.parent is not None and hasattr(idx.parent, 'schema'):
-            idx._schema = idx.parent.schema  # Parent will be either table or view, which both have schema defined
+        idx = cls(server, parent, kwargs["name"])
+        idx._oid = kwargs["oid"]
+        idx._is_clustered = kwargs["indisclustered"]
+        idx._is_primary = kwargs["indisprimary"]
+        idx._is_unique = kwargs["indisunique"]
+        idx._is_valid = kwargs["indisvalid"]
+        if idx.parent is not None and hasattr(idx.parent, "schema"):
+            idx._schema = (
+                idx.parent.schema
+            )  # Parent will be either table or view, which both have schema defined
         return idx
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: "s.Server", parent: NodeObject, name: str):
         """
         Initializes a new instance of an Index
         :param server: Server that owns the index
@@ -44,9 +46,15 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param name: Name of the index
         """
         NodeObject.__init__(self, server, parent, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
 
         # Object Properties
         self._is_clustered: Optional[bool] = None
@@ -121,19 +129,19 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     @property
     def extended_vars(self):
         return {
-            'idx': self.oid,
-            'tid': self.parent.oid,         # Table/view OID
-            'did': self.parent.parent.oid   # Database OID
+            "idx": self.oid,
+            "tid": self.parent.oid,  # Table/view OID
+            "did": self.parent.parent.oid,  # Database OID
         }
 
     # IMPLEMENTATION DETAILS ###############################################
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         create_query_data = {
             "data": {
                 "indisunique": self.is_unique,
@@ -144,30 +152,27 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "amname": self.amname,
                 "fillfactor": self.fillfactor,
                 "spcname": self.spcname,
-                "indconstraint": self.indconstraint
+                "indconstraint": self.indconstraint,
             },
             "mode": "create",
-            "add_not_exists_clause": True
+            "add_not_exists_clause": True,
         }
 
-        self.get_column_details(create_query_data['data'], create_query_data['mode'])
+        self.get_column_details(create_query_data["data"], create_query_data["mode"])
         if self._mxin_server_version[0] >= 11:
-            self.get_include_details(create_query_data['data'])
+            self.get_include_details(create_query_data["data"])
 
         return create_query_data
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
+        """Provides data input for delete script"""
         return {
-            "data": {
-                "nspname": self.parent.schema,
-                "name": self.name
-            },
-            "cascade": self.cascade
+            "data": {"nspname": self.parent.schema, "name": self.name},
+            "cascade": self.cascade,
         }
 
     def _update_query_data(self) -> dict:
-        """ Function that returns data for update script """
+        """Function that returns data for update script"""
         return {
             "data": {
                 "name": self.name,
@@ -176,15 +181,15 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
                 "spcname": self.spcname,
                 "indisclustered": self.is_clustered,
                 "table": self.parent.name,
-                "description": self.description
+                "description": self.description,
             },
             "o_data": {
                 "name": "",
                 "fillfactor": "",
                 "spcname": "",
                 "indisclustered": "",
-                "description": ""
-            }
+                "description": "",
+            },
         }
 
     ##########################################################################
@@ -196,7 +201,7 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
     #
     ##########################################################################
 
-    def get_column_details(self, data, mode='properties'):
+    def get_column_details(self, data, mode="properties"):
         """
         This functional will fetch list of column for index.
 
@@ -206,15 +211,17 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :return:
         """
         sql = templating.render_template(
-            templating.get_template_path(self._mxin_template_root, 'column_details.sql', self._mxin_server_version),
+            templating.get_template_path(
+                self._mxin_template_root, "column_details.sql", self._mxin_server_version
+            ),
             self._mxin_macro_root,
-            idx=self.oid
+            idx=self.oid,
         )
 
         cols, rows = self._server.connection.execute_dict(sql)
 
         # Remove column if duplicate column is present in list.
-        rows = [i for n, i in enumerate(rows) if i not in rows[n + 1:]]
+        rows = [i for n, i in enumerate(rows) if i not in rows[n + 1 :]]
 
         # 'attdef' comes with quotes from query so we need to strip them
         # 'options' we need true/false to render switch ASC(false)/DESC(true)
@@ -224,35 +231,34 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
             # We need all data as collection for ColumnsModel
             # we will not strip down colname when using in SQL to display
             cols_data = {
-                'colname': row['attdef'] if mode == 'create' else
-                row['attdef'].strip('"'),
-                'collspcname': row['collnspname'],
-                'op_class': row['opcname'],
+                "colname": row["attdef"] if mode == "create" else row["attdef"].strip('"'),
+                "collspcname": row["collnspname"],
+                "op_class": row["opcname"],
             }
 
             # ASC/DESC and NULLS works only with btree indexes
-            if 'amname' in data and data['amname'] == 'btree':
-                cols_data['sort_order'] = False
-                if row['options'][0] == 'DESC':
-                    cols_data['sort_order'] = True
+            if "amname" in data and data["amname"] == "btree":
+                cols_data["sort_order"] = False
+                if row["options"][0] == "DESC":
+                    cols_data["sort_order"] = True
 
-                cols_data['nulls'] = False
-                if row['options'][1].split(" ")[1] == 'FIRST':
-                    cols_data['nulls'] = True
-            cols_data['is_sort_nulls_applicable'] = True  # Always set to true
+                cols_data["nulls"] = False
+                if row["options"][1].split(" ")[1] == "FIRST":
+                    cols_data["nulls"] = True
+            cols_data["is_sort_nulls_applicable"] = True  # Always set to true
             columns.append(cols_data)
 
             # We need same data as string to display in properties window
             # If multiple column then separate it by colon
-            cols_str = ''
-            cols_str += self._get_column_property_display_data(row, row['attdef'], data)
+            cols_str = ""
+            cols_str += self._get_column_property_display_data(row, row["attdef"], data)
 
             cols.append(cols_str)
 
         # Push as collection
-        data['columns'] = columns
+        data["columns"] = columns
         # Push as string
-        data['columns_csv'] = ', '.join(cols)
+        data["columns_csv"] = ", ".join(cols)
 
         return data
 
@@ -266,15 +272,17 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :return:
         """
         sql = templating.render_template(
-            templating.get_template_path(self._mxin_template_root, 'include_details.sql', self._mxin_server_version),
+            templating.get_template_path(
+                self._mxin_template_root, "include_details.sql", self._mxin_server_version
+            ),
             self._mxin_macro_root,
-            idx=self.oid
+            idx=self.oid,
         )
 
         cols, rows = self._server.connection.execute_dict(sql)
 
         # Push as collection
-        data['include'] = [col['colname'] for col in rows]
+        data["include"] = [col["colname"] for col in rows]
 
         return data
 
@@ -287,16 +295,16 @@ class Index(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate):
         :param data:
         :return:
         """
-        if row['collnspname']:
-            col_str += ' COLLATE ' + row['collnspname']
-        if row['opcname']:
-            col_str += ' ' + row['opcname']
+        if row["collnspname"]:
+            col_str += " COLLATE " + row["collnspname"]
+        if row["opcname"]:
+            col_str += " " + row["opcname"]
 
         # ASC/DESC and NULLS works only with btree indexes
-        if 'amname' in data and data['amname'] == 'btree':
+        if "amname" in data and data["amname"] == "btree":
             # Append sort order
-            col_str += ' ' + row['options'][0]
+            col_str += " " + row["options"][0]
             # Append nulls value
-            col_str += ' ' + row['options'][1]
+            col_str += " " + row["options"][1]
 
         return col_str

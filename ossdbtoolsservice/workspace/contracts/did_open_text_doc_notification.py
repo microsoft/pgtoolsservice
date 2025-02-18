@@ -4,8 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
-from ossdbtoolsservice.workspace.contracts.common import TextDocumentItem
 from ossdbtoolsservice.serialization import Serializable
+from ossdbtoolsservice.workspace.contracts.common import TextDocumentItem
 
 
 class DidOpenTextDocumentParams(Serializable):
@@ -14,15 +14,15 @@ class DidOpenTextDocumentParams(Serializable):
     Attributes:
         text_document:  The document that was opened
     """
+
     @classmethod
     def get_child_serializable_types(cls):
-        return {'text_document': TextDocumentItem}
+        return {"text_document": TextDocumentItem}
 
     def __init__(self):
         self.text_document: TextDocumentItem = None
 
 
 DID_OPEN_TEXT_DOCUMENT_NOTIFICATION = IncomingMessageConfiguration(
-    'textDocument/didOpen',
-    DidOpenTextDocumentParams
+    "textDocument/didOpen", DidOpenTextDocumentParams
 )

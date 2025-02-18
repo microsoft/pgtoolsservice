@@ -1,9 +1,8 @@
-from typing import Type
-
 import pytest
-from ossdbtoolsservice.hosting.response_queues import ResponseQueues
+
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.message_server import MessageServer
+from ossdbtoolsservice.hosting.response_queues import ResponseQueues
 from ossdbtoolsservice.hosting.service_provider import Service, ServiceProvider
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
@@ -23,31 +22,31 @@ class MockMessageServer(MessageServer):
             self.async_runner.shutdown()
 
     def _send_message(self, message: JSONRPCMessage) -> None:
-        if message.message_type == JSONRPCMessageType.Request:
-            if message.message_method in self._request_responses:
-                # Simulate sending a response
-                response_message = self._request_responses[message.message_method]
-                response_message._message_id = message.message_id
-                assert isinstance(self._response_queues, ResponseQueues)
-                queue = self._response_queues.get_queue(message.message_id)
-                if not queue:
-                    raise ValueError("Request message is missing ID")
-                assert self.async_runner
-                self.async_runner.run_async(queue.put(response_message))
+        if (
+            message.message_type == JSONRPCMessageType.Request
+            and message.message_method in self._request_responses
+        ):
+            # Simulate sending a response
+            response_message = self._request_responses[message.message_method]
+            response_message._message_id = message.message_id
+            assert isinstance(self._response_queues, ResponseQueues)
+            queue = self._response_queues.get_queue(message.message_id)
+            if not queue:
+                raise ValueError("Request message is missing ID")
+            assert self.async_runner
+            self.async_runner.run_async(queue.put(response_message))
         self._messages.append(message)
 
     def receive_message(self, message: JSONRPCMessage) -> None:
         return self._dispatch_message(message)
 
-    def add_services(self, services: dict[str, Type[Service]]) -> None:
+    def add_services(self, services: dict[str, type[Service]]) -> None:
         if self.service_provider is not None:
             raise RuntimeError("Service provider has already been initialized")
         self.service_provider = ServiceProvider(self, services)
         self.service_provider.initialize()
 
-    def setup_request_response(
-        self, request_method: str, response: JSONRPCMessage
-    ) -> None:
+    def setup_request_response(self, request_method: str, response: JSONRPCMessage) -> None:
         self._request_responses[request_method] = response
 
 

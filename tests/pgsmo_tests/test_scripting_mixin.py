@@ -3,26 +3,30 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta, abstractmethod
-from typing import Callable, Type
 import unittest
 import unittest.mock as mock
+from abc import ABCMeta, abstractmethod
+from typing import Callable
 
-from smo.common.scripting_mixins import ScriptableBase, ScriptableCreate, ScriptableDelete, ScriptableUpdate
+from smo.common.scripting_mixins import (
+    ScriptableBase,
+    ScriptableCreate,
+    ScriptableDelete,
+    ScriptableUpdate,
+)
 
-
-TEMPLATE_ROOT = 'template_root'
-MACRO_ROOT = ['macro_root']
+TEMPLATE_ROOT = "template_root"
+MACRO_ROOT = ["macro_root"]
 SERVER_VERSION = (1, 1, 1)
 QUERY_DATA = {}
 
 
 class ScriptableTestBase(metaclass=ABCMeta):
-    unittest = unittest.TestCase('__init__')
+    unittest = unittest.TestCase("__init__")
 
     @property
     @abstractmethod
-    def class_for_test(self) -> Type[ScriptableBase]:
+    def class_for_test(self) -> type[ScriptableBase]:
         pass
 
     @property
@@ -53,21 +57,25 @@ class ScriptableTestBase(metaclass=ABCMeta):
         mock_obj = class_()
 
         # ... Patch out the templating code
-        mock_path = 'path.sql'
-        mock_output = 'sql'
+        mock_path = "path.sql"
+        mock_output = "sql"
         template_path_path = "smo.common.scripting_mixins.templating.get_template_path"
         template_path_mock = mock.MagicMock(return_value=mock_path)
         template_render_path = "smo.common.scripting_mixins.templating.render_template"
         template_render_mock = mock.MagicMock(return_value=mock_output)
 
-        with (mock.patch(template_path_path, template_path_mock, create=True)):
-            with (mock.patch(template_render_path, template_render_mock, create=True)):
-                # If: I get a script
-                result = self.script_lambda(mock_obj)
+        with (
+            mock.patch(template_path_path, template_path_mock, create=True),
+            mock.patch(template_render_path, template_render_mock, create=True),
+        ):
+            # If: I get a script
+            result = self.script_lambda(mock_obj)
 
         # Then:
         # ... The template mocks should have been called
-        template_path_mock.assert_called_once_with(TEMPLATE_ROOT, self.expected_template, SERVER_VERSION)
+        template_path_mock.assert_called_once_with(
+            TEMPLATE_ROOT, self.expected_template, SERVER_VERSION
+        )
         template_render_mock.assert_called_once_with(mock_path, MACRO_ROOT, **QUERY_DATA)
 
         # ... The output should match the expected output
@@ -76,12 +84,12 @@ class ScriptableTestBase(metaclass=ABCMeta):
 
 class TestScriptableCreate(ScriptableTestBase, unittest.TestCase):
     @property
-    def class_for_test(self) -> Type[ScriptableBase]:
+    def class_for_test(self) -> type[ScriptableBase]:
         return self._MockScriptableCreate
 
     @property
     def expected_template(self) -> str:
-        return 'create.sql'
+        return "create.sql"
 
     @property
     def script_lambda(self):
@@ -97,12 +105,12 @@ class TestScriptableCreate(ScriptableTestBase, unittest.TestCase):
 
 class TestScriptableDelete(ScriptableTestBase, unittest.TestCase):
     @property
-    def class_for_test(self) -> Type[ScriptableBase]:
+    def class_for_test(self) -> type[ScriptableBase]:
         return self._MockScriptableDelete
 
     @property
     def expected_template(self) -> str:
-        return 'delete.sql'
+        return "delete.sql"
 
     @property
     def script_lambda(self):
@@ -118,12 +126,12 @@ class TestScriptableDelete(ScriptableTestBase, unittest.TestCase):
 
 class TestScriptableUpdate(ScriptableTestBase, unittest.TestCase):
     @property
-    def class_for_test(self) -> Type[ScriptableBase]:
+    def class_for_test(self) -> type[ScriptableBase]:
         return self._MockScriptableUpdate
 
     @property
     def expected_template(self) -> str:
-        return 'update.sql'
+        return "update.sql"
 
     @property
     def script_lambda(self):

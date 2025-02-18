@@ -1,7 +1,6 @@
 import io
-from logging import Logger
 import threading
-
+from logging import Logger
 from queue import Queue
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
@@ -52,7 +51,8 @@ class RPCMessageServer(MessageServer):
 
         self._log_info("Input and output threads have completed")
 
-        # Close the reader/writer here instead of in the stop method in order to allow "softer"
+        # Close the reader/writer here instead of in the stop method
+        # in order to allow "softer"
         # shutdowns that will read or write the last message before halting
         self.reader.close()
         self.writer.close()

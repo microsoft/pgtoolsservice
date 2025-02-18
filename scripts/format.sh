@@ -9,13 +9,14 @@ fi
 function usage() {
     echo -n \
         "Usage: $(basename "$0")
-Runs linting for this project.
+Formats code for this project.
 "
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
-    echo "Running ruff check..."
-    ruff check ossdbtoolsservice tests tests_v2 pgsmo
+    echo "Running ruff format..."
+    ruff check --select I --fix
+    ruff format ossdbtoolsservice tests pgsmo
 
 fi

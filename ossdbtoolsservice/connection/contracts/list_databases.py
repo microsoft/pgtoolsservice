@@ -5,14 +5,16 @@
 
 """This module holds contracts for the connection/listdatabases method"""
 
-from typing import List  # noqa
-
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
+from ossdbtoolsservice.hosting import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
 from ossdbtoolsservice.serialization import Serializable
 
 
 class ListDatabasesParams(Serializable):
     """Parameters for the connection/listdatabases request"""
+
     owner_uri: str
     include_details: bool
 
@@ -23,11 +25,14 @@ class ListDatabasesParams(Serializable):
 
 class ListDatabasesResponse:
     """Response for the connection/listdatabases request"""
-    database_names: List[str]
+
+    database_names: list[str]
 
     def __init__(self, database_names):
-        self.database_names: List[str] = database_names
+        self.database_names: list[str] = database_names
 
 
-LIST_DATABASES_REQUEST = IncomingMessageConfiguration('connection/listdatabases', ListDatabasesParams)
+LIST_DATABASES_REQUEST = IncomingMessageConfiguration(
+    "connection/listdatabases", ListDatabasesParams
+)
 OutgoingMessageRegistration.register_outgoing_message(ListDatabasesResponse)

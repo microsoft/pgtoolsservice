@@ -4,14 +4,15 @@
 # --------------------------------------------------------------------------------------------
 
 
-from ossdbtoolsservice.workspace.contracts import Range
 from ossdbtoolsservice.serialization import Serializable
+from ossdbtoolsservice.workspace.contracts import Range
 
 
 class TextEdit(Serializable):
     """
     A textual edit applicable to a text document.
     """
+
     range: Range
     new_text: str
 
@@ -24,7 +25,7 @@ class TextEdit(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'range': Range}
+        return {"range": Range}
 
     def __init__(self):
         self.range: Range = None

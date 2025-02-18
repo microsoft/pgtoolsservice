@@ -4,18 +4,19 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
+
 from pgsmo import Sequence
 from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
 class TestSequence(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'sequencename',
-        'oid': 123,
-        'schema': 'public',
-        'schemaoid': 456,
-        'objectname': 'sequencename',
-        'is_system': True
+        "name": "sequencename",
+        "oid": 123,
+        "schema": "public",
+        "schemaoid": 456,
+        "objectname": "sequencename",
+        "is_system": True,
     }
 
     @property
@@ -44,7 +45,7 @@ class TestSequence(NodeObjectTestBase, unittest.TestCase):
             "minimum": "minimum",
             "maximum": "maximum",
             "cache": "cache",
-            "cascade": "cascade"
+            "cascade": "cascade",
         }
 
     @property
@@ -58,5 +59,5 @@ class TestSequence(NodeObjectTestBase, unittest.TestCase):
             "minimum": 1,
             "maximum": 100,
             "cache": 1,
-            "cascade": None
+            "cascade": None,
         }

@@ -28,7 +28,7 @@ class InitializeEditParams(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'filters': EditInitializerFilter}
+        return {"filters": EditInitializerFilter}
 
     def __init__(self):
         self.owner_uri: str = None
@@ -39,4 +39,6 @@ class InitializeEditParams(Serializable):
         self.filters: EditInitializerFilter = None
 
 
-INITIALIZE_EDIT_REQUEST = IncomingMessageConfiguration('edit/initialize', InitializeEditParams)
+INITIALIZE_EDIT_REQUEST = IncomingMessageConfiguration(
+    "edit/initialize", InitializeEditParams
+)

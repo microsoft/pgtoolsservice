@@ -3,11 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List, Optional     # noqa
+from typing import Optional
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
-from ossdbtoolsservice.workspace.contracts.common import Range
 from ossdbtoolsservice.serialization import Serializable
+from ossdbtoolsservice.workspace.contracts.common import Range
 
 
 class TextDocumentChangeEvent(Serializable):
@@ -16,13 +16,14 @@ class TextDocumentChangeEvent(Serializable):
     Attributes:
         range:          Range where the document was changed. Will be null if the server's
                         TextDocumentSyncKind is Full
-        range_length:   Length of the range being replaced in the document. Will be null if the
-                        server's TextDocumentSyncKind is Full
+        range_length:   Length of the range being replaced in the document. 
+                        Will be null if the server's TextDocumentSyncKind is Full
         text:           The new text for the document
     """
+
     @classmethod
     def get_child_serializable_types(cls):
-        return {'range': Range}
+        return {"range": Range}
 
     def __init__(self):
         self.range: Optional[Range] = None
@@ -50,16 +51,19 @@ class DidChangeTextDocumentParams(Serializable):
         content_changes:    List of changes to the document's contents
         text_document:      The document that changed
     """
+
     @classmethod
     def get_child_serializable_types(cls):
-        return {'content_changes': TextDocumentChangeEvent, 'text_document': VersionedTextDocumentIdentifier}
+        return {
+            "content_changes": TextDocumentChangeEvent,
+            "text_document": VersionedTextDocumentIdentifier,
+        }
 
     def __init__(self):
-        self.content_changes: List[TextDocumentChangeEvent] = []
+        self.content_changes: list[TextDocumentChangeEvent] = []
         self.text_document: VersionedTextDocumentIdentifier = None
 
 
 DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION = IncomingMessageConfiguration(
-    'textDocument/didChange',
-    DidChangeTextDocumentParams
+    "textDocument/didChange", DidChangeTextDocumentParams
 )

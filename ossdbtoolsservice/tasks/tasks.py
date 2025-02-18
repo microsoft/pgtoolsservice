@@ -7,11 +7,10 @@
 
 import threading
 import time
-from typing import Callable
 import uuid
+from typing import Callable
 
-from ossdbtoolsservice.hosting import OutgoingMessageRegistration
-from ossdbtoolsservice.hosting import RequestContext
+from ossdbtoolsservice.hosting import OutgoingMessageRegistration, RequestContext
 from ossdbtoolsservice.tasks.contracts import TaskInfo, TaskStatus
 
 
@@ -25,6 +24,7 @@ class TaskResult:
 
 class Task:
     """Class representing a single task handled by the task service"""
+
     name: str
     description: str
     provider_name: str
@@ -37,8 +37,17 @@ class Task:
     cancellation_lock: threading.Lock
     canceled: bool
 
-    def __init__(self, name: str, description: str, provider_name: str, server_name: str, database_name: str, request_context: RequestContext, action,
-                 on_cancel: Callable = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        provider_name: str,
+        server_name: str,
+        database_name: str,
+        request_context: RequestContext,
+        action,
+        on_cancel: Callable = None,
+    ) -> None:
         self.name = name
         self.description = description
         self.provider_name = provider_name
@@ -59,7 +68,15 @@ class Task:
     @property
     def task_info(self) -> TaskInfo:
         """Create a TaskInfo object corresponding to this task"""
-        return TaskInfo(self.id, self.status, self.provider_name, self.server_name, self.database_name, self.name, self.description)
+        return TaskInfo(
+            self.id,
+            self.status,
+            self.provider_name,
+            self.server_name,
+            self.database_name,
+            self.name,
+            self.description,
+        )
 
     def start(self) -> None:
         """Start the task by running it in a new thread"""
@@ -69,7 +86,8 @@ class Task:
         self._thread.start()
 
     def cancel(self) -> bool:
-        """Cancel the task if it is running and return true, or return false if the task is not running"""
+        """Cancel the task if it is running and return true, 
+        or return false if the task is not running"""
         if self.status is not TaskStatus.IN_PROGRESS:
             return False
         if self.on_cancel:
@@ -100,19 +118,29 @@ class Task:
     def _notify_created(self) -> None:
         if self.status is not TaskStatus.NOT_STARTED:
             return
-        self._request_context.send_notification('tasks/newtaskcreated', self.task_info)
+        self._request_context.send_notification("tasks/newtaskcreated", self.task_info)
 
     def _notify_status_changed(self) -> None:
-        self._request_context.send_notification('tasks/statuschanged', {
-            'taskId': self.id,
-            'status': self.status,
-            'message': self.status_message or '',
-            'duration': int((time.process_time() - self._start_time) * 1000) if self._is_completed else 0
-        })
+        self._request_context.send_notification(
+            "tasks/statuschanged",
+            {
+                "taskId": self.id,
+                "status": self.status,
+                "message": self.status_message or "",
+                "duration": int((time.process_time() - self._start_time) * 1000)
+                if self._is_completed
+                else 0,
+            },
+        )
 
     @property
     def _is_completed(self) -> bool:
-        return self.status in [TaskStatus.CANCELED, TaskStatus.FAILED, TaskStatus.SUCCEEDED, TaskStatus.SUCCEEDED_WITH_WARNING]
+        return self.status in [
+            TaskStatus.CANCELED,
+            TaskStatus.FAILED,
+            TaskStatus.SUCCEEDED,
+            TaskStatus.SUCCEEDED_WITH_WARNING,
+        ]
 
 
 OutgoingMessageRegistration.register_outgoing_message(Task)

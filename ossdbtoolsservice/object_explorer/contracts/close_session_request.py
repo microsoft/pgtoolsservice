@@ -26,4 +26,6 @@ class CloseSessionParameters(Serializable):
         self.user_name: str = None
 
 
-CLOSE_SESSION_REQUEST = IncomingMessageConfiguration('objectexplorer/closesession', CloseSessionParameters)
+CLOSE_SESSION_REQUEST = IncomingMessageConfiguration(
+    "objectexplorer/closesession", CloseSessionParameters
+)

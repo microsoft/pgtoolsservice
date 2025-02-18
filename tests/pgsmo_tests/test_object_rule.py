@@ -10,10 +10,7 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
 class TestRule(NodeObjectTestBase, unittest.TestCase):
-    NODE_ROW = {
-        'name': 'rulename',
-        'oid': 123
-    }
+    NODE_ROW = {"name": "rulename", "oid": 123}
 
     @property
     def full_properties(self):
@@ -26,7 +23,7 @@ class TestRule(NodeObjectTestBase, unittest.TestCase):
             "comment": "comment",
             "display_comments": "display_comments",
             "rid": "rid",
-            "rulename": "rulename"
+            "rulename": "rulename",
         }
 
     @property
@@ -40,7 +37,7 @@ class TestRule(NodeObjectTestBase, unittest.TestCase):
             "comment": "test",
             "display_comments": "test",
             "rid": "test",
-            "rulename": "test"
+            "rulename": "test",
         }
 
     @property

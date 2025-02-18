@@ -4,20 +4,27 @@
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterator
+from collections.abc import ItemsView, Iterator, KeysView
+from typing import (
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 from urllib.parse import urljoin
-from typing import Callable, Dict, Generic, List, Optional, Union, Type, TypeVar, KeysView, ItemsView
+
 import smo.utils as utils
 
 
 class NodeObject(metaclass=ABCMeta):
     @classmethod
     def get_nodes_for_parent(
-            cls,
-            root_server: 'Server',
-            parent_obj: Optional['NodeObject'],
-            context_args=None
-    ) -> List['NodeObject']:
+        cls, root_server: "Server", parent_obj: Optional["NodeObject"], context_args=None
+    ) -> List["NodeObject"]:
         """
         Renders and executes nodes.sql for the class to generate a list of NodeObjects
         :param root_server: Root node of the object model
@@ -28,18 +35,22 @@ class NodeObject(metaclass=ABCMeta):
         template_root = cls._template_root(root_server)
 
         # Only include a parent ID if a parent was provided
-        template_vars = {"conn": root_server.connection.connection}      # TODO: Allow configuring show/hide system objects
+        template_vars = {
+            "conn": root_server.connection.connection
+        }  # TODO: Allow configuring show/hide system objects
         if parent_obj is not None:
-            template_vars['parent_id'] = parent_obj._oid
+            template_vars["parent_id"] = parent_obj._oid
 
         if context_args is not None:
             template_vars.update(context_args)
 
         # Render and execute the template
         sql = utils.templating.render_template(
-            utils.templating.get_template_path(template_root, 'nodes.sql', root_server.version),
+            utils.templating.get_template_path(
+                template_root, "nodes.sql", root_server.version
+            ),
             macro_roots=cls._macro_root(),
-            **template_vars
+            **template_vars,
         )
         if parent_obj is None:
             cols, rows = root_server.connection.execute_dict(sql)
@@ -51,17 +62,21 @@ class NodeObject(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def _from_node_query(cls, root_server: 'Server', parent: 'NodeObject', **kwargs) -> 'NodeObject':
+    def _from_node_query(
+        cls, root_server: "Server", parent: "NodeObject", **kwargs
+    ) -> "NodeObject":
         pass
 
-    def __init__(self, root_server: 'Server', parent: Optional['NodeObject'], name: str):
+    def __init__(self, root_server: "Server", parent: Optional["NodeObject"], name: str):
         # Define the state of the object
-        self._server: 'Server' = root_server
-        self._parent: Optional['NodeObject'] = parent
+        self._server: Server = root_server
+        self._parent: Optional[NodeObject] = parent
 
         self._child_collections: Dict[str, NodeCollection] = {}
         self._property_collections: List[NodeLazyPropertyCollection] = []
-        self._full_properties: NodeLazyPropertyCollection = self._register_property_collection(self._property_generator)
+        self._full_properties: NodeLazyPropertyCollection = (
+            self._register_property_collection(self._property_generator)
+        )
 
         # Declare node basic properties
         self._name: str = name
@@ -82,7 +97,7 @@ class NodeObject(metaclass=ABCMeta):
         return self._oid
 
     @property
-    def parent(self) -> Optional['NodeObject']:
+    def parent(self) -> Optional["NodeObject"]:
         return self._parent
 
     @property
@@ -92,7 +107,7 @@ class NodeObject(metaclass=ABCMeta):
         tree until the object doesn't have a parent. The root of the URN is provided by the Server.
         """
         collection = self.__class__.__name__
-        this_fragment = f'{collection}.{self.oid}/'
+        this_fragment = f"{collection}.{self.oid}/"
         if self.parent is None:
             # Base case: object does not have a parent. Append the fragment to the server URN
             return urljoin(self.server.urn_base, this_fragment)
@@ -101,7 +116,7 @@ class NodeObject(metaclass=ABCMeta):
             return urljoin(self.parent.urn, this_fragment)
 
     @property
-    def server(self) -> 'Server':
+    def server(self) -> "Server":
         return self._server
 
     @property
@@ -117,14 +132,14 @@ class NodeObject(metaclass=ABCMeta):
         return template_vars
 
     # METHODS ##############################################################
-    def get_object_by_urn(self, urn_fragment: str) -> 'NodeObject':
+    def get_object_by_urn(self, urn_fragment: str) -> "NodeObject":
         """
         Finds an object using a relative URN
         :param urn_fragment: Fragment of a URN, relative to this object class
         :return: The NodeObject that matches up with the URN
         """
         # Base case: The fragment points to this instance
-        if urn_fragment == '/':
+        if urn_fragment == "/":
             return self
 
         # Recursive case: Process the fragment and recurse
@@ -133,7 +148,9 @@ class NodeObject(metaclass=ABCMeta):
         # Get the matching child collection
         collection = self._child_collections.get(class_name)
         if collection is None:
-            raise ValueError(f'The URN fragment {class_name} is not supported by {self.__class__.__name__}')
+            raise ValueError(
+                f"The URN fragment {class_name} is not supported by {self.__class__.__name__}"
+            )
 
         # Get the matching object
         # TODO: Create a .get method for NodeCollection (see https://github.com/Microsoft/carbon/issues/1713)
@@ -144,10 +161,10 @@ class NodeObject(metaclass=ABCMeta):
         """Refreshes and lazily loaded data"""
         self._refresh_child_collections()
 
-    def get_database_node(self) -> 'NodeObject':
+    def get_database_node(self) -> "NodeObject":
         if self.parent is None:
             # checking for class name here. isInstance needs importing of Database class here creates circular dependency
-            if self.__class__.__name__ == 'Database':
+            if self.__class__.__name__ == "Database":
                 return self
             else:
                 return None
@@ -162,7 +179,7 @@ class NodeObject(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def _template_root(cls, root_server: 'Server') -> str:
+    def _template_root(cls, root_server: "Server") -> str:
         """
         Required to be implemented in child classes. Returns the path to the root of templates for the object
         :param root_server: The server that the object belongs to
@@ -170,20 +187,26 @@ class NodeObject(metaclass=ABCMeta):
         """
 
     # PROTECTED HELPERS ####################################################
-    TRCC = TypeVar('TRCC')
+    TRCC = TypeVar("TRCC")
 
-    def _register_child_collection(self, class_: Type[TRCC], context_args=None) -> 'NodeCollection[TRCC]':
+    def _register_child_collection(
+        self, class_: Type[TRCC], context_args=None
+    ) -> "NodeCollection[TRCC]":
         """
         Creates a node collection for child objects and registers it with the list of child objects.
         This is very useful for ensuring that all child collections are reset when refreshing.
         :param generator: Callable for generating the list of nodes
         :return: The created node collection
         """
-        collection = NodeCollection(lambda: class_.get_nodes_for_parent(self.server, self, context_args=context_args))
+        collection = NodeCollection(
+            lambda: class_.get_nodes_for_parent(self.server, self, context_args=context_args)
+        )
         self._child_collections[class_.__name__] = collection
         return collection
 
-    def _register_property_collection(self, generator: Callable[[], Dict[str, Optional[Union[str, int, bool]]]]):
+    def _register_property_collection(
+        self, generator: Callable[[], Dict[str, Optional[Union[str, int, bool]]]]
+    ):
         """
         Creates a property collection for extended properties, etc, and registers with the list of
         property collections.
@@ -203,9 +226,11 @@ class NodeObject(metaclass=ABCMeta):
 
         # Render and execute the template
         sql = utils.templating.render_template(
-            utils.templating.get_template_path(template_root, 'properties.sql', self._server.version),
+            utils.templating.get_template_path(
+                template_root, "properties.sql", self._server.version
+            ),
             self._macro_root(),
-            **template_vars
+            **template_vars,
         )
         cols, rows = self._server.connection.execute_dict(sql)
 
@@ -221,8 +246,10 @@ class NodeObject(metaclass=ABCMeta):
 
         # Render and execute the template
         sql = utils.templating.render_template(
-            utils.templating.get_template_path(template_root, 'additional_properties.sql', self._server.version),
-            **template_vars
+            utils.templating.get_template_path(
+                template_root, "additional_properties.sql", self._server.version
+            ),
+            **template_vars,
         )
         cols, rows = self._server.connection.execute_dict(sql)
 
@@ -265,7 +292,7 @@ class NodeLazyPropertyCollection:
         """
         # Make sure we have a valid index
         if not isinstance(index, str):
-            raise TypeError('Index must be a string')
+            raise TypeError("Index must be a string")
 
         return self._items[index]
 
@@ -275,7 +302,9 @@ class NodeLazyPropertyCollection:
     def __len__(self) -> int:
         return len(self._items)
 
-    def get(self, item: str, default: Optional[Union[str, int, bool]] = None) -> Optional[Union[str, int, bool]]:
+    def get(
+        self, item: str, default: Optional[Union[str, int, bool]] = None
+    ) -> Optional[Union[str, int, bool]]:
         return self._items.get(item, default)
 
     def items(self) -> ItemsView[str, Union[str, int, bool]]:
@@ -289,7 +318,7 @@ class NodeLazyPropertyCollection:
         self._items_impl = None
 
 
-TNC = TypeVar('TNC')
+TNC = TypeVar("TNC")
 
 
 class NodeCollection(Generic[TNC]):
@@ -323,12 +352,12 @@ class NodeCollection(Generic[TNC]):
         # Determine how we will be looking up the item
         if isinstance(index, int):
             # Lookup is by object ID
-            lookup = (lambda x: x.oid == index)
+            lookup = lambda x: x.oid == index
         elif isinstance(index, str):
             # Lookup is by object name
-            lookup = (lambda x: x.name == index)
+            lookup = lambda x: x.name == index
         else:
-            raise TypeError('Index must be either a string or int')
+            raise TypeError("Index must be either a string or int")
 
         # Look up the desired item
         for item in self._items:
@@ -336,7 +365,7 @@ class NodeCollection(Generic[TNC]):
                 return item
 
         # If we make it to here, an item with the given index does not exist
-        raise NameError('An item with the provided index does not exist')       # TODO: Localize?
+        raise NameError("An item with the provided index does not exist")  # TODO: Localize?
 
     def __iter__(self) -> Iterator:
         return self._items.__iter__()

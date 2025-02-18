@@ -5,4 +5,4 @@
 
 from ossdbtoolsservice.serialization.serializable import Serializable
 
-__all__ = ['Serializable']
+__all__ = ["Serializable"]

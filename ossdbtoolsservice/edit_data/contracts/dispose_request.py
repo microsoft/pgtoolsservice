@@ -4,21 +4,22 @@
 # --------------------------------------------------------------------------------------------
 
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
 from ossdbtoolsservice.edit_data.contracts import SessionOperationRequest
+from ossdbtoolsservice.hosting import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
 
 
 class DisposeRequest(SessionOperationRequest):
-
     def __init__(self):
         SessionOperationRequest.__init__(self)
 
 
 class DisposeResponse:
-
     def __init__(self):
         pass
 
 
-DISPOSE_REQUEST = IncomingMessageConfiguration('edit/dispose', DisposeRequest)
+DISPOSE_REQUEST = IncomingMessageConfiguration("edit/dispose", DisposeRequest)
 OutgoingMessageRegistration.register_outgoing_message(DisposeResponse)

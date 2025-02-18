@@ -3,9 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from ossdbtoolsservice.connection.contracts.common import ConnectionType
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
-from ossdbtoolsservice.connection.contracts.common import ConnectionType
 
 
 class DisconnectRequestParams(Serializable):
@@ -17,4 +17,6 @@ class DisconnectRequestParams(Serializable):
         self.type = None
 
 
-DISCONNECT_REQUEST = IncomingMessageConfiguration('connection/disconnect', DisconnectRequestParams)
+DISCONNECT_REQUEST = IncomingMessageConfiguration(
+    "connection/disconnect", DisconnectRequestParams
+)

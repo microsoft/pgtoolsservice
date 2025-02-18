@@ -1,7 +1,8 @@
 import asyncio
-from concurrent.futures import Future
 import threading
-from typing import Any, Coroutine
+from collections.abc import Coroutine
+from concurrent.futures import Future
+from typing import Any
 
 
 class AsyncRunner:

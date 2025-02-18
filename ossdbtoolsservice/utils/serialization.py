@@ -26,16 +26,14 @@ def convert_to_dict(obj):
 
 
 def _get_serializable_value(obj):
-    """Gets a serializable representation of an object, for use as the default argument to json.dumps"""
+    """Gets a serializable representation of an object, 
+    for use as the default argument to json.dumps"""
     # If the object is an Enum, use its value
     if isinstance(obj, enum.Enum):
         return _get_serializable_value(obj.value)
     # Try to use the object's dictionary representation if available
     try:
-        return {
-            inflection.camelize(key, False): value
-            for key, value in obj.__dict__.items()
-        }
+        return {inflection.camelize(key, False): value for key, value in obj.__dict__.items()}
     except AttributeError:
         pass
     # Assume the object can be serialized normally

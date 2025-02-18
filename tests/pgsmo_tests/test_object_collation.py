@@ -11,21 +11,21 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestCollation(NodeObjectTestBase, unittest.TestCase):
     NODE_QUERY = {
-        'name': 'collation',
-        'oid': 123,
-        'schema': 'test_schema',
-        'schemaoid': 345,
-        'is_system': False
+        "name": "collation",
+        "oid": 123,
+        "schema": "test_schema",
+        "schemaoid": 345,
+        "is_system": False,
     }
 
     PROPERTY_QUERY = {
-        'owner': 'postgres',
-        'description': 'test',
-        'lc_collate': 'test',
-        'lc_type': 'test',
-        'locale': 'test',
-        'copy_collation': 'postgres.UTF-8',
-        'cascade': True
+        "owner": "postgres",
+        "description": "test",
+        "lc_collate": "test",
+        "lc_type": "test",
+        "locale": "test",
+        "copy_collation": "postgres.UTF-8",
+        "cascade": True,
     }
 
     @property
@@ -35,13 +35,13 @@ class TestCollation(NodeObjectTestBase, unittest.TestCase):
     @property
     def full_properties(self):
         return {
-            'owner': 'owner',
-            'description': 'description',
-            'lc_collate': 'lc_collate',
-            'lc_type': 'lc_type',
-            'locale': 'locale',
-            'copy_collation': 'copy_collation',
-            'cascade': 'cascade'
+            "owner": "owner",
+            "description": "description",
+            "lc_collate": "lc_collate",
+            "lc_type": "lc_type",
+            "locale": "locale",
+            "copy_collation": "copy_collation",
+            "cascade": "cascade",
         }
 
     @property

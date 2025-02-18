@@ -1,13 +1,13 @@
 import pytest
-
 from semantic_kernel.contents import (
     AuthorRole,
     ChatHistory,
     ChatMessageContent,
-    TextContent,
     FunctionCallContent,
     FunctionResultContent,
+    TextContent,
 )
+
 from ossdbtoolsservice.chat.completion.vscode_chat_completion import (
     VSCodeChatCompletionHistoryTranslator,
     VSCodeLanguageModelChatMessageRole,

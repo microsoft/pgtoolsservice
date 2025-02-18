@@ -6,8 +6,8 @@
 import unittest
 import unittest.mock as mock
 
-from ossdbtoolsservice.hosting.service_provider import ServiceProvider
 import tests.utils as utils
+from ossdbtoolsservice.hosting.service_provider import ServiceProvider
 
 
 class TestServiceProvider(unittest.TestCase):
@@ -50,7 +50,7 @@ class TestServiceProvider(unittest.TestCase):
         sp.initialize()
 
         # Then: The services should all have been initialized with the service provider
-        for service_name, service_instance in sp._services.items():
+        for _service_name, service_instance in sp._services.items():
             self.assertTrue(service_instance.has_initialized)
             self.assertIs(service_instance.service_provider, sp)
 

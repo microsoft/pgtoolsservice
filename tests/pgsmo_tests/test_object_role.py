@@ -10,12 +10,7 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 
 class TestRole(NodeObjectTestBase, unittest.TestCase):
-    NODE_ROW = {
-        'name': 'role',
-        'oid': 123,
-        'rolcanlogin': True,
-        'rolsuper': True
-    }
+    NODE_ROW = {"name": "role", "oid": 123, "rolcanlogin": True, "rolsuper": True}
 
     @property
     def class_for_test(self):
@@ -24,10 +19,10 @@ class TestRole(NodeObjectTestBase, unittest.TestCase):
     @property
     def basic_properties(self):
         return {
-            '_can_login': TestRole.NODE_ROW['rolcanlogin'],
-            'can_login': TestRole.NODE_ROW['rolcanlogin'],
-            'is_super': TestRole.NODE_ROW['rolsuper'],
-            '_is_super': TestRole.NODE_ROW['rolsuper']
+            "_can_login": TestRole.NODE_ROW["rolcanlogin"],
+            "can_login": TestRole.NODE_ROW["rolcanlogin"],
+            "is_super": TestRole.NODE_ROW["rolsuper"],
+            "_is_super": TestRole.NODE_ROW["rolsuper"],
         }
 
     @property

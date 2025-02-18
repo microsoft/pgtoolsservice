@@ -4,23 +4,25 @@
 # --------------------------------------------------------------------------------------------
 
 import threading
-from typing import List
 
-from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
+from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.metadata.contracts import (
+    METADATA_LIST_REQUEST,
     MetadataListParameters,
     MetadataListResponse,
-    METADATA_LIST_REQUEST,
     MetadataType,
     ObjectMetadata,
 )
 from ossdbtoolsservice.utils import constants
 
-# This query collects all the tables, views, and functions in all the schemas in the database(s)?
+# This query collects all the tables, views, 
+# and functions in all the schemas in the database(s)?
 PG_METADATA_QUERY = """
-SELECT s.nspname AS schema_name, p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), '') || ')' AS object_name, \
+SELECT s.nspname AS schema_name, 
+    p.proname || '(' || COALESCE(pg_catalog.pg_get_function_identity_arguments(p.oid), 
+        '') || ')' AS object_name, \
     'f' as type FROM pg_proc p
     INNER JOIN pg_namespace s ON s.oid = p.pronamespace
     WHERE s.nspname NOT ILIKE 'pg_%' AND s.nspname != 'information_schema'
@@ -51,9 +53,7 @@ class MetadataService(Service):
         )
 
         if self._service_provider.logger is not None:
-            self._service_provider.logger.info(
-                "Metadata service successfully initialized"
-            )
+            self._service_provider.logger.info("Metadata service successfully initialized")
 
     # REQUEST HANDLERS #####################################################
 
@@ -81,7 +81,7 @@ class MetadataService(Service):
                 "Unhandled exception while listing metadata: " + str(e)
             )  # TODO: Localize
 
-    def _list_metadata(self, owner_uri: str) -> List[ObjectMetadata]:
+    def _list_metadata(self, owner_uri: str) -> list[ObjectMetadata]:
         # Get current connection
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection: ServerConnection = connection_service.get_connection(
@@ -91,10 +91,9 @@ class MetadataService(Service):
         # Get the current database
         database_name = connection.database_name
 
-        # Get the metadata query specific to the current provider and fill in the database name
-        metadata_query = QUERY_MAP[self._service_provider.provider].format(
-            database_name
-        )
+        # Get the metadata query specific to the current provider 
+        # and fill in the database name
+        metadata_query = QUERY_MAP[self._service_provider.provider].format(database_name)
 
         query_results = connection.execute_query(metadata_query, all=True)
 

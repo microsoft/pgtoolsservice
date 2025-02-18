@@ -1,15 +1,14 @@
 import json
-
 import sys
 from typing import Any
 
 from flask_socketio import SocketIO
 
-from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 from ossdbtoolsservice.hosting.context import (
-    RequestContext,
     NotificationContext,
+    RequestContext,
 )
+from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 from ossdbtoolsservice.hosting.message_server import MessageServer
 
 if sys.version_info >= (3, 12):
@@ -43,9 +42,7 @@ class WebRequestContext(RequestContext):
 
     @override
     def send_error(self, message: str, data: Any = None, code: int = 0) -> None:
-        error = JSONRPCMessage.create_error(
-            self.message.message_id, code, message, data
-        )
+        error = JSONRPCMessage.create_error(self.message.message_id, code, message, data)
         json_content = json.dumps(error.dictionary, sort_keys=True)
         sid = self._active_sessions.get(self._session_id)
         if sid:

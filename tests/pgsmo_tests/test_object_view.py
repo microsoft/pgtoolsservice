@@ -11,12 +11,12 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestView(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'viewname',
-        'oid': 123,
-        'schema': 'public',
-        'schemaoid': 456,
-        'objectname': 'viewname',
-        'is_system': True
+        "name": "viewname",
+        "oid": 123,
+        "schema": "public",
+        "schemaoid": 456,
+        "objectname": "viewname",
+        "is_system": True,
     }
 
     @property
@@ -29,11 +29,7 @@ class TestView(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def collections(self):
-        return [
-            '_columns', 'columns',
-            '_rules', 'rules',
-            '_triggers', 'triggers'
-        ]
+        return ["_columns", "columns", "_rules", "rules", "_triggers", "triggers"]
 
     @property
     def node_query(self) -> dict:
@@ -47,7 +43,7 @@ class TestView(NodeObjectTestBase, unittest.TestCase):
             "comment": "comment",
             "nspname": "nspname",
             "check_option": "check_option",
-            "security_barrier": "security_barrier"
+            "security_barrier": "security_barrier",
         }
 
     @property
@@ -59,5 +55,5 @@ class TestView(NodeObjectTestBase, unittest.TestCase):
             "comment": "this is a comment",
             "nspname": "test",
             "check_option": False,
-            "security_barrier": None
+            "security_barrier": None,
         }

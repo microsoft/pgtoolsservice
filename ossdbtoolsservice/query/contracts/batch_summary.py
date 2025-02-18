@@ -3,9 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
-from ossdbtoolsservice.query.contracts import SelectionData
+
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
+from ossdbtoolsservice.query.contracts import SelectionData
 from ossdbtoolsservice.query.contracts.result_set_summary import ResultSetSummary
 
 
@@ -16,7 +16,7 @@ class BatchSummary:
     has_error: bool
     execution_end: str
     execution_elapsed: str
-    result_set_summaries: List[ResultSetSummary]
+    result_set_summaries: list[ResultSetSummary]
 
     @classmethod
     def from_batch(cls, batch):
@@ -25,15 +25,19 @@ class BatchSummary:
         if batch.has_executed:
             instance.execution_elapsed = batch.elapsed_time
             instance.execution_end = batch.end_time
-            instance.result_set_summaries = [batch.result_set.result_set_summary] if batch.result_set is not None else []
+            instance.result_set_summaries = (
+                [batch.result_set.result_set_summary] if batch.result_set is not None else []
+            )
 
         return instance
 
-    def __init__(self,
-                 batchId: int,
-                 selection: SelectionData = None,
-                 execution_start: str = None,
-                 has_error: bool = False) -> None:
+    def __init__(
+        self,
+        batchId: int,
+        selection: SelectionData = None,
+        execution_start: str = None,
+        has_error: bool = False,
+    ) -> None:
         self.id = batchId
         self.selection = selection
         self.execution_start: str = execution_start

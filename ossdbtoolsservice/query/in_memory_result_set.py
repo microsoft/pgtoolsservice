@@ -3,19 +3,24 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
-from ossdbtoolsservice.query.result_set import ResultSet, ResultSetEvents
-from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSubset, SaveResultsRequestParams  # noqa
 from ossdbtoolsservice.query.column_info import get_columns_info
+from ossdbtoolsservice.query.contracts import (  # noqa
+    DbCellValue,
+    DbColumn,
+    ResultSetSubset,
+    SaveResultsRequestParams,
+)
 from ossdbtoolsservice.query.data_storage import FileStreamFactory
+from ossdbtoolsservice.query.result_set import ResultSet, ResultSetEvents
 
 
 class InMemoryResultSet(ResultSet):
-
-    def __init__(self, result_set_id: int, batch_id: int, events: ResultSetEvents = None) -> None:
+    def __init__(
+        self, result_set_id: int, batch_id: int, events: ResultSetEvents = None
+    ) -> None:
         ResultSet.__init__(self, result_set_id, batch_id, events)
-        self.rows: List[tuple] = []
+        self.rows: list[tuple] = []
 
     @property
     def row_count(self) -> int:
@@ -33,9 +38,12 @@ class InMemoryResultSet(ResultSet):
     def update_row(self, row_id: int, cursor):
         self.rows[row_id] = cursor.fetchone()
 
-    def get_row(self, row_id: int) -> List[DbCellValue]:
+    def get_row(self, row_id: int) -> list[DbCellValue]:
         row = self.rows[row_id]
-        return [DbCellValue(cell_value, cell_value is None, cell_value, row_id) for cell_value in list(row)]
+        return [
+            DbCellValue(cell_value, cell_value is None, cell_value, row_id)
+            for cell_value in list(row)
+        ]
 
     def read_result_to_end(self, cursor):
         rows = cursor.fetchall()
@@ -45,8 +53,15 @@ class InMemoryResultSet(ResultSet):
 
         self._has_been_read = True
 
-    def do_save_as(self, file_path: str, row_start_index: int, row_end_index: int, file_factory: FileStreamFactory, on_success, on_failure) -> None:
-
+    def do_save_as(
+        self,
+        file_path: str,
+        row_start_index: int,
+        row_end_index: int,
+        file_factory: FileStreamFactory,
+        on_success,
+        on_failure,
+    ) -> None:
         with file_factory.get_writer(file_path) as writer:
             for index in range(row_start_index, row_end_index):
                 row = self.get_row(index)

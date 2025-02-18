@@ -4,14 +4,15 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.utils import constants
-
 from tests.mocks.server_mock import ServerMock
 from tests.utils import get_mock_logger
 
 
 class ServiceProviderMock:
-    def __init__(self, services: dict = {}):
-        self._setup_mocks(get_mock_logger(), ServerMock(), services)
+    def __init__(self, services: dict | None = None):
+        self._setup_mocks(
+            get_mock_logger(), ServerMock(), {} if services is None else services
+        )
 
     def registerMock(self, server, services: dict, logger=None):
         self._setup_mocks(logger, server, services)

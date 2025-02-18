@@ -3,34 +3,40 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta, abstractmethod, abstractproperty
-from typing import List, Dict  # noqa
 import threading
+from abc import ABCMeta, abstractmethod, abstractproperty
 
-from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue, ResultSetSummary, SaveResultsRequestParams  # noqa
+from ossdbtoolsservice.query.contracts import (
+    DbCellValue,
+    DbColumn,
+    ResultSetSummary,
+    SaveResultsRequestParams,
+)
 from ossdbtoolsservice.query.data_storage import FileStreamFactory
 
 
 class ResultSetEvents:
-
-    def __init__(self, on_result_set_completed=None, on_result_set_partially_loaded=None) -> None:
+    def __init__(
+        self, on_result_set_completed=None, on_result_set_partially_loaded=None
+    ) -> None:
         self._on_result_set_completed = on_result_set_completed
         self._on_result_set_partially_loaded = on_result_set_partially_loaded
 
 
 class ResultSet(metaclass=ABCMeta):
-
-    def __init__(self, result_set_id: int, batch_id: int, events: ResultSetEvents = None) -> None:
+    def __init__(
+        self, result_set_id: int, batch_id: int, events: ResultSetEvents = None
+    ) -> None:
         self.id = result_set_id
         self.batch_id = batch_id
         self.events = events
 
         self._has_been_read = False
-        self._columns_info: List[DbColumn] = []
-        self._save_as_threads: Dict[str, threading.Thread] = {}
+        self._columns_info: list[DbColumn] = []
+        self._save_as_threads: dict[str, threading.Thread] = {}
 
     @property
-    def columns_info(self) -> List[DbColumn]:
+    def columns_info(self) -> list[DbColumn]:
         return self._columns_info if self._columns_info is not None else []
 
     @columns_info.setter
@@ -39,7 +45,9 @@ class ResultSet(metaclass=ABCMeta):
 
     @property
     def result_set_summary(self) -> ResultSetSummary:
-        return ResultSetSummary(self.id, self.batch_id, self.row_count, self._has_been_read, self.columns_info)
+        return ResultSetSummary(
+            self.id, self.batch_id, self.row_count, self._has_been_read, self.columns_info
+        )
 
     @abstractproperty
     def row_count(self) -> int:
@@ -51,7 +59,7 @@ class ResultSet(metaclass=ABCMeta):
 
     @abstractmethod
     def add_row(self, cursor):
-        ''' Add row accepts cursor which will be iterated over to get the current row to add '''
+        """Add row accepts cursor which will be iterated over to get the current row to add"""
 
     @abstractmethod
     def remove_row(self, row_id: int):
@@ -59,10 +67,12 @@ class ResultSet(metaclass=ABCMeta):
 
     @abstractmethod
     def update_row(self, row_id: int, cursor):
-        ''' Add row accepts cursor which will be iterated over to get the current row to be updated '''
+        """Add row accepts cursor which will be iterated over 
+        to get the current row to be updated"""
+        pass
 
     @abstractmethod
-    def get_row(self, row_id: int) -> List[DbCellValue]:
+    def get_row(self, row_id: int) -> list[DbCellValue]:
         pass
 
     @abstractmethod
@@ -70,19 +80,32 @@ class ResultSet(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def do_save_as(self, file_path: str, row_start_index: int, row_end_index: int, file_factory: FileStreamFactory, on_success, on_failure) -> None:
+    def do_save_as(
+        self,
+        file_path: str,
+        row_start_index: int,
+        row_end_index: int,
+        file_factory: FileStreamFactory,
+        on_success,
+        on_failure,
+    ) -> None:
         pass
 
-    def save_as(self, params: SaveResultsRequestParams, file_factory: FileStreamFactory, on_success, on_failure) -> None:
-
+    def save_as(
+        self,
+        params: SaveResultsRequestParams,
+        file_factory: FileStreamFactory,
+        on_success,
+        on_failure,
+    ) -> None:
         if self._has_been_read is False:
-            raise RuntimeError('Result cannot be saved until query execution has completed')
+            raise RuntimeError("Result cannot be saved until query execution has completed")
 
         save_as_thread = self._save_as_threads.get(params.file_path)
 
         if save_as_thread is not None:
             if save_as_thread.is_alive():
-                raise RuntimeError('A save request to the same path is in progress')
+                raise RuntimeError("A save request to the same path is in progress")
             else:
                 del self._save_as_threads[params.file_path]
 
@@ -95,7 +118,15 @@ class ResultSet(metaclass=ABCMeta):
 
         new_save_as_thread = threading.Thread(
             target=self.do_save_as,
-            args=(params.file_path, row_start_index, row_end_index, file_factory, on_success, on_failure),
-            daemon=True)
+            args=(
+                params.file_path,
+                row_start_index,
+                row_end_index,
+                file_factory,
+                on_success,
+                on_failure,
+            ),
+            daemon=True,
+        )
         self._save_as_threads[params.file_path] = new_save_as_thread
         new_save_as_thread.start()

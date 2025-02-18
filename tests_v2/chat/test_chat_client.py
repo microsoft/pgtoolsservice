@@ -1,19 +1,20 @@
-"""A simple chat client that connects to the PostgreSQL language server and sends chat completion requests.
+"""A simple chat client that connects to the PostgreSQL language server
+and sends chat completion requests.
 
-This requires that PGTS_CHAT_USE_AZURE_OPENAI be set to true in the environment variables, and the relevant
-Azure OpenAI environment variables be set as well.
+This requires that PGTS_CHAT_USE_AZURE_OPENAI be set to true in the environment variables,
+and the relevant Azure OpenAI environment variables be set as well.
 """
 
-from io import FileIO
-import io
-from multiprocessing import Queue
-import subprocess
+import contextlib
 import json
-import threading
+import subprocess
 import sys
+import threading
+from io import FileIO
+from multiprocessing import Queue
 
-from rich.console import Console
 import click
+from rich.console import Console
 
 PRINT_STDERR = False
 
@@ -36,10 +37,7 @@ def read_responses(stdout_wrapped: FileIO, queue: Queue):
                     print(f"Error response: {message['error']['message']}")
                 elif "method" in message and message["method"] == "connection/complete":
                     queue.put("Connected to database.")
-                elif (
-                    "method" in message
-                    and message["method"] == "chat/completion-result"
-                ):
+                elif "method" in message and message["method"] == "chat/completion-result":
                     # print("RECV <----------")
                     # space = "     "
                     # print(
@@ -65,8 +63,7 @@ def read_responses(stdout_wrapped: FileIO, queue: Queue):
                     print("RECV <----------")
                     space = "     "
                     print(
-                        space
-                        + f"\n{space}".join(json.dumps(message, indent=2).split("\n"))
+                        space + f"\n{space}".join(json.dumps(message, indent=2).split("\n"))
                     )
                     print("<---------------")
 
@@ -135,101 +132,99 @@ def chat_with_postgresql():
         stderr=subprocess.PIPE,
     )
 
-    stdin_wrapped = io.open(process.stdin.fileno(), "wb", buffering=0, closefd=False)
-    stdout_wrapped = io.open(process.stdout.fileno(), "rb", buffering=0, closefd=False)
+    with (
+        open(process.stdin.fileno(), "wb", buffering=0, closefd=False) as stdin_wrapped,
+        open(process.stdout.fileno(), "rb", buffering=0, closefd=False) as stdout_wrapped,
+    ):
+        print("Language server started.")
+        print("Creating connection to database...")
 
-    print("Language server started.")
-    print("Creating connection to database...")
-
-    send_message(
-        stdin_wrapped,
-        {
-            "jsonrpc": "2.0",
-            "method": "connection/connect",
-            "id": 12345,
-            "params": {
-                "ownerUri": "test",
-                "type": "Query",
-                "connection": {
-                    "options": {
-                        "host": "localhost",
-                        "port": 5432,
-                        "user": "postgres",
-                        "password": "example",
-                        "dbname": "postgres",
+        send_message(
+            stdin_wrapped,
+            {
+                "jsonrpc": "2.0",
+                "method": "connection/connect",
+                "id": 12345,
+                "params": {
+                    "ownerUri": "test",
+                    "type": "Query",
+                    "connection": {
+                        "options": {
+                            "host": "localhost",
+                            "port": 5432,
+                            "user": "postgres",
+                            "password": "example",
+                            "dbname": "postgres",
+                        },
                     },
                 },
             },
-        },
-    )
-
-    queue = Queue()
-
-    # Start a thread to handle asynchronous responses from the server
-    response_thread = threading.Thread(
-        target=read_responses, args=(stdout_wrapped, queue), daemon=True
-    )
-    response_thread.start()
-
-    queue.get()  # Wait for the connection to complete
-
-    if PRINT_STDERR:
-        stderr_thread = threading.Thread(
-            target=read_stderr, args=(process,), daemon=True
-        )
-        stderr_thread.start()
-    else:
-        stderr_thread = None
-
-    try:
-        console.print(
-            """[italic]Welcome to the PostgreSQL chat bot! Type 'exit' to exit the chat.[/italic]\n"""
         )
 
-        chatting = True
-        history: list[dict[str, str]] = []
-        while chatting:
-            try:
-                user_input = console.input("[bold]User :>[/bold] ")
-                print()
-            except KeyboardInterrupt:
-                print("\n\nExiting chat...")
-                break
-            except EOFError:
-                print("\n\nExiting chat...")
-                break
+        queue = Queue()
 
-            if user_input == "exit":
-                print("\n\nExiting chat...")
-                break
-            send_chat_completion_message(stdin_wrapped, user_input, history)
-            print("🐘 :>")
-            print()
-            result = queue.get()
-            print()
-            print()
-            history.append({"participant": "user", "content": user_input})
-            history.append({"participant": "assistant", "content": result})
-            chatting = True
+        # Start a thread to handle asynchronous responses from the server
+        response_thread = threading.Thread(
+            target=read_responses, args=(stdout_wrapped, queue), daemon=True
+        )
+        response_thread.start()
 
-    finally:
+        queue.get()  # Wait for the connection to complete
+
+        if PRINT_STDERR:
+            stderr_thread = threading.Thread(target=read_stderr, args=(process,), daemon=True)
+            stderr_thread.start()
+        else:
+            stderr_thread = None
+
         try:
-            send_message(
-                stdin_wrapped,
-                {
-                    "jsonrpc": "2.0",
-                    "method": "exit",
-                    "id": 21451,
-                    "params": None,
-                },
+            console.print(
+                "[italic]Welcome to the PostgreSQL chat bot! "
+                "Type 'exit' to exit the chat.[/italic]\n"
             )
-        except Exception:
-            pass
-        process.terminate()
-        process.wait()
-        response_thread.join()
-        if stderr_thread:
-            stderr_thread.join()
+
+            chatting = True
+            history: list[dict[str, str]] = []
+            while chatting:
+                try:
+                    user_input = console.input("[bold]User :>[/bold] ")
+                    print()
+                except KeyboardInterrupt:
+                    print("\n\nExiting chat...")
+                    break
+                except EOFError:
+                    print("\n\nExiting chat...")
+                    break
+
+                if user_input == "exit":
+                    print("\n\nExiting chat...")
+                    break
+                send_chat_completion_message(stdin_wrapped, user_input, history)
+                print("🐘 :>")
+                print()
+                result = queue.get()
+                print()
+                print()
+                history.append({"participant": "user", "content": user_input})
+                history.append({"participant": "assistant", "content": result})
+                chatting = True
+
+        finally:
+            with contextlib.suppress(Exception):
+                send_message(
+                    stdin_wrapped,
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "exit",
+                        "id": 21451,
+                        "params": None,
+                    },
+                )
+            process.terminate()
+            process.wait()
+            response_thread.join()
+            if stderr_thread:
+                stderr_thread.join()
 
 
 @click.group()

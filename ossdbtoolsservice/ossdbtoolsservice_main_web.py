@@ -6,7 +6,6 @@
 import configparser
 
 from ossdbtoolsservice.hosting.web_message_server import WebMessageServer
-
 from ossdbtoolsservice.main import create_server_init, get_config, get_loggers, main
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 

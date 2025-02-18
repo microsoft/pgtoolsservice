@@ -3,8 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.serialization import Serializable
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
+from ossdbtoolsservice.serialization import Serializable
 
 
 class SessionReadyNotificationParams(Serializable):
@@ -14,6 +14,7 @@ class SessionReadyNotificationParams(Serializable):
         owner_uri:          URI for the editor that owns the query
         batch_summaries:    Summaries of the result sets that were returned with the query
     """
+
     owner_uri: str
     success: bool
     message: str
@@ -24,6 +25,6 @@ class SessionReadyNotificationParams(Serializable):
         self.message: str = message
 
 
-SESSION_READY_NOTIFICATION = 'edit/sessionReady'
+SESSION_READY_NOTIFICATION = "edit/sessionReady"
 
 OutgoingMessageRegistration.register_outgoing_message(SessionReadyNotificationParams)

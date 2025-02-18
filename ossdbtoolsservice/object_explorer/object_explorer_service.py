@@ -4,42 +4,40 @@
 # --------------------------------------------------------------------------------------------
 
 import functools
-from logging import Logger
 import threading
-from typing import Dict, Optional, List  # noqa
+from logging import Logger
+from typing import Dict, List, Optional  # noqa
 from urllib.parse import quote, urlparse
 
 import psycopg
 
-from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.connection.contracts import (
-    ConnectRequestParams,
-    ConnectionDetails,
-    ConnectionType,
-)
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
-from ossdbtoolsservice.object_explorer.contracts import (
-    NodeInfo,
-    CreateSessionResponse,
-    CREATE_SESSION_REQUEST,
-    SessionCreatedParameters,
-    SESSION_CREATED_METHOD,
-    CloseSessionParameters,
-    CLOSE_SESSION_REQUEST,
-    ExpandParameters,
-    EXPAND_REQUEST,
-    ExpandCompletedParameters,
-    EXPAND_COMPLETED_METHOD,
-    REFRESH_REQUEST,
-)
-from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
-from ossdbtoolsservice.metadata.contracts import ObjectMetadata
 import ossdbtoolsservice.utils.constants as constants
 import ossdbtoolsservice.utils.validate as validate
-
-from pgsmo import Server as PGServer
-
+from ossdbtoolsservice.connection.contracts import (
+    ConnectionDetails,
+    ConnectionType,
+    ConnectRequestParams,
+)
+from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
+from ossdbtoolsservice.metadata.contracts import ObjectMetadata
+from ossdbtoolsservice.object_explorer.contracts import (
+    CLOSE_SESSION_REQUEST,
+    CREATE_SESSION_REQUEST,
+    EXPAND_COMPLETED_METHOD,
+    EXPAND_REQUEST,
+    REFRESH_REQUEST,
+    SESSION_CREATED_METHOD,
+    CloseSessionParameters,
+    CreateSessionResponse,
+    ExpandCompletedParameters,
+    ExpandParameters,
+    NodeInfo,
+    SessionCreatedParameters,
+)
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
+from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
+from pgsmo import Server as PGServer
 
 ROUTING_TABLES = {constants.PG_PROVIDER_NAME: PG_ROUTING_TABLE}
 
@@ -52,7 +50,7 @@ class ObjectExplorerService(Service):
     def __init__(self):
         self._service_provider: ServiceProvider = None
         self._logger: Logger = None
-        self._session_map: Dict[str, "ObjectExplorerSession"] = {}
+        self._session_map: dict[str, ObjectExplorerSession] = {}
         self._session_lock: threading.Lock = threading.Lock()
         self._connect_semaphore = threading.Semaphore(1)
 
@@ -98,9 +96,7 @@ class ObjectExplorerService(Service):
         # Step 1: Create the session
         session_exist_check = False
         if self._logger:
-            self._logger.info(
-                f" [handler] Creating OE session for {params.server_name}"
-            )
+            self._logger.info(f" [handler] Creating OE session for {params.server_name}")
         try:
             # Make sure we have the appropriate session params
             validate.is_not_none("params", params)
@@ -127,14 +123,16 @@ class ObjectExplorerService(Service):
             if self._logger:
                 self._logger.info(f"   - Session ID: {session_id}")
 
-            # Add the session to session map in a lock to prevent race conditions between check and add
+            # Add the session to session map in a lock to
+            # prevent race conditions between check and add
             with self._session_lock:
                 if session_id in self._session_map:
                     # If session already exists, get it and respond with it
                     session_exist_check = True
                     if self._service_provider.logger is not None:
                         self._service_provider.logger.info(
-                            f"Object explorer session for {session_id} already exists. Returning existing session."
+                            f"Object explorer session for {session_id} already exists. "
+                            "Returning existing session."
                         )
                     session = self._session_map[session_id]
                 else:
@@ -219,7 +217,7 @@ class ObjectExplorerService(Service):
         if self._service_provider.logger is not None:
             self._service_provider.logger.info("Closing all the OE sessions")
         conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        for key, session in self._session_map.items():
+        for _key, session in self._session_map.items():
             connect_result = conn_service.disconnect(
                 session.id, ConnectionType.OBJECT_EXLPORER
             )
@@ -247,13 +245,13 @@ class ObjectExplorerService(Service):
             except psycopg.OperationalError as e:
                 if self._service_provider.logger is not None:
                     self._service_provider.logger.info(
-                        f"could not close the connection for the database {database.name}: {e}"
+                        "could not close the connection for the "
+                        f"database {database.name}: {e}"
                     )
-            if not close_result:
-                if self._service_provider.logger is not None:
-                    self._service_provider.logger.info(
-                        f"could not close the connection for the database {database.name}"
-                    )
+            if not close_result and self._service_provider.logger is not None:
+                self._service_provider.logger.info(
+                    f"could not close the connection for the database {database.name}"
+                )
 
     def _expand_node_base(
         self,
@@ -317,9 +315,7 @@ class ObjectExplorerService(Service):
                 )
                 session.server.set_connection(connection)
                 session.server.refresh()
-                self._expand_node_thread(
-                    is_refresh, request_context, params, session, True
-                )
+                self._expand_node_thread(is_refresh, request_context, params, session, True)
                 return
             else:
                 self._expand_node_error(request_context, params, str(e))
@@ -357,7 +353,8 @@ class ObjectExplorerService(Service):
                     session.init_task.join()
                 else:
                     raise ValueError(
-                        f"Object Explorer session with ID {params.session_id} is not ready, yet."
+                        f"Object Explorer session with ID {params.session_id} "
+                        "is not ready, yet."
                     )  # TODO: Localize
 
             request_context.send_response(True)
@@ -386,9 +383,7 @@ class ObjectExplorerService(Service):
         if connect_result.error_message is not None:
             raise RuntimeError(connect_result.error_message)
 
-        connection = conn_service.get_connection(
-            key_uri, ConnectionType.OBJECT_EXLPORER
-        )
+        connection = conn_service.get_connection(key_uri, ConnectionType.OBJECT_EXLPORER)
         return connection
 
     def _initialize_session(
@@ -418,7 +413,8 @@ class ObjectExplorerService(Service):
                 session.id, ConnectionType.OBJECT_EXLPORER
             )
 
-            # Step 3: Create the Server object for the session and create the root node for the server
+            # Step 3: Create the Server object for the session and
+            # create the root node for the server
             session.server = self._server(
                 connection, functools.partial(self._create_connection, session)
             )
@@ -448,7 +444,9 @@ class ObjectExplorerService(Service):
 
         except Exception as e:
             # Return a notification that an error occurred
-            message = f"Failed to initialize object explorer session: {str(e)}"  # TODO Localize
+            message = (
+                f"Failed to initialize object explorer session: {str(e)}"  # TODO Localize
+            )
             self._session_created_error(request_context, session, message)
 
             # Attempt to clean up the connection
@@ -480,12 +478,8 @@ class ObjectExplorerService(Service):
     @staticmethod
     def _generate_session_uri(params: ConnectionDetails, provider_name: str) -> str:
         # Make sure the required params are provided
-        validate.is_not_none_or_whitespace(
-            "params.server_name", params.options.get("host")
-        )
-        validate.is_not_none_or_whitespace(
-            "params.user_name", params.options.get("user")
-        )
+        validate.is_not_none_or_whitespace("params.server_name", params.options.get("host"))
+        validate.is_not_none_or_whitespace("params.user_name", params.options.get("user"))
         if provider_name == constants.PG_PROVIDER_NAME:
             validate.is_not_none_or_whitespace(
                 "params.database_name", params.options.get("dbname")
@@ -504,7 +498,7 @@ class ObjectExplorerService(Service):
 
     def _route_request(
         self, is_refresh: bool, session: ObjectExplorerSession, path: str
-    ) -> List[NodeInfo]:
+    ) -> list[NodeInfo]:
         """
         Performs a lookup for a given expand request
         :param is_refresh: Whether or not the request is a request to refresh or just expand
@@ -516,7 +510,7 @@ class ObjectExplorerService(Service):
         path = urlparse(path).path
 
         # We query if its a refresh request or this is the first expand request for this path
-        if is_refresh or (path not in session.cache.keys()):
+        if is_refresh or (path not in session.cache):
             # Find a matching route for the path
             for route, target in self._routing_table.items():
                 match = route.match(path)

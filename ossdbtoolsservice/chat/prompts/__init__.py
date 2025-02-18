@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any
+
 from jinja2 import StrictUndefined, Template
 
 HERE = Path(__file__).parent

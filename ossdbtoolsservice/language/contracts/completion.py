@@ -7,10 +7,13 @@
 
 import enum
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
-from ossdbtoolsservice.workspace.contracts import TextDocumentPosition
-from ossdbtoolsservice.language.contracts import TextEdit   # noqa
+from ossdbtoolsservice.hosting import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
+from ossdbtoolsservice.language.contracts import TextEdit  # noqa
 from ossdbtoolsservice.serialization import Serializable
+from ossdbtoolsservice.workspace.contracts import TextDocumentPosition
 
 
 class CompletionItemKind(enum.Enum):
@@ -18,6 +21,7 @@ class CompletionItemKind(enum.Enum):
     The kind of a completion entry. These are defined by the
     Language Service specification. SQL types are loosely mapped to these.
     """
+
     Text = 1
     Method = 2
     Function = 3
@@ -43,6 +47,7 @@ class CompletionItem(Serializable):
     Completion items are presented in an IntelliSense user interface, representing valid
     items to complete an in-process typing
     """
+
     label: str
     kind: CompletionItemKind
     detail: str
@@ -55,7 +60,7 @@ class CompletionItem(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls):
-        return {'kind': CompletionItemKind, 'text_edit': TextEdit}
+        return {"kind": CompletionItemKind, "text_edit": TextEdit}
 
     def __init__(self):
         self.label: str = None
@@ -69,7 +74,11 @@ class CompletionItem(Serializable):
         self.data: any = None
 
 
-COMPLETION_REQUEST = IncomingMessageConfiguration('textDocument/completion', TextDocumentPosition)
+COMPLETION_REQUEST = IncomingMessageConfiguration(
+    "textDocument/completion", TextDocumentPosition
+)
 
-COMPLETION_RESOLVE_REQUEST = IncomingMessageConfiguration('completionItem/resolve', CompletionItem)
+COMPLETION_RESOLVE_REQUEST = IncomingMessageConfiguration(
+    "completionItem/resolve", CompletionItem
+)
 OutgoingMessageRegistration.register_outgoing_message(CompletionItem)

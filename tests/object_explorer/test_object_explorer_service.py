@@ -10,7 +10,7 @@ import threading
 import unittest
 import unittest.mock as mock
 import urllib.parse as url_parse
-from typing import Callable, Tuple
+from typing import Callable
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
@@ -48,7 +48,7 @@ TEST_PASSWORD = "testpassword"
 TEST_PORT = 5432
 
 
-def _connection_details() -> Tuple[ConnectionDetails, str]:
+def _connection_details() -> tuple[ConnectionDetails, str]:
     param = ConnectionDetails()
     param.options = {
         "host": TEST_HOST,
@@ -88,9 +88,7 @@ class TestObjectExplorer(unittest.TestCase):
         server = utils.MockMessageServer()
         server.set_notification_handler = mock.MagicMock()
         server.set_request_handler = mock.MagicMock()
-        sp: ServiceProvider = ServiceProvider(
-            server, {}, utils.get_mock_logger()
-        )
+        sp: ServiceProvider = ServiceProvider(server, {}, utils.get_mock_logger())
 
         # If: I register a OE service
         oe = ObjectExplorerService()
@@ -144,7 +142,7 @@ class TestObjectExplorer(unittest.TestCase):
         for param_set in params:
             # If: I generate a session URI from params that are missing a value
             # Then: I should get an exception
-            with self.assertRaises(Exception):
+            with self.assertRaises(ValueError):
                 ObjectExplorerService._generate_session_uri(
                     param_set, constants.PG_PROVIDER_NAME
                 )
@@ -196,7 +194,8 @@ class TestObjectExplorer(unittest.TestCase):
         oe._service_provider = utils.get_mock_service_provider({})
 
         # If: I create an OE session for with missing params
-        # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
+        # NOTE: We only need to get the generate uri method to throw,
+        #       we make sure it throws in all
         #       scenarios in a different test
         rc = RequestFlowValidator().add_expected_error(
             type(None), RequestFlowValidator.basic_error_validation
@@ -252,9 +251,7 @@ class TestObjectExplorer(unittest.TestCase):
         oe._provider = constants.PG_PROVIDER_NAME
 
         # ... Patch the threading to throw
-        patch_mock = mock.MagicMock(
-            side_effect=Exception("Boom! Create Session Failed")
-        )
+        patch_mock = mock.MagicMock(side_effect=Exception("Boom! Create Session Failed"))
         patch_path = (
             "ossdbtoolsservice.object_explorer.object_explorer_service.threading.Thread"
         )
@@ -283,7 +280,8 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_handle_create_session_successful(self) -> None:
         # Setup:
-        # ... Create OE service with mock connection service that returns a successful connection response
+        # ... Create OE service with mock connection service that
+        # returns a successful connection response
         mock_connection = MockPGServerConnection(
             cur=None, host="myserver", name="postgres", user="postgres", port=123
         )
@@ -338,7 +336,8 @@ class TestObjectExplorer(unittest.TestCase):
         oe._session_map[session_uri].init_task.join()
 
         # Then:
-        # ... Error notification should have been returned, session should be cleaned up from OE service
+        # ... Error notification should have been returned, session should be
+        # cleaned up from OE service
         rc.validate()
 
         # ... The session should still exist and should have connection and server setup
@@ -356,7 +355,8 @@ class TestObjectExplorer(unittest.TestCase):
             {constants.CONNECTION_SERVICE_NAME: cs}
         )
 
-        # If: I initialize a session (NOTE: We're bypassing request handler to avoid threading issues)
+        # If: I initialize a session (NOTE: We're bypassing request
+        # handler to avoid threading issues)
         params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
@@ -370,13 +370,15 @@ class TestObjectExplorer(unittest.TestCase):
         oe._initialize_session(rc.request_context, session)
 
         # Then:
-        # ... Error notification should have been returned, session should be cleaned up from OE service
+        # ... Error notification should have been returned,
+        # session should be cleaned up from OE service
         rc.validate()
         self.assertDictEqual(oe._session_map, {})
 
     def test_init_session_failed_connection(self) -> None:
         # Setup:
-        # ... Create OE service with mock connection service that returns a failed connection response
+        # ... Create OE service with mock connection service
+        # that returns a failed connection response
         cs = ConnectionService()
         connect_response = ConnectionCompleteParams()
         connect_response.error_message = "Boom! Init Session Failed"
@@ -386,7 +388,8 @@ class TestObjectExplorer(unittest.TestCase):
             {constants.CONNECTION_SERVICE_NAME: cs}
         )
 
-        # If: I initialize a session (NOTE: We're bypassing request handler to avoid threading issues)
+        # If: I initialize a session
+        # (NOTE: We're bypassing request handler to avoid threading issues)
         params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
@@ -400,7 +403,8 @@ class TestObjectExplorer(unittest.TestCase):
         oe._initialize_session(rc.request_context, session)
 
         # Then:
-        # ... Error notification should have been returned, session should be cleaned up from OE service
+        # ... Error notification should have been returned,
+        # session should be cleaned up from OE service
         rc.validate()
         self.assertDictEqual(oe._session_map, {})
 
@@ -520,9 +524,7 @@ class TestObjectExplorer(unittest.TestCase):
         )
 
     # EXPAND/REFRESH NODE TEST BASES #######################################
-    TEventHandler = Callable[
-        [ObjectExplorerService, RequestContext, ExpandParameters], None
-    ]
+    TEventHandler = Callable[[ObjectExplorerService, RequestContext, ExpandParameters], None]
     TGetTask = Callable[[ObjectExplorerSession], threading.Thread]
 
     @staticmethod
@@ -559,9 +561,7 @@ class TestObjectExplorer(unittest.TestCase):
         rc = RequestFlowValidator().add_expected_error(
             type(None), RequestFlowValidator.basic_error_validation
         )
-        params = ExpandParameters.from_dict(
-            {"session_id": "session", "node_path": None}
-        )
+        params = ExpandParameters.from_dict({"session_id": "session", "node_path": None})
         method(oe, rc.request_context, params)
 
         # Then: I should get an error back
@@ -576,9 +576,7 @@ class TestObjectExplorer(unittest.TestCase):
         rc = RequestFlowValidator().add_expected_error(
             type(None), RequestFlowValidator.basic_error_validation
         )
-        params = ExpandParameters.from_dict(
-            {"session_id": session_uri, "node_path": None}
-        )
+        params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": None})
         method(oe, rc.request_context, params)
 
         # Then: I should get an error back
@@ -604,9 +602,7 @@ class TestObjectExplorer(unittest.TestCase):
                 EXPAND_COMPLETED_METHOD,
                 lambda param: self._validate_expand_error(param, session_uri, "/"),
             )
-            params = ExpandParameters.from_dict(
-                {"session_id": session_uri, "node_path": "/"}
-            )
+            params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": "/"})
             method(oe, rc.request_context, params)
 
         # Then:
@@ -630,7 +626,10 @@ class TestObjectExplorer(unittest.TestCase):
         patch_mock = mock.MagicMock(
             side_effect=Exception("Boom! Expand Error Handling Failed")
         )
-        patch_path = "ossdbtoolsservice.object_explorer.object_explorer_service.ObjectExplorerService._route_request"
+        patch_path = (
+            "ossdbtoolsservice.object_explorer.object_explorer_service."
+            "ObjectExplorerService._route_request"
+        )
         with mock.patch(patch_path, patch_mock):
             # If: I expand a node (with route_request that throws)
             rc = RequestFlowValidator()
@@ -640,9 +639,7 @@ class TestObjectExplorer(unittest.TestCase):
                 EXPAND_COMPLETED_METHOD,
                 lambda param: self._validate_expand_error(param, session_uri, "/"),
             )
-            params = ExpandParameters.from_dict(
-                {"session_id": session_uri, "node_path": "/"}
-            )
+            params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": "/"})
             method(oe, rc.request_context, params)
 
         # Joining the threads to avoid rc.validate failure
@@ -657,9 +654,7 @@ class TestObjectExplorer(unittest.TestCase):
         # ... The thread should be attached to the session
         self.assertEqual(len(get_tasks(session)), 1)
 
-    def _handle_er_node_successful(
-        self, method: TEventHandler, get_tasks: TGetTask
-    ) -> None:
+    def _handle_er_node_successful(self, method: TEventHandler, get_tasks: TGetTask) -> None:
         # Setup: Create an OE service with a session preloaded
         oe, session, session_uri = self._preloaded_oe_service()
 
@@ -680,9 +675,7 @@ class TestObjectExplorer(unittest.TestCase):
             EXPAND_COMPLETED_METHOD,
             validate_success_notification,
         )
-        params = ExpandParameters.from_dict(
-            {"session_id": session_uri, "node_path": "/"}
-        )
+        params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": "/"})
         method(oe, rc.request_context, params)
 
         # Joining the threads to avoid rc.validate failure
@@ -719,9 +712,7 @@ class TestObjectExplorer(unittest.TestCase):
         # If: I expand a node
         rc = RequestFlowValidator()
         rc.add_expected_response(bool, self.assertTrue)
-        params = ExpandParameters.from_dict(
-            {"session_id": session_uri, "node_path": "/"}
-        )
+        params = ExpandParameters.from_dict({"session_id": session_uri, "node_path": "/"})
         testevent = threading.Event()
         testtask = threading.Thread(target=myfunc, args=(testevent,))
         session.expand_tasks[params.node_path] = testtask
@@ -739,15 +730,15 @@ class TestObjectExplorer(unittest.TestCase):
 
     # IMPLEMENTATION DETAILS ###############################################
     def _preloaded_oe_service(
-        self, server=mock.Mock()
-    ) -> Tuple[ObjectExplorerService, ObjectExplorerSession, str]:
+        self, server=None
+    ) -> tuple[ObjectExplorerService, ObjectExplorerSession, str]:
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider({})
         oe._routing_table = PG_ROUTING_TABLE
 
         conn_details, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, conn_details)
-        session.server = server
+        session.server = server or mock.Mock()
         session.is_ready = True
         oe._session_map[session_uri] = session
 
@@ -761,9 +752,7 @@ class TestObjectExplorer(unittest.TestCase):
         self.assertEqual(param.node_path, node_path)
         self.assertIsNone(param.nodes)
 
-    def _validate_init_error(
-        self, param: SessionCreatedParameters, session_uri: str
-    ) -> None:
+    def _validate_init_error(self, param: SessionCreatedParameters, session_uri: str) -> None:
         self.assertFalse(param.success)
         self.assertEqual(param.session_id, session_uri)
         self.assertIsNone(param.root_node)
@@ -812,7 +801,8 @@ class SessionTestCase(unittest.TestCase):
 
     def test_handle_close_session_incomplete_params(self) -> None:
         # If: I close an OE session for with missing params
-        # NOTE: We only need to get the generate uri method to throw, we make sure it throws in all
+        # NOTE: We only need to get the generate uri method to throw,
+        #       we make sure it throws in all
         #       scenarios in a different test
         rc = RequestFlowValidator().add_expected_error(
             type(None), RequestFlowValidator.basic_error_validation

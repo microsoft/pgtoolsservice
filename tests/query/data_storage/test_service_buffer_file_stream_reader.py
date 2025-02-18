@@ -3,23 +3,23 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import unittest
-import struct
 import io
 import json
+import struct
+import unittest
 
-from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_reader import ServiceBufferFileStreamReader
-from ossdbtoolsservice.query.contracts.column import DbColumn
 from ossdbtoolsservice.parsers import datatypes
+from ossdbtoolsservice.query.contracts.column import DbColumn
+from ossdbtoolsservice.query.data_storage.service_buffer_file_stream_reader import (
+    ServiceBufferFileStreamReader,
+)
 from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
-DECODING_METHOD = 'utf-8'
+DECODING_METHOD = "utf-8"
 
 
 class TestServiceBufferFileStreamReader(unittest.TestCase):
-
     def setUp(self):
-
         # test data
         self._bool_test_value = True
         self._float_test_value1 = "123.456"
@@ -33,7 +33,9 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._list_test_value = ["Test,Server", "Tes'tSchema", "Tes,'tTable"]
         self._numericrange_test_value = "[10,20)"
         self._datetimerange_test_value = "[2014-06-08T12:12:45,2016-07-06T14:12:08)"
-        self._datetimetzrange_test_value = "[2014-06-08T12:12:45-07:00,2016-07-06T14:12:08-07:00)"
+        self._datetimetzrange_test_value = (
+            "[2014-06-08T12:12:45-07:00,2016-07-06T14:12:08-07:00)"
+        )
         self._daterange_test_value = "[2015-06-06,2016-08-08)"
 
         # # file_streams
@@ -43,19 +45,19 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         bool_len_to_write = bytearray(struct.pack("i", bool_len))
         self._bool_file_stream.write(bool_len_to_write)
         self._bool_file_stream.write(bool_val)
-        self._bool_file_stream.write(b'\xff\xff\xff\xff')
+        self._bool_file_stream.write(b"\xff\xff\xff\xff")
         self._bool_file_stream.write(bool_len_to_write)
         self._bool_file_stream.write(bool_val)
 
         self._float_file_stream1 = io.BytesIO()
-        float_val1 = bytearray(self._float_test_value1.encode('utf-8'))
+        float_val1 = bytearray(self._float_test_value1.encode("utf-8"))
         float_len1 = len(float_val1)
         float_len_to_write1 = bytearray(struct.pack("i", float_len1))
         self._float_file_stream1.write(float_len_to_write1)
         self._float_file_stream1.write(float_val1)
 
         self._float_file_stream2 = io.BytesIO()
-        float_val2 = bytearray(self._float_test_value2.encode('utf-8'))
+        float_val2 = bytearray(self._float_test_value2.encode("utf-8"))
         float_len2 = len(float_val2)
         float_len_to_write2 = bytearray(struct.pack("i", float_len2))
         self._float_file_stream2.write(float_len_to_write2)
@@ -76,14 +78,14 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._int_file_stream.write(int_val)
 
         self._long_long_file_stream = io.BytesIO()
-        long_long_val = bytearray(self._long_long_test_value.encode('utf-8'))
+        long_long_val = bytearray(self._long_long_test_value.encode("utf-8"))
         long_long_len = len(long_long_val)
         long_long_len_to_write = bytearray(struct.pack("i", long_long_len))
         self._long_long_file_stream.write(long_long_len_to_write)
         self._long_long_file_stream.write(long_long_val)
 
         self._bytea_file_stream = io.BytesIO()
-        bytea_val = bytearray(self._bytea_test_value.encode('utf-8'))
+        bytea_val = bytearray(self._bytea_test_value.encode("utf-8"))
         bytea_len = len(bytea_val)
         bytea_len_to_write = bytearray(struct.pack("i", bytea_len))
         self._bytea_file_stream.write(bytea_len_to_write)
@@ -132,7 +134,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._daterange_file_stream.write(daterange_val)
 
         self._multiple_cols_file_stream = io.BytesIO()
-        val0 = bytearray(self._float_test_value1.encode('utf-8'))
+        val0 = bytearray(self._float_test_value1.encode("utf-8"))
         len0 = len(val0)
         len0_to_write = bytearray(struct.pack("i", len0))
         val1 = bytearray(struct.pack("i", self._int_test_value))
@@ -141,7 +143,7 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         val2 = bytearray(self._str_test_value.encode())
         len2 = len(val2)
         len2_to_write = bytearray(struct.pack("i", len2))
-        val3 = bytearray(self._float_test_value2.encode('utf-8'))
+        val3 = bytearray(self._float_test_value2.encode("utf-8"))
         len3 = len(val3)
         len3_to_write = bytearray(struct.pack("i", len3))
         self._multiple_cols_file_stream.write(len0_to_write)
@@ -160,11 +162,19 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         self._bytea_reader = ServiceBufferFileStreamReader(self._bytea_file_stream)
         self._dict_reader = ServiceBufferFileStreamReader(self._dict_file_stream)
         self._list_reader = ServiceBufferFileStreamReader(self._list_file_stream)
-        self._numericrange_reader = ServiceBufferFileStreamReader(self._numericrange_file_stream)
-        self._datetimerange_reader = ServiceBufferFileStreamReader(self._datetimerange_file_stream)
-        self._datetimetzrange_reader = ServiceBufferFileStreamReader(self._datetimetzrange_file_stream)
+        self._numericrange_reader = ServiceBufferFileStreamReader(
+            self._numericrange_file_stream
+        )
+        self._datetimerange_reader = ServiceBufferFileStreamReader(
+            self._datetimerange_file_stream
+        )
+        self._datetimetzrange_reader = ServiceBufferFileStreamReader(
+            self._datetimetzrange_file_stream
+        )
         self._daterange_reader = ServiceBufferFileStreamReader(self._daterange_file_stream)
-        self._multiple_cols_reader = ServiceBufferFileStreamReader(self._multiple_cols_file_stream)
+        self._multiple_cols_reader = ServiceBufferFileStreamReader(
+            self._multiple_cols_file_stream
+        )
 
     def tearDown(self):
         self._bool_file_stream.close()
@@ -262,7 +272,9 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
-        res = self._numericrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
+        res = self._numericrange_reader.read_row(
+            test_file_offset, test_row_id, test_columns_info
+        )
         self.assertEqual(str(self._numericrange_test_value), str(res[0].raw_object))
 
     def test_read_datetimerange(self):
@@ -275,7 +287,9 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
-        res = self._datetimerange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
+        res = self._datetimerange_reader.read_row(
+            test_file_offset, test_row_id, test_columns_info
+        )
         self.assertEqual(str(self._datetimerange_test_value), str(res[0].raw_object))
 
     def test_read_datetimetzrange(self):
@@ -288,7 +302,9 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
-        res = self._datetimetzrange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
+        res = self._datetimetzrange_reader.read_row(
+            test_file_offset, test_row_id, test_columns_info
+        )
         self.assertEqual(str(self._datetimetzrange_test_value), str(res[0].raw_object))
 
     def test_read_daterange(self):
@@ -301,7 +317,9 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         col.provider = PG_PROVIDER_NAME
         test_columns_info.append(col)
 
-        res = self._daterange_reader.read_row(test_file_offset, test_row_id, test_columns_info)
+        res = self._daterange_reader.read_row(
+            test_file_offset, test_row_id, test_columns_info
+        )
         self.assertEqual(str(self._daterange_test_value), str(res[0].raw_object))
 
     def test_read_multiple_cols(self):
@@ -327,12 +345,14 @@ class TestServiceBufferFileStreamReader(unittest.TestCase):
         test_columns_info.append(text_column)
         test_columns_info.append(real_column2)
 
-        res = self._multiple_cols_reader.read_row(test_file_offset, test_row_id, test_columns_info)
+        res = self._multiple_cols_reader.read_row(
+            test_file_offset, test_row_id, test_columns_info
+        )
         self.assertEqual(self._float_test_value1, res[0].raw_object)
         self.assertEqual(self._int_test_value, res[1].raw_object)
         self.assertEqual(self._str_test_value, res[2].raw_object)
         self.assertEqual(self._float_test_value2, res[3].raw_object)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

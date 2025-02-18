@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Type
+from typing import TYPE_CHECKING, Any
 
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
@@ -25,7 +25,7 @@ class HandlerContext:
         self,
         method: str,
         params: Any,
-        result_type: Type["TResult"],
+        result_type: type["TResult"],
     ) -> "TResult | None":
         return await self.server.send_request(method, params, result_type)
 

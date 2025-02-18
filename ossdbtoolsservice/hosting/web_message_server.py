@@ -1,26 +1,26 @@
-from logging import Logger
 import os
-import sys
 import ssl
+import sys
 import threading
 import uuid
 from configparser import ConfigParser
+from logging import Logger
 from typing import Any
 
-from flask import Flask, Response, request, session, jsonify, make_response
+from flask import Flask, Response, jsonify, make_response, request, session
 from flask_cors import CORS
 from flask_socketio import SocketIO, disconnect
 from gevent import monkey
 
 from ossdbtoolsservice.hosting.context import (
-    RequestContext,
     NotificationContext,
+    RequestContext,
 )
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.hosting.web_context import (
-    WebRequestContext,
     WebNotificationContext,
+    WebRequestContext,
 )
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 from ossdbtoolsservice.utils.path import path_relative_to_base
@@ -154,9 +154,7 @@ class WebMessageServer(MessageServer):
     def create_notification_context(self, **kwargs: Any) -> NotificationContext:
         session_id = kwargs.get("session_id")
         assert session_id is not None
-        return WebNotificationContext(
-            self, self.socketio, session_id, self._active_sessions
-        )
+        return WebNotificationContext(self, self.socketio, session_id, self._active_sessions)
 
     # -------------------------
     # Web-specific Handlers
@@ -170,9 +168,7 @@ class WebMessageServer(MessageServer):
     def _handle_http_request(self) -> tuple[Response, int]:
         session_id = session.get("session_id")
         if not session_id:
-            return jsonify(
-                {"error": "No session ID found. Please authenticate first."}
-            ), 403
+            return jsonify({"error": "No session ID found. Please authenticate first."}), 403
 
         sid = self._active_sessions.get(session_id)
         if not sid:
@@ -230,9 +226,7 @@ class WebMessageServer(MessageServer):
         if not sid:
             self.socketio.emit(
                 "error",
-                {
-                    "result": "This WebSocket connection does not match an active session."
-                },
+                {"result": "This WebSocket connection does not match an active session."},
             )
             return
         try:
@@ -273,9 +267,7 @@ class WebMessageServer(MessageServer):
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Methods"] = (
-            "GET, POST, PUT, DELETE, OPTIONS"
-        )
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
 
     def _ensure_session_id(self):
         if "session_id" not in session:

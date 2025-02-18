@@ -5,7 +5,7 @@
 
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Optional, Type
+from typing import Optional
 
 from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.utils import constants
@@ -21,7 +21,7 @@ class ServiceProvider:
     def __init__(
         self,
         message_server: MessageServer,
-        services: dict[str, Type[Service]],
+        services: dict[str, type[Service]],
         logger: Optional[Logger] = None,
     ):
         self._is_initialized = False

@@ -3,23 +3,32 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
-from smo.common.node_object import NodeCollection, NodeObject
-from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
-from pgsmo.objects.table_objects.column import Column
+from typing import TypeVar
 
-from pgsmo.objects.server import server as s    # noqa
 import smo.utils.templating as templating
+from pgsmo.objects.server import server as s  # noqa
+from pgsmo.objects.table_objects.column import Column
+from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import (
+    ScriptableCreate,
+    ScriptableDelete,
+    ScriptableSelect,
+    ScriptableUpdate,
+)
+
+T = TypeVar("T", bound="ViewBase")
 
 
-class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect):
-    TEMPLATE_ROOT = templating.get_template_root(__file__, 'view_templates')
-    MACRO_ROOT = templating.get_template_root(__file__, 'macros')
-    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, '../global_macros')
+class ViewBase(
+    NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate, ScriptableSelect
+):
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "view_templates")
+    MACRO_ROOT = templating.get_template_root(__file__, "macros")
+    GLOBAL_MACRO_ROOT = templating.get_template_root(__file__, "../global_macros")
 
     @classmethod
-    def _from_node_query(cls, server: 's.Server', parent: NodeObject, **kwargs) -> 'View':
+    def _from_node_query(cls: type[T], server: "s.Server", parent: NodeObject, **kwargs) -> T:
         """
         Creates a view object from the results of a node query
         :param server: Server that owns the view
@@ -30,20 +39,28 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
             oid int: Object ID of the view
         :return: A view instance
         """
-        view = cls(server, parent, kwargs['name'])
-        view._oid = kwargs['oid']
-        view._schema = kwargs['schema']
-        view._scid = kwargs['schemaoid']
-        view._is_system = kwargs['is_system']
+        view = cls(server, parent, kwargs["name"])
+        view._oid = kwargs["oid"]
+        view._schema = kwargs["schema"]
+        view._scid = kwargs["schemaoid"]
+        view._is_system = kwargs["is_system"]
 
         return view
 
-    def __init__(self, server: 's.Server', parent: NodeObject, name: str):
+    def __init__(self, server: "s.Server", parent: NodeObject, name: str):
         NodeObject.__init__(self, server, parent, name)
-        ScriptableCreate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableDelete.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableUpdate.__init__(self, self._template_root(server), self._macro_root(), server.version)
-        ScriptableSelect.__init__(self, self._template_root(server), self._macro_root(), server.version)
+        ScriptableCreate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableDelete.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableUpdate.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
+        ScriptableSelect.__init__(
+            self, self._template_root(server), self._macro_root(), server.version
+        )
         self._schema: str = None
         self._scid: int = None
         self._database = self.get_database_node()
@@ -53,10 +70,7 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
     # PROPERTIES ###########################################################
     @property
     def extended_vars(self):
-        template_vars = {
-            'scid': self.scid,
-            'datlastsysoid': self._database.datlastsysoid
-        }
+        template_vars = {"scid": self.scid, "datlastsysoid": self._database.datlastsysoid}
         return template_vars
 
     # -CHILD OBJECTS #######################################################
@@ -133,15 +147,15 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
 
     # IMPLEMENTATION DETAILS ################################################
     @classmethod
-    def _macro_root(cls) -> List[str]:
+    def _macro_root(cls) -> list[str]:
         return [cls.MACRO_ROOT, cls.GLOBAL_MACRO_ROOT]
 
     @classmethod
-    def _template_root(cls, server: 's.Server') -> str:
+    def _template_root(cls, server: "s.Server") -> str:
         return cls.TEMPLATE_ROOT
 
     def _create_query_data(self) -> dict:
-        """ Provides data input for create script """
+        """Provides data input for create script"""
         return {
             "data": {
                 "name": self.name,
@@ -152,24 +166,17 @@ class ViewBase(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate,
                 "owner": self.owner,
                 "comment": self.comment,
             },
-            "display_comments": True
+            "display_comments": True,
         }
 
     def _delete_query_data(self) -> dict:
-        """ Provides data input for delete script """
-        return {
-            "name": self.name,
-            "nspname": self.schema
-        }
+        """Provides data input for delete script"""
+        return {"name": self.name, "nspname": self.schema}
 
     def _update_query_data(self) -> dict:
-        """ Provides data input for update script """
+        """Provides data input for update script"""
         return {"data": {}}
 
     def _select_query_data(self) -> dict:
         """Provides data input for select script"""
-        return {"data": {
-            "name": self.name,
-            "schema": self.schema,
-            "columns": self.columns
-        }}
+        return {"data": {"name": self.name, "schema": self.schema, "columns": self.columns}}

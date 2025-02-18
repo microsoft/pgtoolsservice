@@ -29,8 +29,10 @@ class SaveResultsRequestParams(Serializable):
     @property
     def is_save_selection(self) -> bool:
         return (
-            self.row_start_index is not None and self.row_end_index is not None
-            and self.column_start_index is not None and self.column_end_index is not None
+            self.row_start_index is not None
+            and self.row_end_index is not None
+            and self.column_start_index is not None
+            and self.column_end_index is not None
         )
 
     @classmethod

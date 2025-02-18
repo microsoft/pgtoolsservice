@@ -11,12 +11,12 @@ from tests.pgsmo_tests.node_test_base import NodeObjectTestBase
 
 class TestExtension(NodeObjectTestBase, unittest.TestCase):
     NODE_ROW = {
-        'name': 'ex',
-        'oid': 123,
-        'schema': 'public',
-        'schemaoid': 456,
-        'objectname': 'extension',
-        'is_system': True
+        "name": "ex",
+        "oid": 123,
+        "schema": "public",
+        "schemaoid": 456,
+        "objectname": "extension",
+        "is_system": True,
     }
 
     @property
@@ -37,16 +37,8 @@ class TestExtension(NodeObjectTestBase, unittest.TestCase):
 
     @property
     def full_properties(self):
-        return {
-            "owner": "owner",
-            "relocatable": "relocatable",
-            "version": "version"
-        }
+        return {"owner": "owner", "relocatable": "relocatable", "version": "version"}
 
     @property
     def property_query(self) -> dict:
-        return {
-            "owner": "postgres",
-            "relocatable": False,
-            "version": "1.0"
-        }
+        return {"owner": "postgres", "relocatable": False, "version": "1.0"}

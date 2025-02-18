@@ -9,6 +9,7 @@ from ossdbtoolsservice.serialization.serializable import convert_from_dict
 
 class CancelTaskParameters:
     """Parameters for the tasks/canceltask request"""
+
     task_id: str
 
     @classmethod
@@ -19,4 +20,4 @@ class CancelTaskParameters:
         self.task_id: str = None
 
 
-CANCEL_TASK_REQUEST = IncomingMessageConfiguration('tasks/canceltask', CancelTaskParameters)
+CANCEL_TASK_REQUEST = IncomingMessageConfiguration("tasks/canceltask", CancelTaskParameters)

@@ -5,21 +5,18 @@
 
 import io
 import json
-from typing import List
 
+from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn, SaveResultsRequestParams
 from ossdbtoolsservice.query.data_storage.save_as_writer import SaveAsWriter
-from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue, SaveResultsRequestParams
 
 
 class SaveAsJsonWriter(SaveAsWriter):
-
     def __init__(self, stream: io.BufferedWriter, params: SaveResultsRequestParams) -> None:
         SaveAsWriter.__init__(self, stream, params)
 
         self._data = []
 
-    def write_row(self, row: List[DbCellValue], columns: List[DbColumn]):
-
+    def write_row(self, row: list[DbCellValue], columns: list[DbColumn]):
         column_start_index = self.get_start_index()
         column_end_index = self.get_end_index(columns)
 

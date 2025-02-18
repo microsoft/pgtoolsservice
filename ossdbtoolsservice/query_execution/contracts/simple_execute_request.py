@@ -3,10 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import List
 
-from ossdbtoolsservice.hosting import IncomingMessageConfiguration, OutgoingMessageRegistration
-from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
+from ossdbtoolsservice.hosting import (
+    IncomingMessageConfiguration,
+    OutgoingMessageRegistration,
+)
+from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -20,15 +22,19 @@ class SimpleExecuteRequest(Serializable):
 
 
 class SimpleExecuteResponse:
-    rows: List[List[DbCellValue]]
+    rows: list[list[DbCellValue]]
     row_count: int
-    column_info: List[DbColumn]
+    column_info: list[DbColumn]
 
-    def __init__(self, rows: List[List[DbCellValue]], row_count: int, column_info: List[DbColumn]):
+    def __init__(
+        self, rows: list[list[DbCellValue]], row_count: int, column_info: list[DbColumn]
+    ):
         self.rows = rows
         self.row_count = row_count
         self.column_info = column_info
 
 
-SIMPLE_EXECUTE_REQUEST = IncomingMessageConfiguration('query/simpleexecute', SimpleExecuteRequest)
+SIMPLE_EXECUTE_REQUEST = IncomingMessageConfiguration(
+    "query/simpleexecute", SimpleExecuteRequest
+)
 OutgoingMessageRegistration.register_outgoing_message(SimpleExecuteResponse)

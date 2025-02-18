@@ -3,21 +3,23 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""A module that handles queueing """
+"""A module that handles queueing"""
+
 import threading
 from logging import Logger
-from prompt_toolkit.completion import Completer
 from queue import Queue
-from typing import Callable, Dict, List, Optional   # noqa
+from typing import Callable, Dict, List, Optional  # noqa
+
+from prompt_toolkit.completion import Completer
 
 import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectRequestParams, ConnectionType
+from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectRequestParams
+from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
-from ossdbtoolsservice.driver import ServerConnection
 
-INTELLISENSE_URI = 'intellisense://'
+INTELLISENSE_URI = "intellisense://"
 
 
 class ConnectionContext:
@@ -45,7 +47,12 @@ class ConnectionContext:
 class QueuedOperation:
     """Information about an operation to be queued"""
 
-    def __init__(self, key: str, task: Callable[[Completer], bool], timeout_task: Callable[[None], bool]):
+    def __init__(
+        self,
+        key: str,
+        task: Callable[[Completer], bool],
+        timeout_task: Callable[[None], bool],
+    ):
         """
         Initializes a queued operation with a key defining the connection it maps to,
         a task to be run for a connected queue, and a timeout task. Currently the timeout
@@ -62,14 +69,15 @@ class OperationsQueue:
     Handles requests to queue operations that require a connection. Currently this works
     by having a single queue per connection.
     """
+
     # CONSTANTS ############################################################
-    OPERATIONS_THREAD_NAME = u"LANG_SVC_Operations"
+    OPERATIONS_THREAD_NAME = "LANG_SVC_Operations"
 
     def __init__(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
         self.lock: threading.RLock = threading.RLock()
         self.queue: Queue = Queue()
-        self._context_map: Dict[str, ConnectionContext] = {}
+        self._context_map: dict[str, ConnectionContext] = {}
         self.stop_requested = False
         # TODO consider thread pool for multiple messages? Or full
         # Process queue using multi-threading
@@ -80,29 +88,29 @@ class OperationsQueue:
         """
         Starts the thread that processes operations
         """
-        self._log_info('Language Service Operations Queue starting...')
+        self._log_info("Language Service Operations Queue starting...")
         self._operations_consumer = threading.Thread(
-            target=self._process_operations,
-            args=(),
-            name=self.OPERATIONS_THREAD_NAME
+            target=self._process_operations, args=(), name=self.OPERATIONS_THREAD_NAME
         )
         self._operations_consumer.daemon = True
         self._operations_consumer.start()
 
     def stop(self):
         self.stop_requested = True
-        # Enqueue None to optimistically unblock output thread so it can check for the cancellation flag
+        # Enqueue None to optimistically unblock output thread
+        # so it can check for the cancellation flag
         self.queue.put(None)
-        self._log_info('Language Service Operations Queue stopping...')
+        self._log_info("Language Service Operations Queue stopping...")
 
     def add_operation(self, operation: QueuedOperation):
         """
-        Adds an operation to the correct queue. Raises KeyError if no queue exists for this connection
+        Adds an operation to the correct queue.
+        Raises KeyError if no queue exists for this connection
         """
         if not operation:
             # Must throw in this case, as a None operation is used to close the
             # queue
-            raise ValueError('Operation must not be None')
+            raise ValueError("Operation must not be None")
         with self.lock:
             # Get the connection context or throw KeyError if not found
             context: ConnectionContext = self._context_map[operation.key]
@@ -117,7 +125,9 @@ class OperationsQueue:
         key: str = OperationsQueue.create_key(conn_info)
         return key in self._context_map
 
-    def add_connection_context(self, conn_info: ConnectionInfo, overwrite=False) -> ConnectionContext:
+    def add_connection_context(
+        self, conn_info: ConnectionInfo, overwrite=False
+    ) -> ConnectionContext:
         """
         Adds a connection context and returns the notification event.
         If a connection queue exists alread, will overwrite if necesary
@@ -152,7 +162,10 @@ class OperationsQueue:
                 try:
                     self._connection_service.disconnect(key_uri, ConnectionType.INTELLISENSE)
                 except Exception as ex:
-                    self._log_exception('error during disconnect, ignoring as assume already disconnected: {0}'.format(ex))
+                    self._log_exception(
+                        "error during disconnect, ignoring as assume already disconnected: "
+                        f"{ex}"
+                    )
 
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
@@ -160,12 +173,20 @@ class OperationsQueue:
         """
         Creates a key uniquely identifying a ConnectionInfo object for use in caching
         """
-        return '{0}|{1}|{2}'.format(conn_info.details.server_name, conn_info.details.database_name, conn_info.details.user_name)
+        return (
+            f"{conn_info.details.server_name}|"
+            f"{conn_info.details.database_name}|"
+            f"{conn_info.details.user_name}"
+        )
 
-    def _create_connection(self, connection_key: str, conn_info: ConnectionInfo) -> Optional[ServerConnection]:
+    def _create_connection(
+        self, connection_key: str, conn_info: ConnectionInfo
+    ) -> Optional[ServerConnection]:
         conn_service = self._connection_service
         key_uri = INTELLISENSE_URI + connection_key
-        connect_request = ConnectRequestParams(conn_info.details, key_uri, ConnectionType.INTELLISENSE)
+        connect_request = ConnectRequestParams(
+            conn_info.details, key_uri, ConnectionType.INTELLISENSE
+        )
         connect_result = conn_service.connect(connect_request)
         if connect_result.error_message is not None:
             raise RuntimeError(connect_result.error_message)
@@ -224,4 +245,4 @@ class OperationsQueue:
         Logs an exception if the logger is defined
         :param ex: Exception to log
         """
-        self._log_exception('Thread {0} encountered exception {1}'.format(threading.currentThread(), ex))
+        self._log_exception(f"Thread {threading.currentThread()} encountered exception {ex}")

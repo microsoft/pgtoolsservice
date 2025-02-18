@@ -3,16 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""This module holds the task service, which supports management and tracking of active tasks"""
+"""This module holds the task service, 
+which supports management and tracking of active tasks"""
 
-from typing import Dict
-
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
+from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.tasks import Task, TaskStatus
 from ossdbtoolsservice.tasks.contracts import (
     CANCEL_TASK_REQUEST,
-    CancelTaskParameters,
     LIST_TASKS_REQUEST,
+    CancelTaskParameters,
     ListTasksParameters,
 )
 
@@ -21,7 +20,7 @@ class TaskService(Service):
     """Manage long-running tasks"""
 
     def __init__(self):
-        self._task_map: Dict[str, Task] = {}
+        self._task_map: dict[str, Task] = {}
         self._service_provider = None
 
     def register(self, service_provider: ServiceProvider):

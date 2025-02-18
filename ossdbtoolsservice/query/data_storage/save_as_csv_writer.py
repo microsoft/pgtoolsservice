@@ -3,32 +3,39 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import io
 import csv
-from typing import List
+import io
 
+from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn, SaveResultsRequestParams
 from ossdbtoolsservice.query.data_storage.save_as_writer import SaveAsWriter
-from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue, SaveResultsRequestParams
 
 
 class SaveAsCsvWriter(SaveAsWriter):
-
     def __init__(self, stream: io.BufferedWriter, params: SaveResultsRequestParams) -> None:
         SaveAsWriter.__init__(self, stream, params)
         self._header_written = False
 
-    def write_row(self, row: List[DbCellValue], columns: List[DbColumn]):
-
-        writer = csv.writer(self._file_stream, delimiter=self._params.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+    def write_row(self, row: list[DbCellValue], columns: list[DbColumn]):
+        writer = csv.writer(
+            self._file_stream,
+            delimiter=self._params.delimiter,
+            quotechar='"',
+            quoting=csv.QUOTE_MINIMAL,
+            lineterminator="\n",
+        )
 
         if self._params.include_headers and not self._header_written:
-            selected_column_names = [column.column_name for column in columns[
-                self.get_start_index(): self.get_end_index(columns)]]
+            selected_column_names = [
+                column.column_name
+                for column in columns[self.get_start_index() : self.get_end_index(columns)]
+            ]
             writer.writerow(selected_column_names)
 
             self._header_written = True
 
-        selected_cells = [cell.display_value for cell in row[
-            self.get_start_index(): self.get_end_index(columns)]]
+        selected_cells = [
+            cell.display_value
+            for cell in row[self.get_start_index() : self.get_end_index(columns)]
+        ]
 
         writer.writerow(selected_cells)

@@ -12,5 +12,7 @@ then
   exit
 fi
 
+set -e
+
 nose2 -v --with-coverage --coverage-report html --plugin=nose2.plugins.junitxml --junit-xml "$@"
 pytest tests_v2

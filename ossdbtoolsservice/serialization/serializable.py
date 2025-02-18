@@ -3,13 +3,13 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABCMeta
-from typing import Any
-import inflection
 import enum
+from typing import Any
+
+import inflection
 
 
-class Serializable(metaclass=ABCMeta):
+class Serializable:
     @classmethod
     def from_dict(cls, dictionary: dict) -> Any:
         kwargs = cls.get_child_serializable_types()
@@ -29,12 +29,15 @@ class Serializable(metaclass=ABCMeta):
 def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwargs):
     """
     Converts a class from a json-derived dictionary using attribute name normalization.
-    Attributes described in **kwargs will be omitted from automatic attribute definition and the
+    Attributes described in **kwargs will be omitted from automatic
+    attribute definition and the
     provided method will be called to deserialize the value
     :param class_: Class to create an instance of
     :param dictionary: Dictionary of values to assign attributes with
-    :param ignore_extra_attributes: Whether to ignore extra attributes when converting instead of raising an error
-    :param kwargs: Class to call .from_dict on when the argument key is found in the dictionary
+    :param ignore_extra_attributes: Whether to ignore extra attributes when converting
+        instead of raising an error
+    :param kwargs: Class to call .from_dict on when the argument
+        key is found in the dictionary
     :raises AttributeError: When the class does not contain an attribute in the dictionary
     :return: An instance of class_ with attributes assigned
     """
@@ -54,9 +57,8 @@ def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwarg
             if ignore_extra_attributes:
                 continue
             raise AttributeError(
-                "Could not deserialize to class {0}, {1} is not defined as an attribute".format(
-                    class_, pythonic_attr
-                )
+                f"Could not deserialize to class {class_}, "
+                f"{pythonic_attr} is not defined as an attribute"
             )
 
         value = dictionary[attr]
