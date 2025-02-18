@@ -4,14 +4,18 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.admin.contracts import (
-    DatabaseInfo, GetDatabaseInfoParameters, GetDatabaseInfoResponse, GET_DATABASE_INFO_REQUEST)
+    DatabaseInfo,
+    GetDatabaseInfoParameters,
+    GetDatabaseInfoResponse,
+    GET_DATABASE_INFO_REQUEST,
+)
 from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.driver import ServerConnection
 
 
-class AdminService(object):
+class AdminService(Service):
     """Service for general database administration support"""
 
     def __init__(self):
@@ -26,14 +30,18 @@ class AdminService(object):
         )
 
         if self._service_provider.logger is not None:
-            self._service_provider.logger.info('Admin service successfully initialized')
+            self._service_provider.logger.info("Admin service successfully initialized")
 
     # REQUEST HANDLERS #####################################################
 
-    def _handle_get_database_info_request(self, request_context: RequestContext, params: GetDatabaseInfoParameters) -> None:
+    def _handle_get_database_info_request(
+        self, request_context: RequestContext, params: GetDatabaseInfoParameters
+    ) -> None:
         # Retrieve the connection from the connection service
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        connection: ServerConnection = connection_service.get_connection(params.owner_uri, ConnectionType.DEFAULT)
+        connection: ServerConnection = connection_service.get_connection(
+            params.owner_uri, ConnectionType.DEFAULT
+        )
 
         # Get database owner
         owner_result = connection.get_database_owner()
@@ -43,6 +51,6 @@ class AdminService(object):
         options = {
             DatabaseInfo.DBNAME: connection.database_name,
             DatabaseInfo.OWNER: owner_result,
-            DatabaseInfo.SIZE: size_result
+            DatabaseInfo.SIZE: size_result,
         }
         request_context.send_response(GetDatabaseInfoResponse(DatabaseInfo(options)))

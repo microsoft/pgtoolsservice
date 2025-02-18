@@ -1,0 +1,38 @@
+name: PG Tools Service PR CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Pull Request CI
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip3 install -e .[dev]
+
+      - name: Setup Postgres
+        run: |
+          docker compose up -d
+
+      - name: Run linting
+        run: |
+          ./scripts/lint.sh
+
+      - name: Run tests (Unix)
+        run: |
+          ./scripts/test-all.sh
+
+      - name: Run build script
+        run: |
+          ./scripts/build.sh

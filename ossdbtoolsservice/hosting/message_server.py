@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from logging import Logger
 from typing import Any, Callable, Generic, Type, TypeVar
+import uuid
 
 from pydantic import BaseModel
 
@@ -9,13 +10,17 @@ from ossdbtoolsservice.hosting.context import (
     RequestContext,
     NotificationContext,
 )
+from ossdbtoolsservice.hosting.errors import ResponseError
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
 from ossdbtoolsservice.hosting.message_configuration import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting.response_queues import ResponseQueues, SyncResponseQueues
 from ossdbtoolsservice.serialization.serializable import Serializable
+from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
 
 # Generic type for parameters (BaseModel, Serializable or a plain dict)
 TModel = TypeVar("TModel", bound=BaseModel | Serializable | dict[str, Any])
+TResult = TypeVar("TResult", bound=BaseModel | str | dict[str, Any])
 
 
 ###############################################################################
@@ -55,7 +60,13 @@ class MessageServer(ABC):
     Contains shared logic (e.g. registering handlers and dispatching messages).
     """
 
-    def __init__(self, logger: Logger | None, version: str = "1"):
+    def __init__(
+        self,
+        async_runner: AsyncRunner | None,
+        logger: Logger | None,
+        version: str = "1",
+    ):
+        self.async_runner = async_runner
         self._logger = logger
         self._version = version
         self._stop_requested = False
@@ -77,6 +88,12 @@ class MessageServer(ABC):
         self.set_request_handler(shutdown_config, self._handle_shutdown_request)
         exit_config = IncomingMessageConfiguration("exit", None)
         self.set_request_handler(exit_config, self._handle_shutdown_request)
+
+        self._response_queues: ResponseQueues | SyncResponseQueues
+        if async_runner is not None:
+            self._response_queues = ResponseQueues()
+        else:  # Synchronous
+            self._response_queues = SyncResponseQueues()
 
     def add_shutdown_handler(self, handler: Callable) -> None:
         self._shutdown_handlers.append(handler)
@@ -112,14 +129,29 @@ class MessageServer(ABC):
             **kwargs: Additional arguments to pass to the
                 create_request_context and create_notification_context methods
         """
-        # Responses (success/error) are not handled here.
         if message.message_type in [
             JSONRPCMessageType.ResponseSuccess,
             JSONRPCMessageType.ResponseError,
         ]:
-            return
-
-        if message.message_type == JSONRPCMessageType.Request:
+            if self.async_runner and isinstance(self._response_queues, ResponseQueues):
+                response_queue = self._response_queues.get_queue(message.message_id)
+                if response_queue is not None:
+                    self._log_info(f"Received response id={message.message_id}")
+                    self.async_runner.run(response_queue.put(message))
+                else:
+                    self._log_warning(
+                        f"Received response for unknown request id={message.message_id}"
+                    )
+            else:
+                response_queue = self._response_queues.get_queue(message.message_id)
+                if response_queue is not None:
+                    self._log_info(f"Received response id={message.message_id}")
+                    response_queue.put(message)
+                else:
+                    self._log_warning(
+                        f"Received response for unknown request id={message.message_id}"
+                    )
+        elif message.message_type == JSONRPCMessageType.Request:
             self._log_info(
                 f"Received request id={message.message_id} method={message.message_method}"
             )
@@ -204,19 +236,70 @@ class MessageServer(ABC):
         pass
 
     @abstractmethod
-    def send_request(self, method: str, params: Any) -> None:
+    def _send_message(self, message: JSONRPCMessage) -> None:
         pass
 
-    @abstractmethod
+    async def send_request(
+        self,
+        method: str,
+        params: Any,
+        result_type: Type[TResult] | None = None,
+        timeout: float | None = None,
+    ) -> TResult | None:
+        """
+        Sends a request to the server and waits for a response.
+        Args:
+            method: The method to call
+            params: The parameters to pass to the method
+            result_type: The type of the result (optional)
+            timeout: The timeout for the request, in seconds (optional)
+        Raises:
+            TimeoutError: If the request times out
+            ResponseError: If the response contains an error
+        Returns:
+            The result of the request
+        """
+        if not isinstance(self._response_queues, ResponseQueues):
+            raise ValueError("send_request is not supported in synchronous mode")
+
+        message_id = str(uuid.uuid4())
+        message = JSONRPCMessage.create_request(message_id, method, params)
+        _response_queue = self._response_queues.register_new_queue(message_id)
+        try:
+            self._log_info(f" -- Sending request id={message_id} method={method}")
+            self._send_message(message)
+            response: JSONRPCMessage = await _response_queue.get()
+            if response.message_type == JSONRPCMessageType.ResponseError:
+                raise ResponseError(response.message_error)
+
+            result_encoded = response.message_result
+
+            if result_type is not None and issubclass(result_type, BaseModel):
+                return result_type.model_validate(result_encoded)
+
+            # For str or dict, return as-is
+            return result_encoded
+        finally:
+            self._response_queues.delete_queue(message_id)
+
+    def send_response(self, message_id: str, params: Any) -> None:
+        response = JSONRPCMessage.create_response(message_id, params)
+        self._send_message(response)
+
+    def send_error(
+        self, message_id: str, message: str, data: Any = None, code: int = 0
+    ) -> None:
+        error = JSONRPCMessage.create_error(message_id, code, message, data)
+        self._send_message(error)
+
     def send_notification(self, method: str, params: Any) -> None:
-        pass
+        message = JSONRPCMessage.create_notification(method, params)
+        self._send_message(message)
 
-    @abstractmethod
     def create_request_context(
         self, message: JSONRPCMessage, **kwargs: Any
     ) -> RequestContext:
-        pass
+        return RequestContext(message.message_id, self)
 
-    @abstractmethod
     def create_notification_context(self, **kwargs: Any) -> NotificationContext:
-        pass
+        return NotificationContext(self)

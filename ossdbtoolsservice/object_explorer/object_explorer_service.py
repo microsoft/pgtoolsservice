@@ -17,7 +17,7 @@ from ossdbtoolsservice.connection.contracts import (
     ConnectionDetails,
     ConnectionType,
 )
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.object_explorer.contracts import (
     NodeInfo,
     CreateSessionResponse,
@@ -34,18 +34,19 @@ from ossdbtoolsservice.object_explorer.contracts import (
 )
 from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
-import ossdbtoolsservice.utils as utils
+import ossdbtoolsservice.utils.constants as constants
+import ossdbtoolsservice.utils.validate as validate
 
 from pgsmo import Server as PGServer
 
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 
-ROUTING_TABLES = {utils.constants.PG_PROVIDER_NAME: PG_ROUTING_TABLE}
+ROUTING_TABLES = {constants.PG_PROVIDER_NAME: PG_ROUTING_TABLE}
 
-SERVER_TYPES = {utils.constants.PG_PROVIDER_NAME: PGServer}
+SERVER_TYPES = {constants.PG_PROVIDER_NAME: PGServer}
 
 
-class ObjectExplorerService(object):
+class ObjectExplorerService(Service):
     """Service for browsing database objects"""
 
     def __init__(self):
@@ -102,13 +103,13 @@ class ObjectExplorerService(object):
             )
         try:
             # Make sure we have the appropriate session params
-            utils.validate.is_not_none("params", params)
+            validate.is_not_none("params", params)
 
             # Use the provider's default db if db name was not specified
             if params.database_name is None or params.database_name == "":
                 is_cosmos = params.server_name.endswith(".postgres.cosmos.azure.com")
                 pgsql_config = self._service_provider[
-                    utils.constants.WORKSPACE_SERVICE_NAME
+                    constants.WORKSPACE_SERVICE_NAME
                 ].configuration.pgsql
                 params.database_name = (
                     pgsql_config.default_database
@@ -118,7 +119,7 @@ class ObjectExplorerService(object):
 
             # Use the provider's default port if port number was not specified
             if not params.port:
-                params.port = utils.constants.DEFAULT_PORT[self._provider]
+                params.port = constants.DEFAULT_PORT[self._provider]
 
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params, self._provider)
@@ -174,15 +175,13 @@ class ObjectExplorerService(object):
     ) -> None:
         """Handle close Object Explorer" sessions request"""
         try:
-            utils.validate.is_not_none("params", params)
+            validate.is_not_none("params", params)
 
             # Try to remove the session
             session = self._session_map.pop(params.session_id, None)
             if session is not None:
                 self._close_database_connections(session)
-                conn_service = self._service_provider[
-                    utils.constants.CONNECTION_SERVICE_NAME
-                ]
+                conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
                 connect_result = conn_service.disconnect(
                     session.id, ConnectionType.OBJECT_EXLPORER
                 )
@@ -219,7 +218,7 @@ class ObjectExplorerService(object):
         """Close all OE sessions when service is shutdown"""
         if self._service_provider.logger is not None:
             self._service_provider.logger.info("Closing all the OE sessions")
-        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         for key, session in self._session_map.items():
             connect_result = conn_service.disconnect(
                 session.id, ConnectionType.OBJECT_EXLPORER
@@ -239,8 +238,8 @@ class ObjectExplorerService(object):
     # PRIVATE HELPERS ######################################################
 
     def _close_database_connections(self, session: "ObjectExplorerSession") -> None:
-        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        for database in session.server.databases:
+        conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+        for database in session.server.databases if session.server else []:
             try:
                 close_result = conn_service.disconnect(
                     session.id + database.name, ConnectionType.OBJECT_EXLPORER
@@ -307,13 +306,12 @@ class ObjectExplorerService(object):
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
         except BaseException as e:
             if (
-                session.server.connection is not None
+                session.server
+                and session.server.connection is not None
                 and session.server.connection.connection.broken
                 and not retry_state
             ):
-                conn_service = self._service_provider[
-                    utils.constants.CONNECTION_SERVICE_NAME
-                ]
+                conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
                 connection = conn_service.get_connection(
                     session.id, ConnectionType.OBJECT_EXLPORER
                 )
@@ -343,13 +341,9 @@ class ObjectExplorerService(object):
         self, request_context: RequestContext, params: ExpandParameters
     ) -> Optional[ObjectExplorerSession]:
         try:
-            utils.validate.is_not_none("params", params)
-            utils.validate.is_not_none_or_whitespace(
-                "params.node_path", params.node_path
-            )
-            utils.validate.is_not_none_or_whitespace(
-                "params.session_id", params.session_id
-            )
+            validate.is_not_none("params", params)
+            validate.is_not_none_or_whitespace("params.node_path", params.node_path)
+            validate.is_not_none_or_whitespace("params.session_id", params.session_id)
 
             session = self._session_map.get(params.session_id)
             if session is None:
@@ -378,7 +372,7 @@ class ObjectExplorerService(object):
     def _create_connection(
         self, session: ObjectExplorerSession, database_name: str
     ) -> Optional[ServerConnection]:
-        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
 
         options = session.connection_details.options.copy()
         options["dbname"] = database_name
@@ -400,7 +394,7 @@ class ObjectExplorerService(object):
     def _initialize_session(
         self, request_context: RequestContext, session: ObjectExplorerSession
     ):
-        conn_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
         connection = None
 
         try:
@@ -486,17 +480,17 @@ class ObjectExplorerService(object):
     @staticmethod
     def _generate_session_uri(params: ConnectionDetails, provider_name: str) -> str:
         # Make sure the required params are provided
-        utils.validate.is_not_none_or_whitespace(
+        validate.is_not_none_or_whitespace(
             "params.server_name", params.options.get("host")
         )
-        utils.validate.is_not_none_or_whitespace(
+        validate.is_not_none_or_whitespace(
             "params.user_name", params.options.get("user")
         )
-        if provider_name == utils.constants.PG_PROVIDER_NAME:
-            utils.validate.is_not_none_or_whitespace(
+        if provider_name == constants.PG_PROVIDER_NAME:
+            validate.is_not_none_or_whitespace(
                 "params.database_name", params.options.get("dbname")
             )
-        utils.validate.is_not_none("params.port", params.options.get("port"))
+        validate.is_not_none("params.port", params.options.get("port"))
 
         # Generates a session ID that will function as the base URI for the session
         host = quote(params.options["host"])

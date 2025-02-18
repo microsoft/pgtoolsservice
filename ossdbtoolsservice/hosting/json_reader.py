@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 from enum import Enum
+import io
 import json
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 
@@ -23,7 +24,7 @@ class JSONRPCReader:
         Content = 2
 
     # CONSTRUCTOR ##########################################################
-    def __init__(self, stream, encoding=None, logger=None):
+    def __init__(self, stream: io.FileIO, encoding=None, logger=None) -> None:
         """
         Initializes the JSON RPC reader
         :param stream: Stream that messages will be read from
@@ -102,7 +103,7 @@ class JSONRPCReader:
 
     # IMPLEMENTATION DETAILS ###############################################
 
-    def _read_next_chunk(self):
+    def _read_next_chunk(self) -> bool:
         """
         Read a chunk from the output stream into buffer
         :raises EOFError: Stream was empty or stream did not contain a valid header or content-body
@@ -135,7 +136,7 @@ class JSONRPCReader:
                 self._logger.warn('JSON RPC Reader on read_next_chunk encountered exception: {}'.format(ex))
             raise
 
-    def _try_read_headers(self):
+    def _try_read_headers(self) -> bool:
         """
         Try to read the header information from the internal buffer expecting the last header to contain '\r\n\r\n'
         :raises LookupError: The content-length header was not found
@@ -195,7 +196,7 @@ class JSONRPCReader:
 
         return True
 
-    def _try_read_content(self, content):
+    def _try_read_content(self, content: list[str]) -> bool:
         """
         Try to read content from internal buffer
         :param content: Location to store the content
@@ -215,7 +216,7 @@ class JSONRPCReader:
 
         return True
 
-    def _trim_buffer_and_resize(self, bytes_to_remove):
+    def _trim_buffer_and_resize(self, bytes_to_remove: int) -> None:
         """
         Trim the buffer by the passed in bytes_to_remove by creating a new buffer that is at a minimum the
         default max size

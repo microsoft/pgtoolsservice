@@ -8,6 +8,7 @@ import configparser
 import logging
 import os
 import sys
+from typing import Type
 import debugpy
 
 from ossdbtoolsservice.admin import AdminService
@@ -17,7 +18,7 @@ from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.disaster_recovery.disaster_recovery_service import (
     DisasterRecoveryService,
 )
-from ossdbtoolsservice.hosting import MessageServer, ServiceProvider
+from ossdbtoolsservice.hosting import MessageServer, ServiceProvider, Service
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.object_explorer import ObjectExplorerService
@@ -26,7 +27,6 @@ from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from ossdbtoolsservice.edit_data.edit_data_service import EditDataService
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants, markdown
-from ossdbtoolsservice.utils.async_runner import AsyncRunner
 from ossdbtoolsservice.utils.bool import str_to_bool
 from ossdbtoolsservice.utils.path import path_relative_to_base
 from ossdbtoolsservice.workspace import WorkspaceService
@@ -34,12 +34,10 @@ from ossdbtoolsservice.workspace import WorkspaceService
 
 def create_server_init(
     message_server: MessageServer,
-    provider: str,
     server_logger: logging.Logger | None,
-    async_runner: AsyncRunner | None,
-) -> tuple[MessageServer, ServiceProvider]:
+) -> MessageServer:
     # Create the service provider and add the providers to it
-    services = {
+    services: dict[str, Type[Service]] = {
         constants.ADMIN_SERVICE_NAME: AdminService,
         constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
         constants.CONNECTION_SERVICE_NAME: ConnectionService,
@@ -54,11 +52,9 @@ def create_server_init(
         constants.TASK_SERVICE_NAME: TaskService,
         constants.CHAT_SERVICE_NAME: ChatService,
     }
-    service_box = ServiceProvider(
-        message_server, services, provider, server_logger, async_runner=async_runner
-    )
+    service_box = ServiceProvider(message_server, services, server_logger)
     service_box.initialize()
-    return message_server, service_box
+    return message_server
 
 
 def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
@@ -198,7 +194,9 @@ def get_loggers(log_dir: str) -> logging.Logger:
 
 
 def main(
-    server: MessageServer, service_box: ServiceProvider, args: argparse.Namespace, logger: logging.Logger
+    server: MessageServer,
+    args: argparse.Namespace,
+    logger: logging.Logger,
 ) -> None:
     # See if we have any arguments
     wait_for_debugger = False
@@ -245,8 +243,5 @@ def main(
         markdown.generate_requests_markdown(server, logger)
     else:
         # Start the server
-        try:
-            server.start()
-            server.wait_for_exit()
-        finally:
-            service_box.shutdown()
+        server.start()
+        server.wait_for_exit()

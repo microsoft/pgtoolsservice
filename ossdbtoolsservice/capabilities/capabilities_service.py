@@ -5,21 +5,27 @@
 
 from typing import Optional
 
-from ossdbtoolsservice.capabilities.connection_options.pg_connection_options import \
-    capabilities as PGServerCapabilities
+from ossdbtoolsservice.capabilities.connection_options.pg_connection_options import (
+    capabilities as PGServerCapabilities,
+)
 from ossdbtoolsservice.capabilities.contracts import (
-    CAPABILITIES_REQUEST, INITIALIZE_REQUEST, CapabilitiesRequestParams,
-    CapabilitiesResult, CompletionOptions, InitializeRequestParams,
-    InitializeResult, ServerCapabilities, TextDocumentSyncKind)
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+    CAPABILITIES_REQUEST,
+    INITIALIZE_REQUEST,
+    CapabilitiesRequestParams,
+    CapabilitiesResult,
+    CompletionOptions,
+    InitializeRequestParams,
+    InitializeResult,
+    ServerCapabilities,
+    TextDocumentSyncKind,
+)
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.utils import constants
 
-SERVER_CAPABILITIES_MAP = {
-    constants.PG_PROVIDER_NAME: PGServerCapabilities
-}
+SERVER_CAPABILITIES_MAP = {constants.PG_PROVIDER_NAME: PGServerCapabilities}
 
 
-class CapabilitiesService:
+class CapabilitiesService(Service):
     """Defines the capabilities supported by PG Tools including language service and DMP support"""
 
     def __init__(self):
@@ -28,13 +34,17 @@ class CapabilitiesService:
     def register(self, service_provider: ServiceProvider):
         self._service_provider = service_provider
 
-        self._service_provider.server.set_request_handler(CAPABILITIES_REQUEST, self._handle_dmp_capabilities_request)
-        self._service_provider.server.set_request_handler(INITIALIZE_REQUEST, self._handle_initialize_request)
+        self._service_provider.server.set_request_handler(
+            CAPABILITIES_REQUEST, self._handle_dmp_capabilities_request
+        )
+        self._service_provider.server.set_request_handler(
+            INITIALIZE_REQUEST, self._handle_initialize_request
+        )
 
     def _handle_dmp_capabilities_request(
-            self,
-            request_context: RequestContext,
-            params: Optional[CapabilitiesRequestParams]
+        self,
+        request_context: RequestContext,
+        params: Optional[CapabilitiesRequestParams],
     ) -> None:
         """
         Sends the capabilities of the tools service data protocol features
@@ -50,7 +60,9 @@ class CapabilitiesService:
         request_context.send_response(result)
 
     @staticmethod
-    def _handle_initialize_request(request_context: RequestContext, params: Optional[InitializeRequestParams]) -> None:
+    def _handle_initialize_request(
+        request_context: RequestContext, params: Optional[InitializeRequestParams]
+    ) -> None:
         """
         Sends the capabilities of the tools service language features
         :param request_context: Context for the request
@@ -64,7 +76,9 @@ class CapabilitiesService:
             document_range_formatting_provider=True,
             document_highlight_provider=False,
             hover_provider=False,
-            completion_provider=CompletionOptions(True, ['.', '-', ':', '\\', '[', '"'])
+            completion_provider=CompletionOptions(
+                True, [".", "-", ":", "\\", "[", '"']
+            ),
         )
         result = InitializeResult(capabilities)
 

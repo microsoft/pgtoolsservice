@@ -8,11 +8,12 @@ import unittest
 import unittest.mock as mock
 
 from ossdbtoolsservice.capabilities.capabilities_service import CapabilitiesService
-from ossdbtoolsservice.capabilities.contracts import InitializeResult, CapabilitiesResult
+from ossdbtoolsservice.capabilities.contracts import (
+    InitializeResult,
+    CapabilitiesResult,
+)
 from ossdbtoolsservice.hosting import ServiceProvider, IncomingMessageConfiguration
-from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from ossdbtoolsservice.workspace import WorkspaceService
 
 import tests.utils as utils
@@ -21,12 +22,12 @@ import tests.utils as utils
 class TestCapabilitiesService(unittest.TestCase):
     """Methods for testing the capabilities service"""
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         # Setup: Create a capabilities service with a mocked out service provider
         mock_server_set_request = mock.MagicMock()
-        mock_server = RPCMessageServer(None, None)
+        mock_server = utils.MockMessageServer()
         mock_server.set_request_handler = mock_server_set_request
-        mock_service_provider = ServiceProvider(mock_server, {}, PG_PROVIDER_NAME, None)
+        mock_service_provider = ServiceProvider(mock_server, {}, None)
         service = CapabilitiesService()
 
         # If: I initialize the service
@@ -42,7 +43,7 @@ class TestCapabilitiesService(unittest.TestCase):
             self.assertTrue(callable(mock_call[1][1]))
 
     # noinspection PyUnresolvedReferences
-    def test_initialization_request(self):
+    def test_initialization_request(self) -> None:
         # Setup: Create a request context with mocked out send_* methods
         rc = utils.MockRequestContext()
 
@@ -56,12 +57,14 @@ class TestCapabilitiesService(unittest.TestCase):
         self.assertIsInstance(rc.send_response.mock_calls[0][1][0], InitializeResult)
 
     # noinspection PyUnresolvedReferences
-    def test_dmp_capabilities_request(self):
+    def test_dmp_capabilities_request(self) -> None:
         # Setup: Create a request context with mocked out send_* methods and set up the capabilities service
         rc = utils.MockRequestContext()
         capabilities_service = CapabilitiesService()
         workspace_service = WorkspaceService()
-        capabilities_service._service_provider = utils.get_mock_service_provider({constants.WORKSPACE_SERVICE_NAME: workspace_service})
+        capabilities_service._service_provider = utils.get_mock_service_provider(
+            {constants.WORKSPACE_SERVICE_NAME: workspace_service}
+        )
 
         # If: I request the dmp capabilities of this server
         capabilities_service._handle_dmp_capabilities_request(rc, None)
@@ -72,13 +75,15 @@ class TestCapabilitiesService(unittest.TestCase):
         rc.send_response.assert_called_once()
         self.assertIsInstance(rc.send_response.mock_calls[0][1][0], CapabilitiesResult)
 
-    def test_dmp_capabilities_have_backup_options(self):
+    def test_dmp_capabilities_have_backup_options(self) -> None:
         """Test that the capabilities returned for a DMP capabilities request include backup options"""
         # Setup: Create a request context with mocked out send_* methods and set up the capabilities service
         rc = utils.MockRequestContext()
         capabilities_service = CapabilitiesService()
         workspace_service = WorkspaceService()
-        capabilities_service._service_provider = utils.get_mock_service_provider({constants.WORKSPACE_SERVICE_NAME: workspace_service})
+        capabilities_service._service_provider = utils.get_mock_service_provider(
+            {constants.WORKSPACE_SERVICE_NAME: workspace_service}
+        )
 
         # If: I request the dmp capabilities of this server
         capabilities_service._handle_dmp_capabilities_request(rc, None)
@@ -87,7 +92,9 @@ class TestCapabilitiesService(unittest.TestCase):
         rc.send_response.assert_called_once()
         capabilities_result = rc.send_response.mock_calls[0][1][0]
         features = capabilities_result.capabilities.features
-        backup_options_list = [feature for feature in features if feature.feature_name == 'backup']
+        backup_options_list = [
+            feature for feature in features if feature.feature_name == "backup"
+        ]
         # There should be exactly one feature containing backup options
         self.assertEqual(len(backup_options_list), 1)
         backup_options = backup_options_list[0]
@@ -97,5 +104,5 @@ class TestCapabilitiesService(unittest.TestCase):
         self.assertGreater(len(backup_options.options_metadata), 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

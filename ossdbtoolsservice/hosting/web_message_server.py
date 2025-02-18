@@ -1,6 +1,6 @@
-import json
 from logging import Logger
 import os
+import sys
 import ssl
 import threading
 import uuid
@@ -22,13 +22,20 @@ from ossdbtoolsservice.hosting.web_context import (
     WebRequestContext,
     WebNotificationContext,
 )
+from ossdbtoolsservice.utils.async_runner import AsyncRunner
 from ossdbtoolsservice.utils.path import path_relative_to_base
+
+if sys.version_info >= (3, 12):
+    from typing import override  # pragma: no cover
+else:
+    from typing_extensions import override  # pragma: no cover
 
 
 class WebMessageServer(MessageServer):
     def __init__(
         self,
-        logger: Logger | None = None,
+        async_runner: AsyncRunner | None,
+        logger: Logger,
         listen_address="0.0.0.0",
         listen_port=8443,
         disable_keep_alive=False,
@@ -37,7 +44,7 @@ class WebMessageServer(MessageServer):
         version: str = "1",
         enable_dynamic_cors=False,
     ):
-        super().__init__(logger, version)
+        super().__init__(async_runner, logger, version)
         monkey.patch_all()  # Make sockets cooperative
 
         # A map of session IDs to WebSocket sids (for WebMessageServer)
@@ -127,30 +134,29 @@ class WebMessageServer(MessageServer):
             disconnect(sid)
         self.socketio.stop()
 
-    def send_request(self, method: str, params: Any) -> None:
-        message_id = str(uuid.uuid4())
-        message = JSONRPCMessage.create_request(message_id, method, params)
-        json_content = json.dumps(message.dictionary, sort_keys=True)
-        self.socketio.send("request", json_content)
+    def _send_message(self, message: JSONRPCMessage) -> None:
+        raise NotImplementedError(
+            "WebMessageServer does not support this method. "
+            "Use methods in RequestContext or NotificationContext instead."
+        )
 
-    def send_notification(self, method: str, params: Any) -> None:
-        message = JSONRPCMessage.create_notification(method, params)
-        json_content = json.dumps(message.dictionary, sort_keys=True)
-        self.socketio.send("notification", json_content)
-
+    @override
     def create_request_context(
         self, message: JSONRPCMessage, **kwargs: Any
     ) -> RequestContext:
         session_id = kwargs.get("session_id")
         assert session_id is not None
         return WebRequestContext(
-            message, self.socketio, session_id, self._active_sessions
+            self, message, self.socketio, session_id, self._active_sessions
         )
 
+    @override
     def create_notification_context(self, **kwargs: Any) -> NotificationContext:
         session_id = kwargs.get("session_id")
         assert session_id is not None
-        return WebNotificationContext(self.socketio, session_id, self._active_sessions)
+        return WebNotificationContext(
+            self, self.socketio, session_id, self._active_sessions
+        )
 
     # -------------------------
     # Web-specific Handlers

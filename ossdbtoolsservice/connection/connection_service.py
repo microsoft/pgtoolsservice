@@ -23,7 +23,7 @@ from ossdbtoolsservice.connection.contracts import (
     LIST_DATABASES_REQUEST, ListDatabasesParams, ListDatabasesResponse
 )
 
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.driver import ServerConnection, ConnectionManager
@@ -66,7 +66,7 @@ class ConnectionInfo(object):
         return connection_type in self._connection_map
 
 
-class ConnectionService:
+class ConnectionService(Service):
     """Manage connections, including the ability to connect/disconnect"""
 
     def __init__(self):
@@ -231,13 +231,13 @@ class ConnectionService:
         request_context.send_response(connection_found)
 
     def handle_change_database_request(self, request_context: RequestContext,
-                                       params: ChangeDatabaseRequestParams) -> bool:
+                                       params: ChangeDatabaseRequestParams) -> None:
         """change database of an existing connection or create a new connection
         with default database from input"""
         connection_info: ConnectionInfo = self.get_connection_info(params.owner_uri)
 
         if connection_info is None:
-            return False
+            return None
 
         connection_info_params: Dict[str, str] = connection_info.details.options.copy()
         connection_info_params["dbname"] = params.new_database

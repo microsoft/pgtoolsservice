@@ -21,6 +21,11 @@ from semantic_kernel.contents import ChatHistory
 from semantic_kernel.kernel import Kernel
 from semantic_kernel.contents.text_content import TextContent
 
+
+from ossdbtoolsservice.chat.completion.vscode_chat_prompt_execution_settings import (
+    VSCodeChatPromptExecutionSettings,
+)
+from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.chat.messages import (
     CHAT_REQUEST,
@@ -28,12 +33,11 @@ from ossdbtoolsservice.chat.messages import (
     ChatCompletionRequestParams,
     ChatCompletionResult,
 )
-from ossdbtoolsservice.hosting import (
-    ServiceProvider,
-)
+from ossdbtoolsservice.hosting import ServiceProvider, Service
 
 from ossdbtoolsservice.hosting.context import NotificationContext, RequestContext
 from ossdbtoolsservice.hosting.message_server import MessageServer
+from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
 from .plugin.postgres_plugin import PostgresPlugin
 from .prompts import system_message_prompt
@@ -45,7 +49,7 @@ from .completion.completion_response_queues import CompletionResponseQueues
 from .completion.vscode_chat_completion import VSCodeChatCompletion
 
 
-class ChatService(object):
+class ChatService(Service):
     def __init__(self) -> None:
         self._service_provider: ServiceProvider | None = None
         self._server: MessageServer | None = None
@@ -62,9 +66,14 @@ class ChatService(object):
             self._use_azure_openai = True
             # TODO: Validate environment variables
 
-        self.executor = ThreadPoolExecutor(
-            max_workers=10
-        )  # Adjust the number of workers as needed
+        self.executor = ThreadPoolExecutor(max_workers=10)
+
+    def get_async_runner(self) -> AsyncRunner:
+        if self._service_provider is None:
+            raise ValueError("Service provider is not set")
+        if self._service_provider.server.async_runner is None:
+            raise ValueError("Async runner is required.")
+        return self._service_provider.server.async_runner
 
     def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
@@ -89,12 +98,7 @@ class ChatService(object):
         _: NotificationContext,
         params: VSCodeLanguageModelChatCompletionResponse,
     ) -> None:
-        if self._service_provider is None:
-            raise ValueError("Service provider is not set")
-        if self._service_provider.async_runner is None:
-            raise ValueError("Async runner is required.")
-
-        self._service_provider.async_runner.run(
+        self.get_async_runner().run(
             self.completion_response_queues.handle_completion_response(params)
         )
 
@@ -118,8 +122,6 @@ class ChatService(object):
     ) -> None:
         if self._service_provider is None:
             raise ValueError("Service provider is not set")
-        if self._service_provider.async_runner is None:
-            raise ValueError("Async runner is required.")
 
         chat_id = str(uuid.uuid4())
         if self._logger:
@@ -136,6 +138,12 @@ class ChatService(object):
 
         if self._use_azure_openai:
             chat_completion = AzureChatCompletion()
+            execution_settings = AzureChatPromptExecutionSettings(
+                function_choice_behavior=FunctionChoiceBehavior.Auto(),
+                max_tokens=7000,
+                temperature=0.7,
+                top_p=0.8,
+            )
         else:
             chat_completion = VSCodeChatCompletion(
                 chat_id,
@@ -143,46 +151,27 @@ class ChatService(object):
                 self.completion_response_queues,
                 logger=self._logger,
             )
+            # In VSCode, temperature, top_p etc are set in the extension
+            execution_settings = VSCodeChatPromptExecutionSettings(
+                function_choice_behavior=FunctionChoiceBehavior.Auto(),
+            )
 
         kernel.add_service(chat_completion)
 
         connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+        if not isinstance(connection_service, ConnectionService):
+            raise RuntimeError("Connection service is not set")
+
         postgres_plugin = PostgresPlugin(
             connection_service, request_context, chat_id, owner_uri, self._logger
         )
         postgres_plugin.add_to(kernel)
 
-        # we set the function choice to Auto, so that the LLM can choose the correct function to call.
-        # and we exclude the ChatBot plugin, so that it does not call itself.
-        # this means that it has access to 2 functions, that were defined above.
-        execution_settings = AzureChatPromptExecutionSettings(
-            function_choice_behavior=FunctionChoiceBehavior.Auto(),
-            max_tokens=7000,
-            temperature=0.7,
-            top_p=0.8,
-        )
-
         history = ChatHistory()
 
         # Fetch schemas and tables to be injected into the system message
         db_context = postgres_plugin.get_db_context()
-        # db_context = None
         system_message = system_message_prompt(doc_text=doc_text, db_context=db_context)
-
-        # if doc_text:
-        #     system_message += (
-        #         "\n\n"
-        #         + f"""
-        # The user is currently looking at this document:
-
-        # ```sql
-        # {doc_text}
-        # ```
-        # and may reference it in their questions. If they speak about a query or statement,
-        # and it's not referring to something in the chat history, assume they are
-        # referring to the query or statement in this document.
-        # """.strip()
-        #     )
 
         history.add_system_message(system_message)
 
@@ -196,23 +185,13 @@ class ChatService(object):
         if params.prompt:
             history.add_user_message(params.prompt)
 
-        # arguments = KernelArguments(settings=execution_settings)
-        # arguments["user_input"] = params.prompt
-        # arguments["chat_history"] = history
-
         request_context.send_response(chat_id)
 
         async def process_response_stream() -> None:
-            # if self._logger:
-            #     self._logger.info(f"Processing chat response stream for chat id: {local_chat_id}")
             try:
                 async for item in chat_completion.get_streaming_chat_message_contents(
                     history, execution_settings, kernel=kernel
                 ):
-                    # self._logger.info(f"    {item}")
-                    # if is_complete:
-                    #     continue
-
                     for message in item:
                         if message.finish_reason == "stop":
                             request_context.send_notification(
@@ -229,7 +208,6 @@ class ChatService(object):
                                 if isinstance(item, TextContent)
                             )
                             if content:
-                                # self._logger.info(f"    SENDING NOTIFICATION: {content}")
                                 request_context.send_notification(
                                     CHAT_COMPLETION_RESULT_METHOD,
                                     ChatCompletionResult.response_part(
@@ -238,15 +216,14 @@ class ChatService(object):
                                         content=content,
                                     ),
                                 )
-                                # self._logger.info("    NOTIFICATION SENT")
             except Exception as e:
                 if self._logger:
                     self._logger.error(f"Error processing completion: {e}")
                 request_context.send_error(str(e))
                 request_context.send_notification(
-                    "chat/completion-result",
+                    CHAT_COMPLETION_RESULT_METHOD,
                     ChatCompletionResult.error(chat_id, str(e)),
                 )
                 raise
 
-        self._service_provider.async_runner.run(process_response_stream())
+        self.get_async_runner().run(process_response_stream())

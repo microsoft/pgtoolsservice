@@ -1,17 +1,17 @@
-
 # --------------------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
 from abc import ABCMeta
+from typing import Any
 import inflection
 import enum
 
 
 class Serializable(metaclass=ABCMeta):
     @classmethod
-    def from_dict(cls, dictionary: dict):
+    def from_dict(cls, dictionary: dict) -> Any:
         kwargs = cls.get_child_serializable_types()
         ignore_extra_attributes = cls.ignore_extra_attributes()
 
@@ -53,7 +53,11 @@ def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwarg
         if pythonic_attr not in instance_attributes:
             if ignore_extra_attributes:
                 continue
-            raise AttributeError('Could not deserialize to class {0}, {1} is not defined as an attribute'.format(class_, pythonic_attr))
+            raise AttributeError(
+                "Could not deserialize to class {0}, {1} is not defined as an attribute".format(
+                    class_, pythonic_attr
+                )
+            )
 
         value = dictionary[attr]
 
@@ -61,7 +65,9 @@ def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwarg
             # Caller provided a class to deserialize to. Use that
             if isinstance(value, list):
                 # Value is a list. Use a list comprehension to deserialize all instances
-                deserialized_value = [kwargs[pythonic_attr].from_dict(x) for x in dictionary[attr]]
+                deserialized_value = [
+                    kwargs[pythonic_attr].from_dict(x) for x in dictionary[attr]
+                ]
             elif issubclass(kwargs[pythonic_attr], enum.Enum):
                 # Value is an enum. Convert it from a string
                 deserialized_value = kwargs[pythonic_attr](value)

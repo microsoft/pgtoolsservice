@@ -5,23 +5,26 @@
 
 
 import io
+from logging import Logger
 import sys
 
-from ossdbtoolsservice.hosting import MessageServer, ServiceProvider
+from ossdbtoolsservice.hosting import MessageServer
 from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.main import create_server_init, get_config, get_loggers, main
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
 
 def _create_server(
-    input_stream, output_stream, server_logger, provider
-) -> tuple[MessageServer, ServiceProvider]:
+    input_stream: io.FileIO,
+    output_stream: io.FileIO,
+    server_logger: Logger,
+    async_runner: AsyncRunner,
+) -> MessageServer:
     # Create the server, but don't start it yet
-    rpc_server = RPCMessageServer(input_stream, output_stream, server_logger)
-    async_runner = AsyncRunner()
-    return create_server_init(
-        rpc_server, provider, server_logger, async_runner=async_runner
+    rpc_server = RPCMessageServer(
+        input_stream, output_stream, async_runner, server_logger
     )
+    return create_server_init(rpc_server, server_logger)
 
 
 if __name__ == "__main__":
@@ -38,6 +41,10 @@ if __name__ == "__main__":
 
     std_out_wrapped = io.open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)
 
-    server, service_box = _create_server(stdin, std_out_wrapped, logger, "PGSQL")
+    async_runner = AsyncRunner()
+    server = _create_server(stdin, std_out_wrapped, logger, async_runner)
 
-    main(server, service_box, args, logger)
+    try:
+        main(server, args, logger)
+    finally:
+        async_runner.shutdown()

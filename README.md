@@ -30,13 +30,36 @@ To install the package in development mode, run:
 This installs an editable version of the package with extra development dependencies.
 This is required for running the VS Code extension in development.
 
+## Running tests
+
+There are two test projects in the repository, `tests` and `tests_v2`.
+The `tests_v2` are newer tests that are run with pytest.
+To run all tests, run: `scripts/test_all.sh` or `scripts/test_all.ps1` if you are on Windows.
+
+To run linting checks, use `scripts/lint.sh` or `scripts/lint.ps1` if you are on Windows.
+
+### Docker postgres
+
+To run the integration tests, which are marked across the `tests` with a `@integration` decorator, you need to have a running postgres instance.
+You can use the `docker-compose` file to quickly spin up a local postgres instance.
+
+```bash
+docker-compose up -d
+```
+This will create a local postgres instance with the following connection string:
+
+```
+postgresql://postgres:example@localhost:5432/postgres
+```
+
+
 [GitHub Issue Tracker]:https://github.com/Microsoft/pgtoolsservice/issues
 [bug report]:https://github.com/Microsoft/pgtoolsservice/issues/new?labels=bug
 [feature suggestion]:https://github.com/Microsoft/pgtoolsservice/issues/new?labels=feature-request
 [developer documentation]:https://github.com/Microsoft/pgtoolsservice/wiki/How-to-Contribute
 [Microsoft Enterprise and Developer Privacy Statement]:https://go.microsoft.com/fwlink/?LinkId=786907&lang=en7
-[licensed under the MIT License]:https://github.com/Microsoft/pgtoolsservice/blob/master/License.txt
-[third-party notices]: https://github.com/Microsoft/pgtoolsservice/blob/master/ThirdPartyNotices.txt
+[licensed under the MIT License]:https://github.com/Microsoft/pgtoolsservice/blob/main/License.txt
+[third-party notices]: https://github.com/Microsoft/pgtoolsservice/blob/main/ThirdPartyNotices.txt
 [Microsoft Open Source Code of Conduct]:https://opensource.microsoft.com/codeofconduct/
 [Code of Conduct FAQ]:https://opensource.microsoft.com/codeofconduct/faq/
 [opencode@microsoft.com]:mailto:opencode@microsoft.com

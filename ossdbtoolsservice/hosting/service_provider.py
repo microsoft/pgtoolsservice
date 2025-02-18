@@ -3,31 +3,35 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Optional
+from typing import Optional, Type
 
 from ossdbtoolsservice.hosting.message_server import MessageServer
-from ossdbtoolsservice.utils.async_runner import AsyncRunner
+from ossdbtoolsservice.utils import constants
+
+
+class Service(ABC):
+    @abstractmethod
+    def register(self, service_provider: "ServiceProvider") -> None:
+        pass
 
 
 class ServiceProvider:
     def __init__(
         self,
-        json_rpc_server: MessageServer,
-        services: dict,
-        provider: str,
+        message_server: MessageServer,
+        services: dict[str, Type[Service]],
         logger: Optional[Logger] = None,
-        async_runner: AsyncRunner | None = None,
     ):
         self._is_initialized = False
         self._logger = logger
-        self._server = json_rpc_server
-        self._provider_name = provider
+        self._server = message_server
+        self._provider_name = constants.PG_PROVIDER_NAME
         self._services = {
             service_name: service_class()
             for (service_name, service_class) in services.items()
         }
-        self._async_runner = async_runner
 
     # PROPERTIES ###########################################################
 
@@ -42,10 +46,6 @@ class ServiceProvider:
     @property
     def provider(self) -> str:
         return self._provider_name
-
-    @property
-    def async_runner(self) -> AsyncRunner | None:
-        return self._async_runner
 
     def __getitem__(self, item: str):
         """
@@ -77,10 +77,3 @@ class ServiceProvider:
 
         for service_key in self._services:
             self._services[service_key].register(self)
-
-    def shutdown(self) -> None:
-        """
-        Shutdown logic for services
-        """
-        if self._async_runner is not None:
-            self._async_runner.shutdown()

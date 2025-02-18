@@ -11,7 +11,6 @@ import unittest
 from unittest.mock import MagicMock
 
 from ossdbtoolsservice.hosting import NotificationContext, ServiceProvider
-from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
 from ossdbtoolsservice.workspace import WorkspaceService, IntellisenseConfiguration
 from ossdbtoolsservice.workspace.workspace import Workspace, ScriptFile
 from ossdbtoolsservice.workspace.contracts import (
@@ -21,9 +20,8 @@ from ossdbtoolsservice.workspace.contracts import (
     DidOpenTextDocumentParams,
     DidChangeTextDocumentParams,
     Position,
-    Range
+    Range,
 )
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 import tests.utils as utils
 
 
@@ -48,13 +46,15 @@ class TestWorkspaceService(unittest.TestCase):
         self.assertListEqual(ws._text_open_callbacks, [])
         self.assertListEqual(ws._text_close_callbacks, [])
 
-    def test_register(self):
+    def test_register(self) -> None:
         # Setup:
         # ... Create a mock service provider
-        server: RPCMessageServer = RPCMessageServer(None, None)
+        server = utils.MockMessageServer()
         server.set_notification_handler = MagicMock()
         server.set_request_handler = MagicMock()
-        sp: ServiceProvider = ServiceProvider(server, {}, PG_PROVIDER_NAME, utils.get_mock_logger())
+        sp: ServiceProvider = ServiceProvider(
+            server, {}, utils.get_mock_logger()
+        )
 
         # If: I register a workspace service
         ws: WorkspaceService = WorkspaceService()
@@ -79,7 +79,7 @@ class TestWorkspaceService(unittest.TestCase):
             (ws.register_config_change_callback, ws._config_change_callbacks),
             (ws.register_text_change_callback, ws._text_change_callbacks),
             (ws.register_text_close_callback, ws._text_close_callbacks),
-            (ws.register_text_open_callback, ws._text_open_callbacks)
+            (ws.register_text_open_callback, ws._text_open_callbacks),
         ]
         test_callback = MagicMock()
 
@@ -125,23 +125,21 @@ class TestWorkspaceService(unittest.TestCase):
 
         # If: The workspace receives a config change notification
         nc: NotificationContext = utils.get_mock_notification_context()
-        params: DidChangeConfigurationParams = DidChangeConfigurationParams.from_dict({
-            'settings': {
-                'sql': {
-                    'intellisense': {
-                        'enable_intellisense': False
-                    }
-                },
-                'pgsql': {
-                    'format': {
-                        'keyword_case': 'upper',
-                        'identifier_case': 'lower',
-                        'strip_comments': True,
-                        'reindent': False,
-                    }
+        params: DidChangeConfigurationParams = DidChangeConfigurationParams.from_dict(
+            {
+                "settings": {
+                    "sql": {"intellisense": {"enable_intellisense": False}},
+                    "pgsql": {
+                        "format": {
+                            "keyword_case": "upper",
+                            "identifier_case": "lower",
+                            "strip_comments": True,
+                            "reindent": False,
+                        }
+                    },
                 }
             }
-        })
+        )
         ws._handle_did_change_config(nc, params)
 
         # Then:
@@ -150,8 +148,8 @@ class TestWorkspaceService(unittest.TestCase):
 
         # ... The config should have been updated
         self.assertIs(ws.configuration, params.settings)
-        self.assertEqual(ws.configuration.pgsql.format.keyword_case, 'upper')
-        self.assertEqual(ws.configuration.pgsql.format.identifier_case, 'lower')
+        self.assertEqual(ws.configuration.pgsql.format.keyword_case, "upper")
+        self.assertEqual(ws.configuration.pgsql.format.identifier_case, "lower")
         self.assertTrue(ws.configuration.pgsql.format.strip_comments)
         self.assertFalse(ws.configuration.pgsql.format.reindent)
         # ... And default values that weren't specified in the notification are preserved
@@ -178,18 +176,18 @@ class TestWorkspaceService(unittest.TestCase):
             (
                 ws._handle_did_change_text_doc,
                 self._get_change_text_doc_params(),
-                ws._text_change_callbacks[0]
+                ws._text_change_callbacks[0],
             ),
             (
                 ws._handle_did_open_text_doc,
                 self._get_open_text_doc_params(),
-                ws._text_open_callbacks[0]
+                ws._text_open_callbacks[0],
             ),
             (
                 ws._handle_did_close_text_doc,
                 self._get_close_text_doc_params(),
-                ws._text_close_callbacks[0]
-            )
+                ws._text_close_callbacks[0],
+            ),
         ]
 
         for call in test_calls:
@@ -218,20 +216,20 @@ class TestWorkspaceService(unittest.TestCase):
                 ws._handle_did_change_text_doc,
                 ws._text_change_callbacks[0],
                 self._get_change_text_doc_params(),
-                self._test_handle_text_change_helper
+                self._test_handle_text_change_helper,
             ),
             (
                 ws._handle_did_open_text_doc,
                 ws._text_open_callbacks[0],
                 self._get_open_text_doc_params(),
-                None
+                None,
             ),
             (
                 ws._handle_did_close_text_doc,
                 ws._text_close_callbacks[0],
                 self._get_close_text_doc_params(),
-                None
-            )
+                None,
+            ),
         ]
 
         for call in test_calls:
@@ -268,7 +266,7 @@ class TestWorkspaceService(unittest.TestCase):
         test_calls = [
             (ws._handle_did_change_text_doc, self._get_change_text_doc_params()),
             (ws._handle_did_open_text_doc, self._get_open_text_doc_params()),
-            (ws._handle_did_close_text_doc, self._get_close_text_doc_params())
+            (ws._handle_did_close_text_doc, self._get_close_text_doc_params()),
         ]
 
         for call in test_calls:
@@ -281,8 +279,8 @@ class TestWorkspaceService(unittest.TestCase):
         """Text the workspace service's public get_text method when getting the full text of a file"""
         # Set up the service with a file
         workspace_service = WorkspaceService()
-        file_uri = 'untitled:Test_file'
-        file_text = os.linesep.join(['line1', 'line 2 content', ' line 3 '])
+        file_uri = "untitled:Test_file"
+        file_text = os.linesep.join(["line1", "line 2 content", " line 3 "])
         workspace_service._workspace.open_file(file_uri, file_text)
 
         # Retrieve the full text of the file and make sure it matches
@@ -293,89 +291,93 @@ class TestWorkspaceService(unittest.TestCase):
         """Text the workspace service's public get_text method when getting a selection of the text of a file"""
         # Set up the service with a file
         workspace_service = WorkspaceService()
-        file_uri = 'untitled:Test_file'
-        file_text = os.linesep.join(['line1', 'line 2 content', ' line 3 '])
+        file_uri = "untitled:Test_file"
+        file_text = os.linesep.join(["line1", "line 2 content", " line 3 "])
         workspace_service._workspace.open_file(file_uri, file_text)
 
         # Retrieve the full text of the file and make sure it matches
         selection_range = Range(Position(1, 1), Position(2, 4))
         result_text = workspace_service.get_text(file_uri, selection_range)
-        self.assertEqual(result_text, os.linesep.join(['ine 2 content', ' lin']))
+        self.assertEqual(result_text, os.linesep.join(["ine 2 content", " lin"]))
 
     # IMPLEMENTATION DETAILS ###############################################
 
     @staticmethod
     def _test_handle_text_change_helper(params, sf):
-        calls = [
-            (params.content_changes[0]),
-            (params.content_changes[1])
-        ]
+        calls = [(params.content_changes[0]), (params.content_changes[1])]
         sf.apply_change.has_calls(calls)
 
     @staticmethod
     def _get_change_text_doc_params() -> DidChangeTextDocumentParams:
-        return DidChangeTextDocumentParams.from_dict({
-            'textDocument': {
-                'uri': 'someUri',
-                'version': 1
-            },
-            'contentChanges': [
-                {
-                    'range': {
-                        'start': {'line': 1, 'character': 1},
-                        'end': {'line': 2, 'character': 3},
+        return DidChangeTextDocumentParams.from_dict(
+            {
+                "textDocument": {"uri": "someUri", "version": 1},
+                "contentChanges": [
+                    {
+                        "range": {
+                            "start": {"line": 1, "character": 1},
+                            "end": {"line": 2, "character": 3},
+                        },
+                        "rangeLength": 6,
+                        "text": "abcdefg",
                     },
-                    'rangeLength': 6,
-                    'text': 'abcdefg'
-                },
-                {
-                    'range': {
-                        'start': {'line': 4, 'character': 2},
-                        'end': {'line': 10, 'character': 4},
+                    {
+                        "range": {
+                            "start": {"line": 4, "character": 2},
+                            "end": {"line": 10, "character": 4},
+                        },
+                        "rangeLength": 10,
+                        "text": "abcdefg",
                     },
-                    'rangeLength': 10,
-                    'text': 'abcdefg'
-                }
-            ]
-        })
+                ],
+            }
+        )
 
     @staticmethod
     def _get_close_text_doc_params() -> DidCloseTextDocumentParams:
-        return DidCloseTextDocumentParams.from_dict({
-            'textDocument': {
-                'uri': 'someUri',
-                'languageId': 'SQL',
-                'version': 2,
-                'text': 'abcdef'
+        return DidCloseTextDocumentParams.from_dict(
+            {
+                "textDocument": {
+                    "uri": "someUri",
+                    "languageId": "SQL",
+                    "version": 2,
+                    "text": "abcdef",
+                }
             }
-        })
+        )
 
     @staticmethod
     def _get_open_text_doc_params() -> DidOpenTextDocumentParams:
-        return DidOpenTextDocumentParams.from_dict({
-            'textDocument': {
-                'uri': 'someUri',
-                'languageId': 'SQL',
-                'version': 1,
-                'text': 'abcdef'
+        return DidOpenTextDocumentParams.from_dict(
+            {
+                "textDocument": {
+                    "uri": "someUri",
+                    "languageId": "SQL",
+                    "version": 1,
+                    "text": "abcdef",
+                }
             }
-        })
+        )
 
     @staticmethod
     def _get_mock_script_file() -> ScriptFile:
-        sf: ScriptFile = ScriptFile('path', 'path', '')
+        sf: ScriptFile = ScriptFile("path", "path", "")
         sf.apply_change = MagicMock()
 
         return sf
 
     @staticmethod
-    def _get_mock_workspace(all_none: bool = False, exception: bool = False) -> Tuple[Workspace, ScriptFile]:
+    def _get_mock_workspace(
+        all_none: bool = False, exception: bool = False
+    ) -> Tuple[Workspace, ScriptFile]:
         if exception:
             return_value = NameError()
-            kwargs = {'side_effect': return_value}
+            kwargs = {"side_effect": return_value}
         else:
-            return_value = TestWorkspaceService._get_mock_script_file() if not all_none else None
-            kwargs = {'return_value': return_value}
+            return_value = (
+                TestWorkspaceService._get_mock_script_file() if not all_none else None
+            )
+            kwargs = {"return_value": return_value}
 
         workspace: Workspace = Workspace()
         workspace.get_file = MagicMock(**kwargs)

@@ -6,7 +6,7 @@
 
 from typing import Callable, Dict, List  # noqa
 
-from ossdbtoolsservice.hosting import RequestContext, ServiceProvider
+from ossdbtoolsservice.hosting import RequestContext, ServiceProvider, Service
 from ossdbtoolsservice.edit_data.contracts import (
     CREATE_ROW_REQUEST, CreateRowRequest, DELETE_ROW_REQUEST, DeleteRowRequest, DISPOSE_REQUEST, DisposeRequest,
     DisposeResponse, EDIT_COMMIT_REQUEST, EDIT_SUBSET_REQUEST, EditRow, EditRowState, EditCommitRequest, EditCommitResponse, EditSubsetParams,
@@ -29,7 +29,7 @@ from ossdbtoolsservice.query_execution import QueryExecutionService  # noqa
 import ossdbtoolsservice.utils as utils
 
 
-class EditDataService(object):
+class EditDataService(Service):
 
     def __init__(self):
         self._service_provider: ServiceProvider = None
