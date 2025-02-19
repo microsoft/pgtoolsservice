@@ -15,7 +15,7 @@ class TestServiceProvider(unittest.TestCase):
         # If: I create a new service provider
         server = utils.MockMessageServer()
         logger = utils.get_mock_logger()
-        mock_service = mock.MagicMock(return_value={})
+        mock_service = mock.MagicMock(return_value={}, spec=type)
         services = {"service_name": mock_service}
         sp = ServiceProvider(server, services, logger)
 
