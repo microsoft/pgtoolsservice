@@ -9,7 +9,8 @@ disconnect and holds the current connection, if one is present"""
 import contextlib
 import threading
 import uuid
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple  # noqa
+from collections.abc import Iterable
+from typing import Any, Callable, Optional
 
 from ossdbtoolsservice.connection.contracts import (
     BUILD_CONNECTION_INFO_REQUEST,

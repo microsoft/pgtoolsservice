@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from ossdbtoolsservice.driver.types import PostgreSQLConnection, ServerConnection
+from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.workspace.contracts import Configuration
 
 
@@ -28,7 +28,7 @@ class ConnectionManager:
         :param options: a dict containing connection parameters
         """
 
-        return PostgreSQLConnection(options, config)
+        return ServerConnection(options, config)
 
-    def get_connection(self) -> PostgreSQLConnection:
+    def get_connection(self) -> ServerConnection:
         return self._conn_object

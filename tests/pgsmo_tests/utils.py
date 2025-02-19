@@ -10,10 +10,10 @@ from typing import Any, Optional
 
 from psycopg import Column, DatabaseError, connection
 
-from ossdbtoolsservice.driver.types.psycopg_driver import (
+from ossdbtoolsservice.driver.types.driver import (
     PG_CANCELLATION_QUERY,
     Params,
-    PostgreSQLConnection,
+    ServerConnection,
 )
 from pgsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
@@ -124,7 +124,7 @@ class MockCursor:
         self._has_been_read = True
 
 
-class MockPGServerConnection(PostgreSQLConnection):
+class MockPGServerConnection(ServerConnection):
     """Class used to mock PGSQL ServerConnection objects for testing"""
 
     def __init__(
@@ -148,7 +148,7 @@ class MockPGServerConnection(PostgreSQLConnection):
                 dsn_parameters=f"host={host} dbname={name} user={user} port={port}",
             )
 
-        # mock psycopg.connect call in PostgreSQLConnection.__init__
+        # mock psycopg.connect call in ServerConnection.__init__
         # to return mock psycopg connection
         with mock.patch("psycopg.connect", mock.Mock(return_value=connection)):
             super().__init__(

@@ -15,7 +15,7 @@ from ossdbtoolsservice.admin.contracts import (
     GetDatabaseInfoResponse,
 )
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
@@ -92,7 +92,7 @@ class TestAdminService(unittest.TestCase):
         request_context = MockRequestContext()
 
         # Set up the connection service to return our connection
-        connection = PostgreSQLConnection(get_connection_details())
+        connection = ServerConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
 
         # If I send a get_database_info request

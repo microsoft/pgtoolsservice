@@ -14,7 +14,6 @@ from ossdbtoolsservice.chat.messages import (
 from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts.common import ConnectionType
 from ossdbtoolsservice.driver.types.driver import ServerConnection
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 from ossdbtoolsservice.hosting import RequestContext
 
 from .postgres_utils import (
@@ -85,7 +84,7 @@ class PostgresPlugin:
         connection = self._get_connection()
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
-        assert isinstance(connection, PostgreSQLConnection)
+
         return fetch_schema_v1(connection._conn, schema_name=schema_name)
 
     @kernel_function(
@@ -112,7 +111,7 @@ class PostgresPlugin:
         connection = self._get_connection()
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
-        assert isinstance(connection, PostgreSQLConnection)
+
         return fetch_schema(connection._conn)
 
     @kernel_function(
@@ -155,7 +154,7 @@ class PostgresPlugin:
         connection = self._get_connection()
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
-        assert isinstance(connection, PostgreSQLConnection)
+
         try:
             result = execute_readonly_query(connection._conn, query, self._max_result_chars)
         except Exception:
@@ -237,7 +236,7 @@ class PostgresPlugin:
         connection = self._get_connection()
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
-        assert isinstance(connection, PostgreSQLConnection)
+
         try:
             result = execute_statement(connection._conn, statement)
         except Exception:

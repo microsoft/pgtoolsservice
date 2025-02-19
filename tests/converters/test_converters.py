@@ -3,7 +3,7 @@ from unittest import mock
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.query_execution.contracts import ExecuteStringParams, SubsetParams
 from ossdbtoolsservice.query_execution.query_execution_service import QueryExecutionService
@@ -12,7 +12,7 @@ from tests.integration import get_connection_details, integration_test
 
 
 class TestConverters(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.query_execution_service = QueryExecutionService()
         self.connection_service = ConnectionService()
         self.service_provider = ServiceProvider(None, {}, None)
@@ -26,7 +26,7 @@ class TestConverters(unittest.TestCase):
     # if bool type has bool and bool_array while varchar[] is array type
     def generic_test(
         self,
-        connection: PostgreSQLConnection,
+        connection: ServerConnection,
         value: str,
         pg_cast: str,
         array_type_only: bool = False,
@@ -94,7 +94,7 @@ class TestConverters(unittest.TestCase):
 
     @integration_test
     def test_datatypes_converters(self) -> None:
-        connection = PostgreSQLConnection(get_connection_details())
+        connection = ServerConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
         self.generic_test(connection, "true", "bool")
         self.generic_test(connection, "5.67", "real")

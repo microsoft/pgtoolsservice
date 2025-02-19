@@ -4,6 +4,5 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.driver.types.driver import ServerConnection
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
 
-__all__ = ["ServerConnection", "PostgreSQLConnection"]
+__all__ = ["ServerConnection"]

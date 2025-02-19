@@ -25,7 +25,7 @@ from ossdbtoolsservice.connection.contracts import (
     DisconnectRequestParams,
     ListDatabasesParams,
 )
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.utils.cancellation import CancellationToken
 from ossdbtoolsservice.utils.constants import (
     DEFAULT_PORT,
@@ -990,7 +990,7 @@ class ConnectionServiceIntegrationTests(unittest.TestCase):
         request_context = MockRequestContext()
         params = ListDatabasesParams()
         params.owner_uri = connection_uri
-        connection = PostgreSQLConnection(get_connection_details())
+        connection = ServerConnection(get_connection_details())
         connection_service.get_connection = mock.Mock(return_value=connection)
 
         # If I call the list database handler

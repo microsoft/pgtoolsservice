@@ -20,9 +20,9 @@ from psycopg import sql
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectionType
-from ossdbtoolsservice.driver.types.psycopg_driver import (
+from ossdbtoolsservice.driver.types.driver import (
     PG_CANCELLATION_QUERY,
-    PostgreSQLConnection,
+    ServerConnection,
 )
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration, ServiceProvider
 from ossdbtoolsservice.query import (
@@ -1436,7 +1436,7 @@ class TestQueryService(unittest.TestCase):
         query_params.query = "select usename, usesysid from pg_catalog.pg_user"
         query_params.owner_uri = "test_uri"
 
-        connection = PostgreSQLConnection(get_connection_details())
+        connection = ServerConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
 
         mock_thread = utils.MockThread()
