@@ -4,16 +4,16 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Callable  # noqa
+from typing import Callable
 
-from ossdbtoolsservice.query.contracts import DbColumn, DbCellValue
+from ossdbtoolsservice.edit_data.contracts import EditCell
 from ossdbtoolsservice.parsers.datatype_parsers import get_parser
-from ossdbtoolsservice.edit_data.contracts import EditCell  # noqa
+from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn
 
 
 class CellUpdate:
     def __init__(self, column: DbColumn, new_value: str) -> None:
-        parser: Callable[[str], object] = get_parser(column.data_type)
+        parser: Callable[[str], object] | None = get_parser(column.data_type)
 
         if parser is None:
             raise AttributeError(
@@ -24,7 +24,7 @@ class CellUpdate:
         self.column = column
 
     @property
-    def as_db_cell_value(self):
+    def as_db_cell_value(self) -> DbCellValue:
         return DbCellValue(self.value_as_string, self.value is None, self.value, None)
 
     @property

@@ -13,15 +13,15 @@ from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 
 
 class RevertCellRequest(RowOperationRequest):
-    column_id: int
+    column_id: int | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         RowOperationRequest.__init__(self)
-        self.column_id: int = None
+        self.column_id: int | None = None
 
 
 class RevertCellResponse(EditCellResponse):
-    def __init__(self, edit_cell: EditCell, is_row_dirty: bool):
+    def __init__(self, edit_cell: EditCell | None, is_row_dirty: bool) -> None:
         EditCellResponse.__init__(self, edit_cell, is_row_dirty)
 
 

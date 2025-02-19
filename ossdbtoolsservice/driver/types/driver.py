@@ -3,191 +3,202 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from abc import ABC, abstractmethod
+# from abc import ABC, abstractmethod
+# from typing import Any
+
+# import psycopg
+
+from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+
+# This a PostgreSQL project. De-abstracting the connection class to simplify the codebase.
+# TODO: Rename PostgreSQLConnection to ServerConnection, or otherwise
+# get rid of this.
+ServerConnection = PostgreSQLConnection
 
 
-class ServerConnection(ABC):
-    """Abstract base class that outlines methods and 
-    properties that connections must implement"""
+# class ServerConnection(ABC):
+#     """Abstract base class that outlines methods and
+#     properties that connections must implement"""
 
-    # PROPERTIES ###########################################################
-    @property
-    @abstractmethod
-    def autocommit(self) -> bool:
-        """Returns the current autocommit status for this connection"""
+#     # PROPERTIES ###########################################################
+#     @property
+#     @abstractmethod
+#     def autocommit(self) -> bool:
+#         """Returns the current autocommit status for this connection"""
 
-    @property
-    @abstractmethod
-    def host_name(self) -> str:
-        """Returns the hostname for the current connection"""
+#     @autocommit.setter
+#     @abstractmethod
+#     def autocommit(self, mode: bool):
+#         """
+#         Sets the connection's autocommit setting to the specified mode
+#         :param mode: True or False
+#         """
 
-    @property
-    @abstractmethod
-    def port(self) -> int:
-        """Returns the port number used for the current connection"""
+#     @property
+#     @abstractmethod
+#     def host_name(self) -> str:
+#         """Returns the hostname for the current connection"""
 
-    @property
-    @abstractmethod
-    def user_name(self) -> str:
-        """Returns the user name used for the current connection"""
+#     @property
+#     @abstractmethod
+#     def port(self) -> int:
+#         """Returns the port number used for the current connection"""
 
-    @property
-    @abstractmethod
-    def database_name(self) -> str:
-        """Return the name of the current connection's database"""
+#     @property
+#     @abstractmethod
+#     def user_name(self) -> str:
+#         """Returns the user name used for the current connection"""
 
-    @property
-    @abstractmethod
-    def server_version(self) -> tuple[int, int, int]:
-        """Tuple that splits version string into sensible values"""
+#     @property
+#     @abstractmethod
+#     def database_name(self) -> str:
+#         """Return the name of the current connection's database"""
 
-    @property
-    @abstractmethod
-    def server_type(self) -> str:
-        """Returns the server type/provider"""
+#     @property
+#     @abstractmethod
+#     def server_version(self) -> tuple[int, int, int]:
+#         """Tuple that splits version string into sensible values"""
 
-    @property
-    @abstractmethod
-    def connection_options(self) -> dict:
-        """Returns the options used to create the current connection to the server"""
+#     @property
+#     @abstractmethod
+#     def server_type(self) -> str:
+#         """Returns the server type/provider"""
 
-    @property
-    @abstractmethod
-    def default_database(self) -> str:
-        """Returns the default database if no other database is specified"""
+#     @property
+#     @abstractmethod
+#     def connection_options(self) -> dict:
+#         """Returns the options used to create the current connection to the server"""
 
-    @property
-    @abstractmethod
-    def database_error(self) -> type[Exception]:
-        """Returns the type of database error this connection throws"""
+#     @property
+#     @abstractmethod
+#     def default_database(self) -> str:
+#         """Returns the default database if no other database is specified"""
 
-    @property
-    @abstractmethod
-    def transaction_in_error(self) -> bool:
-        """Returns bool indicating if transaction is in error"""
+#     @property
+#     @abstractmethod
+#     def database_error(self) -> type[Exception]:
+#         """Returns the type of database error this connection throws"""
 
-    @property
-    @abstractmethod
-    def transaction_is_idle(self) -> bool:
-        """Returns bool indicating if transaction is currently idle"""
+#     @property
+#     @abstractmethod
+#     def transaction_in_error(self) -> bool:
+#         """Returns bool indicating if transaction is in error"""
 
-    @property
-    @abstractmethod
-    def transaction_in_trans(self) -> bool:
-        """Returns bool indicating if transaction is currently in transaction block"""
+#     @property
+#     @abstractmethod
+#     def transaction_is_idle(self) -> bool:
+#         """Returns bool indicating if transaction is currently idle"""
 
-    @property
-    @abstractmethod
-    def user_transaction(self) -> bool:
-        """Returns bool if transaction is user started"""
+#     @property
+#     @abstractmethod
+#     def transaction_in_trans(self) -> bool:
+#         """Returns bool indicating if transaction is currently in transaction block"""
 
-    @property
-    @abstractmethod
-    def query_canceled_error(self) -> type[Exception]:
-        """Returns driver query canceled error"""
+#     @property
+#     @abstractmethod
+#     def user_transaction(self) -> bool:
+#         """Returns bool if transaction is user started"""
 
-    @property
-    @abstractmethod
-    def cancellation_query(self) -> str:
-        """
-        Returns a SQL command to end the current query execution process
-        """
+#     @property
+#     @abstractmethod
+#     def query_canceled_error(self) -> type[Exception]:
+#         """Returns driver query canceled error"""
 
-    @property
-    @abstractmethod
-    def connection(self) -> "connection":
-        """
-        Returns the underlying connection
-        """
+#     @property
+#     @abstractmethod
+#     def cancellation_query(self) -> str:
+#         """
+#         Returns a SQL command to end the current query execution process
+#         """
 
-    @property
-    @abstractmethod
-    def open(self) -> bool:
-        """
-        Returns bool indicating if connection is open
-        """
+#     @property
+#     @abstractmethod
+#     def connection(self) -> "connection":
+#         """
+#         Returns the underlying connection
+#         """
 
-    # METHODS ##############################################################
+#     @property
+#     @abstractmethod
+#     def open(self) -> bool:
+#         """
+#         Returns bool indicating if connection is open
+#         """
 
-    @autocommit.setter
-    @abstractmethod
-    def autocommit(self, mode: bool):
-        """
-        Sets the connection's autocommit setting to the specified mode
-        :param mode: True or False
-        """
+#     # METHODS ##############################################################
 
-    @abstractmethod
-    def commit(self):
-        """
-        Commits the current transaction
-        """
+#     @abstractmethod
+#     def commit(self) -> None:
+#         """
+#         Commits the current transaction
+#         """
 
-    @abstractmethod
-    def cursor(self, **kwargs):
-        """
-        Returns a cursor for the current connection
-        """
+#     @abstractmethod
+#     def cursor(self) -> psycopg.ClientCursor[tuple[Any, ...]]:
+#         """
+#         Returns a cursor for the current connection
+#         """
+#         pass
 
-    @abstractmethod
-    def execute_query(self, query: str, all=True):
-        """
-        Execute a simple query without arguments for the given connection
-        :raises an error: if there was no result set when executing the query
-        """
+#     @abstractmethod
+#     def execute_query(self, query: str, all=True):
+#         """
+#         Execute a simple query without arguments for the given connection
+#         :raises an error: if there was no result set when executing the query
+#         """
 
-    @abstractmethod
-    def execute_dict(self, query: str, params=None):
-        """
-        Executes a query and returns the results as an 
-        ordered list of dictionaries that map column
-        name to value. Columns are returned, as well.
-        :param conn: The connection to use to execute the query
-        :param query: The text of the query to execute
-        :param params: Optional parameters to inject into the query
-        :return: A list of column objects and a list of rows, which are formatted as dicts.
-        """
+#     @abstractmethod
+#     def execute_dict(self, query: str, params=None):
+#         """
+#         Executes a query and returns the results as an
+#         ordered list of dictionaries that map column
+#         name to value. Columns are returned, as well.
+#         :param conn: The connection to use to execute the query
+#         :param query: The text of the query to execute
+#         :param params: Optional parameters to inject into the query
+#         :return: A list of column objects and a list of rows, which are formatted as dicts.
+#         """
 
-    @abstractmethod
-    def list_databases(self):
-        """
-        List the databases accessible by the current connection.
-        """
+#     @abstractmethod
+#     def list_databases(self):
+#         """
+#         List the databases accessible by the current connection.
+#         """
 
-    @abstractmethod
-    def get_database_owner(self):
-        """
-        List the owner(s) of the current database
-        """
+#     @abstractmethod
+#     def get_database_owner(self):
+#         """
+#         List the owner(s) of the current database
+#         """
 
-    @abstractmethod
-    def get_database_size(self, dbname: str):
-        """
-        Gets the size of a particular database in MB
-        """
-        pass
+#     @abstractmethod
+#     def get_database_size(self, dbname: str):
+#         """
+#         Gets the size of a particular database in MB
+#         """
+#         pass
 
-    @abstractmethod
-    def get_error_message(self, error) -> str:
-        """
-        Get the message from database error instance
-        """
-        pass
+#     @abstractmethod
+#     def get_error_message(self, error) -> str:
+#         """
+#         Get the message from database error instance
+#         """
+#         pass
 
-    @abstractmethod
-    def close(self):
-        """
-        Closes this current connection.
-        """
+#     @abstractmethod
+#     def close(self):
+#         """
+#         Closes this current connection.
+#         """
 
-    @abstractmethod
-    def set_transaction_in_error(self):
-        """
-        Sets if current connection is in error
-        """
+#     @abstractmethod
+#     def set_transaction_in_error(self):
+#         """
+#         Sets if current connection is in error
+#         """
 
-    @abstractmethod
-    def set_user_transaction(self, mode: bool):
-        """
-        Sets if current connection is user started
-        """
+#     @abstractmethod
+#     def set_user_transaction(self, mode: bool):
+#         """
+#         Sets if current connection is user started
+#         """

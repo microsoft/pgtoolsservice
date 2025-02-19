@@ -9,12 +9,12 @@ from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 
 
 class RevertRowRequest(RowOperationRequest):
-    def __init__(self):
-        RowOperationRequest.__init__(self)
+    def __init__(self) -> None:
+        super().__init__()
 
 
 class RevertRowResponse:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
 

@@ -7,7 +7,7 @@
 import datetime
 import decimal
 import uuid
-from typing import Callable
+from typing import Any, Callable
 
 from dateutil import parser as date_parser  # noqa
 
@@ -79,7 +79,7 @@ def parse_uuid(value: str) -> uuid.UUID:
     return uuid.UUID(value)
 
 
-DATATYPE_PARSER_MAP = {
+DATATYPE_PARSER_MAP: dict[str, Callable[[str], Any]] = {
     datatypes.DATATYPE_BOOL: parse_bool,
     datatypes.DATATYPE_REAL: parse_float,
     datatypes.DATATYPE_DOUBLE: parse_float,
@@ -101,8 +101,10 @@ DATATYPE_PARSER_MAP = {
 }
 
 
-def get_parser(column_data_type: str) -> Callable[[str], object]:
+def get_parser(column_data_type: str | None) -> Callable[[str], Any] | None:
     """
     Returns a parser for the column_data_type provided. If not found returns None
     """
+    if column_data_type is None:
+        return None
     return DATATYPE_PARSER_MAP.get(column_data_type.lower())

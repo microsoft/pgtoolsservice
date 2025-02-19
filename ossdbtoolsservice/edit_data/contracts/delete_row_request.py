@@ -9,12 +9,12 @@ from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 
 
 class DeleteRowRequest(RowOperationRequest):
-    def __init__(self):
-        RowOperationRequest.__init__(self)
+    def __init__(self) -> None:
+        super().__init__()
 
 
 class DeleteRowResponse:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
 

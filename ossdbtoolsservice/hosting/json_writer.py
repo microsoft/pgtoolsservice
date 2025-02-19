@@ -3,7 +3,11 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import io
 import json
+from logging import Logger
+
+from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 
 
 class JSONRPCWriter:
@@ -13,7 +17,9 @@ class JSONRPCWriter:
 
     HEADER = "Content-Length: {}\r\n\r\n"
 
-    def __init__(self, stream, encoding=None, logger=None):
+    def __init__(
+        self, stream: io.FileIO, encoding: str | None = None, logger: Logger | None = None
+    ) -> None:
         """
         Initializes the JSON RPC writer
         :param stream: Stream that messages will be sent on
@@ -25,7 +31,7 @@ class JSONRPCWriter:
         self._logger = logger
 
     # METHODS ##############################################################
-    def close(self):
+    def close(self) -> None:
         """
         Closes the stream
         """
@@ -35,7 +41,7 @@ class JSONRPCWriter:
             if self._logger is not None:
                 self._logger.exception(f"Exception raised when writer stream closed: {e}")
 
-    def send_message(self, message):
+    def send_message(self, message: JSONRPCMessage) -> None:
         """
         Sends JSON RPC message as defined by message object
         :param message: Message to send

@@ -8,12 +8,12 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class ExpandParameters(Serializable):
-    session_id: str
-    node_path: str
+    session_id: str | None
+    node_path: str | None
 
-    def __init__(self):
-        self.session_id: str = None
-        self.node_path: str = None
+    def __init__(self) -> None:
+        self.session_id = None
+        self.node_path = None
 
 
 EXPAND_REQUEST = IncomingMessageConfiguration("objectexplorer/expand", ExpandParameters)

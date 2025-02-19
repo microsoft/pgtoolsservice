@@ -9,7 +9,7 @@ from ossdbtoolsservice.query.contracts import BatchSummary
 
 class BatchNotificationParams:
     """
-    Parameters to be sent back as part of a batch start or complete event 
+    Parameters to be sent back as part of a batch start or complete event
     to indicate that a batch of a query started or completed.
 
     Attributes:

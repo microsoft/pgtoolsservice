@@ -449,7 +449,7 @@ class TestPGConnectionService(unittest.TestCase):
         # ... An error should not have been called
         rc.send_error.assert_not_called()
 
-    def test_list_databases(self):
+    def test_list_databases(self) -> None:
         """Test that the list databases handler correctly lists the connection's databases"""
         # Set up the test with mock data
         mock_query_results = [("database1",), ("database2",)]
@@ -460,7 +460,7 @@ class TestPGConnectionService(unittest.TestCase):
             cursor=mock_cursor,
         )
         mock_cursor.connection = mock_psycopg_connection
-        mock_request_context = utils.MockRequestContext()
+        mock_request_context = utils.MockRequestContext(raise_on_error=True)
 
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
@@ -476,6 +476,7 @@ class TestPGConnectionService(unittest.TestCase):
         ):
             self.connection_service.handle_list_databases(mock_request_context, params)
         expected_databases = [result[0] for result in mock_query_results]
+        self.assertIsNotNone(mock_request_context.last_response_params)
         self.assertEqual(
             mock_request_context.last_response_params.database_names, expected_databases
         )
@@ -584,7 +585,7 @@ class TestPGConnectionService(unittest.TestCase):
         self.assertIsNone(mock_request_context.last_response_params)
         self.assertIsNotNone(mock_request_context.last_error_message)
 
-    def test_build_connection_response(self):
+    def test_build_connection_response(self) -> None:
         """Test that the connection response is built correctly"""
         # Set up the test with mock data
         server_name = "testserver"
@@ -601,7 +602,7 @@ class TestPGConnectionService(unittest.TestCase):
 
         # If I build a connection response for the connection
         response = ossdbtoolsservice.connection.connection_service._build_connection_response(
-            connection_info, connection_type
+            connection_info, mock_connection, connection_type
         )
 
         # Then the response should have accurate information about the connection

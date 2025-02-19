@@ -3,13 +3,14 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""A module that handles autocompletion metadata querying and 
+"""A module that handles autocompletion metadata querying and
 initialization of the completion object."""
 
 import os
 import threading
 from collections import OrderedDict
-from logging import Logger  # noqa
+from logging import Logger
+from typing import Any, Callable
 
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.language.completion import PGCompleter
@@ -28,16 +29,28 @@ class CompletionRefresher:
     completion suggestions in a background thread.
     """
 
-    refreshers = OrderedDict()
+    refreshers: dict = OrderedDict()
 
-    def __init__(self, connection: ServerConnection, logger: Logger = None):
+    def __init__(self, connection: ServerConnection, logger: Logger | None = None) -> None:
         self.connection = connection
-        self.logger: Logger = logger
-        self.server: PGServer = None
-        self._completer_thread: threading.Thread = None
+        self.logger: Logger | None = logger
+        self._server: PGServer | None = None
+        self._completer_thread: threading.Thread | None = None
         self._restart_refresh: threading.Event = threading.Event()
 
-    def refresh(self, callbacks, history=None, settings=None) -> str:
+    @property
+    def server(self) -> PGServer:
+        if self._server is None:
+            # Delay server creation until on background thread
+            self._server = SERVER_MAP[self.connection._provider_name](self.connection)
+        return self._server
+
+    def refresh(
+        self,
+        callbacks: Callable[[PGCompleter], None] | list[Callable[[PGCompleter], None]],
+        history: list[str] | None = None,
+        settings: dict[str, Any] | None = None,
+    ) -> str:
         """
         Creates a PGCompleter object and populates it with the relevant
         completion suggestions in a background thread.
@@ -47,9 +60,6 @@ class CompletionRefresher:
                     has completed the refresh. The newly created completion
                     object will be passed in as an argument to each callback.
         """
-        if self.server is None:
-            # Delay server creation until on background thread
-            self.server = SERVER_MAP[self.connection._provider_name](self.connection)
 
         if self.is_refreshing():
             self._restart_refresh.set()
@@ -64,10 +74,15 @@ class CompletionRefresher:
             self._completer_thread.start()
             return "Auto-completion refresh started in the background."  # TODO localize
 
-    def is_refreshing(self):
-        return self._completer_thread and self._completer_thread.is_alive()
+    def is_refreshing(self) -> None | bool:
+        return self._completer_thread is not None and self._completer_thread.is_alive()
 
-    def _bg_refresh(self, callbacks, history=None, settings=None):
+    def _bg_refresh(
+        self,
+        callbacks: Callable[[PGCompleter], None] | list[Callable[[PGCompleter], None]],
+        history: list[str] | None = None,
+        settings: dict[str, Any] | None = None,
+    ) -> None:
         settings = settings or {}
         completer: PGCompleter = COMPLETER_MAP[self.connection._provider_name](
             smart_completion=True, settings=settings
@@ -88,7 +103,7 @@ class CompletionRefresher:
                         self._restart_refresh.clear()
                         break
                 else:
-                    # Break out of while loop if the for loop finishes natually
+                    # Break out of while loop if the for loop finishes naturally
                     # without hitting the break statement.
                     break
 
@@ -113,12 +128,14 @@ class CompletionRefresher:
             self._restart_refresh.clear()
 
 
-def refresher(name, refreshers=CompletionRefresher.refreshers):
+def refresher(
+    name: str, refreshers: dict = CompletionRefresher.refreshers
+) -> Callable[..., Any]:
     """Decorator to populate the dictionary of refreshers with the current
     function.
     """
 
-    def wrapper(wrapped):
+    def wrapper(wrapped: Callable) -> Any:
         refreshers[name] = wrapped
         return wrapped
 
@@ -126,42 +143,42 @@ def refresher(name, refreshers=CompletionRefresher.refreshers):
 
 
 @refresher("schemata")
-def refresh_schemata(completer: PGCompleter, metadata_executor: MetadataExecutor):
+def refresh_schemata(completer: PGCompleter, metadata_executor: MetadataExecutor) -> None:
     completer.set_search_path(metadata_executor.search_path())
     completer.extend_schemata(metadata_executor.schemata())
 
 
 @refresher("tables")
-def refresh_tables(completer: PGCompleter, metadata_executor: MetadataExecutor):
+def refresh_tables(completer: PGCompleter, metadata_executor: MetadataExecutor) -> None:
     completer.extend_relations(metadata_executor.tables(), kind="tables")
     completer.extend_columns(metadata_executor.table_columns(), kind="tables")
     completer.extend_foreignkeys(metadata_executor.foreignkeys())
 
 
 @refresher("views")
-def refresh_views(completer: PGCompleter, metadata_executor: MetadataExecutor):
+def refresh_views(completer: PGCompleter, metadata_executor: MetadataExecutor) -> None:
     completer.extend_relations(metadata_executor.views(), kind="views")
     completer.extend_columns(metadata_executor.view_columns(), kind="views")
 
 
 @refresher("types")
-def refresh_types(completer: PGCompleter, metadata_executor: MetadataExecutor):
+def refresh_types(completer: PGCompleter, metadata_executor: MetadataExecutor) -> None:
     completer.extend_datatypes(metadata_executor.datatypes())
 
 
 @refresher("databases")
-def refresh_databases(completer: PGCompleter, metadata_executor: MetadataExecutor):
+def refresh_databases(completer: PGCompleter, metadata_executor: MetadataExecutor) -> None:
     completer.extend_database_names(metadata_executor.databases())
 
 
 @refresher("casing")
-def refresh_casing(completer: PGCompleter, metadata_executor: MetadataExecutor):
+def refresh_casing(completer: PGCompleter, metadata_executor: MetadataExecutor) -> None:
     casing_file = completer.casing_file
     if not casing_file:
         return
     generate_casing_file = completer.generate_casing_file
     if generate_casing_file and not os.path.isfile(casing_file):
-        casing_prefs = "\n".join(metadata_executor.casing())
+        casing_prefs = "\n".join(str(c) for c in metadata_executor.casing())
         with open(casing_file, "w") as f:
             f.write(casing_prefs)
     if os.path.isfile(casing_file):
@@ -170,5 +187,5 @@ def refresh_casing(completer: PGCompleter, metadata_executor: MetadataExecutor):
 
 
 @refresher("functions")
-def refresh_functions(completer: PGCompleter, metadata_executor: MetadataExecutor):
+def refresh_functions(completer: PGCompleter, metadata_executor: MetadataExecutor) -> None:
     completer.extend_functions(metadata_executor.functions())

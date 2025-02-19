@@ -11,7 +11,7 @@ from ossdbtoolsservice.query.data_storage import StorageDataReader
 
 
 class TestDataStorageReader(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._rows = [
             (1, "Some text 1", "Some valid xml", b"Hello bytes1"),
             (2, "Some Text 2", "Some Valid xml", b"Hello bytes2"),

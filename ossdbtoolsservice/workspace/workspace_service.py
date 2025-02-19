@@ -7,7 +7,6 @@ from logging import Logger  # noqa
 from typing import Callable, List, Optional  # noqa
 
 from ossdbtoolsservice.hosting import (
-    MessageServer,
     NotificationContext,
     ServiceProvider,
     Service,
@@ -30,26 +29,23 @@ from ossdbtoolsservice.workspace.workspace import Workspace
 
 class WorkspaceService(Service):
     """
-    Class for handling requests/events that deal with the 
+    Class for handling requests/events that deal with the
     sate of the workspace including opening
     and closing of files, the changing of configuration, etc.
     """
 
-    def __init__(self):
-        self._service_provider: ServiceProvider = None
-        self._server: MessageServer = None
-        self._logger: [Logger, None] = None
-        self._workspace: Workspace = None
+    def __init__(self) -> None:
+        super().__init__()
 
         # Create a workspace that will handle state for the session
         self._workspace = Workspace()
         self._configuration: Configuration = Configuration()
 
         # Setup callbacks for the various events we can receive
-        self._config_change_callbacks: list[Callable[Configuration]] = []
-        self._text_change_callbacks: list[Callable[ScriptFile]] = []
-        self._text_open_callbacks: list[Callable[ScriptFile]] = []
-        self._text_close_callbacks: list[Callable[ScriptFile]] = []
+        self._config_change_callbacks: list[Callable[[Configuration], None]] = []
+        self._text_change_callbacks: list[Callable[[ScriptFile], None]] = []
+        self._text_open_callbacks: list[Callable[[ScriptFile], None]] = []
+        self._text_close_callbacks: list[Callable[[ScriptFile], None]] = []
 
     def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
@@ -100,7 +96,7 @@ class WorkspaceService(Service):
         Get the requested text selection, as a string, for a document
 
         :param file_uri: The URI of the requested file
-        :param selection_data: An object containing information about 
+        :param selection_data: An object containing information about
             which part of the file to return,
             or None for the whole file
         :raises ValueError: If there is no file matching the given URI
@@ -118,12 +114,15 @@ class WorkspaceService(Service):
         self, notification_context: NotificationContext, params: DidChangeConfigurationParams
     ) -> None:
         """
-        Handles the configuration change event by storing the 
+        Handles the configuration change event by storing the
         new configuration and calling all
         registered config change callbacks
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
         """
+        if params.settings is None:
+            self._log_warning(f"No settings provided in configuration change: {params}")
+            return
         self._configuration = params.settings
         for callback in self._config_change_callbacks:
             callback(self._configuration)
@@ -138,7 +137,14 @@ class WorkspaceService(Service):
         """
         try:
             # Skip processing if the file isn't opened
-            script_file: ScriptFile = self._workspace.get_file(params.text_document.uri)
+            if params.text_document is None:
+                self._log_warning(f"No text document provided in change: {params}")
+                return
+            uri = params.text_document.uri
+            if uri is None:
+                self._log_warning(f"No URI provided in text document change: {params}")
+                return
+            script_file: ScriptFile | None = self._workspace.get_file(uri)
             if script_file is None:
                 return
 
@@ -157,16 +163,23 @@ class WorkspaceService(Service):
         self, notification_context: NotificationContext, params: DidOpenTextDocumentParams
     ) -> None:
         """
-        Handles when a file is opened in the workspace. 
+        Handles when a file is opened in the workspace.
         The event is propagated to the registered
         file open callbacks
         :param notification_context: Context of the notification
         :param params: Parameters from the notification
         """
         try:
+            if params.text_document is None:
+                self._log_warning(f"No text document provided in change: {params}")
+                return
+            uri = params.text_document.uri
+            if uri is None:
+                self._log_warning(f"No URI provided in text document change: {params}")
+                return
             # Open a new ScriptFile with the initial buffer provided
-            opened_file: ScriptFile = self._workspace.open_file(
-                params.text_document.uri, params.text_document.text
+            opened_file: ScriptFile | None = self._workspace.open_file(
+                uri, params.text_document.text
             )
             if opened_file is None:
                 return
@@ -182,7 +195,7 @@ class WorkspaceService(Service):
         self, notification_context: NotificationContext, params: DidCloseTextDocumentParams
     ) -> None:
         """
-        Handles when a file is closed in the workspace. 
+        Handles when a file is closed in the workspace.
         The event is propagated to the registered
         file close callbacks
         :param notification_context: Context of the notification
@@ -190,7 +203,14 @@ class WorkspaceService(Service):
         """
         try:
             # Attempt to close the requested file
-            closed_file: ScriptFile = self._workspace.close_file(params.text_document.uri)
+            if params.text_document is None:
+                self._log_warning(f"No text document provided in change: {params}")
+                return
+            uri = params.text_document.uri
+            if uri is None:
+                self._log_warning(f"No URI provided in text document change: {params}")
+                return
+            closed_file: ScriptFile | None = self._workspace.close_file(uri)
             if closed_file is None:
                 return
 

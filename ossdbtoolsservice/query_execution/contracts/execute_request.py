@@ -12,30 +12,30 @@ class ExecutionPlanOptions(Serializable):
     include_actual_execution_plan_xml: bool
     include_estimated_execution_plan_xml: bool
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.include_actual_execution_plan_xml: bool = False
         self.include_estimated_execution_plan_xml: bool = False
 
 
 class ExecuteRequestParamsBase(Serializable):
-    owner_uri: str
+    owner_uri: str | None
     execution_plan_options: ExecutionPlanOptions
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[Serializable]]:
         return {"execution_plan_options": ExecutionPlanOptions}
 
-    def __init__(self):
-        self.owner_uri: str = None
+    def __init__(self) -> None:
+        self.owner_uri: str | None = None
         self.execution_plan_options: ExecutionPlanOptions = ExecutionPlanOptions()
 
 
 class ExecuteStringParams(ExecuteRequestParamsBase):
-    query: str
+    query: str | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.query: str = None
+        self.query: str | None = None
 
 
 EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
@@ -48,18 +48,18 @@ EXECUTE_DEPLOY_REQUEST = IncomingMessageConfiguration(
 
 
 class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
-    query_selection: SelectionData
+    query_selection: SelectionData | None
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[Serializable]]:
         return {
             "query_selection": SelectionData,
             "execution_plan_options": ExecutionPlanOptions,
         }
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.query_selection: SelectionData = None
+        self.query_selection = None
 
 
 EXECUTE_DOCUMENT_SELECTION_REQUEST = IncomingMessageConfiguration(
@@ -68,13 +68,13 @@ EXECUTE_DOCUMENT_SELECTION_REQUEST = IncomingMessageConfiguration(
 
 
 class ExecuteDocumentStatementParams(ExecuteRequestParamsBase):
-    line: int
-    column: int
+    line: int | None
+    column: int | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.line: int = None
-        self.column: int = None
+        self.line: int | None = None
+        self.column: int | None = None
 
 
 EXECUTE_DOCUMENT_STATEMENT_REQUEST = IncomingMessageConfiguration(
@@ -87,5 +87,5 @@ class ExecuteResult:
     Parameters for the query execute result. Reserved for future use
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass

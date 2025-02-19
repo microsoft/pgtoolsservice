@@ -8,7 +8,9 @@ from ossdbtoolsservice.query.contracts import DbCellValue
 
 
 class EditCell(DbCellValue):
-    def __init__(self, db_cell_value: DbCellValue, is_dirty: bool, row_id: int = None):
+    def __init__(
+        self, db_cell_value: DbCellValue, is_dirty: bool, row_id: int | None = None
+    ) -> None:
         DbCellValue.__init__(
             self,
             db_cell_value.display_value,

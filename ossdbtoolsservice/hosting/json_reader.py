@@ -5,6 +5,7 @@
 import io
 import json
 from enum import Enum
+from logging import Logger
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 
@@ -25,7 +26,9 @@ class JSONRPCReader:
         Content = 2
 
     # CONSTRUCTOR ##########################################################
-    def __init__(self, stream: io.FileIO, encoding=None, logger=None) -> None:
+    def __init__(
+        self, stream: io.FileIO, encoding: str | None = None, logger: Logger | None = None
+    ) -> None:
         """
         Initializes the JSON RPC reader
         :param stream: Stream that messages will be read from
@@ -44,12 +47,12 @@ class JSONRPCReader:
 
         # Setup message reading state
         self._expected_content_length = 0
-        self._headers = {}
+        self._headers: dict[str, str] = {}
         self._read_state = self.ReadState.Header
         self._needs_more_data = True
 
     # METHODS ##############################################################
-    def close(self):
+    def close(self) -> None:
         """
         Close the stream
         """
@@ -152,7 +155,7 @@ class JSONRPCReader:
 
     def _try_read_headers(self) -> bool:
         """
-        Try to read the header information from the internal buffer 
+        Try to read the header information from the internal buffer
         expecting the last header to contain '\r\n\r\n'
 
         :raises LookupError: The content-length header was not found
@@ -170,7 +173,7 @@ class JSONRPCReader:
         ):
             scan_offset += 1
 
-        # If we reached the end of the buffer and haven't found the control sequence, 
+        # If we reached the end of the buffer and haven't found the control sequence,
         # we haven't found the headers
         if scan_offset + 3 >= self._buffer_end_offset:
             return False
@@ -221,7 +224,7 @@ class JSONRPCReader:
         """
         Try to read content from internal buffer
         :param content: Location to store the content
-        :return: True on successful reading of content, 
+        :return: True on successful reading of content,
             False on incomplete read of content (based on content-length)
         """
         # TODO: Take into consideration that the implementation of this protocol should place

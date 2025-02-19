@@ -14,7 +14,9 @@ class ServerInfo:
     server_version: str
     is_cloud: bool
 
-    def __init__(self, server: str, server_version, is_cloud):
+    def __init__(
+        self, server: str, server_version: tuple[int, int, int], is_cloud: bool
+    ) -> None:
         self.server = server
         self.server_version = (
             str(server_version[0])
@@ -29,23 +31,23 @@ class ServerInfo:
 class ConnectionCompleteParams:
     """Parameters to be sent back with a connection complete event"""
 
-    owner_uri: str
-    connection_id: str
-    messages: str
-    error_message: str
-    error_number: int
-    server_info: ServerInfo
-    connection_summary: ConnectionSummary
+    owner_uri: str | None
+    connection_id: str | None
+    messages: str | None
+    error_message: str | None
+    error_number: int | None
+    server_info: ServerInfo | None
+    connection_summary: ConnectionSummary | None
     type: ConnectionType
 
-    def __init__(self):
-        self.owner_uri: str = None
-        self.connection_id: str = None
-        self.messages: str = None
-        self.error_message: str = None
-        self.error_number: int = 0
-        self.server_info: ServerInfo = None
-        self.connection_summary: ConnectionSummary = None
+    def __init__(self) -> None:
+        self.owner_uri = None
+        self.connection_id = None
+        self.messages = None
+        self.error_message = None
+        self.error_number = 0
+        self.server_info = None
+        self.connection_summary = None
         self.type: ConnectionType = ConnectionType.DEFAULT
 
 

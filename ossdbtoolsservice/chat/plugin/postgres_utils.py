@@ -431,7 +431,8 @@ def fetch_schema_v3(connection: Connection) -> str:
                             sql.SQL("SELECT pg_get_partkeydef(%s::regclass);"),
                             [full_name],
                         )
-                        partdef = cur.fetchone()[0]
+                        partdef_fetch = cur.fetchone()
+                        partdef = partdef_fetch[0] if partdef_fetch else None
                         if partdef:
                             stmt += f" PARTITION BY {partdef}"
 
@@ -476,7 +477,7 @@ def fetch_schema_v3(connection: Connection) -> str:
                                 f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
                             )
                             if part_bound:
-                                # pg_get_expr returns a string like 
+                                # pg_get_expr returns a string like
                                 # "FOR VALUES FROM (...) TO (...)"
                                 alter_stmt += f" {part_bound}"
                             alter_stmt += ";"
@@ -488,7 +489,8 @@ def fetch_schema_v3(connection: Connection) -> str:
                         sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
                         [full_name],
                     )
-                    viewdef = cur.fetchone()[0]
+                    viewdef_fetch = cur.fetchone()
+                    viewdef = viewdef_fetch[0] if viewdef_fetch else None
                     stmt = f"CREATE OR REPLACE VIEW {full_name} AS\n{viewdef};"
                     schema_creation_script.append(stmt)
 
@@ -498,7 +500,8 @@ def fetch_schema_v3(connection: Connection) -> str:
                         sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
                         [full_name],
                     )
-                    viewdef = cur.fetchone()[0]
+                    viewdef_fetch = cur.fetchone()
+                    viewdef = viewdef_fetch[0] if viewdef_fetch else None
                     stmt = f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
                     schema_creation_script.append(stmt)
 
@@ -510,7 +513,7 @@ def fetch_schema_v4(connection: Connection) -> str:
     Fetch a complete schema creation script for each non-system schema in the database,
     including tables, partitioned tables (with ALTER TABLE ... ATTACH PARTITION),
     foreign tables, views, materialized views, sequences, indexes, triggers, and functions.
-    Objects contributed by installed extensions 
+    Objects contributed by installed extensions
     (those with pg_depend.deptype = 'e') are excluded.
     """
     with connection.cursor() as cur:
@@ -522,7 +525,7 @@ def fetch_schema_v4(connection: Connection) -> str:
         if version:
             schema_creation_script.append(f"-- PostgreSQL version: {version[0]}")
 
-        # Create extensions (we still create these, 
+        # Create extensions (we still create these,
         # but later exclude their contributed objects)
         cur.execute("SELECT extname FROM pg_extension;")
         for (extname,) in cur.fetchall():
@@ -540,7 +543,7 @@ def fetch_schema_v4(connection: Connection) -> str:
         for (schema_name,) in schemas:
             schema_creation_script.append(f"CREATE SCHEMA {schema_name};")
 
-            # -- Process tables (regular, partitioned, foreign), 
+            # -- Process tables (regular, partitioned, foreign),
             # views, and materialized views.
             cur.execute(
                 sql.SQL("""
@@ -587,7 +590,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                             col_def += " NOT NULL"
                         col_defs.append(col_def)
 
-                    # Append constraints 
+                    # Append constraints
                     # (ensuring multi‑column constraints are output only once)
                     cur.execute(
                         sql.SQL("""
@@ -611,7 +614,8 @@ def fetch_schema_v4(connection: Connection) -> str:
                             sql.SQL("SELECT pg_get_partkeydef(%s::regclass);"),
                             [full_name],
                         )
-                        partdef = cur.fetchone()[0]
+                        partdef_fetch = cur.fetchone()
+                        partdef = partdef_fetch[0] if partdef_fetch else None
                         if partdef:
                             stmt += f" PARTITION BY {partdef}"
 
@@ -652,7 +656,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                         [full_name],
                     )
                     for _tgname, tgdef in cur.fetchall():
-                        # pg_get_triggerdef returns the trigger definition 
+                        # pg_get_triggerdef returns the trigger definition
                         # (without a trailing semicolon)
                         schema_creation_script.append(tgdef + ";")
 
@@ -684,7 +688,8 @@ def fetch_schema_v4(connection: Connection) -> str:
                         sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
                         [full_name],
                     )
-                    viewdef = cur.fetchone()[0]
+                    viewdef_fetch = cur.fetchone()
+                    viewdef = viewdef_fetch[0] if viewdef_fetch else None
                     schema_creation_script.append(
                         f"CREATE OR REPLACE VIEW {full_name} AS\n{viewdef};"
                     )
@@ -694,7 +699,8 @@ def fetch_schema_v4(connection: Connection) -> str:
                         sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"),
                         [full_name],
                     )
-                    viewdef = cur.fetchone()[0]
+                    viewdef_fetch = cur.fetchone()
+                    viewdef = viewdef_fetch[0] if viewdef_fetch else None
                     schema_creation_script.append(
                         f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
                     )
@@ -726,7 +732,7 @@ def fetch_schema_v4(connection: Connection) -> str:
                 seq_stmt += f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
                 schema_creation_script.append(seq_stmt)
 
-            # Indexes (query via pg_indexes and join with pg_class 
+            # Indexes (query via pg_indexes and join with pg_class
             # to exclude extension‐owned objects)
             cur.execute(
                 sql.SQL("""

@@ -10,11 +10,12 @@ import unittest
 import uuid
 from os import listdir
 from os.path import isfile, join
-from typing import Dict, List  # noqa
+from typing import Any
 from unittest import mock
 
 import psycopg
 from dateutil import parser
+from psycopg import sql
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
@@ -241,7 +242,7 @@ class TestQueryService(unittest.TestCase):
         )
 
         # Then it responds with an error instead of a regular response
-        self.request_context.send_unhandled_error_response.assert_called_once()
+        self.request_context.send_error.assert_called_once()
         self.request_context.send_response.assert_not_called()
 
     def test_query_request_error_handling(self) -> None:
@@ -579,9 +580,10 @@ class TestQueryService(unittest.TestCase):
             call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION
         ]
 
-        # Assert that only two message notifications were sent.
+        # Assert that only three message notifications were sent.
         # The first is a message containing only the notifications, where is_error is false
         # The second is the error message, where is_error is true
+        # The third is another error message that occurs during rollback
         expected_notices = ["NOTICE: foo", "DEBUG: bar"]
         self.assertEqual(len(call_params_list), 3)
         self.assertFalse(call_params_list[0].message.is_error)
@@ -678,7 +680,7 @@ class TestQueryService(unittest.TestCase):
         # is the query string to cancel the ongoing query
         self.assertEqual(
             self.cursor_cancel.execute.call_args_list[0][0][0],
-            PG_CANCELLATION_QUERY.format(0),
+            sql.SQL(PG_CANCELLATION_QUERY.format(0)),
         )
 
         # The batch is also marked as canceled and executed.
@@ -699,7 +701,7 @@ class TestQueryService(unittest.TestCase):
         # Create a side effect to cancel the query while responding to the query request
         real_send_response = self.request_context.send_response
 
-        def cancel_before_execute_side_effect(*args):
+        def cancel_before_execute_side_effect(*args: Any) -> None:
             real_send_response(*args)
             self.request_context.send_response.side_effect = real_send_response
             query = self.query_execution_service.get_query(execute_params.owner_uri)
@@ -739,7 +741,7 @@ class TestQueryService(unittest.TestCase):
         # is the query string to cancel the ongoing query
         self.assertEqual(
             self.cursor_cancel.execute.call_args_list[0][0][0],
-            PG_CANCELLATION_QUERY.format(0),
+            sql.SQL(PG_CANCELLATION_QUERY.format(0)),
         )
 
         # The batch should be marked as canceled, the state should be executed,
@@ -1086,7 +1088,7 @@ class TestQueryService(unittest.TestCase):
         # is the query string to cancel the ongoing query
         self.assertEqual(
             self.cursor_cancel.execute.call_args_list[0][0][0],
-            PG_CANCELLATION_QUERY.format(0),
+            sql.SQL(PG_CANCELLATION_QUERY.format(0)),
         )
 
     def test_query_disposal_with_query_not_started(self) -> None:
@@ -1108,7 +1110,7 @@ class TestQueryService(unittest.TestCase):
         # is the query string to cancel the ongoing query
         self.assertEqual(
             self.cursor_cancel.execute.call_args_list[0][0][0],
-            PG_CANCELLATION_QUERY.format(0),
+            sql.SQL(PG_CANCELLATION_QUERY.format(0)),
         )
 
     def test_get_query_text_from_execute_params_for_doc_statement_same_line_cur_in_1st_batch(
@@ -1272,7 +1274,7 @@ class TestQueryService(unittest.TestCase):
 
         # Then a rollback transaction should have been executed
         self.cursor.execute.assert_has_calls(
-            [mock.call(query_params.query), mock.call("ROLLBACK")]
+            [mock.call(sql.SQL(query_params.query)), mock.call(sql.SQL("ROLLBACK"))]
         )
 
     def test_handle_simple_execute_request(self) -> None:

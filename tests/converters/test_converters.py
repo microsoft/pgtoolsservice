@@ -24,7 +24,13 @@ class TestConverters(unittest.TestCase):
         self.request_context = utils.MockRequestContext()
 
     # if bool type has bool and bool_array while varchar[] is array type
-    def generic_test(self, connection, value, pg_cast, array_type_only=False):
+    def generic_test(
+        self,
+        connection: PostgreSQLConnection,
+        value: str,
+        pg_cast: str,
+        array_type_only: bool = False,
+    ) -> None:
         request_params = ExecuteStringParams()
         request_params.owner_uri = "test_uri"
 
@@ -75,7 +81,7 @@ class TestConverters(unittest.TestCase):
             self.request_context, subset_params
         )
 
-    def _compare_results(self, expected_results, batch_index):
+    def _compare_results(self, expected_results, batch_index) -> None:
         query_results = self.request_context.last_response_params.result_subset
 
         actual_value = query_results.rows[0][0].raw_object
@@ -87,7 +93,7 @@ class TestConverters(unittest.TestCase):
         self.assertEqual(actual_value, expected_value)
 
     @integration_test
-    def test_datatypes_converters(self):
+    def test_datatypes_converters(self) -> None:
         connection = PostgreSQLConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
         self.generic_test(connection, "true", "bool")

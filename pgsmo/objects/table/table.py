@@ -100,9 +100,9 @@ class Table(
             )
         )
 
-        # Index constraints should be comprised of primary key constraints ("p"), 
+        # Index constraints should be comprised of primary key constraints ("p"),
         # unique key constraints ("u"), and exclusion constraints ("x"). Exclusion
-        # constraints have their own separate templates, while primary key and 
+        # constraints have their own separate templates, while primary key and
         # unique key constraints share templates from constraint_index
         self._index_constraints: NodeCollection[IndexConstraint] = (
             self._register_child_collection(IndexConstraint)
@@ -114,7 +114,7 @@ class Table(
 
     # PROPERTIES ###########################################################
     @property
-    def schema(self):
+    def schema(self) -> str:
         return self._schema
 
     @property

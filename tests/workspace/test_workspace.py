@@ -20,7 +20,7 @@ class TestWorkspaceService(unittest.TestCase):
         self.assertDictEqual(w._workspace_files, {})
         self.assertListEqual(w.opened_files, [])
 
-    def test_file_operations_no_path(self):
+    def test_file_operations_no_path(self) -> None:
         # Setup: Create list of paths to try and a list of methods to run
         w: Workspace = Workspace()
         test_methods = [w.close_file, w.contains_file, w.open_file, w.get_file]
@@ -28,7 +28,7 @@ class TestWorkspaceService(unittest.TestCase):
 
         for method in test_methods:
             for path in test_paths:
-                with self.assertRaises(ValueError):
+                with self.assertRaises(ValueError, msg=f"{method.__name__}({path})"):
                     # If: The workspace is asked to perform a file operation
                     # with a missing file path
                     # Then: It should raise an exception

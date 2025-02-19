@@ -14,7 +14,7 @@ from ossdbtoolsservice.query.result_set import ResultSetEvents
 
 
 class TestFileStorageResultSet(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._id = 1
         self._batch_id = 1
         self._events = ResultSetEvents()
@@ -27,7 +27,7 @@ class TestFileStorageResultSet(unittest.TestCase):
 
         self._result_set = None
 
-    def execute_with_patch(self, test: Callable):
+    def execute_with_patch(self, test: Callable) -> None:
         with (
             mock.patch(
                 "ossdbtoolsservice.query.data_storage.service_buffer_file_stream.create_file",

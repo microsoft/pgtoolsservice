@@ -8,10 +8,12 @@ from ossdbtoolsservice.workspace.contracts.common import Location
 
 
 class DefinitionResult:
-    def __init__(self, is_error: bool, message: str, locations: list[Location]):
-        self.is_error_result: bool = is_error
+    def __init__(
+        self, is_error: bool, message: str | None, locations: list[Location]
+    ) -> None:
+        self.is_error_result = is_error
         self.message = message
-        self.locations: [] = locations
+        self.locations = locations
 
 
 OutgoingMessageRegistration.register_outgoing_message(DefinitionResult)

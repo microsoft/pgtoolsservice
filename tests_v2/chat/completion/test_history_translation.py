@@ -1,4 +1,3 @@
-import pytest
 from semantic_kernel.contents import (
     AuthorRole,
     ChatHistory,
@@ -17,12 +16,8 @@ from ossdbtoolsservice.chat.completion.vscode_chat_completion import (
 )
 
 
-@pytest.fixture
-def translator():
-    return VSCodeChatCompletionHistoryTranslator()
-
-
-def test_translate_chat_history_with_text_content(translator):
+def test_translate_chat_history_with_text_content() -> None:
+    translator = VSCodeChatCompletionHistoryTranslator()
     chat_history = ChatHistory(
         messages=[
             ChatMessageContent(role=AuthorRole.USER, items=[TextContent(text="Hello")]),
@@ -43,7 +38,8 @@ def test_translate_chat_history_with_text_content(translator):
     assert messages[1].content[0].value == "Hi there!"
 
 
-def test_translate_chat_history_with_function_call(translator):
+def test_translate_chat_history_with_function_call() -> None:
+    translator = VSCodeChatCompletionHistoryTranslator()
     chat_history = ChatHistory(
         messages=[
             ChatMessageContent(
@@ -82,7 +78,8 @@ def test_translate_chat_history_with_function_call(translator):
     assert messages[2].content[0].content[0].value == "Function result"
 
 
-def test_translate_chat_history_with_function_result(translator):
+def test_translate_chat_history_with_function_result() -> None:
+    translator = VSCodeChatCompletionHistoryTranslator()
     chat_history = ChatHistory(
         messages=[
             ChatMessageContent(

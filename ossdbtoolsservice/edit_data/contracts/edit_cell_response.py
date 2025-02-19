@@ -8,6 +8,6 @@ from ossdbtoolsservice.edit_data.contracts import EditCell
 
 
 class EditCellResponse:
-    def __init__(self, edit_cell: EditCell, is_row_dirty: bool):
+    def __init__(self, edit_cell: EditCell | None, is_row_dirty: bool) -> None:
         self.cell = edit_cell
         self.is_row_dirty = is_row_dirty

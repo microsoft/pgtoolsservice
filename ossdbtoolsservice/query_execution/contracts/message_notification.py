@@ -12,7 +12,7 @@ class ResultMessage:
     time: str
     message: str
 
-    def __init__(self, batch_id: int, is_error: bool, time, message: str):
+    def __init__(self, batch_id: int, is_error: bool, time: str, message: str) -> None:
         self.batch_id: int = batch_id
         self.is_error: bool = is_error
         self.time = time
@@ -30,7 +30,7 @@ class MessageNotificationParams:
     owner_uri: str
     message: ResultMessage
 
-    def __init__(self, owner_uri: str, message: ResultMessage):
+    def __init__(self, owner_uri: str, message: ResultMessage) -> None:
         self.owner_uri: str = owner_uri
         self.message: ResultMessage = message
 

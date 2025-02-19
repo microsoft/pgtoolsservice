@@ -28,7 +28,7 @@ class SelectionData(Serializable):
         self.end_line: int = end_line
         self.end_column: int = end_column
 
-    def to_range(self):
+    def to_range(self) -> Range:
         """Convert the SelectionData object to a workspace service Range object"""
         return Range(
             Position(self.start_line, self.start_column),

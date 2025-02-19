@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from typing import Any
+
 from ossdbtoolsservice.serialization import Serializable
 
 
@@ -18,13 +20,13 @@ class Position(Serializable):
     character: int
 
     @classmethod
-    def from_data(cls, line: int, col: int):
+    def from_data(cls, line: int, col: int) -> "Position":
         pos = cls()
         pos.line = line
         pos.character = col
         return pos
 
-    def __init__(self, line=0, character=0):
+    def __init__(self, line: int = 0, character: int = 0) -> None:
         self.line: int = line
         self.character: int = character
 
@@ -37,23 +39,26 @@ class Range(Serializable):
         end:    The ending position of the range, inclusive
     """
 
-    start: Position
-    end: Position
+    start: Position | None
+    end: Position | None
 
     @classmethod
-    def from_data(cls, start_line: int, start_col: int, end_line: int, end_col: int):
-        result = cls()
-        result.start = Position.from_data(start_line, start_col)
-        result.end = Position.from_data(end_line, end_col)
+    def from_data(
+        cls, start_line: int, start_col: int, end_line: int, end_col: int
+    ) -> "Range":
+        result = cls(
+            start=Position.from_data(start_line, start_col),
+            end=Position.from_data(end_line, end_col),
+        )
         return result
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[Position]]:
         return {"start": Position, "end": Position}
 
-    def __init__(self, start=None, end=None):
-        self.start: Position = start
-        self.end: Position = end
+    def __init__(self, start: Position | None = None, end: Position | None = None) -> None:
+        self.start = start
+        self.end = end
 
 
 class TextDocumentItem(Serializable):
@@ -66,11 +71,11 @@ class TextDocumentItem(Serializable):
         text:           Full content of the document
     """
 
-    def __init__(self):
-        self.uri: str = None
-        self.language_id: str = None
-        self.version: int = None
-        self.text: str = None
+    def __init__(self) -> None:
+        self.uri: str | None = None
+        self.language_id: str | None = None
+        self.version: int | None = None
+        self.text: str | None = None
 
 
 class TextDocumentIdentifier(Serializable):
@@ -80,10 +85,10 @@ class TextDocumentIdentifier(Serializable):
         uri:        The URI that uniquely identifies the path of the text document
     """
 
-    uri: str
+    uri: str | None
 
-    def __init__(self):
-        self.uri: str = None
+    def __init__(self) -> None:
+        self.uri = None
 
 
 class TextDocumentPosition(Serializable):
@@ -94,19 +99,19 @@ class TextDocumentPosition(Serializable):
         position: The position in the document
     """
 
-    text_document: TextDocumentIdentifier
-    position: Position
+    text_document: TextDocumentIdentifier | None
+    position: Position | None
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[Any]]:
         return {"text_document": TextDocumentIdentifier, "position": Position}
 
-    def __init__(self):
-        self.text_document: TextDocumentIdentifier = None
-        self.position: Position = None
+    def __init__(self) -> None:
+        self.text_document = None
+        self.position = None
 
     @classmethod
-    def ignore_extra_attributes(cls):
+    def ignore_extra_attributes(cls) -> bool:
         return True
 
 
@@ -121,6 +126,6 @@ class Location(Serializable):
     uri: str
     range: Range
 
-    def __init__(self, uri: str, rng: Range):
+    def __init__(self, uri: str, rng: Range) -> None:
         self.uri = uri
         self.range = rng

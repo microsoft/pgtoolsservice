@@ -4,23 +4,25 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Dict, List  # noqa
+import psycopg
 
-from ossdbtoolsservice.edit_data.update_management import RowEdit, CellUpdate, EditScript
-from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.edit_data import EditTableMetadata
 from ossdbtoolsservice.edit_data.contracts import (
-    EditCellResponse,
     EditCell,
-    RevertCellResponse,
+    EditCellResponse,
     EditRow,
     EditRowState,
+    RevertCellResponse,
 )
+from ossdbtoolsservice.edit_data.update_management import CellUpdate, EditScript, RowEdit
+from ossdbtoolsservice.query import ResultSet
 from ossdbtoolsservice.query.contracts import DbCellValue
 
 
 class RowUpdate(RowEdit):
-    def __init__(self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata):
+    def __init__(
+        self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata
+    ) -> None:
         super().__init__(row_id, result_set, table_metadata)
         self.row = result_set.get_row(row_id)
         self._cell_updates: dict[int, CellUpdate] = {}
@@ -47,7 +49,7 @@ class RowUpdate(RowEdit):
         edit_cells = [EditCell(cell, True, self.row_id) for cell in cached_row]
 
         for column_index, cell in self._cell_updates.items():
-            edit_cells[column_index] = cell.edit_cell
+            edit_cells[column_index] = cell.as_edit_cell
 
         return EditRow(self.row_id, edit_cells, EditRowState.DIRTY_UPDATE)
 
@@ -76,5 +78,5 @@ class RowUpdate(RowEdit):
 
         return EditScript(query_template, cell_values)
 
-    def apply_changes(self, cursor):
+    def apply_changes(self, cursor: psycopg.Cursor) -> None:
         self.result_set.update_row(self.row_id, cursor)

@@ -16,11 +16,11 @@ class DidCloseTextDocumentParams(Serializable):
     """
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[TextDocumentItem]]:
         return {"text_document": TextDocumentItem}
 
-    def __init__(self):
-        self.text_document: TextDocumentItem = None
+    def __init__(self) -> None:
+        self.text_document: TextDocumentItem | None = None
 
 
 DID_CLOSE_TEXT_DOCUMENT_NOTIFICATION = IncomingMessageConfiguration(

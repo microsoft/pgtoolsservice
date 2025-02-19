@@ -11,7 +11,7 @@ from ossdbtoolsservice.serialization import Serializable
 class ConnectionSummary:
     """Provides high level information about a connection"""
 
-    def __init__(self, server_name: str, database_name: str, user_name: str):
+    def __init__(self, server_name: str, database_name: str, user_name: str) -> None:
         self.server_name: str = server_name
         self.database_name: str = database_name
         self.user_name: str = user_name
@@ -19,61 +19,69 @@ class ConnectionSummary:
 
 class ConnectionDetails(Serializable):
     """
-    Details about the connection on top of a basic connection summary. 
+    Details about the connection on top of a basic connection summary.
     Used as part of the incoming connection request
     """
 
-    options: dict
+    options: dict[str, str | int]
 
     @classmethod
-    def from_data(cls, opts: dict):
-        obj = cls()
-        obj.options = opts
+    def from_data(cls, opts: dict[str, str | int]) -> "ConnectionDetails":
+        obj = cls(opts)
         return obj
 
-    def __init__(self):
-        self.options: dict = {}
+    def __init__(self, options: dict[str, str | int] | None = None) -> None:
+        self.options: dict[str, str | int] = {} if options is None else options
 
-    @property
-    def server_name(self) -> str:
+    def _get_str_option(self, key: str) -> str | None:
         if not self.options:
             return None
-        return self.options.get("host")
+        v = self.options.get(key)
+        if v is None:
+            return None
+        return str(v)
+
+    def _get_int_option(self, key: str) -> int | None:
+        if not self.options:
+            return None
+        v = self.options.get(key)
+        if v is None:
+            return None
+        try:
+            return int(v)
+        except ValueError as e:
+            raise ValueError(f"Invalid value for {key}: {v}. Requires int.") from e
+
+    @property
+    def server_name(self) -> str | None:
+        return self._get_str_option("host")
 
     @server_name.setter
-    def server_name(self, value):
+    def server_name(self, value: str) -> None:
         self.options["host"] = value
 
     @property
-    def database_name(self) -> str:
-        if not self.options:
-            return None
-        return self.options.get("dbname")
+    def database_name(self) -> str | None:
+        return self._get_str_option("dbname")
 
     @database_name.setter
-    def database_name(self, value):
+    def database_name(self, value: str) -> None:
         self.options["dbname"] = value
 
     @property
-    def user_name(self) -> str:
-        if not self.options:
-            return None
-        return self.options.get("user")
+    def user_name(self) -> str | None:
+        return self._get_str_option("user")
 
     @user_name.setter
-    def user_name(self, value):
+    def user_name(self, value: str) -> None:
         self.options["user"] = value
 
     @property
-    def port(self) -> int:
-        if not self.options:
-            return None
-        val = self.options.get("port")
-        if val:
-            return int(val) or None
+    def port(self) -> int | None:
+        return self._get_int_option("port")
 
     @port.setter
-    def port(self, value):
+    def port(self, value: int) -> None:
         self.options["port"] = value
 
 
@@ -89,5 +97,5 @@ class ConnectionType(enum.Enum):
     QUERY = "Query"
     EDIT = "Edit"
     QUERY_CANCEL = "QueryCancel"
-    OBJECT_EXLPORER = "ObjectExplorer"
+    OBJECT_EXLPORER = "ObjectExplorer"  # TODO: Fix typo
     INTELLISENSE = "Intellisense"

@@ -4,6 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 
+import psycopg
+
 from ossdbtoolsservice.edit_data import EditTableMetadata
 from ossdbtoolsservice.edit_data.contracts import (
     EditCell,
@@ -18,9 +20,11 @@ from ossdbtoolsservice.query.contracts import DbCellValue
 
 
 class RowCreate(RowEdit):
-    def __init__(self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata):
+    def __init__(
+        self, row_id: int, result_set: ResultSet, table_metadata: EditTableMetadata
+    ) -> None:
         super().__init__(row_id, result_set, table_metadata)
-        self.new_cells: list[CellUpdate] = [None] * len(result_set.columns_info)
+        self.new_cells: list[CellUpdate | None] = [None] * len(result_set.columns_info)
 
     def set_cell_value(self, column_index: int, new_value: str) -> EditCellResponse:
         self.validate_column_is_updatable(column_index)
@@ -49,10 +53,10 @@ class RowCreate(RowEdit):
     def get_script(self) -> EditScript:
         return self._generate_insert_script()
 
-    def apply_changes(self, cursor):
+    def apply_changes(self, cursor: psycopg.Cursor) -> None:
         self.result_set.add_row(cursor)
 
-    def _generate_insert_script(self):
+    def _generate_insert_script(self) -> EditScript:
         insert_template = "INSERT INTO {0}({1}) VALUES({2}) RETURNING *"
         colum_name_template = '"{0}"'
 

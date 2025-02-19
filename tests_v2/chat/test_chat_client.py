@@ -11,7 +11,8 @@ import subprocess
 import sys
 import threading
 from io import FileIO
-from multiprocessing import Queue
+from queue import Queue
+from typing import IO, Any
 
 import click
 from rich.console import Console
@@ -19,15 +20,15 @@ from rich.console import Console
 PRINT_STDERR = False
 
 
-def read_responses(stdout_wrapped: FileIO, queue: Queue):
+def read_responses(stdout_wrapped: FileIO, queue: Queue[str]) -> None:
     """Read responses from the server's stdout."""
     chat_response = None
     while True:
-        header = stdout_wrapped.readline()
-        if not header:
+        header_bytes = stdout_wrapped.readline()
+        if not header_bytes:
             break
         try:
-            header = header.decode("utf-8").strip()
+            header = header_bytes.decode("utf-8").strip()
             if header.startswith("Content-Length:"):
                 length = int(header.split(":")[1].strip())
                 stdout_wrapped.readline()  # Read the empty line
@@ -72,17 +73,17 @@ def read_responses(stdout_wrapped: FileIO, queue: Queue):
     print("Server stopped.")
 
 
-def read_stderr(process):
+def read_stderr(stderr: IO[bytes]) -> None:
     """Read responses from the server's stderr."""
     while True:
-        line = process.stderr.readline()
+        line = stderr.readline()
         if not line:
             break
         print("STDERR:", line.strip())
     print("Server stopped.")
 
 
-def send_message(stdin_wrapped: FileIO, message):
+def send_message(stdin_wrapped: FileIO, message: dict[str, Any]) -> None:
     """Send a message to the server."""
     HEADER = "Content-Length: {}\r\n\r\n"
     json_content = json.dumps(message, sort_keys=True)
@@ -98,7 +99,7 @@ def send_message(stdin_wrapped: FileIO, message):
 
 def send_chat_completion_message(
     stdin_wrapped: FileIO, user_input: str, history: list[dict[str, str]]
-):
+) -> None:
     request = {
         "jsonrpc": "2.0",
         "method": "chat/completion-request",
@@ -114,7 +115,7 @@ def send_chat_completion_message(
     send_message(stdin_wrapped, request)
 
 
-def chat_with_postgresql():
+def chat_with_postgresql() -> None:
     console = Console()
 
     print("Starting the language server...")
@@ -131,6 +132,8 @@ def chat_with_postgresql():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+    assert process.stdin is not None
+    assert process.stdout is not None
 
     with (
         open(process.stdin.fileno(), "wb", buffering=0, closefd=False) as stdin_wrapped,
@@ -161,7 +164,7 @@ def chat_with_postgresql():
             },
         )
 
-        queue = Queue()
+        queue = Queue[str]()
 
         # Start a thread to handle asynchronous responses from the server
         response_thread = threading.Thread(
@@ -172,7 +175,9 @@ def chat_with_postgresql():
         queue.get()  # Wait for the connection to complete
 
         if PRINT_STDERR:
-            stderr_thread = threading.Thread(target=read_stderr, args=(process,), daemon=True)
+            stderr_thread = threading.Thread(
+                target=read_stderr, args=(process.stderr,), daemon=True
+            )
             stderr_thread.start()
         else:
             stderr_thread = None

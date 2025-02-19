@@ -9,7 +9,7 @@ import sys
 """Utility functions for path handling"""
 
 
-def get_application_base_path():
+def get_application_base_path() -> str:
     """Returns the base path of the application"""
     # Construct the base path for the application
     base_path = os.path.dirname(
@@ -21,6 +21,6 @@ def get_application_base_path():
     return base_path
 
 
-def path_relative_to_base(*paths):
+def path_relative_to_base(*paths: str) -> str:
     """Returns the path of a file relative to the applications base or working directory"""
     return os.path.join(get_application_base_path(), *paths)

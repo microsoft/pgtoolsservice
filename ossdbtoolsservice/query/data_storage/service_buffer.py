@@ -4,14 +4,15 @@
 # --------------------------------------------------------------------------------------------
 
 import io
+from typing import Any
 
 
 class ServiceBufferFileStream:
-    def __init__(self, stream: io.BufferedIOBase) -> None:
+    def __init__(self, stream: io.BufferedIOBase | io.TextIOWrapper) -> None:
         self._file_stream = stream
 
-    def __enter__(self):
+    def __enter__(self) -> "ServiceBufferFileStream":
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, *args: Any) -> None:
         self._file_stream.close()

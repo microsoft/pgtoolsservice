@@ -61,28 +61,36 @@ class MessageServer(ABC):
         async_runner: AsyncRunner | None,
         logger: Logger | None,
         version: str = "1",
-    ):
+    ) -> None:
         self.async_runner = async_runner
         self._logger = logger
         self._version = version
         self._stop_requested = False
-        self._shutdown_handlers = []
+        self._shutdown_handlers: list[Callable[[], None]] = []
         self._request_handlers: dict[str, MessageHandler] = {}
         self._notification_handlers: dict[str, MessageHandler] = {}
 
         # Register built-in handlers
         # 1) Echo
-        echo_config = IncomingMessageConfiguration("echo", None)
+        echo_config: IncomingMessageConfiguration[dict[str, Any]] = (
+            IncomingMessageConfiguration("echo", None)
+        )
         self.set_request_handler(echo_config, self._handle_echo_request)
 
         # 2) Protocol version
-        version_config = IncomingMessageConfiguration("version", None)
+        version_config: IncomingMessageConfiguration[dict[str, Any]] = (
+            IncomingMessageConfiguration("version", None)
+        )
         self.set_request_handler(version_config, self._handle_version_request)
 
         # 3) Shutdown/exit
-        shutdown_config = IncomingMessageConfiguration("shutdown", None)
+        shutdown_config: IncomingMessageConfiguration[dict[str, Any]] = (
+            IncomingMessageConfiguration("shutdown", None)
+        )
         self.set_request_handler(shutdown_config, self._handle_shutdown_request)
-        exit_config = IncomingMessageConfiguration("exit", None)
+        exit_config: IncomingMessageConfiguration[dict[str, Any]] = (
+            IncomingMessageConfiguration("exit", None)
+        )
         self.set_request_handler(exit_config, self._handle_shutdown_request)
 
         self._response_queues: ResponseQueues | SyncResponseQueues
@@ -91,7 +99,7 @@ class MessageServer(ABC):
         else:  # Synchronous
             self._response_queues = SyncResponseQueues()
 
-    def add_shutdown_handler(self, handler: Callable) -> None:
+    def add_shutdown_handler(self, handler: Callable[[], None]) -> None:
         self._shutdown_handlers.append(handler)
 
     def count_shutdown_handlers(self) -> int:
@@ -129,55 +137,73 @@ class MessageServer(ABC):
             JSONRPCMessageType.ResponseSuccess,
             JSONRPCMessageType.ResponseError,
         ]:
+            message_id = message.message_id
+            if message_id is None:
+                self._log_warning(f"Received response with no id: {message.message_type}")
+                return
             if self.async_runner and isinstance(self._response_queues, ResponseQueues):
-                response_queue = self._response_queues.get_queue(message.message_id)
+                response_queue = self._response_queues.get_queue(message_id)
                 if response_queue is not None:
-                    self._log_info(f"Received response id={message.message_id}")
+                    self._log_info(f"Received response id={message_id}")
                     self.async_runner.run(response_queue.put(message))
                 else:
                     self._log_warning(
-                        f"Received response for unknown request id={message.message_id}"
+                        f"Received response for unknown request id={message_id}"
                     )
             else:
-                response_queue = self._response_queues.get_queue(message.message_id)
-                if response_queue is not None:
+                sync_response_queue = self._response_queues.get_queue(message_id)
+                if sync_response_queue is not None:
                     self._log_info(f"Received response id={message.message_id}")
-                    response_queue.put(message)
+                    sync_response_queue.put(message)
                 else:
                     self._log_warning(
                         f"Received response for unknown request id={message.message_id}"
                     )
         elif message.message_type == JSONRPCMessageType.Request:
-            self._log_info(
-                f"Received request id={message.message_id} method={message.message_method}"
-            )
-            handler = self._request_handlers.get(message.message_method)
-            context = self.create_request_context(message, **kwargs)
-            if handler is None:
-                context.send_error(
-                    f"Requested method is unsupported: {message.message_method}"
-                )
-                self._log_warning(f"Unsupported method: {message.message_method}")
+            message_method = message.message_method
+            if message_method is None:
+                self._log_warning(f"Received request with no method: {message.message_type}")
                 return
-            deserialized = handler.deserialize_params(message.message_params)
+            self._log_info(
+                f"Received request id={message.message_id} method={message_method}"
+            )
+            handler = self._request_handlers.get(message_method)
+            req_context = self.create_request_context(message, **kwargs)
+            if handler is None:
+                req_context.send_error(f"Requested method is unsupported: {message_method}")
+                self._log_warning(f"Unsupported method: {message_method}")
+                return
+            deserialized = (
+                handler.deserialize_params(message.message_params)
+                if message.message_params is not None
+                else None
+            )
             try:
-                handler.handler(context, deserialized)
+                handler.handler(req_context, deserialized)
             except Exception as e:
                 error_msg = f"Unhandled exception for method {message.message_method}: {e}"
                 self._log_exception(error_msg)
-                context.send_error(error_msg, code=-32603)
+                req_context.send_error(error_msg, code=-32603)
         elif message.message_type == JSONRPCMessageType.Notification:
-            self._log_info(f"Received notification method={message.message_method}")
-            handler = self._notification_handlers.get(message.message_method)
-            context = self.create_notification_context(**kwargs)
+            message_method = message.message_method
+            if message_method is None:
+                self._log_warning(f"Received request with no method: {message.message_type}")
+                return
+            self._log_info(f"Received notification method={message_method}")
+            handler = self._notification_handlers.get(message_method)
+            noti_context = self.create_notification_context(**kwargs)
             if handler is None:
                 self._log_warning(
                     f"Notification method {message.message_method} is unsupported"
                 )
                 return
-            deserialized = handler.deserialize_params(message.message_params)
+            deserialized = (
+                handler.deserialize_params(message.message_params)
+                if message.message_params is not None
+                else None
+            )
             try:
-                handler.handler(context, deserialized)
+                handler.handler(noti_context, deserialized)
             except Exception as e:
                 error_msg = (
                     f"Unhandled exception for notification {message.message_method}: {e}"
@@ -192,10 +218,10 @@ class MessageServer(ABC):
     def _handle_echo_request(request_context: RequestContext, params: Any) -> None:
         request_context.send_response(params)
 
-    def _handle_version_request(self, request_context: RequestContext, _) -> None:
+    def _handle_version_request(self, request_context: RequestContext, params: Any) -> None:
         request_context.send_response(self._version)
 
-    def _handle_shutdown_request(self, request_context: RequestContext, _) -> None:
+    def _handle_shutdown_request(self, request_context: RequestContext, params: Any) -> None:
         # Signal that the threads should stop
         self._log_info("Received shutdown request")
         self._stop_requested = True
@@ -268,12 +294,16 @@ class MessageServer(ABC):
             self._send_message(message)
             response: JSONRPCMessage = await _response_queue.get()
             if response.message_type == JSONRPCMessageType.ResponseError:
-                raise ResponseError(response.message_error)
+                raise ResponseError(
+                    response.message_error or {"message": "Unknown error response"}
+                )
 
             result_encoded = response.message_result
 
             if result_type is not None and issubclass(result_type, BaseModel):
-                return result_type.model_validate(result_encoded)
+                # mypy isn't picking up that result_type has a model_validate method,
+                # so type:ignore
+                return result_type.model_validate(result_encoded)  # type: ignore
 
             # For str or dict, return as-is
             return result_encoded
@@ -297,6 +327,8 @@ class MessageServer(ABC):
     def create_request_context(
         self, message: JSONRPCMessage, **kwargs: Any
     ) -> RequestContext:
+        if message.message_id is None:
+            raise ValueError("Message ID cannot be None")
         return RequestContext(message.message_id, self)
 
     def create_notification_context(self, **kwargs: Any) -> NotificationContext:

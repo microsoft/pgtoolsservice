@@ -24,8 +24,10 @@ class WebRequestContext(RequestContext):
         message: JSONRPCMessage,
         socketio: SocketIO,
         session_id: str,
-        active_sessions: dict,
-    ):
+        active_sessions: dict[str, str],
+    ) -> None:
+        if message.message_id is None:
+            raise ValueError("message_id cannot be None")
         super().__init__(message.message_id, server)
         self.message = message
         self._socketio = socketio
@@ -34,7 +36,7 @@ class WebRequestContext(RequestContext):
 
     @override
     def send_response(self, params: Any) -> None:
-        response = JSONRPCMessage.create_response(self.message.message_id, params)
+        response = JSONRPCMessage.create_response(self.message_id, params)
         json_content = json.dumps(response.dictionary, sort_keys=True)
         sid = self._active_sessions.get(self._session_id)
         if sid:
@@ -42,7 +44,7 @@ class WebRequestContext(RequestContext):
 
     @override
     def send_error(self, message: str, data: Any = None, code: int = 0) -> None:
-        error = JSONRPCMessage.create_error(self.message.message_id, code, message, data)
+        error = JSONRPCMessage.create_error(self.message_id, code, message, data)
         json_content = json.dumps(error.dictionary, sort_keys=True)
         sid = self._active_sessions.get(self._session_id)
         if sid:
@@ -57,7 +59,7 @@ class WebRequestContext(RequestContext):
             self._socketio.emit("notification", json_content, to=sid)
 
     @override
-    async def send_request(self, method: str, params: Any) -> Any:
+    async def send_request(self, method: str, params: Any, result_type: type[Any]) -> Any:
         # TODO: How to get this to the right session
         raise NotImplementedError("WebRequestContext does not support send_request")
 
@@ -85,6 +87,6 @@ class WebNotificationContext(NotificationContext):
             self._socketio.emit("notification", json_content, to=sid)
 
     @override
-    async def send_request(self, method: str, params: Any) -> Any:
+    async def send_request(self, method: str, params: Any, result_type: type[Any]) -> Any:
         # TODO: How to get this to the right session
         raise NotImplementedError("WebRequestContext does not support send_request")

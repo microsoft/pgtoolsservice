@@ -5,12 +5,12 @@
 
 """Utility functions for operating with threads"""
 
-import threading  # noqa
-from typing import Callable  # noqa
+import threading
+from typing import Any, Callable
 
 
-def run_as_thread(function: Callable, *args) -> threading.Thread:
-    """Runs a function in a thread, passing in the specified args 
+def run_as_thread(function: Callable, *args: Any) -> threading.Thread:
+    """Runs a function in a thread, passing in the specified args
     as its arguments and returns the thread"""
     task = threading.Thread(target=function, args=args)
     task.daemon = False

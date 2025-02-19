@@ -18,17 +18,17 @@ class EditRowState(Enum):
 
 class EditRow:
     """
-    A way to return a row in a result set that is being edited. 
+    A way to return a row in a result set that is being edited.
     It contains state about whether or not the row is dirty
     """
 
     @property
-    def is_dirty(self):
+    def is_dirty(self) -> bool:
         return self.state is not EditRowState.CLEAN
 
     def __init__(
         self, row_id: int, cells: list[EditCell], state: EditRowState = EditRowState.CLEAN
-    ):
+    ) -> None:
         self.cells = cells
         self.id = row_id
         self.state: EditRowState = state

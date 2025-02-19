@@ -19,7 +19,7 @@ class QueryCompleteNotificationParams:
     owner_uri: str
     batch_summaries: list[BatchSummary]
 
-    def __init__(self, owner_uri: str, batch_summaries: list[BatchSummary]):
+    def __init__(self, owner_uri: str, batch_summaries: list[BatchSummary]) -> None:
         self.owner_uri: str = owner_uri
         self.batch_summaries: list[BatchSummary] = batch_summaries
 

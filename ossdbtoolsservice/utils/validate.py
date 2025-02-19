@@ -5,8 +5,12 @@
 
 """Utility functions for validating parameters"""
 
+from typing import Any, TypeVar
 
-def is_not_none(param_name: str, value_to_check: any) -> None:
+T = TypeVar("T")
+
+
+def is_not_none(param_name: str, value_to_check: T | None) -> T:
     """
     Validates that an object is not None, raises ValueError if it is
     :param param_name: The name of the parameter to validate
@@ -15,6 +19,7 @@ def is_not_none(param_name: str, value_to_check: any) -> None:
     if value_to_check is None:
         # TODO: Localize
         raise ValueError(f"{param_name} is None")
+    return value_to_check
 
 
 def is_within_range(
@@ -58,7 +63,7 @@ def is_greater_than(param_name: str, value_to_check: float, lower_limit: float) 
         raise ValueError(f"Value for {param_name} is less than or equal to {lower_limit}")
 
 
-def is_not_equal(param_name: str, value_to_check: any, undesired_value: any) -> None:
+def is_not_equal(param_name: str, value_to_check: Any, undesired_value: Any) -> None:
     """
     Raises ValueError if the value is equal to the undesired value
     :param param_name: Name of the parameter to validate
@@ -82,7 +87,7 @@ def is_not_none_or_empty(param_name: str, value_to_check: str) -> None:
         raise ValueError(f"Parameter {param_name} contains a None or empty string")
 
 
-def is_not_none_or_whitespace(param_name: str, value_to_check: str) -> None:
+def is_not_none_or_whitespace(param_name: str, value_to_check: str | None) -> str:
     """
     Raises ValueError if the value is None or a whitespace/empty string
     :param param_name: Name of the parameter to validate
@@ -92,9 +97,10 @@ def is_not_none_or_whitespace(param_name: str, value_to_check: str) -> None:
         raise ValueError(
             f"Parameter {param_name} contains a None, empty, or whitespace string"
         )
+    return value_to_check
 
 
-def is_object_params_not_none_or_whitespace(objname: str, obj: object, *args) -> None:
+def is_object_params_not_none_or_whitespace(objname: str, obj: object, *args: Any) -> None:
     """
     Raises ValueError if the input object is None or
     any of the input object parameters (args) is None or a whitespace/empty string

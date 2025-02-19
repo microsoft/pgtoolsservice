@@ -10,12 +10,8 @@ from prompt_toolkit.document import Document  # noqa
 class ScriptParseInfo:
     """Represents information about a parsed document used in autocomplete"""
 
-    def __init__(self):
-        self.connection_key: str = None
+    def __init__(self) -> None:
+        self.connection_key: str | None = None
         self.is_connected: bool = False
-        self.document: Document = None
-        self.current_suggestions: list[Completion] = None
-
-    def can_queue(self) -> bool:
-        """Can this be put in a queued operation?"""
-        return self.connection_key is not None
+        self.document: Document | None = None
+        self.current_suggestions: list[Completion] | None = None

@@ -448,7 +448,7 @@ class DefaultCompletionHelper:
         return (key in DefaultCompletionHelper.KEYWORDS) or False
 
     def get_matches(
-        self, start: str, text_range: Range, lowercase: bool
+        self, start: str, text_range: Range | None, lowercase: bool
     ) -> list[CompletionItem]:
         """
         Gets matching keywords as a list of CompletionItem.
@@ -471,7 +471,7 @@ class DefaultCompletionHelper:
 
     @classmethod
     def _to_completion_item(
-        cls, key: str, text_range: Range, lowercase: bool
+        cls, key: str, text_range: Range | None, lowercase: bool
     ) -> CompletionItem:
         key = key.lower() if lowercase else key.upper()
         completion = CompletionItem()

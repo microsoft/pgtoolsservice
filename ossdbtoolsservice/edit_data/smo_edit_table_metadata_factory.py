@@ -4,15 +4,13 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import List  # noqa
-
-from pgsmo import Server
-from pgsmo.objects.table.table import Table  # noqa
-from pgsmo.objects.table_objects.column import Column  # noqa
 from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.edit_data import EditTableMetadata, EditColumnMetadata
-from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+from ossdbtoolsservice.edit_data import EditColumnMetadata, EditTableMetadata
+from ossdbtoolsservice.metadata.contracts.object_metadata import MetadataType, ObjectMetadata
 from ossdbtoolsservice.query.contracts import DbColumn
+from pgsmo import Server
+from pgsmo.objects.table.table import Table
+from pgsmo.objects.table_objects.column import Column
 
 
 class SmoEditTableMetadataFactory:
@@ -24,11 +22,12 @@ class SmoEditTableMetadataFactory:
         object_type: str,
     ) -> EditTableMetadata:
         server = Server(connection)
-        result_object: Table = None
+
         object_metadata = ObjectMetadata(
-            server.urn_base, 0, object_type, object_name, schema_name
+            server.urn_base, MetadataType.TABLE, object_type, object_name, schema_name
         )
 
+        result_object: Table | None
         if object_type.lower() == "table":
             result_object = server.find_table(object_metadata)
         elif object_type.lower() == "view":
@@ -38,9 +37,12 @@ class SmoEditTableMetadataFactory:
 
         edit_columns_metadata: list[EditColumnMetadata] = []
 
-        for column in result_object.columns:
-            db_column = self.create_db_column(column)
-            edit_columns_metadata.append(EditColumnMetadata(db_column, column.default_value))
+        if result_object is not None:
+            for column in result_object.columns:
+                db_column = self.create_db_column(column)
+                edit_columns_metadata.append(
+                    EditColumnMetadata(db_column, column.default_value)
+                )
 
         return EditTableMetadata(schema_name, object_name, edit_columns_metadata)
 

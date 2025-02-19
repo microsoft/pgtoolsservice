@@ -5,6 +5,7 @@
 
 import threading
 
+from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
@@ -17,7 +18,7 @@ from ossdbtoolsservice.metadata.contracts import (
 )
 from ossdbtoolsservice.utils import constants
 
-# This query collects all the tables, views, 
+# This query collects all the tables, views,
 # and functions in all the schemas in the database(s)?
 PG_METADATA_QUERY = """
 SELECT s.nspname AS schema_name, 
@@ -35,16 +36,11 @@ SELECT schemaname AS schema_name, viewname AS object_name, 'v' as type from pg_v
     WHERE schemaname NOT ILIKE 'pg_%' AND schemaname != 'information_schema'
 """
 
-QUERY_MAP = {constants.PG_PROVIDER_NAME: PG_METADATA_QUERY}
-
 
 class MetadataService(Service):
     """Service for database metadata support"""
 
-    def __init__(self):
-        self._service_provider: ServiceProvider = None
-
-    def register(self, service_provider: ServiceProvider):
+    def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
 
         # Register the request handlers with the server
@@ -70,30 +66,35 @@ class MetadataService(Service):
         self, request_context: RequestContext, params: MetadataListParameters
     ) -> None:
         try:
-            metadata = self._list_metadata(params.owner_uri)
+            owner_uri = params.owner_uri
+            if owner_uri is None:
+                raise Exception("Owner URI is required")
+            metadata = self._list_metadata(owner_uri)
             request_context.send_response(MetadataListResponse(metadata))
         except Exception as e:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(
-                    "Unhandled exception while executing the metadata list worker thread"
-                )
+            self._log_exception(e)
             request_context.send_error(
-                "Unhandled exception while listing metadata: " + str(e)
+                "Error while listing metadata: " + str(e)
             )  # TODO: Localize
 
     def _list_metadata(self, owner_uri: str) -> list[ObjectMetadata]:
         # Get current connection
-        connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        connection: ServerConnection = connection_service.get_connection(
+        connection_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
+        connection: ServerConnection | None = connection_service.get_connection(
             owner_uri, ConnectionType.DEFAULT
         )
+
+        if connection is None:
+            raise Exception("Connection is required")
 
         # Get the current database
         database_name = connection.database_name
 
-        # Get the metadata query specific to the current provider 
+        # Get the metadata query specific to the current provider
         # and fill in the database name
-        metadata_query = QUERY_MAP[self._service_provider.provider].format(database_name)
+        metadata_query = PG_METADATA_QUERY.format(database_name)
 
         query_results = connection.execute_query(metadata_query, all=True)
 

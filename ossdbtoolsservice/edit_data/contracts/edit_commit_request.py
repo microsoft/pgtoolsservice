@@ -12,12 +12,12 @@ from ossdbtoolsservice.hosting import (
 
 
 class EditCommitRequest(SessionOperationRequest):
-    def __init__(self):
-        SessionOperationRequest.__init__(self)
+    def __init__(self) -> None:
+        super().__init__()
 
 
 class EditCommitResponse:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
 

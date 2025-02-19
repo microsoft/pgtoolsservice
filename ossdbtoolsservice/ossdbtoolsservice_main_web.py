@@ -4,22 +4,24 @@
 # --------------------------------------------------------------------------------------------
 
 import configparser
+from logging import Logger
 
+from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.hosting.web_message_server import WebMessageServer
 from ossdbtoolsservice.main import create_server_init, get_config, get_loggers, main
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
 
 def _create_web_server(
-    async_runner,
-    server_logger,
-    listen_address,
-    listen_port,
-    disable_keep_alive,
-    debug_web_server,
-    enable_dynamic_cors,
+    async_runner: AsyncRunner,
+    server_logger: Logger,
+    listen_address: str,
+    listen_port: int,
+    disable_keep_alive: bool,
+    debug_web_server: bool,
+    enable_dynamic_cors: bool,
     config: configparser.ConfigParser,
-):
+) -> MessageServer:
     # Create the server, but don't start it yet
     server = WebMessageServer(
         async_runner=async_runner,

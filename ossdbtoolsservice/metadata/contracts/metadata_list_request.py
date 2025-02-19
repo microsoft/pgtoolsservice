@@ -14,10 +14,10 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class MetadataListParameters(Serializable):
-    owner_uri: str
+    owner_uri: str | None
 
-    def __init__(self):
-        self.owner_uri: str = None
+    def __init__(self) -> None:
+        self.owner_uri = None
 
 
 class MetadataListResponse:

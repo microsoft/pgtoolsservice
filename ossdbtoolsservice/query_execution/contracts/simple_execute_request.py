@@ -13,12 +13,12 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class SimpleExecuteRequest(Serializable):
-    owner_uri: str
-    query_string: str
+    owner_uri: str | None
+    query_string: str | None
 
-    def __init__(self):
-        self.owner_uri: str = None
-        self.query_string: str = None
+    def __init__(self) -> None:
+        self.owner_uri = None
+        self.query_string = None
 
 
 class SimpleExecuteResponse:
@@ -28,7 +28,7 @@ class SimpleExecuteResponse:
 
     def __init__(
         self, rows: list[list[DbCellValue]], row_count: int, column_info: list[DbColumn]
-    ):
+    ) -> None:
         self.rows = rows
         self.row_count = row_count
         self.column_info = column_info

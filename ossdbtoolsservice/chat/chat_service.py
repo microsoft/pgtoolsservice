@@ -8,6 +8,10 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from logging import Logger
 
+from semantic_kernel.connectors.ai import (
+    PromptExecutionSettings,
+)
+from semantic_kernel.connectors.ai.chat_completion_client_base import ChatCompletionClientBase
 from semantic_kernel.connectors.ai.function_choice_behavior import (
     FunctionChoiceBehavior,
 )
@@ -132,6 +136,8 @@ class ChatService(Service):
 
         kernel = Kernel()
 
+        chat_completion: ChatCompletionClientBase
+        execution_settings: PromptExecutionSettings
         if self._use_azure_openai:
             chat_completion = AzureChatCompletion()
             execution_settings = AzureChatPromptExecutionSettings(

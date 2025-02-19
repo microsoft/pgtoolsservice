@@ -4,8 +4,9 @@
 # --------------------------------------------------------------------------------------------
 
 from enum import Enum
+from typing import Any
 
-import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.utils import serialization
 
 
 class JSONRPCMessageType(Enum):
@@ -17,32 +18,34 @@ class JSONRPCMessageType(Enum):
 
 class JSONRPCMessage:
     """
-    Internal representation of a JSON RPC message. 
+    Internal representation of a JSON RPC message.
     Provides logic for converting back and forth from dictionary
     """
 
     # CONSTRUCTORS #########################################################
     @classmethod
-    def create_error(cls, msg_id, code, message, data):
+    def create_error(
+        cls, msg_id: str, code: int, message: str, data: Any
+    ) -> "JSONRPCMessage":
         error = {"code": code, "message": message, "data": data}
         return cls(JSONRPCMessageType.ResponseError, msg_id=msg_id, msg_error=error)
 
     @classmethod
-    def create_notification(cls, method, params):
+    def create_notification(cls, method: str, params: Any) -> "JSONRPCMessage":
         return cls(JSONRPCMessageType.Notification, msg_method=method, msg_params=params)
 
     @classmethod
-    def create_request(cls, msg_id, method, params):
+    def create_request(cls, msg_id: str, method: str, params: Any) -> "JSONRPCMessage":
         return cls(
             JSONRPCMessageType.Request, msg_id=msg_id, msg_method=method, msg_params=params
         )
 
     @classmethod
-    def create_response(cls, msg_id, result):
+    def create_response(cls, msg_id: str, result: Any) -> "JSONRPCMessage":
         return cls(JSONRPCMessageType.ResponseSuccess, msg_id=msg_id, msg_result=result)
 
     @classmethod
-    def from_dictionary(cls, msg_dict) -> "JSONRPCMessage":
+    def from_dictionary(cls, msg_dict: dict[str, Any]) -> "JSONRPCMessage":
         """
         Decomposes a dictionary from a JSON RPC message into components with light validation
         :param msg_dict: Dictionary of components from deserializing a JSON RPC message
@@ -84,12 +87,12 @@ class JSONRPCMessage:
 
     def __init__(
         self,
-        msg_type,
-        msg_id=None,
-        msg_method=None,
-        msg_params=None,
-        msg_result=None,
-        msg_error=None,
+        msg_type: JSONRPCMessageType,
+        msg_id: str | None = None,
+        msg_method: str | None = None,
+        msg_params: dict[str, Any] | None = None,
+        msg_result: Any | None = None,
+        msg_error: dict[str, Any] | None = None,
     ):
         self._message_type = msg_type
         self._message_id = msg_id
@@ -100,50 +103,50 @@ class JSONRPCMessage:
 
     # PROPERTIES ###########################################################
     @property
-    def message_id(self):
+    def message_id(self) -> str | None:
         return self._message_id
 
     @property
-    def message_method(self):
+    def message_method(self) -> str | None:
         return self._message_method
 
     @property
-    def message_params(self):
+    def message_params(self) -> dict[str, Any] | None:
         return self._message_params
 
     @property
-    def message_result(self):
+    def message_result(self) -> Any | None:
         return self._message_result
 
     @property
-    def message_error(self):
+    def message_error(self) -> dict[str, Any] | None:
         return self._message_error
 
     @property
-    def message_type(self):
+    def message_type(self) -> JSONRPCMessageType:
         return self._message_type
 
     @property
-    def dictionary(self):
-        message_base = {"jsonrpc": "2.0"}
+    def dictionary(self) -> dict[str, Any] | None:
+        message_base: dict[str, Any] = {"jsonrpc": "2.0"}
 
         if self._message_type is JSONRPCMessageType.Request:
             message_base["method"] = self._message_method
-            message_base["params"] = utils.serialization.convert_to_dict(self._message_params)
+            message_base["params"] = serialization.convert_to_dict(self._message_params)
             message_base["id"] = self._message_id
             return message_base
 
         if self._message_type is JSONRPCMessageType.ResponseSuccess:
-            message_base["result"] = utils.serialization.convert_to_dict(self._message_result)
+            message_base["result"] = serialization.convert_to_dict(self._message_result)
             message_base["id"] = self._message_id
             return message_base
 
         if self._message_type is JSONRPCMessageType.Notification:
             message_base["method"] = self._message_method
-            message_base["params"] = utils.serialization.convert_to_dict(self._message_params)
+            message_base["params"] = serialization.convert_to_dict(self._message_params)
             return message_base
 
         if self._message_type is JSONRPCMessageType.ResponseError:
-            message_base["error"] = utils.serialization.convert_to_dict(self._message_error)
+            message_base["error"] = serialization.convert_to_dict(self._message_error)
             message_base["id"] = self._message_id
             return message_base

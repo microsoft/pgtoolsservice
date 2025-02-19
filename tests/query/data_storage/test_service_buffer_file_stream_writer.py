@@ -5,7 +5,6 @@
 
 import datetime
 import io
-import struct
 import unittest
 import uuid
 from unittest import mock
@@ -29,12 +28,6 @@ class TestServiceBufferFileStreamWriter(unittest.TestCase):
 
     def get_expected_length_with_additional_buffer_for_size(self, test_value_length: int):
         return TestServiceBufferFileStreamWriter.SIZE_BUFFER_LENGTH + test_value_length
-
-    def test_write_to_file(self):
-        val = 5
-        byte_array = bytearray(struct.pack("i", val))
-        res = self._writer._write_to_file(self._file_stream, byte_array)
-        self.assertEqual(res, 4)
 
     def test_write_null(self):
         res = self._writer._write_null()

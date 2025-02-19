@@ -46,6 +46,10 @@ class RequestContext(HandlerContext):
     def send_error(self, message: str, data: Any = None, code: int = 0) -> None:
         self.server.send_error(self.message_id, message, data, code)
 
+    def send_unhandled_error_response(self, ex: Exception) -> None:
+        """Send response for any unhandled exceptions"""
+        self.send_error(f"Unhandled exception: {str(ex)}")
+
 
 class NotificationContext(HandlerContext):
     """

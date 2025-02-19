@@ -56,9 +56,7 @@ def _connection_details() -> tuple[ConnectionDetails, str]:
         "user": TEST_USER,
         "port": TEST_PORT,
     }
-    session_uri = ObjectExplorerService._generate_session_uri(
-        param, constants.PG_PROVIDER_NAME
-    )
+    session_uri = ObjectExplorerService._generate_session_uri(param)
     return param, session_uri
 
 
@@ -143,16 +141,12 @@ class TestObjectExplorer(unittest.TestCase):
             # If: I generate a session URI from params that are missing a value
             # Then: I should get an exception
             with self.assertRaises(ValueError):
-                ObjectExplorerService._generate_session_uri(
-                    param_set, constants.PG_PROVIDER_NAME
-                )
+                ObjectExplorerService._generate_session_uri(param_set)
 
     def test_generate_uri_valid_params(self) -> None:
         # If: I generate a session URI from a valid connection details object
         params, session_uri = _connection_details()
-        output = ObjectExplorerService._generate_session_uri(
-            params, constants.PG_PROVIDER_NAME
-        )
+        output = ObjectExplorerService._generate_session_uri(params)
 
         # Then: The output should be a properly formed URI
         parse_result = url_parse.urlparse(output)

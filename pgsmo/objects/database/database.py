@@ -3,32 +3,33 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional  # noqa
+from typing import Any, Optional
 
-from smo.common.node_object import NodeCollection, NodeObject
-from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
-from pgsmo.objects.server import server as s  # noqa
-from pgsmo.objects.schema.schema import Schema
 import smo.utils.templating as templating
+from ossdbtoolsservice.driver import ServerConnection
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.datatype.datatype import DataType
+from pgsmo.objects.extension.extension import Extension
 from pgsmo.objects.functions.function import Function
 from pgsmo.objects.functions.procedure import Procedure
 from pgsmo.objects.functions.trigger_function import TriggerFunction
+from pgsmo.objects.schema.schema import Schema
 from pgsmo.objects.sequence.sequence import Sequence
+from pgsmo.objects.server import server as s
 from pgsmo.objects.table.table import Table
-from pgsmo.objects.view.view import View
 from pgsmo.objects.view.materialized_view import MaterializedView
-from pgsmo.objects.extension.extension import Extension
-
-from ossdbtoolsservice.driver import ServerConnection  # noqa
+from pgsmo.objects.view.view import View
+from smo.common.node_object import NodeCollection, NodeObject
+from smo.common.scripting_mixins import ScriptableCreate, ScriptableDelete
 
 
 class Database(NodeObject, ScriptableCreate, ScriptableDelete):
     TEMPLATE_ROOT = templating.get_template_root(__file__, "templates")
 
     @classmethod
-    def _from_node_query(cls, server: "s.Server", parent: None, **kwargs) -> "Database":
+    def _from_node_query(
+        cls, server: "s.Server", parent: Optional[NodeObject] = None, **kwargs: Any
+    ) -> "Database":
         """
         Creates a new Database object based on the results from a query to lookup databases
         :param server: Server that owns the database
@@ -57,7 +58,7 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
         db._datlastsysoid = kwargs["datlastsysoid"]
         return db
 
-    def __init__(self, server: "s.Server", name: str):
+    def __init__(self, server: "s.Server", name: str) -> None:
         """
         Initializes a new instance of a database
         """
@@ -110,7 +111,13 @@ class Database(NodeObject, ScriptableCreate, ScriptableDelete):
             return self._connection
         else:
             # If we do not have a connection to the db, we create a new one
-            connection: ServerConnection = self._server.db_connection_callback(self.name)
+            if self._server.db_connection_callback is None:
+                raise ValueError("Unable to create connection")
+            connection: ServerConnection | None = self._server.db_connection_callback(
+                self.name
+            )
+            if connection is None:
+                raise ValueError("Unable to create connection")
             if connection.database_name == self.name:
                 self._connection = connection
                 return self._connection

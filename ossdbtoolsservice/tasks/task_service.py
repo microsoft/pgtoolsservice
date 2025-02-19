@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-"""This module holds the task service, 
+"""This module holds the task service,
 which supports management and tracking of active tasks"""
 
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
@@ -19,11 +19,11 @@ from ossdbtoolsservice.tasks.contracts import (
 class TaskService(Service):
     """Manage long-running tasks"""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        super().__init__()
         self._task_map: dict[str, Task] = {}
-        self._service_provider = None
 
-    def register(self, service_provider: ServiceProvider):
+    def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
 
         # Register the handlers for the service
@@ -38,8 +38,12 @@ class TaskService(Service):
         self, request_context: RequestContext, params: CancelTaskParameters
     ) -> None:
         """Respond to tasks/canceltask requests by canceling the requested task"""
+        task_id = params.task_id
+        if task_id is None:
+            request_context.send_response(False)
+            return
         try:
-            request_context.send_response(self._task_map[params.task_id].cancel())
+            request_context.send_response(self._task_map[task_id].cancel())
         except KeyError:
             request_context.send_response(False)
 

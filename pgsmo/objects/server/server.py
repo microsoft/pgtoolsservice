@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, List, Mapping, Optional, Tuple, Callable  # noqa
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Callable  # noqa
 from urllib.parse import ParseResult, urlparse, quote_plus  # noqa
 
 from ossdbtoolsservice.driver import ServerConnection
@@ -14,20 +14,21 @@ from pgsmo.objects.database.database import Database
 from pgsmo.objects.role.role import Role
 from pgsmo.objects.tablespace.tablespace import Tablespace
 import smo.utils as utils
+import smo.utils.templating as templating
 
 SEARCH_PATH_QUERY = "SELECT * FROM unnest(current_schemas(true))"
 SEARCH_PATH_QUERY_FALLBACK = "SELECT * FROM current_schemas(true)"
 
 
 class Server:
-    TEMPLATE_ROOT = utils.templating.get_template_root(__file__, "templates")
+    TEMPLATE_ROOT = templating.get_template_root(__file__, "templates")
 
     # CONSTRUCTOR ##########################################################
     def __init__(
         self,
         conn: ServerConnection,
-        db_connection_callback: Callable[[str], ServerConnection] = None,
-    ):
+        db_connection_callback: Callable[[str], ServerConnection | None] | None = None,
+    ) -> None:
         """
         Initializes a server object using the provided connection
         :param conn: a connection object
@@ -65,7 +66,7 @@ class Server:
         return self._conn
 
     @property
-    def db_connection_callback(self):
+    def db_connection_callback(self) -> Callable[[str], ServerConnection | None] | None:
         """Connection to the server/db that this object will use"""
         return self._db_connection_callback
 
@@ -76,7 +77,7 @@ class Server:
 
     @property
     def in_recovery(self) -> Optional[bool]:
-        """Whether or not the server is in recovery mode. 
+        """Whether or not the server is in recovery mode.
         If None, value was not loaded from server"""
         return self._recovery_props.get("inrecovery")
 
@@ -111,7 +112,7 @@ class Server:
 
     @property
     def wal_paused(self) -> Optional[bool]:
-        """Whether or not the Write-Ahead Log (WAL) is paused. 
+        """Whether or not the Write-Ahead Log (WAL) is paused.
         If None, value was not loaded from server"""
         return self._recovery_props.get("isreplaypaused")
 
@@ -139,7 +140,7 @@ class Server:
     @property
     def search_path(self) -> NodeCollection[str]:
         """
-        The search_path for the current role. 
+        The search_path for the current role.
         Defined at the server level as it's a global property,
         and as a collection as it is a list of schema names
         """
@@ -198,15 +199,15 @@ class Server:
         except Exception:
             return None
 
-    def find_table(self, metadata):
+    def find_table(self, metadata) -> None | Any:
         """Find the table in the server to script as"""
         return self.find_schema_child_object("tables", metadata)
 
-    def find_function(self, metadata):
+    def find_function(self, metadata) -> None | Any:
         """Find the function in the server to script as"""
         return self.find_schema_child_object("functions", metadata)
 
-    def find_procedure(self, metadata):
+    def find_procedure(self, metadata) -> None | Any:
         """Find the procedure in the server to script as"""
         return self.find_schema_child_object("procedures", metadata)
 
@@ -245,11 +246,11 @@ class Server:
         return self.find_schema_child_object("datatypes", metadata)
 
     def find_index(self, metadata):
-        """Find an index in the server. Indexes are always children of either tables 
+        """Find an index in the server. Indexes are always children of either tables
         or materialized views"""
         try:
             idx_name = metadata.name
-            # For table_objects, the schema key in metadata stores "schema.table_name". 
+            # For table_objects, the schema key in metadata stores "schema.table_name".
             # See get_node_info
             schema_name, table_or_mv_name = metadata.schema.split(".")
 
@@ -290,7 +291,7 @@ class Server:
         """Find a trigger in the server. Triggers are always children of tables"""
         try:
             trigger_name = metadata.name
-            # For table_objects, the schema key in metadata stores "schema.table_name". 
+            # For table_objects, the schema key in metadata stores "schema.table_name".
             # See get_node_info
             schema_name, table_name = metadata.schema.split(".")
 
@@ -317,7 +318,9 @@ class Server:
         """Find a trigger function in the server"""
         return self.find_schema_child_object("trigger_functions", metadata)
 
-    def find_schema_child_object(self, prop_name: str, metadata):
+    def find_schema_child_object(
+        self, prop_name: str, metadata: ObjectMetadata
+    ) -> None | Any:
         """
         Find an object that is a child of a schema object.
         :param prop_name: name of the property used to query for objects

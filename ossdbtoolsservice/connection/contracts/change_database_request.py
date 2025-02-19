@@ -11,17 +11,17 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class ChangeDatabaseRequestParams(Serializable):
-    owner_uri: str
-    new_database: str
+    owner_uri: str | None
+    new_database: str | None
     connection: Optional[ConnectionDetails]
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[ConnectionDetails]]:
         return {"connection": ConnectionDetails}
 
-    def __init__(self, owner_uri: str = None, new_database: str = None):
-        self.owner_uri: str = owner_uri
-        self.new_database: str = new_database
+    def __init__(self, owner_uri: str | None = None, new_database: str | None = None) -> None:
+        self.owner_uri = owner_uri
+        self.new_database = new_database
 
 
 CHANGE_DATABASE_REQUEST = IncomingMessageConfiguration(

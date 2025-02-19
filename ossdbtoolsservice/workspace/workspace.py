@@ -4,10 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 import os
-from typing import List, Optional  # noqa
-from urllib.parse import ParseResult, unquote, urlparse  # noqa
+from typing import Optional
+from urllib.parse import ParseResult, unquote, urlparse
 
-import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.utils import validate
 from ossdbtoolsservice.workspace.script_file import ScriptFile
 
 
@@ -17,7 +17,7 @@ class Workspace:
     Also helps to navigate references between script files.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._workspace_files: dict = {}
 
     # PROPERTIES ###########################################################
@@ -35,7 +35,7 @@ class Workspace:
         :param file_uri: URI to identify the script file as provided by the client
         :return: The ScriptFile that was closed, or None if the file is not open
         """
-        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
+        validate.is_not_none_or_whitespace("file_uri", file_uri)
         file_uri = unquote(file_uri)
 
         return self._workspace_files.pop(file_uri, None)
@@ -46,7 +46,7 @@ class Workspace:
         :param file_uri: URI for the file, as provided by the client
         :return: Flag indicating if the file is tracked in workspace
         """
-        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
+        validate.is_not_none_or_whitespace("file_uri", file_uri)
         file_uri = unquote(file_uri)
 
         return file_uri in self._workspace_files
@@ -60,19 +60,19 @@ class Workspace:
         :param initial_buffer: Optionally the initial contents of the file
         :return: ScriptFile representing the file that was opened
         """
-        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
+        validate.is_not_none_or_whitespace("file_uri", file_uri)
 
         # Validate that the path is not an SCM path
         if self._is_scm_path(file_uri):
             return None
 
         # Resolve the full file path
-        resolved_file_path: str = self._resolve_file_path(file_uri)
+        resolved_file_path: str | None = self._resolve_file_path(file_uri)
 
         # If the file is already loaded in the workspace, just return it
 
         file_uri = unquote(file_uri)
-        script_file: ScriptFile = self.get_file(file_uri)
+        script_file: ScriptFile | None = self.get_file(file_uri)
 
         if script_file is not None:
             return script_file
@@ -94,13 +94,14 @@ class Workspace:
         self._workspace_files[file_uri] = script_file
         return script_file
 
-    def get_file(self, file_uri: str) -> [ScriptFile, None]:
+    def get_file(self, file_uri: str | None) -> ScriptFile | None:
         """
         Gets an open file in the workspace. If the file isn't open, return None
         :param file_uri: URI to identify the file, provided by the client
         :return: ScriptFile representing the file that was loaded, None if the file isn't open
         """
-        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
+        validate.is_not_none_or_whitespace("file_uri", file_uri)
+        assert file_uri is not None  # For type checking
         file_uri = unquote(file_uri)
         return self._workspace_files.get(file_uri)
 
@@ -120,7 +121,7 @@ class Workspace:
         )
 
     @staticmethod
-    def _is_scm_path(file_uri: str):
+    def _is_scm_path(file_uri: str) -> bool:
         """
         If the URI is prefixed with git: then we want to skip processing the file
         :param file_uri: URI for the file to check

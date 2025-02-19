@@ -4,8 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from typing import Optional  # noqa
-
+from typing import Optional
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
@@ -14,29 +13,29 @@ from ossdbtoolsservice.serialization import Serializable
 class EditInitializerFilter(Serializable):
     limit_results: Optional[int]
 
-    def __init__(self):
-        self.limit_results: Optional[int] = None
+    def __init__(self) -> None:
+        self.limit_results = None
 
 
 class InitializeEditParams(Serializable):
-    owner_uri: str
-    schema_name: str
-    object_type: str
-    object_name: str
-    query_string: str
-    filters: EditInitializerFilter
+    owner_uri: str | None
+    schema_name: str | None
+    object_type: str | None
+    object_name: str | None
+    query_string: str | None
+    filters: EditInitializerFilter | None
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[EditInitializerFilter]]:
         return {"filters": EditInitializerFilter}
 
-    def __init__(self):
-        self.owner_uri: str = None
-        self.schema_name: str = None
-        self.object_type: str = None
-        self.object_name: str = None
-        self.query_string: str = None
-        self.filters: EditInitializerFilter = None
+    def __init__(self) -> None:
+        self.owner_uri = None
+        self.schema_name = None
+        self.object_type = None
+        self.object_name = None
+        self.query_string = None
+        self.filters = None
 
 
 INITIALIZE_EDIT_REQUEST = IncomingMessageConfiguration(

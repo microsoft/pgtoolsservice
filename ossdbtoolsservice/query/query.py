@@ -4,19 +4,28 @@
 # --------------------------------------------------------------------------------------------
 
 from enum import Enum
-from typing import Callable, Dict, List, Optional  # noqa
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional  # noqa
 
 import sqlparse
 
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.query import Batch, BatchEvents, ResultSetStorageType, create_batch
 from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
+from ossdbtoolsservice.query.contracts.result_set_subset import ResultSetSubset
 from ossdbtoolsservice.query.data_storage import FileStreamFactory
+
+if TYPE_CHECKING:
+    from ossdbtoolsservice.query_execution.contracts.execute_request import (
+        ExecutionPlanOptions,
+    )
 
 
 class QueryEvents:
     def __init__(
-        self, on_query_started=None, on_query_completed=None, batch_events: BatchEvents = None
+        self,
+        on_query_started: Callable | None = None,
+        on_query_completed: Callable | None = None,
+        batch_events: BatchEvents | None = None,
     ) -> None:
         self.on_query_started = on_query_started
         self.on_query_completed = on_query_completed
@@ -32,18 +41,18 @@ class ExecutionState(Enum):
 class QueryExecutionSettings:
     def __init__(
         self,
-        execution_plan_options,
+        execution_plan_options: "ExecutionPlanOptions",
         result_set_storage_type: ResultSetStorageType = ResultSetStorageType.FILE_STORAGE,
     ) -> None:
         self._execution_plan_options = execution_plan_options
         self._result_set_storage_type = result_set_storage_type
 
     @property
-    def execution_plan_options(self):
+    def execution_plan_options(self) -> "ExecutionPlanOptions":
         return self._execution_plan_options
 
     @property
-    def result_set_storage_type(self):
+    def result_set_storage_type(self) -> ResultSetStorageType:
         return self._result_set_storage_type
 
 
@@ -130,7 +139,7 @@ class Query:
     def current_batch_index(self) -> int:
         return self._current_batch_index
 
-    def execute(self, connection: ServerConnection, retry_state=False):
+    def execute(self, connection: ServerConnection, retry_state: bool = False) -> None:
         """
         Execute the query using the given connection
 
@@ -160,6 +169,7 @@ class Query:
                     break
 
                 batch.execute(connection)
+
         finally:
             # We can only set autocommit when the connection is open.
             if connection.open and connection.transaction_is_idle:
@@ -168,7 +178,9 @@ class Query:
                 self._disable_auto_commit = False
             self._execution_state = ExecutionState.EXECUTED
 
-    def get_subset(self, batch_index: int, start_index: int, end_index: int):
+    def get_subset(
+        self, batch_index: int, start_index: int, end_index: int
+    ) -> ResultSetSubset:
         if batch_index < 0 or batch_index >= len(self._batches):
             raise IndexError(
                 "Batch index cannot be less than 0 or greater than the number of batches"
@@ -180,15 +192,19 @@ class Query:
         self,
         params: SaveResultsRequestParams,
         file_factory: FileStreamFactory,
-        on_success,
-        on_failure,
-    ):
-        if params.batch_index < 0 or params.batch_index >= len(self.batches):
+        on_success: Callable[[], None],
+        on_failure: Callable[[Exception], None],
+    ) -> None:
+        batch_index = params.batch_index
+        if batch_index is None:
+            raise ValueError("Batch index cannot be None")
+
+        if batch_index < 0 or batch_index >= len(self.batches):
             raise IndexError(
                 "Batch index cannot be less than 0 or greater than the number of batches"
             )
 
-        self.batches[params.batch_index].save_as(params, file_factory, on_success, on_failure)
+        self.batches[batch_index].save_as(params, file_factory, on_success, on_failure)
 
 
 def compute_selection_data_for_batches(
@@ -222,7 +238,7 @@ def compute_selection_data_for_batches(
         end_line_num = line_map[end_line_index]
         end_col_num = end_index - end_line_index
 
-        # Create a SelectionData object with the results and update the search offset 
+        # Create a SelectionData object with the results and update the search offset
         # to exclude batches that have been processed
         selection_data.append(
             SelectionData(start_line_num, start_col_num, end_line_num, end_col_num)

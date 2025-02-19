@@ -6,6 +6,8 @@
 import unittest
 from unittest import mock
 
+from psycopg import sql
+
 import tests.utils as utils
 from ossdbtoolsservice.query.batch import (
     Batch,
@@ -60,9 +62,9 @@ class TestBatch(unittest.TestCase):
 
         self.assertEqual(getattr(batch, property_name), expected_value)
 
-    def test_execute_calls_execute_on_cursor(self):
+    def test_execute_calls_execute_on_cursor(self) -> None:
         self.create_and_execute_batch(Batch)
-        self._cursor.execute.assert_called_once_with(self._batch_text)
+        self._cursor.execute.assert_called_once_with(sql.SQL(self._batch_text))
 
     def test_execute_calls_read_result_to_end_on_result_set(self):
         batch = self.create_and_execute_batch(Batch)

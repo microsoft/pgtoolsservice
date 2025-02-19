@@ -9,10 +9,10 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class DisconnectRequestParams(Serializable):
-    owner_uri: str
-    type: ConnectionType
+    owner_uri: str | None
+    type: ConnectionType | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.owner_uri = None
         self.type = None
 

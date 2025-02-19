@@ -9,21 +9,25 @@ import json
 import random
 import string
 from enum import Enum
+from logging import Logger
 from typing import Any
 
+from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.utils.serialization import convert_to_dict
 
 
-def generate_requests_markdown(server, logger, output_file="docs/Requests.md"):
+def generate_requests_markdown(
+    server: MessageServer, logger: Logger, output_file: str = "docs/Requests.md"
+) -> None:
     # Dictionary to store requests grouped by service
-    services_dict = {}
+    services_dict: dict[str, Any] = {}
 
     # Loop over request handlers create a sample request for each and serialize it to JSON
     for method, req_handler in server._request_handlers.items():
         try:
             example_instance = None
-            if req_handler.class_:
-                example_instance = create_example_instance(req_handler.class_)
+            if req_handler.param_class:
+                example_instance = create_example_instance(req_handler.param_class)
 
             # Construct the JSON-RPC request structure
             json_rpc_request = {
@@ -36,7 +40,7 @@ def generate_requests_markdown(server, logger, output_file="docs/Requests.md"):
             # Convert the JSON-RPC request to a JSON string
             json_rpc_request_str = json.dumps(convert_to_dict(json_rpc_request), indent=4)
             logger.info(
-                f"JSON-RPC request for {req_handler.class_} in "
+                f"JSON-RPC request for {req_handler.param_class} in "
                 f"'{method}':\n {json_rpc_request_str}"
             )
 
@@ -57,13 +61,13 @@ def generate_requests_markdown(server, logger, output_file="docs/Requests.md"):
             services_dict[service_name]["index"].append(f"- [{method}](#{anchor_link})")
             services_dict[service_name]["requests"].append(
                 f"## {method}\n- **Class**: "
-                f"{req_handler.class_.__name__ if req_handler.class_ else 'None'}\n"
+                f"{req_handler.param_class.__name__ if req_handler.param_class else 'None'}\n"
                 f"- **Method**: {method}\n- **Request JSON**:\n"
                 f"```json\n{json_rpc_request_str}\n```"
             )  # noqa
         except TypeError as e:
             logger.error(
-                f"Could not create example instance for {req_handler.class_} "
+                f"Could not create example instance for {req_handler.param_class} "
                 f"in '{method}': {e}"
             )
 
@@ -108,7 +112,7 @@ def create_example_instance(cls: type) -> Any:
     if hasattr(cls, "__init__"):
         # Prepare constructor arguments with mock values
         init_args = {}
-        init_signature = cls.__init__.__annotations__
+        init_signature = cls.__init__.__annotations__  # type: ignore
 
         # Populate constructor arguments based on type hints
         for arg_name, arg_type in init_signature.items():
@@ -119,11 +123,11 @@ def create_example_instance(cls: type) -> Any:
         if isinstance(cls, type) and issubclass(cls, Enum):
             instance = list(cls)[0]  # Return the first value of the enum
         else:
-            instance = cls(**init_args)
+            instance = cls(**init_args)  # type: ignore
 
         # Handle any custom attributes
         if hasattr(cls, "get_child_serializable_types"):
-            child_types = cls.get_child_serializable_types()
+            child_types = cls.get_child_serializable_types()  # type: ignore
             for attr, child_cls in child_types.items():
                 setattr(instance, attr, create_example_instance(child_cls))
 

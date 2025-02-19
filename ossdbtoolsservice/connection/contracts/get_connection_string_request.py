@@ -10,10 +10,10 @@ from ossdbtoolsservice.serialization import Serializable
 class GetConnectionStringParams(Serializable):
     """Parameters for Getting Connection String request"""
 
-    owner_uri: str
+    owner_uri: str | None
 
-    def __init__(self, owner_uri: str = None):
-        self.owner_uri: str = owner_uri
+    def __init__(self, owner_uri: str | None = None) -> None:
+        self.owner_uri = owner_uri
 
 
 GET_CONNECTION_STRING_REQUEST = IncomingMessageConfiguration(

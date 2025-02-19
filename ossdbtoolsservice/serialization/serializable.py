@@ -4,29 +4,36 @@
 # --------------------------------------------------------------------------------------------
 
 import enum
-from typing import Any
+from typing import Any, TypeVar
 
 import inflection
+
+T = TypeVar("T", bound="Serializable")
 
 
 class Serializable:
     @classmethod
-    def from_dict(cls, dictionary: dict) -> Any:
+    def from_dict(cls: type[T], dictionary: dict) -> T:
         kwargs = cls.get_child_serializable_types()
         ignore_extra_attributes = cls.ignore_extra_attributes()
 
         return convert_from_dict(cls, dictionary, ignore_extra_attributes, **kwargs)
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[Any]]:
         return {}
 
     @classmethod
-    def ignore_extra_attributes(cls):
+    def ignore_extra_attributes(cls) -> bool:
         return False
 
 
-def convert_from_dict(class_, dictionary, ignore_extra_attributes=False, **kwargs):
+def convert_from_dict(
+    class_: type[T],
+    dictionary: dict[str, Any],
+    ignore_extra_attributes: bool = False,
+    **kwargs: Any,
+) -> T:
     """
     Converts a class from a json-derived dictionary using attribute name normalization.
     Attributes described in **kwargs will be omitted from automatic

@@ -7,6 +7,9 @@
 
 import enum
 
+# Avoid name conflict with BackupInfo.type
+from typing import Type  # noqa: UP035
+
 from ossdbtoolsservice.capabilities.contracts import (
     CategoryValue,
     FeatureMetadataProvider,
@@ -28,102 +31,102 @@ class BackupType(enum.Enum):
 class BackupInfo(Serializable):
     """Options for a requested backup"""
 
-    type: BackupType
-    path: str
-    jobs: int
-    compress: int
-    data_only: bool
-    blobs: bool
-    clean: bool
-    create: bool
-    encoding: str
-    schema: str
-    exclude_schema: str
-    oids: bool
-    no_owner: bool
-    schema_only: bool
-    superuser: str
-    table: str
-    exclude_table: str
-    no_privileges: bool
-    column_inserts: bool
-    disable_dollar_quoting: bool
-    disable_triggers: bool
-    enable_row_security: bool
-    exclude_table_data: str
-    if_exists: bool
-    inserts: bool
-    no_security_labels: bool
-    no_synchronized_snapshots: bool
-    no_tablespaces: bool
-    no_unlogged_table_data: bool
-    quote_all_identifiers: bool
-    section: str
-    serializable_deferrable: bool
-    snapshot: str
-    strict_names: bool
-    use_set_session_authorization: bool
+    type: BackupType | None
+    path: str | None
+    jobs: int | None
+    compress: int | None
+    data_only: bool | None
+    blobs: bool | None
+    clean: bool | None
+    create: bool | None
+    encoding: str | None
+    schema: str | None
+    exclude_schema: str | None
+    oids: bool | None
+    no_owner: bool | None
+    schema_only: bool | None
+    superuser: str | None
+    table: str | None
+    exclude_table: str | None
+    no_privileges: bool | None
+    column_inserts: bool | None
+    disable_dollar_quoting: bool | None
+    disable_triggers: bool | None
+    enable_row_security: bool | None
+    exclude_table_data: str | None
+    if_exists: bool | None
+    inserts: bool | None
+    no_security_labels: bool | None
+    no_synchronized_snapshots: bool | None
+    no_tablespaces: bool | None
+    no_unlogged_table_data: bool | None
+    quote_all_identifiers: bool | None
+    section: str | None
+    serializable_deferrable: bool | None
+    snapshot: str | None
+    strict_names: bool | None
+    use_set_session_authorization: bool | None
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, Type[BackupType]]:  # noqa: UP006
         return {"type": BackupType}
 
     @classmethod
-    def ignore_extra_attributes(cls):
+    def ignore_extra_attributes(cls) -> bool:
         return True
 
-    def __init__(self):
-        self.type: BackupType = None
-        self.path: str = None
-        self.jobs: int = None
-        self.compress: int = None
-        self.data_only: bool = None
-        self.blobs: bool = None
-        self.clean: bool = None
-        self.create: bool = None
-        self.encoding: str = None
-        self.schema: str = None
-        self.exclude_schema: str = None
-        self.oids: bool = None
-        self.no_owner: bool = None
-        self.schema_only: bool = None
-        self.superuser: str = None
-        self.table: str = None
-        self.exclude_table: str = None
-        self.no_privileges: bool = None
-        self.column_inserts: bool = None
-        self.disable_dollar_quoting: bool = None
-        self.disable_triggers: bool = None
-        self.enable_row_security: bool = None
-        self.exclude_table_data: str = None
-        self.if_exists: bool = None
-        self.inserts: bool = None
-        self.no_security_labels: bool = None
-        self.no_synchronized_snapshots: bool = None
-        self.no_tablespaces: bool = None
-        self.no_unlogged_table_data: bool = None
-        self.quote_all_identifiers: bool = None
-        self.section: str = None
-        self.serializable_deferrable: bool = None
-        self.snapshot: str = None
-        self.strict_names: bool = None
-        self.use_set_session_authorization: bool = None
+    def __init__(self) -> None:
+        self.type = None
+        self.path = None
+        self.jobs = None
+        self.compress = None
+        self.data_only = None
+        self.blobs = None
+        self.clean = None
+        self.create = None
+        self.encoding = None
+        self.schema = None
+        self.exclude_schema = None
+        self.oids = None
+        self.no_owner = None
+        self.schema_only = None
+        self.superuser = None
+        self.table = None
+        self.exclude_table = None
+        self.no_privileges = None
+        self.column_inserts = None
+        self.disable_dollar_quoting = None
+        self.disable_triggers = None
+        self.enable_row_security = None
+        self.exclude_table_data = None
+        self.if_exists = None
+        self.inserts = None
+        self.no_security_labels = None
+        self.no_synchronized_snapshots = None
+        self.no_tablespaces = None
+        self.no_unlogged_table_data = None
+        self.quote_all_identifiers = None
+        self.section = None
+        self.serializable_deferrable = None
+        self.snapshot = None
+        self.strict_names = None
+        self.use_set_session_authorization = None
 
 
 class BackupParams(Serializable):
     """Parameters for a backup request"""
 
-    owner_uri: str
-    backup_info: BackupInfo
-    task_execution_mode: str
+    owner_uri: str | None
+    backup_info: BackupInfo | None
+    task_execution_mode: str | None
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[BackupInfo]]:
         return {"backup_info": BackupInfo}
 
-    def __init__(self):
-        self.owner_uri: str = None
-        self.backup_info: BackupInfo = None
+    def __init__(self) -> None:
+        self.owner_uri = None
+        self.backup_info = None
         self.task_execution_mode = None
 
 

@@ -57,7 +57,7 @@ class ChatCompletionResult(BaseModel):
     )
 
     @classmethod
-    def error(cls, chat_id: str, error_message: str):
+    def error(cls, chat_id: str, error_message: str) -> "ChatCompletionResult":
         return cls(
             role=None,
             content=None,
@@ -69,7 +69,7 @@ class ChatCompletionResult(BaseModel):
         )
 
     @classmethod
-    def response_part(cls, chat_id: str, role: str, content: str):
+    def response_part(cls, chat_id: str, role: str, content: str) -> "ChatCompletionResult":
         return cls(
             role=role,
             content=content,
@@ -81,7 +81,7 @@ class ChatCompletionResult(BaseModel):
         )
 
     @classmethod
-    def complete(cls, chat_id: str, reason: str):
+    def complete(cls, chat_id: str, reason: str) -> "ChatCompletionResult":
         return cls(
             role=None,
             content=None,

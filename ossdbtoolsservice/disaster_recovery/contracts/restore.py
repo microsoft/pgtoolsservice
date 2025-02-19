@@ -13,80 +13,80 @@ from ossdbtoolsservice.serialization import Serializable
 class RestoreOptions(Serializable):
     """Options for a requested restore"""
 
-    path: str
-    data_only: bool
-    clean: bool
-    create: bool
-    exit_on_error: bool
-    index: str
-    jobs: int
-    use_list: str
-    schema: str
-    no_owner: bool
-    function: str
-    schema_only: bool
-    superuser: str
-    table: str
-    trigger: str
-    no_privileges: bool
-    single_transaction: bool
-    disable_triggers: bool
-    enable_row_security: bool
-    if_exists: bool
-    no_data_for_failed_tables: bool
-    no_security_labels: bool
-    no_tablespaces: bool
-    section: str
-    strict_names: bool
-    role: str
+    path: str | None
+    data_only: bool | None
+    clean: bool | None
+    create: bool | None
+    exit_on_error: bool | None
+    index: str | None
+    jobs: int | None
+    use_list: str | None
+    schema: str | None
+    no_owner: bool | None
+    function: str | None
+    schema_only: bool | None
+    superuser: str | None
+    table: str | None
+    trigger: str | None
+    no_privileges: bool | None
+    single_transaction: bool | None
+    disable_triggers: bool | None
+    enable_row_security: bool | None
+    if_exists: bool | None
+    no_data_for_failed_tables: bool | None
+    no_security_labels: bool | None
+    no_tablespaces: bool | None
+    section: str | None
+    strict_names: bool | None
+    role: str | None
 
     @classmethod
-    def ignore_extra_attributes(cls):
+    def ignore_extra_attributes(cls) -> bool:
         return True
 
-    def __init__(self):
-        self.path: str = None
-        self.data_only: bool = None
-        self.clean: bool = None
-        self.create: bool = None
-        self.exit_on_error: bool = None
-        self.index: str = None
-        self.jobs: int = None
-        self.use_list: str = None
-        self.schema: str = None
-        self.no_owner: bool = None
-        self.function: str = None
-        self.schema_only: bool = None
-        self.superuser: str = None
-        self.table: str = None
-        self.trigger: str = None
-        self.no_privileges: bool = None
-        self.single_transaction: bool = None
-        self.disable_triggers: bool = None
-        self.enable_row_security: bool = None
-        self.if_exists: bool = None
-        self.no_data_for_failed_tables: bool = None
-        self.no_security_labels: bool = None
-        self.no_tablespaces: bool = None
-        self.section: str = None
-        self.strict_names: bool = None
-        self.role: str = None
+    def __init__(self) -> None:
+        self.path = None
+        self.data_only = None
+        self.clean = None
+        self.create = None
+        self.exit_on_error = None
+        self.index = None
+        self.jobs = None
+        self.use_list = None
+        self.schema = None
+        self.no_owner = None
+        self.function = None
+        self.schema_only = None
+        self.superuser = None
+        self.table = None
+        self.trigger = None
+        self.no_privileges = None
+        self.single_transaction = None
+        self.disable_triggers = None
+        self.enable_row_security = None
+        self.if_exists = None
+        self.no_data_for_failed_tables = None
+        self.no_security_labels = None
+        self.no_tablespaces = None
+        self.section = None
+        self.strict_names = None
+        self.role = None
 
 
 class RestoreParams(Serializable):
     """Parameters for a restore request"""
 
-    owner_uri: str
-    options: RestoreOptions
-    task_execution_mode: str
+    owner_uri: str | None
+    options: RestoreOptions | None
+    task_execution_mode: str | None
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[RestoreOptions]]:
         return {"options": RestoreOptions}
 
-    def __init__(self):
-        self.owner_uri: str = None
-        self.options: RestoreOptions = None
+    def __init__(self) -> None:
+        self.owner_uri = None
+        self.options = None
         self.task_execution_mode = None
 
 

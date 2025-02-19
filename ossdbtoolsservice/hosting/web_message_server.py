@@ -36,19 +36,19 @@ class WebMessageServer(MessageServer):
         self,
         async_runner: AsyncRunner | None,
         logger: Logger,
-        listen_address="0.0.0.0",
-        listen_port=8443,
-        disable_keep_alive=False,
-        debug_web_server=False,
+        listen_address: str = "0.0.0.0",
+        listen_port: int = 8443,
+        disable_keep_alive: bool = False,
+        debug_web_server: bool = False,
         config: ConfigParser | None = None,
         version: str = "1",
-        enable_dynamic_cors=False,
-    ):
+        enable_dynamic_cors: bool = False,
+    ) -> None:
         super().__init__(async_runner, logger, version)
         monkey.patch_all()  # Make sockets cooperative
 
         # A map of session IDs to WebSocket sids (for WebMessageServer)
-        self._active_sessions = {}
+        self._active_sessions: dict[str, str] = {}
 
         # Save settings
         self._listen_address = listen_address
@@ -98,15 +98,17 @@ class WebMessageServer(MessageServer):
         self.socketio = SocketIO(
             self.app,
             async_mode="gevent",
-            cors_allowed_origins=lambda origin: self._dynamic_cors_handler(origin),
+            # TODO: Should this just be "*" if _enable_dynamic_cors
+            # else self._allowed_origins?
+            cors_allowed_origins=lambda origin: self._dynamic_cors_handler(origin),  # type: ignore
             manage_session=True,
             logger=logger or False,
             engineio_logger=logger or False,
             ping_interval=ping_interval,
             always_connect=False,
         )
-        self.socketio.on_event("connect", self._handle_ws_connect)
-        self.socketio.on_event("disconnect", self._handle_ws_disconnect)
+        self.socketio.on_event("connect", lambda _: self._handle_ws_connect())
+        self.socketio.on_event("disconnect", lambda _: self._handle_ws_disconnect())
         self.socketio.on_event("message", self._handle_ws_request)
 
         # Create SSL context (assumes your certificates are stored relative to the base)
@@ -160,6 +162,12 @@ class WebMessageServer(MessageServer):
     # Web-specific Handlers
     # -------------------------
 
+    def _get_request_sid(self) -> str:
+        return request.sid  # type: ignore
+
+    def _get_request_namespace(self) -> str:
+        return request.namespace  # type: ignore
+
     def _handle_start_session(self) -> tuple[dict[str, str], int]:
         session_id = self._ensure_session_id()
         self._log_info(f"Session started with ID: {session_id}")
@@ -186,23 +194,26 @@ class WebMessageServer(MessageServer):
             return jsonify({"error": str(e)}), 500
 
     def _handle_ws_connect(self) -> bool:
-        self._log_info(f"WebSocket connect: sid {request.sid}")
+        sid = self._get_request_sid()
+        self._log_info(f"WebSocket connect: sid {sid}")
         session_id = session.get("session_id")
         if session_id:
-            self._active_sessions[session_id] = request.sid
+            self._active_sessions[session_id] = sid
             self._log_info(f"Client connected with session ID: {session_id}")
             return True
         else:
             self._log_warning("Session ID not found; disconnecting client.")
-            eio_sid = self._get_eio_sid(request.sid, request.namespace)
+            namespace = self._get_request_namespace()
+            eio_sid = self._get_eio_sid(sid, namespace)
             threading.Timer(1.0, self._force_disconnect, args=(eio_sid,)).start()
             return False
 
     def _handle_ws_disconnect(self) -> None:
-        self._log_info(f"WebSocket disconnect: sid {request.sid}")
+        sid = self._get_request_sid()
+        self._log_info(f"WebSocket disconnect: sid {sid}")
         session_id = None
         for s_id, sid in self._active_sessions.items():
-            if sid == request.sid:
+            if sid == sid:
                 session_id = s_id
                 break
         if session_id:
@@ -211,11 +222,13 @@ class WebMessageServer(MessageServer):
         else:
             self._log_warning("No session found for disconnecting client.")
 
-        eio_sid = self._get_eio_sid(request.sid, request.namespace)
+        namespace = self._get_request_namespace()
+        eio_sid = self._get_eio_sid(sid, namespace)
         self._force_disconnect(eio_sid)
 
-    def _handle_ws_request(self, raw_message) -> None:
-        self._log_info(f"WebSocket message: sid {request.sid}")
+    def _handle_ws_request(self, raw_message: dict[str, Any]) -> None:
+        req_sid = self._get_request_sid()
+        self._log_info(f"WebSocket message: sid {req_sid}")
         session_id = session.get("session_id")
         if not session_id:
             self.socketio.emit(
@@ -242,42 +255,42 @@ class WebMessageServer(MessageServer):
                 "error", {"result": "Error processing request!", "exception": str(e)}
             )
 
-    def webserver_started(self):
+    def webserver_started(self) -> None:
         msg = f"Web server started on {self._listen_address}:{self._listen_port}"
         self._log_info(msg)
         print(msg)
 
-    def _dynamic_cors_handler(self, origin):
+    def _dynamic_cors_handler(self, origin: str) -> bool:
         if self._enable_dynamic_cors:
             return True
         return origin in self._allowed_origins
 
-    def _global_options_handler(self, dummy):
+    def _global_options_handler(self, _: Any) -> Response:
         response = make_response("")
         origin = request.headers.get("Origin", "*")
         self._set_cors_headers(response, origin)
         return response
 
-    def _after_request_handler(self, response):
+    def _after_request_handler(self, response: Response) -> Response:
         origin = request.headers.get("Origin", "*")
         self._set_cors_headers(response, origin)
         return response
 
-    def _set_cors_headers(self, response, origin):
+    def _set_cors_headers(self, response: Response, origin: str) -> None:
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
 
-    def _ensure_session_id(self):
+    def _ensure_session_id(self) -> str:
         if "session_id" not in session:
             session["session_id"] = str(uuid.uuid4())
         return session["session_id"]
 
-    def _get_eio_sid(self, sid, namespace):
-        return self.socketio.server.manager.eio_sid_from_sid(sid, namespace)
+    def _get_eio_sid(self, sid: str, namespace: str) -> str | None:
+        return self.socketio.server.manager.eio_sid_from_sid(sid, namespace)  # type: ignore
 
-    def _force_disconnect(self, eio_sid):
+    def _force_disconnect(self, eio_sid: str | None) -> None:
         self._log_info(f"Force disconnecting WebSocket with engineio sid: {eio_sid}")
         if eio_sid:
-            self.socketio.server.eio.disconnect(eio_sid)
+            self.socketio.server.eio.disconnect(eio_sid)  # type: ignore

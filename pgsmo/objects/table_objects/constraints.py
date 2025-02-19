@@ -407,7 +407,7 @@ class PrimaryKeyConstraint(IndexConstraint):
             "tid": self.parent.oid,  # Table/view OID
             "did": self.parent.parent.oid,  # Database OID
             # Constraint type ("p" or "u" for primary or unique)
-            "constraint_type": self.constraint_type,  
+            "constraint_type": self.constraint_type,
         }
 
 
@@ -424,5 +424,5 @@ class UniqueKeyConstraint(IndexConstraint):
             "tid": self.parent.oid,  # Table/view OID
             "did": self.parent.parent.oid,  # Database OID
             # Constraint type ("p" or "u" for primary or unique)
-            "constraint_type": self.constraint_type,  
+            "constraint_type": self.constraint_type,
         }

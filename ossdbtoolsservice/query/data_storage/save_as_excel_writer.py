@@ -12,15 +12,17 @@ from ossdbtoolsservice.query.data_storage.save_as_writer import SaveAsWriter
 
 
 class SaveAsExcelWriter(SaveAsWriter):
-    def __init__(self, stream: io.BufferedWriter, params: SaveResultsRequestParams) -> None:
+    def __init__(
+        self, stream: io.BufferedWriter | io.TextIOWrapper, params: SaveResultsRequestParams
+    ) -> None:
         SaveAsWriter.__init__(self, stream, params)
 
         self._header_written = False
-        self._workbook = xlsxwriter.Workbook(self._file_stream.name)
+        self._workbook = xlsxwriter.Workbook(stream.name)
         self._worksheet = self._workbook.add_worksheet()
         self._current_row = 1
 
-    def write_row(self, row: list[DbCellValue], columns: list[DbColumn]):
+    def write_row(self, row: list[DbCellValue], columns: list[DbColumn]) -> None:
         column_start_index = self.get_start_index()
         column_end_index = self.get_end_index(columns)
 
@@ -38,5 +40,5 @@ class SaveAsExcelWriter(SaveAsWriter):
 
         self._current_row += 1
 
-    def complete_write(self):
+    def complete_write(self) -> None:
         self._workbook.close()

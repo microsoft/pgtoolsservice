@@ -4,37 +4,38 @@
 # --------------------------------------------------------------------------------------------
 import json
 import struct
+from typing import Any, Callable
 
 from ossdbtoolsservice.parsers import datatypes
 
 DECODING_METHOD = "utf-8"
 
 
-def convert_bool(value: bool):
+def convert_bool(value: bool) -> bytearray:
     return bytearray(struct.pack("?", value))
 
 
-def convert_short(value: int):
+def convert_short(value: int) -> bytearray:
     """Range of smallint in Pg is the same with short in c,
     although python type is int, but need to pack the value in short format"""
     return bytearray(struct.pack("h", value))
 
 
-def convert_int(value: int):
+def convert_int(value: int) -> bytearray:
     """Range of integer in Pg is the same with int or long in c,
     we pack the value in int format"""
     return bytearray(struct.pack("i", value))
 
 
-def convert_str(value: str):
+def convert_str(value: str) -> bytearray:
     return bytearray(value.encode())
 
 
-def convert_list(value: list):
+def convert_list(value: list) -> bytearray:
     return bytearray(json.dumps(value).encode())
 
 
-PG_DATATYPE_WRITER_MAP = {
+PG_DATATYPE_WRITER_MAP: dict[str, Callable[[Any], bytearray]] = {
     datatypes.DATATYPE_BOOL: convert_bool,
     datatypes.DATATYPE_SMALLINT: convert_short,
     datatypes.DATATYPE_INTEGER: convert_int,

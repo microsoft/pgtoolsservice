@@ -176,7 +176,9 @@ def get_loggers(log_dir: str) -> logging.Logger:
     logger = logging.getLogger("ossdbtoolsservice")
     try:
         os.makedirs(log_dir, exist_ok=True)
-        handler = logging.FileHandler(os.path.join(log_dir, "ossdbtoolsservice.log"))
+        handler: logging.Handler = logging.FileHandler(
+            os.path.join(log_dir, "ossdbtoolsservice.log")
+        )
     except Exception:
         handler = logging.NullHandler()
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -202,7 +204,7 @@ def main(
             print("Logs will be stored in ./debugpy_logs")
             os.environ["DEBUGPY_LOG_DIR"] = "./debugpy_logs"  # Path to store logs
             os.environ["GEVENT_SUPPORT"] = "True"  # Path to store logs
-            # Dynamically set the Python interpreter for debugpy 
+            # Dynamically set the Python interpreter for debugpy
             # from an environment variable or default to the current interpreter.
             python_path = os.getenv("PYTHON", default=sys.executable)
             print("Python path: " + python_path)

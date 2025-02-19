@@ -8,7 +8,7 @@ from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
 
 class MockMessageServer(MessageServer):
-    def __init__(self, async_runner: AsyncRunner):
+    def __init__(self, async_runner: AsyncRunner) -> None:
         super().__init__(async_runner, logger=None)
         self._messages: list[JSONRPCMessage] = []
         self.service_provider: ServiceProvider | None = None
@@ -30,6 +30,7 @@ class MockMessageServer(MessageServer):
             response_message = self._request_responses[message.message_method]
             response_message._message_id = message.message_id
             assert isinstance(self._response_queues, ResponseQueues)
+            assert message.message_id is not None
             queue = self._response_queues.get_queue(message.message_id)
             if not queue:
                 raise ValueError("Request message is missing ID")

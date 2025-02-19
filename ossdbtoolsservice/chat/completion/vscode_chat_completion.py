@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import sys
 from collections.abc import AsyncGenerator, Mapping
 from logging import Logger
 from typing import Any, Callable, ClassVar, Union
@@ -45,11 +44,6 @@ from .messages import (
 )
 from .vscode_chat_prompt_execution_settings import VSCodeChatPromptExecutionSettings
 
-if sys.version_info >= (3, 12):
-    from typing import override  # pragma: no cover
-else:
-    from typing_extensions import override  # pragma: no cover
-
 
 class VSCodeChatCompletion(ChatCompletionClientBase):
     """
@@ -84,11 +78,9 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
         self._logger = logger
         self._history_translator = VSCodeChatCompletionHistoryTranslator(logger)
 
-    @override
     def get_prompt_execution_settings_class(self) -> type["PromptExecutionSettings"]:
         return VSCodeChatPromptExecutionSettings
 
-    @override
     def _update_function_choice_settings_callback(
         self,
     ) -> Callable[
@@ -113,7 +105,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                 settings.tool_choice = type  # type: ignore
                 tools: list[VSCodeLanguageModelChatTool] = []
                 for f in function_choice_configuration.available_functions:
-                    schema = {"type": "object", "properties": {}}
+                    schema: dict[str, Any] = {"type": "object", "properties": {}}
                     for param in f.parameters:
                         schema["properties"][param.name] = param.schema_data
                     tools.append(
@@ -284,9 +276,9 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
     ) -> list[VSCodeLanguageModelChatMessage]:
         """Translate chat history to VSCodeLanguageModelChatMessage format."""
         messages: list[VSCodeLanguageModelChatMessage] = []
-        for message in chat_history.messages:
+        for history_msg in chat_history.messages:
             role = VSCodeLanguageModelChatMessageRole.USER
-            if message.role == AuthorRole.ASSISTANT:
+            if history_msg.role == AuthorRole.ASSISTANT:
                 role = VSCodeLanguageModelChatMessageRole.ASSISTANT
 
             content: list[
@@ -296,18 +288,18 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                     VSCodeLanguageModelToolCallPart,
                 ]
             ] = []
-            for item in message.items:
-                if isinstance(item, TextContent):
-                    text = item.text
-                    if message.role == AuthorRole.SYSTEM:
+            for message_item in history_msg.items:
+                if isinstance(message_item, TextContent):
+                    text = message_item.text
+                    if history_msg.role == AuthorRole.SYSTEM:
                         text = f"__System Prompt__: {text}"
                     content.append(VSCodeLanguageModelTextPart(value=text))
-                elif isinstance(item, FunctionCallContent):
-                    id = item.id
-                    name = item.name
+                elif isinstance(message_item, FunctionCallContent):
+                    id = message_item.id
+                    name = message_item.name
                     input: dict[str, Any] = {}
-                    if item.arguments and isinstance(item.arguments, Mapping):
-                        input = {k: v for k, v in item.arguments.items()}
+                    if message_item.arguments and isinstance(message_item.arguments, Mapping):
+                        input = {k: v for k, v in message_item.arguments.items()}
 
                     if id and name:
                         content.append(
@@ -322,15 +314,19 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                             self._logger.error(
                                 "Function call content must have an id and name"
                             )
-                elif isinstance(item, FunctionResultContent):
+                elif isinstance(message_item, FunctionResultContent):
                     content.append(
                         VSCodeLanguageModelToolResultPart(
-                            callId=item.id,
-                            content=[VSCodeLanguageModelTextPart(value=str(item.result))],
+                            callId=message_item.id,
+                            content=[
+                                VSCodeLanguageModelTextPart(value=str(message_item.result))
+                            ],
                         )
                     )
                 else:
-                    raise RuntimeError(f"Unexpected item type: {type(item)}: {item}")
+                    raise RuntimeError(
+                        f"Unexpected item type: {type(message_item)}: {message_item}"
+                    )
 
             # Post-process content
             # I've found that having assistant text content mixed with tool call content
@@ -350,18 +346,17 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                     ]
                 ]
             ] = [[]]
-            for item in content:
-                if isinstance(item, VSCodeLanguageModelToolCallPart):
-                    processed_content.append([item])
+
+            for content_item in content:
+                if isinstance(content_item, VSCodeLanguageModelToolCallPart):
+                    processed_content.append([content_item])
                     processed_content.append([])
                 else:
-                    processed_content[-1].append(item)
+                    processed_content[-1].append(content_item)
 
-            for content in processed_content:
-                if content:
-                    messages.append(
-                        VSCodeLanguageModelChatMessage(role=role, content=content)
-                    )
+            for c in processed_content:
+                if c:
+                    messages.append(VSCodeLanguageModelChatMessage(role=role, content=c))
 
         # Post-process messages
         # There can be multiple tool calls that end up with tool results following
@@ -398,12 +393,12 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                 reordered_messages_staged.append(message)
 
         reordered_messages: list[VSCodeLanguageModelChatMessage] = []
-        for item in reordered_messages_staged:
-            if isinstance(item, dict):
-                reordered_messages.append(item["call"])
-                reordered_messages.append(item["result"])
+        for msg in reordered_messages_staged:
+            if isinstance(msg, dict):
+                reordered_messages.append(msg["call"])
+                reordered_messages.append(msg["result"])
             else:
-                reordered_messages.append(item)
+                reordered_messages.append(msg)
 
         return messages
 
@@ -414,7 +409,7 @@ class VSCodeChatCompletionHistoryTranslator:
     Extracted to class for testability
     """
 
-    def __init__(self, logger: Logger | None = None):
+    def __init__(self, logger: Logger | None = None) -> None:
         self._logger = logger
 
     def translate_chat_history(
