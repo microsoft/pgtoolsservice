@@ -24,8 +24,8 @@ class TaskInfo:
 
     task_id: str
     status: TaskStatus
-    server_name: str
-    database_name: str
+    server_name: str | None
+    database_name: str | None
     name: str
     description: str
     provider_name: str
@@ -35,18 +35,18 @@ class TaskInfo:
         task_id: str,
         status: TaskStatus,
         provider_name: str,
-        server_name: str,
-        database_name: str,
+        server_name: str | None,
+        database_name: str | None,
         task_name: str,
         description: str,
-    ):
-        self.task_id: str = task_id
-        self.status: TaskStatus = status
-        self.server_name: str = server_name
-        self.database_name: str = database_name
-        self.name: str = task_name
-        self.description: str = description
-        self.provider_name: str = provider_name
+    ) -> None:
+        self.task_id = task_id
+        self.status = status
+        self.server_name = server_name
+        self.database_name = database_name
+        self.name = task_name
+        self.description = description
+        self.provider_name = provider_name
 
 
 OutgoingMessageRegistration.register_outgoing_message(TaskInfo)

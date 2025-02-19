@@ -3,18 +3,18 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class QueryExecutionPlanRequest(Serializable):
-    owner_uri: str
-    batch_index: int
-    result_set_index: int
+    owner_uri: str | None
+    batch_index: int | None
+    result_set_index: int | None
 
-    def __init__(self):
-        self.owner_uri: str = None
-        self.batch_index: int = None
-        self.result_set_index: int = None
+    def __init__(self) -> None:
+        self.owner_uri = None
+        self.batch_index = None
+        self.result_set_index = None
 
 
 class QueryExecutionResponse:
-    def __init__(self):
+    def __init__(self) -> None:
         self.execution_plan = None
 
 

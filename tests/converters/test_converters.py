@@ -3,7 +3,7 @@ from unittest import mock
 
 import tests.utils as utils
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.query_execution.contracts import ExecuteStringParams, SubsetParams
 from ossdbtoolsservice.query_execution.query_execution_service import QueryExecutionService
@@ -12,7 +12,7 @@ from tests.integration import get_connection_details, integration_test
 
 
 class TestConverters(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.query_execution_service = QueryExecutionService()
         self.connection_service = ConnectionService()
         self.service_provider = ServiceProvider(None, {}, None)
@@ -24,7 +24,13 @@ class TestConverters(unittest.TestCase):
         self.request_context = utils.MockRequestContext()
 
     # if bool type has bool and bool_array while varchar[] is array type
-    def generic_test(self, connection, value, pg_cast, array_type_only=False):
+    def generic_test(
+        self,
+        connection: ServerConnection,
+        value: str,
+        pg_cast: str,
+        array_type_only: bool = False,
+    ) -> None:
         request_params = ExecuteStringParams()
         request_params.owner_uri = "test_uri"
 
@@ -75,7 +81,7 @@ class TestConverters(unittest.TestCase):
             self.request_context, subset_params
         )
 
-    def _compare_results(self, expected_results, batch_index):
+    def _compare_results(self, expected_results, batch_index) -> None:
         query_results = self.request_context.last_response_params.result_subset
 
         actual_value = query_results.rows[0][0].raw_object
@@ -87,8 +93,8 @@ class TestConverters(unittest.TestCase):
         self.assertEqual(actual_value, expected_value)
 
     @integration_test
-    def test_datatypes_converters(self):
-        connection = PostgreSQLConnection(get_connection_details())
+    def test_datatypes_converters(self) -> None:
+        connection = ServerConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
         self.generic_test(connection, "true", "bool")
         self.generic_test(connection, "5.67", "real")

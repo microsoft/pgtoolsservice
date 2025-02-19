@@ -4,13 +4,17 @@
 # --------------------------------------------------------------------------------------------
 import io
 
+from ossdbtoolsservice.query.contracts.save_as_request import SaveResultsRequestParams
 from ossdbtoolsservice.query.data_storage import FileStreamFactory, SaveAsExcelWriter
 
 
 class SaveAsExcelFileStreamFactory(FileStreamFactory):
-    def __init__(self, params) -> None:
+    def __init__(self, params: SaveResultsRequestParams) -> None:
         FileStreamFactory.__init__(self, params)
 
-    def get_writer(self, file_name: str):
+    def get_writer(self, file_name: str) -> SaveAsExcelWriter:
         # Tests rely on mocking io.open
-        return SaveAsExcelWriter(io.open(file_name, "w"), self._params)  # noqa: UP020
+        return SaveAsExcelWriter(
+            io.open(file_name, "w"),  # type: ignore[no-untyped-call]  # noqa: UP020
+            self._params,
+        )

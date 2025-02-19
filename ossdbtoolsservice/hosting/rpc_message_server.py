@@ -22,7 +22,7 @@ class RPCMessageServer(MessageServer):
         super().__init__(async_runner, logger, version)
         self.reader = JSONRPCReader(in_stream, logger=logger)
         self.writer = JSONRPCWriter(out_stream, logger=logger)
-        self._output_queue = Queue()
+        self._output_queue = Queue[JSONRPCMessage | None]()
         self._input_thread = threading.Thread(
             target=self._consume_input, name="JSONRPC_Input_Thread", daemon=True
         )

@@ -26,13 +26,13 @@ SERVER_CAPABILITIES_MAP = {constants.PG_PROVIDER_NAME: PGServerCapabilities}
 
 
 class CapabilitiesService(Service):
-    """Defines the capabilities supported by PG Tools 
+    """Defines the capabilities supported by PG Tools
     including language service and DMP support"""
 
-    def __init__(self):
-        self._service_provider: ServiceProvider = None
+    def __init__(self) -> None:
+        super().__init__()
 
-    def register(self, service_provider: ServiceProvider):
+    def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
 
         self._service_provider.server.set_request_handler(
@@ -52,7 +52,7 @@ class CapabilitiesService(Service):
         :param request_context: Context of the request
         :param params: Parameters for the capabilities request
         """
-        provider: str = self._service_provider.provider
+        provider: str = self.service_provider.provider
         capabilities = SERVER_CAPABILITIES_MAP[provider]
 
         result = CapabilitiesResult(capabilities)
@@ -78,6 +78,9 @@ class CapabilitiesService(Service):
             document_highlight_provider=False,
             hover_provider=False,
             completion_provider=CompletionOptions(True, [".", "-", ":", "\\", "[", '"']),
+            signature_help_provider=None,
+            document_symbol_provider=False,
+            workspace_symbol_provider=False,
         )
         result = InitializeResult(capabilities)
 

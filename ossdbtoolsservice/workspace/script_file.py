@@ -6,7 +6,7 @@
 import os
 from typing import Optional
 
-import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.utils import validate
 from ossdbtoolsservice.workspace.contracts import Position, Range, TextDocumentChangeEvent
 
 
@@ -16,7 +16,7 @@ class ScriptFile:
     """
 
     # CONSTRUCTORS #########################################################
-    def __init__(self, file_uri: str, initial_buffer, file_path: Optional[str]):
+    def __init__(self, file_uri: str, initial_buffer: str, file_path: Optional[str]) -> None:
         """
         Creates a new ScriptFile instance with the specified file contents
         :param file_uri: URI for the file provided by the client
@@ -24,8 +24,8 @@ class ScriptFile:
         :param file_path: Path to the file on disk, if it could be resolved
         """
         # Validate the incoming variables
-        utils.validate.is_not_none_or_whitespace("file_uri", file_uri)
-        utils.validate.is_not_none("initial_buffer", initial_buffer)
+        validate.is_not_none_or_whitespace("file_uri", file_uri)
+        validate.is_not_none("initial_buffer", initial_buffer)
 
         self._file_uri: str = file_uri
         self._file_path: Optional[str] = file_path
@@ -64,28 +64,33 @@ class ScriptFile:
         :param FileChange file_change: The change to apply to the file's contents
         """
         # Validate the positions of the file change
-        self.validate_position(file_change.range.start)
-        self.validate_position(file_change.range.end)
+        if file_change.range is None:
+            raise ValueError("File change range must be set")
+
+        start = file_change.range.start
+        end = file_change.range.end
+        if start is None or end is None:
+            raise ValueError("File change range must have start and end positions")
+        self.validate_position(start)
+        self.validate_position(end)
 
         # Break up the change lines
-        change_lines: list[str] = file_change.text.split("\n")
+        change_lines: list[str] = (
+            file_change.text.split("\n") if file_change.text is not None else []
+        )
 
         # Get the first fragment of the first line that will remain
-        first_line_fragment: str = self.file_lines[file_change.range.start.line][
-            : file_change.range.start.character
-        ]
+        first_line_fragment: str = self.file_lines[start.line][: start.character]
 
         # Get the last fragment of the last line that will remain
-        last_line_fragment: str = self.file_lines[file_change.range.end.line][
-            file_change.range.end.character :
-        ]
+        last_line_fragment: str = self.file_lines[end.line][end.character :]
 
         # Remove the old lines (by repeatedly removing the first line of the change)
-        for _i in range(0, file_change.range.end.line - file_change.range.start.line + 1):
-            del self.file_lines[file_change.range.start.line]
+        for _i in range(0, end.line - start.line + 1):
+            del self.file_lines[start.line]
 
         # Build and insert the new lines
-        current_line_number: int = file_change.range.start.line
+        current_line_number: int = start.line
         for change_index in range(0, len(change_lines)):
             # Since we split the lines above using \n make sure to trim any trailing \r's
             final_line: str = change_lines[change_index].rstrip("\r")
@@ -106,10 +111,10 @@ class ScriptFile:
         :return: The complete line at the given line number
         """
         # Validate line is within range of the file
-        utils.validate.is_within_range("line", line, 0, len(self._file_lines) - 1)
+        validate.is_within_range("line", line, 0, len(self._file_lines) - 1)
         return self.file_lines[line]
 
-    def get_text_in_range(self, buffer_range: Range) -> str:
+    def get_text_in_range(self, buffer_range: Range | None) -> str:
         """
         Gets the text under a specific range joined with environment-specific newlines
         :param buffer_range: The range to retrieve
@@ -117,30 +122,32 @@ class ScriptFile:
         """
         return os.linesep.join(self.get_lines_in_range(buffer_range))
 
-    def get_lines_in_range(self, buffer_range: Range) -> list[str]:
+    def get_lines_in_range(self, buffer_range: Range | None) -> list[str]:
         """
         Gets a range of lines from the file's contents.
         :param buffer_range: The buffer range from which lines will be extracted
         :return: A list of strings from the specified range of the file
         """
+        if buffer_range is None:
+            return []
+
+        start = buffer_range.start
+        end = buffer_range.end
+        if start is None or end is None:
+            return []
+
         # Validate range
-        self.validate_position(buffer_range.start)
-        self.validate_position(buffer_range.end)
+        self.validate_position(start)
+        self.validate_position(end)
 
         output: list[str] = []
-        for line in range(buffer_range.start.line, buffer_range.end.line + 1):
+        for line in range(start.line, end.line + 1):
             current_line: str = self.file_lines[line]
 
             # If the line we're looking at is not the beginning or end, select entire line,
             # otherwise, trim the unselected part of the line
-            start_column: int = (
-                buffer_range.start.character if line == buffer_range.start.line else 0
-            )
-            end_column: int = (
-                buffer_range.end.character
-                if line == buffer_range.end.line
-                else len(current_line)
-            )
+            start_column: int = start.character if line == start.line else 0
+            end_column: int = end.character if line == end.line else len(current_line)
 
             output.append(current_line[start_column:end_column])
         return output
@@ -162,7 +169,7 @@ class ScriptFile:
         # Retrieve the line of the position
         line_string: str = self.file_lines[position.line]
 
-        # Validate against number of columns. 
+        # Validate against number of columns.
         # Allow the character to be in the last column to add a
         # character to the end of the line.
         if position.character < 0 or position.character > len(line_string):

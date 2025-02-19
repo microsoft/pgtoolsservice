@@ -9,9 +9,9 @@
 class CancellationToken:
     """Token used to indicate if an operation has been canceled"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.canceled = False
 
-    def cancel(self):
+    def cancel(self) -> None:
         """Mark the cancellation token as canceled"""
         self.canceled = True

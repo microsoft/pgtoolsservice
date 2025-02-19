@@ -355,7 +355,7 @@ class TestScriptFile(unittest.TestCase):
         expected_result = ["abcghij", "klm"]
         self.assertListEqual(script_file.file_lines, expected_result)
 
-    def test_apply_change_remove_line(self):
+    def test_apply_change_remove_line(self) -> None:
         """Test removing an entire line from the script file by selecting the line"""
         # Set up the test file and parameters to remove a line from the file
         script_file = self._get_test_script_file()

@@ -181,7 +181,7 @@ class DataType(NodeObject, ScriptableCreate, ScriptableDelete, ScriptableUpdate)
         """Provides data input for delete script"""
         data = {
             "data": {"name": self.name, "schema": self.schema},
-            # See issue https://github.com/Microsoft/carbon/issues/1715, 
+            # See issue https://github.com/Microsoft/carbon/issues/1715,
             # Cascade should be configured
             # as part of the input to the delete method as it's not a property
             "cascade": False,

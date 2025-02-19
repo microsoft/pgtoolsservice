@@ -15,12 +15,12 @@ from ossdbtoolsservice.serialization import Serializable
 class ListDatabasesParams(Serializable):
     """Parameters for the connection/listdatabases request"""
 
-    owner_uri: str
-    include_details: bool
+    owner_uri: str | None
+    include_details: bool | None
 
-    def __init__(self):
-        self.owner_uri: str = None
-        self.include_details: bool = None
+    def __init__(self) -> None:
+        self.owner_uri = None
+        self.include_details = None
 
 
 class ListDatabasesResponse:
@@ -28,8 +28,8 @@ class ListDatabasesResponse:
 
     database_names: list[str]
 
-    def __init__(self, database_names):
-        self.database_names: list[str] = database_names
+    def __init__(self, database_names: list[str]) -> None:
+        self.database_names = database_names
 
 
 LIST_DATABASES_REQUEST = IncomingMessageConfiguration(

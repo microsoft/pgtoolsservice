@@ -12,12 +12,12 @@ from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 class SessionCreatedParameters:
     """Parameters to be sent back when an object explorer session is created"""
 
-    error_message: Optional[str]
+    error_message: str | None
     success: bool
-    session_id: Optional[str]
-    root_node: Optional[NodeInfo]
+    session_id: str | None
+    root_node: NodeInfo | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.error_message: Optional[str] = None
         self.success: bool = True
         self.session_id: Optional[str] = None

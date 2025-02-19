@@ -89,8 +89,9 @@ class MockRequestContext(RequestContext):
     """Mock RequestContext object that allows service responses, notifications,
     and errors to be tested"""
 
-    def __init__(self):
+    def __init__(self, raise_on_error: bool = False) -> None:
         RequestContext.__init__(self, None, None)
+        self.raise_on_error = raise_on_error
         self.last_response_params = None
         self.last_notification_method = None
         self.last_notification_params = None
@@ -102,14 +103,16 @@ class MockRequestContext(RequestContext):
             side_effect=self.send_unhandled_error_response_impl
         )
 
-    def send_response_impl(self, params):
+    def send_response_impl(self, params) -> None:
         self.last_response_params = params
 
     def send_notification_impl(self, method, params):
         self.last_notification_method = method
         self.last_notification_params = params
 
-    def send_error_impl(self, message, data=None, code=0):
+    def send_error_impl(self, message, data=None, code=0) -> None:
+        if self.raise_on_error:
+            raise Exception(message)
         self.last_error_message = message
 
     def send_unhandled_error_response_impl(self, ex: Exception):
@@ -204,7 +207,7 @@ class MockCursor:
             self.create_column_description(name=name) for name in columns_names
         ]
         self.rowcount = -1
-        self._mogrified_value = b"Some query"
+        self._mogrified_value = "Some query"
         self.mogrify = mock.Mock(return_value=self._mogrified_value)
         self._query_results = query_results
         self._fetched_count = 0
@@ -221,7 +224,7 @@ class MockCursor:
 
         return next_row
 
-    def execute_success_side_effects(self, *args):
+    def execute_success_side_effects(self, *args, **kwargs) -> None:
         """Set up dummy results for query execution success"""
         for handler in self.connection.notice_handlers:
             handler(MockNotice("foo", "NOTICE"))
@@ -261,7 +264,7 @@ class MockCursor:
         pass
 
     @property
-    def mogrified_value(self):
+    def mogrified_value(self) -> str:
         return self._mogrified_value
 
 

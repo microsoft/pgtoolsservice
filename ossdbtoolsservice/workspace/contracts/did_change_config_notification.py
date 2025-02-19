@@ -4,6 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 from enum import Enum
+from typing import Any
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.serialization import Serializable
@@ -16,14 +17,14 @@ class SQLConfiguration(Serializable):
     """
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type["IntellisenseConfiguration"]]:
         return {"intellisense": IntellisenseConfiguration}
 
     @classmethod
-    def ignore_extra_attributes(cls):
+    def ignore_extra_attributes(cls) -> bool:
         return True
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.intellisense: IntellisenseConfiguration = IntellisenseConfiguration()
 
 
@@ -33,14 +34,14 @@ class PGSQLConfiguration(Serializable):
     """
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type["FormatterConfiguration"]]:
         return {"format": FormatterConfiguration}
 
     @classmethod
-    def ignore_extra_attributes(cls):
+    def ignore_extra_attributes(cls) -> bool:
         return True
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.default_database: str = constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
         self.cosmos_default_database: str = constants.DEFAULT_DB[
             constants.COSMOS_PG_DEFAULT_DB
@@ -62,12 +63,12 @@ class FormatterConfiguration(Serializable):
     """
 
     @classmethod
-    def ignore_extra_attributes(cls):
+    def ignore_extra_attributes(cls) -> bool:
         return True
 
-    def __init__(self):
-        self.keyword_case: str = None
-        self.identifier_case: str = None
+    def __init__(self) -> None:
+        self.keyword_case: str | None = None
+        self.identifier_case: str | None = None
         self.strip_comments: bool = False
         self.reindent: bool = True
 
@@ -78,10 +79,10 @@ class IntellisenseConfiguration(Serializable):
     """
 
     @classmethod
-    def ignore_extra_attributes(cls):
+    def ignore_extra_attributes(cls) -> bool:
         return True
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.enable_intellisense = True
         self.enable_suggestions = True
         self.enable_lowercase_suggestions = False
@@ -95,15 +96,15 @@ class Configuration(Serializable):
     """
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[Any]]:
         return {"sql": SQLConfiguration, "pgsql": PGSQLConfiguration}
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sql = SQLConfiguration()
         self.pgsql = PGSQLConfiguration()
 
-    def get_configuration(self, provider):
-        return {"PGSQL": self.pgsql}[provider]
+    def get_configuration(self) -> PGSQLConfiguration:
+        return self.pgsql
 
 
 class DidChangeConfigurationParams(Serializable):
@@ -112,11 +113,11 @@ class DidChangeConfigurationParams(Serializable):
     """
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[Configuration]]:
         return {"settings": Configuration}
 
-    def __init__(self):
-        self.settings: Configuration = None
+    def __init__(self) -> None:
+        self.settings: Configuration | None = None
 
 
 DID_CHANGE_CONFIG_NOTIFICATION = IncomingMessageConfiguration(

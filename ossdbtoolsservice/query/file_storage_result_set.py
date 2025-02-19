@@ -4,16 +4,18 @@
 # --------------------------------------------------------------------------------------------
 
 
-import ossdbtoolsservice.utils as utils
-from ossdbtoolsservice.query.contracts import (  # noqa
+from typing import Callable
+
+import psycopg
+
+from ossdbtoolsservice.query.contracts import (
     DbCellValue,
-    DbColumn,
     ResultSetSubset,
-    SaveResultsRequestParams,
 )
 from ossdbtoolsservice.query.data_storage import FileStreamFactory, StorageDataReader
 from ossdbtoolsservice.query.data_storage import service_buffer_file_stream as file_stream
 from ossdbtoolsservice.query.result_set import ResultSet, ResultSetEvents
+from ossdbtoolsservice.utils import validate
 
 
 class FileStorageResultSet(ResultSet):
@@ -22,7 +24,7 @@ class FileStorageResultSet(ResultSet):
     RESULT_SET_ROW_COUNT_OF_RANGE_ERROR = "Result set row count out of range"
 
     def __init__(
-        self, result_set_id: int, batch_id: int, events: ResultSetEvents = None
+        self, result_set_id: int, batch_id: int, events: ResultSetEvents | None = None
     ) -> None:
         ResultSet.__init__(self, result_set_id, batch_id, events)
 
@@ -34,7 +36,7 @@ class FileStorageResultSet(ResultSet):
     def row_count(self) -> int:
         return len(self._file_offsets)
 
-    def get_subset(self, start_index: int, end_index: int):
+    def get_subset(self, start_index: int, end_index: int) -> ResultSetSubset:
         if not self._has_been_read:
             raise ValueError(FileStorageResultSet.RESULT_SET_NOT_READ_ERROR)
 
@@ -62,17 +64,17 @@ class FileStorageResultSet(ResultSet):
 
         return subset
 
-    def add_row(self, cursor):
+    def add_row(self, cursor: psycopg.Cursor) -> None:
         new_offset = self._append_row_to_buffer(cursor)
         self._file_offsets.append(new_offset)
 
-    def remove_row(self, row_id: int):
+    def remove_row(self, row_id: int) -> None:
         if not self._has_been_read:
             raise ValueError(FileStorageResultSet.RESULT_SET_NOT_READ_ERROR)
 
         del self._file_offsets[row_id]
 
-    def update_row(self, row_id: int, cursor):
+    def update_row(self, row_id: int, cursor: psycopg.Cursor) -> None:
         new_offset = self._append_row_to_buffer(cursor)
         self._file_offsets[row_id] = new_offset
 
@@ -86,8 +88,8 @@ class FileStorageResultSet(ResultSet):
         with file_stream.get_reader(self._output_file_name) as reader:
             return reader.read_row(self._file_offsets[row_id], row_id, self.columns_info)
 
-    def read_result_to_end(self, cursor):
-        utils.validate.is_not_none("cursor", cursor)
+    def read_result_to_end(self, cursor: psycopg.Cursor) -> None:
+        validate.is_not_none("cursor", cursor)
 
         self._has_been_read = True
         storage_data_reader = StorageDataReader(cursor)
@@ -105,8 +107,8 @@ class FileStorageResultSet(ResultSet):
         row_start_index: int,
         row_end_index: int,
         file_factory: FileStreamFactory,
-        on_success,
-        on_failure,
+        on_success: Callable,
+        on_failure: Callable,
     ) -> None:
         try:
             with (
@@ -124,10 +126,11 @@ class FileStorageResultSet(ResultSet):
                 if on_success is not None:
                     on_success()
         except Exception as e:
-            on_failure(e.strerror if hasattr(e, "strerror") else e)
+            # on_failure(e.strerror if hasattr(e, "strerror") else e)
+            on_failure(e)
 
-    def _append_row_to_buffer(self, cursor):
-        utils.validate.is_not_none("cursor", cursor)
+    def _append_row_to_buffer(self, cursor: psycopg.Cursor) -> int:
+        validate.is_not_none("cursor", cursor)
 
         if not self._has_been_read:
             raise ValueError(FileStorageResultSet.RESULT_SET_NOT_READ_ERROR)

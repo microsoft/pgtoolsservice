@@ -5,19 +5,30 @@
 
 import csv
 import io
+from typing import TYPE_CHECKING
 
-from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn, SaveResultsRequestParams
+from ossdbtoolsservice.query.contracts import DbCellValue, DbColumn
 from ossdbtoolsservice.query.data_storage.save_as_writer import SaveAsWriter
+
+if TYPE_CHECKING:
+    from ossdbtoolsservice.query_execution.contracts.save_result_as_request import (
+        SaveResultsAsCsvRequestParams,
+    )
 
 
 class SaveAsCsvWriter(SaveAsWriter):
-    def __init__(self, stream: io.BufferedWriter, params: SaveResultsRequestParams) -> None:
+    def __init__(
+        self,
+        stream: io.BufferedWriter | io.TextIOWrapper,
+        params: "SaveResultsAsCsvRequestParams",
+    ) -> None:
         SaveAsWriter.__init__(self, stream, params)
+        self._params = params
         self._header_written = False
 
-    def write_row(self, row: list[DbCellValue], columns: list[DbColumn]):
+    def write_row(self, row: list[DbCellValue], columns: list[DbColumn]) -> None:
         writer = csv.writer(
-            self._file_stream,
+            self._file_stream,  # type: ignore
             delimiter=self._params.delimiter,
             quotechar='"',
             quoting=csv.QUOTE_MINIMAL,
@@ -39,3 +50,6 @@ class SaveAsCsvWriter(SaveAsWriter):
         ]
 
         writer.writerow(selected_cells)
+
+    def complete_write(self) -> None:
+        pass

@@ -6,6 +6,8 @@
 import unittest
 from unittest import mock
 
+from psycopg import sql
+
 from ossdbtoolsservice.edit_data import (
     DataEditorSession,
     DataEditSessionExecutionState,
@@ -198,12 +200,13 @@ class TestDataEditorSession(unittest.TestCase):
         self._data_editor_session._session_cache[row_id] = edit_row
         self._data_editor_session._is_initialized = True
         self._data_editor_session._last_row_id = 10
+        self._data_editor_session._result_set = mock.MagicMock()
 
         result = self._data_editor_session.update_cell(row_id, column_index, new_value)
 
         self.assertEqual(new_value, result)
 
-    def test_create_row(self):
+    def test_create_row(self) -> None:
         """
         Validate that create row creates new row based with new row id and returns
         CreateRowResponse
@@ -221,7 +224,7 @@ class TestDataEditorSession(unittest.TestCase):
 
         columns_metadata = [calculated_column_metadata, default_value_column_metadata]
 
-        self._data_editor_session.table_metadata = EditTableMetadata(
+        self._data_editor_session._table_metadata = EditTableMetadata(
             self._schema_name, self._table_name, columns_metadata
         )
 
@@ -240,7 +243,7 @@ class TestDataEditorSession(unittest.TestCase):
         self.assertEqual("&lt;TBD&gt;", response.default_values[0])
         self.assertEqual("False", response.default_values[1])
 
-    def test_create_row_not_initialized(self):
+    def test_create_row_not_initialized(self) -> None:
         with self.assertRaises(RuntimeError) as context_manager:
             self._data_editor_session.create_row()
 
@@ -249,23 +252,23 @@ class TestDataEditorSession(unittest.TestCase):
                 "Edit session has not been initialized", context_manager.exception.args[0]
             )
 
-    def test_delete_row(self):
+    def test_delete_row(self) -> None:
         """
         Verify that it creates and DeleteRow and adds it to session cache
         """
         row_id = 1
         self._data_editor_session._is_initialized = True
         self._data_editor_session._last_row_id = 3
+        self._data_editor_session._result_set = mock.MagicMock()
+        self._data_editor_session._table_metadata = self._edit_table_metadata
 
         self._data_editor_session.delete_row(row_id)
 
         delete_row = self._data_editor_session._session_cache.get(row_id)
 
         self.assertEqual(row_id, delete_row.row_id)
-        self.assertEqual(None, self._data_editor_session._result_set)
-        self.assertEqual(None, self._data_editor_session.table_metadata)
 
-    def test_delete_row_not_initialized(self):
+    def test_delete_row_not_initialized(self) -> None:
         with self.assertRaises(RuntimeError) as context_manager:
             self._data_editor_session.delete_row(2)
 
@@ -274,7 +277,7 @@ class TestDataEditorSession(unittest.TestCase):
                 "Edit session has not been initialized", context_manager.exception.args[0]
             )
 
-    def test_delete_row_with_rowid_out_of_range(self):
+    def test_delete_row_with_rowid_out_of_range(self) -> None:
         self._data_editor_session.initialize(
             self._initialize_edit_request,
             self._connection,
@@ -284,6 +287,7 @@ class TestDataEditorSession(unittest.TestCase):
         )
         self._data_editor_session._is_initialized = True
         self._data_editor_session._last_row_id = 2
+        self._data_editor_session._result_set = mock.MagicMock()
         delete_row_id = 3
 
         with self.assertRaises(IndexError) as context_manager:
@@ -351,7 +355,7 @@ class TestDataEditorSession(unittest.TestCase):
         with self.assertRaises(KeyError):
             self._data_editor_session.revert_row(row_id)
 
-    def test_commit_edit_fire_success(self):
+    def test_commit_edit_fire_success(self) -> None:
         mock_edit = mock.MagicMock()
         mock_edit.row_id = 0
         row_id = 1
@@ -382,7 +386,9 @@ class TestDataEditorSession(unittest.TestCase):
 
         self._mock_cursor.mogrify.assert_called_once()
 
-        self._mock_cursor.execute.assert_called_once_with(self._mock_cursor.mogrified_value)
+        self._mock_cursor.execute.assert_called_once_with(
+            sql.SQL(self._mock_cursor.mogrified_value)
+        )
 
         mock_edit.apply_changes.assert_called_once()
 
@@ -455,6 +461,7 @@ class TestDataEditorSession(unittest.TestCase):
         )
         self._data_editor_session._is_initialized = True
         self._data_editor_session._last_row_id = 2
+        self._data_editor_session._result_set = mock.MagicMock()
         current_row_id = 3
 
         with self.assertRaises(IndexError) as context_manager:
@@ -504,7 +511,7 @@ class TestDataEditorSession(unittest.TestCase):
         row_delete.get_script.assert_not_called()
         self.assertFalse(bool(self._data_editor_session._session_cache))
 
-    def test_commit_when_its_a_existing_row_thats_being_deleted(self):
+    def test_commit_when_its_a_existing_row_thats_being_deleted(self) -> None:
         rows = [
             ("Result1", 53),
             (

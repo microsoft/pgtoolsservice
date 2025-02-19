@@ -64,7 +64,7 @@ class TestTasks(unittest.TestCase):
             self.assertEqual(value, actual_params[param])
         self.assertIn("task_id", actual_params)
 
-    def test_run_task(self):
+    def test_run_task(self) -> None:
         """Test that the task can be started, runs in a separate thread,
         and sends status notifications"""
         # If I kick off a task and wait for it to complete

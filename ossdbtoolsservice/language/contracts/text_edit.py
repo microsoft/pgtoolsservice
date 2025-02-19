@@ -13,20 +13,20 @@ class TextEdit(Serializable):
     A textual edit applicable to a text document.
     """
 
-    range: Range
-    new_text: str
+    range: Range | None
+    new_text: str | None
 
     @classmethod
-    def from_data(cls, text_range: Range, new_text: str):
+    def from_data(cls, text_range: Range | None, new_text: str | None) -> "TextEdit":
         obj = cls()
         obj.range = text_range
         obj.new_text = new_text
         return obj
 
     @classmethod
-    def get_child_serializable_types(cls):
+    def get_child_serializable_types(cls) -> dict[str, type[Serializable]]:
         return {"range": Range}
 
-    def __init__(self):
-        self.range: Range = None
-        self.new_text: str = None
+    def __init__(self) -> None:
+        self.range = None
+        self.new_text = None

@@ -9,7 +9,6 @@ import ossdbtoolsservice.utils.bool
 import ossdbtoolsservice.utils.cancellation
 import ossdbtoolsservice.utils.constants
 import ossdbtoolsservice.utils.log
-import ossdbtoolsservice.utils.markdown
 import ossdbtoolsservice.utils.path
 import ossdbtoolsservice.utils.serialization
 import ossdbtoolsservice.utils.thread
@@ -21,7 +20,6 @@ __all__ = [
     "cancellation",
     "constants",
     "log",
-    "markdown",
     "path",
     "serialization",
     "thread",

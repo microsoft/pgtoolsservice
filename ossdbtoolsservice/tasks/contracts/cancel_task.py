@@ -4,20 +4,16 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
-from ossdbtoolsservice.serialization.serializable import convert_from_dict
+from ossdbtoolsservice.serialization.serializable import Serializable
 
 
-class CancelTaskParameters:
+class CancelTaskParameters(Serializable):
     """Parameters for the tasks/canceltask request"""
 
-    task_id: str
+    task_id: str | None
 
-    @classmethod
-    def from_dict(cls, dictionary: dict):
-        return convert_from_dict(cls, dictionary)
-
-    def __init__(self):
-        self.task_id: str = None
+    def __init__(self) -> None:
+        self.task_id = None
 
 
 CANCEL_TASK_REQUEST = IncomingMessageConfiguration("tasks/canceltask", CancelTaskParameters)

@@ -3,7 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import functools
 import threading
 from logging import Logger
 from typing import Dict, List, Optional  # noqa
@@ -13,6 +12,7 @@ import psycopg
 
 import ossdbtoolsservice.utils.constants as constants
 import ossdbtoolsservice.utils.validate as validate
+from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts import (
     ConnectionDetails,
     ConnectionType,
@@ -37,6 +37,7 @@ from ossdbtoolsservice.object_explorer.contracts import (
 )
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
+from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
 from pgsmo import Server as PGServer
 
 ROUTING_TABLES = {constants.PG_PROVIDER_NAME: PG_ROUTING_TABLE}
@@ -47,14 +48,14 @@ SERVER_TYPES = {constants.PG_PROVIDER_NAME: PGServer}
 class ObjectExplorerService(Service):
     """Service for browsing database objects"""
 
-    def __init__(self):
-        self._service_provider: ServiceProvider = None
-        self._logger: Logger = None
+    def __init__(self) -> None:
+        self._service_provider: ServiceProvider | None = None
+        self._logger: Logger | None = None
         self._session_map: dict[str, ObjectExplorerSession] = {}
         self._session_lock: threading.Lock = threading.Lock()
         self._connect_semaphore = threading.Semaphore(1)
 
-    def register(self, service_provider: ServiceProvider):
+    def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
         self._logger = self._service_provider.logger
 
@@ -87,6 +88,12 @@ class ObjectExplorerService(Service):
                 "Object Explorer service successfully initialized"
             )
 
+    @property
+    def service_provider(self) -> ServiceProvider:
+        if self._service_provider is None:
+            raise ValueError("Service provider is not set")
+        return self._service_provider
+
     # REQUEST HANDLERS #####################################################
 
     def _handle_create_session_request(
@@ -103,10 +110,12 @@ class ObjectExplorerService(Service):
 
             # Use the provider's default db if db name was not specified
             if params.database_name is None or params.database_name == "":
-                is_cosmos = params.server_name.endswith(".postgres.cosmos.azure.com")
-                pgsql_config = self._service_provider[
-                    constants.WORKSPACE_SERVICE_NAME
-                ].configuration.pgsql
+                is_cosmos = params.server_name and params.server_name.endswith(
+                    ".postgres.cosmos.azure.com"
+                )
+                pgsql_config = self.service_provider.get(
+                    constants.WORKSPACE_SERVICE_NAME, WorkspaceService
+                ).configuration.pgsql
                 params.database_name = (
                     pgsql_config.default_database
                     if not is_cosmos
@@ -118,7 +127,7 @@ class ObjectExplorerService(Service):
                 params.port = constants.DEFAULT_PORT[self._provider]
 
             # Generate the session ID and create/store the session
-            session_id = self._generate_session_uri(params, self._provider)
+            session_id = self._generate_session_uri(params)
 
             if self._logger:
                 self._logger.info(f"   - Session ID: {session_id}")
@@ -129,8 +138,8 @@ class ObjectExplorerService(Service):
                 if session_id in self._session_map:
                     # If session already exists, get it and respond with it
                     session_exist_check = True
-                    if self._service_provider.logger is not None:
-                        self._service_provider.logger.info(
+                    if self.service_provider.logger is not None:
+                        self.service_provider.logger.info(
                             f"Object explorer session for {session_id} already exists. "
                             "Returning existing session."
                         )
@@ -149,8 +158,8 @@ class ObjectExplorerService(Service):
 
         except Exception as e:
             message = f"Failed to create OE session: {str(e)}"
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.error(message)
+            if self.service_provider.logger is not None:
+                self.service_provider.logger.error(message)
             request_context.send_error(message)
             return
 
@@ -175,18 +184,24 @@ class ObjectExplorerService(Service):
         try:
             validate.is_not_none("params", params)
 
+            session_id = params.session_id
+            if session_id is None or session_id == "":
+                raise ValueError("Session ID is required")
+
             # Try to remove the session
-            session = self._session_map.pop(params.session_id, None)
+            session = self._session_map.pop(session_id, None)
             if session is not None:
                 self._close_database_connections(session)
-                conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+                conn_service = self.service_provider.get(
+                    constants.CONNECTION_SERVICE_NAME, ConnectionService
+                )
                 connect_result = conn_service.disconnect(
                     session.id, ConnectionType.OBJECT_EXLPORER
                 )
 
                 if not connect_result:
-                    if self._service_provider.logger is not None:
-                        self._service_provider.logger.info(
+                    if self.service_provider.logger is not None:
+                        self.service_provider.logger.info(
                             f"Could not close the OE session with Id {session.id}"
                         )
                     request_context.send_response(False)
@@ -196,8 +211,8 @@ class ObjectExplorerService(Service):
                 request_context.send_response(False)
         except Exception as e:
             message = f"Failed to close OE session: {str(e)}"  # TODO: Localize
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.error(message)
+            if self.service_provider.logger is not None:
+                self.service_provider.logger.error(message)
             request_context.send_error(message)
 
     def _handle_refresh_request(
@@ -214,42 +229,47 @@ class ObjectExplorerService(Service):
 
     def _handle_shutdown(self) -> None:
         """Close all OE sessions when service is shutdown"""
-        if self._service_provider.logger is not None:
-            self._service_provider.logger.info("Closing all the OE sessions")
-        conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+        if self.service_provider.logger is not None:
+            self.service_provider.logger.info("Closing all the OE sessions")
+        conn_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
         for _key, session in self._session_map.items():
             connect_result = conn_service.disconnect(
                 session.id, ConnectionType.OBJECT_EXLPORER
             )
             self._close_database_connections(session)
             if connect_result:
-                if self._service_provider.logger is not None:
-                    self._service_provider.logger.info(
+                if self.service_provider.logger is not None:
+                    self.service_provider.logger.info(
                         "Closed the OE session with Id: " + session.id
                     )
             else:
-                if self._service_provider.logger is not None:
-                    self._service_provider.logger.info(
+                if self.service_provider.logger is not None:
+                    self.service_provider.logger.info(
                         "Could not close the OE session with Id: " + session.id
                     )
 
     # PRIVATE HELPERS ######################################################
 
     def _close_database_connections(self, session: "ObjectExplorerSession") -> None:
-        conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+        conn_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
         for database in session.server.databases if session.server else []:
+            close_result = False
             try:
                 close_result = conn_service.disconnect(
                     session.id + database.name, ConnectionType.OBJECT_EXLPORER
                 )
             except psycopg.OperationalError as e:
-                if self._service_provider.logger is not None:
-                    self._service_provider.logger.info(
+                if self.service_provider.logger is not None:
+                    self.service_provider.logger.info(
                         "could not close the connection for the "
                         f"database {database.name}: {e}"
                     )
-            if not close_result and self._service_provider.logger is not None:
-                self._service_provider.logger.info(
+            if not close_result:
+                self._log_info(
                     f"could not close the connection for the database {database.name}"
                 )
 
@@ -258,7 +278,7 @@ class ObjectExplorerService(Service):
         is_refresh: bool,
         request_context: RequestContext,
         params: ExpandParameters,
-    ):
+    ) -> None:
         # Step 1: Find the session
         session = self._get_session(request_context, params)
         if session is None:
@@ -267,6 +287,8 @@ class ObjectExplorerService(Service):
         try:
             # Step 2: Start a task for expanding the node
             key = params.node_path
+            if key is None:
+                raise ValueError("Node path is required")
             if is_refresh:
                 task = session.refresh_tasks.get(key)
             else:
@@ -295,11 +317,14 @@ class ObjectExplorerService(Service):
         request_context: RequestContext,
         params: ExpandParameters,
         session: ObjectExplorerSession,
-        retry_state=False,
-    ):
+        retry_state: bool = False,
+    ) -> None:
         try:
-            response = ExpandCompletedParameters(session.id, params.node_path)
-            response.nodes = self._route_request(is_refresh, session, params.node_path)
+            node_path = params.node_path
+            if node_path is None:
+                raise ValueError("Node path is required")
+            response = ExpandCompletedParameters(session.id, node_path)
+            response.nodes = self._route_request(is_refresh, session, node_path)
 
             request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
         except BaseException as e:
@@ -309,26 +334,33 @@ class ObjectExplorerService(Service):
                 and session.server.connection.connection.broken
                 and not retry_state
             ):
-                conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+                conn_service = self.service_provider.get(
+                    constants.CONNECTION_SERVICE_NAME, ConnectionService
+                )
                 connection = conn_service.get_connection(
                     session.id, ConnectionType.OBJECT_EXLPORER
                 )
-                session.server.set_connection(connection)
-                session.server.refresh()
-                self._expand_node_thread(is_refresh, request_context, params, session, True)
-                return
+                if connection is not None:
+                    session.server.set_connection(connection)
+                    session.server.refresh()
+                    self._expand_node_thread(
+                        is_refresh, request_context, params, session, True
+                    )
+                    return
+                else:
+                    self._expand_node_error(request_context, params, str(e))
             else:
                 self._expand_node_error(request_context, params, str(e))
 
     def _expand_node_error(
         self, request_context: RequestContext, params: ExpandParameters, message: str
-    ):
-        if self._service_provider.logger is not None:
-            self._service_provider.logger.warning(
+    ) -> None:
+        if self.service_provider.logger is not None:
+            self.service_provider.logger.warning(
                 f"OE service errored while expanding node: {message}"
             )
 
-        response = ExpandCompletedParameters(params.session_id, params.node_path)
+        response = ExpandCompletedParameters(params.session_id or "", params.node_path or "")
         response.error_message = f"Failed to expand node: {message}"  # TODO: Localize
 
         request_context.send_notification(EXPAND_COMPLETED_METHOD, response)
@@ -339,37 +371,40 @@ class ObjectExplorerService(Service):
         try:
             validate.is_not_none("params", params)
             validate.is_not_none_or_whitespace("params.node_path", params.node_path)
-            validate.is_not_none_or_whitespace("params.session_id", params.session_id)
+            session_id = validate.is_not_none_or_whitespace(
+                "params.session_id", params.session_id
+            )
 
-            session = self._session_map.get(params.session_id)
+            session = self._session_map.get(session_id)
             if session is None:
                 raise ValueError(
-                    f"OE session with ID {params.session_id} does not exist"
+                    f"OE session with ID {session_id} does not exist"
                 )  # TODO: Localize
 
             if not session.is_ready:
-                if session.init_task.is_alive():
+                if session.init_task is not None and session.init_task.is_alive():
                     # If the initialization task is still running, wait for it to finish
                     session.init_task.join()
                 else:
                     raise ValueError(
-                        f"Object Explorer session with ID {params.session_id} "
-                        "is not ready, yet."
+                        f"Object Explorer session with ID {session_id} is not ready, yet."
                     )  # TODO: Localize
 
             request_context.send_response(True)
             return session
         except Exception as e:
             message = f"Failed to expand node base: {str(e)}"  # TODO: Localize
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.error(message)
+            if self.service_provider.logger is not None:
+                self.service_provider.logger.error(message)
             request_context.send_error(message)
-            return
+            return None
 
     def _create_connection(
         self, session: ObjectExplorerSession, database_name: str
     ) -> Optional[ServerConnection]:
-        conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+        conn_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
 
         options = session.connection_details.options.copy()
         options["dbname"] = database_name
@@ -380,6 +415,8 @@ class ObjectExplorerService(Service):
             conn_details, key_uri, ConnectionType.OBJECT_EXLPORER
         )
         connect_result = conn_service.connect(connect_request)
+        if connect_result is None:
+            raise RuntimeError("Connection was cancelled during connect")
         if connect_result.error_message is not None:
             raise RuntimeError(connect_result.error_message)
 
@@ -388,8 +425,10 @@ class ObjectExplorerService(Service):
 
     def _initialize_session(
         self, request_context: RequestContext, session: ObjectExplorerSession
-    ):
-        conn_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
+    ) -> None:
+        conn_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
         connection = None
 
         try:
@@ -412,11 +451,13 @@ class ObjectExplorerService(Service):
             connection = conn_service.get_connection(
                 session.id, ConnectionType.OBJECT_EXLPORER
             )
+            if connection is None:
+                raise RuntimeError("Connection was cancelled during connect")
 
             # Step 3: Create the Server object for the session and
             # create the root node for the server
             session.server = self._server(
-                connection, functools.partial(self._create_connection, session)
+                connection, lambda dbname: self._create_connection(session, dbname)
             )
             metadata = ObjectMetadata(
                 session.server.urn_base,
@@ -424,12 +465,13 @@ class ObjectExplorerService(Service):
                 "Database",
                 session.server.maintenance_db_name,
             )
-            node = NodeInfo()
-            node.label = session.connection_details.database_name
-            node.is_leaf = False
-            node.node_path = session.id
-            node.node_type = "Database"
-            node.metadata = metadata
+            node = NodeInfo(
+                label=session.connection_details.database_name or "",
+                node_path=session.id,
+                node_type="Database",
+                metadata=metadata,
+                is_leaf=False,
+            )
 
             # Step 4: Send the completion notification to the server
             response = SessionCreatedParameters()
@@ -458,9 +500,9 @@ class ObjectExplorerService(Service):
         request_context: RequestContext,
         session: ObjectExplorerSession,
         message: str,
-    ):
-        if self._service_provider.logger is not None:
-            self._service_provider.logger.warning(
+    ) -> None:
+        if self.service_provider.logger is not None:
+            self.service_provider.logger.warning(
                 f"OE service errored while creating session to {session.id}: {message}"
             )
 
@@ -476,25 +518,26 @@ class ObjectExplorerService(Service):
         self._session_map.pop(session.id)
 
     @staticmethod
-    def _generate_session_uri(params: ConnectionDetails, provider_name: str) -> str:
+    def _generate_session_uri(params: ConnectionDetails) -> str:
         # Make sure the required params are provided
-        validate.is_not_none_or_whitespace("params.server_name", params.options.get("host"))
-        validate.is_not_none_or_whitespace("params.user_name", params.options.get("user"))
-        if provider_name == constants.PG_PROVIDER_NAME:
-            validate.is_not_none_or_whitespace(
-                "params.database_name", params.options.get("dbname")
-            )
-        validate.is_not_none("params.port", params.options.get("port"))
+        server_name = validate.is_not_none_or_whitespace(
+            "params.server_name", params.server_name
+        )
+        user_name = validate.is_not_none_or_whitespace("params.user_name", params.user_name)
+        database_name = validate.is_not_none_or_whitespace(
+            "params.database_name", params.database_name
+        )
+        port = validate.is_not_none("params.port", params.port)
 
         # Generates a session ID that will function as the base URI for the session
-        host = quote(params.options["host"])
-        user = quote(params.options["user"])
-        db = quote(params.options["dbname"])
+        host = quote(server_name)
+        user = quote(user_name)
+        db = quote(database_name)
         # Port number distinguishes between connections to different server
         # instances with the same username, dbname running on same host
-        port = quote(str(params.options["port"]))
+        port_str = quote(str(port))
 
-        return f"objectexplorer://{user}@{host}:{port}:{db}/"
+        return f"objectexplorer://{user}@{host}:{port_str}:{db}/"
 
     def _route_request(
         self, is_refresh: bool, session: ObjectExplorerSession, path: str

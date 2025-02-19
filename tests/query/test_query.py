@@ -7,6 +7,7 @@ import unittest
 from unittest import mock
 
 import psycopg
+from psycopg import sql
 
 from ossdbtoolsservice.query import (
     ExecutionState,
@@ -80,7 +81,7 @@ class TestQuery(unittest.TestCase):
             self.query.execute(self.connection)
 
         # Then each of the batches executed in order
-        expected_calls = [mock.call(statement) for statement in self.statement_list]
+        expected_calls = [mock.call(sql.SQL(statement)) for statement in self.statement_list]
 
         self.cursor.execute.assert_has_calls(expected_calls)
         self.assertEqual(len(self.cursor.execute.mock_calls), 2)
@@ -97,7 +98,7 @@ class TestQuery(unittest.TestCase):
         # And the query is marked as executed
         self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
 
-    def test_batch_failure(self):
+    def test_batch_failure(self) -> None:
         """Test that query execution handles a batch execution failure by
         stopping further execution"""
         # Set up the cursor to fail when executed
@@ -108,14 +109,14 @@ class TestQuery(unittest.TestCase):
             self.query.execute(self.connection)
 
         # And only the first batch was executed
-        expected_calls = [mock.call(self.statement_list[0])]
+        expected_calls = [mock.call(sql.SQL(self.statement_list[0]))]
         self.cursor.execute.assert_has_calls(expected_calls)
         self.assertEqual(len(self.cursor.execute.mock_calls), 1)
 
         # And the query is marked as executed
         self.assertIs(self.query.execution_state, ExecutionState.EXECUTED)
 
-    def test_batch_selections(self):
+    def test_batch_selections(self) -> None:
         """Test that the query sets up batch objects with correct selection information"""
         full_query = """select * from
 t1;

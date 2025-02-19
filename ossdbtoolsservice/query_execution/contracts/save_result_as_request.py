@@ -12,33 +12,33 @@ from ossdbtoolsservice.query.contracts import SaveResultsRequestParams
 
 
 class SaveResultRequestResult:
-    messages: str
+    messages: str | None
 
-    def __init__(self):
-        self.messages: str = None
+    def __init__(self) -> None:
+        self.messages = None
 
 
 class SaveResultsAsCsvRequestParams(SaveResultsRequestParams):
-    include_headers: bool
+    include_headers: bool | None
     delimiter: str
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.include_headers: bool = None
+        self.include_headers = None
         self.delimiter: str = ","
 
 
 class SaveResultsAsJsonRequestParams(SaveResultsRequestParams):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
 
 class SaveResultsAsExcelRequestParams(SaveResultsRequestParams):
-    include_headers: bool
+    include_headers: bool | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.include_headers: bool = None
+        self.include_headers = None
 
 
 SAVE_AS_CSV_REQUEST = IncomingMessageConfiguration(

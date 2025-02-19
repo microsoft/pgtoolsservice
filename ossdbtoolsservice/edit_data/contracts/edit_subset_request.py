@@ -13,18 +13,18 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class EditSubsetParams(Serializable):
-    owner_uri: str
-    row_start_index: int
-    row_count: int
+    owner_uri: str | None
+    row_start_index: int | None
+    row_count: int | None
 
-    def __init__(self):
-        self.owner_uri: str = None
-        self.row_start_index: int = None
-        self.row_count: int = None
+    def __init__(self) -> None:
+        self.owner_uri = None
+        self.row_start_index = None
+        self.row_count = None
 
 
 class EditSubsetResponse:
-    def __init__(self, row_count: int, edit_rows: list[EditRow]):
+    def __init__(self, row_count: int, edit_rows: list[EditRow]) -> None:
         self.row_count = row_count
         self.subset = edit_rows
 

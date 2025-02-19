@@ -17,7 +17,7 @@ class ExpandCompletedParameters:
     error_message: Optional[str]
     nodes: Optional[list[NodeInfo]]
 
-    def __init__(self, session_id: str, node_path: str):
+    def __init__(self, session_id: str, node_path: str) -> None:
         """
         Initialize parameters to return when an expand operation is completed
         :param session_id: ID for the session that had an expanded

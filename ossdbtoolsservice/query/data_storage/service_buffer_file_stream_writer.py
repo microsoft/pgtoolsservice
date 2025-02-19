@@ -9,10 +9,9 @@ from typing import Any, Callable  # noqa
 
 from ossdbtoolsservice.converters import get_any_to_bytes_converter
 from ossdbtoolsservice.query.data_storage import StorageDataReader
-from ossdbtoolsservice.query.data_storage.service_buffer import ServiceBufferFileStream
 
 
-class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
+class ServiceBufferFileStreamWriter:
     """Writer for service buffer formatted file streams"""
 
     WRITER_STREAM_NONE_ERROR = "Stream argument is None"
@@ -29,21 +28,27 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
                 ServiceBufferFileStreamWriter.WRITER_STREAM_NOT_SUPPORT_WRITING_ERROR
             )
 
-        ServiceBufferFileStream.__init__(self, stream)
+        self._file_stream = stream
 
-    def _write_null(self):
+    def __enter__(self) -> "ServiceBufferFileStreamWriter":
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self._file_stream.close()
+
+    def _write_null(self) -> int:
         val_byte_array = bytearray(b"\xff\xff\xff\xff")
-        return self._write_to_file(self._file_stream, val_byte_array)
+        return self._write_to_file(val_byte_array)
 
-    def _write_to_file(self, stream, byte_array):
+    def _write_to_file(self, byte_array: bytes) -> int:
         try:
-            written_byte_number = stream.write(byte_array)
+            written_byte_number = self._file_stream.write(byte_array)
         except Exception as exc:
             raise OSError(ServiceBufferFileStreamWriter.WRITER_DATA_WRITE_ERROR) from exc
 
         return written_byte_number
 
-    def write_row(self, reader: StorageDataReader):
+    def write_row(self, reader: StorageDataReader) -> int | Any:
         """Write a row to a file"""
         # Define a object list to store multiple columns in a row
         len_columns_info = len(reader.columns_info)
@@ -69,11 +74,11 @@ class ServiceBufferFileStreamWriter(ServiceBufferFileStream):
                 bytes_length_to_write = len(value_to_write)
 
                 row_bytes += self._write_to_file(
-                    self._file_stream, bytearray(struct.pack("i", bytes_length_to_write))
+                    bytearray(struct.pack("i", bytes_length_to_write))
                 )
-                row_bytes += self._write_to_file(self._file_stream, value_to_write)
+                row_bytes += self._write_to_file(value_to_write)
 
         return row_bytes
 
-    def seek(self, offset):
+    def seek(self, offset: int) -> None:
         self._file_stream.seek(offset, io.SEEK_SET)

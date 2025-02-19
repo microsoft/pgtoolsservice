@@ -14,7 +14,7 @@ from ossdbtoolsservice.serialization import Serializable
 class CreateSessionResponse(Serializable):
     session_id: str
 
-    def __init__(self, session_id):
+    def __init__(self, session_id: str) -> None:
         self.session_id: str = session_id
 
 

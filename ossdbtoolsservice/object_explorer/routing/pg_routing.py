@@ -4,7 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 import re
-from typing import Optional, TypeVar, Union
+from collections.abc import Generator
+from typing import Any, Optional, TypeVar, Union
 from urllib.parse import urljoin
 
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
@@ -17,7 +18,15 @@ from ossdbtoolsservice.object_explorer.session import (
 from pgsmo import Schema, Table, View
 from smo.common.node_object import NodeObject
 
+N = TypeVar("N", bound=NodeObject)
+
 # NODE GENERATOR HELPERS ###################################################
+
+
+def _get_node_schema(node: NodeObject) -> str | None:
+    """Some nodes have a schema property, which is used below.
+    This will return if it exists."""
+    return getattr(node, "schema", None)
 
 
 def _get_node_info(
@@ -31,13 +40,13 @@ def _get_node_info(
     Utility method for generating a NodeInfo from a NodeObject
     :param node: NodeObject to convert into a NodeInfo.
                  node.name will be used for the label of the node (unless label is provided)
-                 node.oid will be appended to the end of the 
+                 node.oid will be appended to the end of the
                  current URI to create the node's path
     :param current_path: URI provided in the request to expand/refresh
     :param node_type: Node type, determines icon used in UI
-    :param label: Overrides the node.name is provided, display name of the 
+    :param label: Overrides the node.name is provided, display name of the
                     node displayed as-is
-    :param is_leaf: Whether or not the node is a leaf. Default is true. 
+    :param is_leaf: Whether or not the node is a leaf. Default is true.
                     If false, a trailing slash
                     will be added to the node path to indicate it behaves as a folder
     :return: NodeInfo based on the NodeObject provided
@@ -46,43 +55,45 @@ def _get_node_info(
     metadata = ObjectMetadata(node.urn, None, type(node).__name__, node.name, None)
 
     # Add the schema name if it is the immediate parent
-    if node.parent is not None and node.parent.parent is None and hasattr(node, "schema"):
-        metadata.schema = node.schema
+    if node.parent is not None and node.parent.parent is None:
+        node_schema = _get_node_schema(node)
+        if node_schema is not None:
+            metadata.schema = node_schema
 
-    # Else if it is a table object, add the schema and the object name. 
+    # Else if it is a table object, add the schema and the object name.
     # Important for scripting purposes
     # node.parent = Table/View, node.parent.parent = Schema, node.parent.parent.parent = None
     elif (
         node.parent is not None
         and node.parent.parent is not None
         and node.parent.parent.parent is None
-        and hasattr(node.parent, "schema")
     ):
-        metadata.schema = ".".join([node.parent.schema, node.parent.name])
-
-    node_info: NodeInfo = NodeInfo()
-    node_info.is_leaf = is_leaf
-    node_info.label = label if label is not None else node.name
-    node_info.metadata = metadata
-    node_info.node_type = node_type
+        parent_schema = _get_node_schema(node.parent)
+        if parent_schema is not None:
+            metadata.schema = ".".join([parent_schema, node.parent.name])
 
     # Build the path to the node. Trailing slash is added to indicate URI is a folder
     trailing_slash = "" if is_leaf else "/"
-    node_info.node_path = urljoin(current_path, str(node.oid) + trailing_slash)
+    node_path = urljoin(current_path, str(node.oid) + trailing_slash)
+
+    node_info: NodeInfo = NodeInfo(
+        label=label if label is not None else node.name,
+        node_path=node_path,
+        node_type=node_type,
+        metadata=metadata,
+        is_leaf=is_leaf,
+    )
 
     return node_info
 
 
-NodeObject = TypeVar("NodeObject")
-
-
-def _get_obj_with_refresh(parent_obj: NodeObject, is_refresh: bool) -> NodeObject:
+def _get_obj_with_refresh(parent_obj: N, is_refresh: bool) -> N:
     if is_refresh:
         parent_obj.refresh()
     return parent_obj
 
 
-def _get_schema(session: ObjectExplorerSession, dbid: any, scid: any) -> Schema:
+def _get_schema(session: ObjectExplorerSession, dbid: Any, scid: Any) -> Schema:
     """Utility method to get a schema from the selected database from the collection"""
     return session.server.databases[int(dbid)].schemas[int(scid)]
 
@@ -103,7 +114,7 @@ def _get_schema_child_object(
 
 
 def _get_table_or_view(
-    is_refresh: bool, session: ObjectExplorerSession, dbid: any, parent_type: str, tid: any
+    is_refresh: bool, session: ObjectExplorerSession, dbid: Any, parent_type: str, tid: Any
 ) -> Union[Table, View]:
     tid = int(tid)
     if parent_type == "tables":
@@ -126,23 +137,24 @@ def _get_table_or_view(
 # NODE GENERATORS ##########################################################
 def _default_node_generator(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> None:
+) -> list[NodeInfo]:
     """
-    Clears cached Object Explorer Node information so that the refreshed node and 
+    Clears cached Object Explorer Node information so that the refreshed node and
     its children fetches the data again when expanded
     """
-    if is_refresh:
+    if is_refresh and session.server is not None:
         session.server.refresh()
+    return []
 
 
-def is_system_request(route_path: str):
+def is_system_request(route_path: str) -> bool:
     return "/system/" in route_path
 
 
 # FIRST TIER ##########################################################
 def _roles(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> list[NodeInfo]:
+) -> Generator[NodeInfo, Any, None]:
     """Function to generate a list of roles for a server"""
     _default_node_generator(is_refresh, current_path, session, match_params)
     for role in session.server.roles:
@@ -412,7 +424,7 @@ def _tables(
 # TABLE LEAVES ##########################################################
 def _columns(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> list[NodeInfo]:
+) -> Generator[NodeInfo, Any, None]:
     """
     Function to generate column NodeInfo for tables/views
       dbid int: Database OID
@@ -473,7 +485,7 @@ def _constraints(
 
 def _indexes(
     is_refresh: bool, current_path: str, session: ObjectExplorerSession, match_params: dict
-) -> list[NodeInfo]:
+) -> Generator[NodeInfo, Any, None]:
     """
     Function to generate index NodeInfo for tables
     Expected match_params:
@@ -494,7 +506,7 @@ def _indexes(
 
     for index in indexes:
         attribs = ["Clustered" if index.is_clustered else "Non-Clustered"]
-        # TODO: Add back in the correct node_type, but making sure the SCRIPT AS options 
+        # TODO: Add back in the correct node_type, but making sure the SCRIPT AS options
         # still appear in the right-click menu
         # if index.is_primary:
         #     node_type = 'Key_PrimaryKey'
@@ -537,9 +549,9 @@ def _triggers(
 
 
 # ROUTING TABLE ############################################################
-# This is the table that maps a regular expression to a routing target. 
+# This is the table that maps a regular expression to a routing target.
 # When using route_request,
-# the regular expression will be matched with the provided path. 
+# the regular expression will be matched with the provided path.
 # The routing target will then be
 # used to generate a list of nodes that belong under the node. This can be a list of folders,
 # a list of nodes generated by a function, or both.

@@ -14,7 +14,7 @@ class EditTableMetadata:
     OBJECT_TEMPLATE = '"{0}"'
 
     def __init__(
-        self, schema_name: str, table_name, columns_metadata: list[EditColumnMetadata]
+        self, schema_name: str, table_name: str, columns_metadata: list[EditColumnMetadata]
     ) -> None:
         self.columns_metadata = columns_metadata
         self.schema_name: str = schema_name

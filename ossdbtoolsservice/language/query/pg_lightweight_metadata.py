@@ -3,13 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from logging import Logger  # noqa
+from collections.abc import Generator
+from logging import Logger
+from typing import Any
+
+from psycopg import sql
 
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.language.completion.packages.parseutils.meta import (
     ForeignKey,
     FunctionMetadata,
-)  # noqa
+)
 
 
 class PGLightweightMetadata:
@@ -23,7 +27,7 @@ class PGLightweightMetadata:
         FROM    pg_catalog.pg_namespace
         ORDER BY 1 """
 
-    tables_query = """
+    tables_query = sql.SQL("""
         SELECT  n.nspname schema_name,
                 c.relname table_name
         FROM    pg_catalog.pg_class c
@@ -31,18 +35,18 @@ class PGLightweightMetadata:
                     ON n.oid = c.relnamespace
         WHERE   c.relkind = ANY(%s)
           AND   NOT c.relispartition
-        ORDER BY 1,2;"""
+        ORDER BY 1,2;""")
 
-    databases_query = """
+    databases_query = sql.SQL("""
         SELECT d.datname
         FROM pg_catalog.pg_database d
-        ORDER BY 1"""
+        ORDER BY 1""")
 
-    def __init__(self, conn: ServerConnection, logger: Logger = None):
+    def __init__(self, conn: ServerConnection, logger: Logger | None = None) -> None:
         self.conn = conn
-        self._logger: Logger = logger
+        self._logger: Logger | None = logger
 
-    def _log(self, message):
+    def _log(self, message: str) -> None:
         if self._logger:
             self._logger.debug(message)
 
@@ -51,7 +55,9 @@ class PGLightweightMetadata:
     for properties that are just needed for intellisense
     """
 
-    def _relations(self, kinds=("p", "r", "v", "m")):
+    def _relations(
+        self, kinds: list[str] | None = None
+    ) -> Generator[tuple[Any, ...], Any, None]:
         """Get table or view name metadata
 
         :param kinds: list of postgres relkind filters:
@@ -61,25 +67,30 @@ class PGLightweightMetadata:
                 'm' - materialized view
         :return: (schema_name, rel_name) tuples
         """
+        if kinds is None:
+            kinds = ["p", "r", "v", "m"]
 
         with self.conn.cursor() as cur:
-            sql = cur.mogrify(self.tables_query, [kinds])
-            self._log(f"Tables Query. sql: {sql}")
-            cur.execute(sql)
+            query_morgified = cur.mogrify(self.tables_query, [kinds])
+            query = sql.SQL(query_morgified)  # type: ignore
+            self._log(f"Tables Query. sql: {query}")
+            cur.execute(query)
             yield from cur
 
-    def tables(self):
+    def tables(self) -> Generator[tuple[Any, ...], Any, None]:
         """Yields (schema_name, table_name) tuples"""
         yield from self._relations(kinds=["r", "p"])
 
-    def views(self):
+    def views(self) -> Generator[tuple[Any, ...], Any, None]:
         """Yields (schema_name, view_name) tuples.
 
         Includes both views and and materialized views
         """
         yield from self._relations(kinds=["v", "m"])
 
-    def _columns(self, kinds=("p", "r", "v", "m")):
+    def _columns(
+        self, kinds: list[str] | None = None
+    ) -> Generator[tuple[Any, ...], Any, None]:
         """Get column metadata for tables and views
 
         :param kinds: kinds: list of postgres relkind filters:
@@ -89,8 +100,11 @@ class PGLightweightMetadata:
                 'm' - materialized view
         :return: list of (schema_name, relation_name, column_name, column_type) tuples
         """
+        if kinds is None:
+            kinds = ["p", "r", "v", "m"]
+
         if self.conn.connection.info.server_version >= 120000:
-            columns_query = """
+            columns_query = sql.SQL("""
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
                         att.attname column_name,
@@ -109,9 +123,9 @@ class PGLightweightMetadata:
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
                         AND NOT cls.relispartition
-                ORDER BY 1, 2, att.attnum"""
+                ORDER BY 1, 2, att.attnum""")
         elif self.conn.connection.info.server_version >= 80400:
-            columns_query = """
+            columns_query = sql.SQL("""
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
                         att.attname column_name,
@@ -130,9 +144,9 @@ class PGLightweightMetadata:
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
                         AND NOT cls.relispartition
-                ORDER BY 1, 2, att.attnum"""
+                ORDER BY 1, 2, att.attnum""")
         else:
-            columns_query = """
+            columns_query = sql.SQL("""
                 SELECT  nsp.nspname schema_name,
                         cls.relname table_name,
                         att.attname column_name,
@@ -150,27 +164,28 @@ class PGLightweightMetadata:
                         AND NOT att.attisdropped
                         AND att.attnum  > 0
                         AND NOT cls.relispartition
-                ORDER BY 1, 2, att.attnum"""
+                ORDER BY 1, 2, att.attnum""")
 
         with self.conn.cursor() as cur:
-            sql = cur.mogrify(columns_query, [kinds])
-            self._log(f"Columns Query. sql: {sql}")
-            cur.execute(sql)
+            mogrified_query = cur.mogrify(columns_query, [kinds])
+            query = sql.SQL(mogrified_query)  # type: ignore
+            self._log(f"Columns Query. sql: {query}")
+            cur.execute(query)
             yield from cur
 
-    def table_columns(self):
+    def table_columns(self) -> Generator[tuple[Any, ...], Any, None]:
         yield from self._columns(kinds=["p", "r"])
 
-    def view_columns(self):
+    def view_columns(self) -> Generator[tuple[Any, ...], Any, None]:
         yield from self._columns(kinds=["v", "m"])
 
-    def databases(self):
+    def databases(self) -> list[Any]:
         with self.conn.cursor() as cur:
             self._log(f"Databases Query. sql: {self.databases_query}")
             cur.execute(self.databases_query)
             return [x[0] for x in cur.fetchall()]
 
-    def foreignkeys(self):
+    def foreignkeys(self) -> Generator[ForeignKey, Any, None]:
         """Yields ForeignKey named tuples"""
 
         if self.conn.connection.info.server_version < 90000:
@@ -216,7 +231,7 @@ class PGLightweightMetadata:
             for row in cur:
                 yield ForeignKey(*row)
 
-    def functions(self):
+    def functions(self) -> Generator[FunctionMetadata, Any, None]:
         """Yields FunctionMetadata named tuples"""
 
         if self.conn.connection.info.server_version >= 110000:
@@ -298,7 +313,7 @@ class PGLightweightMetadata:
             for row in cur:
                 yield FunctionMetadata(*row)
 
-    def datatypes(self):
+    def datatypes(self) -> Generator[tuple[Any, ...], Any, None]:
         """Yields tuples of (schema_name, type_name)"""
 
         with self.conn.cursor() as cur:
@@ -345,7 +360,7 @@ class PGLightweightMetadata:
             cur.execute(query)
             yield from cur
 
-    def casing(self):
+    def casing(self) -> Generator[Any, Any, None]:
         """Yields the most common casing for names used in db functions"""
         with self.conn.cursor() as cur:
             query = r"""

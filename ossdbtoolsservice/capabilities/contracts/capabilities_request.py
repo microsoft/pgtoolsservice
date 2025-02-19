@@ -12,10 +12,10 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class CapabilitiesRequestParams(Serializable):
-    host_name: str
-    host_version: str
+    host_name: str | None
+    host_version: str | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.host_name = None
         self.host_version = None
 
@@ -23,12 +23,12 @@ class CapabilitiesRequestParams(Serializable):
 class CategoryValue:
     """Defines a category value for an option"""
 
-    display_name: str
-    name: str
+    display_name: str | None
+    name: str | None
 
-    def __init__(self, display_name: str = None, name: str = None):
-        self.display_name: str = display_name
-        self.name: str = name
+    def __init__(self, display_name: str | None = None, name: str | None = None) -> None:
+        self.display_name = display_name
+        self.name = name
 
 
 class ServiceOption:
@@ -41,34 +41,34 @@ class ServiceOption:
     VALUE_TYPE_NUMBER: str = "number"
     VALUE_TYPE_CATEGORY: str = "category"
     VALUE_TYPE_BOOLEAN: str = "boolean"
-    name: str
-    display_name: str
-    description: str
-    group_name: str
-    value_type: str
-    default_value: str
-    category_values: list[CategoryValue]
+    name: str | None
+    display_name: str | None
+    description: str | None
+    group_name: str | None
+    value_type: str | None
+    default_value: str | None
+    category_values: list[CategoryValue] | None
     is_required: bool
 
     def __init__(
         self,
-        name: str = None,
-        display_name: str = None,
-        description: str = None,
-        group_name: str = None,
-        value_type: str = None,
-        default_value: str = None,
-        category_values: list[CategoryValue] = None,
+        name: str | None = None,
+        display_name: str | None = None,
+        description: str | None = None,
+        group_name: str | None = None,
+        value_type: str | None = None,
+        default_value: str | None = None,
+        category_values: list[CategoryValue] | None = None,
         is_required: bool = False,
-    ):
-        self.name: str = name
-        self.display_name: str = display_name
-        self.description: str = description
-        self.group_name: str = group_name
-        self.value_type: str = value_type
-        self.default_value: str = default_value
-        self.category_values: list[CategoryValue] = category_values
-        self.is_required: bool = is_required
+    ) -> None:
+        self.name = name
+        self.display_name = display_name
+        self.description = description
+        self.group_name = group_name
+        self.value_type = value_type
+        self.default_value = default_value
+        self.category_values = category_values
+        self.is_required = is_required
 
 
 class ConnectionOption(ServiceOption):
@@ -81,22 +81,22 @@ class ConnectionOption(ServiceOption):
     SPECIAL_VALUE_PASSWORD_NAME: str = "password"
     SPECIAL_VALUE_ACCESS_TOKEN_NAME: str = "azureAccountToken"
     SPECIAL_VALUE_APP_NAME: str = "appName"
-    special_value_type: str
+    special_value_type: str | None
     is_identity: bool
 
     def __init__(
         self,
-        name: str = None,
-        display_name: str = None,
-        description: str = None,
-        group_name: str = None,
-        value_type: str = None,
-        default_value: str = None,
-        category_values: list[CategoryValue] = None,
-        special_value_type: str = None,
+        name: str | None = None,
+        display_name: str | None = None,
+        description: str | None = None,
+        group_name: str | None = None,
+        value_type: str | None = None,
+        default_value: str | None = None,
+        category_values: list[CategoryValue] | None = None,
+        special_value_type: str | None = None,
         is_identity: bool = False,
         is_required: bool = False,
-    ):
+    ) -> None:
         super().__init__(
             name,
             display_name,
@@ -107,8 +107,8 @@ class ConnectionOption(ServiceOption):
             category_values,
             is_required,
         )
-        self.special_value_type: str = special_value_type
-        self.is_identity: bool = is_identity
+        self.special_value_type = special_value_type
+        self.is_identity = is_identity
 
 
 class ConnectionProviderOptions:
@@ -129,7 +129,7 @@ class FeatureMetadataProvider:
 
     def __init__(
         self, enabled: bool, feature_name: str, options_metadata: list[ServiceOption]
-    ):
+    ) -> None:
         self.enabled = enabled
         self.feature_name = feature_name
         self.options_metadata = options_metadata
@@ -151,7 +151,7 @@ class DMPServerCapabilities:
         provider_display_name: str,
         connection_options: ConnectionProviderOptions,
         features: list[FeatureMetadataProvider],
-    ):
+    ) -> None:
         self.protocol_version: str = protocol_version
         self.provider_name: str = provider_name
         self.provider_display_name: str = provider_display_name
@@ -164,7 +164,7 @@ class CapabilitiesResult:
 
     capabilities: DMPServerCapabilities
 
-    def __init__(self, capabilities: DMPServerCapabilities):
+    def __init__(self, capabilities: DMPServerCapabilities) -> None:
         self.capabilities: DMPServerCapabilities = capabilities
 
 

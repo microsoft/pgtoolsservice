@@ -10,7 +10,7 @@ import urllib.parse as parse
 
 import inflection
 
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.driver.types import ServerConnection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection
@@ -63,7 +63,7 @@ class TestServer(unittest.TestCase):
         # ... Create an instance of the class and override the connection
         mock_connection = MockPsycopgConnection("host=host dbname=dbname")
         with mock.patch("psycopg.connect", new=mock.Mock(return_value=mock_connection)):
-            pg_connection = PostgreSQLConnection({})
+            pg_connection = ServerConnection({})
         pg_connection.execute_dict = mock_exec_dict
         obj = Server(pg_connection)
 

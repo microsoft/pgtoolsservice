@@ -1,4 +1,5 @@
 from ipaddress import ip_address, ip_interface
+from typing import Any
 
 import psycopg
 from psycopg.types.json import _JsonDumper
@@ -123,7 +124,7 @@ PSYCOPG_SUPPORTED_MULTIRANGE_ARRAY_TYPES = (6155, 6150, 6157, 6151, 6152, 6153)
 
 
 class pgAdminInetLoader(InetLoader):
-    def load(self, data):
+    def load(self, data: Any) -> Any:
         if isinstance(data, memoryview):
             data = bytes(data)
 
@@ -134,7 +135,9 @@ class pgAdminInetLoader(InetLoader):
 
 
 class TextLoaderpgAdmin(TextLoader):
-    def load(self, data):
+    def load(self, data: Any) -> str:
+        if not self.connection:
+            raise ValueError("connection is not set")
         postgres_encoding, python_encoding = get_encoding(self.connection.info.encoding)
         if postgres_encoding not in ["SQLASCII", "SQL_ASCII"]:
             # In case of errors while decoding data, instead of raising error
@@ -158,11 +161,14 @@ class TextLoaderpgAdmin(TextLoader):
 
 
 class JsonDumperpgAdmin(_JsonDumper):
-    def dump(self, obj):
-        return self.dumps(obj).encode()
+    def dump(self, obj: Any) -> Any:
+        v = self.dumps(obj)
+        if isinstance(v, str):
+            return v.encode()
+        return v
 
 
-def addAdapters():
+def addAdapters() -> None:
     # This registers a unicode type caster for datatype 'RECORD'.
     for typ in PSYCOPG_SUPPORTED_RECORD_TYPES:
         psycopg.adapters.register_loader(typ, TextLoaderpgAdmin)
@@ -193,7 +199,7 @@ def addAdapters():
     psycopg.adapters.register_dumper(dict, JsonDumperpgAdmin)
 
 
-def get_encoding(key):
+def get_encoding(key: str) -> list[str]:
     """
     :param key: Database Encoding
     :return:
@@ -206,11 +212,11 @@ def get_encoding(key):
     if key == "ascii":
         key = "raw_unicode_escape"
     try:
-        postgres_encoding = psycopg._encodings.py2pgenc(key).decode()
+        postgres_encoding = psycopg._encodings.py2pgenc(key).decode()  # type: ignore
     except Exception:
         postgres_encoding = "utf-8"
 
-    python_encoding = psycopg._encodings._py_codecs.get(postgres_encoding, "utf-8")
+    python_encoding = psycopg._encodings._py_codecs.get(postgres_encoding, "utf-8")  # type: ignore
 
     _dict = encode_dict.get(postgres_encoding.upper(), [postgres_encoding, python_encoding])
     return _dict

@@ -12,7 +12,7 @@ from ossdbtoolsservice.query_execution.contracts import SaveResultsAsJsonRequest
 
 
 class TestSaveAsJsonWriter(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.request = SaveResultsAsJsonRequestParams()
         self.request.file_path = "TestPath"
         self.request.include_headers = True
@@ -20,9 +20,9 @@ class TestSaveAsJsonWriter(unittest.TestCase):
         self.mock_io = mock.MagicMock()
 
         self.row = [
-            DbCellValue("Test", False, None, 0),
-            DbCellValue(1023, False, None, 0),
-            DbCellValue(False, False, None, 0),
+            DbCellValue("Test", False, "Test", 0),
+            DbCellValue(1023, False, 1023, 0),
+            DbCellValue("False", False, False, 0),
         ]
 
         name_column = DbColumn()
@@ -45,16 +45,16 @@ class TestSaveAsJsonWriter(unittest.TestCase):
         with mock.patch("xlsxwriter.Workbook", new=self.xlsxwriter_mock):
             self.writer = SaveAsJsonWriter(self.mock_io, self.request)
 
-    def test_write_row(self):
+    def test_write_row(self) -> None:
         self.writer.write_row(self.row, self.columns)
 
         self.assertEqual(1, len(self.writer._data))
 
         self.assertEqual("Test", self.writer._data[0]["Name"])
-        self.assertEqual("1023", self.writer._data[0]["Id"])
-        self.assertEqual("False", self.writer._data[0]["Valid"])
+        self.assertEqual(1023, self.writer._data[0]["Id"])
+        self.assertEqual(False, self.writer._data[0]["Valid"])
 
-    def test_complete_write(self):
+    def test_complete_write(self) -> None:
         json_dump_mock = mock.MagicMock()
 
         with mock.patch("json.dump", new=json_dump_mock):

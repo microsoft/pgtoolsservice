@@ -5,8 +5,10 @@
 
 """Utility functions for logging"""
 
+from logging import Logger
 
-def log_debug(logger, message: str):
+
+def log_debug(logger: Logger | None, message: str) -> None:
     """Logs message to debug if logger exists"""
     if logger is not None:
         logger.debug(message)

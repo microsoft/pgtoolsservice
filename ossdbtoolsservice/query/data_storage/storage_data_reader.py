@@ -4,15 +4,19 @@
 # --------------------------------------------------------------------------------------------
 
 
+from typing import Any
+
+import psycopg
+
 from ossdbtoolsservice.query.column_info import get_columns_info
 from ossdbtoolsservice.query.contracts import DbColumn
 
 
 class StorageDataReader:
-    def __init__(self, cursor) -> None:
+    def __init__(self, cursor: psycopg.Cursor) -> None:
         self._cursor = cursor
-        self._current_row: tuple = None
-        self._columns_info = []
+        self._current_row: tuple | None = None
+        self._columns_info: list[DbColumn] = []
 
     @property
     def columns_info(self) -> list[DbColumn]:
@@ -35,13 +39,19 @@ class StorageDataReader:
 
         return row_found
 
-    def get_value(self, column_index: int):
+    def get_value(self, column_index: int) -> Any:
+        if self._current_row is None:
+            raise ValueError("Result set not read")
         return self._current_row[column_index]
 
     def get_values(self) -> tuple:
+        if self._current_row is None:
+            raise ValueError("Result set not read")
         return self._current_row
 
     def is_none(self, column_index: int) -> bool:
+        if self._current_row is None:
+            raise ValueError("Result set not read")
         return self._current_row[column_index] is None
 
     def get_bytes_with_max_capacity(
@@ -49,6 +59,8 @@ class StorageDataReader:
     ) -> bytearray:
         if max_bytes_to_return <= 0:
             raise ValueError("Maximum number of bytes to return must be greater than zero")
+        if self._current_row is None:
+            raise ValueError("Result set not read")
 
         column_value = self._current_row[column_index]
 
@@ -60,6 +72,8 @@ class StorageDataReader:
     def get_chars_with_max_capacity(self, column_index: int, max_chars_to_return: int) -> str:
         if max_chars_to_return <= 0:
             raise ValueError("Maximum number of chars to return must be greater than zero")
+        if self._current_row is None:
+            raise ValueError("Result set not read")
 
         column_value = self._current_row[column_index]
 
@@ -73,6 +87,8 @@ class StorageDataReader:
             raise ValueError(
                 "Maximum number of XML bytes to return must be greater than zero"
             )
+        if self._current_row is None:
+            raise ValueError("Result set not read")
 
         column_value = self._current_row[column_index]
 

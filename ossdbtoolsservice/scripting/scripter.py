@@ -3,12 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Callable
+from typing import Any, Callable, Generic, TypeVar
 
-import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.scripting.contracts import ScriptOperation
+from ossdbtoolsservice.utils import validate
 from pgsmo import Server as PGServer
 from smo.common.node_object import NodeObject
 from smo.common.scripting_mixins import (
@@ -18,22 +18,41 @@ from smo.common.scripting_mixins import (
     ScriptableUpdate,
 )
 
-SERVER_TYPES = {utils.constants.PG_PROVIDER_NAME: PGServer}
+T = TypeVar("T")
+
+
+class ScriptOperationHandler(Generic[T]):
+    def __init__(self, obj_type: type[T], script_method: Callable[[T], str]) -> None:
+        self.obj_type = obj_type
+        self.script_method = script_method
+
+    def can_handle(self, obj: Any) -> bool:
+        return isinstance(obj, self.obj_type)
+
+    def __call__(self, obj: T) -> str:
+        return self.script_method(obj)
 
 
 class Scripter:
     """Service for retrieving operation scripts"""
 
-    SCRIPT_OPERATION = Callable[[NodeObject], str]
-    SCRIPT_HANDLERS: dict[ScriptOperation, tuple[type, SCRIPT_OPERATION]] = {
-        ScriptOperation.CREATE: (ScriptableCreate, lambda obj: obj.create_script()),
-        ScriptOperation.DELETE: (ScriptableDelete, lambda obj: obj.delete_script()),
-        ScriptOperation.UPDATE: (ScriptableUpdate, lambda obj: obj.update_script()),
-        ScriptOperation.SELECT: (ScriptableSelect, lambda obj: obj.select_script()),
+    SCRIPT_HANDLERS: dict[ScriptOperation, ScriptOperationHandler] = {
+        ScriptOperation.CREATE: ScriptOperationHandler(
+            ScriptableCreate, lambda obj: obj.create_script()
+        ),
+        ScriptOperation.DELETE: ScriptOperationHandler(
+            ScriptableDelete, lambda obj: obj.delete_script()
+        ),
+        ScriptOperation.UPDATE: ScriptOperationHandler(
+            ScriptableUpdate, lambda obj: obj.update_script()
+        ),
+        ScriptOperation.SELECT: ScriptOperationHandler(
+            ScriptableSelect, lambda obj: obj.select_script()
+        ),
     }
 
-    def __init__(self, conn: ServerConnection):
-        self.server: PGServer = SERVER_TYPES[conn._provider_name](conn)
+    def __init__(self, conn: ServerConnection) -> None:
+        self.server: PGServer = PGServer(conn)
 
     # SCRIPTING METHODS ############################
     def script(self, operation: ScriptOperation, metadata: ObjectMetadata) -> str:
@@ -45,25 +64,27 @@ class Scripter:
         :return: SQL for the requested scripting operation
         """
         # Make sure we have the handler
-        handler: tuple[type, self.SCRIPT_OPERATION] = self.SCRIPT_HANDLERS.get(operation)
+        handler: ScriptOperationHandler | None = self.SCRIPT_HANDLERS.get(operation)
         if handler is None:
             raise ValueError(
                 f"Script operation {operation} is not supported"
             )  # TODO: Localize
 
-        utils.validate.is_not_none("metadata", metadata)
+        validate.is_not_none("metadata", metadata)
 
         # Get the object and make sure it supports the operation
         if metadata.urn:
             obj: NodeObject = self.server.get_object_by_urn(metadata.urn)
         else:
-            obj: NodeObject = self.server.get_object(metadata.metadata_type_name, metadata)
+            if metadata.metadata_type_name is None:
+                raise ValueError("metadataTypeName required if urn is not provided")
+            obj = self.server.get_object(metadata.metadata_type_name, metadata)
 
-        if not isinstance(obj, handler[0]):
+        if not handler.can_handle(obj):
             # TODO: Localize
             raise TypeError(
                 f"Object of type {obj.__class__.__name__} "
                 f"does not support script operation {operation}"
             )
 
-        return handler[1](obj)
+        return handler(obj)

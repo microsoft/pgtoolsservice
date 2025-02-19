@@ -5,7 +5,7 @@
 
 """Utility functions for operating with text"""
 
-import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.utils import validate
 from ossdbtoolsservice.workspace.contracts.common import Position, Range
 
 
@@ -17,7 +17,7 @@ class TextUtilities:
     )
 
     @classmethod
-    def is_char_delimiter(cls, char: str):
+    def is_char_delimiter(cls, char: str) -> bool:
         """Looks up a character in the list of known delimiters"""
         return char in TextUtilities.char_delimiters
 
@@ -31,7 +31,7 @@ class TextUtilities:
         if length == 0:
             return 0
 
-        utils.validate.is_within_range("start_col", start_col, 0, length)
+        validate.is_within_range("start_col", start_col, 0, length)
         index = start_col
         while index < length:
             if TextUtilities.is_char_delimiter(line[index]):
@@ -50,7 +50,7 @@ class TextUtilities:
         if length == 0:
             return 0
 
-        utils.validate.is_within_range("start_col", start_col, 0, length)
+        validate.is_within_range("start_col", start_col, 0, length)
         index = start_col
         if index == length or (index > 0 and TextUtilities.is_char_delimiter(line[index])):
             # If at the end of a line, skip to previous character to begin searching
@@ -77,7 +77,7 @@ class TextUtilities:
         return Range.from_data(row, start_col, row, end_col)
 
     @classmethod
-    def get_text_and_range(cls, pos: Position, current_line: str) -> tuple[str, Range]:
+    def get_text_and_range(cls, pos: Position, current_line: str) -> tuple[str, Range | None]:
         """
         Given a position in a field and the current lines text, gets the token representing
         the nearest word

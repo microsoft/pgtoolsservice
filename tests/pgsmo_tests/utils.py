@@ -5,13 +5,15 @@
 
 import unittest
 import unittest.mock as mock
-from typing import Optional
+from collections.abc import Generator
+from typing import Any, Optional
 
 from psycopg import Column, DatabaseError, connection
 
-from ossdbtoolsservice.driver.types.psycopg_driver import (
+from ossdbtoolsservice.driver.types.driver import (
     PG_CANCELLATION_QUERY,
-    PostgreSQLConnection,
+    Params,
+    ServerConnection,
 )
 from pgsmo import Server
 from smo.common.node_object import NodeCollection, NodeObject
@@ -72,9 +74,9 @@ class MockCursor:
     def __init__(
         self,
         results: Optional[tuple[list[Column], list[dict]]],
-        throw_on_execute=False,
-        mogrified_value="SomeQuery",
-    ):
+        throw_on_execute: bool = False,
+        mogrified_value: str = "SomeQuery",
+    ) -> None:
         # Setup the results, that will change value once the cursor is executed
         self.description = None
         self.rowcount = None
@@ -90,9 +92,11 @@ class MockCursor:
         self.close = mock.MagicMock()
         self.mogrify = mock.Mock(return_value=self._mogrified_value)
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[list[Any], Any, None]:
         # If we haven't read yet, raise an error
         # Or if we have read but we're past the end of the list, raise an error
+        if not self._results:
+            raise StopIteration
         if not self._has_been_read or self._iter_index > len(self._results[1]):
             raise StopIteration
 
@@ -100,17 +104,17 @@ class MockCursor:
         yield list(self._results[1][self._iter_index].values())
         self._iter_index += 1
 
-    def __enter__(self):
+    def __enter__(self) -> "MockCursor":
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self) -> None:
         pass
 
     @property
-    def mogrified_value(self):
+    def mogrified_value(self) -> str:
         return self._mogrified_value
 
-    def _execute(self, query, params=None):
+    def _execute(self, query: str, params: Params | None = None) -> None:
         # Raise error if that was expected, otherwise set the output
         if self._throw_on_execute:
             raise DatabaseError()
@@ -120,7 +124,7 @@ class MockCursor:
         self._has_been_read = True
 
 
-class MockPGServerConnection(PostgreSQLConnection):
+class MockPGServerConnection(ServerConnection):
     """Class used to mock PGSQL ServerConnection objects for testing"""
 
     def __init__(
@@ -144,7 +148,7 @@ class MockPGServerConnection(PostgreSQLConnection):
                 dsn_parameters=f"host={host} dbname={name} user={user} port={port}",
             )
 
-        # mock psycopg.connect call in PostgreSQLConnection.__init__
+        # mock psycopg.connect call in ServerConnection.__init__
         # to return mock psycopg connection
         with mock.patch("psycopg.connect", mock.Mock(return_value=connection)):
             super().__init__(

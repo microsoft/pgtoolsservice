@@ -9,18 +9,16 @@ from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 
 
 class UpdateCellRequest(RowOperationRequest):
-    column_id: int
-    new_value: str
+    column_id: int | None
+    new_value: str | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         RowOperationRequest.__init__(self)
         self.column_id = None
         self.new_value = None
 
 
-class UpdateCellResponse(EditCellResponse):
-    def __init__(self):
-        EditCellResponse.__init__(self)
+class UpdateCellResponse(EditCellResponse): ...
 
 
 UPDATE_CELL_REQUEST = IncomingMessageConfiguration("edit/updateCell", UpdateCellRequest)

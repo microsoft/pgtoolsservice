@@ -13,7 +13,7 @@ class IncomingMessageConfiguration(Generic[TModel]):
     Stores info for registering a request (or notification).
     """
 
-    message_configurations = []
+    message_configurations: list["IncomingMessageConfiguration"] = []
 
     def __init__(self, method: str, parameter_class: type[TModel] | None) -> None:
         self.method = method
@@ -26,7 +26,7 @@ class OutgoingMessageRegistration:
     Object to register outgoing message configuration.
     """
 
-    message_configurations = []
+    message_configurations: list["OutgoingMessageRegistration"] = []
 
     @staticmethod
     def register_outgoing_message(message_class: Any) -> None:

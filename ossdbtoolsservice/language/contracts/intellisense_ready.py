@@ -15,13 +15,13 @@ class IntelliSenseReadyParams(Serializable):
     """
 
     @classmethod
-    def from_data(cls, uri: str):
+    def from_data(cls, uri: str) -> "IntelliSenseReadyParams":
         obj = cls()
         obj.owner_uri = uri
         return obj
 
-    def __init__(self):
-        self.owner_uri: str = None
+    def __init__(self) -> None:
+        self.owner_uri: str | None = None
 
 
 INTELLISENSE_READY_NOTIFICATION = "textDocument/intelliSenseReady"

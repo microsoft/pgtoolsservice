@@ -39,7 +39,7 @@ def test_send_request_error(
     params = ({"param1": "value1"},)
 
     response_error = JSONRPCMessage.create_error(
-        msg_id=None,
+        msg_id="foo",
         code=-32603,
         message="Internal error",
         data={"error": "An error occurred"},

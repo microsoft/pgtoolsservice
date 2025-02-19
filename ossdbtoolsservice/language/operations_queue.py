@@ -8,16 +8,16 @@
 import threading
 from logging import Logger
 from queue import Queue
-from typing import Callable, Dict, List, Optional  # noqa
+from typing import Callable, Optional
 
 from prompt_toolkit.completion import Completer
 
-import ossdbtoolsservice.utils as utils
 from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectRequestParams
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
+from ossdbtoolsservice.utils import constants
 
 INTELLISENSE_URI = "intellisense://"
 
@@ -25,20 +25,20 @@ INTELLISENSE_URI = "intellisense://"
 class ConnectionContext:
     """Context information needed to look up connections"""
 
-    def __init__(self, key: str, logger: Optional[Logger] = None):
+    def __init__(self, key: str, logger: Logger | None = None) -> None:
         self.key = key
         self.intellisense_complete: threading.Event = threading.Event()
-        self.completer: Completer = None
+        self.completer: Completer | None = None
         self.is_connected: bool = False
-        self.logger: Logger = logger
+        self.logger: Logger | None = logger
 
-    def refresh_metadata(self, connection: ServerConnection):
+    def refresh_metadata(self, connection: ServerConnection) -> None:
         # Start metadata refresh so operations can be completed
         completion_refresher = CompletionRefresher(connection, self.logger)
         completion_refresher.refresh(self._on_completions_refreshed)
 
     # IMPLEMENTATION DETAILS ###############################################
-    def _on_completions_refreshed(self, new_completer: Completer):
+    def _on_completions_refreshed(self, new_completer: Completer) -> None:
         self.completer = new_completer
         self.is_connected = True
         self.intellisense_complete.set()
@@ -50,18 +50,18 @@ class QueuedOperation:
     def __init__(
         self,
         key: str,
-        task: Callable[[Completer], bool],
-        timeout_task: Callable[[None], bool],
-    ):
+        task: Callable[[ConnectionContext], bool],
+        timeout_task: Callable[[], None],
+    ) -> None:
         """
         Initializes a queued operation with a key defining the connection it maps to,
         a task to be run for a connected queue, and a timeout task. Currently the timeout
         task is just used if the queue is not yet connected
         """
         self.key = key
-        self.task: Callable[[Completer], bool] = task
-        self.timeout_task: Callable[[None], bool] = timeout_task
-        self.context: ConnectionContext = None
+        self.task: Callable[[ConnectionContext], bool] = task
+        self.timeout_task: Callable[[], None] = timeout_task
+        self.context: ConnectionContext | None = None
 
 
 class OperationsQueue:
@@ -81,10 +81,10 @@ class OperationsQueue:
         self.stop_requested = False
         # TODO consider thread pool for multiple messages? Or full
         # Process queue using multi-threading
-        self._operations_consumer: threading.Thread = None
+        self._operations_consumer: threading.Thread | None = None
 
     # PUBLIC METHODS ###############################################
-    def start(self):
+    def start(self) -> None:
         """
         Starts the thread that processes operations
         """
@@ -95,14 +95,14 @@ class OperationsQueue:
         self._operations_consumer.daemon = True
         self._operations_consumer.start()
 
-    def stop(self):
+    def stop(self) -> None:
         self.stop_requested = True
         # Enqueue None to optimistically unblock output thread
         # so it can check for the cancellation flag
         self.queue.put(None)
         self._log_info("Language Service Operations Queue stopping...")
 
-    def add_operation(self, operation: QueuedOperation):
+    def add_operation(self, operation: QueuedOperation) -> None:
         """
         Adds an operation to the correct queue.
         Raises KeyError if no queue exists for this connection
@@ -126,7 +126,7 @@ class OperationsQueue:
         return key in self._context_map
 
     def add_connection_context(
-        self, conn_info: ConnectionInfo, overwrite=False
+        self, conn_info: ConnectionInfo, overwrite: bool = False
     ) -> ConnectionContext:
         """
         Adds a connection context and returns the notification event.
@@ -134,8 +134,8 @@ class OperationsQueue:
         """
         with self.lock:
             key: str = OperationsQueue.create_key(conn_info)
-            context: ConnectionContext = self._context_map.get(key)
-            logger: Logger = self._service_provider.logger
+            context: ConnectionContext | None = self._context_map.get(key)
+            logger: Logger | None = self._service_provider.logger
 
             if context:
                 if overwrite:
@@ -146,17 +146,19 @@ class OperationsQueue:
             # Create the context and start refresh
             context = ConnectionContext(key, logger)
             conn = self._create_connection(key, conn_info)
+            if not conn:
+                raise RuntimeError("Failed to create connection for intellisense")
             context.refresh_metadata(conn)
             self._context_map[key] = context
             return context
 
-    def disconnect(self, connection_key: str):
+    def disconnect(self, connection_key: str) -> None:
         """
         Disconnects a connection that was used for intellisense
         """
         with self.lock:
             # Pop the key from the queue as it's no longer needed
-            context: ConnectionContext = self._context_map.pop(connection_key, None)
+            context: ConnectionContext | None = self._context_map.pop(connection_key, None)
             if context:
                 key_uri = INTELLISENSE_URI + connection_key
                 try:
@@ -188,13 +190,13 @@ class OperationsQueue:
             conn_info.details, key_uri, ConnectionType.INTELLISENSE
         )
         connect_result = conn_service.connect(connect_request)
-        if connect_result.error_message is not None:
+        if connect_result and connect_result.error_message is not None:
             raise RuntimeError(connect_result.error_message)
 
         connection = conn_service.get_connection(key_uri, ConnectionType.INTELLISENSE)
         return connection
 
-    def _process_operations(self):
+    def _process_operations(self) -> None:
         """
         Threaded operation that runs to process the queue.
         Thread completes on cancelation
@@ -212,9 +214,9 @@ class OperationsQueue:
                 # Catch generic exceptions without breaking out of loop
                 self._log_thread_exception(error)
 
-    def execute_operation(self, operation: QueuedOperation):
+    def execute_operation(self, operation: QueuedOperation) -> None:
         """
-        Processes an operation. Seperated for test purposes from the threaded logic
+        Processes an operation. Separated for test purposes from the threaded logic
         """
         if operation is not None:
             # Try to process the task, falling back to the timeout
@@ -222,13 +224,16 @@ class OperationsQueue:
             is_connected = operation.context is not None and operation.context.is_connected
             run_timeout_task = not is_connected
             if is_connected:
+                assert operation.context is not None  # for type checker
                 run_timeout_task = not operation.task(operation.context)
             if run_timeout_task:
                 operation.timeout_task()
 
     @property
     def _connection_service(self) -> ConnectionService:
-        return self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
+        return self._service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
 
     def _log_exception(self, message: str) -> None:
         logger = self._service_provider.logger
@@ -240,7 +245,7 @@ class OperationsQueue:
         if logger is not None:
             logger.info(message)
 
-    def _log_thread_exception(self, ex):
+    def _log_thread_exception(self, ex: Exception) -> None:
         """
         Logs an exception if the logger is defined
         :param ex: Exception to log

@@ -6,6 +6,7 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import ItemsView, Iterator, KeysView
 from typing import (
+    TYPE_CHECKING,
     Callable,
     Dict,
     Generic,
@@ -18,6 +19,9 @@ from typing import (
 from urllib.parse import urljoin
 
 import smo.utils as utils
+
+if TYPE_CHECKING:
+    from pgsmo.objects.server.server import Server
 
 
 class NodeObject(metaclass=ABCMeta):

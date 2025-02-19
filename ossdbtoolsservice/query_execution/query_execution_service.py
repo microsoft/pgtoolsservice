@@ -7,11 +7,11 @@ import ntpath
 import threading
 import uuid
 from datetime import datetime
-from typing import Callable, Dict, List  # noqa
+from typing import Any, Callable, TypeVar
 
 import sqlparse
 
-import ossdbtoolsservice.utils as utils
+from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectRequestParams
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
@@ -25,7 +25,7 @@ from ossdbtoolsservice.query import (
     ResultSetStorageType,
 )
 from ossdbtoolsservice.query import compute_selection_data_for_batches as compute_batches
-from ossdbtoolsservice.query.contracts import (  # noqa
+from ossdbtoolsservice.query.contracts import (
     BatchSummary,
     SaveResultsRequestParams,
     SelectionData,
@@ -82,8 +82,12 @@ from ossdbtoolsservice.query_execution.contracts import (
     SimpleExecuteResponse,
     SubsetParams,
 )
+from ossdbtoolsservice.utils import constants, time
+from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
 
 NO_QUERY_MESSAGE = "QueryServiceRequestsNoQuery"
+
+T = TypeVar("T")
 
 
 class ExecuteRequestWorkerArgs:
@@ -92,14 +96,14 @@ class ExecuteRequestWorkerArgs:
         owner_uri: str,
         connection: ServerConnection,
         request_context: RequestContext,
-        result_set_storage_type,
-        before_query_initialize: Callable = None,
-        on_batch_start: Callable = None,
-        on_message_notification: Callable = None,
-        on_resultset_complete: Callable = None,
-        on_batch_complete: Callable = None,
-        on_query_complete: Callable = None,
-    ):
+        result_set_storage_type: ResultSetStorageType,
+        before_query_initialize: Callable[[dict[str, Any]], None] | None = None,
+        on_batch_start: Callable[[BatchNotificationParams], None] | None = None,
+        on_message_notification: Callable[[MessageNotificationParams], None] | None = None,
+        on_resultset_complete: Callable[[ResultSetNotificationParams], None] | None = None,
+        on_batch_complete: Callable[[BatchNotificationParams], None] | None = None,
+        on_query_complete: Callable[[QueryCompleteNotificationParams], None] | None = None,
+    ) -> None:
         self.owner_uri = owner_uri
         self.connection = connection
         self.request_context = request_context
@@ -115,8 +119,8 @@ class ExecuteRequestWorkerArgs:
 class QueryExecutionService(Service):
     """Service for executing queries"""
 
-    def __init__(self):
-        self._service_provider: ServiceProvider = None
+    def __init__(self) -> None:
+        self._service_provider: ServiceProvider | None = None
         # Dictionary mapping uri to a list of batches
         self.query_results: dict[str, Query] = {}
         self.owner_to_thread_map: dict = {}  # Only used for testing
@@ -136,7 +140,7 @@ class QueryExecutionService(Service):
             SAVE_AS_EXCEL_REQUEST: self._handle_save_as_excel_request,
         }
 
-    def register(self, service_provider: ServiceProvider):
+    def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
         # Register the request handlers with the server
 
@@ -150,8 +154,18 @@ class QueryExecutionService(Service):
                 "Query execution service successfully initialized"
             )
 
-    def get_query(self, owner_uri: str):
+    def get_query(self, owner_uri: str | None) -> Query:
+        if owner_uri is None:
+            raise ValueError("owner_uri cannot be None")
+        if owner_uri not in self.query_results:
+            raise LookupError(f"No query found for owner_uri: {owner_uri}")
         return self.query_results[owner_uri]
+
+    @property
+    def service_provider(self) -> ServiceProvider:
+        if self._service_provider is None:
+            raise ValueError("Service provider is not set")
+        return self._service_provider
 
     # REQUEST HANDLERS #####################################################
 
@@ -172,16 +186,26 @@ class QueryExecutionService(Service):
 
     def _handle_query_execution_plan_request(
         self, request_context: RequestContext, params: QueryExecutionPlanRequest
-    ):
+    ) -> Any:
         raise NotImplementedError()
 
     def _handle_simple_execute_request(
         self, request_context: RequestContext, params: SimpleExecuteRequest
-    ):
+    ) -> None:
         new_owner_uri = str(uuid.uuid4())
 
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        connection_info = connection_service.get_connection_info(params.owner_uri)
+        owner_uri = params.owner_uri
+        if owner_uri is None:
+            request_context.send_error("Missing ownerUri")
+            return
+
+        connection_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
+        connection_info = connection_service.get_connection_info(owner_uri)
+        if connection_info is None:
+            request_context.send_error("Could not get connection info")
+            return
         connection_service.connect(
             ConnectRequestParams(connection_info.details, new_owner_uri, ConnectionType.QUERY)
         )
@@ -191,20 +215,31 @@ class QueryExecutionService(Service):
         execute_params.query = params.query_string
         execute_params.owner_uri = new_owner_uri
 
-        def on_query_complete(query_complete_params):
+        def on_query_complete(query_complete_params: QueryCompleteNotificationParams) -> None:
             subset_params = SubsetParams()
             subset_params.owner_uri = new_owner_uri
             subset_params.batch_index = 0
             subset_params.result_set_index = 0
             subset_params.rows_start_index = 0
 
-            resultset_summary = query_complete_params.batch_summaries[0].result_set_summaries[
-                0
-            ]
+            if not query_complete_params.batch_summaries:
+                request_context.send_error("Unable to get batch summaries")
+                return
+
+            resut_set_sumaries = query_complete_params.batch_summaries[0].result_set_summaries
+            if not resut_set_sumaries:
+                request_context.send_error("Unable to get result set summaries")
+                return
+
+            resultset_summary = resut_set_sumaries[0]
 
             subset_params.rows_count = resultset_summary.row_count
 
             subset = self._get_result_subset(request_context, subset_params)
+
+            if subset is None:
+                request_context.send_error("Unable to get result subset")
+                return
 
             simple_execute_response = SimpleExecuteResponse(
                 subset.result_subset.rows,
@@ -226,20 +261,25 @@ class QueryExecutionService(Service):
     def _handle_execute_query_request(
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
-        """Kick off thread to execute query 
+        """Kick off thread to execute query
         in response to an incoming execute query request"""
 
-        def before_query_initialize(before_query_initialize_params):
+        owner_uri = params.owner_uri
+        if owner_uri is None:
+            request_context.send_error("Missing ownerUri")
+            return
+
+        def before_query_initialize(before_query_initialize_params: dict[str, Any]) -> None:
             # Send a response to indicate that the query was kicked off
             request_context.send_response(before_query_initialize_params)
 
-        def on_batch_start(batch_event_params):
+        def on_batch_start(batch_event_params: BatchNotificationParams) -> None:
             request_context.send_notification(BATCH_START_NOTIFICATION, batch_event_params)
 
-        def on_message_notification(notice_message_params):
+        def on_message_notification(notice_message_params: MessageNotificationParams) -> None:
             request_context.send_notification(MESSAGE_NOTIFICATION, notice_message_params)
 
-        def on_resultset_complete(result_set_params):
+        def on_resultset_complete(result_set_params: ResultSetNotificationParams) -> None:
             request_context.send_notification(
                 RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params
             )
@@ -247,27 +287,27 @@ class QueryExecutionService(Service):
                 RESULT_SET_COMPLETE_NOTIFICATION, result_set_params
             )
 
-        def on_batch_complete(batch_event_params):
+        def on_batch_complete(batch_event_params: BatchNotificationParams) -> None:
             request_context.send_notification(BATCH_COMPLETE_NOTIFICATION, batch_event_params)
 
-        def on_query_complete(query_complete_params):
+        def on_query_complete(query_complete_params: QueryCompleteNotificationParams) -> None:
             request_context.send_notification(
                 QUERY_COMPLETE_NOTIFICATION, query_complete_params
             )
 
         # Get a connection for the query
         try:
-            conn = self._get_connection(params.owner_uri, ConnectionType.QUERY)
+            conn = self._get_connection(owner_uri, ConnectionType.QUERY)
         except Exception as e:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(
+            if self.service_provider.logger is not None:
+                self.service_provider.logger.exception(
                     "Encountered exception while handling query request"
                 )  # TODO: Localize
-            request_context.send_unhandled_error_response(e)
+            request_context.send_error(str(e))
             return
 
         worker_args = ExecuteRequestWorkerArgs(
-            params.owner_uri,
+            owner_uri,
             conn,
             request_context,
             ResultSetStorageType.FILE_STORAGE,
@@ -284,49 +324,54 @@ class QueryExecutionService(Service):
     def _handle_execute_deploy_request(
         self, request_context: RequestContext, params: ExecuteRequestParamsBase
     ) -> None:
-        """Kick off thread to execute query 
+        """Kick off thread to execute query
         in response to an incoming execute query request"""
 
-        def before_query_initialize(before_query_initialize_params):
+        owner_uri = params.owner_uri
+        if owner_uri is None:
+            request_context.send_error("Missing ownerUri")
+            return
+
+        def before_query_initialize(before_query_initialize_params: dict[str, Any]) -> None:
             # Send a response to indicate that the query was kicked off
             request_context.send_response(before_query_initialize_params)
 
-        def on_batch_start(batch_event_params):
+        def on_batch_start(batch_event_params: BatchNotificationParams) -> None:
             request_context.send_notification(
                 DEPLOY_BATCH_START_NOTIFICATION, batch_event_params
             )
 
-        def on_message_notification(notice_message_params):
+        def on_message_notification(notice_message_params: MessageNotificationParams) -> None:
             request_context.send_notification(
                 DEPLOY_MESSAGE_NOTIFICATION, notice_message_params
             )
 
-        def on_resultset_complete(result_set_params):
+        def on_resultset_complete(result_set_params: ResultSetNotificationParams) -> None:
             pass
 
-        def on_batch_complete(batch_event_params):
+        def on_batch_complete(batch_event_params: BatchNotificationParams) -> None:
             request_context.send_notification(
                 DEPLOY_BATCH_COMPLETE_NOTIFICATION, batch_event_params
             )
 
-        def on_query_complete(query_complete_params):
+        def on_query_complete(query_complete_params: QueryCompleteNotificationParams) -> None:
             request_context.send_notification(
                 DEPLOY_COMPLETE_NOTIFICATION, query_complete_params
             )
 
         # Get a connection for the query
         try:
-            conn = self._get_connection(params.owner_uri, ConnectionType.QUERY)
+            conn = self._get_connection(owner_uri, ConnectionType.QUERY)
         except Exception as e:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(
+            if self.service_provider.logger is not None:
+                self.service_provider.logger.exception(
                     "Encountered exception while handling query request"
                 )  # TODO: Localize
-            request_context.send_unhandled_error_response(e)
+            request_context.send_error(str(e))
             return
 
         worker_args = ExecuteRequestWorkerArgs(
-            params.owner_uri,
+            owner_uri,
             conn,
             request_context,
             ResultSetStorageType.FILE_STORAGE,
@@ -344,8 +389,12 @@ class QueryExecutionService(Service):
         self,
         request_context: RequestContext,
         params: ExecuteRequestParamsBase,
-        worker_args: ExecuteRequestWorkerArgs = None,
-    ):
+        worker_args: ExecuteRequestWorkerArgs,
+    ) -> None:
+        if params.owner_uri is None:
+            request_context.send_error("Missing ownerUri")
+            return
+
         # Set up batch execution callback methods for sending notifications
         def _batch_execution_started_callback(batch: Batch) -> None:
             batch_event_params = BatchNotificationParams(
@@ -354,7 +403,7 @@ class QueryExecutionService(Service):
             _check_and_fire(worker_args.on_batch_start, batch_event_params)
 
         def _batch_execution_finished_callback(batch: Batch) -> None:
-            # Send back notices as a separate message to 
+            # Send back notices as a separate message to
             # avoid error coloring / highlighting of text
             notices = batch.notices
             if notices:
@@ -384,13 +433,17 @@ class QueryExecutionService(Service):
             batch_event_params = BatchNotificationParams(batch_summary, worker_args.owner_uri)
             _check_and_fire(worker_args.on_batch_complete, batch_event_params)
 
-        # Create a new query if one does not already exist 
+        # Create a new query if one does not already exist
         # or we already executed the previous one
         if (
             params.owner_uri not in self.query_results
             or self.query_results[params.owner_uri].execution_state is ExecutionState.EXECUTED
         ):
             query_text = self._get_query_text_from_execute_params(params)
+
+            if query_text is None:
+                request_context.send_error("Unable to determine query text.")
+                return
 
             execution_settings = QueryExecutionSettings(
                 params.execution_plan_options, worker_args.result_set_storage_type
@@ -418,26 +471,51 @@ class QueryExecutionService(Service):
         thread.daemon = True
         thread.start()
 
-    def _handle_subset_request(self, request_context: RequestContext, params: SubsetParams):
+    def _handle_subset_request(
+        self, request_context: RequestContext, params: SubsetParams
+    ) -> None:
         """Sends a response back to the query/subset request"""
-        request_context.send_response(self._get_result_subset(request_context, params))
+        result = self._get_result_subset(request_context, params)
+        if result is not None:
+            request_context.send_response(result)
 
     def _get_result_subset(
         self, request_context: RequestContext, params: SubsetParams
-    ) -> SubsetResult:
-        query: Query = self.get_query(params.owner_uri)
+    ) -> SubsetResult | None:
+        try:
+            query: Query = self.get_query(params.owner_uri)
 
-        result_set_subset = query.get_subset(
-            params.batch_index,
-            params.rows_start_index,
-            params.rows_start_index + params.rows_count,
-        )
+            if query is None:
+                request_context.send_error(NO_QUERY_MESSAGE)
+                return None
 
-        return SubsetResult(result_set_subset)
+            if params.batch_index is None:
+                request_context.send_error("Missing batch index")
+                return None
+            if params.result_set_index is None:
+                request_context.send_error("Missing result set index")
+                return None
+            if params.rows_start_index is None:
+                request_context.send_error("Missing rows start index")
+                return None
+            if params.rows_count is None:
+                request_context.send_error("Missing rows count")
+                return None
+
+            result_set_subset = query.get_subset(
+                params.batch_index,
+                params.rows_start_index,
+                params.rows_start_index + params.rows_count,
+            )
+
+            return SubsetResult(result_set_subset)
+        except Exception as e:
+            request_context.send_unhandled_error_response(e)
+            return None
 
     def _handle_cancel_query_request(
         self, request_context: RequestContext, params: QueryCancelParams
-    ):
+    ) -> None:
         """Handles a 'query/cancel' request"""
         try:
             if params.owner_uri in self.query_results:
@@ -464,19 +542,18 @@ class QueryExecutionService(Service):
             request_context.send_response(QueryCancelResult())
 
         except Exception as e:
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(str(e))
+            self._log_exception(e)
             request_context.send_unhandled_error_response(e)
 
     def _handle_dispose_request(
         self, request_context: RequestContext, params: QueryDisposeParams
-    ):
+    ) -> None:
         try:
             if params.owner_uri not in self.query_results:
                 request_context.send_error(NO_QUERY_MESSAGE)  # TODO: Localize
                 return
             # Make sure to cancel the query first if it's not executed.
-            # If it's not started, then make sure it never starts. 
+            # If it's not started, then make sure it never starts.
             # If it's executing, make sure that we stop it
             if (
                 self.query_results[params.owner_uri].execution_state
@@ -488,7 +565,7 @@ class QueryExecutionService(Service):
         except Exception as e:
             request_context.send_unhandled_error_response(e)
 
-    def cancel_query(self, owner_uri: str):
+    def cancel_query(self, owner_uri: str) -> None:
         conn = self._get_connection(owner_uri, ConnectionType.QUERY)
         cancel_conn = self._get_connection(owner_uri, ConnectionType.QUERY_CANCEL)
         if conn is None or cancel_conn is None:
@@ -502,8 +579,8 @@ class QueryExecutionService(Service):
             raise e
 
     def _execute_query_request_worker(
-        self, worker_args: ExecuteRequestWorkerArgs, retry_state=False
-    ):
+        self, worker_args: ExecuteRequestWorkerArgs, retry_state: bool = False
+    ) -> None:
         """Worker method for 'handle execute query request' thread"""
 
         _check_and_fire(worker_args.before_query_initialize, {})
@@ -534,7 +611,7 @@ class QueryExecutionService(Service):
         self, owner_uri: str, connection_type: ConnectionType
     ) -> ServerConnection:
         """
-        Get a connection for the given owner URI and 
+        Get a connection for the given owner URI and
         connection type from the connection service
 
         :param owner_uri: the URI to get the connection for
@@ -543,8 +620,13 @@ class QueryExecutionService(Service):
         :raises LookupError: if there is no connection service
         :raises ValueError: if there is no connection corresponding to the given owner_uri
         """
-        connection_service = self._service_provider[utils.constants.CONNECTION_SERVICE_NAME]
-        return connection_service.get_connection(owner_uri, connection_type)
+        connection_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
+        connection = connection_service.get_connection(owner_uri, connection_type)
+        if connection is None:
+            raise ValueError(f"No connection for owner URI: {owner_uri}")
+        return connection
 
     def build_result_set_complete_params(
         self, summary: BatchSummary, owner_uri: str
@@ -552,21 +634,31 @@ class QueryExecutionService(Service):
         summaries = summary.result_set_summaries
         result_set_summary = None
         # Check if none or empty list
-        if summaries:
-            result_set_summary = summaries[0]
+        if not summaries:
+            # This is only called with the result of Batch.batch_summary
+            # so this should not happen.
+            raise ValueError("No result set summaries found")
+        result_set_summary = summaries[0]
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
     def build_message_params(
         self, owner_uri: str, batch_id: int, message: str, is_error: bool = False
-    ):
+    ) -> MessageNotificationParams:
         result_message = ResultMessage(
-            batch_id, is_error, utils.time.get_time_str(datetime.now()), message
+            batch_id, is_error, time.get_time_str(datetime.now()), message
         )
         return MessageNotificationParams(owner_uri, result_message)
 
-    def _get_query_text_from_execute_params(self, params: ExecuteRequestParamsBase):
+    def _get_query_text_from_execute_params(
+        self, params: ExecuteRequestParamsBase
+    ) -> str | None:
         if isinstance(params, ExecuteDocumentSelectionParams):
-            workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
+            if params.owner_uri is None:
+                return None
+
+            workspace_service = self.service_provider.get(
+                constants.WORKSPACE_SERVICE_NAME, WorkspaceService
+            )
             selection_range = (
                 params.query_selection.to_range()
                 if params.query_selection is not None
@@ -576,45 +668,61 @@ class QueryExecutionService(Service):
             return workspace_service.get_text(params.owner_uri, selection_range)
 
         elif isinstance(params, ExecuteDocumentStatementParams):
-            workspace_service = self._service_provider[utils.constants.WORKSPACE_SERVICE_NAME]
-            query = workspace_service.get_text(params.owner_uri, None)
+            # TODO: Move this model to pydantic so validation can
+            # occur automatically and be specific about issues with messages.
+            owner_uri = params.owner_uri
+            if owner_uri is None:
+                return None
+            line = params.line
+            column = params.column
+            if line is None or column is None:
+                return None
+
+            workspace_service = self.service_provider.get(
+                constants.WORKSPACE_SERVICE_NAME, WorkspaceService
+            )
+            query = workspace_service.get_text(owner_uri, None)
             selection_data_list: list[SelectionData] = compute_batches(
                 sqlparse.split(query), query
             )
 
             for selection_data in selection_data_list:
-                if (
-                    selection_data.start_line <= params.line
-                    and selection_data.end_line >= params.line
-                ):
+                start_line = selection_data.start_line
+                end_line = selection_data.end_line
+                if start_line is None or end_line is None:
+                    continue
+
+                start_column = selection_data.start_column
+                end_column = selection_data.end_column
+                if start_column is None or end_column is None:
+                    continue
+
+                if start_line <= line and end_line >= line:
                     if (
                         selection_data.end_line == params.line
-                        and selection_data.end_column < params.column
+                        and end_column < column
                         or selection_data.start_line == params.line
-                        and selection_data.start_column > params.column
+                        and start_column > column
                     ):
                         continue
-                    return workspace_service.get_text(
-                        params.owner_uri, selection_data.to_range()
-                    )
+                    return workspace_service.get_text(owner_uri, selection_data.to_range())
 
-            return ""
+            return None
 
-        else:
-            # Then params must be an instance of ExecuteStringParams, 
-            # which has the query as an attribute
+        elif isinstance(params, ExecuteStringParams):
             return params.query
+        else:
+            return None
 
     def _resolve_query_exception(
         self,
         e: Exception,
         query: Query,
         worker_args: ExecuteRequestWorkerArgs,
-        is_rollback_error=False,
-        retry_query=False,
-    ):
-        utils.log.log_debug(
-            self._service_provider.logger,
+        is_rollback_error: bool = False,
+        retry_query: bool = False,
+    ) -> None:
+        self._log_debug(
             f"Query execution failed for following query: {query.query_text}\n {e}",
         )
 
@@ -642,8 +750,8 @@ class QueryExecutionService(Service):
             error_message = (
                 f"Unhandled exception while executing query: {str(e)}"  # TODO: Localize
             )
-            if self._service_provider.logger is not None:
-                self._service_provider.logger.exception(
+            if self.service_provider.logger is not None:
+                self.service_provider.logger.exception(
                     "Unhandled exception while executing query"
                 )
 
@@ -675,13 +783,13 @@ class QueryExecutionService(Service):
             rollback_query = Query(
                 query.owner_uri,
                 "ROLLBACK",
-                QueryExecutionSettings(ExecutionPlanOptions(), None),
+                QueryExecutionSettings(ExecutionPlanOptions()),
                 QueryEvents(),
             )
             try:
                 rollback_query.execute(worker_args.connection)
             except Exception as rollback_exception:
-                # If the rollback failed, handle the error as usual 
+                # If the rollback failed, handle the error as usual
                 # but don't try to roll back again
                 self._resolve_query_exception(
                     rollback_exception, rollback_query, worker_args, True
@@ -692,21 +800,29 @@ class QueryExecutionService(Service):
         params: SaveResultsRequestParams,
         request_context: RequestContext,
         file_factory: FileStreamFactory,
-    ):
-        query: Query = self.query_results[params.owner_uri]
+    ) -> None:
+        owner_uri = params.owner_uri
+        if owner_uri is None:
+            request_context.send_error("Missing ownerUri")
+            return
 
-        def on_success():
+        query: Query = self.query_results[owner_uri]
+
+        def on_success() -> None:
             request_context.send_response(SaveResultRequestResult())
 
-        def on_error(reason: str):
-            message = f"Failed to save {ntpath.basename(params.file_path)}: {reason}"
+        def on_error(exc: Exception) -> None:
+            file_path = params.file_path
+            if file_path is None:
+                file_path = "unknown"
+            message = f"Failed to save {ntpath.basename(file_path)}: {exc}"
             request_context.send_error(message)
 
         try:
             query.save_as(params, file_factory, on_success, on_error)
 
         except Exception as error:
-            on_error(str(error))
+            on_error(error)
 
 
 def _create_rows_affected_message(batch: Batch) -> str:
@@ -721,6 +837,6 @@ def _create_rows_affected_message(batch: Batch) -> str:
         return "Commands completed successfully"  # TODO: Localize
 
 
-def _check_and_fire(action, params=None):
+def _check_and_fire(action: Callable[[T], None] | None, params: T) -> None:
     if action is not None:
         action(params)

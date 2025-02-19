@@ -2,7 +2,7 @@ from typing import Any
 
 
 class ResponseError(Exception):
-    def __init__(self, message_error: dict[str, Any]):
+    def __init__(self, message_error: dict[str, Any]) -> None:
         message = message_error["message"]
         super().__init__(message)
         self.message = message

@@ -16,7 +16,7 @@ Formats code for this project.
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
     echo "Running ruff format..."
-    ruff check --select I --fix
     ruff format ossdbtoolsservice tests pgsmo
+    ruff check --fix ossdbtoolsservice tests pgsmo    
 
 fi

@@ -59,8 +59,8 @@ class MockCursor:
     def __exit__(self, *args):
         pass
 
-    def _mogrify(self, *args, **kwargs):
-        return args[0].format(args[1:])
+    def _mogrify(self, *args, **kwargs) -> str:
+        return str(args[0].format(args[1:]))
 
 
 class TestMetadataExecutor(unittest.TestCase):
@@ -90,7 +90,7 @@ class TestMetadataExecutor(unittest.TestCase):
             self.executor.databases(), [self.mock_server.maintenance_db_name]
         )
 
-    def test_tables(self):
+    def test_tables(self) -> None:
         # Given 2 tables in the database
         expected_table_tuples = []
         for x in range(0, 3):

@@ -11,7 +11,7 @@ def template(template_text: str, **values: Any) -> str:
     return template.render(**values)
 
 
-def load_prompt(prompt_name: str, **values):
+def load_prompt(prompt_name: str, **values: Any) -> str:
     prompt = prompt_name + ".md"
     template_txt = (HERE / prompt).read_text()
     return template(template_txt, **values).strip()

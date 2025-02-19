@@ -9,6 +9,7 @@ from ossdbtoolsservice.admin.contracts import (
     GetDatabaseInfoParameters,
     GetDatabaseInfoResponse,
 )
+from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
@@ -18,10 +19,7 @@ from ossdbtoolsservice.utils import constants
 class AdminService(Service):
     """Service for general database administration support"""
 
-    def __init__(self):
-        self._service_provider: ServiceProvider = None
-
-    def register(self, service_provider: ServiceProvider):
+    def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
 
         # Register the request handlers with the server
@@ -38,10 +36,18 @@ class AdminService(Service):
         self, request_context: RequestContext, params: GetDatabaseInfoParameters
     ) -> None:
         # Retrieve the connection from the connection service
-        connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        connection: ServerConnection = connection_service.get_connection(
+        connection_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
+        connection: ServerConnection | None = connection_service.get_connection(
             params.owner_uri, ConnectionType.DEFAULT
         )
+
+        if connection is None:
+            request_context.send_error(
+                f"Unable to get connection for owner uri: {params.owner_uri}"
+            )
+            return
 
         # Get database owner
         owner_result = connection.get_database_owner()

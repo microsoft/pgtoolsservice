@@ -11,12 +11,12 @@ from ossdbtoolsservice.edit_data.contracts import SessionOperationRequest
 
 
 class CreateRowRequest(SessionOperationRequest):
-    def __init__(self):
-        SessionOperationRequest.__init__(self)
+    def __init__(self) -> None:
+        super().__init__()
 
 
 class CreateRowResponse:
-    def __init__(self, new_row_id: int, default_values: list[str]):
+    def __init__(self, new_row_id: int, default_values: list[str]) -> None:
         self.default_values = default_values
         self.new_row_id = new_row_id
 

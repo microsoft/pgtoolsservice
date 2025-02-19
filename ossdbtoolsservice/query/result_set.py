@@ -4,7 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 import threading
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
+from typing import Callable
+
+import psycopg
 
 from ossdbtoolsservice.query.contracts import (
     DbCellValue,
@@ -12,12 +15,16 @@ from ossdbtoolsservice.query.contracts import (
     ResultSetSummary,
     SaveResultsRequestParams,
 )
+from ossdbtoolsservice.query.contracts.result_set_subset import ResultSetSubset
 from ossdbtoolsservice.query.data_storage import FileStreamFactory
 
 
+# This class seems unused.
 class ResultSetEvents:
     def __init__(
-        self, on_result_set_completed=None, on_result_set_partially_loaded=None
+        self,
+        on_result_set_completed: Callable | None = None,
+        on_result_set_partially_loaded: Callable | None = None,
     ) -> None:
         self._on_result_set_completed = on_result_set_completed
         self._on_result_set_partially_loaded = on_result_set_partially_loaded
@@ -25,7 +32,7 @@ class ResultSetEvents:
 
 class ResultSet(metaclass=ABCMeta):
     def __init__(
-        self, result_set_id: int, batch_id: int, events: ResultSetEvents = None
+        self, result_set_id: int, batch_id: int, events: ResultSetEvents | None = None
     ) -> None:
         self.id = result_set_id
         self.batch_id = batch_id
@@ -40,7 +47,7 @@ class ResultSet(metaclass=ABCMeta):
         return self._columns_info if self._columns_info is not None else []
 
     @columns_info.setter
-    def columns_info(self, columns_info) -> None:
+    def columns_info(self, columns_info: list[DbColumn]) -> None:
         self._columns_info = columns_info
 
     @property
@@ -49,25 +56,27 @@ class ResultSet(metaclass=ABCMeta):
             self.id, self.batch_id, self.row_count, self._has_been_read, self.columns_info
         )
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def row_count(self) -> int:
         pass
 
     @abstractmethod
-    def get_subset(self, start_index: int, end_index: int):
+    def get_subset(self, start_index: int, end_index: int) -> ResultSetSubset:
         pass
 
     @abstractmethod
-    def add_row(self, cursor):
+    def add_row(self, cursor: psycopg.Cursor) -> None:
         """Add row accepts cursor which will be iterated over to get the current row to add"""
-
-    @abstractmethod
-    def remove_row(self, row_id: int):
         pass
 
     @abstractmethod
-    def update_row(self, row_id: int, cursor):
-        """Add row accepts cursor which will be iterated over 
+    def remove_row(self, row_id: int) -> None:
+        pass
+
+    @abstractmethod
+    def update_row(self, row_id: int, cursor: psycopg.Cursor) -> None:
+        """Add row accepts cursor which will be iterated over
         to get the current row to be updated"""
         pass
 
@@ -76,7 +85,7 @@ class ResultSet(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def read_result_to_end(self, cursor):
+    def read_result_to_end(self, cursor: psycopg.Cursor) -> None:
         pass
 
     @abstractmethod
@@ -86,8 +95,8 @@ class ResultSet(metaclass=ABCMeta):
         row_start_index: int,
         row_end_index: int,
         file_factory: FileStreamFactory,
-        on_success,
-        on_failure,
+        on_success: Callable[[], None],
+        on_failure: Callable[[Exception], None],
     ) -> None:
         pass
 
@@ -95,26 +104,38 @@ class ResultSet(metaclass=ABCMeta):
         self,
         params: SaveResultsRequestParams,
         file_factory: FileStreamFactory,
-        on_success,
-        on_failure,
+        on_success: Callable[[], None],
+        on_failure: Callable[[Exception], None],
     ) -> None:
         if self._has_been_read is False:
             raise RuntimeError("Result cannot be saved until query execution has completed")
 
-        save_as_thread = self._save_as_threads.get(params.file_path)
+        file_path = params.file_path
+        if file_path is None:
+            raise ValueError("File path cannot be None")
+
+        # Validate is_save_selection
+        row_end_index = self.row_count
+        row_start_index = 0
+
+        if params.is_save_selection:
+            if params.row_start_index is None or params.row_end_index is None:
+                raise ValueError("Row start and end indexes cannot be None")
+            if params.row_start_index < 0 or params.row_end_index < 0:
+                raise ValueError("Row start and end indexes must be non-negative")
+            if params.row_start_index > params.row_end_index:
+                raise ValueError("Row start index cannot be greater than row end index")
+
+            row_end_index = params.row_end_index + 1
+            row_start_index = params.row_start_index
+
+        save_as_thread = self._save_as_threads.get(file_path)
 
         if save_as_thread is not None:
             if save_as_thread.is_alive():
                 raise RuntimeError("A save request to the same path is in progress")
             else:
-                del self._save_as_threads[params.file_path]
-
-        row_end_index = self.row_count
-        row_start_index = 0
-
-        if params.is_save_selection:
-            row_end_index = params.row_end_index + 1
-            row_start_index = params.row_start_index
+                del self._save_as_threads[file_path]
 
         new_save_as_thread = threading.Thread(
             target=self.do_save_as,
@@ -128,5 +149,5 @@ class ResultSet(metaclass=ABCMeta):
             ),
             daemon=True,
         )
-        self._save_as_threads[params.file_path] = new_save_as_thread
+        self._save_as_threads[file_path] = new_save_as_thread
         new_save_as_thread.start()

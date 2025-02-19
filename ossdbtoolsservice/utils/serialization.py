@@ -7,12 +7,13 @@
 
 import enum
 import json
+from typing import Any
 
 import inflection
 from pydantic import BaseModel
 
 
-def convert_to_dict(obj):
+def convert_to_dict(obj: Any) -> dict[str, Any]:
     """
     Serializes an object to a json-ready dictionary using attribute name normalization. The
     serialization is repeated, recursively until a built-in type is returned
@@ -25,8 +26,8 @@ def convert_to_dict(obj):
     return json.loads(json.dumps(obj, default=_get_serializable_value))
 
 
-def _get_serializable_value(obj):
-    """Gets a serializable representation of an object, 
+def _get_serializable_value(obj: Any) -> dict[str, Any] | str | None:
+    """Gets a serializable representation of an object,
     for use as the default argument to json.dumps"""
     # If the object is an Enum, use its value
     if isinstance(obj, enum.Enum):

@@ -435,7 +435,7 @@ class TestLanguageService(unittest.TestCase):
         display_meta = "table"
         completion = Completion(text, relative_start_pos, display, display_meta)
         completion_item: CompletionItem = LanguageService.to_completion_item(
-            completion, self.default_text_position
+            completion, self.default_text_position.position
         )
         self.assertEqual(completion_item.label, text)
         self.assertEqual(completion_item.text_edit.new_text, text)
@@ -484,14 +484,14 @@ class TestLanguageService(unittest.TestCase):
         # Given I have anything other than a keyword, I expect label to match key
         table_completion = Completion(text, 0, display, "table")
         completion_item: CompletionItem = LanguageService.to_completion_item(
-            table_completion, self.default_text_position
+            table_completion, self.default_text_position.position
         )
         self.assertEqual(completion_item.sort_text, text)
 
         # Given I have a keyword, I expect
         keyword_completion = Completion(text, 0, display, "keyword")
         completion_item: CompletionItem = LanguageService.to_completion_item(
-            keyword_completion, self.default_text_position
+            keyword_completion, self.default_text_position.position
         )
         self.assertEqual(completion_item.sort_text, "~" + text)
 

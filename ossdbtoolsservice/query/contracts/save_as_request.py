@@ -7,24 +7,24 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class SaveResultsRequestParams(Serializable):
-    file_path: str
-    batch_index: int
-    result_set_index: int
-    owner_uri: str
-    row_start_index: int
-    row_end_index: int
-    column_start_index: int
-    column_end_index: int
+    file_path: str | None
+    batch_index: int | None
+    result_set_index: int | None
+    owner_uri: str | None
+    row_start_index: int | None
+    row_end_index: int | None
+    column_start_index: int | None
+    column_end_index: int | None
 
-    def __init__(self):
-        self.file_path: str = None
-        self.batch_index: int = None
-        self.result_set_index: int = None
-        self.owner_uri: str = None
-        self.row_start_index: int = None
-        self.row_end_index: int = None
-        self.column_start_index: int = None
-        self.column_end_index: int = None
+    def __init__(self) -> None:
+        self.file_path = None
+        self.batch_index = None
+        self.result_set_index = None
+        self.owner_uri = None
+        self.row_start_index = None
+        self.row_end_index = None
+        self.column_start_index = None
+        self.column_end_index = None
 
     @property
     def is_save_selection(self) -> bool:
@@ -36,5 +36,5 @@ class SaveResultsRequestParams(Serializable):
         )
 
     @classmethod
-    def ignore_extra_attributes(cls):
+    def ignore_extra_attributes(cls) -> bool:
         return True

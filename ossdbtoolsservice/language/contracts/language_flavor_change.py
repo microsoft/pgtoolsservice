@@ -15,17 +15,17 @@ class LanguageFlavorChangeParams(Serializable):
     """
 
     @classmethod
-    def from_data(cls, uri: str, language: str, flavor: str):
+    def from_data(cls, uri: str, language: str, flavor: str) -> "LanguageFlavorChangeParams":
         obj = cls()
         obj.uri = uri
         obj.language = language
         obj.flavor = flavor
         return obj
 
-    def __init__(self):
-        self.uri: str = None
-        self.language: str = None
-        self.flavor: str = None
+    def __init__(self) -> None:
+        self.uri: str | None = None
+        self.language: str | None = None
+        self.flavor: str | None = None
 
 
 LANGUAGE_FLAVOR_CHANGE_NOTIFICATION = IncomingMessageConfiguration(

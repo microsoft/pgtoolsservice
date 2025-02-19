@@ -3,15 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Dict, List, Tuple  # noqa
+from collections.abc import Generator
+from typing import Any
 
+from ossdbtoolsservice.language.completion.packages.parseutils.meta import (
+    ForeignKey,
+    FunctionMetadata,
+)
 from ossdbtoolsservice.language.query import PGLightweightMetadata
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from pgsmo import Database as PGDatabase
-from pgsmo import Server as PGServer
 from pgsmo import Schema
-
-METADATA_MAP = {PG_PROVIDER_NAME: PGLightweightMetadata}
+from pgsmo import Server as PGServer
 
 
 class MetadataExecutor:
@@ -20,21 +22,19 @@ class MetadataExecutor:
     autocomplete code
     """
 
-    def __init__(self, server: PGServer):
+    def __init__(self, server: PGServer) -> None:
         self.server = server
-        self.lightweight_metadata = METADATA_MAP[server.connection._provider_name](
-            self.server.connection
-        )
+        self.lightweight_metadata = PGLightweightMetadata(self.server.connection)
         self.schemas: dict[str, Schema] = {}
         self.schemas_loaded = False
 
-    def _load_schemas(self):
+    def _load_schemas(self) -> None:
         database: PGDatabase = self.server.maintenance_db
         if database:
             for schema in database.schemas:
                 self.schemas[schema.name] = schema
 
-    def _ensure_schemas_loaded(self):
+    def _ensure_schemas_loaded(self) -> None:
         if not self.schemas_loaded:
             self._load_schemas()
             self.schemas_loaded = True
@@ -61,7 +61,7 @@ class MetadataExecutor:
         """return a 3-tuple of [schema,table,name]"""
         return [c for c in self.lightweight_metadata.table_columns()]
 
-    def foreignkeys(self) -> list[tuple]:
+    def foreignkeys(self) -> Generator[ForeignKey, Any, None]:
         return self.lightweight_metadata.foreignkeys()
 
     def views(self) -> list[tuple]:
@@ -79,7 +79,7 @@ class MetadataExecutor:
     def casing(self) -> list[tuple]:
         return [c for c in self.lightweight_metadata.casing()]
 
-    def functions(self) -> list[tuple]:
+    def functions(self) -> list[FunctionMetadata]:
         """
         In order to avoid iterating over full properties queries for each function,
           this must always

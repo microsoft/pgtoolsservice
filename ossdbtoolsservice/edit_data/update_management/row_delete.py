@@ -4,6 +4,8 @@
 # --------------------------------------------------------------------------------------------
 
 
+import psycopg
+
 from ossdbtoolsservice.edit_data import EditTableMetadata
 from ossdbtoolsservice.edit_data.contracts import (
     EditCell,
@@ -36,7 +38,7 @@ class RowDelete(RowEdit):
             EditRowState.DIRTY_DELETE,
         )
 
-    def apply_changes(self, cursor):
+    def apply_changes(self, cursor: psycopg.Cursor) -> None:
         self.result_set.remove_row(self.row_id)
 
     def get_script(self) -> EditScript:

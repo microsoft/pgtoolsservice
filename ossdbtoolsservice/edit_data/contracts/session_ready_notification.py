@@ -17,12 +17,12 @@ class SessionReadyNotificationParams(Serializable):
 
     owner_uri: str
     success: bool
-    message: str
+    message: str | None
 
-    def __init__(self, owner_uri: str, success: bool, message: str):
+    def __init__(self, owner_uri: str, success: bool, message: str | None) -> None:
         self.owner_uri: str = owner_uri
         self.success: bool = success
-        self.message: str = message
+        self.message: str | None = message
 
 
 SESSION_READY_NOTIFICATION = "edit/sessionReady"

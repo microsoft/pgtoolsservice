@@ -5,16 +5,55 @@
 
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Optional
+from typing import Any, Optional, TypeVar
 
 from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.utils import constants
 
+S = TypeVar("S", bound="Service")
+
 
 class Service(ABC):
+    def __init__(self) -> None:
+        self._service_provider: ServiceProvider | None = None
+
     @abstractmethod
     def register(self, service_provider: "ServiceProvider") -> None:
         pass
+
+    @property
+    def service_provider(self) -> "ServiceProvider":
+        if self._service_provider is None:
+            raise ValueError("Service provider is not set")
+        return self._service_provider
+
+    @property
+    def server(self) -> MessageServer:
+        if self.service_provider is None:
+            raise ValueError("Service provider is not set")
+        if self.service_provider.server is None:
+            raise ValueError("Message server is not set")
+        return self.service_provider.server
+
+    def _log_warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        if self.service_provider and self.service_provider.logger:
+            self.service_provider.logger.warning(msg, *args, **kwargs)
+
+    def _log_error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        if self.service_provider and self.service_provider.logger:
+            self.service_provider.logger.error(msg, *args, **kwargs)
+
+    def _log_info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        if self.service_provider and self.service_provider.logger:
+            self.service_provider.logger.info(msg, *args, **kwargs)
+
+    def _log_debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        if self.service_provider and self.service_provider.logger:
+            self.service_provider.logger.debug(msg, *args, **kwargs)
+
+    def _log_exception(self, msg: str | Exception, *args: Any, **kwargs: Any) -> None:
+        if self.service_provider and self.service_provider.logger:
+            self.service_provider.logger.exception(msg, *args, **kwargs)
 
 
 class ServiceProvider:
@@ -47,7 +86,7 @@ class ServiceProvider:
     def provider(self) -> str:
         return self._provider_name
 
-    def __getitem__(self, item: str):
+    def __getitem__(self, item: str) -> Service:
         """
         If the service exists, it is returned by its lookup key
         :param item: Key for looking up the service
@@ -60,6 +99,26 @@ class ServiceProvider:
             )
 
         return self._services[item]
+
+    def get(self, item: str, class_: type[S]) -> S:
+        """
+        If the service exists, it is returned by its lookup key
+        :param item: Key for looking up the service
+        :raises RuntimeError: Service provider has not been initialized
+        :return: The requested service
+        """
+        if not self._is_initialized:
+            raise RuntimeError(
+                "Service provider must be initialized before retrieving services"
+            )
+
+        if item not in self._services:
+            raise KeyError(f"Service '{item}' not found")
+
+        service = self._services[item]
+        if not isinstance(service, class_):
+            raise TypeError(f"Service '{item}' is not of type {class_.__name__}")
+        return service
 
     # METHODS ##############################################################
 

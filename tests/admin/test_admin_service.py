@@ -6,6 +6,8 @@
 import unittest
 import unittest.mock as mock
 
+from psycopg import sql
+
 from ossdbtoolsservice.admin import AdminService
 from ossdbtoolsservice.admin.contracts import (
     GET_DATABASE_INFO_REQUEST,
@@ -13,7 +15,7 @@ from ossdbtoolsservice.admin.contracts import (
     GetDatabaseInfoResponse,
 )
 from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types.psycopg_driver import PostgreSQLConnection
+from ossdbtoolsservice.driver.types import ServerConnection
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
@@ -24,7 +26,7 @@ from tests.utils import MockCursor, MockPsycopgConnection, MockRequestContext
 class TestAdminService(unittest.TestCase):
     """Methods for testing the admin service"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin_service = AdminService()
         self.connection_service = ConnectionService()
         self.service_provider = ServiceProviderMock(
@@ -35,7 +37,7 @@ class TestAdminService(unittest.TestCase):
         )
         self.admin_service.register(self.service_provider)
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         """Test that the admin service registers its handlers correctly"""
         # Verify that the correct request handler was set up
         # via the call to register during test setup
@@ -43,7 +45,7 @@ class TestAdminService(unittest.TestCase):
             GET_DATABASE_INFO_REQUEST, self.admin_service._handle_get_database_info_request
         )
 
-    def test_handle_get_database_info_request(self):
+    def test_handle_get_database_info_request(self) -> None:
         """Test that the database info handler responds with the correct database info"""
         uri = "test_uri"
         db_name = "test_db"
@@ -76,21 +78,21 @@ class TestAdminService(unittest.TestCase):
 
         # And the service retrieved the owner name using a query
         # with the database name as a parameter
-        owner_query = (
+        owner_query = sql.SQL(
             "SELECT pg_catalog.pg_get_userbyid(db.datdba) "
             f"FROM pg_catalog.pg_database db WHERE db.datname = '{db_name}'"
         )
-        mock_cursor.execute.assert_called_once_with(owner_query)
+        mock_cursor.execute.assert_called_once_with(owner_query, params=None)
 
     @integration_test
-    def test_get_database_info_request_integration(self):
+    def test_get_database_info_request_integration(self) -> None:
         # Set up the request parameters
         params = GetDatabaseInfoParameters()
         params.owner_uri = "test_uri"
         request_context = MockRequestContext()
 
         # Set up the connection service to return our connection
-        connection = PostgreSQLConnection(get_connection_details())
+        connection = ServerConnection(get_connection_details())
         self.connection_service.get_connection = mock.Mock(return_value=connection)
 
         # If I send a get_database_info request

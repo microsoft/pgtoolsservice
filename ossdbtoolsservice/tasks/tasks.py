@@ -17,7 +17,7 @@ from ossdbtoolsservice.tasks.contracts import TaskInfo, TaskStatus
 class TaskResult:
     """Class representing the result of a task execution"""
 
-    def __init__(self, status: TaskStatus, error_message: str = None):
+    def __init__(self, status: TaskStatus, error_message: str | None = None) -> None:
         self.status = status
         self.error_message = error_message
 
@@ -28,12 +28,12 @@ class Task:
     name: str
     description: str
     provider_name: str
-    server_name: str
-    database_name: str
+    server_name: str | None
+    database_name: str | None
     id: str
     status: TaskStatus
-    status_message: str
-    on_cancel: Callable
+    status_message: str | None
+    on_cancel: Callable | None
     cancellation_lock: threading.Lock
     canceled: bool
 
@@ -42,27 +42,27 @@ class Task:
         name: str,
         description: str,
         provider_name: str,
-        server_name: str,
-        database_name: str,
+        server_name: str | None,
+        database_name: str | None,
         request_context: RequestContext,
-        action,
-        on_cancel: Callable = None,
+        action: Callable[["Task"], TaskResult],
+        on_cancel: Callable | None = None,
     ) -> None:
         self.name = name
         self.description = description
         self.provider_name = provider_name
         self.server_name = server_name
         self.database_name = database_name
-        self.id: str = str(uuid.uuid4())
-        self.status: TaskStatus = TaskStatus.NOT_STARTED
-        self.status_message: str = None
-        self.on_cancel: Callable = on_cancel
+        self.id = str(uuid.uuid4())
+        self.status = TaskStatus.NOT_STARTED
+        self.status_message = None
+        self.on_cancel = on_cancel
         self.cancellation_lock: threading.Lock = threading.Lock()
-        self.canceled: bool = False
+        self.canceled = False
         self._request_context = request_context
-        self._start_time: float = None
-        self._action = action
-        self._thread: threading.Thread = None
+        self._start_time: float | None = None
+        self._action: Callable[[Task], TaskResult] = action
+        self._thread: threading.Thread | None = None
         self._notify_created()
 
     @property
@@ -86,7 +86,7 @@ class Task:
         self._thread.start()
 
     def cancel(self) -> bool:
-        """Cancel the task if it is running and return true, 
+        """Cancel the task if it is running and return true,
         or return false if the task is not running"""
         if self.status is not TaskStatus.IN_PROGRESS:
             return False
@@ -110,7 +110,7 @@ class Task:
         except Exception as e:
             self._set_status(TaskStatus.FAILED, str(e))
 
-    def _set_status(self, new_status: TaskStatus, new_message: str = None) -> None:
+    def _set_status(self, new_status: TaskStatus, new_message: str | None = None) -> None:
         self.status = new_status
         self.status_message = new_message
         self._notify_status_changed()
@@ -128,7 +128,7 @@ class Task:
                 "status": self.status,
                 "message": self.status_message or "",
                 "duration": int((time.process_time() - self._start_time) * 1000)
-                if self._is_completed
+                if self._is_completed and self._start_time is not None
                 else 0,
             },
         )
