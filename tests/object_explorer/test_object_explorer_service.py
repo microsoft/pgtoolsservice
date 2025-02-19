@@ -287,7 +287,6 @@ class TestObjectExplorer(unittest.TestCase):
             {constants.CONNECTION_SERVICE_NAME: cs}
         )
         oe._provider = constants.PG_PROVIDER_NAME
-        oe._server = Server
 
         # ... Create parameters, session, request context validator
         params, session_uri = _connection_details()
