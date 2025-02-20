@@ -77,11 +77,7 @@ class ObjectExplorerService(Service):
         # Find the provider type
         self._provider: str = self._service_provider.provider
 
-        # Find the routing table to use
-        self._routing_table = ROUTING_TABLES[self._service_provider.provider]
-
-        # Find the type of server to use
-        self._server = SERVER_TYPES[self._provider]
+        self._routing_table = PG_ROUTING_TABLE
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info(
@@ -456,7 +452,7 @@ class ObjectExplorerService(Service):
 
             # Step 3: Create the Server object for the session and
             # create the root node for the server
-            session.server = self._server(
+            session.server = PGServer(
                 connection, lambda dbname: self._create_connection(session, dbname)
             )
             metadata = ObjectMetadata(

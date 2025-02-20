@@ -60,7 +60,7 @@ class ServiceProvider:
     def __init__(
         self,
         message_server: MessageServer,
-        services: dict[str, type[Service]],
+        services: dict[str, type[Service] | Service],
         logger: Optional[Logger] = None,
     ):
         self._is_initialized = False
@@ -69,6 +69,8 @@ class ServiceProvider:
         self._provider_name = constants.PG_PROVIDER_NAME
         self._services = {
             service_name: service_class()
+            if isinstance(service_class, type)
+            else service_class
             for (service_name, service_class) in services.items()
         }
 

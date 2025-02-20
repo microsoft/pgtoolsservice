@@ -21,7 +21,7 @@ def test_send_request_success(
     )
 
     # Setup the mock message server to expect the request and respond with the response
-    mock_message_server.setup_request_response(method, response)
+    mock_message_server.setup_client_response(method, response)
 
     # Send the request
     result = async_runner.run(mock_message_server.send_request(method, params, timeout=2))
@@ -46,7 +46,7 @@ def test_send_request_error(
     )
 
     # Setup the mock message server to expect the request and respond with the response
-    mock_message_server.setup_request_response(method, response_error)
+    mock_message_server.setup_client_response(method, response_error)
 
     with pytest.raises(ResponseError) as excinfo:
         async_runner.run(mock_message_server.send_request(method, params, timeout=2))
