@@ -203,12 +203,6 @@ def main(
             print("Starting debugpy on port: " + str(port))
             print("Logs will be stored in ./debugpy_logs")
             os.environ["DEBUGPY_LOG_DIR"] = "./debugpy_logs"  # Path to store logs
-            os.environ["GEVENT_SUPPORT"] = "True"  # Path to store logs
-            # Dynamically set the Python interpreter for debugpy
-            # from an environment variable or default to the current interpreter.
-            python_path = os.getenv("PYTHON", default=sys.executable)
-            print("Python path: " + python_path)
-            debugpy.configure(python=python_path)
             debugpy.listen(("0.0.0.0", port))
         except BaseException:
             # If port 3000 is used, try another debug port
