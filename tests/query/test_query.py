@@ -30,7 +30,7 @@ from tests.utils import MockCursor, MockPsycopgConnection
 class TestQuery(unittest.TestCase):
     """Unit tests for Query and Batch objects"""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up the test by creating a query with multiple batches"""
         self.statement_list = statement_list = ["select version;", "select * from t1;"]
         self.statement_str = "".join(statement_list)
@@ -64,13 +64,13 @@ class TestQuery(unittest.TestCase):
         self.columns_info = [db_column_id, db_column_value]
         self.get_columns_info_mock = mock.Mock(return_value=self.columns_info)
 
-    def test_query_creates_batches(self):
+    def test_query_creates_batches(self) -> None:
         """Test that creating a query also creates batches for each statement in the query"""
         # Verify that the query created in setUp has a batch corresponding to each statement
         for index, statement in enumerate(self.statement_list):
             self.assertEqual(self.query.batches[index].batch_text, statement)
 
-    def test_executing_query_executes_batches(self):
+    def test_executing_query_executes_batches(self) -> None:
         """Test that executing a query also executes all of the query's batches in order"""
 
         # If I call query.execute
@@ -152,7 +152,7 @@ select * from t2
                 _tuple_from_selection_data(expected_selections[index]),
             )
 
-    def test_batch_selections_do_block(self):
+    def test_batch_selections_do_block(self) -> None:
         """Test that the query sets up batch objects with correct selection
         information for blocks containing statements"""
         full_query = """DO $$
@@ -184,7 +184,7 @@ select * from t1;"""
                 _tuple_from_selection_data(expected_selections[index]),
             )
 
-    def test_batches_strip_comments(self):
+    def test_batches_strip_comments(self) -> None:
         """Test that we do not attempt to execute a batch consisting only of comments"""
         full_query = """select * from t1;
 -- test
@@ -217,7 +217,7 @@ select * from t1;"""
                 _tuple_from_selection_data(expected_selections[index]),
             )
 
-    def test_hash_character_processed_correctly(self):
+    def test_hash_character_processed_correctly(self) -> None:
         """Test that xor operator is not taken for an inline comment delimiter"""
         full_query = "select 42 # 24;"
         query = Query(
@@ -230,7 +230,9 @@ select * from t1;"""
         self.assertEqual(len(query.batches), 1)
         self.assertEqual(full_query, query.batches[0].batch_text)
 
-    def execute_get_subset_raises_error_when_index_not_in_range(self, batch_index: int):
+    def execute_get_subset_raises_error_when_index_not_in_range(
+        self, batch_index: int
+    ) -> None:
         full_query = "Select * from t1;"
         query = Query(
             "test_uri",
@@ -246,13 +248,13 @@ select * from t1;"""
                 context_manager.exception.args[0],
             )
 
-    def test_get_subset_raises_error_when_index_is_negetive(self):
+    def test_get_subset_raises_error_when_index_is_negetive(self) -> None:
         self.execute_get_subset_raises_error_when_index_not_in_range(-1)
 
-    def test_get_subset_raises_error_when_index_is_greater_than_batch_size(self):
+    def test_get_subset_raises_error_when_index_is_greater_than_batch_size(self) -> None:
         self.execute_get_subset_raises_error_when_index_not_in_range(20)
 
-    def test_get_subset(self):
+    def test_get_subset(self) -> None:
         full_query = "Select * from t1;"
         query = Query(
             "test_uri",
@@ -272,8 +274,8 @@ select * from t1;"""
         self.assertEqual(expected_subset, subset)
         mock_batch.get_subset.assert_called_once_with(0, 10)
 
-    def test_save_as_with_invalid_batch_index(self):
-        def execute_with_batch_index(index: int):
+    def test_save_as_with_invalid_batch_index(self) -> None:
+        def execute_with_batch_index(index: int) -> None:
             params = SaveResultsRequestParams()
             params.batch_index = index
 
@@ -288,7 +290,7 @@ select * from t1;"""
 
         execute_with_batch_index(2)
 
-    def test_save_as(self):
+    def test_save_as(self) -> None:
         params = SaveResultsRequestParams()
         params.batch_index = 0
 
@@ -304,7 +306,7 @@ select * from t1;"""
         batch_save_as_mock.assert_called_once_with(params, file_factory, on_success, on_error)
 
 
-def _tuple_from_selection_data(data: SelectionData):
+def _tuple_from_selection_data(data: SelectionData) -> tuple[int, int, int, int]:
     """Convert a SelectionData object to a tuple so that its values can easily be verified"""
     return (data.start_line, data.start_column, data.end_line, data.end_column)
 

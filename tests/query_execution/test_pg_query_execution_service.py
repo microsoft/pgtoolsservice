@@ -472,6 +472,27 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(result.owner_uri, owner_uri)
         self.assertEqual(result.result_set_summary, summary.result_set_summaries[0])
 
+    def test_result_set_complete_params_without_summaries(self) -> None:
+        """Test building parameters for the result set complete notification
+        when there are no result set summaries"""
+        # Set up the test with a batch summary and owner uri
+        batch = Batch("", 10, SelectionData())
+        batch._has_executed = True
+        batch._result_set = create_result_set(ResultSetStorageType.IN_MEMORY, 1, 10)
+        summary = batch.batch_summary
+        summary.result_set_summaries = None
+        owner_uri = "test_uri"
+
+        # If I build a result set with no summaries, as if an error prevented
+        # full query execution
+        result = self.query_execution_service.build_result_set_complete_params(
+            summary, owner_uri
+        )
+
+        # Result set summaries should be preserved as None in the output,
+        # without an exception being thrown
+        self.assertIsNone(result.result_set_summary)
+
     def test_message_notices_no_error(self) -> None:
         """Test to make sure that notices are being sent as part of a message notification"""
         # Set up params that are sent as part of a query execution request

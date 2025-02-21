@@ -74,15 +74,13 @@ def convert_from_dict(
             # Caller provided a class to deserialize to. Use that
             if isinstance(value, list):
                 # Value is a list. Use a list comprehension to deserialize all instances
-                deserialized_value = [
-                    kwargs[pythonic_attr].from_dict(x) for x in dictionary[attr]
-                ]
+                deserialized_value = [kwargs[pythonic_attr].from_dict(x) for x in value]
             elif issubclass(kwargs[pythonic_attr], enum.Enum):
                 # Value is an enum. Convert it from a string
                 deserialized_value = kwargs[pythonic_attr](value)
             else:
                 # Value is a singlar object. Use the class to deserialize
-                deserialized_value = kwargs[pythonic_attr].from_dict(dictionary[attr])
+                deserialized_value = kwargs[pythonic_attr].from_dict(value)
         else:
             # Object can be assigned directly
             deserialized_value = value

@@ -634,11 +634,8 @@ class QueryExecutionService(Service):
         summaries = summary.result_set_summaries
         result_set_summary = None
         # Check if none or empty list
-        if not summaries:
-            # This is only called with the result of Batch.batch_summary
-            # so this should not happen.
-            raise ValueError("No result set summaries found")
-        result_set_summary = summaries[0]
+        if summaries:
+            result_set_summary = summaries[0]
         return ResultSetNotificationParams(owner_uri, result_set_summary)
 
     def build_message_params(

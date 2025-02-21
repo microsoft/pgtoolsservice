@@ -28,7 +28,7 @@ class ScriptAsParameters(Serializable):
 
     @classmethod
     def get_child_serializable_types(cls) -> dict[str, type[Any]]:
-        return {"metadata": ObjectMetadata, "operation": ScriptOperation}
+        return {"scripting_objects": ObjectMetadata, "operation": ScriptOperation}
 
     def __init__(self) -> None:
         self.owner_uri = None

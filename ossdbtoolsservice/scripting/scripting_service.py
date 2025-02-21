@@ -38,16 +38,6 @@ class ScriptingService(Service):
         if self._service_provider.logger is not None:
             self._service_provider.logger.info("Scripting service successfully initialized")
 
-    # This seems to deal with unserialized objects for ObjectMetadata?
-    # def create_metadata(self, params: ScriptAsParameters) -> ObjectMetadata:
-    #     """Helper function to convert a ScriptingObjects into ObjectMetadata"""
-    #     scripting_object = params.scripting_objects[0]
-    #     object_metadata = ObjectMetadata()
-    #     object_metadata.metadata_type_name = scripting_object["type"]
-    #     object_metadata.schema = scripting_object["schema"]
-    #     object_metadata.name = scripting_object["name"]
-    #     return object_metadata
-
     # REQUEST HANDLERS #####################################################
     def _handle_script_as_request(
         self,
@@ -85,8 +75,6 @@ class ScriptingService(Service):
             if connection is None:
                 raise Exception("Could not get connection")
 
-            # This seems to deal with unserialized objects for ObjectMetadata?
-            # object_metadata = self.create_metadata(params)
             object_metadata = scripting_objects[0]
 
             scripter = Scripter(connection)
