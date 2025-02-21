@@ -117,7 +117,7 @@ class TestScriptingService(unittest.TestCase):
             scripter_patch.return_value = mock_scripter
 
             scripting_object = {
-                "type": "Table",
+                "metadata_type_name": "Table",
                 "name": "test_table",
                 "schema": "test_schema",
             }
