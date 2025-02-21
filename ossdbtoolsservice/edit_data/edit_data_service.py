@@ -121,7 +121,9 @@ class EditDataService(Service):
             query: str, columns: list[DbColumn], on_query_execution_complete: Callable
         ) -> None:
             def on_resultset_complete(result_set_params: ResultSetNotificationParams) -> None:
-                result_set_params.result_set_summary.column_info = columns
+                if result_set_params.result_set_summary:
+                    result_set_params.result_set_summary.column_info = columns
+
                 request_context.send_notification(
                     RESULT_SET_UPDATED_NOTIFICATION, result_set_params
                 )

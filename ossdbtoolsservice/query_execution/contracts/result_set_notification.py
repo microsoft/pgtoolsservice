@@ -16,11 +16,11 @@ class ResultSetNotificationParams:
     """
 
     owner_uri: str
-    result_set_summary: ResultSetSummary
+    result_set_summary: ResultSetSummary | None
 
-    def __init__(self, owner_uri: str, rs_summary: ResultSetSummary) -> None:
+    def __init__(self, owner_uri: str, rs_summary: ResultSetSummary | None) -> None:
         self.owner_uri: str = owner_uri
-        self.result_set_summary: ResultSetSummary = rs_summary
+        self.result_set_summary = rs_summary
 
 
 RESULT_SET_AVAILABLE_NOTIFICATION = "query/resultSetAvailable"
