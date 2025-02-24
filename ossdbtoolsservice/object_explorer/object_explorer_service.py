@@ -157,7 +157,7 @@ class ObjectExplorerService(Service):
                 self._logger.info(f"   - Session created: {session_id}")
 
             # Respond that the session was created (or existing session was returned)
-            response = CreateSessionResponse(session_id)
+            response = CreateSessionResponse(sessionId=session_id)
             request_context.send_response(response)
 
         except Exception as e:

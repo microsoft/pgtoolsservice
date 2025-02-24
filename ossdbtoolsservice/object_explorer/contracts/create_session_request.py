@@ -3,19 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from pydantic import BaseModel, Field
+
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
     OutgoingMessageRegistration,
 )
-from ossdbtoolsservice.serialization import Serializable
 
 
-class CreateSessionResponse(Serializable):
-    session_id: str
-
-    def __init__(self, session_id: str) -> None:
-        self.session_id: str = session_id
+class CreateSessionResponse(BaseModel):
+    session_id: str = Field(alias="sessionId")
 
 
 CREATE_SESSION_REQUEST = IncomingMessageConfiguration(
