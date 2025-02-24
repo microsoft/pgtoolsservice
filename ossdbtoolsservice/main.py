@@ -247,5 +247,5 @@ def main(
         markdown.generate_requests_markdown(server, logger)
     else:
         # Start the server
-        server.start()
-        server.wait_for_exit()
+        with server:
+            server.wait_for_exit()

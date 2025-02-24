@@ -286,6 +286,13 @@ class MessageServer(ABC):
     def stop(self) -> None:
         pass
 
+    def __enter__(self) -> "MessageServer":
+        self.start()
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self.stop()
+
     @abstractmethod
     def _send_message(self, message: JSONRPCMessage) -> None:
         pass
