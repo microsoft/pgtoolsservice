@@ -12,6 +12,10 @@ from ossdbtoolsservice.object_explorer.contracts.create_session_request import (
     CREATE_SESSION_REQUEST,
     CreateSessionResponse,
 )
+from ossdbtoolsservice.object_explorer.contracts.get_session_id_request import (
+    GET_SESSION_ID_REQUEST,
+    GetSessionIdResponse,
+)
 from ossdbtoolsservice.object_explorer.contracts.session_created_notification import (
     SESSION_CREATED_METHOD,
     SessionCreatedParameters,
@@ -99,3 +103,34 @@ def test_create_session_request(
     assert session_created.success == init_success, (
         f"Error initializing session: {session_created.error_message}"
     )
+
+
+def test_get_session_id_request(
+    mock_message_server: MockMessageServer,
+) -> None:
+    # Test sending a request for a session ID from a ConnectionDetails object
+    # and receiving a response.
+    expected_session_id = "objectexplorer://test_user@localhost:5432:postgres/"
+
+    # Creating a session fetches the configuration
+    workspace_service_mock = mock.MagicMock(spec=WorkspaceService)
+    workspace_service_mock.configuration = Configuration()
+    mock_message_server.add_services(
+        {
+            constants.OBJECT_EXPLORER_NAME: ObjectExplorerService,
+            constants.WORKSPACE_SERVICE_NAME: workspace_service_mock,
+        }
+    )
+    req_params = ConnectionDetails.from_data(
+        {
+            "host": "localhost",
+            "port": 5432,
+            "user": "test_user",
+            "dbname": "postgres",
+        }
+    )
+    response = mock_message_server.send_client_request(
+        GET_SESSION_ID_REQUEST.method, req_params
+    )
+    assert isinstance(response, GetSessionIdResponse)
+    assert response.session_id == expected_session_id
