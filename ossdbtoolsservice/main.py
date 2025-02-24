@@ -156,6 +156,16 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
     )
     parser.add_argument("--provider", type=str, help="Provider name")
 
+    parser.add_argument(
+        "--record-messages-to-file", type=str, help="Record messages to file", default=None
+    )
+    parser.add_argument(
+        "--recorder_autosave_seconds",
+        type=float,
+        help="Message recorder autosave interval in seconds",
+        default=None,
+    )
+
     # VS Code arguments
     parser.add_argument("--log-file", type=str, help="Log file")
     parser.add_argument("--tracing-level", type=str, help="Tracing level")
