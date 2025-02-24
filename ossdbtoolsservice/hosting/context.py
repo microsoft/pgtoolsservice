@@ -36,7 +36,7 @@ class RequestContext(HandlerContext):
     Implementations can provide their own logic to send responses, errors and notifications.
     """
 
-    def __init__(self, message_id: str, server: "MessageServer") -> None:
+    def __init__(self, message_id: str | int, server: "MessageServer") -> None:
         self.message_id = message_id
         super().__init__(server)
 

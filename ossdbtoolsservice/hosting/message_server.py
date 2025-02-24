@@ -310,12 +310,12 @@ class MessageServer(ABC):
         finally:
             self._response_queues.delete_queue(message_id)
 
-    def send_response(self, message_id: str, params: Any) -> None:
+    def send_response(self, message_id: str | int, params: Any) -> None:
         response = JSONRPCMessage.create_response(message_id, params)
         self._send_message(response)
 
     def send_error(
-        self, message_id: str, message: str, data: Any = None, code: int = 0
+        self, message_id: str | int, message: str, data: Any = None, code: int = 0
     ) -> None:
         error = JSONRPCMessage.create_error(message_id, code, message, data)
         self._send_message(error)

@@ -40,32 +40,32 @@ class TimeoutQueue(Generic[T], asyncio.Queue[T]):
 
 class ResponseQueues:
     def __init__(self) -> None:
-        self._queues: dict[str, TimeoutQueue[JSONRPCMessage]] = {}
+        self._queues: dict[str | int, TimeoutQueue[JSONRPCMessage]] = {}
 
-    def register_new_queue(self, request_id: str) -> TimeoutQueue[JSONRPCMessage]:
+    def register_new_queue(self, request_id: str | int) -> TimeoutQueue[JSONRPCMessage]:
         queue = TimeoutQueue[JSONRPCMessage]()
         self._queues[request_id] = queue
         return queue
 
-    def get_queue(self, request_id: str) -> TimeoutQueue[JSONRPCMessage] | None:
+    def get_queue(self, request_id: str | int) -> TimeoutQueue[JSONRPCMessage] | None:
         return self._queues.get(request_id)
 
-    def delete_queue(self, request_id: str) -> None:
+    def delete_queue(self, request_id: str | int) -> None:
         del self._queues[request_id]
 
 
 class SyncResponseQueues:
     def __init__(self) -> None:
-        self._queues: dict[str, SyncQueue[JSONRPCMessage]] = {}
+        self._queues: dict[str | int, SyncQueue[JSONRPCMessage]] = {}
 
-    def register_new_queue(self, request_id: str) -> SyncQueue[JSONRPCMessage]:
+    def register_new_queue(self, request_id: str | int) -> SyncQueue[JSONRPCMessage]:
         queue = SyncQueue[JSONRPCMessage]()
         self._queues[request_id] = queue
         return queue
 
-    def get_queue(self, request_id: str) -> SyncQueue[JSONRPCMessage] | None:
+    def get_queue(self, request_id: str | int) -> SyncQueue[JSONRPCMessage] | None:
         return self._queues.get(request_id)
 
-    def delete_queue(self, request_id: str) -> None:
+    def delete_queue(self, request_id: str | int) -> None:
         if request_id in self._queues:
             del self._queues[request_id]

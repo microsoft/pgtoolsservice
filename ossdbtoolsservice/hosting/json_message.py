@@ -25,7 +25,7 @@ class JSONRPCMessage:
     # CONSTRUCTORS #########################################################
     @classmethod
     def create_error(
-        cls, msg_id: str, code: int, message: str, data: Any
+        cls, msg_id: str | int, code: int, message: str, data: Any
     ) -> "JSONRPCMessage":
         error = {"code": code, "message": message, "data": data}
         return cls(JSONRPCMessageType.ResponseError, msg_id=msg_id, msg_error=error)
@@ -35,13 +35,13 @@ class JSONRPCMessage:
         return cls(JSONRPCMessageType.Notification, msg_method=method, msg_params=params)
 
     @classmethod
-    def create_request(cls, msg_id: str, method: str, params: Any) -> "JSONRPCMessage":
+    def create_request(cls, msg_id: str | int, method: str, params: Any) -> "JSONRPCMessage":
         return cls(
             JSONRPCMessageType.Request, msg_id=msg_id, msg_method=method, msg_params=params
         )
 
     @classmethod
-    def create_response(cls, msg_id: str, result: Any) -> "JSONRPCMessage":
+    def create_response(cls, msg_id: str | int, result: Any) -> "JSONRPCMessage":
         return cls(JSONRPCMessageType.ResponseSuccess, msg_id=msg_id, msg_result=result)
 
     @classmethod
@@ -88,7 +88,7 @@ class JSONRPCMessage:
     def __init__(
         self,
         msg_type: JSONRPCMessageType,
-        msg_id: str | None = None,
+        msg_id: str | int | None = None,
         msg_method: str | None = None,
         msg_params: dict[str, Any] | None = None,
         msg_result: Any | None = None,
@@ -103,7 +103,7 @@ class JSONRPCMessage:
 
     # PROPERTIES ###########################################################
     @property
-    def message_id(self) -> str | None:
+    def message_id(self) -> str | int | None:
         return self._message_id
 
     @property
