@@ -195,5 +195,5 @@ class _ConnectionManager:
                 (db_name,),
             )
             cursor.execute("DROP DATABASE " + db_name)
-        except Exception:
-            pass
+        except Exception as e:
+            raise RuntimeError(f"Failed to drop database {db_name}") from e
