@@ -3,13 +3,14 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Optional  # noqa
+from typing import Optional
 
-from ossdbtoolsservice.object_explorer.contracts.node_info import NodeInfo  # noqa
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
+from ossdbtoolsservice.object_explorer.contracts.node_info import NodeInfo
+from ossdbtoolsservice.serialization.serializable import Serializable
 
 
-class SessionCreatedParameters:
+class SessionCreatedParameters(Serializable):
     """Parameters to be sent back when an object explorer session is created"""
 
     error_message: str | None
