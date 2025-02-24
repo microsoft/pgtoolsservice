@@ -32,12 +32,8 @@ from ossdbtoolsservice.utils.path import path_relative_to_base
 from ossdbtoolsservice.workspace import WorkspaceService
 
 
-def create_server_init(
-    message_server: MessageServer,
-    server_logger: logging.Logger | None,
-) -> MessageServer:
-    # Create the service provider and add the providers to it
-    services: dict[str, type[Service] | Service] = {
+def get_all_services() -> dict[str, type[Service] | Service]:
+    return {
         constants.ADMIN_SERVICE_NAME: AdminService,
         constants.CAPABILITIES_SERVICE_NAME: CapabilitiesService,
         constants.CONNECTION_SERVICE_NAME: ConnectionService,
@@ -52,6 +48,14 @@ def create_server_init(
         constants.TASK_SERVICE_NAME: TaskService,
         constants.CHAT_SERVICE_NAME: ChatService,
     }
+
+
+def create_server_init(
+    message_server: MessageServer,
+    server_logger: logging.Logger | None,
+) -> MessageServer:
+    # Create the service provider and add the providers to it
+    services = get_all_services()
     service_box = ServiceProvider(message_server, services, server_logger)
     service_box.initialize()
     return message_server
