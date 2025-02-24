@@ -4,9 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ossdbtoolsservice.utils import serialization
+
+if TYPE_CHECKING:
+    from ossdbtoolsservice.hosting.lsp_message import LSPAny
 
 
 class JSONRPCMessageType(Enum):
@@ -111,11 +114,11 @@ class JSONRPCMessage:
         return self._message_method
 
     @property
-    def message_params(self) -> dict[str, Any] | None:
+    def message_params(self) -> "LSPAny | None":
         return self._message_params
 
     @property
-    def message_result(self) -> Any | None:
+    def message_result(self) -> "LSPAny | None":
         return self._message_result
 
     @property
