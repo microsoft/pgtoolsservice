@@ -15,11 +15,14 @@ from ossdbtoolsservice.hosting import (
     RequestContext,
 )
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
-from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
-from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
+from ossdbtoolsservice.hosting.json_reader import StreamJSONRPCReader
+from ossdbtoolsservice.hosting.json_writer import StreamJSONRPCWriter
 from ossdbtoolsservice.hosting.message_configuration import IncomingMessageConfiguration
 from ossdbtoolsservice.hosting.message_server import MessageHandler
-from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
+from ossdbtoolsservice.hosting.rpc_message_server import (
+    RPCMessageServer,
+    StreamRPCMessageServer,
+)
 from ossdbtoolsservice.serialization.serializable import Serializable
 
 
@@ -39,11 +42,11 @@ class JSONRPCServerTests(unittest.TestCase):
         logger = utils.get_mock_logger()
 
         # If: I create a server
-        server = RPCMessageServer(input_stream, output_stream, None, logger=logger)
+        server = StreamRPCMessageServer(input_stream, output_stream, None, logger=logger)
 
         # Then: The state should be initialized as defined
-        self.assertIsInstance(server.writer, JSONRPCWriter)
-        self.assertIsInstance(server.reader, JSONRPCReader)
+        self.assertIsInstance(server.writer, StreamJSONRPCWriter)
+        self.assertIsInstance(server.reader, StreamJSONRPCReader)
         self.assertIs(server._logger, logger)
         self.assertEqual(server._version, "1")
         self.assertFalse(server._stop_requested)
@@ -375,7 +378,7 @@ class JSONRPCServerTests(unittest.TestCase):
         output_stream = io.BytesIO()
 
         # ... Create a server that uses the input and output streams
-        server = RPCMessageServer(
+        server = StreamRPCMessageServer(
             input_stream, output_stream, None, logger=utils.get_mock_logger()
         )
 
@@ -409,7 +412,7 @@ class JSONRPCServerTests(unittest.TestCase):
         output_stream = io.BytesIO()
 
         # ... Create a server that uses the input and output streams
-        server = RPCMessageServer(
+        server = StreamRPCMessageServer(
             input_stream, output_stream, None, logger=utils.get_mock_logger()
         )
 

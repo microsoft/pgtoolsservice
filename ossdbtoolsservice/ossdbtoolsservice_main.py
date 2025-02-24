@@ -9,7 +9,8 @@ import sys
 from logging import Logger
 
 from ossdbtoolsservice.hosting import MessageServer
-from ossdbtoolsservice.hosting.rpc_message_server import RPCMessageServer
+from ossdbtoolsservice.hosting.message_recorder import MessageRecorder
+from ossdbtoolsservice.hosting.rpc_message_server import StreamRPCMessageServer
 from ossdbtoolsservice.main import create_server_init, get_config, get_loggers, main
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
@@ -19,9 +20,16 @@ def _create_server(
     output_stream: io.FileIO,
     server_logger: Logger,
     async_runner: AsyncRunner,
+    message_recorder: MessageRecorder | None,
 ) -> MessageServer:
     # Create the server, but don't start it yet
-    rpc_server = RPCMessageServer(input_stream, output_stream, async_runner, server_logger)
+    rpc_server = StreamRPCMessageServer(
+        input_stream,
+        output_stream,
+        async_runner,
+        server_logger,
+        message_recorder=message_recorder,
+    )
     return create_server_init(rpc_server, server_logger)
 
 
@@ -40,7 +48,15 @@ if __name__ == "__main__":
     std_out_wrapped = open(sys.stdout.fileno(), "wb", buffering=0, closefd=False)  # noqa: SIM115
 
     async_runner = AsyncRunner()
-    server = _create_server(stdin, std_out_wrapped, logger, async_runner)
+
+    message_recorder: MessageRecorder | None = None
+    if args.record_messages_to_file:
+        autosave_interval = args.recorder_autosave_seconds
+        message_recorder = MessageRecorder(
+            args.record_messages_to_file, save_interval=autosave_interval, logger=logger
+        )
+
+    server = _create_server(stdin, std_out_wrapped, logger, async_runner, message_recorder)
 
     try:
         main(server, args, logger)

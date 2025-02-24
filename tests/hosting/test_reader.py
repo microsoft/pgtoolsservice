@@ -8,37 +8,39 @@ import unittest
 import unittest.mock as mock
 
 import tests.utils as utils
-from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
+from ossdbtoolsservice.hosting.json_reader import StreamJSONRPCReader
 
 
 class JSONRPCReaderTests(unittest.TestCase):
     def test_create_standard_encoding(self):
         with io.BytesIO(b"") as stream:
             # If: I create a JSON RPC reader with a stream without specifying the encoding
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
 
             # Then: The stream and encoding should be set appropriately
             self.assertIsNotNone(reader)
             self.assertIs(reader.stream, stream)
             self.assertEqual(reader.encoding, "UTF-8")
-            self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Header)
+            self.assertEqual(reader._read_state, StreamJSONRPCReader.ReadState.Header)
 
     def test_create_nonstandard_encoding(self):
         with io.BytesIO(b"") as stream:
             # If: I create a JSON RPC reader with a non-standard encoding
-            reader = JSONRPCReader(stream, encoding="ascii", logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(
+                stream, encoding="ascii", logger=utils.get_mock_logger()
+            )
 
             # Then: The stream and encoding should be set appropriately
             self.assertIsNotNone(reader)
             self.assertIs(reader.stream, stream)
             self.assertEqual(reader.encoding, "ascii")
-            self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Header)
+            self.assertEqual(reader._read_state, StreamJSONRPCReader.ReadState.Header)
 
     def test_closes(self):
         with io.BytesIO(b"") as stream:
             # If:
             # ... I create a JSON RPC reader with an opened stream
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
 
             # ... and I close the reader
             reader.close()
@@ -55,7 +57,7 @@ class JSONRPCReaderTests(unittest.TestCase):
 
         # If: Close a reader and it throws an exception
         logger = utils.get_mock_logger()
-        reader = JSONRPCReader(stream, logger=logger)
+        reader = StreamJSONRPCReader(stream, logger=logger)
         reader.close()
 
         # Then: There should not have been an exception throws
@@ -72,7 +74,7 @@ class JSONRPCReaderTests(unittest.TestCase):
 
         with io.BytesIO(test_bytes) as stream:
             # If: I attempt to read a chunk from the stream
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
             result = reader._read_next_chunk()
 
             # Then:
@@ -95,7 +97,7 @@ class JSONRPCReaderTests(unittest.TestCase):
             # If:
             # ... I create a reader with an artificially low initial buffer size
             #     and prefill the buffer
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
             reader._buffer = bytearray(5)
             reader._buffer_end_offset = 4
 
@@ -121,7 +123,7 @@ class JSONRPCReaderTests(unittest.TestCase):
         with io.BytesIO() as stream:
             # If:
             # ... I create a reader with a stream that has no bytes
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
 
             # ... and I read a chunk from the stream
             # Then: I should get an exception
@@ -135,7 +137,7 @@ class JSONRPCReaderTests(unittest.TestCase):
 
         # If:
         # ... I create a reader with a closed stream
-        reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+        reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
 
         # ... and I read a chunk from the stream
         # Then: I should get an exception
@@ -146,7 +148,7 @@ class JSONRPCReaderTests(unittest.TestCase):
 
     def test_read_headers_success(self):
         # Setup: Create a reader with a loaded buffer that contains a a complete header
-        reader = JSONRPCReader(None, logger=utils.get_mock_logger())
+        reader = StreamJSONRPCReader(None, logger=utils.get_mock_logger())
         reader._buffer = bytearray(b"Content-Length: 56\r\n\r\n")
         reader._buffer_end_offset = len(reader._buffer)
 
@@ -159,7 +161,7 @@ class JSONRPCReaderTests(unittest.TestCase):
 
         # ... The current reading position should have moved to the end of the buffer
         self.assertEqual(reader._read_offset, len(reader._buffer))
-        self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Content)
+        self.assertEqual(reader._read_state, StreamJSONRPCReader.ReadState.Content)
 
         # ... The headers should have been stored
         self.assertEqual(reader._expected_content_length, 56)
@@ -168,7 +170,7 @@ class JSONRPCReaderTests(unittest.TestCase):
     def test_read_headers_not_found(self):
         # Setup: Create a reader with a loaded buffer
         # that does not contain the \r\n\r\n control
-        reader = JSONRPCReader(None, logger=utils.get_mock_logger())
+        reader = StreamJSONRPCReader(None, logger=utils.get_mock_logger())
         reader._buffer = bytearray(b"1234567890")
         reader._buffer_end_offset = len(reader._buffer)
 
@@ -181,13 +183,13 @@ class JSONRPCReaderTests(unittest.TestCase):
 
         # ... The current reading position of the buffer should not have moved
         self.assertEqual(reader._read_offset, 0)
-        self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Header)
+        self.assertEqual(reader._read_state, StreamJSONRPCReader.ReadState.Header)
 
     def test_read_headers_no_colon(self):
         # Setup: Create a reader with a buffer that contains the control sequence but does not
         #        match the header format
         test_buffer = bytearray(b"1234567890\r\n\r\n")
-        reader = JSONRPCReader(None, logger=utils.get_mock_logger())
+        reader = StreamJSONRPCReader(None, logger=utils.get_mock_logger())
         reader._buffer = test_buffer
         reader._buffer_end_offset = len(reader._buffer)
         reader._read_offset = 1
@@ -207,7 +209,7 @@ class JSONRPCReaderTests(unittest.TestCase):
     def test_read_headers_no_content_length(self):
         # Setup: Create a reader with a header block that doesn't contain content-length
         test_buffer = bytearray(b"Content-Type: application/json\r\n\r\n")
-        reader = JSONRPCReader(None, logger=utils.get_mock_logger())
+        reader = StreamJSONRPCReader(None, logger=utils.get_mock_logger())
         reader._buffer = test_buffer
         reader._buffer_end_offset = len(reader._buffer)
         reader._read_offset = 1
@@ -230,7 +232,7 @@ class JSONRPCReaderTests(unittest.TestCase):
     def test_read_headers_bad_format(self):
         # Setup: Create a reader with a header block that contains invalid content-length
         test_buffer = bytearray(b"Content-Length: abc\r\n\r\n")
-        reader = JSONRPCReader(None, logger=utils.get_mock_logger())
+        reader = StreamJSONRPCReader(None, logger=utils.get_mock_logger())
         reader._buffer = test_buffer
         reader._buffer_end_offset = len(reader._buffer)
         reader._read_offset = 1
@@ -255,11 +257,11 @@ class JSONRPCReaderTests(unittest.TestCase):
     def test_read_content_success(self):
         # Setup: Create a reader that has read in headers and has all of a message buffered
         test_buffer = bytearray(b"message")
-        reader = JSONRPCReader(None, logger=utils.get_mock_logger())
+        reader = StreamJSONRPCReader(None, logger=utils.get_mock_logger())
         reader._buffer = test_buffer
         reader._buffer_end_offset = len(reader._buffer)
         reader._read_offset = 0
-        reader._read_state = JSONRPCReader.ReadState.Content
+        reader._read_state = StreamJSONRPCReader.ReadState.Content
         reader._expected_content_length = 5
 
         # If: I read a message from the buffer
@@ -272,18 +274,18 @@ class JSONRPCReaderTests(unittest.TestCase):
         self.assertEqual(output[0], "messa")
 
         # ... The state of the reader should have been updated
-        self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Header)
+        self.assertEqual(reader._read_state, StreamJSONRPCReader.ReadState.Header)
         self.assertEqual(reader._read_offset, 5)
         self.assertEqual(reader._buffer_end_offset, len(reader._buffer))
 
     def test_read_content_not_enough_buffer(self):
         # Setup: Create a reader that has read in headers and has part of a message buffered
         test_buffer = bytearray(b"message")
-        reader = JSONRPCReader(None, logger=utils.get_mock_logger())
+        reader = StreamJSONRPCReader(None, logger=utils.get_mock_logger())
         reader._buffer = test_buffer
         reader._buffer_end_offset = len(reader._buffer)
         reader._read_offset = 0
-        reader._read_state = JSONRPCReader.ReadState.Content
+        reader._read_state = StreamJSONRPCReader.ReadState.Content
         reader._expected_content_length = 15
 
         # If: I read a message from the buffer
@@ -296,7 +298,7 @@ class JSONRPCReaderTests(unittest.TestCase):
         self.assertEqual(output[0], "")
 
         # ... The state of the reader should stay the same
-        self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Content)
+        self.assertEqual(reader._read_state, StreamJSONRPCReader.ReadState.Content)
         self.assertEqual(reader._read_offset, 0)
         self.assertEqual(reader._expected_content_length, 15)
         self.assertEqual(reader._buffer_end_offset, len(reader._buffer))
@@ -307,7 +309,7 @@ class JSONRPCReaderTests(unittest.TestCase):
         # Setup: Reader with a stream that has an entire message read
         test_bytes = bytearray(b'Content-Length: 32\r\n\r\n{"method":"test", "params":null}')
         with io.BytesIO(test_bytes) as stream:
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
             reader._buffer = bytearray(100)
 
             # If: I read a message with the reader
@@ -318,16 +320,16 @@ class JSONRPCReaderTests(unittest.TestCase):
             self.assertIsNotNone(message)
 
             # ... The reader should be back in header mode
-            self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Header)
+            self.assertEqual(reader._read_state, StreamJSONRPCReader.ReadState.Header)
 
             # ... The buffer should have been trimmed
-            self.assertEqual(len(reader._buffer), JSONRPCReader.DEFAULT_BUFFER_SIZE)
+            self.assertEqual(len(reader._buffer), StreamJSONRPCReader.DEFAULT_BUFFER_SIZE)
 
     def test_read_message_multi_read_header(self):
         # Setup: Reader with a stream that has an entire message read
         test_bytes = bytearray(b'Content-Length: 32\r\n\r\n{"method":"test", "params":null}')
         with io.BytesIO(test_bytes) as stream:
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
             reader._buffer = bytearray(10)
 
             # If: I read a message with the reader
@@ -338,16 +340,16 @@ class JSONRPCReaderTests(unittest.TestCase):
             self.assertIsNotNone(message)
 
             # ... The reader should be back in header mode
-            self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Header)
+            self.assertEqual(reader._read_state, StreamJSONRPCReader.ReadState.Header)
 
             # ... The buffer should have been trimmed
-            self.assertEqual(len(reader._buffer), JSONRPCReader.DEFAULT_BUFFER_SIZE)
+            self.assertEqual(len(reader._buffer), StreamJSONRPCReader.DEFAULT_BUFFER_SIZE)
 
     def test_read_message_multi_read_content(self):
         # Setup: Reader with a stream that has an entire message read
         test_bytes = bytearray(b'Content-Length: 32\r\n\r\n{"method":"test", "params":null}')
         with io.BytesIO(test_bytes) as stream:
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
             reader._buffer = bytearray(25)
 
             # If: I read a message with the reader
@@ -358,16 +360,16 @@ class JSONRPCReaderTests(unittest.TestCase):
             self.assertIsNotNone(message)
 
             # ... The reader should be back in header mode
-            self.assertEqual(reader._read_state, JSONRPCReader.ReadState.Header)
+            self.assertEqual(reader._read_state, StreamJSONRPCReader.ReadState.Header)
 
             # ... The buffer should have been trimmed
-            self.assertEqual(len(reader._buffer), JSONRPCReader.DEFAULT_BUFFER_SIZE)
+            self.assertEqual(len(reader._buffer), StreamJSONRPCReader.DEFAULT_BUFFER_SIZE)
 
     def test_read_message_invalid_json(self):
         # Setup: Reader with a stream that has an invalid message
         test_bytes = bytearray(b"Content-Length: 10\r\n\r\nabcdefghij")
         with io.BytesIO(test_bytes) as stream:
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
             reader._buffer = bytearray(100)
 
             # If: I read a message
@@ -383,7 +385,7 @@ class JSONRPCReaderTests(unittest.TestCase):
         test_string = b'Content-Length: 32\r\n\r\n{"method":"test", "params":null}'
         test_bytes = bytearray(test_string + test_string)
         with io.BytesIO(test_bytes) as stream:
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
             reader._buffer = bytearray(100)
 
             # If:
@@ -408,7 +410,7 @@ class JSONRPCReaderTests(unittest.TestCase):
         )
         test_bytes = bytearray(test_string)
         with io.BytesIO(test_bytes) as stream:
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
             reader._buffer = bytearray(100)
 
             # If: I read a message with invalid headers
@@ -429,7 +431,7 @@ class JSONRPCReaderTests(unittest.TestCase):
         )
         test_bytes = bytearray(test_string)
         with io.BytesIO(test_bytes) as stream:
-            reader = JSONRPCReader(stream, logger=utils.get_mock_logger())
+            reader = StreamJSONRPCReader(stream, logger=utils.get_mock_logger())
             reader._buffer = bytearray(100)
 
             # If: I read a message with invalid content

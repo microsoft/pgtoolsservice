@@ -12,14 +12,14 @@ import unittest.mock as mock
 
 import tests.utils as utils
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
-from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
+from ossdbtoolsservice.hosting.json_writer import StreamJSONRPCWriter
 
 
 class JSONRPCWriterTests(unittest.TestCase):
     def test_create_standard_encoding(self):
         with io.BytesIO(b"123") as stream:
             # If: I create a JSON RPC writer
-            writer = JSONRPCWriter(stream)
+            writer = StreamJSONRPCWriter(stream)
 
             # Then: The available properties should be set properly
             self.assertIsNotNone(writer)
@@ -30,7 +30,7 @@ class JSONRPCWriterTests(unittest.TestCase):
     def test_create_nonstandard_encoding(self):
         with io.BytesIO(b"123") as stream:
             # If: I create a JSON RPC writer with a nonstandard encoding
-            writer = JSONRPCWriter(stream, "ascii")
+            writer = StreamJSONRPCWriter(stream, "ascii")
 
             # Then: The available properties should be set properly
             self.assertIsNotNone(writer)
@@ -42,7 +42,7 @@ class JSONRPCWriterTests(unittest.TestCase):
         with io.BytesIO(b"123") as stream:
             # If:
             # ... I create a JSON RPC writer with an opened stream
-            writer = JSONRPCWriter(stream, logger=utils.get_mock_logger())
+            writer = StreamJSONRPCWriter(stream, logger=utils.get_mock_logger())
 
             # ... and I close the writer
             writer.close()
@@ -59,7 +59,7 @@ class JSONRPCWriterTests(unittest.TestCase):
 
         # If: Close a reader and it throws an exception
         logger = utils.get_mock_logger()
-        reader = JSONRPCWriter(stream, logger=logger)
+        reader = StreamJSONRPCWriter(stream, logger=logger)
         reader.close()
 
         # Then: There should not have been an exception throws
@@ -72,7 +72,7 @@ class JSONRPCWriterTests(unittest.TestCase):
         with io.BytesIO(b"") as stream:
             # If:
             # ... I create a JSON RPC writer
-            writer = JSONRPCWriter(stream, logger=utils.get_mock_logger())
+            writer = StreamJSONRPCWriter(stream, logger=utils.get_mock_logger())
 
             # ... and I send a message
             message = JSONRPCMessage.create_request("123", "test/test", {})

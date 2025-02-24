@@ -4,13 +4,36 @@
 # --------------------------------------------------------------------------------------------
 import io
 import json
+from abc import ABC, abstractmethod
 from enum import Enum
 from logging import Logger
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 
 
-class JSONRPCReader:
+class JSONRPCReader(ABC):
+    """
+    Read JSON RPC messages from a stream
+    """
+
+    @abstractmethod
+    def close(self) -> None:
+        """
+        Close the stream
+        """
+        pass
+
+    @abstractmethod
+    def read_message(self) -> JSONRPCMessage:
+        """
+        Read JSON RPC message from buffer
+        :raises ValueError: if the body-content cannot be serialized to a JSON object
+        :return: JsonRpcMessage that was received
+        """
+        pass
+
+
+class StreamJSONRPCReader(JSONRPCReader):
     """
     Reads JSON RPC message from a stream
     """
@@ -27,7 +50,10 @@ class JSONRPCReader:
 
     # CONSTRUCTOR ##########################################################
     def __init__(
-        self, stream: io.FileIO, encoding: str | None = None, logger: Logger | None = None
+        self,
+        stream: io.FileIO | io.BytesIO,
+        encoding: str | None = None,
+        logger: Logger | None = None,
     ) -> None:
         """
         Initializes the JSON RPC reader
