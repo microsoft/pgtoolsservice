@@ -35,6 +35,10 @@ from ossdbtoolsservice.object_explorer.contracts import (
     NodeInfo,
     SessionCreatedParameters,
 )
+from ossdbtoolsservice.object_explorer.contracts.get_session_id_request import (
+    GET_SESSION_ID_REQUEST,
+    GetSessionIdResponse,
+)
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
 from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
@@ -72,6 +76,10 @@ class ObjectExplorerService(Service):
         self._service_provider.server.set_request_handler(
             REFRESH_REQUEST, self._handle_refresh_request
         )
+        self._service_provider.server.set_request_handler(
+            GET_SESSION_ID_REQUEST, self._handle_get_session_id_request
+        )
+
         self._service_provider.server.add_shutdown_handler(self._handle_shutdown)
 
         # Find the provider type
@@ -210,6 +218,18 @@ class ObjectExplorerService(Service):
             if self.service_provider.logger is not None:
                 self.service_provider.logger.error(message)
             request_context.send_error(message)
+
+    def _handle_get_session_id_request(
+        self, request_context: RequestContext, params: ConnectionDetails
+    ) -> None:
+        """Retrieve the existing session ID for the given connection details"""
+        validate.is_not_none("params", params)
+        session_id = self._generate_session_uri(params)
+
+        if self._logger:
+            self._logger.info(f"   - Session ID: {session_id}")
+
+        request_context.send_response(GetSessionIdResponse(session_id=session_id))
 
     def _handle_refresh_request(
         self, request_context: RequestContext, params: ExpandParameters
