@@ -14,6 +14,7 @@ from ossdbtoolsservice.language.completion.packages.parseutils.meta import (
     ForeignKey,
     FunctionMetadata,
 )
+from ossdbtoolsservice.utils.sql import as_sql
 
 
 class PGLightweightMetadata:
@@ -72,7 +73,7 @@ class PGLightweightMetadata:
 
         with self.conn.cursor() as cur:
             query_morgified = cur.mogrify(self.tables_query, [kinds])
-            query = sql.SQL(query_morgified)  # type: ignore
+            query = as_sql(query_morgified)
             self._log(f"Tables Query. sql: {query}")
             cur.execute(query)
             yield from cur
@@ -168,7 +169,7 @@ class PGLightweightMetadata:
 
         with self.conn.cursor() as cur:
             mogrified_query = cur.mogrify(columns_query, [kinds])
-            query = sql.SQL(mogrified_query)  # type: ignore
+            query = as_sql(mogrified_query)
             self._log(f"Columns Query. sql: {query}")
             cur.execute(query)
             yield from cur
