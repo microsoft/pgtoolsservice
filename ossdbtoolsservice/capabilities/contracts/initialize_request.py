@@ -108,13 +108,13 @@ class ServerCapabilities:
         self.workspace_symbol_provider = workspace_symbol_provider
 
 
-class InitializeResult:
+class InitializeResult(Serializable):
     """Initialization result parameters"""
 
-    capabilities: ServerCapabilities
+    capabilities: ServerCapabilities | None
 
-    def __init__(self, capabilities: ServerCapabilities) -> None:
-        self.capabilities: ServerCapabilities = capabilities
+    def __init__(self, capabilities: ServerCapabilities | None = None) -> None:
+        self.capabilities = capabilities 
 
 
 INITIALIZE_REQUEST = IncomingMessageConfiguration("initialize", InitializeRequestParams)
