@@ -25,7 +25,6 @@ class PlaybackDB:
         if dataset is None:
             raise ValueError(f"Dataset {dataset_name} not found")
         self.dataset = dataset
-        # self.database_name = f"{dataset.db_name}-{uuid.uuid4().hex[:8]}"
         self.database_name = self.dataset.db_name
 
         self.db_config = {
