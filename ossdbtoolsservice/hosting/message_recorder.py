@@ -197,6 +197,7 @@ class MessageRecorder:
         create_timestamp: Callable[[], float] = time.monotonic,
         save_interval: float | None = None,
         logger: Logger | None = None,
+        silence_errors: bool = True,
     ):
         """
         Args:
@@ -206,10 +207,14 @@ class MessageRecorder:
             save_interval: The interval in seconds to save the recorded messages.
                 Defaults to None, which means no automatic saving. File will be saved
                 when the recorder is closed.
+            logger: A logger to log messages. Defaults to None.
+            silence_errors: Whether to silence errors when recording messages.
+                Defaults to True to avoid effecting the server. Set to False for testing.
         """
         self.file_path = file_path
         self.create_timestamp = create_timestamp
         self._logger = logger
+        self.silence_errors = silence_errors
 
         self.client_requests: list[MessageRecord[LSPRequestMessage]] = []
         self.server_requests: list[MessageRecord[LSPRequestMessage]] = []
@@ -329,6 +334,8 @@ class MessageRecorder:
                 if isinstance(e, ValidationError):
                     # Capture the message for debugging
                     self._logger.error(json.dumps(message.dictionary, indent=2))
+            if not self.silence_errors:
+                raise e
 
     def create_record_session(self) -> RecordedSession:
         """
