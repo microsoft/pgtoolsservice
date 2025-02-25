@@ -21,36 +21,9 @@ The [Microsoft Enterprise and Developer Privacy Statement] describes the privacy
 ## License
 This extension is [licensed under the MIT License]. Please see the [third-party notices] file for additional copyright notices and license terms applicable to portions of the software.
 
-## Development Installation
+## Developing
 
-To install the package in development mode, run:
-
-    pip install -e .[dev]
-
-This installs an editable version of the package with extra development dependencies.
-This is required for running the VS Code extension in development.
-
-## Running tests
-
-There are two test projects in the repository, `tests` and `tests_v2`.
-The `tests_v2` are newer tests that are run with pytest.
-To run all tests, run: `scripts/test_all.sh` or `scripts/test_all.ps1` if you are on Windows.
-
-To run linting checks, use `scripts/lint.sh` or `scripts/lint.ps1` if you are on Windows.
-
-### Docker postgres
-
-To run the integration tests, which are marked across the `tests` with a `@integration` decorator, you need to have a running postgres instance.
-You can use the `docker-compose` file to quickly spin up a local postgres instance.
-
-```bash
-docker-compose up -d
-```
-This will create a local postgres instance with the following connection string:
-
-```
-postgresql://postgres:example@localhost:5432/postgres
-```
+See the [DEVELOPING.md](DEVELOPING.md) for details on how to develop this project.
 
 
 [GitHub Issue Tracker]:https://github.com/Microsoft/pgtoolsservice/issues

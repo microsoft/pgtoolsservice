@@ -1,0 +1,12 @@
+# docker-compose for creating a recording DB. See DEVELOPING.md
+services:
+
+  db:
+    image: mcr.microsoft.com/azurelinux/base/postgres:16
+    container_name: pgts-postgres-novolume
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - "5678:5432"
+    command:
+      - postgres
