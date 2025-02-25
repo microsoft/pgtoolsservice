@@ -24,7 +24,7 @@ from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExpl
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.workspace.contracts.did_change_config_notification import Configuration
 from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
-from tests_v2.test_utils.mock_message_server import MockMessageServer
+from tests_v2.test_utils.message_server_client_wrapper import MockMessageServerClientWrapper
 
 
 @pytest.mark.parametrize(
@@ -35,7 +35,7 @@ from tests_v2.test_utils.mock_message_server import MockMessageServer
     ],
 )
 def test_create_session_request(
-    mock_message_server: MockMessageServer, init_success: bool
+    mock_server_client_wrapper: MockMessageServerClientWrapper, init_success: bool
 ) -> None:
     """Test sending a request to the message server and receiving a response."""
 
@@ -71,7 +71,7 @@ def test_create_session_request(
 
     connection_service_mock.connect.return_value = connection_complete_params
 
-    mock_message_server.add_services(
+    mock_server_client_wrapper.add_services(
         {
             constants.OBJECT_EXPLORER_NAME: ObjectExplorerService,
             constants.WORKSPACE_SERVICE_NAME: workspace_service_mock,
@@ -87,17 +87,17 @@ def test_create_session_request(
         }
     )
 
-    expected_result = CreateSessionResponse(expected_session_id)
+    expected_result = CreateSessionResponse(sessionId=expected_session_id)
 
-    response = mock_message_server.send_client_request(
-        CREATE_SESSION_REQUEST.method, req_params
+    response = mock_server_client_wrapper.send_client_request(
+        CREATE_SESSION_REQUEST.method, req_params, timeout=2
     )
+    result = response.get_result(CreateSessionResponse)
 
-    assert isinstance(response, CreateSessionResponse)
-    assert response.session_id == expected_result.session_id
+    assert result.session_id == expected_result.session_id
 
-    session_created = mock_message_server.wait_for_notification(SESSION_CREATED_METHOD)
-    assert isinstance(session_created, SessionCreatedParameters)
+    notification = mock_server_client_wrapper.wait_for_notification(SESSION_CREATED_METHOD)
+    session_created = notification.get_params(SessionCreatedParameters)
 
     assert session_created.session_id == expected_result.session_id
     assert session_created.success == init_success, (
@@ -106,7 +106,7 @@ def test_create_session_request(
 
 
 def test_get_session_id_request(
-    mock_message_server: MockMessageServer,
+    mock_server_client_wrapper: MockMessageServerClientWrapper,
 ) -> None:
     # Test sending a request for a session ID from a ConnectionDetails object
     # and receiving a response.
@@ -115,7 +115,7 @@ def test_get_session_id_request(
     # Creating a session fetches the configuration
     workspace_service_mock = mock.MagicMock(spec=WorkspaceService)
     workspace_service_mock.configuration = Configuration()
-    mock_message_server.add_services(
+    mock_server_client_wrapper.add_services(
         {
             constants.OBJECT_EXPLORER_NAME: ObjectExplorerService,
             constants.WORKSPACE_SERVICE_NAME: workspace_service_mock,
@@ -129,8 +129,8 @@ def test_get_session_id_request(
             "dbname": "postgres",
         }
     )
-    response = mock_message_server.send_client_request(
+    response = mock_server_client_wrapper.send_client_request(
         GET_SESSION_ID_REQUEST.method, req_params
     )
-    assert isinstance(response, GetSessionIdResponse)
-    assert response.session_id == expected_session_id
+    result = response.get_result(GetSessionIdResponse)
+    assert result.session_id == expected_session_id

@@ -1,7 +1,64 @@
-import pytest
+from collections.abc import Generator
 
+import pytest
+from psycopg import Connection
+from psycopg_pool import ConnectionPool
+
+from ossdbtoolsservice.main import get_all_services
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
-from tests_v2.test_utils.mock_message_server import MockMessageServer
+from tests_v2.test_utils.constants import DEFAULT_CONNECTION_STRING
+from tests_v2.test_utils.message_server_client_wrapper import (
+    MessageServerClientWrapper,
+    MockMessageServerClientWrapper,
+)
+from tests_v2.test_utils.playback.playback_db import PlaybackDB
+from tests_v2.test_utils.queue_message_server import QueueRPCMessageServer
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--run-server",
+        action="store",
+        default=None,
+        help=(
+            "Path to a server executable. "
+            "Will run tests written against a server client wrapper with the bundled server "
+            "rather than a mock server."
+        ),
+    )
+
+    parser.addoption(
+        "--connection-string",
+        action="store",
+        default=DEFAULT_CONNECTION_STRING,
+        help=(
+            "Connection string to the database server to use for tests. "
+            "Defaults to localhost connection to database in docker-compose.yml."
+        ),
+    )
+
+    parser.addoption(
+        "--playback",
+        action="store_true",
+        default=False,
+        help="Run playback tests.",
+    )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers", "playback: mark test to run only if --playback is specified"
+    )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    if not config.getoption("--playback"):
+        skip_marker = pytest.mark.skip(
+            reason="Playback tests are skipped unless --playback is specified."
+        )
+        for item in items:
+            if "playback" in item.keywords:
+                item.add_marker(skip_marker)
 
 
 @pytest.fixture
@@ -15,6 +72,63 @@ def async_runner() -> AsyncRunner:
 
 
 @pytest.fixture(scope="function")
-def mock_message_server(async_runner: AsyncRunner) -> MockMessageServer:
-    # Must be async to correctly setup AsyncRunner
-    return MockMessageServer(async_runner)
+def mock_message_server(
+    async_runner: AsyncRunner,
+) -> Generator[QueueRPCMessageServer, None, None]:
+    server = QueueRPCMessageServer(async_runner=async_runner)
+    with server:
+        yield server
+
+
+@pytest.fixture(scope="function")
+def mock_server_client_wrapper(
+    mock_message_server: QueueRPCMessageServer,
+) -> Generator[MockMessageServerClientWrapper, None, None]:
+    wrapper = MockMessageServerClientWrapper(mock_message_server)
+    with wrapper:
+        yield wrapper
+
+
+@pytest.fixture(scope="function")
+def server_client_wrapper(
+    request: pytest.FixtureRequest,
+    async_runner: AsyncRunner,
+) -> Generator[MessageServerClientWrapper, None, None]:
+    server_executable = request.config.getoption("--run-server")
+    if server_executable is None:
+        server = QueueRPCMessageServer(async_runner=async_runner)
+        server.add_services(get_all_services())
+        with server:
+            wrapper = MockMessageServerClientWrapper(server)
+            with wrapper:
+                yield wrapper
+    else:
+        # TODO: Implement this
+        raise NotImplementedError("Server client wrapper not implemented")
+
+
+@pytest.fixture(scope="session")
+def connection_string(request: pytest.FixtureRequest) -> str:
+    return request.config.getoption("--connection-string")  # type: ignore
+
+
+@pytest.fixture(scope="session")
+def connection_pool(
+    connection_string: str,
+) -> Generator[ConnectionPool, None, None]:
+    pool = ConnectionPool[Connection](connection_string)
+    with pool:
+        yield pool
+
+
+@pytest.fixture(scope="function")
+def connection(connection_pool: ConnectionPool) -> Generator[Connection, None, None]:
+    with connection_pool.connection() as conn:
+        yield conn
+
+
+@pytest.fixture(scope="function")
+def pagila_playback_db() -> Generator[PlaybackDB, None, None]:
+    playback_db = PlaybackDB("pagila")
+    with playback_db:
+        yield playback_db
