@@ -3,11 +3,11 @@ from typing import Any
 
 from ossdbtoolsservice.hosting.lsp_message import LSPMessage, LSPResponseErrorMessage
 from ossdbtoolsservice.hosting.message_recorder import RecordedSession
-from tests_v2.test_utils.message_diff import diff_messages
 from tests_v2.test_utils.message_server_client_wrapper import (
     MessageServerClientWrapper,
     ServerResponseError,
 )
+from tests_v2.test_utils.playback.message_diff import diff_messages
 from tests_v2.test_utils.playback.playback_config import PlaybackConfiguration
 
 

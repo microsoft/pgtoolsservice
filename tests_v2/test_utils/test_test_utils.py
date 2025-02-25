@@ -2,7 +2,7 @@
 
 from typing import Any, Callable
 
-from .message_diff import dict_diff, replace_properties
+from .playback.message_diff import dict_diff, replace_properties
 
 # dict_diff
 
