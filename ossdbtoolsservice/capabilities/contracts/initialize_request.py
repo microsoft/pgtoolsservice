@@ -114,7 +114,7 @@ class InitializeResult(Serializable):
     capabilities: ServerCapabilities | None
 
     def __init__(self, capabilities: ServerCapabilities | None = None) -> None:
-        self.capabilities = capabilities 
+        self.capabilities = capabilities
 
 
 INITIALIZE_REQUEST = IncomingMessageConfiguration("initialize", InitializeRequestParams)

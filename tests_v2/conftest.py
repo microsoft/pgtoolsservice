@@ -110,7 +110,7 @@ def server_client_wrapper(
         server_log_file = request.config.getoption("--server-log-file")
         server_log_file = server_log_file if isinstance(server_log_file, str) else None
         exe_wrapper = ExecutableMessageServerClientWrapper(
-            server_executable,            
+            server_executable,
             log_dir=server_log_file,
         )
         with exe_wrapper:
