@@ -5,6 +5,17 @@ $curloc = $pwd
 $scriptloc = $PSScriptRoot
 Set-Location $scriptloc/..
 
+# Process arguments
+$playback = ""
+$restArgs = @()
+foreach ($arg in $args) {
+    if ($arg -eq "--playback") {
+        $playback = "--playback"
+    } else {
+        $restArgs += $arg
+    }
+}
+
 # Display an error if the integration test config file does not exist
 if (!(Test-Path 'tests\integration\config.json'))
 {
@@ -12,7 +23,11 @@ if (!(Test-Path 'tests\integration\config.json'))
   return
 }
 
-# Run the tests
-nose2 -v --with-coverage --coverage-report html --plugin=nose2.plugins.junitxml --junit-xml @args
-pytest tests_v2
+# Run the tests conditionally including filtered args for nose2
+if ($restArgs.Count -gt 0) {
+    nose2 -v --with-coverage --coverage-report html --plugin=nose2.plugins.junitxml --junit-xml $restArgs
+} else {
+    nose2 -v --with-coverage --coverage-report html --plugin=nose2.plugins.junitxml --junit-xml
+}
+pytest tests_v2 $playback
 Set-Location $curloc
