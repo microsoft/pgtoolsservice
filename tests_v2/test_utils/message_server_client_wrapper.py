@@ -1,7 +1,9 @@
+import subprocess
 import threading
 import time
 import uuid
 from abc import ABC, abstractmethod
+from pathlib import Path
 from queue import Queue
 from threading import Lock
 from typing import Any
@@ -9,6 +11,8 @@ from typing import Any
 from pydantic import BaseModel
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
+from ossdbtoolsservice.hosting.json_reader import StreamJSONRPCReader
+from ossdbtoolsservice.hosting.json_writer import StreamJSONRPCWriter
 from ossdbtoolsservice.hosting.lsp_message import (
     LSPAny,
     LSPNotificationMessage,
@@ -60,15 +64,15 @@ class MessageServerClientWrapper(ABC):
         self._request_responses: dict[str, list[JSONRPCMessage]] = {}
         self._message_lock = Lock()
 
-        self._output_thread = threading.Thread(
-            target=self._consume_output,
+        self._server_message_processing_thread = threading.Thread(
+            target=self._process_server_messages,
             name="MessageServerClientWrapper_Polling",
             daemon=True,
         )
         self._stop_requested = False
 
     def start(self) -> None:
-        self._output_thread.start()
+        self._server_message_processing_thread.start()
 
     def stop(self) -> None:
         self._stop_requested = True
@@ -76,7 +80,7 @@ class MessageServerClientWrapper(ABC):
         self._server_message_queue.put(
             JSONRPCMessage(msg_type=JSONRPCMessageType.Notification, msg_method="TEST_STOP")
         )
-        self._output_thread.join()
+        self._server_message_processing_thread.join()
 
     def __enter__(self) -> "MessageServerClientWrapper":
         self.start()
@@ -89,7 +93,7 @@ class MessageServerClientWrapper(ABC):
         with self._message_lock:
             return self._messages.copy()
 
-    def _consume_output(self) -> None:
+    def _process_server_messages(self) -> None:
         while not self._stop_requested:
             message = self._server_message_queue.get()
             if message.message_method == "TEST_STOP":
@@ -117,10 +121,10 @@ class MessageServerClientWrapper(ABC):
                     response_message = JSONRPCMessage.create_response(
                         msg_id=message.message_id, result=response_message.message_result
                     )
-                self.send_client_message(response_message)
+                self._send_client_message(response_message)
 
     @abstractmethod
-    def send_client_message(self, message: JSONRPCMessage) -> None:
+    def _send_client_message(self, message: JSONRPCMessage) -> None:
         """This "sends" a message to the server, mimicking e.g. VSCode sending a
         request, response, or notification to the server.
         """
@@ -129,9 +133,9 @@ class MessageServerClientWrapper(ABC):
     def send_client_request(
         self,
         method: str,
-        params: Any,
+        params: LSPAny | BaseModel | Serializable | None,
         message_id: str | int | None = None,
-        timeout: float = 2.0,
+        timeout: float | None = 2.0,
         pop_response: bool = False,
     ) -> LSPResponseResultMessage:
         """Sends a request. Waits for the response, and returns the response params.
@@ -159,10 +163,10 @@ class MessageServerClientWrapper(ABC):
         )
 
         message_count = len(self._messages)
-        self.send_client_message(req_message)
-        timer = TimeoutTimer(timeout)
+        self._send_client_message(req_message)
+        timer = TimeoutTimer(timeout) if timeout else None
         while True:
-            if timer.is_expired():
+            if timer is not None and timer.is_expired():
                 raise TimeoutError("Timed out waiting for response")
             if len(self._messages) > message_count:
                 for i, message in enumerate(self._messages[message_count:]):
@@ -199,7 +203,7 @@ class MessageServerClientWrapper(ABC):
         notification_message = JSONRPCMessage.create_notification(
             method=method, params=serialized_params
         )
-        self.send_client_message(notification_message)
+        self._send_client_message(notification_message)
 
     def wait_for_notification(
         self, method: str, timeout: float = 2.0, pop_message: bool = False
@@ -277,7 +281,7 @@ class MockMessageServerClientWrapper(MessageServerClientWrapper):
         """Convenience method to add services to the message server."""
         self._message_server.add_services(services)
 
-    def send_client_message(self, message: JSONRPCMessage) -> None:
+    def _send_client_message(self, message: JSONRPCMessage) -> None:
         """This "sends" a message to the server, mimicking e.g. VSCode sending a
         request, response, or notification to the server.
         """
@@ -296,3 +300,77 @@ class MockMessageServerClientWrapper(MessageServerClientWrapper):
         return await self._message_server.send_request(
             method, params, result_type=result_type, timeout=timeout
         )
+
+
+class ExecutableMessageServerClientWrapper(MessageServerClientWrapper):
+    def __init__(self, pgts_exe_path: str | Path, log_dir: str | None = None) -> None:
+        super().__init__(Queue())
+        self.pgts_exe_path = pgts_exe_path
+        self.log_dir = log_dir
+
+        self.process: subprocess.Popen | None = None
+        self.reader: StreamJSONRPCReader | None = None
+        self.writer: StreamJSONRPCWriter | None = None
+        self.read_server_output_thread: threading.Thread | None = None
+
+    def start(self) -> None:
+        super().start()
+        cmd = [self.pgts_exe_path]
+        if self.log_dir:
+            cmd += ["--log-dir", self.log_dir]
+        self.process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        assert self.process.stdin is not None
+        assert self.process.stdout is not None
+
+        in_stream = open(self.process.stdin.fileno(), "wb", buffering=0, closefd=False)  # noqa: SIM115
+        out_stream = open(self.process.stdout.fileno(), "rb", buffering=0, closefd=False)  # noqa: SIM115
+
+        self.reader = StreamJSONRPCReader(out_stream)  # Read from stdout of server process
+        self.writer = StreamJSONRPCWriter(in_stream)  # Write to stdin of server process
+
+        self.read_server_output_thread = threading.Thread(
+            target=self._read_server_output, daemon=True, name="ReadServerOutputThread"
+        )
+        self.read_server_output_thread.start()
+
+    def stop(self) -> None:
+        if self.reader:
+            self.reader.close()
+        if self.writer:
+            self.writer.close()
+
+        super().stop()
+
+        if self.process:
+            self.process.terminate()
+            self.process.wait()
+        if self.read_server_output_thread:
+            self.read_server_output_thread.join()
+        self.read_server_output_thread = None
+        self.reader = None
+        self.writer = None
+        self.process = None
+
+    def _read_server_output(self) -> None:
+        """Read the server output and send it to the server message queue."""
+        if not self.reader:
+            raise RuntimeError("Message server not started")
+        while not self._stop_requested:
+            try:
+                message = self.reader.read_message()
+            except EOFError:
+                break
+            self._server_message_queue.put(message)
+
+    def _send_client_message(self, message: JSONRPCMessage) -> None:
+        """This "sends" a message to the server, mimicking e.g. VSCode sending a
+        request, response, or notification to the server.
+        """
+        if not self.writer:
+            raise RuntimeError("Message server not started")
+        self.writer.send_message(message)

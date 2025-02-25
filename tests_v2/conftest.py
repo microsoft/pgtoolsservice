@@ -8,6 +8,7 @@ from ossdbtoolsservice.main import get_all_services
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 from tests_v2.test_utils.constants import DEFAULT_CONNECTION_STRING
 from tests_v2.test_utils.message_server_client_wrapper import (
+    ExecutableMessageServerClientWrapper,
     MessageServerClientWrapper,
     MockMessageServerClientWrapper,
 )
@@ -24,6 +25,16 @@ def pytest_addoption(parser: pytest.Parser) -> None:
             "Path to a server executable. "
             "Will run tests written against a server client wrapper with the bundled server "
             "rather than a mock server."
+        ),
+    )
+
+    parser.addoption(
+        "--server-log-file",
+        action="store",
+        default=None,
+        help=(
+            "When used with --run-server, path to a file to log the server output to. "
+            "If not specified, the server output will not be logged."
         ),
     )
 
@@ -95,16 +106,22 @@ def server_client_wrapper(
     async_runner: AsyncRunner,
 ) -> Generator[MessageServerClientWrapper, None, None]:
     server_executable = request.config.getoption("--run-server")
-    if server_executable is None:
+    if isinstance(server_executable, str):
+        server_log_file = request.config.getoption("--server-log-file")
+        server_log_file = server_log_file if isinstance(server_log_file, str) else None
+        exe_wrapper = ExecutableMessageServerClientWrapper(
+            server_executable,            
+            log_dir=server_log_file,
+        )
+        with exe_wrapper:
+            yield exe_wrapper
+    else:
         server = QueueRPCMessageServer(async_runner=async_runner)
         server.add_services(get_all_services())
         with server:
-            wrapper = MockMessageServerClientWrapper(server)
-            with wrapper:
-                yield wrapper
-    else:
-        # TODO: Implement this
-        raise NotImplementedError("Server client wrapper not implemented")
+            mock_wrapper = MockMessageServerClientWrapper(server)
+            with mock_wrapper:
+                yield mock_wrapper
 
 
 @pytest.fixture(scope="session")
