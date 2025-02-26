@@ -164,7 +164,7 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
         "--record-messages-to-file", type=str, help="Record messages to file", default=None
     )
     parser.add_argument(
-        "--recorder_autosave_seconds",
+        "--recorder-autosave-seconds",
         type=float,
         help="Message recorder autosave interval in seconds",
         default=None,
