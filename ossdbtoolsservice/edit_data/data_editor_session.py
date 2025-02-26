@@ -28,6 +28,7 @@ from ossdbtoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMe
 from ossdbtoolsservice.query.contracts import DbColumn, ResultSetSubset
 from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.utils import validate
+from ossdbtoolsservice.utils.sql import as_sql
 
 
 class DataEditSessionExecutionState:
@@ -272,11 +273,11 @@ class DataEditorSession:
                             pass
                         else:
                             script: EditScript = operation.get_script()
-                            query_template_sql = sql.SQL(script.query_template)  # type:ignore
+                            query_template_sql = as_sql(script.query_template)
                             morgified = cursor.mogrify(
                                 query_template_sql, (script.query_paramters)
                             )
-                            morgified_sql = sql.SQL(morgified)  # type:ignore
+                            morgified_sql = as_sql(morgified)
                             cursor.execute(morgified_sql)
                             operation.apply_changes(cursor)
 
@@ -311,6 +312,6 @@ class DataEditorSession:
             sql.SQL(", ").join(column_names),
             sql.Identifier(metadata.schema_name),
             sql.Identifier(metadata.table_name),
-            sql.SQL(limit_clause),  # type:ignore
+            as_sql(limit_clause),
         )
         return query.as_string(connection.connection)

@@ -5,12 +5,34 @@
 
 import io
 import json
+from abc import ABC, abstractmethod
 from logging import Logger
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
 
 
-class JSONRPCWriter:
+class JSONRPCWriter(ABC):
+    """
+    Abstract base class for writing JSON RPC messages
+    """
+
+    @abstractmethod
+    def close(self) -> None:
+        """
+        Closes the writer
+        """
+        pass
+
+    @abstractmethod
+    def send_message(self, message: JSONRPCMessage) -> None:
+        """
+        Sends JSON RPC message as defined by message object
+        :param message: Message to send
+        """
+        pass
+
+
+class StreamJSONRPCWriter(JSONRPCWriter):
     """
     Write JSON RPC messages to a stream
     """
@@ -18,7 +40,10 @@ class JSONRPCWriter:
     HEADER = "Content-Length: {}\r\n\r\n"
 
     def __init__(
-        self, stream: io.FileIO, encoding: str | None = None, logger: Logger | None = None
+        self,
+        stream: io.FileIO | io.BytesIO,
+        encoding: str | None = None,
+        logger: Logger | None = None,
     ) -> None:
         """
         Initializes the JSON RPC writer

@@ -4,8 +4,9 @@ from logging import Logger
 from queue import Queue
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage
-from ossdbtoolsservice.hosting.json_reader import JSONRPCReader
-from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter
+from ossdbtoolsservice.hosting.json_reader import JSONRPCReader, StreamJSONRPCReader
+from ossdbtoolsservice.hosting.json_writer import JSONRPCWriter, StreamJSONRPCWriter
+from ossdbtoolsservice.hosting.message_recorder import MessageRecorder
 from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
@@ -13,15 +14,16 @@ from ossdbtoolsservice.utils.async_runner import AsyncRunner
 class RPCMessageServer(MessageServer):
     def __init__(
         self,
-        in_stream: io.FileIO,
-        out_stream: io.FileIO,
+        reader: JSONRPCReader,
+        writer: JSONRPCWriter,
         async_runner: AsyncRunner | None,
-        logger: Logger,
+        logger: Logger | None,
         version: str = "1",
+        message_recorder: MessageRecorder | None = None,
     ) -> None:
-        super().__init__(async_runner, logger, version)
-        self.reader = JSONRPCReader(in_stream, logger=logger)
-        self.writer = JSONRPCWriter(out_stream, logger=logger)
+        super().__init__(async_runner, logger, version, message_recorder)
+        self.reader = reader
+        self.writer = writer
         self._output_queue = Queue[JSONRPCMessage | None]()
         self._input_thread = threading.Thread(
             target=self._consume_input, name="JSONRPC_Input_Thread", daemon=True
@@ -81,3 +83,26 @@ class RPCMessageServer(MessageServer):
                 self.writer.send_message(message)
             except Exception as e:
                 self._log_exception(f"Output thread exception: {e}")
+
+
+class StreamRPCMessageServer(RPCMessageServer):
+    def __init__(
+        self,
+        in_stream: io.FileIO | io.BytesIO,
+        out_stream: io.FileIO | io.BytesIO,
+        async_runner: AsyncRunner | None,
+        logger: Logger,
+        version: str = "1",
+        message_recorder: MessageRecorder | None = None,
+    ) -> None:
+        reader = StreamJSONRPCReader(in_stream, logger=logger)
+        writer = StreamJSONRPCWriter(out_stream, logger=logger)
+
+        super().__init__(
+            reader,
+            writer,
+            async_runner,
+            logger,
+            version=version,
+            message_recorder=message_recorder,
+        )

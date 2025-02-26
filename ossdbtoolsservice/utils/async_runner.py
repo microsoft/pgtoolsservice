@@ -2,7 +2,9 @@ import asyncio
 import threading
 from collections.abc import Coroutine
 from concurrent.futures import Future
-from typing import Any
+from typing import Any, TypeVar
+
+T = TypeVar("T")
 
 
 class AsyncRunner:
@@ -20,7 +22,9 @@ class AsyncRunner:
             self._existing_loop = True
         except RuntimeError:
             self.loop = asyncio.new_event_loop()
-            self.thread = threading.Thread(target=self._run_loop, daemon=True)
+            self.thread = threading.Thread(
+                target=self._run_loop, daemon=True, name="AsyncRunner_Event_Loop"
+            )
             self.thread.start()
 
     def _run_loop(self) -> None:
@@ -28,11 +32,11 @@ class AsyncRunner:
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()
 
-    def run(self, coroutine: Coroutine) -> Any:
+    def run(self, coroutine: Coroutine[Any, Any, T]) -> T:
         """Submits a coroutine to the event loop and waits for it to complete."""
         return asyncio.run_coroutine_threadsafe(coroutine, self.loop).result()
 
-    def run_async(self, coroutine: Coroutine) -> Future:
+    def run_async(self, coroutine: Coroutine[Any, Any, T]) -> Future[T]:
         """Submits a coroutine to the event loop without waiting for it to complete."""
         return asyncio.run_coroutine_threadsafe(coroutine, self.loop)
 

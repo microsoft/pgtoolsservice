@@ -6,11 +6,12 @@ from collections.abc import Mapping, Sequence
 from typing import Any, Optional
 
 import psycopg
-from psycopg import Column, sql
+from psycopg import Column
 from psycopg.pq import TransactionStatus
 
 from ossdbtoolsservice.driver.types.adapter import addAdapters
 from ossdbtoolsservice.utils import constants
+from ossdbtoolsservice.utils.sql import as_sql
 from ossdbtoolsservice.workspace.contracts import Configuration
 
 PG_CANCELLATION_QUERY = "SELECT pg_cancel_backend ({})"
@@ -288,7 +289,7 @@ class ServerConnection:
         :raises psycopg.ProgrammingError: if there was no result set when executing the query
         """
         with self.cursor() as cur:
-            query_sql = sql.SQL(query)  # type: ignore
+            query_sql = as_sql(query)
             cur.execute(query_sql, params=params)
             query_results = cur.fetchall()
             return query_results
@@ -299,7 +300,7 @@ class ServerConnection:
         :raises psycopg.ProgrammingError: if there was no result set when executing the query
         """
         with self.cursor() as cur:
-            query_sql = sql.SQL(query)  # type: ignore
+            query_sql = as_sql(query)
             cur.execute(query_sql, params=params)
             query_results = cur.fetchone()
             return query_results
@@ -317,7 +318,7 @@ class ServerConnection:
         :return: A list of column objects and a list of rows, which are formatted as dicts.
         """
         with self.cursor() as cur:
-            query_sql = sql.SQL(query)  # type: ignore
+            query_sql = as_sql(query)
             cur.execute(query_sql, params)
 
             cols: list[Column] | None = cur.description
@@ -334,7 +335,7 @@ class ServerConnection:
 
     def execute_2darray(self, query: str, params: Params | None = None) -> dict[str, Any]:
         with self.cursor() as cur:
-            query_sql = sql.SQL(query)  # type: ignore
+            query_sql = as_sql(query)
             cur.execute(query_sql, params)
 
             # Get Resultset Column Name, Type and size

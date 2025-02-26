@@ -8,10 +8,15 @@ from typing import Any, TypeVar
 
 import inflection
 
+from ossdbtoolsservice.utils.serialization import convert_to_dict
+
 T = TypeVar("T", bound="Serializable")
 
 
 class Serializable:
+    def to_dict(self) -> dict[str, Any]:
+        return convert_to_dict(self)
+
     @classmethod
     def from_dict(cls: type[T], dictionary: dict) -> T:
         kwargs = cls.get_child_serializable_types()

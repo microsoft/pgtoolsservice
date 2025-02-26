@@ -1,5 +1,7 @@
 from psycopg import Connection, sql
 
+from ossdbtoolsservice.utils.sql import as_sql
+
 
 def fetch_schemas_and_tables(connection: Connection) -> str:
     """Fetch all user schemas and their tables."""
@@ -31,7 +33,7 @@ def execute_readonly_query(
     with connection.cursor() as cur:
         cur.execute("BEGIN TRANSACTION READ ONLY;")
         try:
-            cur.execute(wrap_sql(query))
+            cur.execute(as_sql(query))
             result = cur.fetchall()
             result_str = str(result)
             # Format as CSV
@@ -59,13 +61,8 @@ def execute_readonly_query(
 def execute_statement(connection: Connection, statement: str) -> str:
     """Execute a statement against the database."""
     with connection.cursor() as cur:
-        cur.execute(wrap_sql(statement))
+        cur.execute(as_sql(statement))
         return "Statement executed successfully."
-
-
-def wrap_sql(statement: str) -> sql.SQL:
-    """Wrap a SQL statement in a transaction."""
-    return sql.SQL(statement)  # type:ignore
 
 
 def fetch_schema_v1(connection: Connection, schema_name: str = "public") -> str:

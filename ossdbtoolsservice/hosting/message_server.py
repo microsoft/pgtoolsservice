@@ -1,5 +1,6 @@
 import uuid
 from abc import ABC, abstractmethod
+from asyncio import exceptions as asyncio_exceptions
 from logging import Logger
 from typing import Any, Callable, Generic, TypeVar
 
@@ -11,14 +12,16 @@ from ossdbtoolsservice.hosting.context import (
 )
 from ossdbtoolsservice.hosting.errors import ResponseError
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
+from ossdbtoolsservice.hosting.lsp_message import LSPAny
 from ossdbtoolsservice.hosting.message_configuration import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting.message_recorder import MessageRecorder
 from ossdbtoolsservice.hosting.response_queues import ResponseQueues, SyncResponseQueues
 from ossdbtoolsservice.serialization.serializable import Serializable
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
 # Generic type for parameters (BaseModel, Serializable or a plain dict)
 TModel = TypeVar("TModel", bound=BaseModel | Serializable | dict[str, Any])
-TResult = TypeVar("TResult", bound=BaseModel | str | dict[str, Any])
+TResult = TypeVar("TResult", bound=BaseModel | LSPAny)
 
 
 ###############################################################################
@@ -31,10 +34,14 @@ class MessageHandler(Generic[TModel]):
         self.param_class = param_class
         self.handler = handler
 
-    def deserialize_params(self, params: dict[str, Any]) -> Any:
+    def deserialize_params(self, params: LSPAny) -> Any:
         if self.param_class is None:
             # No complex deserialization
             return params
+
+        # Complex deserialization
+        if not isinstance(params, dict):
+            raise ValueError(f"Unsupported type for deserialization: {type(params)}")
 
         if issubclass(self.param_class, BaseModel):
             return self.param_class.model_validate(params)
@@ -61,7 +68,18 @@ class MessageServer(ABC):
         async_runner: AsyncRunner | None,
         logger: Logger | None,
         version: str = "1",
+        message_recorder: MessageRecorder | None = None,
     ) -> None:
+        """Creates a new MessageServer instance.
+
+        Args:
+            async_runner: The async runner to use for async operations
+            logger: The logger to use for logging messages
+            version: The version of the server
+            record_messages_to_file: The file to record messages to.
+                If None, will not record. These messages are useful for
+                debugging or playback during tests.
+        """
         self.async_runner = async_runner
         self._logger = logger
         self._version = version
@@ -69,6 +87,8 @@ class MessageServer(ABC):
         self._shutdown_handlers: list[Callable[[], None]] = []
         self._request_handlers: dict[str, MessageHandler] = {}
         self._notification_handlers: dict[str, MessageHandler] = {}
+
+        self._message_recorder = message_recorder
 
         # Register built-in handlers
         # 1) Echo
@@ -133,6 +153,9 @@ class MessageServer(ABC):
             **kwargs: Additional arguments to pass to the
                 create_request_context and create_notification_context methods
         """
+        if self._message_recorder:
+            self._message_recorder.record(message, incoming=True)
+
         if message.message_type in [
             JSONRPCMessageType.ResponseSuccess,
             JSONRPCMessageType.ResponseError,
@@ -230,6 +253,10 @@ class MessageServer(ABC):
         for handler in self._shutdown_handlers:
             handler()
 
+        # Stop recorder
+        if self._message_recorder:
+            self._message_recorder.close()
+
         self.stop()
 
     def _log_exception(self, message: str) -> None:
@@ -258,6 +285,13 @@ class MessageServer(ABC):
     @abstractmethod
     def stop(self) -> None:
         pass
+
+    def __enter__(self) -> "MessageServer":
+        self.start()
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self.stop()
 
     @abstractmethod
     def _send_message(self, message: JSONRPCMessage) -> None:
@@ -288,11 +322,18 @@ class MessageServer(ABC):
 
         message_id = str(uuid.uuid4())
         message = JSONRPCMessage.create_request(message_id, method, params)
+        if self._message_recorder:
+            self._message_recorder.record(message, incoming=False)
         _response_queue = self._response_queues.register_new_queue(message_id)
         try:
             self._log_info(f" -- Sending request id={message_id} method={method}")
             self._send_message(message)
-            response: JSONRPCMessage = await _response_queue.get()
+            try:
+                response: JSONRPCMessage = await _response_queue.get(timeout=timeout)
+            except asyncio_exceptions.TimeoutError as e:
+                raise TimeoutError(
+                    f"Timed out waiting for response for request: {message_id} ({method})"
+                ) from e
             if response.message_type == JSONRPCMessageType.ResponseError:
                 raise ResponseError(
                     response.message_error or {"message": "Unknown error response"}
@@ -300,28 +341,47 @@ class MessageServer(ABC):
 
             result_encoded = response.message_result
 
-            if result_type is not None and issubclass(result_type, BaseModel):
+            if result_type is None:
+                # Caller handles result type checking.
+                return result_encoded  # type: ignore
+
+            if result_encoded is None:
+                if result_type is None:
+                    return None
+                raise TypeError(f"Expected result of type {result_type}, but got None")
+
+            if issubclass(result_type, BaseModel):
                 # mypy isn't picking up that result_type has a model_validate method,
                 # so type:ignore
                 return result_type.model_validate(result_encoded)  # type: ignore
 
-            # For str or dict, return as-is
-            return result_encoded
+            if isinstance(result_encoded, result_type):
+                return result_encoded  # type: ignore
+
+            raise TypeError(
+                f"Expected result of type {result_type}, but got {type(result_encoded)}"
+            )
         finally:
             self._response_queues.delete_queue(message_id)
 
-    def send_response(self, message_id: str, params: Any) -> None:
+    def send_response(self, message_id: str | int, params: Any) -> None:
         response = JSONRPCMessage.create_response(message_id, params)
+        if self._message_recorder:
+            self._message_recorder.record(response, incoming=False)
         self._send_message(response)
 
     def send_error(
-        self, message_id: str, message: str, data: Any = None, code: int = 0
+        self, message_id: str | int, message: str, data: Any = None, code: int = 0
     ) -> None:
         error = JSONRPCMessage.create_error(message_id, code, message, data)
+        if self._message_recorder:
+            self._message_recorder.record(error, incoming=False)
         self._send_message(error)
 
     def send_notification(self, method: str, params: Any) -> None:
         message = JSONRPCMessage.create_notification(method, params)
+        if self._message_recorder:
+            self._message_recorder.record(message, incoming=False)
         self._send_message(message)
 
     def create_request_context(

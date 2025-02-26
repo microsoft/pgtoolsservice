@@ -31,8 +31,13 @@ jobs:
 
       - name: Run tests (Unix)
         run: |
-          ./scripts/test-all.sh
+          ./scripts/test-all.sh --playback
 
       - name: Run build script
         run: |
           ./scripts/build.sh
+
+      # Run a single test to verify the build
+      - name: Test build
+        run: |
+          pytest tests_v2/capabilities/test_initialize_request.py --run-server=`pwd`/dist/pgsqltoolsservice/ossdbtoolsservice_main
