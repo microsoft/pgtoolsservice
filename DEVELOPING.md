@@ -91,7 +91,7 @@ Note that this runs the server on port 5678, to avoid conflicts with other runni
 2. Load in the test dataset using the load_test_data.sh script. For example, to load the `pagila` dataset, run:
 
 ```bash
-scripts/load_test_data.sh pgbench --connection-string postgresql://postgres:example@localhost:5678/postgres
+scripts/load_test_data.sh pagila --connection-string postgresql://postgres:example@localhost:5678/postgres
 ```
 
 3. Run the VSCode extension with the PGTS_RECORD_MESSAGES_TO_FILE environment variable set to the path of the file where you want to save the recorded session.
