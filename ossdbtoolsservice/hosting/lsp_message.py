@@ -64,8 +64,6 @@ class LSPMessage(BaseModel):
         "LSPResponseErrorMessage",
         "LSPNotificationMessage",
     ]:
-        if message.dictionary is None:
-            raise ValueError("Invalid JSON-RPC message")
         if message.message_type == JSONRPCMessageType.Request:
             return LSPRequestMessage.model_validate(message.dictionary)
         if message.message_type == JSONRPCMessageType.ResponseSuccess:
@@ -112,8 +110,6 @@ class LSPRequestMessage(LSPMessage):
 
     @classmethod
     def from_jsonrpc_message(cls, message: JSONRPCMessage) -> "LSPRequestMessage":
-        if message.dictionary is None:
-            raise ValueError("Invalid JSON-RPC message")
         return cls.model_validate(message.dictionary)
 
 
@@ -135,8 +131,6 @@ class LSPResponseResultMessage(LSPMessage):
 
     @classmethod
     def from_jsonrpc_message(cls, message: JSONRPCMessage) -> "LSPResponseResultMessage":
-        if message.dictionary is None:
-            raise ValueError("Invalid JSON-RPC message")
         return cls.model_validate(message.dictionary)
 
     def get_result(self, cls: type[TModel]) -> TModel:
@@ -177,8 +171,6 @@ class LSPResponseErrorMessage(LSPMessage):
 
     @classmethod
     def from_jsonrpc_message(cls, message: JSONRPCMessage) -> "LSPResponseErrorMessage":
-        if message.dictionary is None:
-            raise ValueError("Invalid JSON-RPC message")
         return cls.model_validate(message.dictionary)
 
 
@@ -210,8 +202,6 @@ class LSPNotificationMessage(LSPMessage):
 
     @classmethod
     def from_jsonrpc_message(cls, message: JSONRPCMessage) -> "LSPNotificationMessage":
-        if message.dictionary is None:
-            raise ValueError("Invalid JSON-RPC message")
         return cls.model_validate(message.dictionary)
 
 

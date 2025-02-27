@@ -17,7 +17,6 @@ def test_message_from_dict_request() -> None:
     # Create a JSONRPCMessage as a request.
     req = JSONRPCMessage.create_request("req1", "doSomething", {"arg": 42})
     msg_dict = req.dictionary
-    assert msg_dict is not None
 
     # Convert using LSPMessage.from_dict.
     lsp_msg = LSPMessage.from_dict(msg_dict)
@@ -37,7 +36,6 @@ def test_message_from_dict_response_success() -> None:
     # Create a JSONRPCMessage as a successful response.
     resp = JSONRPCMessage.create_response("12", {"result": "success"})
     msg_dict = resp.dictionary
-    assert msg_dict is not None
 
     # Convert using LSPMessage.from_dict.
     lsp_msg = LSPMessage.from_dict(msg_dict)
@@ -58,7 +56,6 @@ def test_message_from_dict_response_error() -> None:
         "err1", code=-32603, message="Server error", data={"detail": "oops"}
     )
     msg_dict = err.dictionary
-    assert msg_dict is not None
 
     # Convert using LSPMessage.from_dict.
     lsp_msg = LSPMessage.from_dict(msg_dict)
@@ -82,7 +79,6 @@ def test_message_from_dict_notification() -> None:
     # Create a JSONRPCMessage as a notification.
     notif = JSONRPCMessage.create_notification("notifyMethod", {"info": "update"})
     msg_dict = notif.dictionary
-    assert msg_dict is not None
 
     # Convert using LSPMessage.from_dict.
     lsp_msg = LSPMessage.from_dict(msg_dict)

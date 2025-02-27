@@ -252,13 +252,8 @@ class MessageRecorder:
         try:
             with self._lock:  # Added lock for thread safety
                 timestamp = self.create_timestamp()
-                message_dict = message.dictionary
-                if message_dict is None:
-                    # I don't think this could actually be None;
-                    # raise an error to detect if this is the case
-                    raise Exception("Unexpected message dictionary")
+                lsp_message = LSPMessage.from_dict(message.dictionary)
 
-                lsp_message = LSPMessage.from_dict(message_dict)
                 if isinstance(lsp_message, LSPRequestMessage):
                     if incoming:
                         # Server shutdown message does not have a response.

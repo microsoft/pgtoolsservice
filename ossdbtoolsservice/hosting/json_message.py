@@ -130,26 +130,23 @@ class JSONRPCMessage:
         return self._message_type
 
     @property
-    def dictionary(self) -> dict[str, Any] | None:
-        message_base: dict[str, Any] = {"jsonrpc": "2.0"}
+    def dictionary(self) -> dict[str, Any]:
+        message_dict: dict[str, Any] = {"jsonrpc": "2.0"}
 
         if self._message_type is JSONRPCMessageType.Request:
-            message_base["method"] = self._message_method
-            message_base["params"] = serialization.convert_to_dict(self._message_params)
-            message_base["id"] = self._message_id
-            return message_base
+            message_dict["method"] = self._message_method
+            message_dict["params"] = serialization.convert_to_dict(self._message_params)
+            message_dict["id"] = self._message_id
+        elif self._message_type is JSONRPCMessageType.ResponseSuccess:
+            message_dict["result"] = serialization.convert_to_dict(self._message_result)
+            message_dict["id"] = self._message_id
+        elif self._message_type is JSONRPCMessageType.Notification:
+            message_dict["method"] = self._message_method
+            message_dict["params"] = serialization.convert_to_dict(self._message_params)
+        elif self._message_type is JSONRPCMessageType.ResponseError:
+            message_dict["error"] = serialization.convert_to_dict(self._message_error)
+            message_dict["id"] = self._message_id
+        else:
+            raise ValueError(f"Unknown message type: {self._message_type}")
 
-        if self._message_type is JSONRPCMessageType.ResponseSuccess:
-            message_base["result"] = serialization.convert_to_dict(self._message_result)
-            message_base["id"] = self._message_id
-            return message_base
-
-        if self._message_type is JSONRPCMessageType.Notification:
-            message_base["method"] = self._message_method
-            message_base["params"] = serialization.convert_to_dict(self._message_params)
-            return message_base
-
-        if self._message_type is JSONRPCMessageType.ResponseError:
-            message_base["error"] = serialization.convert_to_dict(self._message_error)
-            message_base["id"] = self._message_id
-            return message_base
+        return message_dict
