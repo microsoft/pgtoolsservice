@@ -126,8 +126,8 @@ class PostgresPlugin:
             "This query must not modify the database at all. "
             "Can include SELECT, SHOW, EXPLAIN etc. "
             "Do not include additional statements, e.g. SET search_path, in this query."
-            "It must only be a single, well formatted query"
-            " that will be presented to the user,"
+            "It must only be a single, spacious, well formatted query"
+            " with line breaks and tabs. The statement will be presented to the user,"
             " so focus on readability. "
             "You do not need confirmation to use this function."
         ),
@@ -198,8 +198,8 @@ class PostgresPlugin:
             "by name before it is executed. "
             "Ensure chat history has presented the query by name "
             " to the user and the user has confirmed it."
-            "It must only be a single, well formatted SQL statement"
-            " that will be presented to the user,"
+            "It must only be a single, spacious, well formatted query"
+            " with line breaks and tabs. The statement will be presented to the user,"
             " so focus on readability."
         ),
     )

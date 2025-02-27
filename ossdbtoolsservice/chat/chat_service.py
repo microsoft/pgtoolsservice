@@ -183,7 +183,8 @@ class ChatService(Service):
         history = ChatHistory()
 
         # Fetch schemas and tables to be injected into the system message
-        db_context = postgres_plugin.get_db_context()
+        # db_context = postgres_plugin.get_db_context()
+        db_context = None
         system_message = system_message_prompt(doc_text=doc_text, db_context=db_context)
 
         history.add_system_message(system_message)
