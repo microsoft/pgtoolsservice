@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from queue import Queue
 from threading import Lock
-from typing import Any
+from typing import Any, Callable
 
 from pydantic import BaseModel
 
@@ -71,6 +71,10 @@ class MessageServerClientWrapper(ABC):
         )
         self._stop_requested = False
 
+        self._notification_handlers: dict[
+            str, list[Callable[[LSPNotificationMessage], None]]
+        ] = {}
+
     def start(self) -> None:
         self._server_message_processing_thread.start()
 
@@ -123,12 +127,30 @@ class MessageServerClientWrapper(ABC):
                     )
                 self._send_client_message(response_message)
 
+            if message.message_type == JSONRPCMessageType.Notification:
+                if not message.message_method:
+                    raise ValueError("Notification message has no method")
+                handlers = self._notification_handlers.get(message.message_method, [])
+                for handler in handlers:
+                    handler(LSPNotificationMessage.from_jsonrpc_message(message))
+
     @abstractmethod
     def _send_client_message(self, message: JSONRPCMessage) -> None:
         """This "sends" a message to the server, mimicking e.g. VSCode sending a
         request, response, or notification to the server.
         """
         pass
+
+    def add_notification_handler(
+        self, method: str, handler: Callable[[LSPNotificationMessage], None]
+    ) -> None:
+        """Adds a handler for notifications with the given method.
+
+        Args:
+            method: The method of the notification.
+            handler: The handler function to call when the notification is received.
+        """
+        self._notification_handlers.setdefault(method, []).append(handler)
 
     def send_client_request(
         self,
@@ -275,7 +297,7 @@ class MessageServerClientWrapper(ABC):
 class MockMessageServerClientWrapper(MessageServerClientWrapper):
     def __init__(self, message_server: QueueRPCMessageServer) -> None:
         self._message_server = message_server
-        super().__init__(message_server.output_queue)
+        super().__init__(self._message_server.output_queue)
 
     def add_services(self, services: dict[str, type[Service] | Service]) -> None:
         """Convenience method to add services to the message server."""
