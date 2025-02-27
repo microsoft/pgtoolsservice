@@ -40,6 +40,7 @@ class CopilotQueryNotificationParams(PGTSBaseModel):
     query: str
     owner_uri: str
     has_error: bool = False
+    chat_id: str
 
 
 class ChatCompletionResult(PGTSBaseModel):

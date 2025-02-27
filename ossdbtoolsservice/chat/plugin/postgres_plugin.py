@@ -166,6 +166,7 @@ class PostgresPlugin:
                     query=query,
                     owner_uri=self._owner_uri,
                     has_error=True,
+                    chat_id=self._chat_id,
                 ),
             )
             raise
@@ -178,6 +179,7 @@ class PostgresPlugin:
                 query=query,
                 owner_uri=self._owner_uri,
                 has_error=False,
+                chat_id=self._chat_id,
             ),
         )
         return result
@@ -248,6 +250,7 @@ class PostgresPlugin:
                     query=statement,
                     owner_uri=self._owner_uri,
                     has_error=True,
+                    chat_id=self._chat_id,
                 ),
             )
             raise
@@ -260,6 +263,7 @@ class PostgresPlugin:
                 query=statement,
                 owner_uri=self._owner_uri,
                 has_error=False,
+                chat_id=self._chat_id,
             ),
         )
         return result
