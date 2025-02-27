@@ -26,7 +26,21 @@ class ChatCompletionRequestParams(PGTSBaseModel):
     prompt: str
     history: list[ChatMessageContent]
     owner_uri: str
+    """The owner URI for the document or node that owns the database 
+    connection that the completion request will use"""
     document: str | None = None
+    """The text of the document the user is currently editing."""
+
+
+class ChatCompletionRequestResult(BaseModel):
+    """Result of a chat completion request.
+
+    Notifies the client of the chat_id that will be used
+    to identify completion content delivered through
+    notifications.
+    """
+
+    chat_id: str = Field(alias="chatId")
 
 
 class ChatProgressUpdateParams(PGTSBaseModel):

@@ -31,7 +31,7 @@ from ossdbtoolsservice.chat.messages import (
     CHAT_REQUEST,
     ChatCompletionContent,
     ChatCompletionRequestParams,
-    ChatCompletionResult,
+    ChatCompletionRequestResult,
 )
 from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.hosting import Service, ServiceProvider
@@ -188,7 +188,7 @@ class ChatService(Service):
         if params.prompt:
             history.add_user_message(params.prompt)
 
-        request_context.send_response(chat_id)
+        request_context.send_response(ChatCompletionRequestResult(chatId=chat_id))        
 
         async def process_response_stream() -> None:
             try:
