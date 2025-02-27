@@ -9,4 +9,4 @@ def as_sql(query: str) -> sql.SQL:
     strings are not Literals. This consolidates the
     # type:ignore to one place.
     """
-    return sql.SQL(query)  # type: ignore
+    return sql.SQL(query)  # pyright: ignore
