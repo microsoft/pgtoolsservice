@@ -19,3 +19,4 @@ nosetests.xml
 nose2-junit.xml
 node_modules/
 *.egg-info/
+.env
