@@ -43,7 +43,9 @@ class CopilotQueryNotificationParams(PGTSBaseModel):
     chat_id: str
 
 
-class ChatCompletionResult(PGTSBaseModel):
+class ChatCompletionContent(PGTSBaseModel):
+    """Chat completion result part sent as a notification to the client."""
+    
     role: str | None
     content: str | None = None
     chat_id: str
@@ -53,7 +55,7 @@ class ChatCompletionResult(PGTSBaseModel):
     error_message: str | None = None
 
     @classmethod
-    def error(cls, chat_id: str, error_message: str) -> "ChatCompletionResult":
+    def error(cls, chat_id: str, error_message: str) -> "ChatCompletionContent":
         return cls(
             role=None,
             content=None,
@@ -65,7 +67,7 @@ class ChatCompletionResult(PGTSBaseModel):
         )
 
     @classmethod
-    def response_part(cls, chat_id: str, role: str, content: str) -> "ChatCompletionResult":
+    def response_part(cls, chat_id: str, role: str, content: str) -> "ChatCompletionContent":
         return cls(
             role=role,
             content=content,
@@ -77,7 +79,7 @@ class ChatCompletionResult(PGTSBaseModel):
         )
 
     @classmethod
-    def complete(cls, chat_id: str, reason: str) -> "ChatCompletionResult":
+    def complete(cls, chat_id: str, reason: str) -> "ChatCompletionContent":
         return cls(
             role=None,
             content=None,

@@ -29,6 +29,7 @@ from ossdbtoolsservice.chat.completion.vscode_chat_prompt_execution_settings imp
 from ossdbtoolsservice.chat.messages import (
     CHAT_COMPLETION_RESULT_METHOD,
     CHAT_REQUEST,
+    ChatCompletionContent,
     ChatCompletionRequestParams,
     ChatCompletionResult,
 )
@@ -87,13 +88,13 @@ class ChatService(Service):
 
         # Register notification handlers
         self._service_provider.server.set_notification_handler(
-            VSCODE_LM_COMPLETION_RESPONSE, self._handle_completion_response
+            VSCODE_LM_COMPLETION_RESPONSE, self._handle_completion_response_notification
         )
 
         if self._service_provider.logger is not None:
             self._service_provider.logger.info("Chat service successfully initialized")
 
-    def _handle_completion_response(
+    def _handle_completion_response_notification(
         self,
         _: NotificationContext,
         params: VSCodeLanguageModelChatCompletionResponse,
@@ -198,7 +199,7 @@ class ChatService(Service):
                         if message.finish_reason == "stop":
                             request_context.send_notification(
                                 CHAT_COMPLETION_RESULT_METHOD,
-                                ChatCompletionResult.complete(
+                                ChatCompletionContent.complete(
                                     chat_id,
                                     message.finish_reason,
                                 ),
@@ -212,7 +213,7 @@ class ChatService(Service):
                             if content:
                                 request_context.send_notification(
                                     CHAT_COMPLETION_RESULT_METHOD,
-                                    ChatCompletionResult.response_part(
+                                    ChatCompletionContent.response_part(
                                         chat_id=chat_id,
                                         role=message.role,
                                         content=content,
@@ -224,7 +225,7 @@ class ChatService(Service):
                 request_context.send_error(str(e))
                 request_context.send_notification(
                     CHAT_COMPLETION_RESULT_METHOD,
-                    ChatCompletionResult.error(chat_id, str(e)),
+                    ChatCompletionContent.error(chat_id, str(e)),
                 )
                 raise
 
