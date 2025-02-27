@@ -112,7 +112,12 @@ class PostgresPlugin:
         if connection is None:
             return "Error. Could not connect to the database. No connection found."
 
-        return fetch_schema(connection._conn)
+        return fetch_schema(
+            connection._conn,
+            include_indexes=True,
+            include_sequences=False,
+            include_functions=False,
+        )
 
     @kernel_function(
         name="execute_sql_query_readonly",

@@ -505,7 +505,12 @@ def fetch_schema_v3(connection: Connection) -> str:
         return "\n".join(schema_creation_script)
 
 
-def fetch_schema_v4(connection: Connection) -> str:
+def fetch_schema_v4(
+    connection: Connection,
+    include_sequences: bool = True,
+    include_indexes: bool = True,
+    include_functions: bool = True,
+) -> str:
     """
     Fetch a complete schema creation script for each non-system schema in the database,
     including tables, partitioned tables (with ALTER TABLE ... ATTACH PARTITION),
@@ -705,76 +710,82 @@ def fetch_schema_v4(connection: Connection) -> str:
             # -- Now process additional objects in the schema.
 
             # Sequences (using information_schema so that we get a readable set of attributes)
-            cur.execute(
-                sql.SQL("""
-    SELECT sequence_name, start_value, minimum_value, maximum_value, increment, cycle_option
-    FROM information_schema.sequences
-    WHERE sequence_schema = %s;
-            """),
-                [schema_name],
-            )
-            for (
-                seq_name,
-                start_value,
-                min_value,
-                max_value,
-                increment,
-                cycle_option,
-            ) in cur.fetchall():
-                seq_stmt = f"CREATE SEQUENCE {schema_name}.{seq_name}\n"
-                seq_stmt += f"    START WITH {start_value}\n"
-                seq_stmt += f"    INCREMENT BY {increment}\n"
-                seq_stmt += f"    MINVALUE {min_value}\n"
-                seq_stmt += f"    MAXVALUE {max_value}\n"
-                seq_stmt += f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
-                schema_creation_script.append(seq_stmt)
-
-            # Indexes (query via pg_indexes and join with pg_class
-            # to exclude extension‐owned objects)
-            cur.execute(
-                sql.SQL("""
-                SELECT c.oid, i.indexname, i.indexdef
-                FROM pg_indexes i
-                JOIN pg_namespace n ON i.schemaname = n.nspname
-                JOIN pg_class c ON c.relname = i.indexname AND c.relnamespace = n.oid
-                WHERE i.schemaname = %s
-                  AND NOT EXISTS (
-                      SELECT 1 FROM pg_depend d
-                      WHERE d.objid = c.oid AND d.deptype = 'e'
-                  );
-            """),
-                [schema_name],
-            )
-            for _oid, _indexname, indexdef in cur.fetchall():
-                schema_creation_script.append(indexdef + ";")
-
-            # Functions (exclude functions that are part of an extension)
-            try:
+            if include_sequences:
                 cur.execute(
                     sql.SQL("""
-                   SELECT p.oid, p.proname,
-                        CASE
-                            WHEN p.prokind = 'f' THEN pg_get_functiondef(p.oid)
-                            WHEN p.prokind = 'a' THEN
-                                'Aggregate function using ' || (SELECT pp.proname
-                                                                FROM pg_proc pp
-                                                                WHERE pp.oid = a.aggtransfn)
-                            ELSE ''
-                        END AS function_def
-                    FROM pg_proc p
-                    JOIN pg_namespace n ON p.pronamespace = n.oid
-                    LEFT JOIN pg_aggregate a ON a.aggfnoid = p.oid  -- Get aggregate details
-                    WHERE n.nspname = %s
-                    AND NOT EXISTS (
-                        SELECT 1 FROM pg_depend d
-                        WHERE d.objid = p.oid AND d.deptype = 'e'
-                    );
-                   """),
+        SELECT sequence_name, start_value, minimum_value, maximum_value, increment, cycle_option
+        FROM information_schema.sequences
+        WHERE sequence_schema = %s;
+                """),
                     [schema_name],
                 )
-                for _oid, _proname, funcdef in cur.fetchall():
-                    schema_creation_script.append(funcdef)
-            except Exception:
-                pass
+                for (
+                    seq_name,
+                    start_value,
+                    min_value,
+                    max_value,
+                    increment,
+                    cycle_option,
+                ) in cur.fetchall():
+                    seq_stmt = f"CREATE SEQUENCE {schema_name}.{seq_name}\n"
+                    seq_stmt += f"    START WITH {start_value}\n"
+                    seq_stmt += f"    INCREMENT BY {increment}\n"
+                    seq_stmt += f"    MINVALUE {min_value}\n"
+                    seq_stmt += f"    MAXVALUE {max_value}\n"
+                    seq_stmt += (
+                        f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
+                    )
+                    schema_creation_script.append(seq_stmt)
+
+            if include_indexes:
+                # Indexes (query via pg_indexes and join with pg_class
+                # to exclude extension‐owned objects)
+                cur.execute(
+                    sql.SQL("""
+                    SELECT c.oid, i.indexname, i.indexdef
+                    FROM pg_indexes i
+                    JOIN pg_namespace n ON i.schemaname = n.nspname
+                    JOIN pg_class c ON c.relname = i.indexname AND c.relnamespace = n.oid
+                    WHERE i.schemaname = %s
+                    AND NOT EXISTS (
+                        SELECT 1 FROM pg_depend d
+                        WHERE d.objid = c.oid AND d.deptype = 'e'
+                    );
+                """),
+                    [schema_name],
+                )
+                for _oid, _indexname, indexdef in cur.fetchall():
+                    schema_creation_script.append(indexdef + ";")
+
+                # Functions (exclude functions that are part of an extension)
+
+            if include_functions:
+                try:
+                    cur.execute(
+                        sql.SQL("""
+                    SELECT p.oid, p.proname,
+                            CASE
+                                WHEN p.prokind = 'f' THEN pg_get_functiondef(p.oid)
+                                WHEN p.prokind = 'a' THEN
+                                    'Aggregate function using ' || (SELECT pp.proname
+                                                                    FROM pg_proc pp
+                                                                    WHERE pp.oid = a.aggtransfn)
+                                ELSE ''
+                            END AS function_def
+                        FROM pg_proc p
+                        JOIN pg_namespace n ON p.pronamespace = n.oid
+                        LEFT JOIN pg_aggregate a ON a.aggfnoid = p.oid  -- Get aggregate details
+                        WHERE n.nspname = %s
+                        AND NOT EXISTS (
+                            SELECT 1 FROM pg_depend d
+                            WHERE d.objid = p.oid AND d.deptype = 'e'
+                        );
+                    """),
+                        [schema_name],
+                    )
+                    for _oid, _proname, funcdef in cur.fetchall():
+                        schema_creation_script.append(funcdef)
+                except Exception:
+                    pass
 
         return "\n\n".join(schema_creation_script)
