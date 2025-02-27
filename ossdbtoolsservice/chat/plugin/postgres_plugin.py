@@ -71,7 +71,7 @@ class PostgresPlugin:
         ],
     ) -> Annotated[str, "The creation script for the schema."]:
         if self._logger:
-            self._logger.info(f" ... Fetching context for schema '{schema_name}' 📖")
+            self._logger.info(f" ... Fetching context for schema '{schema_name}'")
 
         self._request_context.send_notification(
             CHAT_PROGRESS_UPDATE_METHOD,
@@ -98,7 +98,7 @@ class PostgresPlugin:
         self,
     ) -> Annotated[str, "The creation script for the schemas and tables."]:
         if self._logger:
-            self._logger.info(" ... Fetching database context 📖")
+            self._logger.info(" ... Fetching database context")
 
         self._request_context.send_notification(
             CHAT_PROGRESS_UPDATE_METHOD,
@@ -141,7 +141,7 @@ class PostgresPlugin:
         ],
     ) -> Annotated[str, "The result of the SQL query."]:
         if self._logger:
-            self._logger.info(f" ... Executing query {script_name} 🔎")
+            self._logger.info(f" ... Executing query {script_name}")
 
         self._request_context.send_notification(
             CHAT_PROGRESS_UPDATE_METHOD,
@@ -223,7 +223,7 @@ class PostgresPlugin:
             )
 
         if self._logger:
-            self._logger.info(f" ... Executing statement {script_name} ✍️")
+            self._logger.info(f" ... Executing statement {script_name}")
 
         self._request_context.send_notification(
             CHAT_PROGRESS_UPDATE_METHOD,
