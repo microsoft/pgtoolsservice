@@ -30,8 +30,8 @@ class ChatCompletionRequestParams(PGTSBaseModel):
 
 
 class ChatProgressUpdateParams(PGTSBaseModel):
-    chat_id: str | None = None
-    content: str | None = None
+    chat_id: str
+    content: str
 
 
 class CopilotQueryNotificationParams(PGTSBaseModel):
