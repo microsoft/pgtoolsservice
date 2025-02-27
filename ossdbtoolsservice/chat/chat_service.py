@@ -51,7 +51,11 @@ from .prompts import system_message_prompt
 
 
 class ChatService(Service):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        chat_completion: ChatCompletionClientBase | None = None,
+        execution_settings: PromptExecutionSettings | None = None,
+    ) -> None:
         self._service_provider: ServiceProvider | None = None
         self._server: MessageServer | None = None
         self._logger: Logger | None = None
@@ -59,13 +63,23 @@ class ChatService(Service):
         # Mapping of completion request IDs to Queues
         self.completion_response_queues = CompletionResponseQueues()
 
-        # Allow Azure OpenAI to be used with environment variables
-        # TODO: Make this part of initialization logic during init call,
-        #  allow services to fail gracefully.
-        self._use_azure_openai = False
-        if os.environ.get("PGTS_CHAT_USE_AZURE_OPENAI"):
-            self._use_azure_openai = True
-            # TODO: Validate environment variables
+        self._chat_completion = chat_completion
+        self._prompt_execution_settings = execution_settings
+        if self._chat_completion is None and os.environ.get("PGTS_CHAT_USE_AZURE_OPENAI"):
+            # Allow Azure OpenAI to be used with environment variables
+            self._chat_completion = AzureChatCompletion()
+            if self._prompt_execution_settings is None:
+                self._prompt_execution_settings = AzureChatPromptExecutionSettings(
+                    function_choice_behavior=FunctionChoiceBehavior.Auto(),
+                    max_tokens=7000,
+                    temperature=0.7,
+                    top_p=0.8,
+                )
+
+        if self._chat_completion is not None and self._prompt_execution_settings is None:
+            raise ValueError(
+                "Must supply prompt execution settings if supplying chat completion"
+            )
 
         self.executor = ThreadPoolExecutor(max_workers=10)
 
@@ -139,15 +153,7 @@ class ChatService(Service):
 
         chat_completion: ChatCompletionClientBase
         execution_settings: PromptExecutionSettings
-        if self._use_azure_openai:
-            chat_completion = AzureChatCompletion()
-            execution_settings = AzureChatPromptExecutionSettings(
-                function_choice_behavior=FunctionChoiceBehavior.Auto(),
-                max_tokens=7000,
-                temperature=0.7,
-                top_p=0.8,
-            )
-        else:
+        if not self._chat_completion:
             chat_completion = VSCodeChatCompletion(
                 chat_id,
                 request_context.send_notification,
@@ -158,6 +164,10 @@ class ChatService(Service):
             execution_settings = VSCodeChatPromptExecutionSettings(
                 function_choice_behavior=FunctionChoiceBehavior.Auto(),
             )
+        else:
+            assert self._prompt_execution_settings is not None  # Validated in __init__
+            chat_completion = self._chat_completion
+            execution_settings = self._prompt_execution_settings
 
         kernel.add_service(chat_completion)
 
@@ -229,4 +239,12 @@ class ChatService(Service):
                 )
                 raise
 
-        self.get_async_runner().run(process_response_stream())
+        try:
+            self.get_async_runner().run(process_response_stream())
+        except Exception as e:
+            if self._logger:
+                self._logger.error(f"Error in chat request: {e}")
+            request_context.send_notification(
+                CHAT_COMPLETION_RESULT_METHOD,
+                ChatCompletionContent.error(chat_id, str(e)),
+            )
