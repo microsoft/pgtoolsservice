@@ -35,6 +35,9 @@ from ossdbtoolsservice.object_explorer.contracts import (
     NodeInfo,
     SessionCreatedParameters,
 )
+from ossdbtoolsservice.object_explorer.contracts.close_session_request import (
+    CloseSessionResponse,
+)
 from ossdbtoolsservice.object_explorer.contracts.get_session_id_request import (
     GET_SESSION_ID_REQUEST,
     GetSessionIdResponse,
@@ -191,6 +194,7 @@ class ObjectExplorerService(Service):
             session_id = params.session_id
             if session_id is None or session_id == "":
                 raise ValueError("Session ID is required")
+            response = CloseSessionResponse(sessionId=session_id, success=False)
 
             # Try to remove the session
             session = self._session_map.pop(session_id, None)
@@ -208,11 +212,12 @@ class ObjectExplorerService(Service):
                         self.service_provider.logger.info(
                             f"Could not close the OE session with Id {session.id}"
                         )
-                    request_context.send_response(False)
+                    request_context.send_response(response)
                 else:
-                    request_context.send_response(True)
+                    response.success = True
+                    request_context.send_response(response)
             else:
-                request_context.send_response(False)
+                request_context.send_response(response)
         except Exception as e:
             message = f"Failed to close OE session: {str(e)}"  # TODO: Localize
             if self.service_provider.logger is not None:

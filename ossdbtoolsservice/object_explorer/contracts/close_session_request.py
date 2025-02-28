@@ -5,8 +5,18 @@
 
 from typing import Any
 
+from pydantic import BaseModel, ConfigDict, Field
+
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
+from ossdbtoolsservice.hosting.message_configuration import OutgoingMessageRegistration
 from ossdbtoolsservice.serialization import Serializable
+
+
+class CloseSessionResponse(BaseModel):
+    session_id: str = Field(alias="sessionId")
+    success: bool
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class CloseSessionParameters(Serializable):
@@ -31,3 +41,5 @@ class CloseSessionParameters(Serializable):
 CLOSE_SESSION_REQUEST = IncomingMessageConfiguration(
     "objectexplorer/closesession", CloseSessionParameters
 )
+
+OutgoingMessageRegistration.register_outgoing_message(CloseSessionResponse)
