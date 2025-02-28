@@ -30,6 +30,9 @@ from ossdbtoolsservice.object_explorer.contracts import (
     NodeInfo,
     SessionCreatedParameters,
 )
+from ossdbtoolsservice.object_explorer.contracts.close_session_request import (
+    CloseSessionResponse,
+)
 from ossdbtoolsservice.object_explorer.object_explorer_service import (
     ObjectExplorerService,
     ObjectExplorerSession,
@@ -812,7 +815,10 @@ class SessionTestCase(unittest.TestCase):
         self.oe._session_map = {}
 
         # If: I close an OE session that doesn't exist
-        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
+        rc = RequestFlowValidator().add_expected_response(
+            CloseSessionResponse,
+            lambda param: self.assertEqual(param.success, False),
+        )
         session_id = _connection_details()[1]
         params = _close_session_params()
         params.session_id = session_id
@@ -825,7 +831,10 @@ class SessionTestCase(unittest.TestCase):
         self.cs.disconnect = mock.MagicMock(return_value=False)
 
         # If: I close an OE session that doesn't exist
-        rc = RequestFlowValidator().add_expected_response(bool, self.assertFalse)
+        rc = RequestFlowValidator().add_expected_response(
+            CloseSessionResponse,
+            lambda param: self.assertEqual(param.success, False),
+        )
         session_id = _connection_details()[1]
         params = _close_session_params()
         params.session_id = session_id
@@ -854,7 +863,13 @@ class SessionTestCase(unittest.TestCase):
 
     def test_handle_close_session_successful(self) -> None:
         # If: I close a session
-        rc = RequestFlowValidator().add_expected_response(bool, self.assertTrue)
+        rc = RequestFlowValidator().add_expected_response(
+            CloseSessionResponse,
+            lambda param: (
+                self.assertEqual(param.success, True),
+                self.assertEqual(param.session_id, _connection_details()[1]),
+            ),
+        )
         session_id = _connection_details()[1]
         params = _close_session_params()
         params.session_id = session_id

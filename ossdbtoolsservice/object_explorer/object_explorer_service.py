@@ -35,6 +35,9 @@ from ossdbtoolsservice.object_explorer.contracts import (
     NodeInfo,
     SessionCreatedParameters,
 )
+from ossdbtoolsservice.object_explorer.contracts.close_session_request import (
+    CloseSessionResponse,
+)
 from ossdbtoolsservice.object_explorer.contracts.get_session_id_request import (
     GET_SESSION_ID_REQUEST,
     GetSessionIdResponse,
@@ -208,11 +211,17 @@ class ObjectExplorerService(Service):
                         self.service_provider.logger.info(
                             f"Could not close the OE session with Id {session.id}"
                         )
-                    request_context.send_response(False)
+                    request_context.send_response(
+                        CloseSessionResponse(sessionId=session_id, success=False)
+                    )
                 else:
-                    request_context.send_response(True)
+                    request_context.send_response(
+                        CloseSessionResponse(sessionId=session_id, success=True)
+                    )
             else:
-                request_context.send_response(False)
+                request_context.send_response(
+                    CloseSessionResponse(sessionId=session_id, success=False)
+                )
         except Exception as e:
             message = f"Failed to close OE session: {str(e)}"  # TODO: Localize
             if self.service_provider.logger is not None:
@@ -229,7 +238,7 @@ class ObjectExplorerService(Service):
         if self._logger:
             self._logger.info(f"   - Session ID: {session_id}")
 
-        request_context.send_response(GetSessionIdResponse(session_id=session_id))
+        request_context.send_response(GetSessionIdResponse(sessionId=session_id))
 
     def _handle_refresh_request(
         self, request_context: RequestContext, params: ExpandParameters

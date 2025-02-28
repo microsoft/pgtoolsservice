@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
 from ossdbtoolsservice.hosting.message_configuration import (
@@ -13,7 +13,7 @@ class GetSessionIdResponse(BaseModel):
         session_id (str): The ID of the session.
     """
 
-    session_id: str
+    session_id: str = Field(alias="sessionId")
 
 
 # For a given set of connection options, get the session ID of a previously
