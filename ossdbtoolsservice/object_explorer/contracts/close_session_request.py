@@ -5,7 +5,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.hosting.message_configuration import OutgoingMessageRegistration
@@ -15,8 +15,6 @@ from ossdbtoolsservice.serialization import Serializable
 class CloseSessionResponse(BaseModel):
     session_id: str = Field(alias="sessionId")
     success: bool
-
-    model_config = ConfigDict(populate_by_name=True)
 
 
 class CloseSessionParameters(Serializable):

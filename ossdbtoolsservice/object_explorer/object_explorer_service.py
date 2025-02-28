@@ -194,7 +194,6 @@ class ObjectExplorerService(Service):
             session_id = params.session_id
             if session_id is None or session_id == "":
                 raise ValueError("Session ID is required")
-            response = CloseSessionResponse(sessionId=session_id, success=False)
 
             # Try to remove the session
             session = self._session_map.pop(session_id, None)
@@ -212,12 +211,17 @@ class ObjectExplorerService(Service):
                         self.service_provider.logger.info(
                             f"Could not close the OE session with Id {session.id}"
                         )
-                    request_context.send_response(response)
+                    request_context.send_response(
+                        CloseSessionResponse(sessionId=session_id, success=False)
+                    )
                 else:
-                    response.success = True
-                    request_context.send_response(response)
+                    request_context.send_response(
+                        CloseSessionResponse(sessionId=session_id, success=True)
+                    )
             else:
-                request_context.send_response(response)
+                request_context.send_response(
+                    CloseSessionResponse(sessionId=session_id, success=False)
+                )
         except Exception as e:
             message = f"Failed to close OE session: {str(e)}"  # TODO: Localize
             if self.service_provider.logger is not None:
@@ -234,7 +238,7 @@ class ObjectExplorerService(Service):
         if self._logger:
             self._logger.info(f"   - Session ID: {session_id}")
 
-        request_context.send_response(GetSessionIdResponse(session_id=session_id))
+        request_context.send_response(GetSessionIdResponse(sessionId=session_id))
 
     def _handle_refresh_request(
         self, request_context: RequestContext, params: ExpandParameters
