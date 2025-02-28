@@ -112,7 +112,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                         VSCodeLanguageModelChatTool(
                             name=f.name,
                             description=f.description or "",
-                            inputSchema=schema,
+                            input_schema=schema,
                         )
                     )
                 settings.tools = tools  # type: ignore
@@ -176,31 +176,15 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
             model_options: dict[str, Any] = {}
 
             request = VSCodeLanguageModelCompletionRequestParams(
-                chatId=self._chat_id,
-                requestId=request_id,
+                chat_id=self._chat_id,
+                request_id=request_id,
                 messages=messages,
                 tools=tools,
-                modelOptions=model_options,
+                model_options=model_options,
             )
 
             # Send the request
             self._send_request(VSCODE_LM_CHAT_COMPLETION_REQUEST_METHOD, request)
-
-            # yield [StreamingChatMessageContent(
-            #     role=AuthorRole.ASSISTANT,
-            #     choice_index=0,
-            #     items=[StreamingTextContent(text="TEST", choice_index=0)],
-            #     inner_content=None,
-            #     finish_reason=None,
-            # )]
-            # yield [StreamingChatMessageContent(
-            #     role=AuthorRole.ASSISTANT,
-            #     choice_index=0,
-            #     items=[],
-            #     inner_content=None,
-            #     finish_reason=FinishReason.STOP,
-            # )]
-            # return
 
             # Consume from response queue
             while True:
@@ -304,7 +288,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                     if id and name:
                         content.append(
                             VSCodeLanguageModelToolCallPart(
-                                callId=id,
+                                call_id=id,
                                 name=name,
                                 input=input,
                             )
@@ -317,7 +301,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                 elif isinstance(message_item, FunctionResultContent):
                     content.append(
                         VSCodeLanguageModelToolResultPart(
-                            callId=message_item.id,
+                            call_id=message_item.id,
                             content=[
                                 VSCodeLanguageModelTextPart(value=str(message_item.result))
                             ],
@@ -445,7 +429,7 @@ class VSCodeChatCompletionHistoryTranslator:
                     if id and name:
                         content.append(
                             VSCodeLanguageModelToolCallPart(
-                                callId=id,
+                                call_id=id,
                                 name=name,
                                 input=input,
                             )
@@ -458,7 +442,7 @@ class VSCodeChatCompletionHistoryTranslator:
                 elif isinstance(item, FunctionResultContent):
                     content.append(
                         VSCodeLanguageModelToolResultPart(
-                            callId=item.id,
+                            call_id=item.id,
                             content=[VSCodeLanguageModelTextPart(value=str(item.result))],
                         )
                     )

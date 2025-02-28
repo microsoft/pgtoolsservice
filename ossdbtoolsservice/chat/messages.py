@@ -3,8 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pydantic import BaseModel, ConfigDict, Field
-
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
 )
@@ -18,54 +17,50 @@ CHAT_COMPLETION_RESULT_METHOD = "chat/completion-result"
 COPILOT_QUERY_NOTIFICATION_METHOD = "chat/notify-copilot-query"
 
 
-class ChatMessageContent(BaseModel):
+class ChatMessageContent(PGTSBaseModel):
     participant: str
     content: str
 
 
-class ChatCompletionRequestParams(BaseModel):
+class ChatCompletionRequestParams(PGTSBaseModel):
     prompt: str
     history: list[ChatMessageContent]
-    owner_uri: str = Field(alias="ownerUri")
+    owner_uri: str
     document: str | None = None
 
 
-class ChatProgressUpdateParams(BaseModel):
-    chat_id: str | None = Field(None, alias="chatId")
+class ChatProgressUpdateParams(PGTSBaseModel):
+    chat_id: str | None = None
     content: str | None = None
 
 
-class CopilotQueryNotificationParams(BaseModel):
-    query_name: str = Field(alias="queryName")
-    query_description: str = Field(alias="queryDescription")
+class CopilotQueryNotificationParams(PGTSBaseModel):
+    query_name: str
+    query_description: str
     query: str
-    owner_uri: str = Field(alias="ownerUri")
-    has_error: bool = Field(default=False, alias="hasError")
+    owner_uri: str
+    has_error: bool = False
 
 
-class ChatCompletionResult(BaseModel):
+class ChatCompletionResult(PGTSBaseModel):
     role: str | None
     content: str | None = None
-    chat_id: str = Field(alias="chatId")
-    is_complete: bool = Field(False, alias="isComplete")
-    complete_reason: str | None = Field(default=None, alias="completeReason")
-    is_error: bool = Field(default=False, alias="isError")
-    error_message: str | None = Field(default=None, alias="errorMessage")
-
-    model_config = ConfigDict(
-        populate_by_name=True,
-    )
+    chat_id: str
+    is_complete: bool = False
+    complete_reason: str | None = None
+    is_error: bool = False
+    error_message: str | None = None
 
     @classmethod
     def error(cls, chat_id: str, error_message: str) -> "ChatCompletionResult":
         return cls(
             role=None,
             content=None,
-            chatId=chat_id,
-            isComplete=True,
-            completeReason="error",
-            isError=True,
-            errorMessage=error_message,
+            chat_id=chat_id,
+            is_complete=True,
+            complete_reason="error",
+            is_error=True,
+            error_message=error_message,
         )
 
     @classmethod
@@ -73,11 +68,11 @@ class ChatCompletionResult(BaseModel):
         return cls(
             role=role,
             content=content,
-            chatId=chat_id,
-            isComplete=False,
-            completeReason=None,
-            isError=False,
-            errorMessage=None,
+            chat_id=chat_id,
+            is_complete=False,
+            complete_reason=None,
+            is_error=False,
+            error_message=None,
         )
 
     @classmethod
@@ -85,11 +80,11 @@ class ChatCompletionResult(BaseModel):
         return cls(
             role=None,
             content=None,
-            chatId=chat_id,
-            isComplete=True,
-            completeReason=reason,
-            isError=False,
-            errorMessage=None,
+            chat_id=chat_id,
+            is_complete=True,
+            complete_reason=reason,
+            is_error=False,
+            error_message=None,
         )
 
 
