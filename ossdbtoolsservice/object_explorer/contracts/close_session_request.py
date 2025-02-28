@@ -5,15 +5,14 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
-
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.hosting.message_configuration import OutgoingMessageRegistration
 from ossdbtoolsservice.serialization import Serializable
 
 
-class CloseSessionResponse(BaseModel):
-    session_id: str = Field(alias="sessionId")
+class CloseSessionResponse(PGTSBaseModel):
+    session_id: str
     success: bool
 
 

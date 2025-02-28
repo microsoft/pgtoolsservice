@@ -1,9 +1,9 @@
 from enum import Enum
 from typing import Any, Union
 
-from pydantic import BaseModel, Field
 from semantic_kernel.contents.utils.finish_reason import FinishReason
 
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
     OutgoingMessageRegistration,
@@ -38,24 +38,24 @@ VSCODE_LM_COMPLETION_RESPONSE_METHOD = "chat/vscode-lm-response"
 # Content
 
 
-class VSCodeLanguageModelTextPart(BaseModel):
+class VSCodeLanguageModelTextPart(PGTSBaseModel):
     value: str
 
 
-class VSCodeLanguageModelToolCallPart(BaseModel):
-    call_id: str = Field(alias="callId")
+class VSCodeLanguageModelToolCallPart(PGTSBaseModel):
+    call_id: str 
     name: str
     input: dict[str, Any]
 
 
-class VSCodeLanguageModelToolResultPart(BaseModel):
-    call_id: str = Field(alias="callId")
+class VSCodeLanguageModelToolResultPart(PGTSBaseModel):
+    call_id: str
     content: list[VSCodeLanguageModelTextPart]
 
 
-class VSCodeLanguageModelCompleteResultPart(BaseModel):
-    error_message: str | None = Field(default=None, alias="errorMessage")
-    finish_reason: VSCodeLanguageModelFinishReason = Field(alias="finishReason")
+class VSCodeLanguageModelCompleteResultPart(PGTSBaseModel):
+    error_message: str | None = None
+    finish_reason: VSCodeLanguageModelFinishReason
 
 
 # Request
@@ -66,7 +66,7 @@ class VSCodeLanguageModelChatMessageRole(str, Enum):
     ASSISTANT = "assistant"
 
 
-class VSCodeLanguageModelChatMessage(BaseModel):
+class VSCodeLanguageModelChatMessage(PGTSBaseModel):
     role: VSCodeLanguageModelChatMessageRole
     """The role of this message"""
 
@@ -84,18 +84,18 @@ class VSCodeLanguageModelChatMessage(BaseModel):
     Some parts may be message-type specific for some models."""
 
 
-class VSCodeLanguageModelChatTool(BaseModel):
+class VSCodeLanguageModelChatTool(PGTSBaseModel):
     name: str
     description: str
-    input_schema: dict[str, Any] = Field(alias="inputSchema")
+    input_schema: dict[str, Any] 
     """A JSON schema for the input this tool accepts."""
 
 
-class VSCodeLanguageModelCompletionRequestParams(BaseModel):
-    chat_id: str = Field(alias="chatId")
-    request_id: str = Field(alias="requestId")
+class VSCodeLanguageModelCompletionRequestParams(PGTSBaseModel):
+    chat_id: str
+    request_id: str
     messages: list[VSCodeLanguageModelChatMessage]
-    model_options: dict[str, Any] = Field(alias="modelOptions")
+    model_options: dict[str, Any] 
     tools: list[VSCodeLanguageModelChatTool]
     justification: str | None = None
 
@@ -103,8 +103,8 @@ class VSCodeLanguageModelCompletionRequestParams(BaseModel):
 # Response
 
 
-class VSCodeLanguageModelChatCompletionResponse(BaseModel):
-    request_id: str = Field(alias="requestId")
+class VSCodeLanguageModelChatCompletionResponse(PGTSBaseModel):
+    request_id: str 
     response: (
         VSCodeLanguageModelCompleteResultPart
         | VSCodeLanguageModelTextPart

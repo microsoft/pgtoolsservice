@@ -3,17 +3,16 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from pydantic import BaseModel, Field
-
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
     OutgoingMessageRegistration,
 )
 
 
-class CreateSessionResponse(BaseModel):
-    session_id: str = Field(alias="sessionId")
+class CreateSessionResponse(PGTSBaseModel):
+    session_id: str 
 
 
 CREATE_SESSION_REQUEST = IncomingMessageConfiguration(
