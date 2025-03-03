@@ -44,7 +44,7 @@ from ossdbtoolsservice.object_explorer.contracts.get_session_id_request import (
 )
 from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
-from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
+from ossdbtoolsservice.utils.connection import get_connection_details_with_defaults
 from pgsmo import Server as PGServer
 
 ROUTING_TABLES = {constants.PG_PROVIDER_NAME: PG_ROUTING_TABLE}
@@ -114,24 +114,7 @@ class ObjectExplorerService(Service):
         try:
             # Make sure we have the appropriate session params
             validate.is_not_none("params", params)
-
-            # Use the provider's default db if db name was not specified
-            if params.database_name is None or params.database_name == "":
-                is_cosmos = params.server_name and params.server_name.endswith(
-                    ".postgres.cosmos.azure.com"
-                )
-                pgsql_config = self.service_provider.get(
-                    constants.WORKSPACE_SERVICE_NAME, WorkspaceService
-                ).configuration.pgsql
-                params.database_name = (
-                    pgsql_config.default_database
-                    if not is_cosmos
-                    else pgsql_config.cosmos_default_database
-                )
-
-            # Use the provider's default port if port number was not specified
-            if not params.port:
-                params.port = constants.DEFAULT_PORT[self._provider]
+            params = get_connection_details_with_defaults(params)
 
             # Generate the session ID and create/store the session
             session_id = self._generate_session_uri(params)
@@ -233,6 +216,8 @@ class ObjectExplorerService(Service):
     ) -> None:
         """Retrieve the existing session ID for the given connection details"""
         validate.is_not_none("params", params)
+        params = get_connection_details_with_defaults(params)
+
         session_id = self._generate_session_uri(params)
 
         if self._logger:

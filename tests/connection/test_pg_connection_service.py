@@ -26,7 +26,9 @@ from ossdbtoolsservice.connection.contracts import (
     ListDatabasesParams,
 )
 from ossdbtoolsservice.driver.types import ServerConnection
+from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
+from ossdbtoolsservice.utils.connection import get_connection_details_with_defaults
 from ossdbtoolsservice.utils.constants import (
     DEFAULT_PORT,
     PG_PROVIDER_NAME,
@@ -166,7 +168,7 @@ class TestPGConnectionService(unittest.TestCase):
             self.connection_service.connect(params)
         mock_connection.close.assert_called_once()
 
-    def test_same_options_uses_existing_connection(self):
+    def test_same_options_uses_existing_connection(self) -> None:
         """Test that the connect method uses an existing connection
         when connecting again with the same options"""
         # Set up the test with mock data
@@ -180,8 +182,10 @@ class TestPGConnectionService(unittest.TestCase):
         )
 
         # Insert a ConnectionInfo object into the connection service's map
-        old_connection_details = ConnectionDetails.from_data(
-            {"host": "myserver", "dbname": "postgres", "user": "postgres", "abc": 123}
+        old_connection_details = get_connection_details_with_defaults(
+            ConnectionDetails.from_data(
+                {"host": "myserver", "dbname": "postgres", "user": "postgres", "abc": 123}
+            )
         )
         old_connection_info = ConnectionInfo(connection_uri, old_connection_details)
         old_connection_info.add_connection(connection_type, mock_server_connection)
@@ -463,7 +467,7 @@ class TestPGConnectionService(unittest.TestCase):
         mock_request_context = utils.MockRequestContext(raise_on_error=True)
 
         # Insert a ConnectionInfo object into the connection service's map
-        connection_details = ConnectionDetails.from_data({})
+        connection_details = get_connection_details_with_defaults(ConnectionDetails.from_data({}))
         connection_info = ConnectionInfo(connection_uri, connection_details)
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
@@ -481,7 +485,7 @@ class TestPGConnectionService(unittest.TestCase):
             mock_request_context.last_response_params.database_names, expected_databases
         )
 
-    def test_get_connection_for_existing_connection(self):
+    def test_get_connection_for_existing_connection(self) -> None:
         """Test that get_connection returns a connection
         that already exists for the given URI and type"""
         # Set up the test with mock data
@@ -493,7 +497,9 @@ class TestPGConnectionService(unittest.TestCase):
 
         # Insert a ConnectionInfo object into the connection service's map
         connection_details = ConnectionDetails.from_data({})
-        connection_info = ConnectionInfo(connection_uri, connection_details)
+        connection_info = ConnectionInfo(
+            connection_uri, get_connection_details_with_defaults(connection_details)
+        )
         self.connection_service.owner_to_connection_map[connection_uri] = connection_info
 
         # Get the connection without first creating it
@@ -621,13 +627,9 @@ class TestPGConnectionService(unittest.TestCase):
         self.assertEqual(response.connection_summary.user_name, user)
         self.assertEqual(response.type, connection_type)
 
-    def test_default_database(self):
+    def test_default_database(self) -> None:
         """Test that if no database is given, the default database is used"""
         # Set up the connection params and default database name
-        default_db = "test_db"
-        self.connection_service._service_provider[
-            WORKSPACE_SERVICE_NAME
-        ].configuration.pgsql.default_database = default_db
         params: ConnectRequestParams = ConnectRequestParams.from_dict(
             {
                 "ownerUri": "someUri",
@@ -657,15 +659,13 @@ class TestPGConnectionService(unittest.TestCase):
             # Then psycopg's connect method was called with the default database
             calls = mock_psycopg_connect.mock_calls
             self.assertEqual(len(calls), 1)
-            self.assertEqual(calls[0][2]["dbname"], default_db)
+            self.assertEqual(
+                calls[0][2]["dbname"], constants.DEFAULT_DB[constants.PG_DEFAULT_DB_KEY]
+            )
 
-    def test_cosmos_default_database(self):
+    def test_cosmos_default_database(self) -> None:
         """Test that if no database is given, the default database is used"""
         # Set up the connection params and default database name
-        default_db = "citus_test_db"
-        self.connection_service._service_provider[
-            WORKSPACE_SERVICE_NAME
-        ].configuration.pgsql.cosmos_default_database = default_db
         params: ConnectRequestParams = ConnectRequestParams.from_dict(
             {
                 "ownerUri": "someUri",
@@ -695,9 +695,12 @@ class TestPGConnectionService(unittest.TestCase):
             # Then psycopg's connect method was called with the default database
             calls = mock_psycopg_connect.mock_calls
             self.assertEqual(len(calls), 1)
-            self.assertEqual(calls[0][2]["dbname"], default_db)
+            self.assertEqual(
+                calls[0][2]["dbname"],
+                constants.DEFAULT_DB[constants.COSMOS_PG_DEFAULT_DB_KEY],
+            )
 
-    def test_non_default_database(self):
+    def test_non_default_database(self) -> None:
         """Test that if a database is given, the default database is not used"""
         # Set up the connection params and default database name
         default_db = "test_db"

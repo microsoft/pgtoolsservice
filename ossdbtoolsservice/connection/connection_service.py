@@ -39,6 +39,7 @@ from ossdbtoolsservice.driver import ConnectionManager, ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
+from ossdbtoolsservice.utils.connection import get_connection_details_with_defaults
 from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
 
 
@@ -130,12 +131,12 @@ class ConnectionService(Service):
         indicating whether the connection was successful
         """
         owner_uri = params.owner_uri
-        connection_details = params.connection
         if owner_uri is None:
             raise ValueError("No owner URI set")
-        if connection_details is None:
+        if params.connection is None:
             raise ValueError("No connection details set")
 
+        connection_details = get_connection_details_with_defaults(params.connection)
         connection_info: ConnectionInfo | None = self.owner_to_connection_map.get(owner_uri)
 
         # If there is no saved connection or the saved connection's options do not match,

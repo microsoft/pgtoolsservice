@@ -42,9 +42,9 @@ class PGSQLConfiguration(Serializable):
         return True
 
     def __init__(self) -> None:
-        self.default_database: str = constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
+        self.default_database: str = constants.DEFAULT_DB[constants.PG_DEFAULT_DB_KEY]
         self.cosmos_default_database: str = constants.DEFAULT_DB[
-            constants.COSMOS_PG_DEFAULT_DB
+            constants.COSMOS_PG_DEFAULT_DB_KEY
         ]
         self.format: FormatterConfiguration = FormatterConfiguration()
 

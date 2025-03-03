@@ -34,7 +34,7 @@ pg_conn_provider_opts = ConnectionProviderOptions(
             is_identity=True,
             is_required=False,
             group_name="Source",
-            default_value=constants.DEFAULT_DB[constants.PG_DEFAULT_DB],
+            default_value=constants.DEFAULT_DB[constants.PG_DEFAULT_DB_KEY],
         ),
         ConnectionOption(
             name="user",

@@ -95,12 +95,12 @@ class ServerConnection:
         self._default_database = (
             config.pgsql.default_database
             if config
-            else constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
+            else constants.DEFAULT_DB[constants.PG_DEFAULT_DB_KEY]
         )
         if is_cosmos and config:
             self._default_database = config.pgsql.cosmos_default_database
         elif is_cosmos and not config:
-            self._default_database = constants.DEFAULT_DB[constants.COSMOS_PG_DEFAULT_DB]
+            self._default_database = constants.DEFAULT_DB[constants.COSMOS_PG_DEFAULT_DB_KEY]
 
         # Use the default database if one was not provided
         if "dbname" not in connection_options or not connection_options["dbname"]:
