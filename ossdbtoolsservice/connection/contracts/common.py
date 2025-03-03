@@ -84,6 +84,22 @@ class ConnectionDetails(Serializable):
     def port(self, value: int) -> None:
         self.options["port"] = value
 
+    @property
+    def password(self) -> str | None:
+        return self._get_str_option("password")
+
+    @password.setter
+    def password(self, value: str) -> None:
+        self.options["password"] = value
+
+    @property
+    def azure_account_token(self) -> str | None:
+        return self._get_str_option("azureAccountToken")
+
+    @azure_account_token.setter
+    def azure_account_token(self, value: str) -> None:
+        self.options["azureAccountToken"] = value
+
 
 class ConnectionType(enum.Enum):
     """
