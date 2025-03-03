@@ -39,6 +39,7 @@ from ossdbtoolsservice.driver import ConnectionManager, ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
+from ossdbtoolsservice.utils.connection import is_same_connection_details
 from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
 
 
@@ -140,9 +141,8 @@ class ConnectionService(Service):
 
         # If there is no saved connection or the saved connection's options do not match,
         # create a new one
-        if (
-            connection_info is None
-            or connection_info.details.options != connection_details.options
+        if connection_info is None or not is_same_connection_details(
+            connection_info.details, connection_details
         ):
             if connection_info is not None:
                 self._close_connections(connection_info)
