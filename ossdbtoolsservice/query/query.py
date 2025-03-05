@@ -60,7 +60,7 @@ class Query:
     """Object representing a single query, consisting of one or more batches"""
 
     EXPLAIN_QUERY_TEMPLATE = "EXPLAIN {0}"
-    ANALYZE_EXPLAIN_QUERY_TEMPLATE = "ANALYZE EXPLAIN {0}"
+    EXPLAIN_ANALYZE_QUERY_TEMPLATE = "EXPLAIN ANALYZE {0}"
 
     def __init__(
         self,
@@ -100,7 +100,7 @@ class Query:
                     )
                 elif self._execution_plan_options.include_actual_execution_plan_xml:
                     self._disable_auto_commit = True
-                    sql_statement_text = Query.ANALYZE_EXPLAIN_QUERY_TEMPLATE.format(
+                    sql_statement_text = Query.EXPLAIN_ANALYZE_QUERY_TEMPLATE.format(
                         sql_statement_text
                     )
 
@@ -158,7 +158,6 @@ class Query:
             if self._user_transaction:
                 connection.set_user_transaction(True)
 
-            # When Analyze Explain is used we have to disable auto commit
             if self._disable_auto_commit and connection.transaction_is_idle:
                 connection.autocommit = False
 

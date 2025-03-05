@@ -79,11 +79,12 @@ class ServerConnection:
             conn_params["password"] = conn_params["azureAccountToken"]
 
         # Map the connection options to their psycopg-specific options
-        connection_options: dict[str, Any] = {
-            PG_CONNECTION_OPTION_KEY_MAP.get(option, option): value
-            for option, value in conn_params.items()
-            if option in PG_CONNECTION_PARAM_KEYWORDS
-        }
+        connection_options: dict[str, Any] = {}
+        for option, value in conn_params.items():
+            mapped_option = PG_CONNECTION_OPTION_KEY_MAP.get(option, option)
+            if mapped_option in PG_CONNECTION_PARAM_KEYWORDS:
+                connection_options[mapped_option] = value
+
         self._connection_options = connection_options
         # Flag to determine whether server is Azure Cosmos PG server
         is_cosmos = "host" in connection_options and connection_options["host"].endswith(

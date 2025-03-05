@@ -1248,7 +1248,7 @@ class TestQueryService(unittest.TestCase):
         self.assertEqual(selection_data.end.line, end_line_index)
         self.assertEqual(selection_data.end.character, end_column_index)
 
-    def test_start_query_execution_thread_sends_true_when_show_plan_is_enabled(
+    def test_start_query_execution_thread_sends_true_when_estimated_plan_is_enabled(
         self,
     ) -> None:
         request = ExecuteStringParams()
@@ -1268,6 +1268,27 @@ class TestQueryService(unittest.TestCase):
         query = self.query_execution_service.get_query(request.owner_uri)
 
         self.assertEqual("EXPLAIN Test Query", query._batches[0].batch_text)
+
+    def test_start_query_execution_thread_sends_true_when_actual_plan_is_enabled(
+        self,
+    ) -> None:
+        request = ExecuteStringParams()
+        request.execution_plan_options = ExecutionPlanOptions()
+        request.execution_plan_options.include_actual_execution_plan_xml = True
+        request.owner_uri = "Test Owner Uri"
+        request.query = "Test Query"
+
+        worker_args = ExecuteRequestWorkerArgs(
+            request.owner_uri, self.connection, self.request_context, None
+        )
+
+        self.query_execution_service._start_query_execution_thread(
+            self.request_context, request, worker_args
+        )
+
+        query = self.query_execution_service.get_query(request.owner_uri)
+
+        self.assertEqual("EXPLAIN ANALYZE Test Query", query._batches[0].batch_text)
 
     def test_execution_error_rolls_back_transaction(self) -> None:
         """Test that a query execution error in the middle of a transaction
