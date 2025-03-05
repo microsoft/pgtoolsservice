@@ -76,7 +76,7 @@ class PostgresPlugin:
         self._request_context.send_notification(
             CHAT_PROGRESS_UPDATE_METHOD,
             ChatProgressUpdateParams(
-                chatId=self._chat_id,
+                chat_id=self._chat_id,
                 content=f"Fetching database context for schema {schema_name} 📖...",
             ),
         )
@@ -103,7 +103,7 @@ class PostgresPlugin:
         self._request_context.send_notification(
             CHAT_PROGRESS_UPDATE_METHOD,
             ChatProgressUpdateParams(
-                chatId=self._chat_id,
+                chat_id=self._chat_id,
                 content="Fetching database context 📖...",
             ),
         )
@@ -146,7 +146,7 @@ class PostgresPlugin:
         self._request_context.send_notification(
             CHAT_PROGRESS_UPDATE_METHOD,
             ChatProgressUpdateParams(
-                chatId=self._chat_id,
+                chat_id=self._chat_id,
                 content=f"Executing query '{script_name}' 🔎 ...",
             ),
         )
@@ -161,11 +161,11 @@ class PostgresPlugin:
             self._request_context.send_notification(
                 COPILOT_QUERY_NOTIFICATION_METHOD,
                 CopilotQueryNotificationParams(
-                    queryName=script_name,
-                    queryDescription=script_description,
+                    query_name=script_name,
+                    query_description=script_description,
                     query=query,
-                    ownerUri=self._owner_uri,
-                    hasError=True,
+                    owner_uri=self._owner_uri,
+                    has_error=True,
                 ),
             )
             raise
@@ -173,11 +173,11 @@ class PostgresPlugin:
         self._request_context.send_notification(
             COPILOT_QUERY_NOTIFICATION_METHOD,
             CopilotQueryNotificationParams(
-                queryName=script_name,
-                queryDescription=script_description,
+                query_name=script_name,
+                query_description=script_description,
                 query=query,
-                ownerUri=self._owner_uri,
-                hasError=False,
+                owner_uri=self._owner_uri,
+                has_error=False,
             ),
         )
         return result
@@ -228,7 +228,7 @@ class PostgresPlugin:
         self._request_context.send_notification(
             CHAT_PROGRESS_UPDATE_METHOD,
             ChatProgressUpdateParams(
-                chatId=self._chat_id,
+                chat_id=self._chat_id,
                 content=f"Executing statement '{script_name}' ✍️ ...",
             ),
         )
@@ -243,11 +243,11 @@ class PostgresPlugin:
             self._request_context.send_notification(
                 COPILOT_QUERY_NOTIFICATION_METHOD,
                 CopilotQueryNotificationParams(
-                    queryName=script_name,
-                    queryDescription=script_description,
+                    query_name=script_name,
+                    query_description=script_description,
                     query=statement,
-                    ownerUri=self._owner_uri,
-                    hasError=True,
+                    owner_uri=self._owner_uri,
+                    has_error=True,
                 ),
             )
             raise
@@ -255,11 +255,11 @@ class PostgresPlugin:
         self._request_context.send_notification(
             COPILOT_QUERY_NOTIFICATION_METHOD,
             CopilotQueryNotificationParams(
-                queryName=script_name,
-                queryDescription=script_description,
+                query_name=script_name,
+                query_description=script_description,
                 query=statement,
-                ownerUri=self._owner_uri,
-                hasError=False,
+                owner_uri=self._owner_uri,
+                has_error=False,
             ),
         )
         return result

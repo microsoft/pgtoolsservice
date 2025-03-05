@@ -144,7 +144,7 @@ class ObjectExplorerService(Service):
                 self._logger.info(f"   - Session created: {session_id}")
 
             # Respond that the session was created (or existing session was returned)
-            response = CreateSessionResponse(sessionId=session_id)
+            response = CreateSessionResponse(session_id=session_id)
             request_context.send_response(response)
 
         except Exception as e:
@@ -196,15 +196,15 @@ class ObjectExplorerService(Service):
                             f"Could not close the OE session with Id {session.id}"
                         )
                     request_context.send_response(
-                        CloseSessionResponse(sessionId=session_id, success=False)
+                        CloseSessionResponse(session_id=session_id, success=False)
                     )
                 else:
                     request_context.send_response(
-                        CloseSessionResponse(sessionId=session_id, success=True)
+                        CloseSessionResponse(session_id=session_id, success=True)
                     )
             else:
                 request_context.send_response(
-                    CloseSessionResponse(sessionId=session_id, success=False)
+                    CloseSessionResponse(session_id=session_id, success=False)
                 )
         except Exception as e:
             message = f"Failed to close OE session: {str(e)}"  # TODO: Localize
@@ -224,7 +224,7 @@ class ObjectExplorerService(Service):
         if self._logger:
             self._logger.info(f"   - Session ID: {session_id}")
 
-        request_context.send_response(GetSessionIdResponse(sessionId=session_id))
+        request_context.send_response(GetSessionIdResponse(session_id=session_id))
 
     def _handle_refresh_request(
         self, request_context: RequestContext, params: ExpandParameters
