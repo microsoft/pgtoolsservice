@@ -191,11 +191,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                 finished = False
 
                 # Get the next response
-                if self._logger:
-                    self._logger.info(f"Waiting for response from queue: {request_id}")
                 response = await queue.get()
-                if self._logger:
-                    self._logger.info(f"Got response from queue: {request_id}")
 
                 transformed_response, finished = self._translate_response(response)
                 transformed_response.function_invoke_attempt = function_invoke_attempt
