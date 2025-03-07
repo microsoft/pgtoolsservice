@@ -109,3 +109,13 @@ and the next client request. This organizes the recorded session into logical gr
 of the communication. Note that, in addition to being a format that can be played back against a server, it is also good for debugging and understanding the communication between the client and server.
 
 See the [tests_v2/test_data/recordings](tests_v2/test_data/recordings) folder for examples of recorded sessions.
+
+## Web server
+
+To run the development web server and client, use:
+
+```
+docker-compose -f docker-compose.web.yml up
+```
+
+Navigate to <http://localhost:5000> to view the test client. You can send JSON RPC messages to the client, e.g. the requests found in the playback files.

@@ -1,11 +1,11 @@
 # Stage 1: Build the executable using PyInstaller
-FROM python:3.8-slim AS builder
+FROM mcr.microsoft.com/azurelinux/base/python:3.12
 
 # Set the working directory in the container
 WORKDIR /src
 
 # Install binutils for objdump
-RUN apt-get update && apt-get install -y binutils
+RUN tdnf install -y binutils
 
 # Copy the current directory contents into the container at /app
 COPY scripts /src/scripts
@@ -14,21 +14,11 @@ COPY pgsmo /src/pgsmo
 COPY smo /src/smo
 COPY ssl /src/ssl
 COPY config.ini ossdbtoolsservice_main.spec /src/
+COPY setup.cfg /src/
+COPY pyproject.toml /src/
 
-# Run the build script
-RUN scripts/build.sh
-
-# Stage 2: Package the built executable into a minimal Docker container
-FROM debian:latest
-
-# Set the working directory in the container
-WORKDIR /app
-
-# Copy the built executable from the builder stage
-COPY --from=builder /src/dist/pgsqltoolsservice /app
-
-# Set the appropriate permissions
-RUN chmod -R +x /app
+# Install pgtoolsservice
+RUN pip3 install -e .
 
 # Specify the command to run the executable
-CMD ["/app/ossdbtoolsservice_main", "--enable-web-server", "--console-logging"]
+CMD ["python3", "/src/ossdbtoolsservice/ossdbtoolsservice_main_web.py", "--enable-web-server", "--console-logging",]

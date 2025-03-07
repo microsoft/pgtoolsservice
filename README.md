@@ -1,10 +1,21 @@
-# Open Source Databases Tools Service 
-The Open Source Databases Tools Service is an application that provides core functionality for various PostgreSQL Server tools.  These features include the following:
+# PostgreSQL Tools Service 
+The PostgreSQL Tools Service (pgtoolsservice, or PGTS) is an application that provides core functionality for various PostgreSQL Server tools.
 * Connection management
 * Language Service support using VS Code protocol
 * Query execution and resultset management
 
-It is based on the [Microsoft SQL Tools Service](https://github.com/Microsoft/sqltoolsservice) and [pgAdmin](https://www.pgadmin.org).
+It is based on an early version of [Microsoft SQL Tools Service](https://github.com/Microsoft/sqltoolsservice), with some functionality coming from [pgAdmin](https://www.pgadmin.org) and [pgcli](https://www.pgcli.com).
+
+## Servers
+
+There are two servers in PGTS: A RPC server that reads and writes JSON-RPC messages from stdin/stdout, and a web server that reads and writes JSON-RPC messages over HTTP using web sockets.
+The web server is used to provide a REST API for the RPC server.
+Both servers use messaging defined by the [Language Server Protocol (LSP)](https://microsoft.github.io/language-server-protocol/).
+
+## Naming
+
+The project is named `pgtoolsservice`, but there is the name `ossdbtoolsservice` in some places. This reflects a refactor that was done years ago to make the project more generic and support other databases.
+However, that refactor was never completed, and the project is still PostgreSQL specific. The name `ossdbtoolsservice` will be removed in a future release.
 
 ## Support
 Support for this extension is provided on our [GitHub Issue Tracker]. You can submit a [bug report], a [feature suggestion] or participate in discussions.

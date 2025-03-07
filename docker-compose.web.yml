@@ -1,0 +1,30 @@
+services:
+  server:
+    image: ossdbtoolsservice-web:latest
+    container_name: ossdbtoolsservice-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8443:8443"
+    command:
+      - python3
+      - /src/ossdbtoolsservice/ossdbtoolsservice_main_web.py
+      - --enable-web-server
+      - --console-logging
+      - --enable-dynamic-cors
+
+  client:
+    image: ossdbtoolsservice-web-dev-client:latest
+    container_name: ossdbtoolsservice-web-dev-client
+    build:
+      context: ./webserver_client
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./webserver_client:/app
+    ports:
+      - "5000:5000"
+    command: ["npx", "serve", ".", "-p", "5000"]
+
