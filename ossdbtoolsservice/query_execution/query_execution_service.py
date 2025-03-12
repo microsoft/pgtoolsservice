@@ -9,6 +9,8 @@ import uuid
 from datetime import datetime
 from typing import Any, Callable, TypeVar
 
+import psycopg
+import psycopg.errors
 import sqlparse
 
 from ossdbtoolsservice.connection.connection_service import ConnectionService
@@ -736,8 +738,8 @@ class QueryExecutionService(Service):
         elif isinstance(
             e,
             (
-                worker_args.connection.database_error,
-                worker_args.connection.query_canceled_error,
+                psycopg.DatabaseError,
+                psycopg.errors.QueryCanceled,
             ),
         ):
             # get_error_message may return None so ensure error_message is str type
