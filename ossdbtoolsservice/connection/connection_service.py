@@ -35,7 +35,7 @@ from ossdbtoolsservice.connection.contracts import (
     ListDatabasesResponse,
     ServerInfo,
 )
-from ossdbtoolsservice.driver import ConnectionManager, ServerConnection
+from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.cancellation import CancellationToken
@@ -165,15 +165,15 @@ class ConnectionService(Service):
             self._cancellation_map[cancellation_key] = cancellation_token
 
         # Get the type of server and config
-        provider_name = self.service_provider.provider
         config = self.service_provider.get(
             constants.WORKSPACE_SERVICE_NAME, WorkspaceService
         ).configuration
         try:
             # Get connection to DB server using the provided connection params
-            connection = ConnectionManager(
-                provider_name, config, connection_details.options
-            ).get_connection()
+            connection = ServerConnection(
+                connection_details.options,
+                config,
+            )
         except Exception as err:
             return _build_connection_response_error(connection_info, params.type, err)
         finally:
