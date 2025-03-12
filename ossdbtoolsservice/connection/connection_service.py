@@ -473,7 +473,7 @@ def _build_connection_response_error(
 
 def _get_server_info(connection: ServerConnection) -> ServerInfo:
     """Build the server info response for a connection"""
-    server = connection.server_type
+    server = "PostgreSQL"
     server_version = connection.server_version
     host = connection.host_name
     is_cloud = host.endswith("database.azure.com") or host.endswith("database.windows.net")
