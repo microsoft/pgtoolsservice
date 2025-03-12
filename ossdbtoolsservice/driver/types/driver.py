@@ -182,11 +182,6 @@ class ServerConnection:
         return self._version
 
     @property
-    def connection_options(self) -> dict[str, Any]:
-        """Returns the options used to create the current connection to the server"""
-        return self._connection_options
-
-    @property
     def default_database(self) -> str:
         """Returns the default database for PostgreSQL if no other database is specified"""
         return self._default_database
