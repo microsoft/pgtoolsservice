@@ -141,7 +141,6 @@ class ServerConnection:
 
         # Setting the provider for this connection
         self._provider_name = constants.PG_PROVIDER_NAME
-        self._server_type = "PostgreSQL"
 
     # METHODS ##############################################################
     @property
@@ -181,11 +180,6 @@ class ServerConnection:
     def server_version(self) -> tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
         return self._version
-
-    @property
-    def server_type(self) -> str:
-        """Server type for distinguishing between standard PG and PG supersets"""
-        return self._server_type
 
     @property
     def connection_options(self) -> dict[str, Any]:
