@@ -131,9 +131,6 @@ class ServerConnection:
         # Get the DSN parameters for the connection as a dict
         self._dsn_parameters = self._conn.info.get_parameters()
 
-        # Find the class of the database error this driver throws
-        self._database_error = psycopg.DatabaseError
-
         # Calculate the server version
         version_string = str(self._conn.info.server_version)
         self._version: tuple[int, int, int] = (
@@ -201,11 +198,6 @@ class ServerConnection:
         return self._default_database
 
     @property
-    def database_error(self) -> type[Exception]:
-        """Returns the type of database error this connection throws"""
-        return self._database_error
-
-    @property
     def transaction_in_error(self) -> bool:
         """Returns bool indicating if transaction is in error"""
         return (
@@ -227,11 +219,6 @@ class ServerConnection:
     def user_transaction(self) -> bool:
         """Returns bool indicating if transaction is in error"""
         return self._user_transaction
-
-    @property
-    def query_canceled_error(self) -> type[Exception]:
-        """Returns driver query canceled error"""
-        return psycopg.errors.QueryCanceled
 
     @property
     def cancellation_query(self) -> str:
