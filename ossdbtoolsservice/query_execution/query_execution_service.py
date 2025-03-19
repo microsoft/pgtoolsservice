@@ -130,7 +130,7 @@ class QueryExecutionService(Service):
 
         self._service_action_mapping: dict = {
             EXECUTE_STRING_REQUEST: self._handle_execute_query_request,
-            EXECUTE_DEPLOY_REQUEST: self._handle_execute_deploy_request,
+            EXECUTE_DEPLOY_REQUEST: self._handle_execute_deploy_request,  # Unused in VSCode
             EXECUTE_DOCUMENT_SELECTION_REQUEST: self._handle_execute_query_request,
             EXECUTE_DOCUMENT_STATEMENT_REQUEST: self._handle_execute_query_request,
             SUBSET_REQUEST: self._handle_subset_request,
@@ -297,7 +297,7 @@ class QueryExecutionService(Service):
 
         # Get a connection for the query
         try:
-            pooled_connection = self._get_pooled_connection(owner_uri)
+            connection = self._get_long_lived_connection(owner_uri)
         except Exception as e:
             if self.service_provider.logger is not None:
                 self.service_provider.logger.exception(
@@ -308,7 +308,7 @@ class QueryExecutionService(Service):
 
         worker_args = ExecuteRequestWorkerArgs(
             owner_uri,
-            pooled_connection,
+            connection,
             request_context,
             ResultSetStorageType.FILE_STORAGE,
             before_query_initialize,

@@ -369,7 +369,7 @@ class PostgresPlugin(PGTSChatPlugin):
                     function_name=EXECUTE_STATEMENT_FUNCTION_NAME,
                 ),
             )
-            raise
+            return f"Error executing statement: {e}"
 
         self._request_context.send_notification(
             COPILOT_QUERY_NOTIFICATION_METHOD,

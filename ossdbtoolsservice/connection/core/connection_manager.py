@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+import contextlib
 import logging
 import queue
 import threading
@@ -10,7 +11,9 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from psycopg import Connection
 from psycopg.conninfo import make_conninfo
+from psycopg.rows import TupleRow
 from psycopg_pool import ConnectionPool, PoolTimeout
 
 from ossdbtoolsservice.connection.contracts import (
@@ -110,6 +113,7 @@ class ConnectionManager:
             target=self._process_tasks, name="ConnectionManagerWorker", daemon=True
         )
         self._request_thread.start()
+        self._logger.info("Initialized ConnectionManager")
 
     def _process_tasks(self) -> None:
         while True:
@@ -150,6 +154,7 @@ class ConnectionManager:
     def _connect(
         self, owner_uri: str, details: ConnectionDetails, config: Configuration | None = None
     ) -> OwnerConnectionInfo:
+        self._logger.info(f"Attempting to connect: owner_uri={owner_uri}")
         with self._lock:
             details_hash = details.to_hash()
 
@@ -164,15 +169,25 @@ class ConnectionManager:
                     existing_details, _ = existing_associated_details_and_pool
                     # If so, check if the details match.
                     if existing_details.to_hash() == details_hash:
+                        self._logger.info(
+                            f"Reusing existing connection for owner_uri={owner_uri}"
+                        )
                         # If so, nothing to do.
                         return existing_connection_complete_params
                     else:
+                        self._logger.info(
+                            f"Disconnecting owner_uri={owner_uri} due to "
+                            "connect request with different details"
+                        )
                         # If not, disconnect the owner_uri from the existing connection pool.
                         # Call _disconnect directly, as we are processing a task.
                         self._disconnect(owner_uri)
 
             pool = self._details_to_pools.get(details_hash)
             if pool is None:
+                self._logger.info(
+                    f"Creating new connection pool for details_hash={details_hash}"
+                )
                 # Create a new pool.
                 try:
                     pool = self._create_connection_pool(details, config)
@@ -199,6 +214,7 @@ class ConnectionManager:
                     owner_uri, details, ServerConnection(conn)
                 )
                 self._owner_uri_to_conn_info[owner_uri] = owner_conn_info
+                self._logger.info(f"Connection established for owner_uri={owner_uri}")
                 return owner_conn_info
 
     def disconnect(self, owner_uri: str) -> bool:
@@ -214,18 +230,22 @@ class ConnectionManager:
         return self._run_task(self._disconnect, (owner_uri,))
 
     def _disconnect(self, owner_uri: str) -> bool:
+        self._logger.info(f"Disconnecting owner_uri={owner_uri}")
         with self._lock:
             # Remove connections currently in transaction.
             if owner_uri in self._owner_uri_to_active_tx_connection:
                 conn, pool = self._owner_uri_to_active_tx_connection.pop(owner_uri)
                 conn.close()
-                pool.putconn(conn.connection)
 
             # Remove long lived connections.
             if owner_uri in self._owner_ur_to_long_lived_connection:
                 connections = self._owner_ur_to_long_lived_connection.pop(owner_uri)
                 for conn in connections.values():
-                    conn.return_to_pool()
+                    try:
+                        conn.close()
+                    except Exception as e:
+                        self._logger.exception(e)
+                        raise
 
             # Remove the owner URI from the details to owner URI mapping.
             details_and_pool = self._owner_uri_to_details.pop(owner_uri, None)
@@ -241,12 +261,18 @@ class ConnectionManager:
                     pool = self._details_to_pools.pop(details_hash, None)
                     if pool:
                         pool.close()
+                        self._logger.info(
+                            f"Closed connection pool for details_hash={details_hash}"
+                        )
 
             # Remove the connection complete params for the owner URI.
             if owner_uri in self._owner_uri_to_conn_info:
                 del self._owner_uri_to_conn_info[owner_uri]
                 return True
             else:
+                self._logger.warning(
+                    f"No connection info found for owner_uri={owner_uri} during disconnect"
+                )
                 return False
 
     def get_pooled_connection(self, owner_uri: str) -> PooledConnection | None:
@@ -269,6 +295,10 @@ class ConnectionManager:
             if owner_uri in self._owner_uri_to_active_tx_connection:
                 # If so, return the existing connection.
                 conn, pool = self._owner_uri_to_active_tx_connection[owner_uri]
+                self._logger.info(
+                    "Returning existing transaction in extension connection for "
+                    f"owner_uri={owner_uri}"
+                )
                 return PooledConnection(
                     get_connection=lambda _: conn,
                     put_connection=lambda conn: self._put_connection(conn, pool, owner_uri),
@@ -276,6 +306,9 @@ class ConnectionManager:
             elif owner_uri in self._owner_uri_to_details:
                 # If the owner URI is associated with a connection pool, return it.
                 details, pool = self._owner_uri_to_details[owner_uri]
+                self._logger.info(
+                    f"Returning new pooled connection for owner_uri={owner_uri}"
+                )
                 return PooledConnection(
                     get_connection=lambda pooled_conn: self._get_connection(
                         pool, details, pooled_conn
@@ -311,10 +344,19 @@ class ConnectionManager:
                     conn = connections[connection_name]
                     try:
                         conn.check()
+                        self._logger.info(
+                            "Returning existing long-lived connection for "
+                            f"owner_uri={owner_uri}, connection_name={connection_name}"
+                        )
                         return conn
                     except Exception:
                         # If the connection is not valid, remove it from the map
                         # and return it to the pool. The pool will discard it.
+                        self._logger.warning(
+                            f"Long-lived connection for owner_uri={owner_uri} "
+                            f"and connection_name={connection_name} is not valid. "
+                            "Returning to pool to issue a new connection."
+                        )
                         conn.return_to_pool()
                         del connections[connection_name]
                         if not connections:
@@ -332,6 +374,10 @@ class ConnectionManager:
                 if owner_uri not in self._owner_ur_to_long_lived_connection:
                     self._owner_ur_to_long_lived_connection[owner_uri] = {}
                 self._owner_ur_to_long_lived_connection[owner_uri][connection_name] = conn
+                self._logger.info(
+                    f"Returning new long-lived connection for owner_uri={owner_uri}, "
+                    f"connection_name={connection_name}"
+                )
                 return conn
             else:
                 return None
@@ -343,6 +389,7 @@ class ConnectionManager:
 
     def close(self) -> None:
         with self._lock:
+            self._logger.info("Closing all connection pools")
             for conn in self._owner_uri_to_active_tx_connection.values():
                 conn[0].close()
             for pool in self._details_to_pools.values():
@@ -376,6 +423,14 @@ class ConnectionManager:
         """
         self._fetch_azure_token = fetch_azure_token
 
+    def set_logger(self, logger: logging.Logger) -> None:
+        """Set the logger for the connection manager.
+
+        Args:
+            logger: The logger to use.
+        """
+        self._logger = logger
+
     def _get_connection(
         self,
         pool: ConnectionPool,
@@ -407,6 +462,14 @@ class ConnectionManager:
             for owner_uri in self._details_to_owner_uri.get(details.to_hash(), []):
                 active_tx += 1 if owner_uri in self._owner_uri_to_active_tx_connection else 0
             connect_error_message = self._get_and_clear_connection_errors(details.to_hash())
+            self._logger.exception(e)
+            self._logger.error(
+                f"Connection error for {self._get_user_facing_conn_str(details)}."
+                f"Pool size: {pool_size}, "
+                f"Max size: {max_size}, "
+                f"Active transactions: {active_tx}, "
+                f"Connection error: {connect_error_message}"
+            )
             raise GetConnectionTimeout(
                 pool_size=pool_size,
                 pool_max=max_size,
@@ -441,8 +504,11 @@ class ConnectionManager:
                 if owner_uri in self._owner_uri_to_active_tx_connection:
                     del self._owner_uri_to_active_tx_connection[owner_uri]
 
-                # Set autocommit to True, as the connection is not in a transaction.
-                conn.autocommit = True
+                # Reset the connection to its initial state.
+                # If errors, the pool should clean up the connection.
+                with contextlib.suppress(Exception):
+                    conn.reset()
+                
                 # Return the connection to the pool.
                 pool.putconn(conn.connection)
 
@@ -470,6 +536,7 @@ class ConnectionManager:
         # to avoid creating mutliple connections when not needed.
         pool.open(wait=True, timeout=self._timeout_override or details.connect_timeout)
         return pool
+  
 
     def _build_owner_connection_info(
         self,
