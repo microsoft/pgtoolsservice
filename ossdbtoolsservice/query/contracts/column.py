@@ -8,6 +8,7 @@ from typing import Any
 from psycopg import Column
 
 import ossdbtoolsservice.parsers.datatypes as datatypes
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.utils import constants
 
@@ -40,53 +41,28 @@ def get_column_name(column_index: int, column_name: str) -> str:
     return column_name
 
 
-class DbColumn:
-    allow_db_null: bool | None
-    base_catalog_name: str | None
-    column_size: int | None
-    numeric_precision: int | None
-    numeric_scale: int | None
-    base_schema_name: str | None
-    base_server_name: str | None
-    base_table_name: str | None
-    column_ordinal: int | None
-    base_column_name: str | None
-    column_name: str | None
-    is_aliased: bool | None
-    is_auto_increment: bool | None
-    is_expression: bool | None
-    is_hidden: bool | None
-    is_identity: bool | None
-    is_key: bool | None
-    is_read_only: bool | None
-    is_unique: bool | None
-    data_type: str | None
-    is_updatable: bool | None
-    _provider: str
-
-    def __init__(self) -> None:
-        self.allow_db_null: bool | None = None
-        self.base_catalog_name: str | None = None
-        self.column_size: int | None = None
-        self.numeric_precision: int | None = None
-        self.numeric_scale: int | None = None
-        self.base_schema_name: str | None = None
-        self.base_server_name: str | None = None
-        self.base_table_name: str | None = None
-        self.column_ordinal: int | None = None
-        self.base_column_name: str | None = None
-        self.column_name: str | None = None
-        self.is_aliased: bool | None = None
-        self.is_auto_increment: bool | None = None
-        self.is_expression: bool | None = None
-        self.is_hidden: bool | None = None
-        self.is_identity: bool | None = None
-        self.is_key: bool | None = None
-        self.is_read_only: bool | None = False
-        self.is_unique: bool | None = None
-        self.data_type: str | None = None
-        self.is_updatable: bool | None = False
-        self._provider: str = constants.PG_PROVIDER_NAME
+class DbColumn(PGTSBaseModel):
+    allow_db_null: bool | None = None
+    base_catalog_name: str | None = None
+    column_size: int | None = None
+    numeric_precision: int | None = None
+    numeric_scale: int | None = None
+    base_schema_name: str | None = None
+    base_server_name: str | None = None
+    base_table_name: str | None = None
+    column_ordinal: int | None = None
+    base_column_name: str | None = None
+    column_name: str | None = None
+    is_aliased: bool | None = None
+    is_auto_increment: bool | None = None
+    is_expression: bool | None = None
+    is_hidden: bool | None = None
+    is_identity: bool | None = None
+    is_key: bool | None = None
+    is_read_only: bool = False
+    is_unique: bool | None = None
+    data_type: str | None = None
+    is_updatable: bool = False
 
     @property
     def is_chars(self) -> bool:
@@ -117,11 +93,7 @@ class DbColumn:
 
     @property
     def provider(self) -> str:
-        return self._provider
-
-    @provider.setter
-    def provider(self, name: str) -> None:
-        self._provider = name
+        return constants.PG_PROVIDER_NAME
 
     # The cursor_description is an element from psycopg's cursor class' description property.
     # It is a property that is a tuple (read-only) containing a 7-item sequence.

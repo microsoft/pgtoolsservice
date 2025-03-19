@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional  # noqa
 
 import sqlparse
 
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.query import Batch, BatchEvents, ResultSetStorageType, create_batch
 from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
 from ossdbtoolsservice.query.contracts.result_set_subset import ResultSetSubset
@@ -77,6 +77,7 @@ class Query:
         self._current_batch_index = 0
         self._batches: list[Batch] = []
         self._execution_plan_options = query_execution_settings.execution_plan_options
+        self._connection_backend_pid: Optional[int] = None
 
         self.is_canceled = False
 
@@ -139,6 +140,10 @@ class Query:
     def current_batch_index(self) -> int:
         return self._current_batch_index
 
+    @property
+    def connection_backend_pid(self) -> Optional[int]:
+        return self._connection_backend_pid
+
     def execute(self, connection: ServerConnection, retry_state: bool = False) -> None:
         """
         Execute the query using the given connection
@@ -152,6 +157,9 @@ class Query:
             raise RuntimeError("Cannot execute a query multiple times")
 
         self._execution_state = ExecutionState.EXECUTING
+
+        # Set the connection backend PID
+        self._connection_backend_pid = connection.backend_pid
 
         # Run each batch sequentially
         try:

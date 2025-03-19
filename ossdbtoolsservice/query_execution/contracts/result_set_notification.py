@@ -3,11 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.query.contracts import ResultSetSummary
 
 
-class ResultSetNotificationParams:
+class ResultSetNotificationParams(PGTSBaseModel):
     """
     Parameters to return when a result set is started or completed
     Attributes:
@@ -17,10 +18,6 @@ class ResultSetNotificationParams:
 
     owner_uri: str
     result_set_summary: ResultSetSummary | None
-
-    def __init__(self, owner_uri: str, rs_summary: ResultSetSummary | None) -> None:
-        self.owner_uri: str = owner_uri
-        self.result_set_summary = rs_summary
 
 
 RESULT_SET_AVAILABLE_NOTIFICATION = "query/resultSetAvailable"

@@ -16,12 +16,12 @@ class SimpleExecuteRequest(Serializable):
     owner_uri: str | None
     query_string: str | None
 
-    def __init__(self) -> None:
+    def __init__(self, owner_uri: str | None = None, query_string: str | None = None) -> None:
         self.owner_uri = None
         self.query_string = None
 
 
-class SimpleExecuteResponse:
+class SimpleExecuteResponse(Serializable):
     rows: list[list[DbCellValue]]
     row_count: int
     column_info: list[DbColumn]
@@ -34,7 +34,8 @@ class SimpleExecuteResponse:
         self.column_info = column_info
 
 
+SIMPLE_EXECUTE_REQUEST_METHOD = "query/simpleexecute"
 SIMPLE_EXECUTE_REQUEST = IncomingMessageConfiguration(
-    "query/simpleexecute", SimpleExecuteRequest
+    SIMPLE_EXECUTE_REQUEST_METHOD, SimpleExecuteRequest
 )
 OutgoingMessageRegistration.register_outgoing_message(SimpleExecuteResponse)

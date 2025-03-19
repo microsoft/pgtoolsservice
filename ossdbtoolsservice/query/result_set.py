@@ -53,7 +53,11 @@ class ResultSet(metaclass=ABCMeta):
     @property
     def result_set_summary(self) -> ResultSetSummary:
         return ResultSetSummary(
-            self.id, self.batch_id, self.row_count, self._has_been_read, self.columns_info
+            id=self.id,
+            batch_id=self.batch_id,
+            row_count=self.row_count,
+            complete=self._has_been_read,
+            column_info=self.columns_info,
         )
 
     @property
