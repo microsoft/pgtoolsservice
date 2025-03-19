@@ -100,9 +100,7 @@ class EditDataService(Service):
         owner_uri = params.owner_uri
         assert owner_uri is not None  # for type checking
 
-        connection = self.connection_service.get_connection(
-            owner_uri, ConnectionType.QUERY
-        )
+        connection = self.connection_service.get_connection(owner_uri, ConnectionType.QUERY)
 
         if connection is None:
             request_context.send_error("Connection not found")
@@ -267,9 +265,7 @@ class EditDataService(Service):
             request_context.send_error("Owner URI is required")
             return
 
-        connection = self.connection_service.get_connection(
-            owner_uri, ConnectionType.QUERY
-        )
+        connection = self.connection_service.get_connection(owner_uri, ConnectionType.QUERY)
 
         if connection is None:
             request_context.send_error("Connection not found")

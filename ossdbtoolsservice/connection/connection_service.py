@@ -61,6 +61,9 @@ class ConnectionService(Service):
     def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
 
+        if service_provider.logger is not None:
+            self._connection_manager.set_logger(service_provider.logger)
+
         # Register the handlers for the service
         service_provider.server.set_request_handler(
             CONNECT_REQUEST, self.handle_connect_request

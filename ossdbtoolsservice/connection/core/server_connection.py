@@ -330,6 +330,19 @@ class ServerConnection:
         else:
             return "An unspecified database error occurred."
 
+    def reset(self) -> None:
+        """
+        Resets the connection to a clean state.
+        """
+        # Reset the connection to a clean state
+        if self.transaction_in_trans:
+            # Rollback the transaction if it is in progress
+            self.rollback()
+        self.autocommit = True
+        with self.cursor() as cur:
+            # Reset the connection to a clean state
+            cur.execute("DISCARD ALL")
+
     def close(self) -> None:
         """
         Closes this current connection.

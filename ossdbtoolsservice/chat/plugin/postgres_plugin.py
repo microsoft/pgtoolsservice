@@ -112,8 +112,13 @@ class PostgresPlugin:
         if pooled_connection is None:
             return "Error. Could not connect to the database. No connection found."
 
-        with pooled_connection as connection:
-            return fetch_schema(connection._conn)
+        try:
+            with pooled_connection as connection:
+                return fetch_schema(connection._conn)
+        except Exception as e:   
+            if self._logger:
+                self._logger.exception(e)         
+            return f"Error fetching database context: {e}"
 
     @kernel_function(
         name="execute_sql_query_readonly",
@@ -161,7 +166,7 @@ class PostgresPlugin:
                 result = execute_readonly_query(
                     connection._conn, query, self._max_result_chars
                 )
-            except Exception:
+            except Exception as e:
                 self._request_context.send_notification(
                     COPILOT_QUERY_NOTIFICATION_METHOD,
                     CopilotQueryNotificationParams(
@@ -172,7 +177,7 @@ class PostgresPlugin:
                         has_error=True,
                     ),
                 )
-                raise
+                return f"Error executing statement: {e}"
 
         self._request_context.send_notification(
             COPILOT_QUERY_NOTIFICATION_METHOD,
@@ -244,7 +249,7 @@ class PostgresPlugin:
         with pooled_connection as connection:
             try:
                 result = execute_statement(connection._conn, statement)
-            except Exception:
+            except Exception as e:
                 self._request_context.send_notification(
                     COPILOT_QUERY_NOTIFICATION_METHOD,
                     CopilotQueryNotificationParams(
@@ -255,7 +260,7 @@ class PostgresPlugin:
                         has_error=True,
                     ),
                 )
-                raise
+                return f"Error executing statement: {e}"
 
         self._request_context.send_notification(
             COPILOT_QUERY_NOTIFICATION_METHOD,
