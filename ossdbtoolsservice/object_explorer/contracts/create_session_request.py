@@ -12,7 +12,7 @@ from ossdbtoolsservice.hosting import (
 
 
 class CreateSessionResponse(PGTSBaseModel):
-    session_id: str 
+    session_id: str
 
 
 CREATE_SESSION_REQUEST = IncomingMessageConfiguration(

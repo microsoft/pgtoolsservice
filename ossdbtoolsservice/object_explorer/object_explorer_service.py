@@ -5,20 +5,20 @@
 
 import threading
 from logging import Logger
-from typing import Dict, List, Optional  # noqa
+from typing import Optional
 from urllib.parse import quote, urlparse
 
 import psycopg
 
 import ossdbtoolsservice.utils.constants as constants
 import ossdbtoolsservice.utils.validate as validate
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts import (
     ConnectionDetails,
     ConnectionType,
     ConnectRequestParams,
 )
-from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.metadata.contracts import ObjectMetadata
 from ossdbtoolsservice.object_explorer.contracts import (
@@ -46,10 +46,6 @@ from ossdbtoolsservice.object_explorer.routing import PG_ROUTING_TABLE
 from ossdbtoolsservice.object_explorer.session import ObjectExplorerSession
 from ossdbtoolsservice.utils.connection import get_connection_details_with_defaults
 from pgsmo import Server as PGServer
-
-ROUTING_TABLES = {constants.PG_PROVIDER_NAME: PG_ROUTING_TABLE}
-
-SERVER_TYPES = {constants.PG_PROVIDER_NAME: PGServer}
 
 
 class ObjectExplorerService(Service):
@@ -186,9 +182,7 @@ class ObjectExplorerService(Service):
                 conn_service = self.service_provider.get(
                     constants.CONNECTION_SERVICE_NAME, ConnectionService
                 )
-                connect_result = conn_service.disconnect(
-                    session.id, ConnectionType.OBJECT_EXLPORER
-                )
+                connect_result = conn_service.disconnect(session.id)
 
                 if not connect_result:
                     if self.service_provider.logger is not None:
@@ -246,9 +240,7 @@ class ObjectExplorerService(Service):
             constants.CONNECTION_SERVICE_NAME, ConnectionService
         )
         for _key, session in self._session_map.items():
-            connect_result = conn_service.disconnect(
-                session.id, ConnectionType.OBJECT_EXLPORER
-            )
+            connect_result = conn_service.disconnect(session.id)
             self._close_database_connections(session)
             if connect_result:
                 if self.service_provider.logger is not None:
@@ -270,9 +262,7 @@ class ObjectExplorerService(Service):
         for database in session.server.databases if session.server else []:
             close_result = False
             try:
-                close_result = conn_service.disconnect(
-                    session.id + database.name, ConnectionType.OBJECT_EXLPORER
-                )
+                close_result = conn_service.disconnect(session.id + database.name)
             except psycopg.OperationalError as e:
                 if self.service_provider.logger is not None:
                     self.service_provider.logger.info(
@@ -422,9 +412,7 @@ class ObjectExplorerService(Service):
         conn_details = ConnectionDetails.from_data(options)
 
         key_uri = session.id + database_name
-        connect_request = ConnectRequestParams(
-            conn_details, key_uri, ConnectionType.OBJECT_EXLPORER
-        )
+        connect_request = ConnectRequestParams(conn_details, key_uri)
         connect_result = conn_service.connect(connect_request)
         if connect_result is None:
             raise RuntimeError("Connection was cancelled during connect")
@@ -445,11 +433,7 @@ class ObjectExplorerService(Service):
         try:
             # Step 1: Connect with the provided connection details
             with self._connect_semaphore:
-                connect_request = ConnectRequestParams(
-                    session.connection_details,
-                    session.id,
-                    ConnectionType.OBJECT_EXLPORER,
-                )
+                connect_request = ConnectRequestParams(session.connection_details, session.id)
                 connect_result = conn_service.connect(connect_request)
                 if connect_result is None:
                     raise RuntimeError(
@@ -504,7 +488,7 @@ class ObjectExplorerService(Service):
 
             # Attempt to clean up the connection
             if connection is not None:
-                conn_service.disconnect(session.id, ConnectionType.OBJECT_EXLPORER)
+                conn_service.disconnect(session.id)
 
     def _session_created_error(
         self,
