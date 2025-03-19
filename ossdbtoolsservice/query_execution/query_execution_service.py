@@ -766,28 +766,10 @@ class QueryExecutionService(Service):
         )
         _check_and_fire(worker_args.on_message_notification, result_message_params)
 
-        # If there was a failure in the middle of a transaction, roll it back.
-        # Note that conn.rollback() won't work since the connection is in autocommit mode
-        if (
-            not is_rollback_error
-            and not retry_query
-            and worker_args.connection.transaction_in_error
-            and not worker_args.connection.user_transaction
-        ):
-            rollback_query = Query(
-                query.owner_uri,
-                "ROLLBACK",
-                QueryExecutionSettings(ExecutionPlanOptions()),
-                QueryEvents(),
-            )
-            try:
-                rollback_query.execute(worker_args.connection)
-            except Exception as rollback_exception:
-                # If the rollback failed, handle the error as usual
-                # but don't try to roll back again
-                self._resolve_query_exception(
-                    rollback_exception, rollback_query, worker_args, True
-                )
+        # Don't roll back transaction.
+        # If the user opened the transaction, they should roll it back.
+        # If the user did not open the transaction, the connection is in autocommit mode
+        # and the transaction will be rolled back automatically.
 
     def _save_result(
         self,

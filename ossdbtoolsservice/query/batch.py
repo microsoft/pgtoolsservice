@@ -141,6 +141,10 @@ class Batch:
     def notices(self) -> list[str]:
         return self._notices
 
+    @property
+    def is_rollback(self) -> bool:
+        return self.batch_text.lower().startswith("rollback")
+
     def get_cursor(self, connection: ServerConnection) -> psycopg.Cursor:
         return connection.cursor()
 

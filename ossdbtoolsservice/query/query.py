@@ -163,6 +163,15 @@ class Query:
 
         # Run each batch sequentially
         try:
+            if connection.transaction_in_error and not self.is_rollback:
+                # If the transaction is in error, the only statements we can execute
+                # are ROLLBACK or ROLLBACK TO SAVEPOINT.
+                raise RuntimeError(
+                    "Your transaction is currently aborted due to an error. "
+                    "You must explicitly issue a ROLLBACK or ROLLBACK TO SAVEPOINT "
+                    "before executing further commands."
+                )
+
             if self._user_transaction:
                 connection.set_user_transaction(True)
 
@@ -184,6 +193,17 @@ class Query:
                 connection.set_user_transaction(False)
                 self._disable_auto_commit = False
             self._execution_state = ExecutionState.EXECUTED
+            self._connection_backend_pid = None
+
+    @property
+    def is_rollback(self) -> bool:
+        """
+        Check if the query is a rollback - this is determined by checking if the first batch
+        is a rollback statement.
+
+        :return: True if the query is a rollback, False otherwise
+        """
+        return bool(self.batches) and self.batches[0].is_rollback
 
     def get_subset(
         self, batch_index: int, start_index: int, end_index: int
