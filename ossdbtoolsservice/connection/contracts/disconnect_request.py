@@ -12,9 +12,11 @@ class DisconnectRequestParams(Serializable):
     owner_uri: str | None
     type: ConnectionType | None
 
-    def __init__(self) -> None:
-        self.owner_uri = None
-        self.type = None
+    def __init__(
+        self, owner_uri: str | None = None, type: ConnectionType | None = None
+    ) -> None:
+        self.owner_uri = owner_uri
+        self.type = type
 
 
 DISCONNECT_REQUEST = IncomingMessageConfiguration(

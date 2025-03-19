@@ -3,10 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.connection.contracts.build_connection_info_request import (
-    BUILD_CONNECTION_INFO_REQUEST,
-    BuildConnectionInfoParams,
-)
 from ossdbtoolsservice.connection.contracts.cancellation_request import (
     CANCEL_CONNECT_REQUEST,
     CancelConnectParams,
@@ -16,9 +12,11 @@ from ossdbtoolsservice.connection.contracts.change_database_request import (
     ChangeDatabaseRequestParams,
 )
 from ossdbtoolsservice.connection.contracts.common import (
+    AzureToken,
     ConnectionDetails,
     ConnectionSummary,
     ConnectionType,
+    ServerInfo,
 )
 from ossdbtoolsservice.connection.contracts.connect_request import (
     CONNECT_REQUEST,
@@ -27,7 +25,6 @@ from ossdbtoolsservice.connection.contracts.connect_request import (
 from ossdbtoolsservice.connection.contracts.connection_complete_notification import (
     CONNECTION_COMPLETE_METHOD,
     ConnectionCompleteParams,
-    ServerInfo,
 )
 from ossdbtoolsservice.connection.contracts.disconnect_request import (
     DISCONNECT_REQUEST,
@@ -44,8 +41,7 @@ from ossdbtoolsservice.connection.contracts.list_databases import (
 )
 
 __all__ = [
-    "BUILD_CONNECTION_INFO_REQUEST",
-    "BuildConnectionInfoParams",
+    "AzureToken",
     "CANCEL_CONNECT_REQUEST",
     "CancelConnectParams",
     "CONNECT_REQUEST",

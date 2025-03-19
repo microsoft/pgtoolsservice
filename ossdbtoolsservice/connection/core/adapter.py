@@ -1,3 +1,4 @@
+from functools import lru_cache
 from ipaddress import ip_address, ip_interface
 from typing import Any
 
@@ -168,7 +169,13 @@ class JsonDumperpgAdmin(_JsonDumper):
         return v
 
 
+@lru_cache(maxsize=1)
 def addAdapters() -> None:
+    """
+    Register the adapters for the types that are not supported by psycopg3
+    This will only execute once per process.
+    """
+
     # This registers a unicode type caster for datatype 'RECORD'.
     for typ in PSYCOPG_SUPPORTED_RECORD_TYPES:
         psycopg.adapters.register_loader(typ, TextLoaderpgAdmin)
