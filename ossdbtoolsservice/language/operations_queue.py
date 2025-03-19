@@ -12,9 +12,11 @@ from typing import Callable, Optional
 
 from prompt_toolkit.completion import Completer
 
-from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectRequestParams
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import (
+    ConnectionService,
+    OwnerConnectionInfo,
+    PooledConnection,
+)
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
 from ossdbtoolsservice.utils import constants
@@ -32,9 +34,9 @@ class ConnectionContext:
         self.is_connected: bool = False
         self.logger: Logger | None = logger
 
-    def refresh_metadata(self, connection: ServerConnection) -> None:
+    def refresh_metadata(self, pooled_connection: PooledConnection) -> None:
         # Start metadata refresh so operations can be completed
-        completion_refresher = CompletionRefresher(connection, self.logger)
+        completion_refresher = CompletionRefresher(pooled_connection, self.logger)
         completion_refresher.refresh(self._on_completions_refreshed)
 
     # IMPLEMENTATION DETAILS ###############################################
@@ -117,7 +119,7 @@ class OperationsQueue:
             operation.context = context
             self.queue.put(operation)
 
-    def has_connection_context(self, conn_info: ConnectionInfo) -> bool:
+    def has_connection_context(self, conn_info: OwnerConnectionInfo) -> bool:
         """
         Checks if there's a connection context for a given connection in the map.
         Intentional does not lock as this is intended for quick lookup
@@ -126,7 +128,7 @@ class OperationsQueue:
         return key in self._context_map
 
     def add_connection_context(
-        self, conn_info: ConnectionInfo, overwrite: bool = False
+        self, conn_info: OwnerConnectionInfo, overwrite: bool = False
     ) -> ConnectionContext:
         """
         Adds a connection context and returns the notification event.
@@ -137,63 +139,33 @@ class OperationsQueue:
             context: ConnectionContext | None = self._context_map.get(key)
             logger: Logger | None = self._service_provider.logger
 
-            if context:
-                if overwrite:
-                    self.disconnect(key)
-                else:
-                    # Notify ready and return immediately, the queue exists
-                    return context
+            if context and not overwrite:
+                # Notify ready and return immediately, the queue exists
+                return context
             # Create the context and start refresh
             context = ConnectionContext(key, logger)
-            conn = self._create_connection(key, conn_info)
-            if not conn:
+            pooled_connection = self._create_pooled_connection(conn_info.owner_uri)
+            if not pooled_connection:
                 raise RuntimeError("Failed to create connection for intellisense")
-            context.refresh_metadata(conn)
+            context.refresh_metadata(pooled_connection)
             self._context_map[key] = context
             return context
 
-    def disconnect(self, connection_key: str) -> None:
-        """
-        Disconnects a connection that was used for intellisense
-        """
-        with self.lock:
-            # Pop the key from the queue as it's no longer needed
-            context: ConnectionContext | None = self._context_map.pop(connection_key, None)
-            if context:
-                key_uri = INTELLISENSE_URI + connection_key
-                try:
-                    self._connection_service.disconnect(key_uri, ConnectionType.INTELLISENSE)
-                except Exception as ex:
-                    self._log_exception(
-                        "error during disconnect, ignoring as assume already disconnected: "
-                        f"{ex}"
-                    )
-
     # IMPLEMENTATION DETAILS ###############################################
     @classmethod
-    def create_key(cls, conn_info: ConnectionInfo) -> str:
+    def create_key(cls, conn_info: OwnerConnectionInfo) -> str:
         """
         Creates a key uniquely identifying a ConnectionInfo object for use in caching
         """
         return (
-            f"{conn_info.details.server_name}|"
-            f"{conn_info.details.database_name}|"
-            f"{conn_info.details.user_name}"
+            f"{conn_info.connection_details.server_name}|"
+            f"{conn_info.connection_details.database_name}|"
+            f"{conn_info.connection_details.user_name}"
         )
 
-    def _create_connection(
-        self, connection_key: str, conn_info: ConnectionInfo
-    ) -> Optional[ServerConnection]:
+    def _create_pooled_connection(self, owner_uri: str) -> Optional[PooledConnection]:
         conn_service = self._connection_service
-        key_uri = INTELLISENSE_URI + connection_key
-        connect_request = ConnectRequestParams(
-            conn_info.details, key_uri, ConnectionType.INTELLISENSE
-        )
-        connect_result = conn_service.connect(connect_request)
-        if connect_result and connect_result.error_message is not None:
-            raise RuntimeError(connect_result.error_message)
-
-        connection = conn_service.get_connection(key_uri, ConnectionType.INTELLISENSE)
+        connection = conn_service.get_pooled_connection(owner_uri)
         return connection
 
     def _process_operations(self) -> None:

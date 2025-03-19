@@ -18,8 +18,7 @@ from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.document import Document
 
 import ossdbtoolsservice.scripting.scripter as scripter
-from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionType
+from ossdbtoolsservice.connection import ConnectionService, OwnerConnectionInfo
 from ossdbtoolsservice.hosting import (
     NotificationContext,
     RequestContext,
@@ -380,7 +379,7 @@ class LanguageService(Service):
         do_send_default_empty_response()
 
     # SERVICE NOTIFICATION HANDLERS #####################################################
-    def on_connect(self, conn_info: ConnectionInfo) -> threading.Thread:
+    def on_connect(self, conn_info: OwnerConnectionInfo) -> threading.Thread:
         """Set up intellisense cache on connection to a new database"""
         return thread.run_as_thread(self._build_intellisense_cache_thread, conn_info)
 
@@ -423,7 +422,7 @@ class LanguageService(Service):
         return uri in self._valid_uri
 
     def _build_intellisense_cache_thread(
-        self, conn_info: ConnectionInfo, overwrite: bool = False
+        self, conn_info: OwnerConnectionInfo, overwrite: bool = False
     ) -> None:
         if not self.operations_queue:
             raise RuntimeError("Operations queue is not initialized")
@@ -552,73 +551,81 @@ class LanguageService(Service):
         if not context or not context.is_connected:
             return False
 
-        definition_result: DefinitionResult | None = None
-        completer: Completer = context.completer
-        completions: Iterable[Completion] = (
-            completer.get_completions(scriptparseinfo.document, None) if completer else []
-        )
-
-        text_doc_uri = params.text_document.uri if params.text_document else None
-
-        if completions and scriptparseinfo.document and text_doc_uri is not None:
-            word_under_cursor = scriptparseinfo.document.get_word_under_cursor()
-            matching_completion = next(
-                completion
-                for completion in completions
-                if completion.display == word_under_cursor
+        try:
+            definition_result: DefinitionResult | None = None
+            completer: Completer = context.completer
+            completions: Iterable[Completion] = (
+                completer.get_completions(scriptparseinfo.document, None) if completer else []
             )
-            if matching_completion:
-                connection = self._connection_service.get_connection(
-                    text_doc_uri, ConnectionType.QUERY
+
+            text_doc_uri = params.text_document.uri if params.text_document else None
+
+            if completions and scriptparseinfo.document and text_doc_uri is not None:
+                word_under_cursor = scriptparseinfo.document.get_word_under_cursor()
+                matching_completion = next(
+                    completion
+                    for completion in completions
+                    if completion.display == word_under_cursor
                 )
-                if connection is None:
-                    request_context.send_response(DefinitionResult(True, "", []))
-                    return False
+                if matching_completion:
+                    pooled_connection = self._connection_service.get_pooled_connection(
+                        text_doc_uri
+                    )
+                    if pooled_connection is None:
+                        request_context.send_response(DefinitionResult(True, "", []))
+                        return False
 
-                scripter_instance = scripter.Scripter(connection)
-                object_metadata = ObjectMetadata(
-                    None,
-                    None,
-                    matching_completion.display_meta,
-                    matching_completion.display,
-                    # Can't find a "schema" on prompt_tookit Completion,
-                    # don't trust this schema grab.
-                    # Using getattr for mypy's sake
-                    getattr(matching_completion, "schema")  # noqa: B009
-                    if hasattr(matching_completion, "schema")
-                    else None,
-                )
-                create_script = scripter_instance.script(
-                    ScriptOperation.CREATE, object_metadata
-                )
+                    with pooled_connection as connection:
+                        scripter_instance = scripter.Scripter(connection)
+                        object_metadata = ObjectMetadata(
+                            None,
+                            None,
+                            matching_completion.display_meta,
+                            matching_completion.display,
+                            # Can't find a "schema" on prompt_tookit Completion,
+                            # don't trust this schema grab.
+                            # Using getattr for mypy's sake
+                            getattr(matching_completion, "schema")  # noqa: B009
+                            if hasattr(matching_completion, "schema")
+                            else None,
+                        )
+                        create_script = scripter_instance.script(
+                            ScriptOperation.CREATE, object_metadata
+                        )
 
-                if create_script:
-                    with tempfile.NamedTemporaryFile(
-                        mode="wt",
-                        delete=False,
-                        encoding="utf-8",
-                        suffix=".sql",
-                        newline=None,
-                    ) as namedfile:
-                        namedfile.write(create_script)
-                        if namedfile.name:
-                            file_uri = "file:///" + namedfile.name.strip("/")
-                            location_in_script = Location(
-                                file_uri, Range(Position(0, 1), Position(1, 1))
-                            )
-                            definition_result = DefinitionResult(
-                                False,
-                                None,
-                                [
-                                    location_in_script,
-                                ],
-                            )
+                        if create_script:
+                            with tempfile.NamedTemporaryFile(
+                                mode="wt",
+                                delete=False,
+                                encoding="utf-8",
+                                suffix=".sql",
+                                newline=None,
+                            ) as namedfile:
+                                namedfile.write(create_script)
+                                if namedfile.name:
+                                    file_uri = "file:///" + namedfile.name.strip("/")
+                                    location_in_script = Location(
+                                        file_uri, Range(Position(0, 1), Position(1, 1))
+                                    )
+                                    definition_result = DefinitionResult(
+                                        False,
+                                        None,
+                                        [
+                                            location_in_script,
+                                        ],
+                                    )
 
-                            request_context.send_response(definition_result)
-                            return True
+                                    request_context.send_response(definition_result)
+                                    return True
 
-        if definition_result is None:
-            request_context.send_response(DefinitionResult(True, "", []))
+            if definition_result is None:
+                request_context.send_response(DefinitionResult(True, "", []))
+        except Exception as e:
+            self._log_error(
+                "Error in send_definition_using_connected_completions: %s", str(e)
+            )
+            request_context.send_response(DefinitionResult(True, str(e), []))
+            return True
 
         return False
 
