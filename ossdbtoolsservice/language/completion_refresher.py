@@ -12,15 +12,12 @@ from collections import OrderedDict
 from logging import Logger
 from typing import Any, Callable
 
-from ossdbtoolsservice.driver import ServerConnection
+from prompt_toolkit.completion import Completer
+
+from ossdbtoolsservice.connection import PooledConnection
 from ossdbtoolsservice.language.completion import PGCompleter
 from ossdbtoolsservice.language.metadata_executor import MetadataExecutor
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 from pgsmo import Server as PGServer
-
-COMPLETER_MAP = {PG_PROVIDER_NAME: PGCompleter}
-
-SERVER_MAP = {PG_PROVIDER_NAME: PGServer}
 
 
 class CompletionRefresher:
@@ -31,19 +28,18 @@ class CompletionRefresher:
 
     refreshers: dict = OrderedDict()
 
-    def __init__(self, connection: ServerConnection, logger: Logger | None = None) -> None:
-        self.connection = connection
+    def __init__(
+        self,
+        pooled_connection: PooledConnection,
+        logger: Logger | None = None,
+        completer_type: type[Completer] | None = None,
+    ) -> None:
+        self.pooled_connection = pooled_connection
         self.logger: Logger | None = logger
+        self.completer_type = completer_type or PGCompleter
         self._server: PGServer | None = None
         self._completer_thread: threading.Thread | None = None
         self._restart_refresh: threading.Event = threading.Event()
-
-    @property
-    def server(self) -> PGServer:
-        if self._server is None:
-            # Delay server creation until on background thread
-            self._server = SERVER_MAP[self.connection._provider_name](self.connection)
-        return self._server
 
     def refresh(
         self,
@@ -84,48 +80,48 @@ class CompletionRefresher:
         settings: dict[str, Any] | None = None,
     ) -> None:
         settings = settings or {}
-        completer: PGCompleter = COMPLETER_MAP[self.connection._provider_name](
-            smart_completion=True, settings=settings
-        )
+        completer = self.completer_type(smart_completion=True, settings=settings)
 
-        self.server.refresh()
-        metadata_executor = MetadataExecutor(self.server)
+        with self.pooled_connection as connection:
+            server = PGServer(connection)
+            server.refresh()
+            metadata_executor = MetadataExecutor(server)
 
-        # If callbacks is a single function then push it into a list.
-        if callable(callbacks):
-            callbacks = [callbacks]
+            # If callbacks is a single function then push it into a list.
+            if callable(callbacks):
+                callbacks = [callbacks]
 
-        try:
-            while True:
-                for do_refresh in self.refreshers.values():
-                    do_refresh(completer, metadata_executor)
-                    if self._restart_refresh.is_set():
-                        self._restart_refresh.clear()
+            try:
+                while True:
+                    for do_refresh in self.refreshers.values():
+                        do_refresh(completer, metadata_executor)
+                        if self._restart_refresh.is_set():
+                            self._restart_refresh.clear()
+                            break
+                    else:
+                        # Break out of while loop if the for loop finishes naturally
+                        # without hitting the break statement.
                         break
-                else:
-                    # Break out of while loop if the for loop finishes naturally
-                    # without hitting the break statement.
-                    break
 
-                # Start over the refresh from the beginning if the for loop hit the
-                # break statement.
-                continue
+                    # Start over the refresh from the beginning if the for loop hit the
+                    # break statement.
+                    continue
 
-            # Load history into completer so it can learn user preferences
-            n_recent = 100
-            if history:
-                for recent in history[-n_recent:]:
-                    completer.extend_query_history(recent, is_init=True)
+                # Load history into completer so it can learn user preferences
+                n_recent = 100
+                if history:
+                    for recent in history[-n_recent:]:
+                        completer.extend_query_history(recent, is_init=True)
 
-        except Exception as e:
-            if self.logger:
-                self.logger.exception("Error during metadata refresh: %s", e)
+            except Exception as e:
+                if self.logger:
+                    self.logger.exception("Error during metadata refresh: %s", e)
 
-        for callback in callbacks:
-            callback(completer)
+            for callback in callbacks:
+                callback(completer)
 
-        if self._restart_refresh.is_set():
-            self._restart_refresh.clear()
+            if self._restart_refresh.is_set():
+                self._restart_refresh.clear()
 
 
 def refresher(
