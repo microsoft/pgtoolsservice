@@ -11,6 +11,7 @@ from logging import Logger
 from ossdbtoolsservice.hosting import MessageServer
 from ossdbtoolsservice.hosting.message_recorder import MessageRecorder
 from ossdbtoolsservice.hosting.rpc_message_server import StreamRPCMessageServer
+from ossdbtoolsservice.hosting.service_provider import ServiceProvider
 from ossdbtoolsservice.main import create_server_init, get_config, get_loggers, main
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
@@ -21,7 +22,7 @@ def _create_server(
     server_logger: Logger,
     async_runner: AsyncRunner,
     message_recorder: MessageRecorder | None,
-) -> MessageServer:
+) -> tuple[MessageServer, ServiceProvider]:
     # Create the server, but don't start it yet
     rpc_server = StreamRPCMessageServer(
         input_stream,
@@ -56,9 +57,11 @@ if __name__ == "__main__":
             args.record_messages_to_file, save_interval=autosave_interval, logger=logger
         )
 
-    server = _create_server(stdin, std_out_wrapped, logger, async_runner, message_recorder)
+    server, service_provider = _create_server(
+        stdin, std_out_wrapped, logger, async_runner, message_recorder
+    )
 
     try:
-        main(server, args, logger)
+        main(server, service_provider, args, logger)
     finally:
         async_runner.shutdown()
