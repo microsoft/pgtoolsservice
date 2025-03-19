@@ -1,3 +1,5 @@
+import psycopg
+
 from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
 from ossdbtoolsservice.utils import constants
 
@@ -20,8 +22,9 @@ def get_connection_details_with_defaults(params: ConnectionDetails) -> Connectio
         new_params.port = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
 
     # Use AzureAccountToken directly as a password
-    if new_params.azure_account_token:
-        new_params.password = new_params.azure_account_token
+    azure_token = new_params.azure_token
+    if azure_token:
+        new_params.password = azure_token.token
 
     return new_params
 
@@ -35,3 +38,23 @@ def is_same_connection_details(
     params1 = get_connection_details_with_defaults(params1)
     params2 = get_connection_details_with_defaults(params2)
     return params1.options == params2.options
+
+
+def get_db_error_message(error: Exception) -> str:
+    """
+    Get the message from DatabaseError instance
+    """
+    # If error.args exists and has at least one element,
+    # return the first element as the error message.
+    if hasattr(error, "args") and error.args and len(error.args) > 0:
+        return error.args[0]
+
+    # If error.diag.message_primary is not None, return it.
+    elif (
+        isinstance(error, psycopg.DatabaseError) and error.diag and error.diag.message_primary
+    ):
+        return error.diag.message_primary
+
+    # If neither is available, return a generic error message.
+    else:
+        return "An unspecified database error occurred."

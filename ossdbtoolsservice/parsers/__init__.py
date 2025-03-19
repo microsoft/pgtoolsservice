@@ -3,8 +3,6 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import ossdbtoolsservice.parsers.datatype_parsers  # noqa
-import ossdbtoolsservice.parsers.datatypes
-import ossdbtoolsservice.parsers.owner_uri_parser  # noqa
+from ossdbtoolsservice.parsers import datatype_parsers, datatypes
 
-__all__ = ["datatypes", "datatype_parsers", "owner_uri_parser"]
+__all__ = ["datatypes", "datatype_parsers"]
