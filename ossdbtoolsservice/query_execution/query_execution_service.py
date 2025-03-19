@@ -17,6 +17,7 @@ from ossdbtoolsservice.connection import (
     ConnectionService,
     PooledConnection,
 )
+from ossdbtoolsservice.connection.core.server_connection import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.query import (
     Batch,
@@ -96,7 +97,7 @@ class ExecuteRequestWorkerArgs:
     def __init__(
         self,
         owner_uri: str,
-        pooled_connection: PooledConnection,
+        connection: ServerConnection | PooledConnection,
         request_context: RequestContext,
         result_set_storage_type: ResultSetStorageType,
         before_query_initialize: Callable[[dict[str, Any]], None] | None = None,
@@ -107,7 +108,7 @@ class ExecuteRequestWorkerArgs:
         on_query_complete: Callable[[QueryCompleteNotificationParams], None] | None = None,
     ) -> None:
         self.owner_uri = owner_uri
-        self.pooled_connection = pooled_connection
+        self.connection = connection
         self.request_context = request_context
         self.result_set_storage_type = result_set_storage_type
         self.before_query_initialize = before_query_initialize
@@ -360,7 +361,7 @@ class QueryExecutionService(Service):
 
         # Get a connection for the query
         try:
-            pooled_connection = self._get_pooled_connection(owner_uri)
+            connection = self._get_long_lived_connection(owner_uri)
         except Exception as e:
             if self.service_provider.logger is not None:
                 self.service_provider.logger.exception(
@@ -371,7 +372,7 @@ class QueryExecutionService(Service):
 
         worker_args = ExecuteRequestWorkerArgs(
             owner_uri,
-            pooled_connection,
+            connection,
             request_context,
             ResultSetStorageType.FILE_STORAGE,
             before_query_initialize,
@@ -589,8 +590,12 @@ class QueryExecutionService(Service):
 
         # Wrap execution in a try/except block so that we can send an error if it fails
         try:
-            with worker_args.pooled_connection as connection:
-                query.execute(connection, retry_state)
+            if isinstance(worker_args.connection, ServerConnection):
+                query.execute(worker_args.connection, retry_state)
+            else:
+                # PooledConnection, use as context manager.
+                with worker_args.connection as connection:
+                    query.execute(connection, retry_state)
         except Exception as e:
             self._resolve_query_exception(e, query, worker_args)
         finally:
@@ -604,8 +609,7 @@ class QueryExecutionService(Service):
 
     def _get_pooled_connection(self, owner_uri: str) -> PooledConnection:
         """
-        Get a pooled connection for the given owner URI and
-        connection type from the connection service
+        Get a pooled connection for the given owner URI from the connection service
 
         :param owner_uri: the URI to get the connection for
         :returns: a PooledConnection object
@@ -617,6 +621,24 @@ class QueryExecutionService(Service):
             constants.CONNECTION_SERVICE_NAME, ConnectionService
         )
         connection = connection_service.get_pooled_connection(owner_uri)
+        if connection is None:
+            raise ValueError(f"No connection for owner URI: {owner_uri}")
+        return connection
+
+    def _get_long_lived_connection(self, owner_uri: str) -> ServerConnection:
+        """
+        Get a long lived connection for the given owner URI from the connection service
+
+        :param owner_uri: the URI to get the connection for
+        :returns: a ServerConnection object
+        :raises LookupError: if there is no connection service
+        :raises ValueError: if there is no connection pool
+            corresponding to the given owner_uri
+        """
+        connection_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
+        connection = connection_service.get_connection(owner_uri, owner_uri[-30:])
         if connection is None:
             raise ValueError(f"No connection for owner URI: {owner_uri}")
         return connection

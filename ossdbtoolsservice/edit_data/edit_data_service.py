@@ -101,7 +101,7 @@ class EditDataService(Service):
         assert owner_uri is not None  # for type checking
 
         connection = self.connection_service.get_connection(
-            params.owner_uri, ConnectionType.QUERY
+            owner_uri, ConnectionType.QUERY
         )
 
         if connection is None:
@@ -112,7 +112,7 @@ class EditDataService(Service):
         # TODO: Refactor if we want to keep edit service, which is currently
         # unused in VSCode. We'd have to push the pooled connection everywhere
         # the connection is used.
-        pooled_connection = PooledConnection(lambda: connection, lambda conn: None)
+        pooled_connection = PooledConnection(lambda _: connection, lambda conn: None)
 
         if connection is None:
             request_context.send_error("Could not get connection")
@@ -268,7 +268,7 @@ class EditDataService(Service):
             return
 
         connection = self.connection_service.get_connection(
-            params.owner_uri, ConnectionType.QUERY
+            owner_uri, ConnectionType.QUERY
         )
 
         if connection is None:

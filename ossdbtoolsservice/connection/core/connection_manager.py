@@ -88,9 +88,7 @@ class ConnectionManager:
         self._owner_uri_to_active_tx_connection: dict[
             str, tuple[ServerConnection, ConnectionPool]
         ] = {}
-        self._owner_uri_to_orphaned_connection: dict[
-            str, dict[ConnectionType, ServerConnection]
-        ] = {}
+        self._owner_ur_to_long_lived_connection: dict[str, dict[str, ServerConnection]] = {}
         self._owner_uri_to_conn_info: dict[str, OwnerConnectionInfo] = {}
 
         self._fetch_azure_token = fetch_azure_token
@@ -223,9 +221,9 @@ class ConnectionManager:
                 conn.close()
                 pool.putconn(conn.connection)
 
-            # Remove orphaned connections.
-            if owner_uri in self._owner_uri_to_orphaned_connection:
-                connections = self._owner_uri_to_orphaned_connection.pop(owner_uri)
+            # Remove long lived connections.
+            if owner_uri in self._owner_ur_to_long_lived_connection:
+                connections = self._owner_ur_to_long_lived_connection.pop(owner_uri)
                 for conn in connections.values():
                     conn.return_to_pool()
 
@@ -272,21 +270,23 @@ class ConnectionManager:
                 # If so, return the existing connection.
                 conn, pool = self._owner_uri_to_active_tx_connection[owner_uri]
                 return PooledConnection(
-                    get_connection=lambda: conn,
+                    get_connection=lambda _: conn,
                     put_connection=lambda conn: self._put_connection(conn, pool, owner_uri),
                 )
             elif owner_uri in self._owner_uri_to_details:
                 # If the owner URI is associated with a connection pool, return it.
                 details, pool = self._owner_uri_to_details[owner_uri]
                 return PooledConnection(
-                    get_connection=lambda: self._get_connection(pool, details),
+                    get_connection=lambda pooled_conn: self._get_connection(
+                        pool, details, pooled_conn
+                    ),
                     put_connection=lambda conn: self._put_connection(conn, pool, owner_uri),
                 )
             else:
                 return None
 
-    def get_orphaned_connection(
-        self, owner_uri: str, connection_type: ConnectionType
+    def get_long_lived_connection(
+        self, owner_uri: str, connection_name: ConnectionType | str
     ) -> ServerConnection | None:
         """Gets a connection that is not tracked with the pool it comes from.
 
@@ -300,15 +300,15 @@ class ConnectionManager:
             The connection if found, None otherwise.
         """
         with self._lock:
-            if owner_uri in self._owner_uri_to_orphaned_connection:
-                # If the owner URI is already associated with an orphaned connection of
+            if owner_uri in self._owner_ur_to_long_lived_connection:
+                # If the owner URI is already associated with an long lived connection of
                 # the same type, return it.
                 # Check the connection first, same way the pool does.
                 # If the connection is not valid, remove it from the map,
                 # so a new connection can be created.
-                connections = self._owner_uri_to_orphaned_connection[owner_uri]
-                if connection_type in connections:
-                    conn = connections[connection_type]
+                connections = self._owner_ur_to_long_lived_connection[owner_uri]
+                if connection_name in connections:
+                    conn = connections[connection_name]
                     try:
                         conn.check()
                         return conn
@@ -316,22 +316,22 @@ class ConnectionManager:
                         # If the connection is not valid, remove it from the map
                         # and return it to the pool. The pool will discard it.
                         conn.return_to_pool()
-                        del connections[connection_type]
+                        del connections[connection_name]
                         if not connections:
-                            del self._owner_uri_to_orphaned_connection[owner_uri]
+                            del self._owner_ur_to_long_lived_connection[owner_uri]
             if owner_uri in self._owner_uri_to_details:
                 # If the owner URI is associated with a connection pool, get a new connection.
                 details, pool = self._owner_uri_to_details[owner_uri]
-                conn = self._get_connection(pool, details, True)
+                conn = self._get_connection(pool, details)
                 conn.autocommit = True
                 # Set the application name to show the connection type.
                 application_name = conn.application_name or ""
-                application_name = f"{application_name} - {connection_type.value}"
+                application_name = f"{application_name} - {connection_name}"
                 conn.execute_statement("SET application_name = %s", [application_name])
-                # Store the connection in the orphaned connection map.
-                if owner_uri not in self._owner_uri_to_orphaned_connection:
-                    self._owner_uri_to_orphaned_connection[owner_uri] = {}
-                self._owner_uri_to_orphaned_connection[owner_uri][connection_type] = conn
+                # Store the connection in the long lived connection map.
+                if owner_uri not in self._owner_ur_to_long_lived_connection:
+                    self._owner_ur_to_long_lived_connection[owner_uri] = {}
+                self._owner_ur_to_long_lived_connection[owner_uri][connection_name] = conn
                 return conn
             else:
                 return None
@@ -351,7 +351,7 @@ class ConnectionManager:
             self._details_to_owner_uri.clear()
             self._owner_uri_to_details.clear()
             self._owner_uri_to_active_tx_connection.clear()
-            self._owner_uri_to_orphaned_connection.clear()
+            self._owner_ur_to_long_lived_connection.clear()
             self._owner_uri_to_conn_info.clear()
             self._details_to_connection_errors.clear()
 
@@ -377,7 +377,10 @@ class ConnectionManager:
         self._fetch_azure_token = fetch_azure_token
 
     def _get_connection(
-        self, pool: ConnectionPool, details: ConnectionDetails, is_orphan: bool = False
+        self,
+        pool: ConnectionPool,
+        details: ConnectionDetails,
+        pooled_connection: PooledConnection | None = None,
     ) -> ServerConnection:
         try:
             conn = pool.getconn()
@@ -386,9 +389,9 @@ class ConnectionManager:
             # not have been returned from the pool.
             # Set autocommit to True.
             conn.autocommit = True
-            # If this is an orphaned connection, set the pool so that
+            # If this is an long lived connection, set the pool so that
             # it can be manually returned to the pool.
-            return ServerConnection(conn, pool if is_orphan else None)
+            return ServerConnection(conn, pool, pooled_connection)
         except PoolTimeout as e:
             stats = pool.get_stats()
             pool_size = stats.get("pool_size", 0)

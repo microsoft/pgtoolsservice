@@ -80,7 +80,7 @@ class TestMetadataService(unittest.TestCase):
             cur=mock_cursor, connection=mock_psycopg_connection
         )
         mock_cursor.connection = mock_psycopg_connection
-        pooled_connection = PooledConnection(lambda: mock_connection, lambda _: None)
+        pooled_connection = PooledConnection(lambda _: mock_connection, lambda _: None)
         self.connection_service.get_pooled_connection = mock.Mock(
             return_value=pooled_connection
         )

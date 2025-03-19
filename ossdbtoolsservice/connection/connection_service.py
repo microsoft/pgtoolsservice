@@ -136,20 +136,21 @@ class ConnectionService(Service):
         return self._connection_manager.disconnect(owner_uri)
 
     def get_connection(
-        self, owner_uri: str | None, connection_type: ConnectionType
+        self, owner_uri: str, connection_type: ConnectionType | str
     ) -> Optional[ServerConnection]:
         """
         Get a connection for the given owner URI and connection type.
 
         NOTE: Use get_pooled_connection and use as a context manager instead of this method.
-        This is kept to support legacy code in the Object Explorer.
+        If possible. This method will issue a long lived connection that cannot be
+        shared.
 
         :raises ValueError: If there is no connection associated with the provided URI
         """
         if owner_uri is None:
             raise ValueError("No owner URI set")
 
-        return self._connection_manager.get_orphaned_connection(owner_uri, connection_type)
+        return self._connection_manager.get_long_lived_connection(owner_uri, connection_type)
 
     def get_pooled_connection(self, owner_uri: str) -> Optional[PooledConnection]:
         """

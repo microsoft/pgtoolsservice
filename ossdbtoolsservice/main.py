@@ -56,7 +56,7 @@ def create_server_init(
 ) -> tuple[MessageServer, ServiceProvider]:
     # Create the service provider and add the providers to it
     services = get_all_services()
-    service_box = ServiceProvider(message_server, services, server_logger)    
+    service_box = ServiceProvider(message_server, services, server_logger)
     return message_server, service_box
 
 
