@@ -95,6 +95,7 @@ class Query:
 
             # Create and save the batch
             if bool(self._execution_plan_options):
+                # TODO: These options are unused in VSCode.
                 if self._execution_plan_options.include_estimated_execution_plan_xml:
                     sql_statement_text = Query.EXPLAIN_QUERY_TEMPLATE.format(
                         sql_statement_text
