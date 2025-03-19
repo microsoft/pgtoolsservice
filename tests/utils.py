@@ -314,3 +314,7 @@ class MockMessageServer(MessageServer):
 
     def recieve_message(self, message: JSONRPCMessage) -> None:
         self._dispatch_message(message)
+
+
+def get_fully_qualified_type_name(obj: type) -> str:
+    return f"{obj.__module__}.{obj.__qualname__}"

@@ -6,6 +6,7 @@
 import unittest
 import unittest.mock as mock
 
+import psycopg
 from psycopg import sql
 
 from ossdbtoolsservice.admin import AdminService
@@ -14,8 +15,7 @@ from ossdbtoolsservice.admin.contracts import (
     GetDatabaseInfoParameters,
     GetDatabaseInfoResponse,
 )
-from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types import ServerConnection
+from ossdbtoolsservice.connection import ConnectionService, PooledConnection, ServerConnection
 from ossdbtoolsservice.utils import constants
 from tests.integration import get_connection_details, integration_test
 from tests.mocks.service_provider_mock import ServiceProviderMock
@@ -65,7 +65,10 @@ class TestAdminService(unittest.TestCase):
             cur=mock_cursor, connection=mock_psycopg_connection, name=db_name
         )
         mock_cursor.connection = mock_psycopg_connection
-        self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
+        pooled_connection = PooledConnection(lambda: mock_connection, lambda _: None)
+        self.connection_service.get_pooled_connection = mock.Mock(
+            return_value=pooled_connection
+        )
 
         # If I send a get_database_info request
         self.admin_service._handle_get_database_info_request(request_context, params)
@@ -92,8 +95,12 @@ class TestAdminService(unittest.TestCase):
         request_context = MockRequestContext()
 
         # Set up the connection service to return our connection
-        connection = ServerConnection(get_connection_details())
-        self.connection_service.get_connection = mock.Mock(return_value=connection)
+        conn = psycopg.connect(**get_connection_details())
+        connection = ServerConnection(conn)
+        pooled_connection = PooledConnection(lambda: connection, lambda _: None)
+        self.connection_service.get_pooled_connection = mock.Mock(
+            return_value=pooled_connection
+        )
 
         # If I send a get_database_info request
         self.admin_service._handle_get_database_info_request(request_context, params)

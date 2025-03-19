@@ -18,9 +18,9 @@ from dateutil import parser
 from psycopg import sql
 
 import tests.utils as utils
-from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionDetails, ConnectionType
-from ossdbtoolsservice.driver.types.driver import (
+from ossdbtoolsservice.connection import ConnectionService, PooledConnection
+from ossdbtoolsservice.connection.contracts import ConnectionType
+from ossdbtoolsservice.connection.core.server_connection import (
     PG_CANCELLATION_QUERY,
     ServerConnection,
 )
@@ -95,6 +95,7 @@ class TestQueryService(unittest.TestCase):
         self.connection = MockPGServerConnection(
             cur=self.cursor, connection=self.mock_psycopg_connection
         )
+        self.pooled_connection = PooledConnection(lambda: self.connection, lambda conn: None)
         self.cursor.connection = self.mock_psycopg_connection
         self.connection_service = ConnectionService()
         self.query_execution_service = QueryExecutionService()
@@ -121,7 +122,9 @@ class TestQueryService(unittest.TestCase):
             else:
                 return self.connection
 
-        self.connection_service.get_connection = mock.Mock(side_effect=connection_side_effect)
+        self.connection_service.get_pooled_connection = mock.Mock(
+            return_value=self.pooled_connection
+        )
 
     def tearDown(self) -> None:
         generated_files_path = "."
@@ -612,12 +615,11 @@ class TestQueryService(unittest.TestCase):
             call[1][1] for call in notification_calls if call[1][0] == MESSAGE_NOTIFICATION
         ]
 
-        # Assert that only three message notifications were sent.
+        # Assert that only two message notifications were sent.
         # The first is a message containing only the notifications, where is_error is false
         # The second is the error message, where is_error is true
-        # The third is another error message that occurs during rollback
         expected_notices = ["NOTICE: foo", "DEBUG: bar"]
-        self.assertEqual(len(call_params_list), 3)
+        self.assertEqual(len(call_params_list), 2)
         self.assertFalse(call_params_list[0].message.is_error)
         self.assertTrue(call_params_list[1].message.is_error)
         notices_str = "\n".join(expected_notices)
@@ -659,7 +661,7 @@ class TestQueryService(unittest.TestCase):
         # The first is a message containing only the notifications, where is_error is false
         # The second is the error message, where is_error is true
         expected_notices = ["NOTICE: foo", "DEBUG: bar"]
-        self.assertEqual(len(call_params_list), 3)
+        self.assertEqual(len(call_params_list), 2)
         self.assertFalse(call_params_list[0].message.is_error)
         self.assertTrue(call_params_list[1].message.is_error)
         notices_str = "\n".join(expected_notices)
@@ -675,10 +677,15 @@ class TestQueryService(unittest.TestCase):
         execute_params = get_execute_string_params()
         cancel_params = get_execute_request_params()
 
-        def cancel_during_execute_side_effects(*args):
-            self.query_execution_service._handle_cancel_query_request(
-                self.request_context, cancel_params
-            )
+        cancel_called = False
+
+        def cancel_during_execute_side_effects(*args, **kwargs):
+            nonlocal cancel_called
+            if not cancel_called:
+                cancel_called = True
+                self.query_execution_service._handle_cancel_query_request(
+                    self.request_context, cancel_params
+                )
 
         # Set up to run cancel query handler during execute() attempt
         self.cursor.execute = mock.Mock(side_effect=cancel_during_execute_side_effects)
@@ -701,8 +708,7 @@ class TestQueryService(unittest.TestCase):
         # Then we must have ran execute for a batch,
         # and executed 'SELECTED pg_cancel_backend(pid)
         # to cancel the query
-        self.cursor.execute.assert_called_once()
-        self.cursor_cancel.execute.assert_called_once()
+        self.assertEqual(self.cursor.execute.call_count, 2)
         self.assertTrue(
             isinstance(self.request_context.last_response_params, QueryCancelResult)
         )
@@ -711,7 +717,7 @@ class TestQueryService(unittest.TestCase):
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
         self.assertEqual(
-            self.cursor_cancel.execute.call_args_list[0][0][0],
+            self.cursor.execute.call_args_list[1][0][0],
             sql.SQL(PG_CANCELLATION_QUERY.format(0)),
         )
 
@@ -760,21 +766,11 @@ class TestQueryService(unittest.TestCase):
         self.query_execution_service.owner_to_thread_map[execute_params.owner_uri].join()
         query = self.query_execution_service.query_results[execute_params.owner_uri]
 
-        # Then the execute request handler's execute is not called,
-        # as well as the cancel query's execute of 'SELECT pg_cancel_backend(pid) is called,
-        # but doesn't do anything
-        self.cursor.execute.assert_not_called()
-        self.cursor_cancel.execute.assert_called_once()
+        # Then the execute request handler's execute is not called
         self.assertTrue(
             isinstance(self.request_context.last_response_params, QueryCancelResult)
         )
         self.assertEqual(self.request_context.last_response_params.messages, None)
-        # Check the positional args for the first arg of of the first (and only) call
-        # is the query string to cancel the ongoing query
-        self.assertEqual(
-            self.cursor_cancel.execute.call_args_list[0][0][0],
-            sql.SQL(PG_CANCELLATION_QUERY.format(0)),
-        )
 
         # The batch should be marked as canceled, the state should be executed,
         # and we should have rolled back
@@ -1101,9 +1097,11 @@ class TestQueryService(unittest.TestCase):
     def test_query_disposal_with_query_executing(self) -> None:
         """Test query disposal while a query is executing"""
         uri = "test_uri"
-        self.query_execution_service.query_results[uri] = Query(
+        query = Query(
             uri, "", QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents()
         )
+        query._connection_backend_pid = 0
+        self.query_execution_service.query_results[uri] = query
         self.query_execution_service.query_results[
             uri
         ]._execution_state = ExecutionState.EXECUTING
@@ -1115,20 +1113,22 @@ class TestQueryService(unittest.TestCase):
         self.assertTrue(uri not in self.query_execution_service.query_results)
         self.request_context.send_response.assert_called_once_with({})
         self.request_context.send_error.assert_not_called()
-        self.cursor_cancel.execute.assert_called_once()
+        self.cursor.execute.assert_called_once()
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
         self.assertEqual(
-            self.cursor_cancel.execute.call_args_list[0][0][0],
+            self.cursor.execute.call_args_list[0][0][0],
             sql.SQL(PG_CANCELLATION_QUERY.format(0)),
         )
 
     def test_query_disposal_with_query_not_started(self) -> None:
         """Test query disposal while a query has not started executing"""
         uri = "test_uri"
-        self.query_execution_service.query_results[uri] = Query(
+        query = Query(
             uri, "", QueryExecutionSettings(ExecutionPlanOptions(), None), QueryEvents()
         )
+        query._connection_backend_pid = 0
+        self.query_execution_service.query_results[uri] = query
         params = QueryDisposeParams()
         params.owner_uri = uri
 
@@ -1137,11 +1137,11 @@ class TestQueryService(unittest.TestCase):
         self.assertTrue(uri not in self.query_execution_service.query_results)
         self.request_context.send_response.assert_called_once_with({})
         self.request_context.send_error.assert_not_called()
-        self.cursor_cancel.execute.assert_called_once()
+        self.cursor.execute.assert_called_once()
         # Check the positional args for the first arg of of the first (and only) call
         # is the query string to cancel the ongoing query
         self.assertEqual(
-            self.cursor_cancel.execute.call_args_list[0][0][0],
+            self.cursor.execute.call_args_list[0][0][0],
             sql.SQL(PG_CANCELLATION_QUERY.format(0)),
         )
 
@@ -1301,53 +1301,13 @@ class TestQueryService(unittest.TestCase):
 
         self.assertEqual("EXPLAIN ANALYZE Test Query", query._batches[0].batch_text)
 
-    def test_execution_error_rolls_back_transaction(self) -> None:
-        """Test that a query execution error in the middle of a transaction
-        causes that transaction to roll back"""
-        # Set up the cursor to throw an error when executing and the connection to
-        # indicate that a transaction is open
-        self.cursor.execute.side_effect = self.cursor.execute_failure_side_effects
-        self.mock_psycopg_connection.TransactionStatus = psycopg.pq.TransactionStatus.INERROR
-        query_params = get_execute_string_params()
-        query = Query(
-            query_params.owner_uri,
-            query_params.query,
-            QueryExecutionSettings(ExecutionPlanOptions(), None),
-            QueryEvents(),
-        )
-        self.query_execution_service.query_results[query_params.owner_uri] = query
-
-        # If I execute a query that opens a transaction and then throws an error when executed
-
-        worker_args = ExecuteRequestWorkerArgs(
-            query_params.owner_uri, self.connection, self.request_context, None
-        )
-
-        self.query_execution_service._execute_query_request_worker(worker_args)
-
-        # Then a rollback transaction should have been executed
-        self.cursor.execute.assert_has_calls(
-            [mock.call(sql.SQL(query_params.query)), mock.call(sql.SQL("ROLLBACK"))]
-        )
-
     def test_handle_simple_execute_request(self) -> None:
         """Test for _handle_simple_execute_request to make sure it returns required details
         from the first batch"""
         simple_execution_request = SimpleExecuteRequest()
         simple_execution_request.owner_uri = "test_uri"
         simple_execution_request.query_string = "Select something"
-        connection_uri = "test_connection_url"
 
-        connection_details = ConnectionDetails.from_data({})
-        connection_info = ConnectionInfo(connection_uri, connection_details)
-
-        def get_connection_info(uri):
-            self.assertEqual(uri, simple_execution_request.owner_uri)
-            return connection_info
-
-        self.connection_service.get_connection_info = mock.Mock(
-            side_effect=get_connection_info
-        )
         self.connection_service.connect = mock.MagicMock()
 
         mock_rows = [("Result1", 53, 2.57), ("Result2", None, "foobar")]
@@ -1489,8 +1449,12 @@ class TestQueryService(unittest.TestCase):
         query_params.query = "select usename, usesysid from pg_catalog.pg_user"
         query_params.owner_uri = "test_uri"
 
-        connection = ServerConnection(get_connection_details())
-        self.connection_service.get_connection = mock.Mock(return_value=connection)
+        conn = psycopg.connect(**get_connection_details())
+        connection = ServerConnection(conn)
+        pooled_connection = PooledConnection(lambda: connection, lambda _: None)
+        self.connection_service.get_pooled_connection = mock.Mock(
+            return_value=pooled_connection
+        )
 
         mock_thread = utils.MockThread()
         with mock.patch(
@@ -1511,7 +1475,6 @@ class TestQueryService(unittest.TestCase):
         notification_methods = list(notifications.keys())
         expected_methods = [
             "query/batchStart",
-            "query/resultSetAvailable",
             "query/resultSetComplete",
             "query/message",
             "query/batchComplete",
