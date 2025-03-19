@@ -27,7 +27,16 @@ class PlaybackConfiguration:
             Dictionary of properties with custom matching functions.
             The key is the property path and the value is a callable that takes two values,
             the recorded value and the playback value, and returns True if they match.
+        ignore_server_notification_methods (list[str] | None):
+            List of server notification methods to ignore.
+            This is useful for notifications that are not relevant to the test.
+            Defaults to None, which means all notifications are considered.
+        ignore_responses (list[str] | None):
+            List of responses to ignore.
+            This is useful for responses that are not relevant to the test.
+            Defaults to None, which means all responses are considered.
         timeout (float): Timeout for the tests.
+            Defaults to 2.0 seconds.
     """
 
     def __init__(
@@ -35,6 +44,8 @@ class PlaybackConfiguration:
         ignore_properties: list[str | Callable[[Any], bool]],
         replace_properties: list[str],
         match_properties: dict[str, Callable[[Any, Any], bool]],
+        ignore_server_notification_methods: list[str] | None = None,
+        ignore_responses: list[str] | None = None,
         timeout: float = 2.0,
     ) -> None:
         self.timeout = timeout
@@ -43,6 +54,8 @@ class PlaybackConfiguration:
         self.replace_properties: dict[str, list[tuple[Any, Any]]] = {
             k: [] for k in replace_properties
         }
+        self.ignore_server_notification_methods = ignore_server_notification_methods or []
+        self.ignore_responses = ignore_responses or []
 
     @classmethod
     def default(cls) -> "PlaybackConfiguration":
@@ -55,6 +68,8 @@ class PlaybackConfiguration:
             ],
             replace_properties=["params.connectionId"],
             match_properties={},
+            ignore_server_notification_methods=[],
+            ignore_responses=[],
         )
 
 

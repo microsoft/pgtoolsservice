@@ -1,0 +1,1576 @@
+{
+  "client_request_groups": [
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 0,
+            "method": "initialize",
+            "params": {
+              "processId": 48579,
+              "rootPath": null,
+              "rootUri": null,
+              "capabilities": {
+                "workspace": {
+                  "applyEdit": true,
+                  "workspaceEdit": {
+                    "documentChanges": true,
+                    "resourceOperations": [
+                      "create",
+                      "rename",
+                      "delete"
+                    ],
+                    "failureHandling": "textOnlyTransactional"
+                  },
+                  "didChangeConfiguration": {
+                    "dynamicRegistration": true
+                  },
+                  "didChangeWatchedFiles": {
+                    "dynamicRegistration": true
+                  },
+                  "symbol": {
+                    "dynamicRegistration": true,
+                    "symbolKind": {
+                      "valueSet": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        19,
+                        20,
+                        21,
+                        22,
+                        23,
+                        24,
+                        25,
+                        26
+                      ]
+                    }
+                  },
+                  "executeCommand": {
+                    "dynamicRegistration": true
+                  },
+                  "configuration": true,
+                  "workspaceFolders": true
+                },
+                "textDocument": {
+                  "publishDiagnostics": {
+                    "relatedInformation": true
+                  },
+                  "synchronization": {
+                    "dynamicRegistration": true,
+                    "willSave": true,
+                    "willSaveWaitUntil": true,
+                    "didSave": true
+                  },
+                  "completion": {
+                    "dynamicRegistration": true,
+                    "contextSupport": true,
+                    "completionItem": {
+                      "snippetSupport": true,
+                      "commitCharactersSupport": true,
+                      "documentationFormat": [
+                        "markdown",
+                        "plaintext"
+                      ],
+                      "deprecatedSupport": true,
+                      "preselectSupport": true
+                    },
+                    "completionItemKind": {
+                      "valueSet": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        19,
+                        20,
+                        21,
+                        22,
+                        23,
+                        24,
+                        25
+                      ]
+                    }
+                  },
+                  "hover": {
+                    "dynamicRegistration": true,
+                    "contentFormat": [
+                      "markdown",
+                      "plaintext"
+                    ]
+                  },
+                  "signatureHelp": {
+                    "dynamicRegistration": true,
+                    "signatureInformation": {
+                      "documentationFormat": [
+                        "markdown",
+                        "plaintext"
+                      ],
+                      "parameterInformation": {
+                        "labelOffsetSupport": true
+                      }
+                    }
+                  },
+                  "definition": {
+                    "dynamicRegistration": true,
+                    "linkSupport": true
+                  },
+                  "references": {
+                    "dynamicRegistration": true
+                  },
+                  "documentHighlight": {
+                    "dynamicRegistration": true
+                  },
+                  "documentSymbol": {
+                    "dynamicRegistration": true,
+                    "symbolKind": {
+                      "valueSet": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                        6,
+                        7,
+                        8,
+                        9,
+                        10,
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        19,
+                        20,
+                        21,
+                        22,
+                        23,
+                        24,
+                        25,
+                        26
+                      ]
+                    },
+                    "hierarchicalDocumentSymbolSupport": true
+                  },
+                  "codeAction": {
+                    "dynamicRegistration": true,
+                    "codeActionLiteralSupport": {
+                      "codeActionKind": {
+                        "valueSet": [
+                          "",
+                          "quickfix",
+                          "refactor",
+                          "refactor.extract",
+                          "refactor.inline",
+                          "refactor.rewrite",
+                          "source",
+                          "source.organizeImports"
+                        ]
+                      }
+                    }
+                  },
+                  "codeLens": {
+                    "dynamicRegistration": true
+                  },
+                  "formatting": {
+                    "dynamicRegistration": true
+                  },
+                  "rangeFormatting": {
+                    "dynamicRegistration": true
+                  },
+                  "onTypeFormatting": {
+                    "dynamicRegistration": true
+                  },
+                  "rename": {
+                    "dynamicRegistration": true,
+                    "prepareSupport": true
+                  },
+                  "documentLink": {
+                    "dynamicRegistration": true
+                  },
+                  "typeDefinition": {
+                    "dynamicRegistration": true,
+                    "linkSupport": true
+                  },
+                  "implementation": {
+                    "dynamicRegistration": true,
+                    "linkSupport": true
+                  },
+                  "colorProvider": {
+                    "dynamicRegistration": true
+                  },
+                  "foldingRange": {
+                    "dynamicRegistration": true,
+                    "rangeLimit": 5000,
+                    "lineFoldingOnly": true
+                  },
+                  "declaration": {
+                    "dynamicRegistration": true,
+                    "linkSupport": true
+                  }
+                }
+              },
+              "trace": "off",
+              "workspaceFolders": null
+            }
+          },
+          "timestamp": 4408.077743167
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 0,
+            "result": {
+              "capabilities": {
+                "textDocumentSync": 2,
+                "hoverProvider": false,
+                "completionProvider": {
+                  "resolveProvider": true,
+                  "triggerCharacters": [
+                    ".",
+                    "-",
+                    ":",
+                    "\\",
+                    "[",
+                    "\""
+                  ]
+                },
+                "signatureHelpProvider": null,
+                "definitionProvider": true,
+                "referencesProvider": false,
+                "documentHighlightProvider": false,
+                "documentFormattingProvider": true,
+                "documentRangeFormattingProvider": true,
+                "documentSymbolProvider": false,
+                "workspaceSymbolProvider": false
+              }
+            }
+          },
+          "timestamp": 4408.096312555
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [],
+      "client_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "initialized",
+            "params": {}
+          },
+          "timestamp": 4408.102329029
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "workspace/didChangeConfiguration",
+            "params": {
+              "settings": {
+                "pgsql": {
+                  "enableExperimentalFeatures": true,
+                  "enableRichExperiences": true,
+                  "enableRichExperiencesDoNotShowPrompt": true,
+                  "openQueryResultsInTabByDefault": true,
+                  "openQueryResultsInTabByDefaultDoNotShowPrompt": false,
+                  "enableNewQueryResultFeature": true,
+                  "azureActiveDirectory": "AuthCodeGrant",
+                  "shortcuts": {
+                    "_comment": "Short cuts must follow the format (ctrl)+(shift)+(alt)+[key]",
+                    "event.toggleResultPane": "ctrl+alt+R",
+                    "event.focusResultsGrid": "ctrl+alt+G",
+                    "event.toggleMessagePane": "ctrl+alt+Y",
+                    "event.prevGrid": "ctrl+up",
+                    "event.nextGrid": "ctrl+down",
+                    "event.copySelection": "ctrl+C",
+                    "event.copyWithHeaders": "",
+                    "event.copyAllHeaders": "",
+                    "event.maximizeGrid": "",
+                    "event.selectAll": "ctrl+A",
+                    "event.saveAsJSON": "",
+                    "event.saveAsCSV": "",
+                    "event.saveAsExcel": "",
+                    "event.changeColumnWidth": "ctrl+alt+S"
+                  },
+                  "enableSqlAuthenticationProvider": true,
+                  "saveAsCsv": {
+                    "lineSeparator": null,
+                    "textIdentifier": "\"",
+                    "encoding": "utf-8",
+                    "delimiter": ",",
+                    "includeHeaders": true
+                  },
+                  "tracingLevel": "Critical",
+                  "piiLogging": false,
+                  "logRetentionMinutes": 10080,
+                  "logFilesRemovalLimit": 100,
+                  "queryHistoryLimit": 20,
+                  "ignorePlatformWarning": false,
+                  "objectExplorer": {
+                    "groupBySchema": false,
+                    "expandTimeout": 45
+                  },
+                  "logDebugInfo": false,
+                  "debugSourcePath": null,
+                  "useDebugSource": false,
+                  "enableStartupDebugging": false,
+                  "debugServerPort": 3000,
+                  "maxRecentConnections": 5,
+                  "connectionGroups": [
+                    {
+                      "name": "ROOT",
+                      "id": "335DEEAB-00BF-4947-9D3B-00905B3CB3C9"
+                    }
+                  ],
+                  "connections": [
+                    {
+                      "authenticationType": "SqlLogin",
+                      "connectTimeout": 15,
+                      "applicationName": "vscode-pgsql",
+                      "profileName": "test-user-tx",
+                      "server": "localhost",
+                      "user": "postgres",
+                      "password": "",
+                      "savePassword": true,
+                      "port": "5678",
+                      "database": "pagila",
+                      "groupId": "335DEEAB-00BF-4947-9D3B-00905B3CB3C9"
+                    }
+                  ],
+                  "messagesDefaultOpen": true,
+                  "resultsFontFamily": null,
+                  "resultsFontSize": null,
+                  "copyIncludeHeaders": false,
+                  "copyRemoveNewLine": true,
+                  "showBatchTime": false,
+                  "splitPaneSelection": "next",
+                  "format": {
+                    "alignColumnDefinitionsInColumns": false,
+                    "datatypeCasing": "none",
+                    "keywordCasing": "none",
+                    "placeCommasBeforeNextStatement": false,
+                    "placeSelectStatementReferencesOnNewLine": false
+                  },
+                  "applyLocalization": false,
+                  "intelliSense": {
+                    "enableIntelliSense": true,
+                    "enableErrorChecking": true,
+                    "enableSuggestions": true,
+                    "enableQuickInfo": true,
+                    "lowerCaseSuggestions": false
+                  },
+                  "persistQueryResultTabs": false,
+                  "enableQueryHistoryFeature": true,
+                  "enableQueryHistoryCapture": true,
+                  "resultsGrid": {
+                    "autoSizeColumns": true
+                  },
+                  "enableCopilot": true
+                }
+              }
+            }
+          },
+          "timestamp": 4408.103509278
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "$/setTraceNotification",
+            "params": {
+              "value": "off"
+            }
+          },
+          "timestamp": 4408.174398244
+        }
+      ]
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "objectexplorer/getsessionid",
+            "params": {
+              "options": {
+                "host": "localhost",
+                "port": "5678",
+                "dbname": "pagila",
+                "user": "postgres",
+                "password": "",
+                "authenticationType": "SqlLogin",
+                "connectTimeout": 15,
+                "applicationName": "vscode-pgsql"
+              }
+            }
+          },
+          "timestamp": 4408.236102144
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "result": {
+              "sessionId": "objectexplorer://postgres@localhost:5678:pagila/"
+            }
+          },
+          "timestamp": 4408.238933048
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [],
+      "client_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "$/setTraceNotification",
+            "params": {
+              "value": "off"
+            }
+          },
+          "timestamp": 4408.889439538
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "workspace/didChangeConfiguration",
+            "params": {
+              "settings": {
+                "pgsql": {
+                  "enableExperimentalFeatures": true,
+                  "enableRichExperiences": true,
+                  "enableRichExperiencesDoNotShowPrompt": true,
+                  "openQueryResultsInTabByDefault": true,
+                  "openQueryResultsInTabByDefaultDoNotShowPrompt": false,
+                  "enableNewQueryResultFeature": true,
+                  "azureActiveDirectory": "AuthCodeGrant",
+                  "shortcuts": {
+                    "_comment": "Short cuts must follow the format (ctrl)+(shift)+(alt)+[key]",
+                    "event.toggleResultPane": "ctrl+alt+R",
+                    "event.focusResultsGrid": "ctrl+alt+G",
+                    "event.toggleMessagePane": "ctrl+alt+Y",
+                    "event.prevGrid": "ctrl+up",
+                    "event.nextGrid": "ctrl+down",
+                    "event.copySelection": "ctrl+C",
+                    "event.copyWithHeaders": "",
+                    "event.copyAllHeaders": "",
+                    "event.maximizeGrid": "",
+                    "event.selectAll": "ctrl+A",
+                    "event.saveAsJSON": "",
+                    "event.saveAsCSV": "",
+                    "event.saveAsExcel": "",
+                    "event.changeColumnWidth": "ctrl+alt+S"
+                  },
+                  "enableSqlAuthenticationProvider": true,
+                  "saveAsCsv": {
+                    "lineSeparator": null,
+                    "textIdentifier": "\"",
+                    "encoding": "utf-8",
+                    "delimiter": ",",
+                    "includeHeaders": true
+                  },
+                  "tracingLevel": "Critical",
+                  "piiLogging": false,
+                  "logRetentionMinutes": 10080,
+                  "logFilesRemovalLimit": 100,
+                  "queryHistoryLimit": 20,
+                  "ignorePlatformWarning": false,
+                  "objectExplorer": {
+                    "groupBySchema": false,
+                    "expandTimeout": 45
+                  },
+                  "logDebugInfo": false,
+                  "debugSourcePath": null,
+                  "useDebugSource": false,
+                  "enableStartupDebugging": false,
+                  "debugServerPort": 3000,
+                  "maxRecentConnections": 5,
+                  "connectionGroups": [
+                    {
+                      "name": "ROOT",
+                      "id": "335DEEAB-00BF-4947-9D3B-00905B3CB3C9"
+                    }
+                  ],
+                  "connections": [
+                    {
+                      "authenticationType": "SqlLogin",
+                      "connectTimeout": 15,
+                      "applicationName": "vscode-pgsql",
+                      "profileName": "test-user-tx",
+                      "server": "localhost",
+                      "user": "postgres",
+                      "password": "",
+                      "savePassword": true,
+                      "port": "5678",
+                      "database": "pagila",
+                      "groupId": "335DEEAB-00BF-4947-9D3B-00905B3CB3C9",
+                      "id": "B791DEA4-EEBC-4AF8-8E52-8A1AE2C521B4"
+                    }
+                  ],
+                  "messagesDefaultOpen": true,
+                  "resultsFontFamily": null,
+                  "resultsFontSize": null,
+                  "copyIncludeHeaders": false,
+                  "copyRemoveNewLine": true,
+                  "showBatchTime": false,
+                  "splitPaneSelection": "next",
+                  "format": {
+                    "alignColumnDefinitionsInColumns": false,
+                    "datatypeCasing": "none",
+                    "keywordCasing": "none",
+                    "placeCommasBeforeNextStatement": false,
+                    "placeSelectStatementReferencesOnNewLine": false
+                  },
+                  "applyLocalization": false,
+                  "intelliSense": {
+                    "enableIntelliSense": true,
+                    "enableErrorChecking": true,
+                    "enableSuggestions": true,
+                    "enableQuickInfo": true,
+                    "lowerCaseSuggestions": false
+                  },
+                  "persistQueryResultTabs": false,
+                  "enableQueryHistoryFeature": true,
+                  "enableQueryHistoryCapture": true,
+                  "resultsGrid": {
+                    "autoSizeColumns": true
+                  },
+                  "enableCopilot": true
+                }
+              }
+            }
+          },
+          "timestamp": 4408.890346913
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "textDocument/didOpen",
+            "params": {
+              "textDocument": {
+                "uri": "untitled:Untitled-1",
+                "languageId": "sql",
+                "version": 1,
+                "text": ""
+              }
+            }
+          },
+          "timestamp": 4432.283028083
+        }
+      ]
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "objectexplorer/getsessionid",
+            "params": {
+              "options": {
+                "host": "localhost",
+                "port": "5678",
+                "dbname": "pagila",
+                "user": "postgres",
+                "password": "example",
+                "authenticationType": "SqlLogin",
+                "connectTimeout": 15,
+                "applicationName": "vscode-pgsql"
+              }
+            }
+          },
+          "timestamp": 4432.500647969
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "result": {
+              "sessionId": "objectexplorer://postgres@localhost:5678:pagila/"
+            }
+          },
+          "timestamp": 4432.501919906
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [],
+      "client_notifications": []
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "objectexplorer/createsession",
+            "params": {
+              "options": {
+                "host": "localhost",
+                "port": "5678",
+                "dbname": "pagila",
+                "user": "postgres",
+                "password": "example",
+                "authenticationType": "SqlLogin",
+                "connectTimeout": 15,
+                "applicationName": "vscode-pgsql"
+              }
+            }
+          },
+          "timestamp": 4432.504374464
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "result": {
+              "sessionId": "objectexplorer://postgres@localhost:5678:pagila/"
+            }
+          },
+          "timestamp": 4432.506295876
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "objectexplorer/sessioncreated",
+            "params": {
+              "errorMessage": null,
+              "success": true,
+              "sessionId": "objectexplorer://postgres@localhost:5678:pagila/",
+              "rootNode": {
+                "nodePath": "objectexplorer://postgres@localhost:5678:pagila/",
+                "nodeType": "Database",
+                "label": "pagila",
+                "nodeSubType": null,
+                "nodeStatus": null,
+                "isLeaf": false,
+                "metadata": {
+                  "metadataType": null,
+                  "metadataTypeName": "Database",
+                  "name": "pagila",
+                  "schema": null,
+                  "urn": "//postgres@localhost:5678/"
+                },
+                "errorMessage": null,
+                "isSystem": false
+              }
+            }
+          },
+          "timestamp": 4432.578863288
+        }
+      ],
+      "client_notifications": []
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "connection/connect",
+            "params": {
+              "ownerUri": "objectexplorer://postgres@localhost:5678:pagila/",
+              "connection": {
+                "options": {
+                  "host": "localhost",
+                  "port": "5678",
+                  "dbname": "pagila",
+                  "user": "postgres",
+                  "password": "example",
+                  "authenticationType": "SqlLogin",
+                  "connectTimeout": 15,
+                  "applicationName": "vscode-pgsql"
+                }
+              }
+            }
+          },
+          "timestamp": 4432.588507667
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 4,
+            "result": true
+          },
+          "timestamp": 4432.594429446
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "connection/complete",
+            "params": {
+              "ownerUri": "objectexplorer://postgres@localhost:5678:pagila/",
+              "connectionId": "fa79a6f0-48a5-4231-8870-1c89a58c9792",
+              "messages": null,
+              "errorMessage": null,
+              "errorNumber": 0,
+              "serverInfo": {
+                "server": "PostgreSQL",
+                "serverVersion": "16.0.4",
+                "isCloud": false
+              },
+              "connectionSummary": {
+                "serverName": "localhost",
+                "databaseName": "pagila",
+                "userName": "postgres"
+              }
+            }
+          },
+          "timestamp": 4432.66074273
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "textDocument/intelliSenseReady",
+            "params": {
+              "ownerUri": "objectexplorer://postgres@localhost:5678:pagila/"
+            }
+          },
+          "timestamp": 4432.821601996
+        }
+      ],
+      "client_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "connection/languageflavorchanged",
+            "params": {
+              "uri": "objectexplorer://postgres@localhost:5678:pagila/",
+              "language": "sql",
+              "flavor": "PGSQL"
+            }
+          },
+          "timestamp": 4432.823321614
+        }
+      ]
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "connection/connect",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "connection": {
+                "options": {
+                  "host": "localhost",
+                  "port": "5678",
+                  "dbname": "pagila",
+                  "user": "postgres",
+                  "password": "example",
+                  "authenticationType": "SqlLogin",
+                  "connectTimeout": 15,
+                  "applicationName": "vscode-pgsql"
+                }
+              }
+            }
+          },
+          "timestamp": 4432.827759921
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 5,
+            "result": true
+          },
+          "timestamp": 4432.829592547
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "connection/complete",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "connectionId": "60e187de-ea62-4c11-97d7-fc90ff080c99",
+              "messages": null,
+              "errorMessage": null,
+              "errorNumber": 0,
+              "serverInfo": {
+                "server": "PostgreSQL",
+                "serverVersion": "16.0.4",
+                "isCloud": false
+              },
+              "connectionSummary": {
+                "serverName": "localhost",
+                "databaseName": "pagila",
+                "userName": "postgres"
+              }
+            }
+          },
+          "timestamp": 4432.858156265
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "textDocument/intelliSenseReady",
+            "params": {
+              "ownerUri": "untitled:Untitled-1"
+            }
+          },
+          "timestamp": 4432.859417994
+        }
+      ],
+      "client_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "connection/languageflavorchanged",
+            "params": {
+              "uri": "untitled:Untitled-1",
+              "language": "sql",
+              "flavor": "PGSQL"
+            }
+          },
+          "timestamp": 4432.875323944
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "textDocument/didChange",
+            "params": {
+              "textDocument": {
+                "uri": "untitled:Untitled-1",
+                "version": 2
+              },
+              "contentChanges": [
+                {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 0
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 0
+                    }
+                  },
+                  "rangeLength": 0,
+                  "text": "BEGIN"
+                }
+              ]
+            }
+          },
+          "timestamp": 4440.03091015
+        }
+      ]
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "method": "query/executeDocumentSelection",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "executionPlanOptions": {
+                "includeEstimatedExecutionPlanXml": false,
+                "includeActualExecutionPlanXml": false
+              }
+            }
+          },
+          "timestamp": 4442.560644125
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 6,
+            "result": {}
+          },
+          "timestamp": 4442.600192823
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/batchStart",
+            "params": {
+              "batchSummary": {
+                "id": 0,
+                "selection": {
+                  "startLine": 0,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 5
+                },
+                "executionStart": "2025-03-12T17:01:54.896592",
+                "hasError": false,
+                "executionEnd": null,
+                "executionElapsed": null,
+                "resultSetSummaries": null
+              },
+              "ownerUri": "untitled:Untitled-1"
+            }
+          },
+          "timestamp": 4442.60188984
+        },        
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/resultSetComplete",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "resultSetSummary": null
+            }
+          },
+          "timestamp": 4442.606847983
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/message",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "message": {
+                "batchId": 0,
+                "isError": false,
+                "time": "17:01:54.903341",
+                "message": "BEGIN"
+              }
+            }
+          },
+          "timestamp": 4442.608323946
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/batchComplete",
+            "params": {
+              "batchSummary": {
+                "id": 0,
+                "selection": {
+                  "startLine": 0,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 5
+                },
+                "executionStart": "2025-03-12T17:01:54.896592",
+                "hasError": false,
+                "executionEnd": "17:01:54.901322",
+                "executionElapsed": "0:00:00.004730",
+                "resultSetSummaries": []
+              },
+              "ownerUri": "untitled:Untitled-1"
+            }
+          },
+          "timestamp": 4442.609233587
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/complete",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "batchSummaries": [
+                {
+                  "id": 0,
+                  "selection": {
+                    "startLine": 0,
+                    "startColumn": 0,
+                    "endLine": 0,
+                    "endColumn": 5
+                  },
+                  "executionStart": "2025-03-12T17:01:54.896592",
+                  "hasError": false,
+                  "executionEnd": "17:01:54.901322",
+                  "executionElapsed": "0:00:00.004730",
+                  "resultSetSummaries": []
+                }
+              ]
+            }
+          },
+          "timestamp": 4442.61108893
+        }
+      ],
+      "client_notifications": []
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "textDocument/definition",
+            "params": {
+              "textDocument": {
+                "uri": "untitled:Untitled-1"
+              },
+              "position": {
+                "line": 0,
+                "character": 4
+              }
+            }
+          },
+          "timestamp": 4449.174641843
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 7,
+            "result": {
+              "isErrorResult": true,
+              "message": "'Keyword'",
+              "locations": []
+            }
+          },
+          "timestamp": 4449.181819832
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "textDocument/statusChanged",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "status": "DefinitionRequested"
+            }
+          },
+          "timestamp": 4449.176940217
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "textDocument/statusChanged",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "status": "DefinitionRequestCompleted"
+            }
+          },
+          "timestamp": 4449.177879486
+        }
+      ],
+      "client_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "textDocument/didChange",
+            "params": {
+              "textDocument": {
+                "uri": "untitled:Untitled-1",
+                "version": 3
+              },
+              "contentChanges": [
+                {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 0
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 5
+                    }
+                  },
+                  "rangeLength": 5,
+                  "text": "INSERT INTO actor (first_name, last_name) VALUES ('John', 'Doe');"
+                }
+              ]
+            }
+          },
+          "timestamp": 4449.281754509
+        }
+      ]
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 8,
+            "method": "query/executeDocumentSelection",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "executionPlanOptions": {
+                "includeEstimatedExecutionPlanXml": false,
+                "includeActualExecutionPlanXml": false
+              }
+            }
+          },
+          "timestamp": 4451.361996521
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 8,
+            "result": {}
+          },
+          "timestamp": 4451.368435342
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/batchStart",
+            "params": {
+              "batchSummary": {
+                "id": 0,
+                "selection": {
+                  "startLine": 0,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 65
+                },
+                "executionStart": "2025-03-12T17:02:03.662983",
+                "hasError": false,
+                "executionEnd": null,
+                "executionElapsed": null,
+                "resultSetSummaries": null
+              },
+              "ownerUri": "untitled:Untitled-1"
+            }
+          },
+          "timestamp": 4451.368969866
+        },        
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/resultSetComplete",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "resultSetSummary": null
+            }
+          },
+          "timestamp": 4451.372213994
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/message",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "message": {
+                "batchId": 0,
+                "isError": false,
+                "time": "17:02:03.666691",
+                "message": "INSERT 0 1"
+              }
+            }
+          },
+          "timestamp": 4451.372661444
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/batchComplete",
+            "params": {
+              "batchSummary": {
+                "id": 0,
+                "selection": {
+                  "startLine": 0,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 65
+                },
+                "executionStart": "2025-03-12T17:02:03.662983",
+                "hasError": false,
+                "executionEnd": "17:02:03.665773",
+                "executionElapsed": "0:00:00.002790",
+                "resultSetSummaries": []
+              },
+              "ownerUri": "untitled:Untitled-1"
+            }
+          },
+          "timestamp": 4451.373428275
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/complete",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "batchSummaries": [
+                {
+                  "id": 0,
+                  "selection": {
+                    "startLine": 0,
+                    "startColumn": 0,
+                    "endLine": 0,
+                    "endColumn": 65
+                  },
+                  "executionStart": "2025-03-12T17:02:03.662983",
+                  "hasError": false,
+                  "executionEnd": "17:02:03.665773",
+                  "executionElapsed": "0:00:00.002790",
+                  "resultSetSummaries": []
+                }
+              ]
+            }
+          },
+          "timestamp": 4451.374410299
+        }
+      ],
+      "client_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "textDocument/didChange",
+            "params": {
+              "textDocument": {
+                "uri": "untitled:Untitled-1",
+                "version": 4
+              },
+              "contentChanges": [
+                {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 0
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 65
+                    }
+                  },
+                  "rangeLength": 65,
+                  "text": "INSERT INTO actor (first_name, last_name) VALUES ('Jane', 'Smith');"
+                }
+              ]
+            }
+          },
+          "timestamp": 4456.920915393
+        }
+      ]
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "query/executeDocumentSelection",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "executionPlanOptions": {
+                "includeEstimatedExecutionPlanXml": false,
+                "includeActualExecutionPlanXml": false
+              }
+            }
+          },
+          "timestamp": 4458.452099544
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "result": {}
+          },
+          "timestamp": 4458.460966233
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/batchStart",
+            "params": {
+              "batchSummary": {
+                "id": 0,
+                "selection": {
+                  "startLine": 0,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 67
+                },
+                "executionStart": "2025-03-12T17:02:10.755564",
+                "hasError": false,
+                "executionEnd": null,
+                "executionElapsed": null,
+                "resultSetSummaries": null
+              },
+              "ownerUri": "untitled:Untitled-1"
+            }
+          },
+          "timestamp": 4458.461566689
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/resultSetComplete",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "resultSetSummary": null
+            }
+          },
+          "timestamp": 4458.464595064
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/message",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "message": {
+                "batchId": 0,
+                "isError": false,
+                "time": "17:02:10.759452",
+                "message": "INSERT 0 1"
+              }
+            }
+          },
+          "timestamp": 4458.465453426
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/batchComplete",
+            "params": {
+              "batchSummary": {
+                "id": 0,
+                "selection": {
+                  "startLine": 0,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 67
+                },
+                "executionStart": "2025-03-12T17:02:10.755564",
+                "hasError": false,
+                "executionEnd": "17:02:10.757947",
+                "executionElapsed": "0:00:00.002383",
+                "resultSetSummaries": []
+              },
+              "ownerUri": "untitled:Untitled-1"
+            }
+          },
+          "timestamp": 4458.466442192
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/complete",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "batchSummaries": [
+                {
+                  "id": 0,
+                  "selection": {
+                    "startLine": 0,
+                    "startColumn": 0,
+                    "endLine": 0,
+                    "endColumn": 67
+                  },
+                  "executionStart": "2025-03-12T17:02:10.755564",
+                  "hasError": false,
+                  "executionEnd": "17:02:10.757947",
+                  "executionElapsed": "0:00:00.002383",
+                  "resultSetSummaries": []
+                }
+              ]
+            }
+          },
+          "timestamp": 4458.467635894
+        }
+      ],
+      "client_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "textDocument/didChange",
+            "params": {
+              "textDocument": {
+                "uri": "untitled:Untitled-1",
+                "version": 5
+              },
+              "contentChanges": [
+                {
+                  "range": {
+                    "start": {
+                      "line": 0,
+                      "character": 0
+                    },
+                    "end": {
+                      "line": 0,
+                      "character": 67
+                    }
+                  },
+                  "rangeLength": 67,
+                  "text": "ROLLBACK"
+                }
+              ]
+            }
+          },
+          "timestamp": 4463.703500306
+        }
+      ]
+    },
+    {
+      "client_request": {
+        "request": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "query/executeDocumentSelection",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "executionPlanOptions": {
+                "includeEstimatedExecutionPlanXml": false,
+                "includeActualExecutionPlanXml": false
+              }
+            }
+          },
+          "timestamp": 4465.513773032
+        },
+        "response": {
+          "message": {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "result": {}
+          },
+          "timestamp": 4465.516788207
+        }
+      },
+      "server_requests": [],
+      "server_notifications": [
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/batchStart",
+            "params": {
+              "batchSummary": {
+                "id": 0,
+                "selection": {
+                  "startLine": 0,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 8
+                },
+                "executionStart": "2025-03-12T17:02:17.811417",
+                "hasError": false,
+                "executionEnd": null,
+                "executionElapsed": null,
+                "resultSetSummaries": null
+              },
+              "ownerUri": "untitled:Untitled-1"
+            }
+          },
+          "timestamp": 4465.517411959
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/resultSetComplete",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "resultSetSummary": null
+            }
+          },
+          "timestamp": 4465.519790205
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/message",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "message": {
+                "batchId": 0,
+                "isError": false,
+                "time": "17:02:17.814617",
+                "message": "ROLLBACK"
+              }
+            }
+          },
+          "timestamp": 4465.520604221
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/batchComplete",
+            "params": {
+              "batchSummary": {
+                "id": 0,
+                "selection": {
+                  "startLine": 0,
+                  "startColumn": 0,
+                  "endLine": 0,
+                  "endColumn": 8
+                },
+                "executionStart": "2025-03-12T17:02:17.811417",
+                "hasError": false,
+                "executionEnd": "17:02:17.813329",
+                "executionElapsed": "0:00:00.001912",
+                "resultSetSummaries": []
+              },
+              "ownerUri": "untitled:Untitled-1"
+            }
+          },
+          "timestamp": 4465.521417266
+        },
+        {
+          "message": {
+            "jsonrpc": "2.0",
+            "method": "query/complete",
+            "params": {
+              "ownerUri": "untitled:Untitled-1",
+              "batchSummaries": [
+                {
+                  "id": 0,
+                  "selection": {
+                    "startLine": 0,
+                    "startColumn": 0,
+                    "endLine": 0,
+                    "endColumn": 8
+                  },
+                  "executionStart": "2025-03-12T17:02:17.811417",
+                  "hasError": false,
+                  "executionEnd": "17:02:17.813329",
+                  "executionElapsed": "0:00:00.001912",
+                  "resultSetSummaries": []
+                }
+              ]
+            }
+          },
+          "timestamp": 4465.522268933
+        }
+      ],
+      "client_notifications": []
+    }
+  ]
+}

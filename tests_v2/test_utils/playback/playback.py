@@ -16,10 +16,18 @@ class PlaybackError(Exception):
 
 
 class Playback:
-    def __init__(self, server_client_wrapper: MessageServerClientWrapper) -> None:
+    def __init__(
+        self,
+        server_client_wrapper: MessageServerClientWrapper,
+        playback_config: PlaybackConfiguration | None = None,
+    ) -> None:
         self.server_client_wrapper = server_client_wrapper
+        self.playback_config = playback_config or PlaybackConfiguration.default()
 
-    def run(self, recorded_session: RecordedSession) -> None:
+    def run(
+        self,
+        recorded_session: RecordedSession,
+    ) -> None:
         """Plays back a recorded session. This is used to test the server's
         behavior when receiving a series of messages.
 
@@ -32,7 +40,7 @@ class Playback:
         specific server state to start with.
         """
 
-        playback_config = PlaybackConfiguration.default()
+        playback_config = self.playback_config
 
         property_replace_map: dict[str, list[tuple[Any, Any]]] = (
             playback_config.replace_properties.copy()
@@ -62,19 +70,22 @@ class Playback:
                     timeout=playback_config.timeout,
                 )
 
-                diff_result = diff_messages(
-                    expected_response,
-                    actual_response,
-                    ignore_properties=playback_config.ignore_properties,
-                    replace_map=property_replace_map,
-                    match_properties=playback_config.match_properties,
-                )
-                assert not diff_result.diff, (
-                    f"Expected:\n{expected_response.model_dump_json(indent=2)}\n"
-                    f"Actual:\n{actual_response.model_dump_json(indent=2)}\n"
-                    f"Diff:\n{json.dumps(diff_result.diff, indent=2)}"
-                )
-                property_replace_map = diff_result.replace_map
+                # Ignore responses that are in the ignore list
+                if request.method not in playback_config.ignore_responses:
+                    diff_result = diff_messages(
+                        expected_response,
+                        actual_response,
+                        ignore_properties=playback_config.ignore_properties,
+                        replace_map=property_replace_map,
+                        match_properties=playback_config.match_properties,
+                    )
+                    assert not diff_result.diff, (
+                        f"Expected:\n{expected_response.model_dump_json(indent=2)}\n"
+                        f"Actual:\n{actual_response.model_dump_json(indent=2)}\n"
+                        f"Diff:\n{json.dumps(diff_result.diff, indent=2)}"
+                    )
+                    property_replace_map = diff_result.replace_map
+
             except ServerResponseError as e:
                 error_response = LSPMessage.from_jsonrpc_message(e.rpc_message)
                 if not isinstance(error_response, LSPResponseErrorMessage):
@@ -107,6 +118,13 @@ class Playback:
             notifications = client_request_group.server_notifications
             if notifications:
                 for notification in notifications:
+                    # Ignore notifications that are in the ignore list
+                    if (
+                        notification.message.method
+                        in playback_config.ignore_server_notification_methods
+                    ):
+                        continue
+
                     try:
                         actual_notification = (
                             self.server_client_wrapper.wait_for_notification(
@@ -170,6 +188,13 @@ class Playback:
                         ) from e
         # Verify no additional messages not accounted for
         remaining_messages = self.server_client_wrapper.get_messages()
+        # Filter out messages that are in the ignore list
+        remaining_messages = [
+            message
+            for message in remaining_messages
+            if message.message_method
+            not in playback_config.ignore_server_notification_methods
+        ]
         if remaining_messages:
             raise PlaybackError(
                 "Unexpected messages received after playback:\n"
