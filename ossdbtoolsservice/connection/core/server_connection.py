@@ -3,61 +3,17 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 from collections.abc import Mapping, Sequence
-from typing import Any, Optional
+from typing import Any
 
 import psycopg
 from psycopg import Column
 from psycopg.pq import TransactionStatus
+from psycopg_pool import ConnectionPool
 
-from ossdbtoolsservice.driver.types.adapter import addAdapters
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.sql import as_sql
-from ossdbtoolsservice.workspace.contracts import Configuration
 
 PG_CANCELLATION_QUERY = "SELECT pg_cancel_backend ({})"
-
-# Dictionary mapping connection option names to their
-# corresponding PostgreSQL connection string keys.
-# If a name is not present in this map, the name should be used as the key.
-PG_CONNECTION_OPTION_KEY_MAP = {
-    "connectTimeout": "connect_timeout",
-    "clientEncoding": "client_encoding",
-    "applicationName": "application_name",
-}
-
-# Recognized parameter keywords for postgres database connection
-# Source: https://www.postgresql.org/docs/9.6/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
-PG_CONNECTION_PARAM_KEYWORDS = [
-    "host",
-    "hostaddr",
-    "port",
-    "dbname",
-    "user",
-    "password",
-    "passfile",
-    "connect_timeout",
-    "client_encoding",
-    "options",
-    "application_name",
-    "fallback_application_name",
-    "keepalives",
-    "keepalives_idle",
-    "keepalives_interval",
-    "keepalives_count",
-    "tty",
-    "sslmode",
-    "requiressl",
-    "sslcompression",
-    "sslcert",
-    "sslkey",
-    "sslrootcert",
-    "sslcrl",
-    "requirepeer",
-    "krbsrvname",
-    "gsslib",
-    "service",
-    "target_session_attrs",
-]
 
 Params = Sequence[Any] | Mapping[str, Any]
 
@@ -66,56 +22,22 @@ class ServerConnection:
     """Wrapper for a psycopg connection that makes various properties easier to access"""
 
     def __init__(
-        self, conn_params: dict[str, str | int], config: Optional[Configuration] = None
+        self, connection: psycopg.Connection, pool: ConnectionPool | None = None
     ) -> None:
         """
         Creates a new connection wrapper. Parses version string
         :param conn_params: connection parameters dict
-        :param config: optional Configuration object with pgsql connection config
+        :param pool: Optional connection pool for this connection.
+            This supports cases where the connection is not associated with
+            a pooled connection context manager, but the connection needs to be
+            returned to a pool. E.g. if the connection is broken, call return_to_pool
+            and request a new one.
         """
-        # If options contains azureSecurityToken, then just copy it over to password,
-        # which is how it is passed to PostgreSQL.
-        if "azureAccountToken" in conn_params:
-            conn_params["password"] = conn_params["azureAccountToken"]
-
-        # Map the connection options to their psycopg-specific options
-        connection_options: dict[str, Any] = {}
-        for option, value in conn_params.items():
-            mapped_option = PG_CONNECTION_OPTION_KEY_MAP.get(option, option)
-            if mapped_option in PG_CONNECTION_PARAM_KEYWORDS:
-                connection_options[mapped_option] = value
-
-        self._connection_options = connection_options
-        # Flag to determine whether server is Azure Cosmos PG server
-        is_cosmos = "host" in connection_options and connection_options["host"].endswith(
-            ".postgres.cosmos.azure.com"
-        )
-
-        # Use the correct default DB depending on whether config is defined and
-        # whether the server is an Azure Cosmos PG server
-        self._default_database = (
-            config.pgsql.default_database
-            if config
-            else constants.DEFAULT_DB[constants.PG_DEFAULT_DB]
-        )
-        if is_cosmos and config:
-            self._default_database = config.pgsql.cosmos_default_database
-        elif is_cosmos and not config:
-            self._default_database = constants.DEFAULT_DB[constants.COSMOS_PG_DEFAULT_DB]
-
-        # Use the default database if one was not provided
-        if "dbname" not in connection_options or not connection_options["dbname"]:
-            connection_options["dbname"] = self.default_database
-
-        # Use the default port number if one was not provided
-        if "port" not in connection_options or not connection_options["port"]:
-            connection_options["port"] = constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
 
         # Pass connection parameters as keyword arguments to the
         # connection by unpacking the connection_options dict
-        self._conn = psycopg.connect(**connection_options)
-
-        addAdapters()
+        self._conn = connection
+        self._pool = pool
 
         # Set autocommit mode so that users have control over transactions
         self._conn.autocommit = True
@@ -139,9 +61,6 @@ class ServerConnection:
             int(version_string[-2:]),
         )
 
-        # Setting the provider for this connection
-        self._provider_name = constants.PG_PROVIDER_NAME
-
     # METHODS ##############################################################
     @property
     def autocommit(self) -> bool:
@@ -164,7 +83,10 @@ class ServerConnection:
     @property
     def port(self) -> int:
         """Returns the port number used for the current connection"""
-        return self._connection_options["port"]
+        return int(
+            self._dsn_parameters.get("port")
+            or constants.DEFAULT_PORT[constants.PG_PROVIDER_NAME]
+        )
 
     @property
     def database_name(self) -> str:
@@ -177,14 +99,14 @@ class ServerConnection:
         return self._dsn_parameters["user"]
 
     @property
+    def application_name(self) -> str | None:
+        """Returns the application name used for the current connection"""
+        return self._dsn_parameters.get("application_name")
+
+    @property
     def server_version(self) -> tuple[int, int, int]:
         """Tuple that splits version string into sensible values"""
         return self._version
-
-    @property
-    def default_database(self) -> str:
-        """Returns the default database for PostgreSQL if no other database is specified"""
-        return self._default_database
 
     @property
     def transaction_in_error(self) -> bool:
@@ -196,7 +118,11 @@ class ServerConnection:
 
     @property
     def transaction_is_idle(self) -> bool:
-        """Returns bool indicating if transaction is currently idle"""
+        """Returns bool indicating if transaction is currently idle.
+
+        The value TransactionStatus.IDLE indicates that the
+        connection is NOT currently in a transaction.
+        """
         return self._conn.info.transaction_status is TransactionStatus.IDLE
 
     @property
@@ -212,8 +138,13 @@ class ServerConnection:
     @property
     def cancellation_query(self) -> str:
         """Returns a SQL command to end the current query execution process"""
-        backend_pid = self._conn.info.backend_pid
+        backend_pid = self.backend_pid
         return PG_CANCELLATION_QUERY.format(backend_pid)
+
+    @property
+    def backend_pid(self) -> int:
+        """Returns the backend process id for this connection"""
+        return self._conn.info.backend_pid
 
     @property
     def connection(self) -> psycopg.Connection:
@@ -233,6 +164,12 @@ class ServerConnection:
         Commits the current transaction
         """
         self._conn.commit()
+
+    def rollback(self) -> None:
+        """
+        Rollbacks the current transaction
+        """
+        self._conn.rollback()
 
     def cursor(self, **kwargs: Any) -> psycopg.ClientCursor[tuple[Any, ...]]:
         """
@@ -260,9 +197,18 @@ class ServerConnection:
         else:
             return self.fetch_one(query)
 
+    def execute_statement(self, query: str, params: Params | None = None) -> None:
+        """
+        Execute a statement that returns no results.
+        :raises psycopg.ProgrammingError: if there was no result set when executing the query
+        """
+        with self.cursor() as cur:
+            query_sql = as_sql(query)
+            cur.execute(query_sql, params=params)
+
     def fetch_all(self, query: str, params: Params | None = None) -> list[tuple[Any, ...]]:
         """
-        Execute a queryfor the given connection. Fetch all results.
+        Execute a query for the given connection. Fetch all results.
         :raises psycopg.ProgrammingError: if there was no result set when executing the query
         """
         with self.cursor() as cur:
@@ -377,7 +323,24 @@ class ServerConnection:
         """
         Closes this current connection.
         """
-        self._conn.close()
+        if not self._conn.closed:
+            self._conn.close()
+        # If the connection is part of a pool, return it to the pool.
+        if self._pool is not None:
+            self._pool.putconn(self._conn)
+
+    def return_to_pool(self) -> None:
+        """
+        Returns this connection to the pool, if it is part of a pool.
+        """
+        if self._pool is not None:
+            self._pool.putconn(self._conn)
+
+    def check(self) -> None:
+        """
+        Checks the connection. Raises an error if the connection is broken.
+        """
+        ConnectionPool.check_connection(self._conn)
 
     def set_transaction_in_error(self) -> None:
         """
