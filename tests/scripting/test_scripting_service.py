@@ -80,7 +80,7 @@ class TestScriptingService(unittest.TestCase):
         cs.connect = mock.MagicMock(
             return_value=ConnectionCompleteParams(owner_uri=TestScriptingService.MOCK_URI)
         )
-        pooled_connection = PooledConnection(lambda: mock_connection, lambda _: None)
+        pooled_connection = PooledConnection(lambda _: mock_connection, lambda _: None)
         cs.get_pooled_connection = mock.MagicMock(return_value=pooled_connection)
         ss = ScriptingService()
         ss._service_provider = utils.get_mock_service_provider({CONNECTION_SERVICE_NAME: cs})
@@ -106,7 +106,7 @@ class TestScriptingService(unittest.TestCase):
         )
 
         def get_pooled_connection(*args: Any, **kwargs: Any) -> PooledConnection:
-            return PooledConnection(lambda: mock_connection, lambda _: None)
+            return PooledConnection(lambda _: mock_connection, lambda _: None)
 
         cs.get_pooled_connection = mock.MagicMock(side_effect=get_pooled_connection)
         ss = ScriptingService()

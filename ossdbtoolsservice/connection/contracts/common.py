@@ -281,7 +281,7 @@ class ConnectionDetails(Serializable):
         return host.endswith(".postgres.database.azure.com")
 
 
-class ConnectionType(enum.Enum):
+class ConnectionType(str, enum.Enum):
     """
     String constants that represent connection types.
 
@@ -295,3 +295,6 @@ class ConnectionType(enum.Enum):
     QUERY_CANCEL = "QueryCancel"
     OBJECT_EXLPORER = "ObjectExplorer"  # TODO: Fix typo
     INTELLISENSE = "Intellisense"
+
+    def __str__(self) -> str:
+        return str(self.value)

@@ -130,10 +130,10 @@ def test_get_pooled_connection_unknown(
     assert pooled_conn is None
 
 
-def test_get_orphaned_connection_valid(
+def test_get_long_lived_connection_valid(
     stub_connection_manager: StubConnectionManager,
 ) -> None:
-    """Test that an orphaned connection is returned and
+    """Test that an long lived connection is returned and
     its application name is set correctly."""
     owner_uri = "test_owner_uri_5"
     details = get_connection_details()
@@ -141,11 +141,11 @@ def test_get_orphaned_connection_valid(
     stub_connection_manager.connect(owner_uri, details)
     conn_type = ConnectionType.OBJECT_EXLPORER
 
-    orphan_conn = stub_connection_manager.get_orphaned_connection(owner_uri, conn_type)
-    assert orphan_conn is not None
+    long_lived_conn = stub_connection_manager.get_long_lived_connection(owner_uri, conn_type)
+    assert long_lived_conn is not None
 
-    # Behavior: After retrieval, the orphan connection should have autocommit True
-    assert orphan_conn.autocommit is True
+    # Behavior: After retrieval, the long_lived connection should have autocommit True
+    assert long_lived_conn.autocommit is True
 
     # The connection should have had a "SET application_name = %s" command executed.
     assert stub_connection_manager.mock_connection_class_factory.queries_executed, (
@@ -163,10 +163,10 @@ def test_get_orphaned_connection_valid(
             break
 
 
-def test_get_orphaned_connection_invalid_gets_recreated(
+def test_get_long_lived_connection_invalid_gets_recreated(
     mock_connection_class_factory: MockConnectionClassFactory,
 ) -> None:
-    """Test that if an orphaned connection fails its check, a new connection is obtained."""
+    """Test that if an long lived connection fails its check, a new connection is obtained."""
     owner_uri = "test_owner_uri_6"
     details = get_connection_details()
 
@@ -176,12 +176,12 @@ def test_get_orphaned_connection_invalid_gets_recreated(
     connection_manager.connect(owner_uri, details)
     conn_type = ConnectionType.DEFAULT
 
-    # Get an orphaned connection initially.
-    orphan_conn = connection_manager.get_orphaned_connection(owner_uri, conn_type)
-    assert orphan_conn is not None
+    # Get an long lived connection initially.
+    long_lived_conn = connection_manager.get_long_lived_connection(owner_uri, conn_type)
+    assert long_lived_conn is not None
 
-    # Simulate that the existing orphan's check fails.
-    conn = orphan_conn.connection
+    # Simulate that the existing long lived's check fails.
+    conn = long_lived_conn.connection
     assert isinstance(conn, mock.Mock)
     conn.execute.reset_mock()
     conn.pgconn = mock.Mock()
@@ -192,25 +192,26 @@ def test_get_orphaned_connection_invalid_gets_recreated(
 
     conn.execute.side_effect = throw_exception_on_execute
 
-    # Re-call get_orphaned_connection, which should cause the invalid one
+    # Re-call get_long_lived_connection, which should cause the invalid one
     # to be recycled and a new one created.
-    new_orphan_conn = connection_manager.get_orphaned_connection(owner_uri, conn_type)
-    assert new_orphan_conn is not None
+    new_long_lived_conn = connection_manager.get_long_lived_connection(owner_uri, conn_type)
+    assert new_long_lived_conn is not None
     # The new connection should be different from the old one.
-    assert new_orphan_conn.connection is not orphan_conn.connection
+    assert new_long_lived_conn.connection is not long_lived_conn.connection
 
     # And the new connection should have its application name command executed.
     conn.execute.assert_called()
 
 
-def test_get_orphaned_connection_unknown_owner(
+def test_get_long_lived_connection_unknown_owner(
     stub_connection_manager: StubConnectionManager,
 ) -> None:
-    """Test that getting an orphaned connection for an unrecognized owner URI returns None."""
-    orphan_conn = stub_connection_manager.get_orphaned_connection(
+    """Test that getting an long lived connection
+    for an unrecognized owner URI returns None."""
+    long_lived_conn = stub_connection_manager.get_long_lived_connection(
         "unknown_owner", ConnectionType.DEFAULT
     )
-    assert orphan_conn is None
+    assert long_lived_conn is None
 
 
 def test_disconnect_behavior(stub_connection_manager: StubConnectionManager) -> None:

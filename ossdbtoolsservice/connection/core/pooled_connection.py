@@ -28,7 +28,7 @@ class PooledConnection:
 
     def __init__(
         self,
-        get_connection: Callable[[], ServerConnection],
+        get_connection: Callable[["PooledConnection"], ServerConnection],
         put_connection: Callable[[ServerConnection], None],
     ) -> None:
         self._get_connection = get_connection
@@ -41,12 +41,19 @@ class PooledConnection:
         if self._is_closed:
             raise RuntimeError("Cannot re-use a pooled connection after it has been closed.")
 
-        self._connection = self._get_connection()
+        self._connection = self._get_connection(self)
         return self._connection
 
     def __exit__(
-        self, exc_type: type[Exception], exc_value: Exception, traceback: Any
+        self, exc_type: type[Exception] | None, exc_value: Exception | None, traceback: Any
     ) -> None:
         self._is_closed = True
         if self._connection is not None:
             self._put_connection(self._connection)
+
+    def close(self) -> None:
+        """Manually put the connection back to the pool."""
+        if self._connection is not None:
+            self._is_closed = True
+            self._put_connection(self._connection)
+            self._connection = None

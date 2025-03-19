@@ -101,7 +101,7 @@ class TestConverters(unittest.TestCase):
         connection = ServerConnection(conn)
 
         def get_pooled_connection(*args: Any, **kwargs: Any) -> PooledConnection:
-            return PooledConnection(lambda: connection, lambda _: None)
+            return PooledConnection(lambda _: connection, lambda _: None)
 
         self.connection_service.get_pooled_connection = mock.Mock(
             side_effect=get_pooled_connection

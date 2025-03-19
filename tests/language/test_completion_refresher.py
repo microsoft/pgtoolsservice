@@ -20,7 +20,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
 
     def setUp(self):
         self.refresher: CompletionRefresher = CompletionRefresher(
-            PooledConnection(lambda: utils.MockPGServerConnection(), lambda _: None),
+            PooledConnection(lambda _: utils.MockPGServerConnection(), lambda _: None),
         )
 
     def test_ctor(self):

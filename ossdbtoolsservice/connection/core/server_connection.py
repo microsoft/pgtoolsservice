@@ -3,15 +3,19 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, Union
 
 import psycopg
+from git import TYPE_CHECKING
 from psycopg import Column
 from psycopg.pq import TransactionStatus
 from psycopg_pool import ConnectionPool
 
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.sql import as_sql
+
+if TYPE_CHECKING:
+    from ossdbtoolsservice.connection.core.pooled_connection import PooledConnection
 
 PG_CANCELLATION_QUERY = "SELECT pg_cancel_backend ({})"
 
@@ -22,7 +26,10 @@ class ServerConnection:
     """Wrapper for a psycopg connection that makes various properties easier to access"""
 
     def __init__(
-        self, connection: psycopg.Connection, pool: ConnectionPool | None = None
+        self,
+        connection: psycopg.Connection,
+        pool: ConnectionPool | None = None,
+        pooled_connection: Union["PooledConnection", None] = None,
     ) -> None:
         """
         Creates a new connection wrapper. Parses version string
@@ -32,12 +39,16 @@ class ServerConnection:
             a pooled connection context manager, but the connection needs to be
             returned to a pool. E.g. if the connection is broken, call return_to_pool
             and request a new one.
+        :param pooled_connection: Optional PooledConnection object.
+            If this connection is part of a PooledConnection, closing manually
+            will notify the PooledConnection.
         """
 
         # Pass connection parameters as keyword arguments to the
         # connection by unpacking the connection_options dict
         self._conn = connection
         self._pool = pool
+        self._pooled_connection = pooled_connection
 
         # Set autocommit mode so that users have control over transactions
         self._conn.autocommit = True
@@ -325,16 +336,18 @@ class ServerConnection:
         """
         if not self._conn.closed:
             self._conn.close()
-        # If the connection is part of a pool, return it to the pool.
-        if self._pool is not None:
-            self._pool.putconn(self._conn)
+        self.return_to_pool()
 
     def return_to_pool(self) -> None:
         """
         Returns this connection to the pool, if it is part of a pool.
         """
+        # If the connection is part of a pool, return it to the pool.
         if self._pool is not None:
             self._pool.putconn(self._conn)
+
+        if self._pooled_connection is not None:
+            self._pooled_connection.close()
 
     def check(self) -> None:
         """

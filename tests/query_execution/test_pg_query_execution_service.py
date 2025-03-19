@@ -95,7 +95,9 @@ class TestQueryService(unittest.TestCase):
         self.connection = MockPGServerConnection(
             cur=self.cursor, connection=self.mock_psycopg_connection
         )
-        self.pooled_connection = PooledConnection(lambda: self.connection, lambda conn: None)
+        self.pooled_connection = PooledConnection(
+            lambda _: self.connection, lambda conn: None
+        )
         self.cursor.connection = self.mock_psycopg_connection
         self.connection_service = ConnectionService()
         self.query_execution_service = QueryExecutionService()
@@ -122,6 +124,7 @@ class TestQueryService(unittest.TestCase):
             else:
                 return self.connection
 
+        self.connection_service.get_connection = mock.Mock(return_value=self.connection)
         self.connection_service.get_pooled_connection = mock.Mock(
             return_value=self.pooled_connection
         )
@@ -1451,7 +1454,7 @@ class TestQueryService(unittest.TestCase):
 
         conn = psycopg.connect(**get_connection_details())
         connection = ServerConnection(conn)
-        pooled_connection = PooledConnection(lambda: connection, lambda _: None)
+        pooled_connection = PooledConnection(lambda _: connection, lambda _: None)
         self.connection_service.get_pooled_connection = mock.Mock(
             return_value=pooled_connection
         )
