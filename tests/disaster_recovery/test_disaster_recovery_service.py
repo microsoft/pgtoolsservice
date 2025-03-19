@@ -13,8 +13,9 @@ from typing import Callable
 from unittest import mock
 
 import tests.pgsmo_tests.utils as pg_utils
-from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
+from ossdbtoolsservice.connection import ConnectionService, OwnerConnectionInfo
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
+from ossdbtoolsservice.connection.contracts.common import ConnectionSummary, ServerInfo
 from ossdbtoolsservice.disaster_recovery import (
     DisasterRecoveryService,
     disaster_recovery_service,
@@ -32,14 +33,6 @@ class TestDisasterRecoveryService(unittest.TestCase):
         """Set up the tests with a disaster recovery service and
         connection service with mock connection info"""
         self.disaster_recovery_service = DisasterRecoveryService()
-        self.connection_service = ConnectionService()
-        self.task_service = TaskService()
-        self.disaster_recovery_service._service_provider = utils.get_mock_service_provider(
-            {
-                constants.CONNECTION_SERVICE_NAME: self.connection_service,
-                constants.TASK_SERVICE_NAME: self.task_service,
-            }
-        )
 
         # Create connection information for use in the tests
         self.connection_details = ConnectionDetails()
@@ -53,7 +46,32 @@ class TestDisasterRecoveryService(unittest.TestCase):
             "port": 5432,
         }
         self.test_uri = "test_uri"
-        self.connection_info = ConnectionInfo(self.test_uri, self.connection_details)
+        self.connection_info = OwnerConnectionInfo(
+            owner_uri=self.test_uri,
+            connection_details=self.connection_details,
+            connection_id="test",
+            server_info=ServerInfo(
+                server=self.host, server_version="13.10.1", is_cloud=False
+            ),
+            connection_summary=ConnectionSummary(
+                server_name=self.host,
+                database_name=self.dbname,
+                user_name=self.username,
+            ),
+        )
+
+        self.connection_service = mock.MagicMock(spec=ConnectionService)
+        self.connection_service.get_connection_info = mock.Mock(
+            return_value=self.connection_info
+        )
+
+        self.task_service = TaskService()
+        self.disaster_recovery_service._service_provider = utils.get_mock_service_provider(
+            {
+                constants.CONNECTION_SERVICE_NAME: self.connection_service,
+                constants.TASK_SERVICE_NAME: self.task_service,
+            }
+        )
 
         # Create backup parameters for the tests
         self.request_context = utils.MockRequestContext()
@@ -445,11 +463,7 @@ class TestDisasterRecoveryService(unittest.TestCase):
             ) as mock_popen,
         ):
             # If I perform a backup/restore
-            with mock.patch(
-                "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
-                new=mock.Mock(return_value=mockConnection),
-            ):
-                task_result = test_method(self.connection_info, test_params, self.mock_task)
+            task_result = test_method(self.connection_info, test_params, self.mock_task)
             # Then the code got the path of the executable
             mock_get_path.assert_called_once_with(exe_name, mockConnection.server_version)
             # And ran the executable as a subprocess
@@ -496,10 +510,6 @@ class TestDisasterRecoveryService(unittest.TestCase):
                 new=mock.Mock(return_value=mock_pg_path),
             ),
             mock.patch("subprocess.Popen", new=mock.Mock(return_value=mock_process)),
-            mock.patch(
-                "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
-                new=mock.Mock(return_value=pg_utils.MockPGServerConnection(None)),
-            ),
         ):
             # If I perform a backup/restore that fails
             task_result = test_method(self.connection_info, test_params, self.mock_task)
@@ -523,14 +533,9 @@ class TestDisasterRecoveryService(unittest.TestCase):
     def _test_perform_backup_restore_no_exe_internal(
         self, test_method: Callable, test_params
     ):
-        mockConnection = pg_utils.MockPGServerConnection(None)
         with (
             mock.patch("os.path.exists", new=mock.Mock(return_value=False)),
             mock.patch("subprocess.Popen") as mock_popen,
-            mock.patch(
-                "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
-                new=mock.Mock(return_value=mockConnection),
-            ),
         ):
             # If I perform a restore when the pg_restore executable cannot be found
             task_result = test_method(self.connection_info, test_params, mock.Mock())
@@ -559,9 +564,6 @@ class TestDisasterRecoveryService(unittest.TestCase):
     def _test_handle_backup_restore_internal(
         self, test_handler: Callable, test_method: Callable, test_params
     ):
-        # Set up the connection service to return the test's connection information
-        self.connection_service.owner_to_connection_map[self.test_uri] = self.connection_info
-
         # Set up a mock task so that the restore code does
         # not actually run in a separate thread
         with mock.patch(
@@ -608,6 +610,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
     def _test_handle_backup_restore_request_no_connection(
         self, test_handler: Callable, test_params
     ):
+        self.connection_service.get_connection_info = mock.Mock(return_value=None)
+
         # Set up a mock task so that the restore code
         # does not actually run in a separate thread
         with (
@@ -630,13 +634,8 @@ class TestDisasterRecoveryService(unittest.TestCase):
         created if the task has been canceled"""
         # Set up the task to be canceled
         self.mock_task.canceled = True
-        mockConnection = pg_utils.MockPGServerConnection(None)
         with (
             mock.patch("subprocess.Popen", new=mock.Mock()) as mock_popen,
-            mock.patch(
-                "ossdbtoolsservice.connection.ConnectionInfo.get_connection",
-                new=mock.Mock(return_value=mockConnection),
-            ),
         ):
             # If I try to perform a backup/restore for a canceled task
             disaster_recovery_service._perform_backup_restore(

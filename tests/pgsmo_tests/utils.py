@@ -10,7 +10,7 @@ from typing import Any, Optional
 
 from psycopg import Column, DatabaseError, connection
 
-from ossdbtoolsservice.driver.types.driver import (
+from ossdbtoolsservice.connection.core.server_connection import (
     PG_CANCELLATION_QUERY,
     Params,
     ServerConnection,
@@ -141,6 +141,8 @@ class MockPGServerConnection(ServerConnection):
         self.close = mock.MagicMock()
         self.cursor = mock.MagicMock(return_value=cur)
 
+        self._backend_pid = 0
+
         # if no mock pyscopg connection passed, create default one
         if not connection:
             connection = MockPsycopgConnection(
@@ -150,10 +152,9 @@ class MockPGServerConnection(ServerConnection):
 
         # mock psycopg.connect call in ServerConnection.__init__
         # to return mock psycopg connection
-        with mock.patch("psycopg.connect", mock.Mock(return_value=connection)):
-            super().__init__(
-                {"host_name": host, "user_name": user, "port": port, "database_name": name}
-            )
+        super().__init__(
+            connection=connection,
+        )
 
     @property
     def connection(self) -> connection:
@@ -164,6 +165,11 @@ class MockPGServerConnection(ServerConnection):
     def cancellation_query(self) -> str:
         """Returns a SQL command to end the current query execution process"""
         return PG_CANCELLATION_QUERY.format(0)
+
+    @property
+    def backend_pid(self) -> int:
+        """Returns the backend process ID"""
+        return self._backend_pid
 
 
 # OBJECT TEST HELPERS ######################################################

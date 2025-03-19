@@ -5,12 +5,11 @@
 
 import time
 import unittest
-from typing import List  # noqa
 from unittest.mock import Mock, patch
 
 import tests.pgsmo_tests.utils as utils
+from ossdbtoolsservice.connection import PooledConnection
 from ossdbtoolsservice.language.completion_refresher import CompletionRefresher
-from ossdbtoolsservice.utils.constants import PG_PROVIDER_NAME
 
 MYSCHEMA = "myschema"
 MYSCHEMA2 = "myschema2"
@@ -21,7 +20,7 @@ class TestSqlCompletionRefresher(unittest.TestCase):
 
     def setUp(self):
         self.refresher: CompletionRefresher = CompletionRefresher(
-            utils.MockPGServerConnection()
+            PooledConnection(lambda: utils.MockPGServerConnection(), lambda _: None),
         )
 
     def test_ctor(self):
@@ -86,23 +85,3 @@ class TestSqlCompletionRefresher(unittest.TestCase):
             self.refresher.refresh(callbacks)
             self.refresher._completer_thread.join()
             self.assertEqual(callbacks[0].call_count, 1)
-
-    def test_refresh_selects_pg_completer(self):
-        """
-        The correct completer (pg) should be selected.
-        """
-        callbacks = Mock()
-        pg_completer = Mock()
-
-        mock_completer_map = {PG_PROVIDER_NAME: pg_completer}
-        with patch(
-            "ossdbtoolsservice.language.completion_refresher.COMPLETER_MAP",
-            mock_completer_map,
-        ):
-            # Set refreshers to 0: we're not testing refresh logic here
-            self.refresher.refreshers = {}
-            self.refresher.refresh(callbacks)
-
-            # PGCompleter should be called because
-            # self.refresher is using a MockPGServerConnection
-            pg_completer.assert_called_once()

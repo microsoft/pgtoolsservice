@@ -8,11 +8,14 @@ import unittest
 from typing import Callable
 from unittest import mock
 
-from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
+from ossdbtoolsservice.connection import (
+    ConnectionService,
+    OwnerConnectionInfo,
+)
 from ossdbtoolsservice.connection.contracts import (
     ConnectionDetails,
-    ConnectRequestParams,
 )
+from ossdbtoolsservice.connection.contracts.common import ConnectionSummary, ServerInfo
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.language.operations_queue import (
     INTELLISENSE_URI,
@@ -50,7 +53,17 @@ class TestOperationsQueue(unittest.TestCase):
         self.expected_context_key = "test_host|test_db|user"
         self.expected_connection_uri = INTELLISENSE_URI + self.expected_context_key
         self.test_uri = "test_uri"
-        self.connection_info = ConnectionInfo(self.test_uri, self.connection_details)
+        self.owner_connection_info = OwnerConnectionInfo(
+            owner_uri=self.expected_connection_uri,
+            connection_id="test",
+            server_info=ServerInfo(server="test", server_version="1.2.3", is_cloud=False),
+            connection_summary=ConnectionSummary(
+                server_name="test_host",
+                database_name="test_db",
+                user_name="user",
+            ),
+            connection_details=self.connection_details,
+        )
 
         # Create mock CompletionRefresher to avoid calls to create separate thread
         self.refresher_mock = mock.MagicMock()
@@ -74,7 +87,9 @@ class TestOperationsQueue(unittest.TestCase):
         # Given a connection will be created on a connect request
         connect_result = mock.MagicMock()
         connect_result.error_message = None
-        self.mock_connection_service.get_connection = mock.Mock(return_value=mock.MagicMock())
+        self.mock_connection_service.get_pooled_connection = mock.Mock(
+            return_value=mock.MagicMock()
+        )
         self.mock_connection_service.connect = mock.MagicMock(return_value=connect_result)
 
         # When I add a connection context
@@ -83,55 +98,58 @@ class TestOperationsQueue(unittest.TestCase):
         with mock.patch(COMPLETIONREFRESHER_PATH_PATH) as refresher_patch:
             refresher_patch.return_value = self.refresher_mock
             context: ConnectionContext = operations_queue.add_connection_context(
-                self.connection_info
+                self.owner_connection_info
             )
             # Then I expect the context to be non-null
             self.assertIsNotNone(context)
             self.assertEqual(context.key, self.expected_context_key)
             self.assertFalse(context.intellisense_complete.is_set())
-            self.assertTrue(operations_queue.has_connection_context(self.connection_info))
+            self.assertTrue(
+                operations_queue.has_connection_context(self.owner_connection_info)
+            )
 
     def test_add_same_context_twice_creates_one_context(self) -> None:
         def do_test():
             # When I add context for 2 URIs with same connection details
             operations_queue = OperationsQueue(self.mock_service_provider)
+            get_pooled_connection_mock = mock.Mock(return_value=mock.MagicMock())
+            self.mock_connection_service.get_pooled_connection = get_pooled_connection_mock
 
             with mock.patch(COMPLETIONREFRESHER_PATH_PATH) as refresher_patch:
                 refresher_patch.return_value = self.refresher_mock
-                operations_queue.add_connection_context(self.connection_info)
-                conn_info2 = ConnectionInfo("newuri", self.connection_info.details)
+                operations_queue.add_connection_context(self.owner_connection_info)
+                conn_info2 = OwnerConnectionInfo(
+                    owner_uri="newuri",
+                    connection_id="test",
+                    server_info=self.owner_connection_info.server_info,
+                    connection_summary=self.owner_connection_info.connection_summary,
+                    connection_details=self.owner_connection_info.connection_details,
+                )
                 operations_queue.add_connection_context(conn_info2)
-                # Then I expect to only have connection
-                connect_mock: mock.MagicMock = self.mock_connection_service.connect
-                connect_mock.assert_called_once()
-                connect_params: ConnectRequestParams = connect_mock.call_args[0][0]
-                self.assertEqual(connect_params.owner_uri, self.expected_connection_uri)
+                assert len(operations_queue._context_map) == 1
+                assert get_pooled_connection_mock.call_count == 1
 
         self._run_with_mock_connection(do_test)
 
     def test_add_same_context_twice_with_overwrite_creates_two_contexts(self) -> None:
         def do_test():
+            get_pooled_connection_mock = mock.Mock(return_value=mock.MagicMock())
+            self.mock_connection_service.get_pooled_connection = get_pooled_connection_mock
             # When I add context for 2 URIs with same connection details
             operations_queue = OperationsQueue(self.mock_service_provider)
             with mock.patch(COMPLETIONREFRESHER_PATH_PATH) as refresher_patch:
                 refresher_patch.return_value = self.refresher_mock
-                operations_queue.add_connection_context(self.connection_info)
-                conn_info2 = ConnectionInfo("newuri", self.connection_info.details)
+                operations_queue.add_connection_context(self.owner_connection_info)
+                conn_info2 = OwnerConnectionInfo(
+                    owner_uri="newuri",
+                    connection_id="test",
+                    server_info=self.owner_connection_info.server_info,
+                    connection_summary=self.owner_connection_info.connection_summary,
+                    connection_details=self.owner_connection_info.connection_details,
+                )
                 operations_queue.add_connection_context(conn_info2, overwrite=True)
-                # Then I expect to only have 1 connection
-                # and I expect disconnect and reconnect to have been called
-                connect_mock: mock.MagicMock = self.mock_connection_service.connect
-                self.assertEqual(connect_mock.call_count, 2)
-                self.assertEqual(
-                    connect_mock.call_args_list[0][0][0].owner_uri,
-                    self.expected_connection_uri,
-                )
-                self.assertEqual(
-                    connect_mock.call_args_list[1][0][0].owner_uri,
-                    self.expected_connection_uri,
-                )
-                disconnect_mock: mock.MagicMock = self.mock_connection_service.disconnect
-                disconnect_mock.assert_called_once()
+                assert len(operations_queue._context_map) == 1
+                assert get_pooled_connection_mock.call_count == 2
 
         self._run_with_mock_connection(do_test)
 
@@ -224,7 +242,9 @@ class TestOperationsQueue(unittest.TestCase):
     def _run_with_mock_connection(self, test: Callable[[], None]) -> None:
         connect_result = mock.MagicMock()
         connect_result.error_message = None
-        self.mock_connection_service.get_connection = mock.Mock(return_value=mock.MagicMock())
+        self.mock_connection_service.get_pooled_connection = mock.Mock(
+            return_value=mock.MagicMock()
+        )
         self.mock_connection_service.connect = mock.MagicMock(return_value=connect_result)
         self.mock_connection_service.disconnect = mock.MagicMock(return_value=True)
         test()

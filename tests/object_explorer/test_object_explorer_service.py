@@ -209,18 +209,21 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_handle_create_session_session_exists(self) -> None:
         # Setup: Create an OE service and pre-load a session
+        params, session_uri = _connection_details()
+
         mock_connection = MockPGServerConnection(
             cur=None, host="myserver", name="postgres", user="postgres", port=123
         )
         cs = ConnectionService()
-        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
+        cs.connect = mock.MagicMock(
+            return_value=ConnectionCompleteParams(owner_uri=session_uri)
+        )
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
 
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider(
             {constants.CONNECTION_SERVICE_NAME: cs}
         )
-        params, session_uri = _connection_details()
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
         oe._provider = constants.PG_PROVIDER_NAME
@@ -279,20 +282,21 @@ class TestObjectExplorer(unittest.TestCase):
         # Setup:
         # ... Create OE service with mock connection service that
         # returns a successful connection response
+        params, session_uri = _connection_details()
+
         mock_connection = MockPGServerConnection(
             cur=None, host="myserver", name="postgres", user="postgres", port=123
         )
         cs = ConnectionService()
-        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
+        cs.connect = mock.MagicMock(
+            return_value=ConnectionCompleteParams(owner_uri=session_uri)
+        )
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider(
             {constants.CONNECTION_SERVICE_NAME: cs}
         )
         oe._provider = constants.PG_PROVIDER_NAME
-
-        # ... Create parameters, session, request context validator
-        params, session_uri = _connection_details()
 
         # ... Create validation of success notification
         def validate_success_notification(response: SessionCreatedParameters):
@@ -375,9 +379,13 @@ class TestObjectExplorer(unittest.TestCase):
         # Setup:
         # ... Create OE service with mock connection service
         # that returns a failed connection response
+        params, session_uri = _connection_details()
+
         cs = ConnectionService()
-        connect_response = ConnectionCompleteParams()
-        connect_response.error_message = "Boom! Init Session Failed"
+        connect_response = ConnectionCompleteParams(
+            owner_uri=session_uri, error_message="Boom! Init Session Failed"
+        )
+
         cs.connect = mock.MagicMock(return_value=connect_response)
         oe = ObjectExplorerService()
         oe._service_provider = utils.get_mock_service_provider(
@@ -386,7 +394,7 @@ class TestObjectExplorer(unittest.TestCase):
 
         # If: I initialize a session
         # (NOTE: We're bypassing request handler to avoid threading issues)
-        params, session_uri = _connection_details()
+
         session = ObjectExplorerSession(session_uri, params)
         oe._session_map[session_uri] = session
 
@@ -406,15 +414,19 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_create_connection_successful(self) -> None:
         # Setup:
+        params, session_uri = _connection_details()
+
         mock_connection = MockPGServerConnection()
         oe = ObjectExplorerService()
         cs = ConnectionService()
-        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
+        cs.connect = mock.MagicMock(
+            return_value=ConnectionCompleteParams(owner_uri=session_uri)
+        )
         cs.get_connection = mock.MagicMock(return_value=mock_connection)
         oe._service_provider = utils.get_mock_service_provider(
             {constants.CONNECTION_SERVICE_NAME: cs}
         )
-        params, session_uri = _connection_details()
+
         session = ObjectExplorerSession(session_uri, params)
         connection = oe._create_connection(session, "foo_database")
 
@@ -425,16 +437,18 @@ class TestObjectExplorer(unittest.TestCase):
 
     def test_create_connection_failed(self) -> None:
         # Setup:
+        params, session_uri = _connection_details()
         oe = ObjectExplorerService()
         cs = ConnectionService()
-        connect_response = ConnectionCompleteParams()
         error = "Failed"
-        connect_response.error_message = error
+        connect_response = ConnectionCompleteParams(
+            owner_uri=session_uri, error_message=error
+        )
         cs.connect = mock.MagicMock(return_value=connect_response)
         oe._service_provider = utils.get_mock_service_provider(
             {constants.CONNECTION_SERVICE_NAME: cs}
         )
-        params, session_uri = _connection_details()
+
         session = ObjectExplorerSession(session_uri, params)
 
         with self.assertRaises(RuntimeError) as context:
