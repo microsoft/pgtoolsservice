@@ -48,7 +48,24 @@ class SaveAsWriter(ServiceBufferFileStream, Generic[T]):
         pass
 
     def get_start_index(self) -> int:
+        """
+        Get the start index for iterating over columns.
+        """
         return self._column_start_index if self._column_start_index else 0
 
     def get_end_index(self, columns: list[DbColumn]) -> int:
-        return self._column_count if self._column_count else len(columns)
+        """
+        Get the exclusive end index for iterating over columns.
+
+        The returned value is one greater than the actual column end index
+        (if specified) to make it suitable for use in a range function.
+        If no column end index is specified, the value will default to the
+        total number of columns.
+
+        Args:
+            columns (list[DbColumn]): The list of columns in the result set.
+
+        Returns:
+            int: The exclusive end index for column iteration.
+        """
+        return self._column_end_index + 1 if self._column_end_index else len(columns)

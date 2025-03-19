@@ -54,6 +54,17 @@ class TestSaveAsJsonWriter(unittest.TestCase):
         self.assertEqual(1023, self.writer._data[0]["Id"])
         self.assertEqual(False, self.writer._data[0]["Valid"])
 
+    def test_write_row_for_selection(self) -> None:
+        self.writer._column_start_index = 1
+        self.writer._column_end_index = 2
+        self.writer.write_row(self.row, self.columns)
+
+        self.assertEqual(1, len(self.writer._data))
+
+        self.assertNotIn("Name", self.writer._data[0])
+        self.assertEqual(1023, self.writer._data[0]["Id"])
+        self.assertEqual(False, self.writer._data[0]["Valid"])
+
     def test_complete_write(self) -> None:
         json_dump_mock = mock.MagicMock()
 

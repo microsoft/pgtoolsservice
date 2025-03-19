@@ -12,7 +12,7 @@ from ossdbtoolsservice.query_execution.contracts import SaveResultsAsExcelReques
 
 
 class TestSaveAsExcelWriter(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.request = SaveResultsAsExcelRequestParams()
         self.request.file_path = "TestPath"
         self.request.include_headers = True
@@ -45,11 +45,11 @@ class TestSaveAsExcelWriter(unittest.TestCase):
         with mock.patch("xlsxwriter.Workbook", new=self.xlsxwriter_mock):
             self.writer = SaveAsExcelWriter(self.mock_io, self.request)
 
-    def test_construction(self):
+    def test_construction(self) -> None:
         self.xlsxwriter_mock.assert_called_once_with(self.mock_io.name)
         self.workbook_mock.add_worksheet.assert_called_once()
 
-    def test_write_row_column_headers(self):
+    def test_write_row_column_headers(self) -> None:
         bold = {}
         self.workbook_mock.add_format = mock.Mock(return_value=bold)
         self.writer.write_row(self.row, self.columns)
@@ -70,7 +70,7 @@ class TestSaveAsExcelWriter(unittest.TestCase):
         self.assertEqual("Valid", write_column_header_args[2][0][2])
         self.assertEqual(bold, write_column_header_args[2][0][3])
 
-    def test_write_row(self):
+    def test_write_row(self) -> None:
         self.writer.write_row(self.row, self.columns)
 
         write_column_value_args = self.worksheet_mock.write.call_args_list
@@ -87,6 +87,18 @@ class TestSaveAsExcelWriter(unittest.TestCase):
         self.assertEqual(2, write_column_value_args[5][0][1])
         self.assertEqual(False, write_column_value_args[5][0][2])
 
-    def test_complete_write(self):
+    def test_write_row_for_selection(self) -> None:
+        self.writer._column_start_index = 1
+        self.writer._column_end_index = 2
+        self.writer.write_row(self.row, self.columns)
+        write_column_value_args = self.worksheet_mock.write.call_args_list
+
+        self.assertEqual("Id", write_column_value_args[0][0][2])
+        self.assertEqual("Valid", write_column_value_args[1][0][2])
+
+        self.assertEqual(1023, write_column_value_args[2][0][2])
+        self.assertEqual(False, write_column_value_args[3][0][2])
+
+    def test_complete_write(self) -> None:
         self.writer.complete_write()
         self.workbook_mock.close.assert_called_once()

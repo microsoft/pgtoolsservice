@@ -12,7 +12,7 @@ from ossdbtoolsservice.query_execution.contracts import SaveResultsAsCsvRequestP
 
 
 class TestSaveAsCsvWriter(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.request = SaveResultsAsCsvRequestParams()
         self.request.file_path = "TestPath"
         self.request.include_headers = True
@@ -38,7 +38,7 @@ class TestSaveAsCsvWriter(unittest.TestCase):
 
         self.writer = SaveAsCsvWriter(self.mock_io, self.request)
 
-    def test_write_row(self):
+    def test_write_row(self) -> None:
         writer_mock = mock.MagicMock()
         csv_writer_mock = mock.Mock(return_value=writer_mock)
         with mock.patch("csv.writer", new=csv_writer_mock):
@@ -54,7 +54,7 @@ class TestSaveAsCsvWriter(unittest.TestCase):
             self.assertEqual(["Name", "Id", "Valid"], write_row_args[0][0][0])
             self.assertEqual(["Test", "1023", "False"], write_row_args[1][0][0])
 
-    def test_write_row_for_few_columns(self):
+    def test_write_row_for_few_columns(self) -> None:
         self.writer._column_start_index = 1
         self.writer._column_end_index = 2
 
@@ -70,10 +70,11 @@ class TestSaveAsCsvWriter(unittest.TestCase):
             self.assertEqual(writer_mock.writerow.call_count, 2)
             write_row_args = writer_mock.writerow.call_args_list
 
+            self.assertEqual(2, len(write_row_args))
             self.assertEqual(["Id", "Valid"], write_row_args[0][0][0])
             self.assertEqual(["1023", "False"], write_row_args[1][0][0])
 
-    def test_write_row_change_delimiter(self):
+    def test_write_row_change_delimiter(self) -> None:
         self.request.delimiter = ";"
         writer_mock = mock.MagicMock()
         csv_writer_mock = mock.Mock(return_value=writer_mock)
