@@ -9,9 +9,8 @@ from ossdbtoolsservice.admin.contracts import (
     GetDatabaseInfoParameters,
     GetDatabaseInfoResponse,
 )
+from ossdbtoolsservice.connection import PooledConnection
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.utils import constants
 
@@ -35,28 +34,33 @@ class AdminService(Service):
     def _handle_get_database_info_request(
         self, request_context: RequestContext, params: GetDatabaseInfoParameters
     ) -> None:
+        owner_uri = params.owner_uri
+        if not owner_uri:
+            request_context.send_error("Owner URI is required")
+            return
         # Retrieve the connection from the connection service
         connection_service = self.service_provider.get(
             constants.CONNECTION_SERVICE_NAME, ConnectionService
         )
-        connection: ServerConnection | None = connection_service.get_connection(
-            params.owner_uri, ConnectionType.DEFAULT
+        pooled_connection: PooledConnection | None = connection_service.get_pooled_connection(
+            owner_uri
         )
 
-        if connection is None:
+        if pooled_connection is None:
             request_context.send_error(
                 f"Unable to get connection for owner uri: {params.owner_uri}"
             )
             return
 
-        # Get database owner
-        owner_result = connection.get_database_owner()
-        size_result = connection.get_database_size(connection.database_name)
+        with pooled_connection as connection:
+            # Get database owner
+            owner_result = connection.get_database_owner()
+            size_result = connection.get_database_size(connection.database_name)
 
-        # Set up and send the response
-        options = {
-            DatabaseInfo.DBNAME: connection.database_name,
-            DatabaseInfo.OWNER: owner_result,
-            DatabaseInfo.SIZE: size_result,
-        }
+            # Set up and send the response
+            options = {
+                DatabaseInfo.DBNAME: connection.database_name,
+                DatabaseInfo.OWNER: owner_result,
+                DatabaseInfo.SIZE: size_result,
+            }
         request_context.send_response(GetDatabaseInfoResponse(DatabaseInfo(options)))

@@ -6,8 +6,7 @@
 from typing import Optional
 
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.driver.types.driver import ServerConnection
+from ossdbtoolsservice.connection.core.server_connection import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.scripting.contracts import (
     SCRIPT_AS_REQUEST,
@@ -68,16 +67,16 @@ class ScriptingService(Service):
             connection_service = self.service_provider.get(
                 constants.CONNECTION_SERVICE_NAME, ConnectionService
             )
-            connection = connection_service.get_connection(
-                params.owner_uri, ConnectionType.QUERY
-            )
+            pooled_connection = connection_service.get_pooled_connection(owner_uri)
 
-            if connection is None:
+            if pooled_connection is None:
                 raise Exception("Could not get connection")
 
             object_metadata = scripting_objects[0]
 
-            scripter = Scripter(connection)
+            with pooled_connection as connection:
+                scripter = Scripter(connection)
+                script = scripter.script(scripting_operation, object_metadata)
 
             script = scripter.script(scripting_operation, object_metadata)
             request_context.send_response(ScriptAsResponse(owner_uri, script))

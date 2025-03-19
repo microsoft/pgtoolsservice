@@ -20,9 +20,8 @@ from ossdbtoolsservice.chat.messages import (
     CopilotQueryNotificationParams,
 )
 from ossdbtoolsservice.chat.plugin.plugin_base import PGTSChatPlugin
+from ossdbtoolsservice.connection import PooledConnection
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts.common import ConnectionType
-from ossdbtoolsservice.driver.types.driver import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext
 
 from .postgres_utils import (
@@ -84,8 +83,8 @@ class PostgresPlugin(PGTSChatPlugin):
             kernel_functions, plugin_name=self.name, description=self.description
         )
 
-    def _get_connection(self) -> ServerConnection | None:
-        return self._connection_service.get_connection(self._owner_uri, ConnectionType.QUERY)
+    def _get_pooled_connection(self) -> PooledConnection | None:
+        return self._connection_service.get_pooled_connection(self._owner_uri)
 
     def _process_script_result(self, result: Any) -> Any:
         if not result:
@@ -123,11 +122,12 @@ class PostgresPlugin(PGTSChatPlugin):
             ),
         )
         try:
-            connection = self._get_connection()
-            if connection is None:
+            pooled_connection = self._get_pooled_connection()
+            if pooled_connection is None:
                 return "Error. Could not connect to the database. No connection found."
 
-            return self._process_script_result(fetch_full_schema(connection._conn))
+            with pooled_connection as connection:
+                return self._process_script_result(fetch_full_schema(connection._conn))
         except Exception as e:
             if self._logger:
                 self._logger.exception(e)
@@ -186,108 +186,109 @@ class PostgresPlugin(PGTSChatPlugin):
         )
 
         try:
-            connection = self._get_connection()
-            if connection is None:
+            pooled_connection = self._get_pooled_connection()
+            if pooled_connection is None:
                 return "Error. Could not connect to the database. No connection found."
 
-            if schema_name is not None:
-                schemas = [schema_name]
-            else:
-                schemas = get_schema_names(connection._conn)
-
-            def _get_scripts(func: Callable[[str], list[str]]) -> list[str]:
+            with pooled_connection as connection:
                 if schema_name is not None:
-                    return func(schema_name)
-                result = []
-                for schema in schemas:
-                    result.append("-- Schema: " + schema)
-                    result.extend(func(schema))
-                return result
+                    schemas = [schema_name]
+                else:
+                    schemas = get_schema_names(connection._conn)
 
-            if object_type == "tables":
-                return self._process_script_result(
-                    "\n".join(
-                        _get_scripts(
-                            lambda s: get_table_scripts(
-                                connection._conn,
-                                schema_name=s,
+                def _get_scripts(func: Callable[[str], list[str]]) -> list[str]:
+                    if schema_name is not None:
+                        return func(schema_name)
+                    result = []
+                    for schema in schemas:
+                        result.append("-- Schema: " + schema)
+                        result.extend(func(schema))
+                    return result
+
+                if object_type == "tables":
+                    return self._process_script_result(
+                        "\n".join(
+                            _get_scripts(
+                                lambda s: get_table_scripts(
+                                    connection._conn,
+                                    schema_name=s,
+                                )
                             )
                         )
                     )
-                )
-            elif object_type == "indexes":
-                return self._process_script_result(
-                    "\n".join(
-                        _get_scripts(
-                            lambda s: get_index_scripts(
-                                connection._conn,
-                                schema_name=s,
+                elif object_type == "indexes":
+                    return self._process_script_result(
+                        "\n".join(
+                            _get_scripts(
+                                lambda s: get_index_scripts(
+                                    connection._conn,
+                                    schema_name=s,
+                                )
                             )
                         )
                     )
-                )
-            elif object_type == "functions":
-                return self._process_script_result(
-                    "\n".join(
-                        _get_scripts(
-                            lambda s: get_function_scripts(
-                                connection._conn,
-                                schema_name=s,
+                elif object_type == "functions":
+                    return self._process_script_result(
+                        "\n".join(
+                            _get_scripts(
+                                lambda s: get_function_scripts(
+                                    connection._conn,
+                                    schema_name=s,
+                                )
                             )
                         )
                     )
-                )
-            elif object_type == "sequences":
-                return self._process_script_result(
-                    "\n".join(
-                        _get_scripts(
-                            lambda s: get_sequence_scripts(
-                                connection._conn,
-                                schema_name=s,
+                elif object_type == "sequences":
+                    return self._process_script_result(
+                        "\n".join(
+                            _get_scripts(
+                                lambda s: get_sequence_scripts(
+                                    connection._conn,
+                                    schema_name=s,
+                                )
                             )
                         )
                     )
-                )
-            elif object_type == "comments":
-                return self._process_script_result(
-                    "\n".join(
-                        _get_scripts(
-                            lambda s: get_comment_scripts(
-                                connection._conn,
-                                schema_name=s,
+                elif object_type == "comments":
+                    return self._process_script_result(
+                        "\n".join(
+                            _get_scripts(
+                                lambda s: get_comment_scripts(
+                                    connection._conn,
+                                    schema_name=s,
+                                )
                             )
                         )
                     )
-                )
-            elif object_type == "ownership":
-                return self._process_script_result(
-                    "\n".join(
-                        _get_scripts(
-                            lambda s: get_ownership_scripts(
-                                connection._conn,
-                                schema_name=s,
+                elif object_type == "ownership":
+                    return self._process_script_result(
+                        "\n".join(
+                            _get_scripts(
+                                lambda s: get_ownership_scripts(
+                                    connection._conn,
+                                    schema_name=s,
+                                )
                             )
                         )
                     )
-                )
-            elif object_type == "default_privileges":
-                return self._process_script_result(
-                    "\n".join(
-                        _get_scripts(
-                            lambda s: get_default_privileges_scripts(
-                                connection._conn,
-                                schema_name=s,
+                elif object_type == "default_privileges":
+                    return self._process_script_result(
+                        "\n".join(
+                            _get_scripts(
+                                lambda s: get_default_privileges_scripts(
+                                    connection._conn,
+                                    schema_name=s,
+                                )
                             )
                         )
                     )
-                )
-            elif object_type == "fdw":
-                # FDW objects are global; no schema required.
-                return self._process_script_result(
-                    "\n".join(get_fdw_scripts(connection._conn))
-                )
-            else:
-                return f"Error. Unsupported object type: {object_type}."
+                elif object_type == "fdw":
+                    # FDW objects are global; no schema required.
+                    return self._process_script_result(
+                        "\n".join(get_fdw_scripts(connection._conn))
+                    )
+                else:
+                    return f"Error. Unsupported object type: {object_type}."
         except Exception as e:
             if self._logger:
                 self._logger.exception(e)
@@ -339,12 +340,13 @@ class PostgresPlugin(PGTSChatPlugin):
             ),
         )
 
-        connection = self._get_connection()
-        if connection is None:
+        pooled_connection = self._get_pooled_connection()
+        if pooled_connection is None:
             return "Error. Could not connect to the database. No connection found."
 
         try:
-            result = execute_readonly_query(connection._conn, query, self._max_result_chars)
+            with pooled_connection as connection:
+                result = execute_readonly_query(connection._conn, query, self._max_result_chars)
         except Exception as e:
             if self._logger:
                 self._logger.exception(e)
@@ -436,12 +438,13 @@ class PostgresPlugin(PGTSChatPlugin):
             ),
         )
 
-        connection = self._get_connection()
-        if connection is None:
+        pooled_connection = self._get_pooled_connection()
+        if pooled_connection is None:
             return "Error. Could not connect to the database. No connection found."
 
         try:
-            result = execute_statement(connection._conn, statement)
+            with pooled_connection as connection:
+                result = execute_statement(connection._conn, statement)
         except Exception as e:
             if self._logger:
                 self._logger.exception(e)

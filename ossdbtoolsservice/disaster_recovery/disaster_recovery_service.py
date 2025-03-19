@@ -14,9 +14,8 @@ from typing import Any
 
 import inflection
 
-from ossdbtoolsservice.connection import ConnectionInfo
+from ossdbtoolsservice.connection import OwnerConnectionInfo
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.disaster_recovery.contracts import (
     BACKUP_REQUEST,
     RESTORE_REQUEST,
@@ -61,7 +60,7 @@ class DisasterRecoveryService(Service):
         if owner_uri is None:
             request_context.send_error("Owner URI is required")
             return
-        connection_info: ConnectionInfo | None = self.service_provider.get(
+        connection_info: OwnerConnectionInfo | None = self.service_provider.get(
             constants.CONNECTION_SERVICE_NAME, ConnectionService
         ).get_connection_info(owner_uri)
         if connection_info is None:
@@ -70,8 +69,8 @@ class DisasterRecoveryService(Service):
             )  # TODO: Localize
             return
         provider: str = self.service_provider.provider
-        host = connection_info.details.server_name
-        database = connection_info.details.database_name
+        host = connection_info.connection_details.server_name
+        database = connection_info.connection_details.database_name
 
         task = Task(
             "Backup",
@@ -95,7 +94,7 @@ class DisasterRecoveryService(Service):
         if owner_uri is None:
             request_context.send_error("Owner URI is required")
             return
-        connection_info: ConnectionInfo | None = self.service_provider.get(
+        connection_info: OwnerConnectionInfo | None = self.service_provider.get(
             constants.CONNECTION_SERVICE_NAME, ConnectionService
         ).get_connection_info(owner_uri)
         if connection_info is None:
@@ -104,8 +103,8 @@ class DisasterRecoveryService(Service):
             )  # TODO: Localize
             return
         provider: str = self.service_provider.provider
-        host = connection_info.details.server_name
-        database = connection_info.details.database_name
+        host = connection_info.connection_details.server_name
+        database = connection_info.connection_details.database_name
         task = Task(
             "Restore",
             f"Host: {host}, Database: {database}",
@@ -120,7 +119,7 @@ class DisasterRecoveryService(Service):
 
 
 def _perform_backup_restore(
-    connection_info: ConnectionInfo,
+    connection_info: OwnerConnectionInfo,
     process_args: list[str],
     options: dict[str, Any],
     task: Task,
@@ -144,7 +143,7 @@ def _perform_backup_restore(
             return TaskResult(TaskStatus.CANCELED)
         dump_restore_process: subprocess.Popen | None = None
         try:
-            password = connection_info.details.options.get("password") or ""
+            password = connection_info.connection_details.options.get("password") or ""
             os.putenv("PGPASSWORD", str(password))
 
             # Set the executable bit on the file
@@ -165,7 +164,7 @@ def _perform_backup_restore(
 
 
 def _perform_backup(
-    connection_info: ConnectionInfo, params: BackupParams, task: Task
+    connection_info: OwnerConnectionInfo, params: BackupParams, task: Task
 ) -> TaskResult:
     """Call out to pg_dump to do a backup"""
     backup_info = params.backup_info
@@ -176,10 +175,7 @@ def _perform_backup(
     if backup_type is None:
         return TaskResult(TaskStatus.FAILED, "Backup type is required")
     try:
-        connection = connection_info.get_connection(ConnectionType.DEFAULT)
-        if connection is None:
-            return TaskResult(TaskStatus.FAILED, "Could not get connection")
-        pg_dump_location = _get_pg_exe_path("pg_dump", connection.server_version)
+        pg_dump_location = _get_pg_exe_path("pg_dump", connection_info.server_version)
     except ValueError as e:
         return TaskResult(TaskStatus.FAILED, str(e))
     pg_dump_args = [
@@ -188,7 +184,9 @@ def _perform_backup(
         f"--format={_BACKUP_FORMAT_MAP[backup_type]}",
     ]
 
-    pg_dump_args += _get_backup_restore_connection_params(connection_info.details.options)
+    pg_dump_args += _get_backup_restore_connection_params(
+        connection_info.connection_details.options
+    )
     # Remove the options that were already used,
     # and pass the rest so that they can be automatically serialized
     options = params.backup_info.__dict__.copy()
@@ -198,7 +196,7 @@ def _perform_backup(
 
 
 def _perform_restore(
-    connection_info: ConnectionInfo, params: RestoreParams, task: Task
+    connection_info: OwnerConnectionInfo, params: RestoreParams, task: Task
 ) -> TaskResult:
     """Call out to pg_restore to restore from a backup"""
     options = params.options
@@ -210,14 +208,13 @@ def _perform_restore(
         return TaskResult(TaskStatus.FAILED, "Path is required")
 
     try:
-        connection = connection_info.get_connection(ConnectionType.DEFAULT)
-        if connection is None:
-            return TaskResult(TaskStatus.FAILED, "Could not get connection")
-        pg_restore_location = _get_pg_exe_path("pg_restore", connection.server_version)
+        pg_restore_location = _get_pg_exe_path("pg_restore", connection_info.server_version)
     except ValueError as e:
         return TaskResult(TaskStatus.FAILED, str(e))
     pg_restore_args = [pg_restore_location]
-    pg_restore_args += _get_backup_restore_connection_params(connection_info.details.options)
+    pg_restore_args += _get_backup_restore_connection_params(
+        connection_info.connection_details.options
+    )
     pg_restore_args.append(path)
     # Remove the options that were already used,
     # and pass the rest so that they can be automatically serialized

@@ -7,7 +7,7 @@
 from logging import Logger
 from typing import Callable
 
-from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.connection import ConnectionService, PooledConnection
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.edit_data import (
     DataEditorSession,
@@ -105,6 +105,16 @@ class EditDataService(Service):
         )
 
         if connection is None:
+            request_context.send_error("Connection not found")
+            return
+
+        # Create a mock pooled connection that just uses the connection
+        # TODO: Refactor if we want to keep edit service, which is currently
+        # unused in VSCode. We'd have to push the pooled connection everywhere
+        # the connection is used.
+        pooled_connection = PooledConnection(lambda: connection, lambda conn: None)
+
+        if connection is None:
             request_context.send_error("Could not get connection")
             return
 
@@ -148,7 +158,7 @@ class EditDataService(Service):
 
             worker_args = ExecuteRequestWorkerArgs(
                 owner_uri,
-                connection,
+                pooled_connection,
                 request_context,
                 ResultSetStorageType.IN_MEMORY,
                 on_resultset_complete=on_resultset_complete,

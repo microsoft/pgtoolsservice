@@ -313,11 +313,24 @@ class MessageRecorder:
         """
         Path(self.file_path).parent.mkdir(parents=True, exist_ok=True)
         with self._lock:
-            recorded_session = self.create_record_session()
-            with open(self.file_path, "w") as f:
-                f.write(recorded_session.model_dump_json(indent=2))
-            if self._logger:
-                self._logger.info(f"[RECORDER] Saved recorded session to {self.file_path}")
+            try:
+                recorded_session = self.create_record_session()
+                with open(self.file_path, "w") as f:
+                    f.write(recorded_session.model_dump_json(indent=2))
+                if self._logger:
+                    self._logger.info(
+                        f"[RECORDER] Saved recorded session to {self.file_path}"
+                    )
+            except Exception as e:
+                if self._logger:
+                    if self.silence_errors:
+                        self._logger.warning(
+                            f"[RECORDER] Failed to save recorded session: {e}"
+                        )
+                    else:
+                        self._logger.exception(e)
+                if not self.silence_errors:
+                    raise e
 
     def close(self) -> None:
         """
