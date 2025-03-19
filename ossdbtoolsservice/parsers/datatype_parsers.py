@@ -9,7 +9,7 @@ import decimal
 import uuid
 from typing import Any, Callable
 
-from dateutil import parser as date_parser  # noqa
+from dateutil import parser as date_parser
 
 from ossdbtoolsservice.parsers import datatypes
 
