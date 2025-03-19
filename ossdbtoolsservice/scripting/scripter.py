@@ -5,7 +5,7 @@
 
 from typing import Any, Callable, Generic, TypeVar
 
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
 from ossdbtoolsservice.scripting.contracts import ScriptOperation
 from ossdbtoolsservice.utils import validate

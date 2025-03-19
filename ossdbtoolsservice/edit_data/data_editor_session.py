@@ -26,7 +26,7 @@ from ossdbtoolsservice.edit_data.contracts import (
 )
 from ossdbtoolsservice.edit_data import SmoEditTableMetadataFactory, EditTableMetadata
 from ossdbtoolsservice.query.contracts import DbColumn, ResultSetSubset
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.utils import validate
 from ossdbtoolsservice.utils.sql import as_sql
 

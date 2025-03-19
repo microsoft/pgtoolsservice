@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 
 
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.edit_data import EditColumnMetadata, EditTableMetadata
 from ossdbtoolsservice.metadata.contracts.object_metadata import MetadataType, ObjectMetadata
 from ossdbtoolsservice.query.contracts import DbColumn

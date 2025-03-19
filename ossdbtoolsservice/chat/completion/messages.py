@@ -43,7 +43,7 @@ class VSCodeLanguageModelTextPart(PGTSBaseModel):
 
 
 class VSCodeLanguageModelToolCallPart(PGTSBaseModel):
-    call_id: str 
+    call_id: str
     name: str
     input: dict[str, Any]
 
@@ -87,7 +87,7 @@ class VSCodeLanguageModelChatMessage(PGTSBaseModel):
 class VSCodeLanguageModelChatTool(PGTSBaseModel):
     name: str
     description: str
-    input_schema: dict[str, Any] 
+    input_schema: dict[str, Any]
     """A JSON schema for the input this tool accepts."""
 
 
@@ -95,7 +95,7 @@ class VSCodeLanguageModelCompletionRequestParams(PGTSBaseModel):
     chat_id: str
     request_id: str
     messages: list[VSCodeLanguageModelChatMessage]
-    model_options: dict[str, Any] 
+    model_options: dict[str, Any]
     tools: list[VSCodeLanguageModelChatTool]
     justification: str | None = None
 
@@ -104,7 +104,7 @@ class VSCodeLanguageModelCompletionRequestParams(PGTSBaseModel):
 
 
 class VSCodeLanguageModelChatCompletionResponse(PGTSBaseModel):
-    request_id: str 
+    request_id: str
     response: (
         VSCodeLanguageModelCompleteResultPart
         | VSCodeLanguageModelTextPart

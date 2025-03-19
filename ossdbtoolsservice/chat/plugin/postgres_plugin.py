@@ -11,9 +11,8 @@ from ossdbtoolsservice.chat.messages import (
     ChatProgressUpdateParams,
     CopilotQueryNotificationParams,
 )
+from ossdbtoolsservice.connection import PooledConnection
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts.common import ConnectionType
-from ossdbtoolsservice.driver.types.driver import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext
 
 from .postgres_utils import (
@@ -53,8 +52,8 @@ class PostgresPlugin:
     def add_to(self, kernel: Kernel) -> None:
         kernel.add_plugin(self, plugin_name=self.name, description=self.description)
 
-    def _get_connection(self) -> ServerConnection | None:
-        return self._connection_service.get_connection(self._owner_uri, ConnectionType.QUERY)
+    def _get_pooled_connection(self) -> PooledConnection | None:
+        return self._connection_service.get_pooled_connection(self._owner_uri)
 
     @kernel_function(
         name="get_full_schema_context",
@@ -81,11 +80,12 @@ class PostgresPlugin:
             ),
         )
 
-        connection = self._get_connection()
-        if connection is None:
+        pooled_connection = self._get_pooled_connection()
+        if pooled_connection is None:
             return "Error. Could not connect to the database. No connection found."
 
-        return fetch_schema_v1(connection._conn, schema_name=schema_name)
+        with pooled_connection as connection:
+            return fetch_schema_v1(connection._conn, schema_name=schema_name)
 
     @kernel_function(
         name="get_schema_and_table_context",
@@ -108,11 +108,12 @@ class PostgresPlugin:
             ),
         )
 
-        connection = self._get_connection()
-        if connection is None:
+        pooled_connection = self._get_pooled_connection()
+        if pooled_connection is None:
             return "Error. Could not connect to the database. No connection found."
 
-        return fetch_schema(connection._conn)
+        with pooled_connection as connection:
+            return fetch_schema(connection._conn)
 
     @kernel_function(
         name="execute_sql_query_readonly",
@@ -151,24 +152,27 @@ class PostgresPlugin:
             ),
         )
 
-        connection = self._get_connection()
-        if connection is None:
+        pooled_connection = self._get_pooled_connection()
+        if pooled_connection is None:
             return "Error. Could not connect to the database. No connection found."
 
-        try:
-            result = execute_readonly_query(connection._conn, query, self._max_result_chars)
-        except Exception:
-            self._request_context.send_notification(
-                COPILOT_QUERY_NOTIFICATION_METHOD,
-                CopilotQueryNotificationParams(
-                    query_name=script_name,
-                    query_description=script_description,
-                    query=query,
-                    owner_uri=self._owner_uri,
-                    has_error=True,
-                ),
-            )
-            raise
+        with pooled_connection as connection:
+            try:
+                result = execute_readonly_query(
+                    connection._conn, query, self._max_result_chars
+                )
+            except Exception:
+                self._request_context.send_notification(
+                    COPILOT_QUERY_NOTIFICATION_METHOD,
+                    CopilotQueryNotificationParams(
+                        query_name=script_name,
+                        query_description=script_description,
+                        query=query,
+                        owner_uri=self._owner_uri,
+                        has_error=True,
+                    ),
+                )
+                raise
 
         self._request_context.send_notification(
             COPILOT_QUERY_NOTIFICATION_METHOD,
@@ -233,24 +237,25 @@ class PostgresPlugin:
             ),
         )
 
-        connection = self._get_connection()
-        if connection is None:
+        pooled_connection = self._get_pooled_connection()
+        if pooled_connection is None:
             return "Error. Could not connect to the database. No connection found."
 
-        try:
-            result = execute_statement(connection._conn, statement)
-        except Exception:
-            self._request_context.send_notification(
-                COPILOT_QUERY_NOTIFICATION_METHOD,
-                CopilotQueryNotificationParams(
-                    query_name=script_name,
-                    query_description=script_description,
-                    query=statement,
-                    owner_uri=self._owner_uri,
-                    has_error=True,
-                ),
-            )
-            raise
+        with pooled_connection as connection:
+            try:
+                result = execute_statement(connection._conn, statement)
+            except Exception:
+                self._request_context.send_notification(
+                    COPILOT_QUERY_NOTIFICATION_METHOD,
+                    CopilotQueryNotificationParams(
+                        query_name=script_name,
+                        query_description=script_description,
+                        query=statement,
+                        owner_uri=self._owner_uri,
+                        has_error=True,
+                    ),
+                )
+                raise
 
         self._request_context.send_notification(
             COPILOT_QUERY_NOTIFICATION_METHOD,

@@ -6,8 +6,6 @@
 import threading
 
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionType
-from ossdbtoolsservice.driver import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.metadata.contracts import (
     METADATA_LIST_REQUEST,
@@ -82,21 +80,20 @@ class MetadataService(Service):
         connection_service = self.service_provider.get(
             constants.CONNECTION_SERVICE_NAME, ConnectionService
         )
-        connection: ServerConnection | None = connection_service.get_connection(
-            owner_uri, ConnectionType.DEFAULT
-        )
+        pooled_connection = connection_service.get_pooled_connection(owner_uri)
 
-        if connection is None:
+        if pooled_connection is None:
             raise Exception("Connection is required")
 
-        # Get the current database
-        database_name = connection.database_name
+        with pooled_connection as connection:
+            # Get the current database
+            database_name = connection.database_name
 
-        # Get the metadata query specific to the current provider
-        # and fill in the database name
-        metadata_query = PG_METADATA_QUERY.format(database_name)
+            # Get the metadata query specific to the current provider
+            # and fill in the database name
+            metadata_query = PG_METADATA_QUERY.format(database_name)
 
-        query_results = connection.execute_query(metadata_query, all=True)
+            query_results = connection.execute_query(metadata_query, all=True)
 
         metadata_list = []
         if query_results:
