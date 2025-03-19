@@ -278,9 +278,10 @@ class QueryExecutionService(Service):
             request_context.send_notification(MESSAGE_NOTIFICATION, notice_message_params)
 
         def on_resultset_complete(result_set_params: ResultSetNotificationParams) -> None:
-            request_context.send_notification(
-                RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params
-            )
+            # query/resultSetAvailable not used in VSCode.
+            # request_context.send_notification(
+            #     RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params
+            # )
             request_context.send_notification(
                 RESULT_SET_COMPLETE_NOTIFICATION, result_set_params
             )
