@@ -53,12 +53,11 @@ def get_all_services() -> dict[str, type[Service] | Service]:
 def create_server_init(
     message_server: MessageServer,
     server_logger: logging.Logger | None,
-) -> MessageServer:
+) -> tuple[MessageServer, ServiceProvider]:
     # Create the service provider and add the providers to it
     services = get_all_services()
-    service_box = ServiceProvider(message_server, services, server_logger)
-    service_box.initialize()
-    return message_server
+    service_box = ServiceProvider(message_server, services, server_logger)    
+    return message_server, service_box
 
 
 def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
@@ -204,6 +203,7 @@ def get_loggers(log_dir: str) -> logging.Logger:
 
 def main(
     server: MessageServer,
+    service_provider: ServiceProvider,
     args: argparse.Namespace,
     logger: logging.Logger,
 ) -> None:
@@ -247,5 +247,5 @@ def main(
         markdown.generate_requests_markdown(server, logger)
     else:
         # Start the server
-        with server:
+        with service_provider, server:
             server.wait_for_exit()
