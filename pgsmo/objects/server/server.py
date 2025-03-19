@@ -3,18 +3,19 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Callable  # noqa
-from urllib.parse import ParseResult, urlparse, quote_plus  # noqa
+from collections.abc import Mapping
+from typing import Any, Callable, Optional
+from urllib.parse import ParseResult, quote_plus, urlparse
 
-from ossdbtoolsservice.driver import ServerConnection
-from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
-from pgsmo.objects.schema.schema import Schema
-from smo.common.node_object import NodeObject, NodeCollection, NodeLazyPropertyCollection
-from pgsmo.objects.database.database import Database
-from pgsmo.objects.role.role import Role
-from pgsmo.objects.tablespace.tablespace import Tablespace
 import smo.utils as utils
 import smo.utils.templating as templating
+from ossdbtoolsservice.connection import ServerConnection
+from ossdbtoolsservice.metadata.contracts.object_metadata import ObjectMetadata
+from pgsmo.objects.database.database import Database
+from pgsmo.objects.role.role import Role
+from pgsmo.objects.schema.schema import Schema
+from pgsmo.objects.tablespace.tablespace import Tablespace
+from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection, NodeObject
 
 SEARCH_PATH_QUERY = "SELECT * FROM unnest(current_schemas(true))"
 SEARCH_PATH_QUERY_FALLBACK = "SELECT * FROM current_schemas(true)"

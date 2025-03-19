@@ -6,7 +6,7 @@
 from typing import Any, Optional
 
 import smo.utils.templating as templating
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from pgsmo.objects.collation.collation import Collation
 from pgsmo.objects.datatype.datatype import DataType
 from pgsmo.objects.extension.extension import Extension
