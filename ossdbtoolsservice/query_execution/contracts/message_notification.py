@@ -8,13 +8,13 @@ from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 
 class ResultMessage(PGTSBaseModel):
-    batch_id: int | None = None
+    batch_id: int
     is_error: bool
     time: str | None = None
     message: str
 
 
-class MessageNotificationParams:
+class MessageNotificationParams(PGTSBaseModel):
     """
     Parameters to be sent back with a message notification
     Attributes:
@@ -24,10 +24,6 @@ class MessageNotificationParams:
 
     owner_uri: str
     message: ResultMessage
-
-    def __init__(self, owner_uri: str, message: ResultMessage) -> None:
-        self.owner_uri: str = owner_uri
-        self.message: ResultMessage = message
 
 
 MESSAGE_NOTIFICATION = "query/message"

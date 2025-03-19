@@ -12,7 +12,7 @@ import sqlparse
 from psycopg import sql
 from psycopg.errors import Diagnostic
 
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.query.contracts import (
     BatchSummary,
     SaveResultsRequestParams,
