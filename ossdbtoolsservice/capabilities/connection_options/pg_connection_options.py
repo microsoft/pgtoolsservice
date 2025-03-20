@@ -55,7 +55,7 @@ pg_conn_provider_opts = ConnectionProviderOptions(
             value_type=ConnectionOption.VALUE_TYPE_PASSWORD,
             special_value_type=ConnectionOption.SPECIAL_VALUE_PASSWORD_NAME,
             is_identity=True,
-            is_required=True,
+            is_required=False,
             group_name="Security",
         ),
         ConnectionOption(
