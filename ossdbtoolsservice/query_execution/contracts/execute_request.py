@@ -3,6 +3,8 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from pydantic import BaseModel
+
 from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 from ossdbtoolsservice.query.contracts import SelectionData
 from ossdbtoolsservice.serialization import Serializable
@@ -22,7 +24,7 @@ class ExecuteRequestParamsBase(Serializable):
     execution_plan_options: ExecutionPlanOptions
 
     @classmethod
-    def get_child_serializable_types(cls) -> dict[str, type[Serializable]]:
+    def get_child_serializable_types(cls) -> dict[str, type[Serializable] | type[BaseModel]]:
         return {"execution_plan_options": ExecutionPlanOptions}
 
     def __init__(self) -> None:
@@ -51,7 +53,7 @@ class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
     query_selection: SelectionData | None
 
     @classmethod
-    def get_child_serializable_types(cls) -> dict[str, type[Serializable]]:
+    def get_child_serializable_types(cls) -> dict[str, type[Serializable] | type[BaseModel]]:
         return {
             "query_selection": SelectionData,
             "execution_plan_options": ExecutionPlanOptions,

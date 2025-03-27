@@ -642,7 +642,10 @@ class QueryExecutionService(Service):
         self, owner_uri: str, batch_id: int, message: str, is_error: bool = False
     ) -> MessageNotificationParams:
         result_message = ResultMessage(
-            batch_id, is_error, time.get_time_str(datetime.now()), message
+            batch_id=batch_id,
+            is_error=is_error,
+            time=time.get_time_str(datetime.now()),
+            message=message,
         )
         return MessageNotificationParams(owner_uri, result_message)
 

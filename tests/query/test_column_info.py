@@ -31,12 +31,13 @@ class TestGetColumnsInfo(unittest.TestCase):
                 "precision",
                 "scale",
                 "null_ok",
+                "type_display",
             ],
         )
 
         self._cursor.description = [
-            column("id", 1, None, None, None, None, True),
-            column("is_valid", 2, None, None, None, None, True),
+            column("id", 1, None, None, None, None, True, "text"),
+            column("is_valid", 2, None, None, None, None, True, "text"),
         ]
         self._connection = utils.MockPsycopgConnection(cursor=self._cursor)
         self._cursor.connection = self._connection

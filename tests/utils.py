@@ -6,7 +6,7 @@ import logging
 import re
 import unittest
 import unittest.mock as mock
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import psycopg
 from psycopg.connection import AdaptersMap
@@ -255,7 +255,15 @@ class MockCursor:
             "null_ok": None,
         }
         merge = {**description, **dict(kwargs)}
-        return tuple(merge.values())
+        tup = tuple(merge.values())
+        column = mock.Mock()
+
+        def _side_effect(index: int) -> Any:
+            return tup[index]
+
+        column.__getitem__ = mock.Mock(side_effect=_side_effect)
+        column.type_display = "text"
+        return column
 
     def __enter__(self):
         return self

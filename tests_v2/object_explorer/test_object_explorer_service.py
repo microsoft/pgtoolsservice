@@ -87,7 +87,7 @@ def test_create_session_request(
         }
     )
 
-    expected_result = CreateSessionResponse(sessionId=expected_session_id)
+    expected_result = CreateSessionResponse(session_id=expected_session_id)
 
     response = mock_server_client_wrapper.send_client_request(
         CREATE_SESSION_REQUEST.method, req_params, timeout=2

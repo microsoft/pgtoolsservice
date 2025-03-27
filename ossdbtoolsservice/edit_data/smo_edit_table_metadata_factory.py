@@ -47,18 +47,14 @@ class SmoEditTableMetadataFactory:
         return EditTableMetadata(schema_name, object_name, edit_columns_metadata)
 
     def create_db_column(self, column: Column) -> DbColumn:
-        db_column = DbColumn()
-
-        db_column.allow_db_null = column.not_null is False
-        db_column.column_name = column.name
-        db_column.column_ordinal = column.column_ordinal
-        db_column.data_type = column.datatype
-        db_column.is_key = column.is_key
-        db_column.is_read_only = column.is_readonly
-        db_column.is_unique = column.is_unique
-        db_column.is_auto_increment = column.is_auto_increment
-        db_column.is_updatable = (
-            column.is_readonly is False and column.is_auto_increment is False
+        return DbColumn(
+            allow_db_null=column.not_null is False,
+            column_name=column.name,
+            column_ordinal=column.column_ordinal,
+            data_type=column.datatype,
+            is_key=column.is_key,
+            is_read_only=bool(column.is_readonly),
+            is_unique=column.is_unique,
+            is_auto_increment=column.is_auto_increment,
+            is_updatable=(column.is_readonly is False and column.is_auto_increment is False),
         )
-
-        return db_column
