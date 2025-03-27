@@ -23,6 +23,7 @@ from semantic_kernel.contents import ChatHistory
 from semantic_kernel.contents.text_content import TextContent
 from semantic_kernel.kernel import Kernel
 
+from ossdbtoolsservice.chat.chat_history_manager import ChatHistoryManager
 from ossdbtoolsservice.chat.completion.vscode_chat_prompt_execution_settings import (
     VSCodeChatPromptExecutionSettings,
 )
@@ -82,6 +83,8 @@ class ChatService(Service):
             )
 
         self.executor = ThreadPoolExecutor(max_workers=10)
+
+        self._chat_history_manager = ChatHistoryManager()
 
     def get_async_runner(self) -> AsyncRunner:
         if self._service_provider is None:
@@ -185,21 +188,23 @@ class ChatService(Service):
         # Fetch schemas and tables to be injected into the system message
         # db_context = postgres_plugin.get_db_context()
         db_context = None
-        system_message = system_message_prompt(doc_text=doc_text, db_context=db_context)
+        system_message = system_message_prompt(
+            doc_text=doc_text,
+            selected_doc_text=selected_doc_text,
+            db_context=db_context,
+            profile_name=params.profile_name,
+            is_azure_pg=is_azure_pg,
+            result_messages=params.result_messages,
+        )
 
-        history.add_system_message(system_message)
+        history = self._chat_history_manager.get_chat_history(
+            session_id=session_id,
+            request_prompt=params.prompt,
+            request_history=params.history,
+            system_message=system_message,
+        )
 
-        for message in params.history or []:
-            if message.participant == "user":
-                history.add_user_message(message.content)
-            else:
-                history.add_assistant_message(message.content)
-
-        # Add prompt as last user input
-        if params.prompt:
-            history.add_user_message(params.prompt)
-
-        request_context.send_response(ChatCompletionRequestResult(chatId=chat_id))        
+        request_context.send_response(ChatCompletionRequestResult(chat_id=chat_id))
 
         async def process_response_stream() -> None:
             try:
@@ -230,8 +235,35 @@ class ChatService(Service):
                                         content=content,
                                     ),
                                 )
+
+                # Get function call content out of history
+                if session_id:
+                    last_user_message: str | None = None
+                    tool_calls: dict[str, FunctionCallContent] = {}
+                    for message in history.messages:
+                        if message.role == AuthorRole.USER and message.content:
+                            last_user_message = message.content
+                        elif (
+                            message.role == AuthorRole.ASSISTANT
+                            or message.role == AuthorRole.TOOL
+                        ):
+                            for content in message.items:
+                                if isinstance(content, FunctionCallContent) and content.id:
+                                    tool_calls[content.id] = content
+                                elif (
+                                    isinstance(content, FunctionResultContent)
+                                    and content.id in tool_calls
+                                    and last_user_message
+                                ):
+                                    self._chat_history_manager.add_tool_call_record(
+                                        session_id,
+                                        last_user_message,
+                                        tool_calls[content.id],
+                                        content,
+                                    )
             except Exception as e:
                 if self._logger:
+                    self._logger.exception(e)
                     self._logger.error(f"Error processing completion: {e}")
                 request_context.send_error(str(e))
                 request_context.send_notification(
@@ -244,6 +276,7 @@ class ChatService(Service):
             self.get_async_runner().run(process_response_stream())
         except Exception as e:
             if self._logger:
+                self._logger.exception(e)
                 self._logger.error(f"Error in chat request: {e}")
             request_context.send_notification(
                 CHAT_COMPLETION_RESULT_METHOD,
