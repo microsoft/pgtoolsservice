@@ -55,6 +55,9 @@ class StreamJSONRPCWriter(JSONRPCWriter):
         self.encoding = encoding or "UTF-8"
         self._logger = logger
 
+        # Used to control logging.
+        self._last_message_method_sent: str | None = None
+
     # METHODS ##############################################################
     def close(self) -> None:
         """
@@ -81,13 +84,20 @@ class StreamJSONRPCWriter(JSONRPCWriter):
             self.stream.write(json_content.encode(self.encoding))
             self.stream.flush()
 
-            if self._logger is not None:
+            if self._logger is not None and (
+                message.message_method != self._last_message_method_sent
+                or message.message_method
+                not in [
+                    # Avoid overly chatty logging for these methods
+                    "chat/completion-result"
+                ]
+            ):
                 self._logger.info(
                     f"{message.message_type.name} message sent "
                     f"id={message.message_id} "
-                    f"method={message.message_method} "
+                    f"method={message.message_method}"
                 )
-
+            self._last_message_method_sent = message.message_method
             # Uncomment for verbose logging
             # if self._logger:
             #     self._logger.info(f'{json_content}')
