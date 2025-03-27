@@ -412,11 +412,39 @@ class VSCodeChatCompletionHistoryTranslator:
             else:
                 reordered_messages_staged.append(message)
 
+        # Determine index of the last user (non-tool) message.
+        last_user_index = -1
+        for idx, item in enumerate(reordered_messages_staged):
+            if not isinstance(item, dict):
+                last_user_index = idx
+
         reordered_messages: list[VSCodeLanguageModelChatMessage] = []
-        for item in reordered_messages_staged:
+        for i, item in enumerate(reordered_messages_staged):
             if isinstance(item, dict):
-                reordered_messages.append(item["call"])
-                reordered_messages.append(item["result"])
+                if last_user_index != -1 and i < last_user_index:
+                    # Tool calls in history are not allowed by VSCode.
+                    # For each tool call that is before the last user message,
+                    # translate them to a system message.
+                    call = cast(VSCodeLanguageModelToolCallPart, item["call"].content[0])
+                    result = cast(
+                        VSCodeLanguageModelToolResultPart, item["result"].content[0]
+                    )
+                    tool_call_prompt = tool_call_to_system_message_prompt(
+                        call_id=call.call_id,
+                        function_name=call.name,
+                        function_input=call.input,
+                        result=result.content[0].value,
+                    )
+                    reordered_messages.append(
+                        VSCodeLanguageModelChatMessage(
+                            role=VSCodeLanguageModelChatMessageRole.USER,
+                            content=[VSCodeLanguageModelTextPart(value=tool_call_prompt)],
+                        )
+                    )
+                else:
+                    # Append tool call/result pairs as separate messages.
+                    reordered_messages.append(item["call"])
+                    reordered_messages.append(item["result"])
             else:
                 reordered_messages.append(item)
 
