@@ -259,27 +259,14 @@ class MessageRecorder:
                         # Server shutdown message does not have a response.
                         # Skip recording this.
                         if lsp_message.method in ["shutdown", "exit"]:
-                            if self._logger:
-                                self._logger.info(
-                                    "[RECORDER] Skipping recording of shutdown message: "
-                                    f"{lsp_message.id}"
-                                )
                             return
                         self.client_requests.append(
                             MessageRecord(message=lsp_message, timestamp=timestamp)
                         )
-                        if self._logger:
-                            self._logger.info(
-                                f"[RECORDER] Recorded client request: {lsp_message.id}"
-                            )
                     else:
                         self.server_requests.append(
                             MessageRecord(message=lsp_message, timestamp=timestamp)
                         )
-                        if self._logger:
-                            self._logger.info(
-                                f"[RECORDER] Recorded server request: {lsp_message.id}"
-                            )
                 elif isinstance(
                     lsp_message, (LSPResponseResultMessage, LSPResponseErrorMessage)
                 ):
@@ -287,37 +274,19 @@ class MessageRecorder:
                         self.client_responses.append(
                             MessageRecord(message=lsp_message, timestamp=timestamp)
                         )
-                        if self._logger:
-                            self._logger.info(
-                                f"[RECORDER] Recorded client response: {lsp_message.id}"
-                            )
                     else:
                         self.server_responses.append(
                             MessageRecord(message=lsp_message, timestamp=timestamp)
                         )
-                        if self._logger:
-                            self._logger.info(
-                                f"[RECORDER] Recorded server response: {lsp_message.id}"
-                            )
                 elif isinstance(lsp_message, LSPNotificationMessage):
                     if incoming:
                         self.client_notifications.append(
                             MessageRecord(message=lsp_message, timestamp=timestamp)
                         )
-                        if self._logger:
-                            self._logger.info(
-                                "[RECORDER] Recorded client notification: "
-                                f"{lsp_message.method}"
-                            )
                     else:
                         self.server_notifications.append(
                             MessageRecord(message=lsp_message, timestamp=timestamp)
                         )
-                        if self._logger:
-                            self._logger.info(
-                                "[RECORDER] Recorded server notification: "
-                                f"{lsp_message.method}"
-                            )
                 else:
                     raise Exception(f"Unexpected message type: {type(lsp_message)}")
         except Exception as e:
@@ -354,8 +323,8 @@ class MessageRecorder:
         """
         Close the recorder and save the messages to a file.
         """
+        self.save()
         # Stop background thread if active
         self._stop_event.set()
         if self._saving_thread:
             self._saving_thread.join()
-        self.save()
