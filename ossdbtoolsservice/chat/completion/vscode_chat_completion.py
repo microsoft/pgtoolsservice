@@ -5,7 +5,7 @@
 
 from collections.abc import AsyncGenerator, Mapping
 from logging import Logger
-from typing import Any, Callable, ClassVar, Union
+from typing import Any, Callable, ClassVar, Union, cast
 
 from pydantic import BaseModel
 from semantic_kernel.connectors.ai.chat_completion_client_base import (
@@ -28,6 +28,8 @@ from semantic_kernel.contents import (
     StreamingTextContent,
     TextContent,
 )
+
+from ossdbtoolsservice.chat.prompts import tool_call_to_system_message_prompt
 
 from .completion_response_queues import CompletionResponseQueues
 from .messages import (
@@ -155,7 +157,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
         """
         if not isinstance(settings, VSCodeChatPromptExecutionSettings):
             settings = self.get_prompt_execution_settings_from_settings(settings)
-        assert isinstance(settings, VSCodeChatPromptExecutionSettings)  # nosec
+        assert isinstance(settings, VSCodeChatPromptExecutionSettings)
 
         # Create the response queue
         request_id, queue = self._response_queues.register_new_queue()
@@ -195,6 +197,9 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
 
                 transformed_response, finished = self._translate_response(response)
                 transformed_response.function_invoke_attempt = function_invoke_attempt
+
+                # TODO: Check if it's a tool call past the maximum allowed, and
+                # inform model that's it hit its limit. OR system prompt the max.
 
                 # Yield the response
                 yield [transformed_response]
@@ -282,7 +287,7 @@ class VSCodeChatCompletionHistoryTranslator:
                 if isinstance(item, TextContent):
                     text = item.text
                     if message.role == AuthorRole.SYSTEM:
-                        text = f"__System Prompt__: {text}"
+                        text = f"<SYSTEM_MESSAGE>{text}</SYSTEM_MESSAGE>"
                     content.append(VSCodeLanguageModelTextPart(value=text))
                 elif isinstance(item, FunctionCallContent):
                     id = item.id
