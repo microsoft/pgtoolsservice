@@ -183,24 +183,35 @@ class MessageServer(ABC):
                         f"Received response for unknown request id={message.message_id}"
                     )
         elif message.message_type == JSONRPCMessageType.Request:
-            message_method = message.message_method
-            if message_method is None:
-                self._log_warning(f"Received request with no method: {message.message_type}")
-                return
-            self._log_info(
-                f"Received request id={message.message_id} method={message_method}"
-            )
-            handler = self._request_handlers.get(message_method)
             req_context = self.create_request_context(message, **kwargs)
-            if handler is None:
-                req_context.send_error(f"Requested method is unsupported: {message_method}")
-                self._log_warning(f"Unsupported method: {message_method}")
+            try:
+                message_method = message.message_method
+                if message_method is None:
+                    self._log_warning(
+                        f"Received request with no method: {message.message_type}"
+                    )
+                    return
+                self._log_info(
+                    f"Received request id={message.message_id} method={message_method}"
+                )
+                handler = self._request_handlers.get(message_method)
+                if handler is None:
+                    req_context.send_error(
+                        f"Requested method is unsupported: {message_method}"
+                    )
+                    self._log_warning(f"Unsupported method: {message_method}")
+                    return
+                deserialized = (
+                    handler.deserialize_params(message.message_params)
+                    if message.message_params is not None
+                    else None
+                )
+            except Exception as e:
+                error_msg = f"Failed to deserialize request {message.message_method}: {e}"
+                self._log_exception(error_msg)
+                req_context.send_error(error_msg, code=-32602)
                 return
-            deserialized = (
-                handler.deserialize_params(message.message_params)
-                if message.message_params is not None
-                else None
-            )
+
             try:
                 handler.handler(req_context, deserialized)
             except Exception as e:
@@ -251,11 +262,17 @@ class MessageServer(ABC):
 
         # Execute the shutdown request handlers
         for handler in self._shutdown_handlers:
-            handler()
+            try:
+                handler()
+            except Exception as e:
+                self._log_exception(f"Error executing shutdown handler: {e}")
 
         # Stop recorder
         if self._message_recorder:
-            self._message_recorder.close()
+            try:
+                self._message_recorder.close()
+            except Exception as e:
+                self._log_exception(f"Error closing message recorder: {e}")
 
         self.stop()
 
