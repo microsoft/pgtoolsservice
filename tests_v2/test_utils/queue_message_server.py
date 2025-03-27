@@ -17,6 +17,8 @@ class QueueJSONRPCWriter(JSONRPCWriter):
         pass
 
     def send_message(self, message: JSONRPCMessage) -> None:
+        # Ensure serialized params
+        JSONRPCMessage.from_dictionary(message.dictionary)
         self.queue.put(message)
 
 

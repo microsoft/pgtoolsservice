@@ -413,9 +413,20 @@ class TestQueryService(unittest.TestCase):
     def test_result_set_positive(self) -> None:
         """Test that we properly generate the result set"""
         description = [("first", 0, 1, 2, 3, 4, True), ("second", 5, 6, 7, 8, 9, False)]
+
+        def get_mock_column(desc: tuple) -> mock.Mock:
+            column = mock.Mock()
+
+            def _side_effect(index: int) -> Any:
+                return desc[index]
+
+            column.__getitem__ = mock.Mock(side_effect=_side_effect)
+            column.type_display = "text"
+            return column
+
         test_columns = [
-            DbColumn.from_cursor_description(0, description[0]),
-            DbColumn.from_cursor_description(1, description[1]),
+            DbColumn.from_cursor_description(0, get_mock_column(description[0])),
+            DbColumn.from_cursor_description(1, get_mock_column(description[1])),
         ]
         ordinal = 0
         batch_ordinal = 0

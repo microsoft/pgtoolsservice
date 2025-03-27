@@ -3,20 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 
-class ResultMessage:
-    batch_id: int
+class ResultMessage(PGTSBaseModel):
+    batch_id: int | None = None
     is_error: bool
-    time: str
+    time: str | None = None
     message: str
-
-    def __init__(self, batch_id: int, is_error: bool, time: str, message: str) -> None:
-        self.batch_id: int = batch_id
-        self.is_error: bool = is_error
-        self.time = time
-        self.message: str = message
 
 
 class MessageNotificationParams:

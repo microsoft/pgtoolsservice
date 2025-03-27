@@ -9,6 +9,7 @@ from ossdbtoolsservice.capabilities.contracts import (
     ConnectionProviderOptions,
     DMPServerCapabilities,
 )
+from ossdbtoolsservice.chat.messages import CopilotAccessMode
 from ossdbtoolsservice.disaster_recovery.contracts import BACKUP_OPTIONS, RESTORE_OPTIONS
 from ossdbtoolsservice.query_execution.contracts import SERIALIZATION_OPTIONS
 from ossdbtoolsservice.utils import constants
@@ -198,6 +199,18 @@ pg_conn_provider_opts = ConnectionProviderOptions(
             ),
             value_type=ConnectionOption.VALUE_TYPE_STRING,
             group_name="Client",
+        ),
+        ConnectionOption(
+            name="copilotAccessMode",
+            display_name="Copilot access mode",
+            description="The access mode for the Copilot connection. "
+            "If not specified, the global settings value is used.",
+            value_type=ConnectionOption.VALUE_TYPE_CATEGORY,
+            group_name="Copilot",
+            category_values=[
+                CategoryValue("Read Only", str(CopilotAccessMode.READ_ONLY)),
+                CategoryValue("Read/Write", str(CopilotAccessMode.READ_WRITE)),
+            ],
         ),
     ]
 )

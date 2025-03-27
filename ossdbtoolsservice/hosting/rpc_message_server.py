@@ -70,7 +70,6 @@ class RPCMessageServer(MessageServer):
                 self._dispatch_message(message)
             except Exception as e:
                 self._log_exception(f"Input thread exception: {e}")
-                self.stop()
                 break
 
     def _consume_output(self) -> None:

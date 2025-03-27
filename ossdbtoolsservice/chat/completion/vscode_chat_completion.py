@@ -5,7 +5,7 @@
 
 from collections.abc import AsyncGenerator, Mapping
 from logging import Logger
-from typing import Any, Callable, ClassVar, Union
+from typing import Any, Callable, ClassVar, Union, cast
 
 from pydantic import BaseModel
 from semantic_kernel.connectors.ai.chat_completion_client_base import (
@@ -28,6 +28,8 @@ from semantic_kernel.contents import (
     StreamingTextContent,
     TextContent,
 )
+
+from ossdbtoolsservice.chat.prompts import tool_call_to_system_message_prompt
 
 from .completion_response_queues import CompletionResponseQueues
 from .messages import (
@@ -155,7 +157,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
         """
         if not isinstance(settings, VSCodeChatPromptExecutionSettings):
             settings = self.get_prompt_execution_settings_from_settings(settings)
-        assert isinstance(settings, VSCodeChatPromptExecutionSettings)  # nosec
+        assert isinstance(settings, VSCodeChatPromptExecutionSettings)
 
         # Create the response queue
         request_id, queue = self._response_queues.register_new_queue()
@@ -191,14 +193,13 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
                 finished = False
 
                 # Get the next response
-                if self._logger:
-                    self._logger.info(f"Waiting for response from queue: {request_id}")
                 response = await queue.get()
-                if self._logger:
-                    self._logger.info(f"Got response from queue: {request_id}")
 
                 transformed_response, finished = self._translate_response(response)
                 transformed_response.function_invoke_attempt = function_invoke_attempt
+
+                # TODO: Check if it's a tool call past the maximum allowed, and
+                # inform model that's it hit its limit. OR system prompt the max.
 
                 # Yield the response
                 yield [transformed_response]
@@ -255,137 +256,6 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
 
         return transformed_response, finished
 
-    def _translate_chat_history(
-        self, chat_history: ChatHistory
-    ) -> list[VSCodeLanguageModelChatMessage]:
-        """Translate chat history to VSCodeLanguageModelChatMessage format."""
-        messages: list[VSCodeLanguageModelChatMessage] = []
-        for history_msg in chat_history.messages:
-            role = VSCodeLanguageModelChatMessageRole.USER
-            if history_msg.role == AuthorRole.ASSISTANT:
-                role = VSCodeLanguageModelChatMessageRole.ASSISTANT
-
-            content: list[
-                Union[
-                    VSCodeLanguageModelTextPart,
-                    VSCodeLanguageModelToolResultPart,
-                    VSCodeLanguageModelToolCallPart,
-                ]
-            ] = []
-            for message_item in history_msg.items:
-                if isinstance(message_item, TextContent):
-                    text = message_item.text
-                    if history_msg.role == AuthorRole.SYSTEM:
-                        text = f"__System Prompt__: {text}"
-                    content.append(VSCodeLanguageModelTextPart(value=text))
-                elif isinstance(message_item, FunctionCallContent):
-                    id = message_item.id
-                    name = message_item.name
-                    input: dict[str, Any] = {}
-                    if message_item.arguments and isinstance(message_item.arguments, Mapping):
-                        input = {k: v for k, v in message_item.arguments.items()}
-
-                    if id and name:
-                        content.append(
-                            VSCodeLanguageModelToolCallPart(
-                                call_id=id,
-                                name=name,
-                                input=input,
-                            )
-                        )
-                    else:
-                        if self._logger:
-                            self._logger.error(
-                                "Function call content must have an id and name"
-                            )
-                elif isinstance(message_item, FunctionResultContent):
-                    content.append(
-                        VSCodeLanguageModelToolResultPart(
-                            call_id=message_item.id,
-                            content=[
-                                VSCodeLanguageModelTextPart(value=str(message_item.result))
-                            ],
-                        )
-                    )
-                else:
-                    raise RuntimeError(
-                        f"Unexpected item type: {type(message_item)}: {message_item}"
-                    )
-
-            # Post-process content
-            # I've found that having assistant text content mixed with tool call content
-            # will cause the VSCode sendRequest to fail with
-            # "Invalid request: Tool call part must be followed by a User message with
-            # a LanguageModelToolResultPart with a matching callId."
-            # ...even though the tool result part is given as the next User message.
-            # Separate out tool call requests into their own User message,
-            # followed by a User message with the tool result part.
-
-            processed_content: list[
-                list[
-                    Union[
-                        VSCodeLanguageModelTextPart,
-                        VSCodeLanguageModelToolResultPart,
-                        VSCodeLanguageModelToolCallPart,
-                    ]
-                ]
-            ] = [[]]
-
-            for content_item in content:
-                if isinstance(content_item, VSCodeLanguageModelToolCallPart):
-                    processed_content.append([content_item])
-                    processed_content.append([])
-                else:
-                    processed_content[-1].append(content_item)
-
-            for c in processed_content:
-                if c:
-                    messages.append(VSCodeLanguageModelChatMessage(role=role, content=c))
-
-        # Post-process messages
-        # There can be multiple tool calls that end up with tool results following
-        # in the message history, but not directly after the tool call message.
-        # This will cause the VSCode sendRequest to fail.
-        # Each tool call message must be followed by the tool result message.
-        # Detect tool calls not followed by a tool result, and re-order so tool calls
-        # are followed by their results, preserving the order of the tool calls.
-        tool_call_index: dict[str, dict[str, VSCodeLanguageModelChatMessage]] = {}
-        reordered_messages_staged: list[
-            VSCodeLanguageModelChatMessage | dict[str, VSCodeLanguageModelChatMessage]
-        ] = []
-        for message in messages:
-            if message.content and isinstance(
-                message.content[0], VSCodeLanguageModelToolCallPart
-            ):
-                call_id = message.content[0].call_id
-                if call_id in tool_call_index:
-                    raise RuntimeError(f"Tool call with callId {call_id} already exists")
-                else:
-                    tool_call_index[call_id] = {"call": message}
-            elif message.content and isinstance(
-                message.content[0], VSCodeLanguageModelToolResultPart
-            ):
-                call_id = message.content[0].call_id
-                if call_id in tool_call_index:
-                    tool_call_index[call_id]["result"] = message
-                else:
-                    raise RuntimeError(
-                        f"Tool result with callId {call_id} "
-                        "does not have a matching tool call"
-                    )
-            else:
-                reordered_messages_staged.append(message)
-
-        reordered_messages: list[VSCodeLanguageModelChatMessage] = []
-        for msg in reordered_messages_staged:
-            if isinstance(msg, dict):
-                reordered_messages.append(msg["call"])
-                reordered_messages.append(msg["result"])
-            else:
-                reordered_messages.append(msg)
-
-        return messages
-
 
 class VSCodeChatCompletionHistoryTranslator:
     """A class to translate chat history to VSCodeLanguageModelChatMessage format.
@@ -417,7 +287,7 @@ class VSCodeChatCompletionHistoryTranslator:
                 if isinstance(item, TextContent):
                     text = item.text
                     if message.role == AuthorRole.SYSTEM:
-                        text = f"__System Prompt__: {text}"
+                        text = f"<SYSTEM_MESSAGE>{text}</SYSTEM_MESSAGE>"
                     content.append(VSCodeLanguageModelTextPart(value=text))
                 elif isinstance(item, FunctionCallContent):
                     id = item.id
@@ -547,11 +417,39 @@ class VSCodeChatCompletionHistoryTranslator:
             else:
                 reordered_messages_staged.append(message)
 
+        # Determine index of the last user (non-tool) message.
+        last_user_index = -1
+        for idx, item in enumerate(reordered_messages_staged):
+            if not isinstance(item, dict):
+                last_user_index = idx
+
         reordered_messages: list[VSCodeLanguageModelChatMessage] = []
-        for item in reordered_messages_staged:
+        for i, item in enumerate(reordered_messages_staged):
             if isinstance(item, dict):
-                reordered_messages.append(item["call"])
-                reordered_messages.append(item["result"])
+                if last_user_index != -1 and i < last_user_index:
+                    # Tool calls in history are not allowed by VSCode.
+                    # For each tool call that is before the last user message,
+                    # translate them to a system message.
+                    call = cast(VSCodeLanguageModelToolCallPart, item["call"].content[0])
+                    result = cast(
+                        VSCodeLanguageModelToolResultPart, item["result"].content[0]
+                    )
+                    tool_call_prompt = tool_call_to_system_message_prompt(
+                        call_id=call.call_id,
+                        function_name=call.name,
+                        function_input=call.input,
+                        result=result.content[0].value,
+                    )
+                    reordered_messages.append(
+                        VSCodeLanguageModelChatMessage(
+                            role=VSCodeLanguageModelChatMessageRole.USER,
+                            content=[VSCodeLanguageModelTextPart(value=tool_call_prompt)],
+                        )
+                    )
+                else:
+                    # Append tool call/result pairs as separate messages.
+                    reordered_messages.append(item["call"])
+                    reordered_messages.append(item["result"])
             else:
                 reordered_messages.append(item)
 

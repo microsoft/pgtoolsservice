@@ -7,6 +7,7 @@ import enum
 from typing import Any, TypeVar
 
 import inflection
+from pydantic import BaseModel
 
 from ossdbtoolsservice.utils.serialization import convert_to_dict
 
@@ -83,6 +84,9 @@ def convert_from_dict(
             elif issubclass(kwargs[pythonic_attr], enum.Enum):
                 # Value is an enum. Convert it from a string
                 deserialized_value = kwargs[pythonic_attr](value)
+            elif issubclass(kwargs[pythonic_attr], BaseModel):
+                # Value is pydantic model. Convert it
+                deserialized_value = kwargs[pythonic_attr].model_validate(value)
             else:
                 # Value is a singlar object. Use the class to deserialize
                 deserialized_value = kwargs[pythonic_attr].from_dict(value)
