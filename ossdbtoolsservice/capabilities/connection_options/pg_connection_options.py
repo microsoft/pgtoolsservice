@@ -113,6 +113,7 @@ pg_conn_provider_opts = ConnectionProviderOptions(
             description="The client encoding for the connection",
             value_type=ConnectionOption.VALUE_TYPE_STRING,
             group_name="Client",
+            default_value="utf8",
         ),
         ConnectionOption(
             name="options",

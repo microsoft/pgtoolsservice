@@ -86,7 +86,6 @@ class StreamJSONRPCWriter(JSONRPCWriter):
                     f"{message.message_type.name} message sent "
                     f"id={message.message_id} "
                     f"method={message.message_method} "
-                    f"{json_content}"
                 )
 
             # Uncomment for verbose logging
