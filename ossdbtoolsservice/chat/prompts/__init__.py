@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any
 
@@ -44,3 +45,13 @@ def system_message_prompt(
     )
 
 
+def tool_call_to_system_message_prompt(
+    call_id: str, function_name: str, function_input: dict[str, Any], result: str
+) -> str:
+    return load_prompt(
+        "tool_call_to_system_message_prompt",
+        call_id=call_id,
+        function_name=function_name,
+        function_input_str=json.dumps(function_input),
+        result=result,
+    )

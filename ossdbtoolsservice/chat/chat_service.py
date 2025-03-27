@@ -19,8 +19,12 @@ from semantic_kernel.connectors.ai.open_ai import (
     AzureChatCompletion,
     AzureChatPromptExecutionSettings,
 )
-from semantic_kernel.contents import ChatHistory
-from semantic_kernel.contents.text_content import TextContent
+from semantic_kernel.contents import (
+    AuthorRole,
+    FunctionCallContent,
+    FunctionResultContent,
+    TextContent,
+)
 from semantic_kernel.kernel import Kernel
 
 from ossdbtoolsservice.chat.chat_history_manager import ChatHistoryManager
@@ -34,12 +38,16 @@ from ossdbtoolsservice.chat.messages import (
     ChatCompletionRequestParams,
     ChatCompletionRequestResult,
 )
+from ossdbtoolsservice.chat.plugin.azure_pg.azure_pg_plugin import AzurePGPlugin
+from ossdbtoolsservice.chat.plugin.docs_plugin import DocsPlugin
+from ossdbtoolsservice.chat.plugin.plugin_base import PGTSChatPlugin
 from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.hosting import Service, ServiceProvider
 from ossdbtoolsservice.hosting.context import NotificationContext, RequestContext
 from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.utils import constants
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
+from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
 
 from .completion.completion_response_queues import CompletionResponseQueues
 from .completion.messages import (
@@ -150,7 +158,9 @@ class ChatService(Service):
             request_context.send_error("owner_uri is required")
             return
 
-        doc_text = params.document
+        session_id = params.session_id
+
+        doc_text, selected_doc_text = self._get_active_document_text(params)
 
         kernel = Kernel()
 
@@ -165,7 +175,9 @@ class ChatService(Service):
             )
             # In VSCode, temperature, top_p etc are set in the extension
             execution_settings = VSCodeChatPromptExecutionSettings(
-                function_choice_behavior=FunctionChoiceBehavior.Auto(),
+                function_choice_behavior=FunctionChoiceBehavior.Auto(
+                    maximum_auto_invoke_attempts=10  # TODO: How best to configure?
+                ),
             )
         else:
             assert self._prompt_execution_settings is not None  # Validated in __init__
@@ -174,16 +186,50 @@ class ChatService(Service):
 
         kernel.add_service(chat_completion)
 
-        connection_service = self._service_provider[constants.CONNECTION_SERVICE_NAME]
-        if not isinstance(connection_service, ConnectionService):
-            raise RuntimeError("Connection service is not set")
-
-        postgres_plugin = PostgresPlugin(
-            connection_service, request_context, chat_id, owner_uri, self._logger
+        connection_service = self._service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
         )
-        postgres_plugin.add_to(kernel)
+        connection_info = connection_service.get_connection_info(owner_uri)
+        if connection_info is None:
+            request_context.send_error(f"Connection info not found for {owner_uri}")
+            return
+        is_azure_pg = connection_info.details.is_azure_pg
 
-        history = ChatHistory()
+        plugins: list[PGTSChatPlugin] = [
+            PostgresPlugin(
+                connection_service=connection_service,
+                request_context=request_context,
+                chat_id=chat_id,
+                profile_name=params.profile_name,
+                copilot_access_mode=params.access_mode,
+                owner_uri=owner_uri,
+                logger=self._logger,
+            )
+        ]
+        if is_azure_pg:
+            plugins.append(
+                AzurePGPlugin(
+                    request_context=request_context,
+                    chat_id=chat_id,
+                    subscription_id=connection_info.details.azure_subscription_id,
+                    resource_group=connection_info.details.azure_resource_group,
+                    server_name=connection_info.details.server_name,
+                    database_name=connection_info.details.database_name,
+                    arm_token=params.arm_token.token if params.arm_token else None,
+                    logger=self._logger,
+                )
+            )
+
+        docs_plugin = DocsPlugin(
+            request_context=request_context, chat_id=chat_id, logger=self._logger
+        )
+        for plugin in plugins:
+            for doc in plugin.topic_documentation:
+                docs_plugin.add_topic_documentation(doc)
+        plugins.append(docs_plugin)
+
+        for plugin in plugins:
+            plugin.add_to(kernel)
 
         # Fetch schemas and tables to be injected into the system message
         # db_context = postgres_plugin.get_db_context()
@@ -282,3 +328,28 @@ class ChatService(Service):
                 CHAT_COMPLETION_RESULT_METHOD,
                 ChatCompletionContent.error(chat_id, str(e)),
             )
+
+    def _get_active_document_text(
+        self, params: ChatCompletionRequestParams
+    ) -> tuple[str | None, str | None]:
+        doc_text: str | None = None
+        selected_doc_text: str | None = None
+        if params.active_editor_uri:
+            workspace_service = self.service_provider.get(
+                constants.WORKSPACE_SERVICE_NAME, WorkspaceService
+            )
+            doc_text = workspace_service.get_text(
+                params.active_editor_uri, selection_range=None
+            )
+            if params.active_editor_selection:
+                selection_range = (
+                    params.active_editor_selection.to_range()
+                    if params.active_editor_selection is not None
+                    else None
+                )
+
+                selected_doc_text = workspace_service.get_text(
+                    params.active_editor_uri, selection_range
+                )
+
+        return doc_text, selected_doc_text

@@ -29,21 +29,21 @@ from ossdbtoolsservice.chat.messages import ChatCompletionRequestParams
                 "to the user.",
             }
         ],
-        # [
-        #     {
-        #         "query": "What is the table with the most rows in my database?",
-        #         "context": "The payment table has the most rows.",
-        #     },
-        #     {
-        #         "query": "What tables are in my database?",
-        #         "context": (
-        #             "Database contains user tables: "
-        #             "actor,address,category,city,country,customer,"
-        #             "film,film_actor,film_category,inventory,language,"
-        #             "payment,rental,staff,store"
-        #         ),
-        #     },
-        # ],
+        [
+            {
+                "query": "What is the table with the most rows in my database?",
+                "context": "The payment table has the most rows.",
+            },
+            {
+                "query": "What tables are in my database?",
+                "context": (
+                    "Database contains user tables: "
+                    "actor,address,category,city,country,customer,"
+                    "film,film_actor,film_category,inventory,language,"
+                    "payment,rental,staff,store"
+                ),
+            },
+        ],
     ],
 )
 def test_evals(
@@ -72,7 +72,10 @@ def test_evals(
         context = input["context"]
 
         completion_request = ChatCompletionRequestParams(
-            prompt=prompt, history=[], ownerUri="test"
+            prompt=prompt,
+            history=[],
+            owner_uri="test",
+            profile_name="testdb",
         )
 
         response = chat_service_wrapper.get_response(completion_request)
