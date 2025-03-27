@@ -100,6 +100,22 @@ class ConnectionDetails(Serializable):
     def azure_account_token(self, value: str) -> None:
         self.options["azureAccountToken"] = value
 
+    @property
+    def azure_subscription_id(self) -> str | None:
+        return self._get_str_option("azureSubscriptionId")
+
+    @property
+    def azure_resource_group(self) -> str | None:
+        return self._get_str_option("azureResourceGroup")
+
+
+    @property
+    def is_azure_pg(self) -> bool:
+        host = self.server_name
+        if not host:
+            return False
+        return host.endswith(".postgres.database.azure.com")
+
 
 class ConnectionType(enum.Enum):
     """
