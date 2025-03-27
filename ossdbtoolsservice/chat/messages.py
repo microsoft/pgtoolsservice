@@ -17,6 +17,14 @@ CHAT_COMPLETION_RESULT_METHOD = "chat/completion-result"
 COPILOT_QUERY_NOTIFICATION_METHOD = "chat/notify-copilot-query"
 
 
+class CopilotAccessMode(str, Enum):
+    READ_ONLY = "ro"
+    READ_WRITE = "rw"
+
+    def __str__(self) -> str:
+        return self.value
+
+
 class ChatMessageContent(PGTSBaseModel):
     participant: str
     content: str

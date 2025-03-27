@@ -108,6 +108,9 @@ class ConnectionDetails(Serializable):
     def azure_resource_group(self) -> str | None:
         return self._get_str_option("azureResourceGroup")
 
+    @property
+    def copilot_access_mode(self) -> str | None:
+        return self._get_str_option("copilotAccessMode")
 
     @property
     def is_azure_pg(self) -> bool:
