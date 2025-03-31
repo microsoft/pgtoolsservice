@@ -5,8 +5,6 @@
 
 from typing import Optional
 
-import sqlparse
-
 from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.driver.types.driver import ServerConnection
@@ -82,8 +80,7 @@ class ScriptingService(Service):
             scripter = Scripter(connection)
 
             script = scripter.script(scripting_operation, object_metadata)
-            formatted_script = sqlparse.format(script, reindent=True)
-            request_context.send_response(ScriptAsResponse(owner_uri, formatted_script))
+            request_context.send_response(ScriptAsResponse(owner_uri, script))
         except Exception as e:
             if connection is not None and connection.connection.broken and not retry_state:
                 self._log_warning(
