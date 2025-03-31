@@ -4,36 +4,31 @@
 # --------------------------------------------------------------------------------------------
 
 import threading
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
-from ossdbtoolsservice.connection.contracts import ConnectionDetails
+from ossdbtoolsservice.driver.types.driver import ServerConnection
 from ossdbtoolsservice.hosting.context import RequestContext
+from ossdbtoolsservice.utils import constants
 from pgsmo import Server
+import psycopg
 
 from ossdbtoolsservice.schema.contracts import (
-        GET_SCHEMA_MODEL_REQUEST,
         GetSchemaModelResponseParams,
-        IEntity,
-        IColumn,
-        IRelationship,
-        OnAction,
-        CREATE_SESSION_REQUEST,
-        CLOSE_SESSION_REQUEST,
         SessionIdContainer,
 )
 
 class SchemaEditorSession:
-    connection_details: ConnectionDetails
+    owner_uri: str
     id: str
     is_ready: bool
     _server: Optional[Server]
-    _schema: Dict[str, Any] | None
+    _schema: List[Dict[str, Any]] | None = None
 
     init_task: Optional[threading.Thread]
     get_schema_task: Optional[threading.Thread]
 
-    def __init__(self, session_id: str, params: ConnectionDetails) -> None:
-        self.connection_details = params
+    def __init__(self, session_id: str, owner_uri: str) -> None:
+        self.owner_uri = owner_uri
         self.id = session_id
         self.is_ready = False
         self._server = None
@@ -57,7 +52,7 @@ class SchemaEditorSession:
         return
 
 
-    def get_schema_model(self, request_context: RequestContext) -> None:
+    def get_schema_model(self, request_context: RequestContext, connection: ServerConnection) -> None:
         # Check if we already have our schema cached
         if self._schema is not None:
             request_context.send_response(self._schema)
@@ -70,18 +65,22 @@ class SchemaEditorSession:
 
         # Start a process to retrieve the schema
         self.get_schema_task = threading.Thread(
-            target=self._get_schema_model_request_thread, args=(request_context,)
+            target=self._get_schema_model_request_thread, args=(request_context,connection,)
         )
         self.get_schema_task.daemon = True
         self.get_schema_task.start()
         return
     
-    def _get_schema_model_request_thread(self, request_context: RequestContext):
-        self._schema = GetSchemaModelResponseParams([], [])
+    def _get_schema_model_request_thread(self, request_context: RequestContext, connection: ServerConnection):
+        try:
+            schema_resp = self.get_schema_json(connection._conn)
+            request_context.send_response(schema_resp)
+        except Exception as e:
+            request_context.send_error(f"Error fetching db context: {e}")
         return
     
-    def get_schema_json(conn: Connection) -> Dict[str, Any]:
-        schema_json: Dict[str, Any] = {"tables": []}
+    def get_schema_json(self, conn: psycopg.Connection) -> Dict[str, Any]:
+        schema_resp = GetSchemaModelResponseParams(tables=[])
         
         # First, query for all user tables (exclude system schemas)
         with conn.cursor() as cur:
@@ -209,9 +208,9 @@ class SchemaEditorSession:
                 }
                 table_dict["relationships"].append(rel_obj)
             
-            schema_json["tables"].append(table_dict)
+            schema_resp.tables.append(table_dict)
         
-        return schema_json
+        return schema_resp
     
     def close_session(self):
         # TODO

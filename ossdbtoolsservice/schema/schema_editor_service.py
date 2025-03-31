@@ -6,13 +6,16 @@
 import threading
 from logging import Logger
 
+from ossdbtoolsservice.connection.connection_service import ConnectionService
+from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService
+from ossdbtoolsservice.utils import constants
 import ossdbtoolsservice.utils.validate as validate
 from ossdbtoolsservice.utils.connection import get_connection_details_with_defaults
 from ossdbtoolsservice.schema import utils as schema_utils
 
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 
-from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
+from ossdbtoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType
 from ossdbtoolsservice.hosting import Service, ServiceProvider
 from ossdbtoolsservice.hosting.context import RequestContext
 from ossdbtoolsservice.schema.session import SchemaEditorSession
@@ -30,6 +33,7 @@ class SchemaEditorService(Service):
 
     def __init__(self) -> None:
         self._service_provider: ServiceProvider | None = None
+        self._conn_service: ConnectionService | None = None
         self._logger: Logger | None = None
         self._session_map: dict[str, SchemaEditorSession] = {}
         self._session_lock: threading.Lock = threading.Lock()
@@ -61,6 +65,10 @@ class SchemaEditorService(Service):
             self._service_provider.logger.info(
                 "Schema Editor service successfully initialized"
             )
+
+        self._conn_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
 
 
     @property
@@ -96,6 +104,7 @@ class SchemaEditorService(Service):
 
         # Generate the session ID and create/store the session
         session_id = schema_utils.generate_session_uri(params)
+        owner_uri = ObjectExplorerService._generate_session_uri(params)
 
         if self._logger:
             self._logger.info(f"   - Session ID: {session_id}")
@@ -111,7 +120,7 @@ class SchemaEditorService(Service):
                 request_context.send_error(message)
             else:
                 # If session doesn't exist, create a new one
-                session = SchemaEditorSession(session_id, params)
+                session = SchemaEditorSession(session_id, owner_uri)
                 self._session_map[session_id] = session
                 session.initialize(request_context)
 
@@ -133,7 +142,13 @@ class SchemaEditorService(Service):
                 assert(session_id in self._session_map)
                 session = self._session_map[session_id]
                 assert(session.init_task is None)
-                session.get_schema_model(request_context)
+            connection = self._conn_service.get_connection(
+                session.owner_uri, ConnectionType.OBJECT_EXLPORER
+            )
+            if not connection:
+                request_context.send_error(f"No connection available for {session.owner_uri}")
+                return    
+            session.get_schema_model(request_context, connection)
         except Exception as e:
             message = f"Failed to get schema model: {str(e)}"
             if self.service_provider.logger is not None:
