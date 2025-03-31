@@ -56,7 +56,7 @@ class VSCodeChatCompletion(ChatCompletionClientBase):
     Completion requests are sent to VSCode via LSP notifications, at which time the
     code here starts listening for LSP notifications that are streaming responses from
     the Language Model call. These responses are translated and handled by Semantic Kernel,
-    including tool calls. 
+    including tool calls.
     """
 
     SUPPORTS_FUNCTION_CALLING: ClassVar[bool] = True
