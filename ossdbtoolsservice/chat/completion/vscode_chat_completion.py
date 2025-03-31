@@ -49,7 +49,14 @@ from .vscode_chat_prompt_execution_settings import VSCodeChatPromptExecutionSett
 
 class VSCodeChatCompletion(ChatCompletionClientBase):
     """
-    A class to interact with the VS Code GitHub Copilot LLMs
+    An implementation of a ChatCompletionClient that uses Language Server Protocol (LSP)
+    JSON-RPC messages to communicate with the VSCode Lamange Model (vscode.lm) API.
+    This class allows Semantic Kernel to leverage GitHub Copilot LLMs in chat responses.
+
+    Completion requests are sent to VSCode via LSP notifications, at which time the
+    code here starts listening for LSP notifications that are streaming responses from
+    the Language Model call. These responses are translated and handled by Semantic Kernel,
+    including tool calls. 
     """
 
     SUPPORTS_FUNCTION_CALLING: ClassVar[bool] = True
