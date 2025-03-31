@@ -6,7 +6,9 @@ from semantic_kernel.functions import KernelFunction, kernel_function
 
 from ossdbtoolsservice.chat.constants import GET_DOCS_FUNCTION_NAME
 from ossdbtoolsservice.chat.messages import (
+    CHAT_FUNCTION_CALL_ERROR_NOTIFICATION_METHOD,
     CHAT_FUNCTION_CALL_NOTIFICATION_METHOD,
+    ChatFunctionCallErrorNotificationParams,
     ChatFunctionCallNotificationParams,
 )
 from ossdbtoolsservice.chat.plugin.plugin_base import PGTSChatPlugin
@@ -94,6 +96,13 @@ class DocsPlugin(PGTSChatPlugin):
                     self._logger.error(
                         f"Docs Chat Plugin: Error fetching documentation for {doc.topic}: {e}"
                     )
+                self._request_context.send_notification(
+                    CHAT_FUNCTION_CALL_ERROR_NOTIFICATION_METHOD,
+                    ChatFunctionCallErrorNotificationParams(
+                        chat_id=self._chat_id,
+                        function_name=GET_DOCS_FUNCTION_NAME,
+                    ),
+                )
                 return f"Error fetching documentation for {doc.topic}: {e}"
 
         return get_doc

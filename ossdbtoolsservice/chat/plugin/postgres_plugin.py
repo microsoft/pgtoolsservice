@@ -361,7 +361,7 @@ class PostgresPlugin(PGTSChatPlugin):
                 ),
             )
             self._request_context.send_notification(
-                COPILOT_QUERY_NOTIFICATION_METHOD,
+                CHAT_FUNCTION_CALL_ERROR_NOTIFICATION_METHOD,
                 ChatFunctionCallErrorNotificationParams(
                     chat_id=self._chat_id,
                     function_name=EXECUTE_STATEMENT_FUNCTION_NAME,
