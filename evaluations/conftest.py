@@ -14,12 +14,13 @@ from semantic_kernel.connectors.ai.open_ai import (
 from evaluations.chat_service_wrapper import ChatServiceWrapper
 from evaluations.settings import EvaluationSettings
 from ossdbtoolsservice.chat.chat_service import ChatService
-from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.driver.types.driver import ServerConnection
+from ossdbtoolsservice.connection import (
+    ConnectionService,
+    ServerConnection,
+)
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 from tests_v2.test_utils.message_server_client_wrapper import MockMessageServerClientWrapper
 from tests_v2.test_utils.queue_message_server import QueueRPCMessageServer
-
 
 # def pytest_addoption(parser: pytest.Parser) -> None:
 #     # TODO: How to get VS Code pytest settings to not pass --playback for evaluations?
