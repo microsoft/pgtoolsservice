@@ -523,13 +523,15 @@ class ConnectionManager:
         # Create a new connection pool.
         pool = ConnectionPool(
             name=str(details.to_hash()),
-            min_size=1,
+            min_size=0,
             max_size=self._max_pool_size,
             timeout=self._timeout_override or details.connect_timeout,
             open=False,
             check=ConnectionPool.check_connection,
             kwargs=details.get_connection_params(config),
             connection_class=connection_class,
+            max_idle=60 * 5,  # 5 minutes
+            max_lifetime=60 * 30,  # 30 minutes
         )
 
         # Open and wait for the first connection to be establshed
