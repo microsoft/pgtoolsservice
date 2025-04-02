@@ -7,7 +7,7 @@ import enum
 import time
 from typing import Any
 
-from psycopg.conninfo import conninfo_to_dict, make_conninfo
+from psycopg.conninfo import conninfo_to_dict
 from pydantic import field_validator
 
 from ossdbtoolsservice.connection.core.constants import (
@@ -249,7 +249,12 @@ class ConnectionDetails(Serializable):
         """
         Returns hash of the connection details.
         """
-        return hash(make_conninfo(**self.get_connection_params()))
+        conninfo = " ".join(
+            f"{k}={str(v)}"
+            for (k, v) in sorted(self.get_connection_params().items())
+            if v is not None
+        )
+        return hash(conninfo)
 
     @classmethod
     def from_connection_string(cls, conn_str: str) -> "ConnectionDetails":
