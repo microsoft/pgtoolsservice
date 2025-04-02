@@ -275,6 +275,70 @@ class ConnectionManager:
                 )
                 return False
 
+    def transfer_connection(self, old_owner_uri: str, new_owner_uri) -> bool:
+        """Transfer a connection from one owner URI to another.
+        If there is already a connection associated with new_owner_uri, close it.
+        This will disassociate the old owner URI from the connection pool and
+        associate the new owner URI with the connection pool.
+        Args:
+            old_owner_uri: The old owner URI to disconnect.
+            new_owner_uri: The new owner URI to connect.
+        Returns:
+            True if the connection was disconnected, False if no connection was found.
+        """
+        return self._run_task(self._transfer_connection, (old_owner_uri, new_owner_uri))
+
+    def _transfer_connection(self, old_owner_uri: str, new_owner_uri: str) -> bool:
+        self._logger.info(f"Transferring connection from {old_owner_uri} to {new_owner_uri}")
+        with self._lock:
+            # Disconnect the new owner URI if it is already connected.
+            if new_owner_uri in self._owner_uri_to_details:
+                self._logger.info(
+                    f"Disconnecting new owner_uri={new_owner_uri} "
+                    "to transfer connection from old owner URI"
+                )
+                self._disconnect(new_owner_uri)
+
+            # Handle the connection info
+            if old_owner_uri in self._owner_uri_to_conn_info:
+                conn_info = self._owner_uri_to_conn_info.pop(old_owner_uri)
+                conn_info.owner_uri = new_owner_uri
+                self._owner_uri_to_conn_info[new_owner_uri] = conn_info
+            else:
+                self._logger.warning(
+                    f"No connection info found for old_owner_uri={old_owner_uri} "
+                    f"during transfer to new_owner_uri={new_owner_uri}"
+                )
+                return False
+
+            # Handle association with the connection pool.
+            details_and_pool = self._owner_uri_to_details.get(old_owner_uri, None)
+            if details_and_pool:
+                details, pool = details_and_pool
+                # Remove the old owner URI from the connection pool.
+                pool_owner_uris = self._details_to_owner_uri.get(details.to_hash(), [])
+                if old_owner_uri in pool_owner_uris:
+                    pool_owner_uris.remove(old_owner_uri)
+                # Associate the new owner URI with the connection pool.
+                self._owner_uri_to_details[new_owner_uri] = (details, pool)
+                self._details_to_owner_uri.setdefault(details.to_hash(), set()).add(
+                    new_owner_uri
+                )
+
+            # Handle active transactions
+            if old_owner_uri in self._owner_uri_to_active_tx_connection:
+                self._owner_uri_to_active_tx_connection[new_owner_uri] = (
+                    self._owner_uri_to_active_tx_connection.pop(old_owner_uri)
+                )
+
+            # Handle long lived connections
+            if old_owner_uri in self._owner_uri_to_long_lived_connection:
+                self._owner_uri_to_long_lived_connection[new_owner_uri] = (
+                    self._owner_uri_to_long_lived_connection.pop(old_owner_uri)
+                )
+
+            return True
+
     def get_pooled_connection(self, owner_uri: str) -> PooledConnection | None:
         """Get a pooled connection for the given owner URI.
 

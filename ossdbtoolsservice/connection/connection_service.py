@@ -17,9 +17,7 @@ from ossdbtoolsservice.connection.contracts import (
     LIST_DATABASES_REQUEST,
     AzureToken,
     CancelConnectParams,
-    ChangeDatabaseRequestParams,
     ConnectionCompleteParams,
-    ConnectionDetails,
     ConnectionType,
     ConnectRequestParams,
     DisconnectRequestParams,
@@ -30,6 +28,10 @@ from ossdbtoolsservice.connection.contracts import (
 from ossdbtoolsservice.connection.contracts.fetch_azure_token_request import (
     FETCH_AZURE_TOKEN_REQUEST_METHOD,
     FetchAzureTokenRequestParams,
+)
+from ossdbtoolsservice.connection.contracts.transfer_connection_request import (
+    TRANSFER_CONNECTION_REQUEST,
+    TransferConnectionParams,
 )
 from ossdbtoolsservice.connection.core.connection_manager import (
     ConnectionManager,
@@ -77,11 +79,9 @@ class ConnectionService(Service):
         service_provider.server.set_request_handler(
             CANCEL_CONNECT_REQUEST, self.handle_cancellation_request
         )
-
-        # Unused in VSCode
-        # service_provider.server.set_request_handler(
-        #     CHANGE_DATABASE_REQUEST, self.handle_change_database_request
-        # )
+        service_provider.server.set_request_handler(
+            TRANSFER_CONNECTION_REQUEST, self.handle_transfer_connection_request
+        )
 
         # This is unimplemented
         # service_provider.server.set_request_handler(
@@ -245,37 +245,14 @@ class ConnectionService(Service):
         self._connection_manager.disconnect(owner_uri)
         request_context.send_response(True)  # VSCode doesn't use this response
 
-    def handle_change_database_request(
-        self, request_context: RequestContext, params: ChangeDatabaseRequestParams
+    def handle_transfer_connection_request(
+        self, request_context: RequestContext, params: TransferConnectionParams
     ) -> None:
-        """change database of an existing connection or create a new connection
-        with default database from input"""
-        owner_uri = params.owner_uri
-        if owner_uri is None:
-            request_context.send_error("No owner URI set")
-            return
-
-        if params.new_database is None:
-            request_context.send_error("No new database set")
-            return
-
-        connection_info: OwnerConnectionInfo | None = self.get_connection_info(owner_uri)
-
-        if connection_info is None:
-            return None
-
-        connection_info_params: dict[str, str | int] = (
-            connection_info.connection_details.options.copy()
+        """Transfer a connection to the given owner URI"""
+        result = self._connection_manager.transfer_connection(
+            params.old_owner_uri, params.new_owner_uri
         )
-        connection_info_params["dbname"] = params.new_database
-        connection_details: ConnectionDetails = ConnectionDetails.from_data(
-            connection_info_params
-        )
-
-        connection_request_params: ConnectRequestParams = ConnectRequestParams(
-            connection_details, params.owner_uri
-        )
-        self.handle_connect_request(request_context, connection_request_params)
+        request_context.send_response(result)
 
     def handle_get_connection_string_request(
         self, request_context: RequestContext, params: GetConnectionStringParams
