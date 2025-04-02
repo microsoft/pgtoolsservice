@@ -86,7 +86,7 @@ class ConnectionManager:
         self._lock = threading.RLock()  # Use RLock to allow re-entrance
         self._pool_worker_lock = threading.Lock()  # Lock for pool worker threads
         self._details_to_pools: dict[int, ConnectionPool] = {}
-        self._details_to_owner_uri: dict[int, list[str]] = {}
+        self._details_to_owner_uri: dict[int, set[str]] = {}
         self._owner_uri_to_details: dict[str, tuple[ConnectionDetails, ConnectionPool]] = {}
         self._owner_uri_to_active_tx_connection: dict[
             str, tuple[ServerConnection, ConnectionPool]
@@ -208,7 +208,7 @@ class ConnectionManager:
                 self._details_to_pools[details_hash] = pool
             # Associate the owner URI with the connection pool.
             self._owner_uri_to_details[owner_uri] = (details, pool)
-            self._details_to_owner_uri.setdefault(details_hash, []).append(owner_uri)
+            self._details_to_owner_uri.setdefault(details_hash, set()).add(owner_uri)
             with pool.connection() as conn:
                 owner_conn_info = self._build_owner_connection_info(
                     owner_uri, details, ServerConnection(conn)
