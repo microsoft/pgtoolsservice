@@ -91,7 +91,7 @@ class ConnectionManager:
         self._owner_uri_to_active_tx_connection: dict[
             str, tuple[ServerConnection, ConnectionPool]
         ] = {}
-        self._owner_ur_to_long_lived_connection: dict[str, dict[str, ServerConnection]] = {}
+        self._owner_uri_to_long_lived_connection: dict[str, dict[str, ServerConnection]] = {}
         self._owner_uri_to_conn_info: dict[str, OwnerConnectionInfo] = {}
 
         self._fetch_azure_token = fetch_azure_token
@@ -238,8 +238,8 @@ class ConnectionManager:
                 conn.close()
 
             # Remove long lived connections.
-            if owner_uri in self._owner_ur_to_long_lived_connection:
-                connections = self._owner_ur_to_long_lived_connection.pop(owner_uri)
+            if owner_uri in self._owner_uri_to_long_lived_connection:
+                connections = self._owner_uri_to_long_lived_connection.pop(owner_uri)
                 for conn in connections.values():
                     try:
                         conn.close()
@@ -333,13 +333,13 @@ class ConnectionManager:
             The connection if found, None otherwise.
         """
         with self._lock:
-            if owner_uri in self._owner_ur_to_long_lived_connection:
+            if owner_uri in self._owner_uri_to_long_lived_connection:
                 # If the owner URI is already associated with an long lived connection of
                 # the same type, return it.
                 # Check the connection first, same way the pool does.
                 # If the connection is not valid, remove it from the map,
                 # so a new connection can be created.
-                connections = self._owner_ur_to_long_lived_connection[owner_uri]
+                connections = self._owner_uri_to_long_lived_connection[owner_uri]
                 if connection_name in connections:
                     conn = connections[connection_name]
                     try:
@@ -360,7 +360,7 @@ class ConnectionManager:
                         conn.return_to_pool()
                         del connections[connection_name]
                         if not connections:
-                            del self._owner_ur_to_long_lived_connection[owner_uri]
+                            del self._owner_uri_to_long_lived_connection[owner_uri]
             if owner_uri in self._owner_uri_to_details:
                 # If the owner URI is associated with a connection pool, get a new connection.
                 details, pool = self._owner_uri_to_details[owner_uri]
@@ -371,9 +371,9 @@ class ConnectionManager:
                 application_name = f"{application_name} - {connection_name}"
                 conn.execute_statement("SET application_name = %s", [application_name])
                 # Store the connection in the long lived connection map.
-                if owner_uri not in self._owner_ur_to_long_lived_connection:
-                    self._owner_ur_to_long_lived_connection[owner_uri] = {}
-                self._owner_ur_to_long_lived_connection[owner_uri][connection_name] = conn
+                if owner_uri not in self._owner_uri_to_long_lived_connection:
+                    self._owner_uri_to_long_lived_connection[owner_uri] = {}
+                self._owner_uri_to_long_lived_connection[owner_uri][connection_name] = conn
                 self._logger.info(
                     f"Returning new long-lived connection for owner_uri={owner_uri}, "
                     f"connection_name={connection_name}"
@@ -398,7 +398,7 @@ class ConnectionManager:
             self._details_to_owner_uri.clear()
             self._owner_uri_to_details.clear()
             self._owner_uri_to_active_tx_connection.clear()
-            self._owner_ur_to_long_lived_connection.clear()
+            self._owner_uri_to_long_lived_connection.clear()
             self._owner_uri_to_conn_info.clear()
             self._details_to_connection_errors.clear()
 
