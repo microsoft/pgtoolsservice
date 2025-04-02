@@ -142,7 +142,9 @@ def test_translate_chat_history_with_function_result() -> None:
 def test_tmp() -> None:
     connectionstring = "host=localhost port=5432 user=postgres password=example dbname=pagila"
     import psycopg
+
     from ossdbtoolsservice.chat.plugin.postgres_utils import fetch_schema_v4
+
     with psycopg.connect(connectionstring) as conn:
         conn.autocommit = True
         fetch_schema_v4(conn)

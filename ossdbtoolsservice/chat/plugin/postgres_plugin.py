@@ -346,7 +346,9 @@ class PostgresPlugin(PGTSChatPlugin):
 
         try:
             with pooled_connection as connection:
-                result = execute_readonly_query(connection._conn, query, self._max_result_chars)
+                result = execute_readonly_query(
+                    connection._conn, query, self._max_result_chars
+                )
         except Exception as e:
             if self._logger:
                 self._logger.exception(e)

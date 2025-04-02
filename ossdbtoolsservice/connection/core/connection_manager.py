@@ -11,9 +11,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from psycopg import Connection
 from psycopg.conninfo import make_conninfo
-from psycopg.rows import TupleRow
 from psycopg_pool import ConnectionPool, PoolTimeout
 
 from ossdbtoolsservice.connection.contracts import (
@@ -572,7 +570,7 @@ class ConnectionManager:
                 # If errors, the pool should clean up the connection.
                 with contextlib.suppress(Exception):
                     conn.reset()
-                
+
                 # Return the connection to the pool.
                 pool.putconn(conn.connection)
 
@@ -602,7 +600,6 @@ class ConnectionManager:
         # to avoid creating mutliple connections when not needed.
         pool.open(wait=True, timeout=self._timeout_override or details.connect_timeout)
         return pool
-  
 
     def _build_owner_connection_info(
         self,
