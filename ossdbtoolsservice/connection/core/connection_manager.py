@@ -89,7 +89,7 @@ class ConnectionManager:
         self._owner_uri_to_active_tx_connection: dict[
             str, tuple[ServerConnection, ConnectionPool]
         ] = {}
-        self._owner_uri_to_long_lived_connection: dict[str, dict[str, ServerConnection]] = {}
+        self._owner_uri_to_long_lived_connection: dict[str, ServerConnection] = {}
         self._owner_uri_to_conn_info: dict[str, OwnerConnectionInfo] = {}
 
         self._fetch_azure_token = fetch_azure_token
@@ -235,15 +235,16 @@ class ConnectionManager:
                 conn, pool = self._owner_uri_to_active_tx_connection.pop(owner_uri)
                 conn.close()
 
-            # Remove long lived connections.
-            if owner_uri in self._owner_uri_to_long_lived_connection:
-                connections = self._owner_uri_to_long_lived_connection.pop(owner_uri)
-                for conn in connections.values():
-                    try:
-                        conn.close()
-                    except Exception as e:
-                        self._logger.exception(e)
-                        raise
+            # Remove long lived connection.
+            long_lived_connection = self._owner_uri_to_long_lived_connection.pop(
+                owner_uri, None
+            )
+            if long_lived_connection:
+                try:
+                    long_lived_connection.close()
+                except Exception as e:
+                    self._logger.exception(e)
+                    raise
 
             # Remove the owner URI from the details to owner URI mapping.
             details_and_pool = self._owner_uri_to_details.pop(owner_uri, None)
@@ -395,38 +396,39 @@ class ConnectionManager:
             The connection if found, None otherwise.
         """
         with self._lock:
-            if owner_uri in self._owner_uri_to_long_lived_connection:
+            existing_connection = self._owner_uri_to_long_lived_connection.get(owner_uri)
+            if existing_connection:
                 # If the owner URI is already associated with an long lived connection of
                 # the same type, return it.
                 # Check the connection first, same way the pool does.
                 # If the connection is not valid, remove it from the map,
                 # so a new connection can be created.
-                connections = self._owner_uri_to_long_lived_connection[owner_uri]
-                if connection_name in connections:
-                    conn = connections[connection_name]
-                    try:
-                        # Check if the connection is valid.
-                        # Only check if the connection is not in a transaction,
-                        # as the check turns on autocommit.
-                        if not conn.transaction_in_trans and not conn.transaction_in_error:
-                            conn.check()
-                        self._logger.info(
-                            "Returning existing long-lived connection for "
-                            f"owner_uri={owner_uri}, connection_name={connection_name}"
-                        )
-                        return conn
-                    except Exception:
-                        # If the connection is not valid, remove it from the map
-                        # and return it to the pool. The pool will discard it.
-                        self._logger.warning(
-                            f"Long-lived connection for owner_uri={owner_uri} "
-                            f"and connection_name={connection_name} is not valid. "
-                            "Returning to pool to issue a new connection."
-                        )
-                        conn.return_to_pool()
-                        del connections[connection_name]
-                        if not connections:
-                            del self._owner_uri_to_long_lived_connection[owner_uri]
+
+                try:
+                    # Check if the connection is valid.
+                    # Only check if the connection is not in a transaction,
+                    # as the check turns on autocommit.
+                    if (
+                        not existing_connection.transaction_in_trans
+                        and not existing_connection.transaction_in_error
+                    ):
+                        existing_connection.check()
+                    self._logger.info(
+                        "Returning existing long-lived connection for "
+                        f"owner_uri={owner_uri}, connection_name={connection_name}"
+                    )
+                    return existing_connection
+                except Exception:
+                    # If the connection is not valid, remove it from the map
+                    # and return it to the pool. The pool will discard it.
+                    self._logger.warning(
+                        f"Long-lived connection for owner_uri={owner_uri} "
+                        f"and connection_name={connection_name} is not valid. "
+                        "Returning to pool to issue a new connection."
+                    )
+                    existing_connection.return_to_pool()
+                    del self._owner_uri_to_long_lived_connection[owner_uri]
+
             if owner_uri in self._owner_uri_to_details:
                 # If the owner URI is associated with a connection pool, get a new connection.
                 details, pool = self._owner_uri_to_details[owner_uri]
@@ -437,9 +439,7 @@ class ConnectionManager:
                 application_name = f"{application_name} - {connection_name}"
                 conn.execute_statement("SET application_name = %s", [application_name])
                 # Store the connection in the long lived connection map.
-                if owner_uri not in self._owner_uri_to_long_lived_connection:
-                    self._owner_uri_to_long_lived_connection[owner_uri] = {}
-                self._owner_uri_to_long_lived_connection[owner_uri][connection_name] = conn
+                self._owner_uri_to_long_lived_connection[owner_uri] = conn
                 self._logger.info(
                     f"Returning new long-lived connection for owner_uri={owner_uri}, "
                     f"connection_name={connection_name}"
