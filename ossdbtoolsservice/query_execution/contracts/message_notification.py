@@ -8,7 +8,7 @@ from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 
 
 class ResultMessage(PGTSBaseModel):
-    batch_id: int
+    batch_id: int | None = None
     is_error: bool
     time: str | None = None
     message: str
