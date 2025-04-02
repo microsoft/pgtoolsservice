@@ -178,7 +178,6 @@ class Batch:
             self.after_execute(cursor)
         except:
             self._has_error = True
-            conn.set_transaction_in_error()
             raise
         finally:
             if cursor and cursor.statusmessage is not None:

@@ -56,11 +56,6 @@ class ServerConnection:
         # Set initial transaction is not from user
         self._user_transaction = False
 
-        # Set initial connection has error
-        self._transaction_in_error = (
-            self._conn.info.transaction_status is TransactionStatus.INERROR
-        )
-
         # Get the DSN parameters for the connection as a dict
         self._dsn_parameters = self._conn.info.get_parameters()
 
@@ -122,10 +117,7 @@ class ServerConnection:
     @property
     def transaction_in_error(self) -> bool:
         """Returns bool indicating if transaction is in error"""
-        return (
-            self._conn.info.transaction_status is TransactionStatus.INERROR
-            or self._transaction_in_error
-        )
+        return self._conn.info.transaction_status is TransactionStatus.INERROR
 
     @property
     def transaction_is_idle(self) -> bool:
@@ -367,12 +359,6 @@ class ServerConnection:
         Checks the connection. Raises an error if the connection is broken.
         """
         ConnectionPool.check_connection(self._conn)
-
-    def set_transaction_in_error(self) -> None:
-        """
-        Sets if current connection is in error
-        """
-        self._transaction_in_error = True
 
     def set_user_transaction(self, mode: bool) -> None:
         """
