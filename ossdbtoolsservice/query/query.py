@@ -188,7 +188,8 @@ class Query:
                 batch.execute(connection)
 
         finally:
-            # We can only set autocommit when the connection is open.
+            # If transaction is in idle (no active transaction),
+            # we can set autocommit to True, if the connection is open.
             if connection.open and connection.transaction_is_idle:
                 connection.autocommit = True
                 connection.set_user_transaction(False)

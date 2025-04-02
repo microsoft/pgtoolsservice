@@ -78,7 +78,6 @@ class ScriptingService(Service):
                 scripter = Scripter(connection)
                 script = scripter.script(scripting_operation, object_metadata)
 
-            script = scripter.script(scripting_operation, object_metadata)
             request_context.send_response(ScriptAsResponse(owner_uri, script))
         except Exception as e:
             if connection is not None and connection.connection.broken and not retry_state:

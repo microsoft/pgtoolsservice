@@ -405,7 +405,11 @@ class ConnectionManager:
                 if connection_name in connections:
                     conn = connections[connection_name]
                     try:
-                        conn.check()
+                        # Check if the connection is valid.
+                        # Only check if the connection is not in a transaction,
+                        # as the check turns on autocommit.
+                        if not conn.transaction_in_trans and not conn.transaction_in_error:
+                            conn.check()
                         self._logger.info(
                             "Returning existing long-lived connection for "
                             f"owner_uri={owner_uri}, connection_name={connection_name}"

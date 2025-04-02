@@ -157,5 +157,9 @@ class TestScriptingService(unittest.TestCase):
             for call_args in mock_scripter.script.call_args_list:
                 matches[call_args[0][0]] += 1
 
-            for calls in matches.values():
-                self.assertEqual(calls, 1)
+            for operation, calls in matches.items():
+                self.assertEqual(
+                    calls,
+                    1,
+                    msg=f"Operation {operation} was called {calls} times, expected 1 time",
+                )

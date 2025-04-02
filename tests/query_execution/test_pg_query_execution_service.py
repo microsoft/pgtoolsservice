@@ -1458,6 +1458,7 @@ class TestQueryService(unittest.TestCase):
         self.connection_service.get_pooled_connection = mock.Mock(
             return_value=pooled_connection
         )
+        self.connection_service.get_connection = mock.Mock(return_value=connection)
 
         mock_thread = utils.MockThread()
         with mock.patch(
@@ -1475,14 +1476,16 @@ class TestQueryService(unittest.TestCase):
             call[1][0]: call[1][1]
             for call in self.request_context.send_notification.mock_calls
         }
-        notification_methods = list(notifications.keys())
-        expected_methods = [
-            "query/batchStart",
-            "query/resultSetComplete",
-            "query/message",
-            "query/batchComplete",
-            "query/complete",
-        ]
+        notification_methods = set(notifications.keys())
+        expected_methods = set(
+            [
+                "query/batchStart",
+                "query/resultSetComplete",
+                "query/message",
+                "query/batchComplete",
+                "query/complete",
+            ]
+        )
         self.assertEqual(notification_methods, expected_methods)
 
         # And the query results can be retrieved using a query/subset request

@@ -106,6 +106,7 @@ class TestConverters(unittest.TestCase):
         self.connection_service.get_pooled_connection = mock.Mock(
             side_effect=get_pooled_connection
         )
+        self.connection_service.get_connection = mock.Mock(return_value=connection)
         self.generic_test(connection, "true", "bool")
         self.generic_test(connection, "5.67", "real")
         self.generic_test(connection, "8.912", "double precision")
