@@ -250,7 +250,7 @@ class ConnectionManager:
             if details_and_pool:
                 details = details_and_pool[0]
                 details_hash = details.to_hash()
-                pool_owner_uris = self._details_to_owner_uri.get(details_hash, [])
+                pool_owner_uris = self._details_to_owner_uri.get(details_hash, set())
                 if owner_uri in pool_owner_uris:
                     pool_owner_uris.remove(owner_uri)
 
@@ -273,7 +273,7 @@ class ConnectionManager:
                 )
                 return False
 
-    def transfer_connection(self, old_owner_uri: str, new_owner_uri) -> bool:
+    def transfer_connection(self, old_owner_uri: str, new_owner_uri: str) -> bool:
         """Transfer a connection from one owner URI to another.
         If there is already a connection associated with new_owner_uri, close it.
         This will disassociate the old owner URI from the connection pool and
@@ -314,7 +314,7 @@ class ConnectionManager:
             if details_and_pool:
                 details, pool = details_and_pool
                 # Remove the old owner URI from the connection pool.
-                pool_owner_uris = self._details_to_owner_uri.get(details.to_hash(), [])
+                pool_owner_uris = self._details_to_owner_uri.get(details.to_hash(), set())
                 if old_owner_uri in pool_owner_uris:
                     pool_owner_uris.remove(old_owner_uri)
                 # Associate the new owner URI with the connection pool.
