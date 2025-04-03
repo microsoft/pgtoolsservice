@@ -66,7 +66,7 @@ class ConnectionManager:
     def __init__(
         self,
         fetch_azure_token: Callable[[str, str | None], AzureToken] | None = None,
-        max_pool_size: int = 10,
+        max_pool_size: int | None = None,
         connection_class_factory: ConnectionClassFactoryBase | None = None,
         logger: logging.Logger | None = None,
         timeout_override: int | None = None,
@@ -75,7 +75,8 @@ class ConnectionManager:
 
         Args:
             fetch_azure_token: A function to fetch the Azure token.
-            max_pool_size: The maximum size of the connection pool.
+            max_pool_size: The maximum size of the connection pool. 
+                By default uses the configuration value.
             connection_class_factory: A factory to create the connection class.
             logger: A logger to use for logging.
             timeout_override: If True, will override the timeout for the connection pool.
@@ -135,7 +136,7 @@ class ConnectionManager:
         return response.result
 
     def connect(
-        self, owner_uri: str, details: ConnectionDetails, config: Configuration | None = None
+        self, owner_uri: str, details: ConnectionDetails, config: Configuration
     ) -> OwnerConnectionInfo:
         """Connect to the database using the given details.
         This will create a new connection pool if one does not already exist.
@@ -150,7 +151,7 @@ class ConnectionManager:
         return self._run_task(self._connect, (owner_uri, details, config))
 
     def _connect(
-        self, owner_uri: str, details: ConnectionDetails, config: Configuration | None = None
+        self, owner_uri: str, details: ConnectionDetails, config: Configuration
     ) -> OwnerConnectionInfo:
         self._logger.info(f"Attempting to connect: owner_uri={owner_uri}")
         with self._lock:
@@ -469,7 +470,9 @@ class ConnectionManager:
             self._details_to_connection_errors.clear()
 
     def get_pool_stats(self) -> dict[str, Any]:
-        """Get the pool stats for all pools."""
+        """Get the pool stats for all pools.
+        See https://www.psycopg.org/psycopg3/docs/advanced/pool.html#pool-stats
+        """
         with self._lock:
             stats = {}
             for _, pool in self._details_to_pools.items():
@@ -579,8 +582,10 @@ class ConnectionManager:
                 pool.putconn(conn.connection)
 
     def _create_connection_pool(
-        self, details: ConnectionDetails, config: Configuration | None = None
+        self, details: ConnectionDetails, config: Configuration
     ) -> ConnectionPool:
+        max_connections = self._max_pool_size or config.pgsql.max_connections
+
         connection_class = self.connection_class_factory.create_connection_class(
             details,
             self._store_connection_error,
@@ -590,7 +595,7 @@ class ConnectionManager:
         pool = ConnectionPool(
             name=str(details.to_hash()),
             min_size=0,
-            max_size=self._max_pool_size,
+            max_size=max_connections,
             timeout=self._timeout_override or details.connect_timeout,
             open=False,
             check=ConnectionPool.check_connection,

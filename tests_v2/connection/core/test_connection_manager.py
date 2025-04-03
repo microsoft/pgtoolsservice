@@ -13,6 +13,7 @@ from ossdbtoolsservice.connection.contracts import (
 )
 from ossdbtoolsservice.connection.core.connection_manager import ConnectionManager
 from ossdbtoolsservice.connection.core.errors import GetConnectionTimeout
+from ossdbtoolsservice.workspace.contracts.configuration import Configuration
 from tests_v2.connection.conftest import MockConnectionClassFactory, StubConnectionManager
 
 
@@ -57,7 +58,7 @@ def test_connect_returns_valid_connection_info(
         connection_class_factory=mock_connection_class_factory,
     )
 
-    conn_info = connection_manager.connect(owner_uri, details)
+    conn_info = connection_manager.connect(owner_uri, details, config=Configuration())
 
     # Behavior: Connection info should contain the same connection details
     # (via hash) and a non-empty connection id
@@ -73,8 +74,8 @@ def test_reconnect_with_identical_details_returns_same_info(
     owner_uri = "test_owner_uri_2"
     details = get_connection_details()
 
-    conn_info1 = stub_connection_manager.connect(owner_uri, details)
-    conn_info2 = stub_connection_manager.connect(owner_uri, details)
+    conn_info1 = stub_connection_manager.connect(owner_uri, details, config=Configuration())
+    conn_info2 = stub_connection_manager.connect(owner_uri, details, config=Configuration())
 
     # Behavior: The connection info returned should be equivalent (by connection id)
     assert conn_info1.connection_id == conn_info2.connection_id
@@ -87,13 +88,13 @@ def test_reconnect_with_different_details_creates_new_connection(
     same owner URI effectively reconnects."""
     owner_uri = "test_owner_uri_3"
     details1 = get_connection_details()
-    conn_info1 = stub_connection_manager.connect(owner_uri, details1)
+    conn_info1 = stub_connection_manager.connect(owner_uri, details1, config=Configuration())
 
     # Create modified connection details
     details2 = get_connection_details()
     details2.options["dbname"] = "different_db"
 
-    conn_info2 = stub_connection_manager.connect(owner_uri, details2)
+    conn_info2 = stub_connection_manager.connect(owner_uri, details2, config=Configuration())
 
     # Behavior: New connection info should have a different connection id
     # (representing a new connection)
@@ -106,7 +107,7 @@ def test_get_pooled_connection_normal(stub_connection_manager: StubConnectionMan
     """Test that get_pooled_connection returns a usable connection via the context manager."""
     owner_uri = "test_owner_uri_4"
     details = get_connection_details()
-    stub_connection_manager.connect(owner_uri, details)
+    stub_connection_manager.connect(owner_uri, details, config=Configuration())
 
     pooled_conn = stub_connection_manager.get_pooled_connection(owner_uri)
     assert pooled_conn is not None
@@ -138,7 +139,7 @@ def test_get_long_lived_connection_valid(
     owner_uri = "test_owner_uri_5"
     details = get_connection_details()
     details.options["application_name"] = "test_app_name"
-    stub_connection_manager.connect(owner_uri, details)
+    stub_connection_manager.connect(owner_uri, details, config=Configuration())
     conn_type = ConnectionType.OBJECT_EXLPORER
 
     long_lived_conn = stub_connection_manager.get_long_lived_connection(owner_uri, conn_type)
@@ -173,7 +174,7 @@ def test_get_long_lived_connection_invalid_gets_recreated(
     connection_manager = ConnectionManager(
         connection_class_factory=mock_connection_class_factory,
     )
-    connection_manager.connect(owner_uri, details)
+    connection_manager.connect(owner_uri, details, config=Configuration())
     conn_type = ConnectionType.DEFAULT
 
     # Get an long lived connection initially.
@@ -218,7 +219,7 @@ def test_disconnect_behavior(stub_connection_manager: StubConnectionManager) -> 
     """Test that disconnecting an owner URI makes connections unavailable behaviorally."""
     owner_uri = "test_owner_uri_7"
     details = get_connection_details()
-    stub_connection_manager.connect(owner_uri, details)
+    stub_connection_manager.connect(owner_uri, details, config=Configuration())
 
     # Pre-disconnect, connection info should be available.
     assert stub_connection_manager.get_connection_info(owner_uri) is not None
@@ -256,8 +257,8 @@ def test_close_releases_all_connections(
     connection_manager = ConnectionManager(
         connection_class_factory=mock_connection_class_factory,
     )
-    connection_manager.connect(owner_uri1, details)
-    connection_manager.connect(owner_uri2, details)
+    connection_manager.connect(owner_uri1, details, config=Configuration())
+    connection_manager.connect(owner_uri2, details, config=Configuration())
 
     # Call close on the manager.
     connection_manager.close()
@@ -283,8 +284,8 @@ def test_raises_timeout_error_when_pool_maxed_out(
     owner_uri_1 = "test_owner_uri_1"
     owner_uri_2 = "test_owner_uri_2"
     details = get_connection_details()
-    connection_manager.connect(owner_uri_1, details)
-    connection_manager.connect(owner_uri_2, details)
+    connection_manager.connect(owner_uri_1, details, config=Configuration())
+    connection_manager.connect(owner_uri_2, details, config=Configuration())
 
     # Create a connection, put it back with an active transaction
 
@@ -328,7 +329,7 @@ def test_fetches_expired_azure_token(
     # Set token to have already expired.
     details.options["azureTokenExpiry"] = int(time.time()) - 100
 
-    connection_manager.connect(owner_uri, details)
+    connection_manager.connect(owner_uri, details, config=Configuration())
 
     assert mock_fetch_token.called
 
@@ -351,8 +352,8 @@ def test_two_threads_against_expired_token_refreshes_once(
     owner_uri_2 = "test_owner_uri_2"
     details = get_azure_connection_details()
 
-    connection_manager.connect(owner_uri_1, details)
-    connection_manager.connect(owner_uri_2, details)
+    connection_manager.connect(owner_uri_1, details, config=Configuration())
+    connection_manager.connect(owner_uri_2, details, config=Configuration())
 
     # Set token to have already expired.
     details.options["azureTokenExpiry"] = int(time.time()) - 100

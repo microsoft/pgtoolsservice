@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 from unittest import mock
 
@@ -45,7 +46,11 @@ from ossdbtoolsservice.query_execution.contracts.result_set_notification import 
     ResultSetNotificationParams,
 )
 from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.workspace.contracts.did_change_config_notification import Configuration
+from ossdbtoolsservice.workspace.contracts.did_change_config_notification import (
+    DID_CHANGE_CONFIG_NOTIFICATION,
+    Configuration,
+    DidChangeConfigurationParams,
+)
 from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
 from tests_v2.connection.conftest import MockConnectionClassFactory
 from tests_v2.test_utils.message_server_client_wrapper import (
@@ -59,7 +64,7 @@ from tests_v2.test_utils.utils import is_debugger_active
 class ConnectionServiceTestComponents:
     connection_service: ConnectionService
     connection_manager: ConnectionManager
-    workspace_service: mock.MagicMock
+    workspace_service: WorkspaceService
     connection_class_factory: MockConnectionClassFactory
     mock_server_client_wrapper: MockMessageServerClientWrapper
 
@@ -76,19 +81,18 @@ def connection_service_test_components(
     connection_service = ConnectionService(
         connection_manager=connection_manager,
     )
-    workspace_service_mock = mock.MagicMock(spec=WorkspaceService)
-    workspace_service_mock.configuration = Configuration()
+    workspace_service = WorkspaceService()
     mock_server_client_wrapper.add_services(
         {
             constants.CONNECTION_SERVICE_NAME: connection_service,
-            constants.WORKSPACE_SERVICE_NAME: workspace_service_mock,
+            constants.WORKSPACE_SERVICE_NAME: workspace_service,
         }
     )
 
     return ConnectionServiceTestComponents(
         connection_service=connection_service,
         connection_manager=connection_manager,
-        workspace_service=workspace_service_mock,
+        workspace_service=workspace_service,
         connection_class_factory=mock_connection_class_factory,
         mock_server_client_wrapper=mock_server_client_wrapper,
     )
@@ -219,6 +223,54 @@ def test_connection_from_multiple_uris_create_correct_pools(
     with pooled_connection_2a as _, pooled_connection_2b as _:
         stats = connection_manager.get_pool_stats()
         assert stats[pool_name_1]["pool_size"] == 3
+
+
+def test_connection_pool_uses_configuration(
+    connection_service_test_components: ConnectionServiceTestComponents,
+) -> None:
+    """Test that multiple connection requests create the correct pools"
+    only create one connection pool."""
+    client = connection_service_test_components.mock_server_client_wrapper
+    workspace_service = connection_service_test_components.workspace_service
+    connection_manager = connection_service_test_components.connection_manager
+
+    config = Configuration()
+    config.pgsql.max_connections = 20
+
+    client.send_client_notification(
+        method=DID_CHANGE_CONFIG_NOTIFICATION.method,
+        params=DidChangeConfigurationParams(
+            configuration=config,
+        ),
+    )
+    
+    time.sleep(0.1)  # Give the notification time to be processed
+
+    assert workspace_service.configuration.pgsql.max_connections == 20
+
+    connection_details = ConnectionDetails(
+        {"host": "localhost", "port": 5432, "user": "test_user"}
+    )
+    connection_uri = "testuri_1"
+
+    response = client.send_client_request(
+        CONNECT_REQUEST.method,
+        ConnectRequestParams(
+            owner_uri=connection_uri,
+            connection=connection_details,
+        ),
+    )
+    assert response.result is True
+
+    notfication = client.wait_for_notification(CONNECTION_COMPLETE_METHOD)
+    params = notfication.get_params(ConnectionCompleteParams)
+    assert params.owner_uri == connection_uri
+
+    # Check that the connection pools are correct
+    pool_name = str(connection_details.to_hash())
+    stats = connection_manager.get_pool_stats()
+    assert pool_name in stats
+    assert stats[pool_name]["pool_max"] == 20
 
 
 def test_fetches_stale_azure_token(

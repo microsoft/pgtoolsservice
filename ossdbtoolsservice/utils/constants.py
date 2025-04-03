@@ -22,6 +22,9 @@ DEFAULT_PORT = {
 
 DEFAULT_CONNECT_TIMEOUT = 10
 
+# Default maximum connections per ConnectionDetails (server+db+params)
+DEFAULT_MAX_CONNECTIONS = 10
+
 # Service names
 ADMIN_SERVICE_NAME = "admin"
 CAPABILITIES_SERVICE_NAME = "capabilities"
