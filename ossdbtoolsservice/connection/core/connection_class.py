@@ -71,9 +71,7 @@ class ConnectionClassFactory(ConnectionClassFactoryBase):
                     # refresh that token when it expires. This is done by creating a new
                     # connection class that checks the token expiration and refreshes
                     # it if needed.
-                    self.maybe_handle_azure_token(
-                        details, maybe_refresh_azure_token, kwargs
-                    )
+                    self.maybe_handle_azure_token(details, maybe_refresh_azure_token, kwargs)
 
                     return super().connect(*args, **kwargs)
                 except Exception as e:

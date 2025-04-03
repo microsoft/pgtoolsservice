@@ -243,7 +243,7 @@ def test_connection_pool_uses_configuration(
             configuration=config,
         ),
     )
-    
+
     time.sleep(0.1)  # Give the notification time to be processed
 
     assert workspace_service.configuration.pgsql.max_connections == 20

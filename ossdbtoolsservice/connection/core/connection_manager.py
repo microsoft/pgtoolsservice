@@ -75,7 +75,7 @@ class ConnectionManager:
 
         Args:
             fetch_azure_token: A function to fetch the Azure token.
-            max_pool_size: The maximum size of the connection pool. 
+            max_pool_size: The maximum size of the connection pool.
                 By default uses the configuration value.
             connection_class_factory: A factory to create the connection class.
             logger: A logger to use for logging.
