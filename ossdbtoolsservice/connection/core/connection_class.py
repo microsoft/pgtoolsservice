@@ -42,7 +42,7 @@ class ConnectionClassFactory(ConnectionClassFactoryBase):
     """
 
     @staticmethod
-    def handle_azure_token(
+    def maybe_handle_azure_token(
         details: ConnectionDetails,
         maybe_refresh_azure_token: Callable[[ConnectionDetails], AzureToken | None] | None,
         kwargs: dict[str, Any],
@@ -67,14 +67,14 @@ class ConnectionClassFactory(ConnectionClassFactoryBase):
             @classmethod
             def connect(cls, *args: Any, **kwargs: Any) -> "PGTSConnection":
                 try:
-                    if details.azure_token and maybe_refresh_azure_token is not None:
-                        # If the connection is using an Entra token, we need to be able to
-                        # refresh that token when it expires. This is done by creating a new
-                        # connection class that checks the token expiration and refreshes
-                        # it if needed.
-                        new_azure_token = maybe_refresh_azure_token(details)
-                        if new_azure_token:
-                            kwargs["password"] = new_azure_token.token
+                    # If the connection is using an Entra token, we need to be able to
+                    # refresh that token when it expires. This is done by creating a new
+                    # connection class that checks the token expiration and refreshes
+                    # it if needed.
+                    self.maybe_handle_azure_token(
+                        details, maybe_refresh_azure_token, kwargs
+                    )
+
                     return super().connect(*args, **kwargs)
                 except Exception as e:
                     store_connection_error(details, e)

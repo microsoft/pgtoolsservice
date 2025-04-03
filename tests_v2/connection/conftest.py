@@ -32,7 +32,7 @@ class MockConnectionClassFactory(ConnectionClassFactoryBase):
     ) -> type[Connection[TupleRow]]:
         def get_mock_connection(*args: Any, **kwargs: Any) -> Connection[TupleRow]:
             nonlocal maybe_refresh_azure_token
-            ConnectionClassFactory.handle_azure_token(
+            ConnectionClassFactory.maybe_handle_azure_token(
                 details, maybe_refresh_azure_token, kwargs
             )
 
