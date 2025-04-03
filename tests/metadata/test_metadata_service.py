@@ -6,8 +6,7 @@
 import unittest
 import unittest.mock as mock
 
-from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionType
+from ossdbtoolsservice.connection import ConnectionService, PooledConnection
 from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.metadata.contracts import (
     METADATA_LIST_REQUEST,
@@ -81,7 +80,10 @@ class TestMetadataService(unittest.TestCase):
             cur=mock_cursor, connection=mock_psycopg_connection
         )
         mock_cursor.connection = mock_psycopg_connection
-        self.connection_service.get_connection = mock.Mock(return_value=mock_connection)
+        pooled_connection = PooledConnection(lambda _: mock_connection, lambda _: None)
+        self.connection_service.get_pooled_connection = mock.Mock(
+            return_value=pooled_connection
+        )
         request_context = MockRequestContext()
         params = MetadataListParameters()
         params.owner_uri = self.test_uri
@@ -95,9 +97,7 @@ class TestMetadataService(unittest.TestCase):
             self.assertEqual(mock_thread.target, self.metadata_service._metadata_list_worker)
             mock_thread.start.assert_called_once()
         # And the worker retrieved the correct connection and executed a query on it
-        self.connection_service.get_connection.assert_called_once_with(
-            self.test_uri, ConnectionType.DEFAULT
-        )
+        self.connection_service.get_pooled_connection.assert_called_once_with(self.test_uri)
         mock_cursor.execute.assert_called_once()
         # And the handler responded with the expected results
         self.assertIsNone(request_context.last_error_message)

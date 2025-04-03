@@ -1,9 +1,11 @@
 import unittest
+from typing import Any
 from unittest import mock
 
+import psycopg
+
 import tests.utils as utils
-from ossdbtoolsservice.connection import ConnectionService
-from ossdbtoolsservice.driver.types import ServerConnection
+from ossdbtoolsservice.connection import ConnectionService, PooledConnection, ServerConnection
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.query_execution.contracts import ExecuteStringParams, SubsetParams
 from ossdbtoolsservice.query_execution.query_execution_service import QueryExecutionService
@@ -82,7 +84,8 @@ class TestConverters(unittest.TestCase):
         )
 
     def _compare_results(self, expected_results, batch_index) -> None:
-        query_results = self.request_context.last_response_params.result_subset
+        last_response_params = self.request_context.last_response_params
+        query_results = last_response_params.result_subset
 
         actual_value = query_results.rows[0][0].raw_object
         expected_value = expected_results[batch_index][0][0]
@@ -94,7 +97,15 @@ class TestConverters(unittest.TestCase):
 
     @integration_test
     def test_datatypes_converters(self) -> None:
-        connection = ServerConnection(get_connection_details())
+        conn = psycopg.connect(**get_connection_details())
+        connection = ServerConnection(conn)
+
+        def get_pooled_connection(*args: Any, **kwargs: Any) -> PooledConnection:
+            return PooledConnection(lambda _: connection, lambda _: None)
+
+        self.connection_service.get_pooled_connection = mock.Mock(
+            side_effect=get_pooled_connection
+        )
         self.connection_service.get_connection = mock.Mock(return_value=connection)
         self.generic_test(connection, "true", "bool")
         self.generic_test(connection, "5.67", "real")

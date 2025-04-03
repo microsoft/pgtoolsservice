@@ -9,7 +9,7 @@ from typing import Any
 
 from psycopg import sql
 
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.language.completion.packages.parseutils.meta import (
     ForeignKey,
     FunctionMetadata,

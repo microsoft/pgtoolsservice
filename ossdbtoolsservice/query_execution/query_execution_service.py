@@ -9,11 +9,15 @@ import uuid
 from datetime import datetime
 from typing import Any, Callable, TypeVar
 
+import psycopg
+import psycopg.errors
 import sqlparse
 
-from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionType, ConnectRequestParams
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import (
+    ConnectionService,
+    PooledConnection,
+)
+from ossdbtoolsservice.connection.core.server_connection import ServerConnection
 from ossdbtoolsservice.hosting import RequestContext, Service, ServiceProvider
 from ossdbtoolsservice.query import (
     Batch,
@@ -53,7 +57,6 @@ from ossdbtoolsservice.query_execution.contracts import (
     MESSAGE_NOTIFICATION,
     QUERY_COMPLETE_NOTIFICATION,
     QUERY_EXECUTION_PLAN_REQUEST,
-    RESULT_SET_AVAILABLE_NOTIFICATION,
     RESULT_SET_COMPLETE_NOTIFICATION,
     SAVE_AS_CSV_REQUEST,
     SAVE_AS_EXCEL_REQUEST,
@@ -65,7 +68,6 @@ from ossdbtoolsservice.query_execution.contracts import (
     ExecuteDocumentStatementParams,
     ExecuteRequestParamsBase,
     ExecuteStringParams,
-    ExecutionPlanOptions,
     MessageNotificationParams,
     QueryCancelParams,
     QueryCancelResult,
@@ -83,6 +85,7 @@ from ossdbtoolsservice.query_execution.contracts import (
     SubsetParams,
 )
 from ossdbtoolsservice.utils import constants, time
+from ossdbtoolsservice.utils.connection import get_db_error_message
 from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
 
 NO_QUERY_MESSAGE = "QueryServiceRequestsNoQuery"
@@ -94,7 +97,7 @@ class ExecuteRequestWorkerArgs:
     def __init__(
         self,
         owner_uri: str,
-        connection: ServerConnection,
+        connection: ServerConnection | PooledConnection,
         request_context: RequestContext,
         result_set_storage_type: ResultSetStorageType,
         before_query_initialize: Callable[[dict[str, Any]], None] | None = None,
@@ -127,7 +130,7 @@ class QueryExecutionService(Service):
 
         self._service_action_mapping: dict = {
             EXECUTE_STRING_REQUEST: self._handle_execute_query_request,
-            EXECUTE_DEPLOY_REQUEST: self._handle_execute_deploy_request,
+            EXECUTE_DEPLOY_REQUEST: self._handle_execute_deploy_request,  # Unused in VSCode
             EXECUTE_DOCUMENT_SELECTION_REQUEST: self._handle_execute_query_request,
             EXECUTE_DOCUMENT_STATEMENT_REQUEST: self._handle_execute_query_request,
             SUBSET_REQUEST: self._handle_subset_request,
@@ -202,14 +205,10 @@ class QueryExecutionService(Service):
         connection_service = self.service_provider.get(
             constants.CONNECTION_SERVICE_NAME, ConnectionService
         )
-        connection_info = connection_service.get_connection_info(owner_uri)
-        if connection_info is None:
+        pooled_connection = connection_service.get_pooled_connection(owner_uri)
+        if pooled_connection is None:
             request_context.send_error("Could not get connection info")
             return
-        connection_service.connect(
-            ConnectRequestParams(connection_info.details, new_owner_uri, ConnectionType.QUERY)
-        )
-        new_connection = self._get_connection(new_owner_uri, ConnectionType.QUERY)
 
         execute_params = ExecuteStringParams()
         execute_params.query = params.query_string
@@ -250,7 +249,7 @@ class QueryExecutionService(Service):
 
         worker_args = ExecuteRequestWorkerArgs(
             new_owner_uri,
-            new_connection,
+            pooled_connection,
             request_context,
             ResultSetStorageType.FILE_STORAGE,
             on_query_complete=on_query_complete,
@@ -280,9 +279,10 @@ class QueryExecutionService(Service):
             request_context.send_notification(MESSAGE_NOTIFICATION, notice_message_params)
 
         def on_resultset_complete(result_set_params: ResultSetNotificationParams) -> None:
-            request_context.send_notification(
-                RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params
-            )
+            # query/resultSetAvailable not used in VSCode.
+            # request_context.send_notification(
+            #     RESULT_SET_AVAILABLE_NOTIFICATION, result_set_params
+            # )
             request_context.send_notification(
                 RESULT_SET_COMPLETE_NOTIFICATION, result_set_params
             )
@@ -297,7 +297,7 @@ class QueryExecutionService(Service):
 
         # Get a connection for the query
         try:
-            conn = self._get_connection(owner_uri, ConnectionType.QUERY)
+            connection = self._get_long_lived_connection(owner_uri)
         except Exception as e:
             if self.service_provider.logger is not None:
                 self.service_provider.logger.exception(
@@ -308,7 +308,7 @@ class QueryExecutionService(Service):
 
         worker_args = ExecuteRequestWorkerArgs(
             owner_uri,
-            conn,
+            connection,
             request_context,
             ResultSetStorageType.FILE_STORAGE,
             before_query_initialize,
@@ -361,7 +361,7 @@ class QueryExecutionService(Service):
 
         # Get a connection for the query
         try:
-            conn = self._get_connection(owner_uri, ConnectionType.QUERY)
+            connection = self._get_long_lived_connection(owner_uri)
         except Exception as e:
             if self.service_provider.logger is not None:
                 self.service_provider.logger.exception(
@@ -372,7 +372,7 @@ class QueryExecutionService(Service):
 
         worker_args = ExecuteRequestWorkerArgs(
             owner_uri,
-            conn,
+            connection,
             request_context,
             ResultSetStorageType.FILE_STORAGE,
             before_query_initialize,
@@ -538,7 +538,7 @@ class QueryExecutionService(Service):
             # Only need to do additional work to cancel the query
             # if it's currently running
             if query.execution_state is ExecutionState.EXECUTING:
-                self.cancel_query(params.owner_uri)
+                self.cancel_query(params.owner_uri, query)
             request_context.send_response(QueryCancelResult())
 
         except Exception as e:
@@ -549,34 +549,35 @@ class QueryExecutionService(Service):
         self, request_context: RequestContext, params: QueryDisposeParams
     ) -> None:
         try:
-            if params.owner_uri not in self.query_results:
+            owner_uri = params.owner_uri
+            if owner_uri is None:
+                request_context.send_error(NO_QUERY_MESSAGE)  # TODO: Localize
+                return
+
+            query = self.query_results.get(owner_uri)
+            if not query:
                 request_context.send_error(NO_QUERY_MESSAGE)  # TODO: Localize
                 return
             # Make sure to cancel the query first if it's not executed.
             # If it's not started, then make sure it never starts.
             # If it's executing, make sure that we stop it
-            if (
-                self.query_results[params.owner_uri].execution_state
-                is not ExecutionState.EXECUTED
-            ):
-                self.cancel_query(params.owner_uri)
-            del self.query_results[params.owner_uri]
+            if query.execution_state is not ExecutionState.EXECUTED:
+                self.cancel_query(owner_uri, query)
+            del self.query_results[owner_uri]
             request_context.send_response({})
         except Exception as e:
             request_context.send_unhandled_error_response(e)
 
-    def cancel_query(self, owner_uri: str) -> None:
-        conn = self._get_connection(owner_uri, ConnectionType.QUERY)
-        cancel_conn = self._get_connection(owner_uri, ConnectionType.QUERY_CANCEL)
-        if conn is None or cancel_conn is None:
+    def cancel_query(self, owner_uri: str, query: Query) -> None:
+        pooled_connection = self._get_pooled_connection(owner_uri)
+        if pooled_connection is None:
             raise LookupError("Could not find associated connection")  # TODO: Localize
 
-        try:
-            cancel_conn.execute_query(conn.cancellation_query)
-        # This exception occurs when we run SELECT pg_cancel_backend on
-        # a query that's currently executing
-        except BaseException as e:
-            raise e
+        if query.connection_backend_pid is None:
+            return  # Query is no longer running
+
+        with pooled_connection as conn:
+            conn.execute_query(f"SELECT pg_cancel_backend ({query.connection_backend_pid})")
 
     def _execute_query_request_worker(
         self, worker_args: ExecuteRequestWorkerArgs, retry_state: bool = False
@@ -589,15 +590,14 @@ class QueryExecutionService(Service):
 
         # Wrap execution in a try/except block so that we can send an error if it fails
         try:
-            query.execute(worker_args.connection, retry_state)
-        except Exception as e:
-            if not retry_state and worker_args.connection.connection.broken:
-                self._resolve_query_exception(e, query, worker_args, False, True)
-                conn = self._get_connection(worker_args.owner_uri, ConnectionType.QUERY)
-                worker_args.connection = conn
-                self._execute_query_request_worker(worker_args, True)
+            if isinstance(worker_args.connection, ServerConnection):
+                query.execute(worker_args.connection, retry_state)
             else:
-                self._resolve_query_exception(e, query, worker_args)
+                # PooledConnection, use as context manager.
+                with worker_args.connection as connection:
+                    query.execute(connection, retry_state)
+        except Exception as e:
+            self._resolve_query_exception(e, query, worker_args)
         finally:
             # Send a query complete notification
             batch_summaries = [batch.batch_summary for batch in query.batches]
@@ -607,23 +607,38 @@ class QueryExecutionService(Service):
             )
             _check_and_fire(worker_args.on_query_complete, query_complete_params)
 
-    def _get_connection(
-        self, owner_uri: str, connection_type: ConnectionType
-    ) -> ServerConnection:
+    def _get_pooled_connection(self, owner_uri: str) -> PooledConnection:
         """
-        Get a connection for the given owner URI and
-        connection type from the connection service
+        Get a pooled connection for the given owner URI from the connection service
 
         :param owner_uri: the URI to get the connection for
-        :param connection_type: the type of connection to get
-        :returns: a ServerConnection object
+        :returns: a PooledConnection object
         :raises LookupError: if there is no connection service
-        :raises ValueError: if there is no connection corresponding to the given owner_uri
+        :raises ValueError: if there is no pooled connection
+            corresponding to the given owner_uri
         """
         connection_service = self.service_provider.get(
             constants.CONNECTION_SERVICE_NAME, ConnectionService
         )
-        connection = connection_service.get_connection(owner_uri, connection_type)
+        connection = connection_service.get_pooled_connection(owner_uri)
+        if connection is None:
+            raise ValueError(f"No connection for owner URI: {owner_uri}")
+        return connection
+
+    def _get_long_lived_connection(self, owner_uri: str) -> ServerConnection:
+        """
+        Get a long lived connection for the given owner URI from the connection service
+
+        :param owner_uri: the URI to get the connection for
+        :returns: a ServerConnection object
+        :raises LookupError: if there is no connection service
+        :raises ValueError: if there is no connection pool
+            corresponding to the given owner_uri
+        """
+        connection_service = self.service_provider.get(
+            constants.CONNECTION_SERVICE_NAME, ConnectionService
+        )
+        connection = connection_service.get_connection(owner_uri, owner_uri[-30:])
         if connection is None:
             raise ValueError(f"No connection for owner URI: {owner_uri}")
         return connection
@@ -636,7 +651,9 @@ class QueryExecutionService(Service):
         # Check if none or empty list
         if summaries:
             result_set_summary = summaries[0]
-        return ResultSetNotificationParams(owner_uri, result_set_summary)
+        return ResultSetNotificationParams(
+            owner_uri=owner_uri, result_set_summary=result_set_summary
+        )
 
     def build_message_params(
         self, owner_uri: str, batch_id: int, message: str, is_error: bool = False
@@ -647,7 +664,7 @@ class QueryExecutionService(Service):
             time=time.get_time_str(datetime.now()),
             message=message,
         )
-        return MessageNotificationParams(owner_uri, result_message)
+        return MessageNotificationParams(owner_uri=owner_uri, message=result_message)
 
     def _get_query_text_from_execute_params(
         self, params: ExecuteRequestParamsBase
@@ -736,12 +753,12 @@ class QueryExecutionService(Service):
         elif isinstance(
             e,
             (
-                worker_args.connection.database_error,
-                worker_args.connection.query_canceled_error,
+                psycopg.DatabaseError,
+                psycopg.errors.QueryCanceled,
             ),
         ):
             # get_error_message may return None so ensure error_message is str type
-            error_message = str(worker_args.connection.get_error_message(e))
+            error_message = str(get_db_error_message(e))
 
         elif isinstance(e, RuntimeError):
             error_message = str(e)
@@ -772,28 +789,10 @@ class QueryExecutionService(Service):
         )
         _check_and_fire(worker_args.on_message_notification, result_message_params)
 
-        # If there was a failure in the middle of a transaction, roll it back.
-        # Note that conn.rollback() won't work since the connection is in autocommit mode
-        if (
-            not is_rollback_error
-            and not retry_query
-            and worker_args.connection.transaction_in_error
-            and not worker_args.connection.user_transaction
-        ):
-            rollback_query = Query(
-                query.owner_uri,
-                "ROLLBACK",
-                QueryExecutionSettings(ExecutionPlanOptions()),
-                QueryEvents(),
-            )
-            try:
-                rollback_query.execute(worker_args.connection)
-            except Exception as rollback_exception:
-                # If the rollback failed, handle the error as usual
-                # but don't try to roll back again
-                self._resolve_query_exception(
-                    rollback_exception, rollback_query, worker_args, True
-                )
+        # Don't roll back transaction.
+        # If the user opened the transaction, they should roll it back.
+        # If the user did not open the transaction, the connection is in autocommit mode
+        # and the transaction will be rolled back automatically.
 
     def _save_result(
         self,

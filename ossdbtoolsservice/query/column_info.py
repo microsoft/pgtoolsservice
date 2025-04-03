@@ -8,7 +8,6 @@ import psycopg
 from psycopg import sql
 
 from ossdbtoolsservice.query.contracts import DbColumn
-from ossdbtoolsservice.utils import constants
 
 
 def get_columns_info(cursor: psycopg.Cursor) -> list[DbColumn]:
@@ -49,7 +48,6 @@ def get_columns_info(cursor: psycopg.Cursor) -> list[DbColumn]:
             for index, column in enumerate(cursor.description):
                 db_column = DbColumn.from_cursor_description(index, column)
                 db_column.data_type = rows_dict.get(column[1])
-                db_column.provider = constants.PG_PROVIDER_NAME
                 columns_info.append(db_column)
 
         return columns_info

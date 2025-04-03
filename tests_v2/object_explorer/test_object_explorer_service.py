@@ -3,11 +3,11 @@ from unittest import mock
 import pytest
 
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType
+from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
 from ossdbtoolsservice.connection.contracts.connection_complete_notification import (
     ConnectionCompleteParams,
 )
-from ossdbtoolsservice.driver.types.driver import ServerConnection
+from ossdbtoolsservice.connection.core.server_connection import ServerConnection
 from ossdbtoolsservice.object_explorer.contracts.create_session_request import (
     CREATE_SESSION_REQUEST,
     CreateSessionResponse,
@@ -53,13 +53,14 @@ def test_create_session_request(
     # Creating a session will establish a connection
     connection_service_mock = mock.MagicMock(spec=ConnectionService)
 
-    connection_complete_params = ConnectionCompleteParams()
+    connection_complete_params: ConnectionCompleteParams
     if not init_success:
-        connection_complete_params.error_message = "Connection failed"
+        connection_complete_params = ConnectionCompleteParams.create_error(
+            owner_uri=expected_session_id,
+            error_message="Connection failed",
+        )
     else:
-        connection_complete_params.owner_uri = expected_session_id
-        connection_complete_params.connection_summary = None
-        connection_complete_params.type = ConnectionType.OBJECT_EXLPORER
+        connection_complete_params = ConnectionCompleteParams(owner_uri=expected_session_id)
 
         # Mock the connection.
         server_connection_mock = mock.MagicMock(spec=ServerConnection)

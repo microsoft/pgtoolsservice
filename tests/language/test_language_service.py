@@ -13,8 +13,10 @@ from unittest import mock
 from parameterized import parameterized
 from prompt_toolkit.completion import Completion
 
+from ossdbtoolsservice.connection import OwnerConnectionInfo
+from ossdbtoolsservice.connection.contracts.common import ConnectionSummary, ServerInfo
 import tests.utils as utils
-from ossdbtoolsservice.connection import ConnectionInfo, ConnectionService
+from ossdbtoolsservice.connection import ConnectionService
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.hosting import NotificationContext, RequestContext, ServiceProvider
 from ossdbtoolsservice.language import LanguageService
@@ -126,7 +128,7 @@ class TestLanguageService(unittest.TestCase):
         # If: intellisense is disabled
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
-        config.sql.intellisense.enable_intellisense = False
+        config.pgsql.intellisense.enable_intellisense = False
         self.mock_workspace_service._configuration = config
         service: LanguageService = self._init_service()
 
@@ -174,7 +176,7 @@ class TestLanguageService(unittest.TestCase):
         )
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
-        config.sql.intellisense.enable_intellisense = True
+        config.pgsql.intellisense.enable_intellisense = True
         self.mock_workspace_service._configuration = config
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
@@ -240,16 +242,29 @@ class TestLanguageService(unittest.TestCase):
         """
         # If: I create a new language service
         service: LanguageService = self._init_service_with_flow_validator()
-        conn_info = ConnectionInfo(
-            "file://msuri.sql",
-            ConnectionDetails.from_data(
-                {"host": None, "dbname": "TEST_DBNAME", "user": "TEST_USER"}
+        conn_info = OwnerConnectionInfo(
+            owner_uri="file://msuri.sql",
+            connection_id="TEST_CONNECTION_ID",
+            connection_details=ConnectionDetails.from_data(
+                {"host": "TEST_SERVER", "dbname": "TEST_DBNAME", "user": "TEST_USER"}
+            ),
+            server_info=ServerInfo(
+                server="TEST_SERVER",
+                server_version="17.0.1",
+                is_cloud=False,
+            ),
+            connection_summary=ConnectionSummary(
+                server_name="TEST_SERVER",
+                database_name="TEST_DBNAME",
+                user_name="TEST_USER",
             ),
         )
 
         connect_result = mock.MagicMock()
         connect_result.error_message = None
-        self.mock_connection_service.get_connection = mock.Mock(return_value=mock.MagicMock())
+        self.mock_connection_service.get_pooled_connection = mock.Mock(
+            return_value=mock.MagicMock()
+        )
         self.mock_connection_service.connect = mock.MagicMock(return_value=connect_result)
 
         def validate_success_notification(response: IntelliSenseReadyParams):
@@ -463,7 +478,7 @@ class TestLanguageService(unittest.TestCase):
     def test_handle_definition_request_intellisense_off(self) -> None:
         request_context: RequestContext = utils.MockRequestContext()
         config = Configuration()
-        config.sql.intellisense.enable_intellisense = False
+        config.pgsql.intellisense.enable_intellisense = False
         self.mock_workspace_service._configuration = config
 
         language_service = self._init_service()

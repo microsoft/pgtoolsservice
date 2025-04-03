@@ -10,7 +10,7 @@ import urllib.parse as parse
 
 import inflection
 
-from ossdbtoolsservice.driver.types import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from pgsmo.objects.database.database import Database
 from pgsmo.objects.server.server import Server
 from smo.common.node_object import NodeCollection, NodeLazyPropertyCollection
@@ -24,7 +24,7 @@ class TestServer(unittest.TestCase):
     def test_init(self):
         # If: I construct a new server object
         host = "host"
-        port = "1234"
+        port = 1234
         dbname = "dbname"
         mock_conn = MockPGServerConnection(None, name=dbname, host=host, port=port)
         server = Server(mock_conn)
@@ -62,8 +62,7 @@ class TestServer(unittest.TestCase):
 
         # ... Create an instance of the class and override the connection
         mock_connection = MockPsycopgConnection("host=host dbname=dbname")
-        with mock.patch("psycopg.connect", new=mock.Mock(return_value=mock_connection)):
-            pg_connection = ServerConnection({})
+        pg_connection = ServerConnection(mock_connection)
         pg_connection.execute_dict = mock_exec_dict
         obj = Server(pg_connection)
 
@@ -126,7 +125,7 @@ class TestServer(unittest.TestCase):
         self.assertIsNotNone(urn_base_match)
         self.assertEqual(urn_base_match.groupdict()["user"], server.connection.user_name)
         self.assertEqual(urn_base_match.groupdict()["host"], server.host)
-        self.assertEqual(urn_base_match.groupdict()["port"], server.port)
+        self.assertEqual(int(urn_base_match.groupdict()["port"]), server.port)
 
     def test_get_obj_by_urn_empty(self):
         # Setup: Create a server object

@@ -4,10 +4,11 @@
 # --------------------------------------------------------------------------------------------
 
 import unittest
+from typing import Any
 from unittest import mock
 
 import tests.utils as utils
-from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.connection import ConnectionService, PooledConnection
 from ossdbtoolsservice.connection.contracts import ConnectionCompleteParams
 from ossdbtoolsservice.hosting import ServiceProvider
 from ossdbtoolsservice.scripting.contracts.script_as_request import (
@@ -76,8 +77,11 @@ class TestScriptingService(unittest.TestCase):
         # Setup: Create a scripting service
         mock_connection = {}
         cs = ConnectionService()
-        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
-        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+        cs.connect = mock.MagicMock(
+            return_value=ConnectionCompleteParams(owner_uri=TestScriptingService.MOCK_URI)
+        )
+        pooled_connection = PooledConnection(lambda _: mock_connection, lambda _: None)
+        cs.get_pooled_connection = mock.MagicMock(return_value=pooled_connection)
         ss = ScriptingService()
         ss._service_provider = utils.get_mock_service_provider({CONNECTION_SERVICE_NAME: cs})
 
@@ -97,8 +101,14 @@ class TestScriptingService(unittest.TestCase):
         # ... Create a scripting service
         mock_connection = MockPGServerConnection()
         cs = ConnectionService()
-        cs.connect = mock.MagicMock(return_value=ConnectionCompleteParams())
-        cs.get_connection = mock.MagicMock(return_value=mock_connection)
+        cs.connect = mock.MagicMock(
+            return_value=ConnectionCompleteParams(owner_uri=TestScriptingService.MOCK_URI)
+        )
+
+        def get_pooled_connection(*args: Any, **kwargs: Any) -> PooledConnection:
+            return PooledConnection(lambda _: mock_connection, lambda _: None)
+
+        cs.get_pooled_connection = mock.MagicMock(side_effect=get_pooled_connection)
         ss = ScriptingService()
         ss._service_provider = utils.get_mock_service_provider({CONNECTION_SERVICE_NAME: cs})
 
@@ -147,5 +157,9 @@ class TestScriptingService(unittest.TestCase):
             for call_args in mock_scripter.script.call_args_list:
                 matches[call_args[0][0]] += 1
 
-            for calls in matches.values():
-                self.assertEqual(calls, 1)
+            for operation, calls in matches.items():
+                self.assertEqual(
+                    calls,
+                    1,
+                    msg=f"Operation {operation} was called {calls} times, expected 1 time",
+                )

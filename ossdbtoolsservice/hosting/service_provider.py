@@ -35,6 +35,14 @@ class Service(ABC):
             raise ValueError("Message server is not set")
         return self.service_provider.server
 
+    def shutdown(self) -> None:  # noqa: B027
+        """
+        Called when the service provider is shutting
+        down. This is a good place to clean up any resources
+        that the service is using. Default implementation does nothing.
+        """
+        pass
+
     def _log_warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
         if self.service_provider and self.service_provider.logger:
             self.service_provider.logger.warning(msg, *args, **kwargs)
@@ -121,6 +129,23 @@ class ServiceProvider:
         if not isinstance(service, class_):
             raise TypeError(f"Service '{item}' is not of type {class_.__name__}")
         return service
+
+    def __enter__(self) -> "ServiceProvider":
+        """
+        Context manager for the service provider
+        :return: The service provider
+        """
+        self.initialize()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_value: Optional[Exception],
+        traceback: Optional[Any],
+    ) -> None:
+        for service in self._services.values():
+            service.shutdown()
 
     # METHODS ##############################################################
 

@@ -193,7 +193,7 @@ class ChatService(Service):
         if connection_info is None:
             request_context.send_error(f"Connection info not found for {owner_uri}")
             return
-        is_azure_pg = connection_info.details.is_azure_pg
+        is_azure_pg = connection_info.connection_details.is_azure_pg
 
         plugins: list[PGTSChatPlugin] = [
             PostgresPlugin(
@@ -211,10 +211,10 @@ class ChatService(Service):
                 AzurePGPlugin(
                     request_context=request_context,
                     chat_id=chat_id,
-                    subscription_id=connection_info.details.azure_subscription_id,
-                    resource_group=connection_info.details.azure_resource_group,
-                    server_name=connection_info.details.server_name,
-                    database_name=connection_info.details.database_name,
+                    subscription_id=connection_info.connection_details.azure_subscription_id,
+                    resource_group=connection_info.connection_details.azure_resource_group,
+                    server_name=connection_info.connection_details.server_name,
+                    database_name=connection_info.connection_details.database_name,
                     arm_token=params.arm_token.token if params.arm_token else None,
                     logger=self._logger,
                 )

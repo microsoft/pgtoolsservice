@@ -5,6 +5,7 @@
 
 """This module holds contracts for the connection/listdatabases method"""
 
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
     OutgoingMessageRegistration,
@@ -18,18 +19,17 @@ class ListDatabasesParams(Serializable):
     owner_uri: str | None
     include_details: bool | None
 
-    def __init__(self) -> None:
-        self.owner_uri = None
-        self.include_details = None
+    def __init__(
+        self, owner_uri: str | None = None, include_details: bool | None = None
+    ) -> None:
+        self.owner_uri = owner_uri
+        self.include_details = include_details
 
 
-class ListDatabasesResponse:
+class ListDatabasesResponse(PGTSBaseModel):
     """Response for the connection/listdatabases request"""
 
     database_names: list[str]
-
-    def __init__(self, database_names: list[str]) -> None:
-        self.database_names = database_names
 
 
 LIST_DATABASES_REQUEST = IncomingMessageConfiguration(

@@ -12,7 +12,7 @@ import sqlparse
 from psycopg import sql
 from psycopg.errors import Diagnostic
 
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.query.contracts import (
     BatchSummary,
     SaveResultsRequestParams,
@@ -141,6 +141,10 @@ class Batch:
     def notices(self) -> list[str]:
         return self._notices
 
+    @property
+    def is_rollback(self) -> bool:
+        return self.batch_text.lower().startswith("rollback")
+
     def get_cursor(self, connection: ServerConnection) -> psycopg.Cursor:
         return connection.cursor()
 
@@ -174,7 +178,6 @@ class Batch:
             self.after_execute(cursor)
         except:
             self._has_error = True
-            conn.set_transaction_in_error()
             raise
         finally:
             if cursor and cursor.statusmessage is not None:

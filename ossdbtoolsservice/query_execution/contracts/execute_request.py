@@ -21,27 +21,28 @@ class ExecutionPlanOptions(Serializable):
 
 class ExecuteRequestParamsBase(Serializable):
     owner_uri: str | None
-    execution_plan_options: ExecutionPlanOptions
+    execution_plan_options: ExecutionPlanOptions  # TODO: Seem unused in VSCode
 
     @classmethod
     def get_child_serializable_types(cls) -> dict[str, type[Serializable] | type[BaseModel]]:
         return {"execution_plan_options": ExecutionPlanOptions}
 
-    def __init__(self) -> None:
-        self.owner_uri: str | None = None
+    def __init__(self, owner_uri: str | None = None) -> None:
+        self.owner_uri: str | None = owner_uri
         self.execution_plan_options: ExecutionPlanOptions = ExecutionPlanOptions()
 
 
 class ExecuteStringParams(ExecuteRequestParamsBase):
     query: str | None
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.query: str | None = None
+    def __init__(self, owner_uri: str | None = None, query: str | None = None) -> None:
+        super().__init__(owner_uri=owner_uri)
+        self.query: str | None = query
 
 
+EXECUTE_STRING_REQUEST_METHOD = "query/executeString"
 EXECUTE_STRING_REQUEST = IncomingMessageConfiguration(
-    "query/executeString", ExecuteStringParams
+    EXECUTE_STRING_REQUEST_METHOD, ExecuteStringParams
 )
 
 EXECUTE_DEPLOY_REQUEST = IncomingMessageConfiguration(
@@ -64,8 +65,9 @@ class ExecuteDocumentSelectionParams(ExecuteRequestParamsBase):
         self.query_selection = None
 
 
+EXECUTE_DOCUMENT_SELECTION_REQUEST_METHOD = "query/executeDocumentSelection"
 EXECUTE_DOCUMENT_SELECTION_REQUEST = IncomingMessageConfiguration(
-    "query/executeDocumentSelection", ExecuteDocumentSelectionParams
+    EXECUTE_DOCUMENT_SELECTION_REQUEST_METHOD, ExecuteDocumentSelectionParams
 )
 
 

@@ -23,6 +23,7 @@ from ossdbtoolsservice.hosting.message_server import TResult
 from ossdbtoolsservice.hosting.service_provider import Service
 from ossdbtoolsservice.serialization.serializable import Serializable
 from tests_v2.test_utils.queue_message_server import QueueRPCMessageServer
+from tests_v2.test_utils.utils import is_debugger_active
 
 
 class TimeoutTimer:
@@ -186,7 +187,7 @@ class MessageServerClientWrapper(ABC):
 
         message_count = len(self._messages)
         self._send_client_message(req_message)
-        timer = TimeoutTimer(timeout) if timeout else None
+        timer = TimeoutTimer(timeout) if timeout and not is_debugger_active() else None
         while True:
             if timer is not None and timer.is_expired():
                 raise TimeoutError("Timed out waiting for response")
@@ -216,9 +217,9 @@ class MessageServerClientWrapper(ABC):
         """
         serialized_params: LSPAny | None = None
         if isinstance(params, Serializable):
-            params = params.to_dict()
+            serialized_params = params.to_dict()
         elif isinstance(params, BaseModel):
-            params = params.model_dump(by_alias=True)
+            serialized_params = params.model_dump(by_alias=True)
         else:
             serialized_params = params
 
@@ -241,7 +242,7 @@ class MessageServerClientWrapper(ABC):
         """
         timer = TimeoutTimer(timeout)
         while True:
-            if timer.is_expired():
+            if timer.is_expired() and not is_debugger_active():
                 raise TimeoutError(f"Timed out waiting for notification {method}")
             with self._message_lock:
                 for i, msg in enumerate(self._messages):
@@ -271,7 +272,7 @@ class MessageServerClientWrapper(ABC):
         """
         timer = TimeoutTimer(timeout)
         while True:
-            if timer.is_expired():
+            if timer.is_expired() and not is_debugger_active():
                 raise TimeoutError(f"Timed out waiting for notification {method}")
             for i, msg in enumerate(self._messages):
                 if (
@@ -284,6 +285,15 @@ class MessageServerClientWrapper(ABC):
                     return LSPRequestMessage.from_jsonrpc_message(msg)
             time.sleep(0.01)
 
+    def clear_notifications(self) -> None:
+        """Clears all notifications from the queue."""
+        with self._message_lock:
+            self._messages = [
+                message
+                for message in self._messages
+                if message.message_type != JSONRPCMessageType.Notification
+            ]
+
     def setup_client_response(self, request_method: str, response: JSONRPCMessage) -> None:
         """Sets up a response to be returned when a request is sent
         FROM the server TO the client.
@@ -292,6 +302,13 @@ class MessageServerClientWrapper(ABC):
         the responses will be returned in the order they were set up.
         """
         self._request_responses.setdefault(request_method, []).append(response)
+
+    def get_server_message_count(self, method: str) -> int:
+        """Get the number of messages received from the server with the given method."""
+        with self._message_lock:
+            return len(
+                [message for message in self._messages if message.message_method == method]
+            )
 
 
 class MockMessageServerClientWrapper(MessageServerClientWrapper):

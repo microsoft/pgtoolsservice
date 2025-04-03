@@ -12,7 +12,6 @@ class CancelConnectParams(Serializable):
     """Parameters for the cancel connect request"""
 
     owner_uri: str | None
-    type: ConnectionType
 
     def __init__(
         self,

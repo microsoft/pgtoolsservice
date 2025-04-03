@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional  # noqa
 
 import sqlparse
 
-from ossdbtoolsservice.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.query import Batch, BatchEvents, ResultSetStorageType, create_batch
 from ossdbtoolsservice.query.contracts import SaveResultsRequestParams, SelectionData
 from ossdbtoolsservice.query.contracts.result_set_subset import ResultSetSubset
@@ -77,6 +77,7 @@ class Query:
         self._current_batch_index = 0
         self._batches: list[Batch] = []
         self._execution_plan_options = query_execution_settings.execution_plan_options
+        self._connection_backend_pid: Optional[int] = None
 
         self.is_canceled = False
 
@@ -94,6 +95,7 @@ class Query:
 
             # Create and save the batch
             if bool(self._execution_plan_options):
+                # TODO: These options are unused in VSCode.
                 if self._execution_plan_options.include_estimated_execution_plan_xml:
                     sql_statement_text = Query.EXPLAIN_QUERY_TEMPLATE.format(
                         sql_statement_text
@@ -139,6 +141,10 @@ class Query:
     def current_batch_index(self) -> int:
         return self._current_batch_index
 
+    @property
+    def connection_backend_pid(self) -> Optional[int]:
+        return self._connection_backend_pid
+
     def execute(self, connection: ServerConnection, retry_state: bool = False) -> None:
         """
         Execute the query using the given connection
@@ -153,8 +159,20 @@ class Query:
 
         self._execution_state = ExecutionState.EXECUTING
 
+        # Set the connection backend PID
+        self._connection_backend_pid = connection.backend_pid
+
         # Run each batch sequentially
         try:
+            if connection.transaction_in_error and not self.is_rollback:
+                # If the transaction is in error, the only statements we can execute
+                # are ROLLBACK or ROLLBACK TO SAVEPOINT.
+                raise RuntimeError(
+                    "Your transaction is currently aborted due to an error. "
+                    "You must explicitly issue a ROLLBACK or ROLLBACK TO SAVEPOINT "
+                    "before executing further commands."
+                )
+
             if self._user_transaction:
                 connection.set_user_transaction(True)
 
@@ -170,12 +188,24 @@ class Query:
                 batch.execute(connection)
 
         finally:
-            # We can only set autocommit when the connection is open.
+            # If transaction is in idle (no active transaction),
+            # we can set autocommit to True, if the connection is open.
             if connection.open and connection.transaction_is_idle:
                 connection.autocommit = True
                 connection.set_user_transaction(False)
                 self._disable_auto_commit = False
             self._execution_state = ExecutionState.EXECUTED
+            self._connection_backend_pid = None
+
+    @property
+    def is_rollback(self) -> bool:
+        """
+        Check if the query is a rollback - this is determined by checking if the first batch
+        is a rollback statement.
+
+        :return: True if the query is a rollback, False otherwise
+        """
+        return bool(self.batches) and self.batches[0].is_rollback
 
     def get_subset(
         self, batch_index: int, start_index: int, end_index: int

@@ -3,7 +3,15 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from ossdbtoolsservice.driver.connection_manager import ConnectionManager
-from ossdbtoolsservice.driver.types import ServerConnection
+from ossdbtoolsservice.core.models import PGTSBaseModel
+from ossdbtoolsservice.hosting import IncomingMessageConfiguration
 
-__all__ = ["ConnectionManager", "ServerConnection"]
+
+class TransferConnectionParams(PGTSBaseModel):
+    old_owner_uri: str
+    new_owner_uri: str
+
+
+TRANSFER_CONNECTION_REQUEST = IncomingMessageConfiguration(
+    "connection/transfer", TransferConnectionParams
+)

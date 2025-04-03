@@ -64,7 +64,7 @@ class WorkspaceService(Service):
         )
 
         # Register handler for when the configuration changes
-        self._service_provider.server.set_notification_handler(
+        self._server.set_notification_handler(
             DID_CHANGE_CONFIG_NOTIFICATION, self._handle_did_change_config
         )
 

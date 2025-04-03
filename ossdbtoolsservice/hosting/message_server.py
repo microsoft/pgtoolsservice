@@ -381,6 +381,22 @@ class MessageServer(ABC):
         finally:
             self._response_queues.delete_queue(message_id)
 
+    def send_request_sync(
+        self,
+        method: str,
+        params: Any,
+        result_type: type[TResult] | None = None,
+        timeout: float | None = None,
+    ) -> TResult | None:
+        """
+        Sends a request to the server and waits for a response.
+
+        Uses the async runner to run the request in a separate thread."
+        """
+        if self.async_runner is None:
+            raise ValueError("Async runner is not set")
+        return self.async_runner.run(self.send_request(method, params, result_type, timeout))
+
     def send_response(self, message_id: str | int, params: Any) -> None:
         response = JSONRPCMessage.create_response(message_id, params)
         if self._message_recorder:

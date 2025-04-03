@@ -7,7 +7,7 @@
 from logging import Logger
 from typing import Callable
 
-from ossdbtoolsservice.connection import ConnectionService
+from ossdbtoolsservice.connection import ConnectionService, PooledConnection
 from ossdbtoolsservice.connection.contracts import ConnectionType
 from ossdbtoolsservice.edit_data import (
     DataEditorSession,
@@ -100,9 +100,17 @@ class EditDataService(Service):
         owner_uri = params.owner_uri
         assert owner_uri is not None  # for type checking
 
-        connection = self.connection_service.get_connection(
-            params.owner_uri, ConnectionType.QUERY
-        )
+        connection = self.connection_service.get_connection(owner_uri, ConnectionType.QUERY)
+
+        if connection is None:
+            request_context.send_error("Connection not found")
+            return
+
+        # Create a mock pooled connection that just uses the connection
+        # TODO: Refactor if we want to keep edit service, which is currently
+        # unused in VSCode. We'd have to push the pooled connection everywhere
+        # the connection is used.
+        pooled_connection = PooledConnection(lambda _: connection, lambda conn: None)
 
         if connection is None:
             request_context.send_error("Could not get connection")
@@ -148,7 +156,7 @@ class EditDataService(Service):
 
             worker_args = ExecuteRequestWorkerArgs(
                 owner_uri,
-                connection,
+                pooled_connection,
                 request_context,
                 ResultSetStorageType.IN_MEMORY,
                 on_resultset_complete=on_resultset_complete,
@@ -257,9 +265,7 @@ class EditDataService(Service):
             request_context.send_error("Owner URI is required")
             return
 
-        connection = self.connection_service.get_connection(
-            params.owner_uri, ConnectionType.QUERY
-        )
+        connection = self.connection_service.get_connection(owner_uri, ConnectionType.QUERY)
 
         if connection is None:
             request_context.send_error("Connection not found")

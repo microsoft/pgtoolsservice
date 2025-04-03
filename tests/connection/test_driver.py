@@ -1,8 +1,7 @@
 import unittest
 from typing import Any
-from unittest.mock import patch
 
-from ossdbtoolsservice.driver.types.driver import ServerConnection
+from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
 
 
 # Create simple dummy connection classes to satisfy the constructor.
@@ -40,8 +39,7 @@ class DummyConnection:
 
 
 class TestServerConnectionOptionMapping(unittest.TestCase):
-    @patch("psycopg.connect", return_value=DummyConnection())
-    def test_option_key_translation(self, mock_connect: Any) -> None:
+    def test_option_key_translation(self) -> None:
         # Prepare connection parameters with keys that need mapping.
         conn_params: dict[str, str | int] = {
             "clientEncoding": "utf8",  # expected to be mapped to client_encoding
@@ -49,14 +47,14 @@ class TestServerConnectionOptionMapping(unittest.TestCase):
             "host": "localhost",  # remains unchanged
             "azureAccountToken": "token123",  # should be copied to password
         }
-        # Create the ServerConnection without a config (so default_database is used)
-        conn_instance = ServerConnection(conn_params, config=None)
+        conn_details = ConnectionDetails(conn_params)
+        transformed_params = conn_details.get_connection_params()
 
         # Assert key mapping and azure token handling.
-        self.assertEqual(conn_instance._connection_options["password"], "token123")
-        self.assertEqual(conn_instance._connection_options["client_encoding"], "utf8")
-        self.assertEqual(conn_instance._connection_options["connect_timeout"], 10)
-        self.assertEqual(conn_instance._connection_options["host"], "localhost")
+        self.assertEqual(transformed_params["password"], "token123")
+        self.assertEqual(transformed_params["client_encoding"], "utf8")
+        self.assertEqual(transformed_params["connect_timeout"], 10)
+        self.assertEqual(transformed_params["host"], "localhost")
 
 
 if __name__ == "__main__":
