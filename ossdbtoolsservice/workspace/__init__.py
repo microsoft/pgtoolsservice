@@ -8,7 +8,6 @@ from ossdbtoolsservice.workspace.contracts import (
     FormatterConfiguration,
     IntellisenseConfiguration,
     PGSQLConfiguration,
-    SQLConfiguration,
     TextDocumentIdentifier,
 )
 from ossdbtoolsservice.workspace.script_file import ScriptFile
@@ -18,7 +17,6 @@ from ossdbtoolsservice.workspace.workspace_service import WorkspaceService
 __all__ = [
     "Configuration",
     "PGSQLConfiguration",
-    "SQLConfiguration",
     "IntellisenseConfiguration",
     "FormatterConfiguration",
     "ScriptFile",

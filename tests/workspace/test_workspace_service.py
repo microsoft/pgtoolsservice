@@ -93,7 +93,7 @@ class TestWorkspaceService(unittest.TestCase):
 
         # Then:
         # ... The config should have sensible default values
-        intellisense: IntellisenseConfiguration = ws.configuration.sql.intellisense
+        intellisense: IntellisenseConfiguration = ws.configuration.pgsql.intellisense
         self.assertIsNotNone(intellisense)
         self.assertTrue(intellisense.enable_intellisense)
         self.assertTrue(intellisense.enable_suggestions)
@@ -150,7 +150,7 @@ class TestWorkspaceService(unittest.TestCase):
         self.assertTrue(ws.configuration.pgsql.format.strip_comments)
         self.assertFalse(ws.configuration.pgsql.format.reindent)
         # ... And default values that weren't specified in the notification are preserved
-        self.assertTrue(ws.configuration.sql.intellisense.enable_suggestions)
+        self.assertTrue(ws.configuration.pgsql.intellisense.enable_suggestions)
 
         # ... The mock config change callbacks should have been called
         for callback in ws._config_change_callbacks:

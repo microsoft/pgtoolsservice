@@ -11,14 +11,15 @@ from ossdbtoolsservice.workspace.contracts.common import (
     TextDocumentItem,
     TextDocumentPosition,
 )
-from ossdbtoolsservice.workspace.contracts.did_change_config_notification import (
-    DID_CHANGE_CONFIG_NOTIFICATION,
+from ossdbtoolsservice.workspace.contracts.configuration import (
     Configuration,
-    DidChangeConfigurationParams,
     FormatterConfiguration,
     IntellisenseConfiguration,
     PGSQLConfiguration,
-    SQLConfiguration,
+)
+from ossdbtoolsservice.workspace.contracts.did_change_config_notification import (
+    DID_CHANGE_CONFIG_NOTIFICATION,
+    DidChangeConfigurationParams,
 )
 from ossdbtoolsservice.workspace.contracts.did_change_text_doc_notification import (
     DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION,
@@ -39,7 +40,6 @@ __all__ = [
     "DidChangeConfigurationParams",
     "Configuration",
     "PGSQLConfiguration",
-    "SQLConfiguration",
     "IntellisenseConfiguration",
     "FormatterConfiguration",
     "DID_CHANGE_TEXT_DOCUMENT_NOTIFICATION",

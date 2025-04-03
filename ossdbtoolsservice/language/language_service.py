@@ -395,7 +395,7 @@ class LanguageService(Service):
     @property
     def should_lowercase(self) -> bool:
         """Looks up enable_lowercase_suggestions from the workspace config"""
-        config = self._workspace_service.configuration.sql.intellisense
+        config = self._workspace_service.configuration.pgsql.intellisense
         return config.enable_lowercase_suggestions
 
     # METHODS ##############################################################
@@ -408,7 +408,7 @@ class LanguageService(Service):
         if uri is None:
             return True
         return (
-            not self._workspace_service.configuration.sql.intellisense.enable_intellisense
+            not self._workspace_service.configuration.pgsql.intellisense.enable_intellisense
             or not self.is_valid_uri(uri)
         )
 

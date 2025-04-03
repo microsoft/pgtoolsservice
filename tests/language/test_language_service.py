@@ -128,7 +128,7 @@ class TestLanguageService(unittest.TestCase):
         # If: intellisense is disabled
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
-        config.sql.intellisense.enable_intellisense = False
+        config.pgsql.intellisense.enable_intellisense = False
         self.mock_workspace_service._configuration = config
         service: LanguageService = self._init_service()
 
@@ -176,7 +176,7 @@ class TestLanguageService(unittest.TestCase):
         )
         context: RequestContext = utils.MockRequestContext()
         config = Configuration()
-        config.sql.intellisense.enable_intellisense = True
+        config.pgsql.intellisense.enable_intellisense = True
         self.mock_workspace_service._configuration = config
         workspace, script_file = self._get_test_workspace(True, input_text)
         self.mock_workspace_service._workspace = workspace
@@ -478,7 +478,7 @@ class TestLanguageService(unittest.TestCase):
     def test_handle_definition_request_intellisense_off(self) -> None:
         request_context: RequestContext = utils.MockRequestContext()
         config = Configuration()
-        config.sql.intellisense.enable_intellisense = False
+        config.pgsql.intellisense.enable_intellisense = False
         self.mock_workspace_service._configuration = config
 
         language_service = self._init_service()
