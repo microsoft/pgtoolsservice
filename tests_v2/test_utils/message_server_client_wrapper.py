@@ -217,9 +217,9 @@ class MessageServerClientWrapper(ABC):
         """
         serialized_params: LSPAny | None = None
         if isinstance(params, Serializable):
-            params = params.to_dict()
+            serialized_params = params.to_dict()
         elif isinstance(params, BaseModel):
-            params = params.model_dump(by_alias=True)
+            serialized_params = params.model_dump(by_alias=True)
         else:
             serialized_params = params
 
