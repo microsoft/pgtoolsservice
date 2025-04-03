@@ -6,10 +6,9 @@
 import threading
 from typing import Any, Dict, List, Optional
 
-from ossdbtoolsservice.driver.types.driver import ServerConnection
+from ossdbtoolsservice.connection import ServerConnection
 from ossdbtoolsservice.hosting.context import RequestContext
 from ossdbtoolsservice.schema.contracts.get_schema_model import ColumnSchema, RelationshipSchema, TableSchema
-from ossdbtoolsservice.utils import constants
 from pgsmo import Server
 import psycopg
 
