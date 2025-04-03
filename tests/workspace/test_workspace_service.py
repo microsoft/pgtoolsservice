@@ -125,8 +125,9 @@ class TestWorkspaceService(unittest.TestCase):
         params: DidChangeConfigurationParams = DidChangeConfigurationParams.from_dict(
             {
                 "settings": {
-                    "sql": {"intellisense": {"enable_intellisense": False}},
                     "pgsql": {
+                        "maxConnections": 10,
+                        "intellisense": {"enable_intellisense": False},
                         "format": {
                             "keyword_case": "upper",
                             "identifier_case": "lower",
