@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from ossdbtoolsservice.driver.types.driver import ServerConnection
 from ossdbtoolsservice.hosting.context import RequestContext
+from ossdbtoolsservice.schema.contracts.get_schema_model import ColumnSchema, RelationshipSchema, TableSchema
 from ossdbtoolsservice.utils import constants
 from pgsmo import Server
 import psycopg
@@ -120,19 +121,22 @@ class SchemaEditorSession:
                 replica_identity, bytes_val, size_str, live_rows, dead_rows, comment
             ) = table_row
             
-            table_dict: Dict[str, Any] = {
-                "id": table_id,
-                "schema": schema_name,
-                "name": table_name,
-                "rls_enabled": rls_enabled,
-                "rls_forced": rls_forced,
-                "replica_identity": replica_identity,
-                "bytes": bytes_val,
-                "size": size_str,
-                "live_rows_estimate": live_rows,
-                "dead_rows_estimate": dead_rows,
-                "comment": comment,
-            }
+            table_dict = TableSchema(
+                id=table_id,
+                schema=schema_name,
+                name=table_name,
+                rls_enabled=rls_enabled,
+                rls_forced=rls_forced,
+                replica_identity=replica_identity,
+                bytes=bytes_val,
+                size=size_str,
+                live_rows_estimate=live_rows,
+                dead_rows_estimate=dead_rows,
+                comment=comment,
+                columns=[],
+                primary_keys=[],
+                relationships=[]
+            )
             
             # Query columns for this table
             with conn.cursor() as cur:
@@ -151,18 +155,18 @@ class SchemaEditorSession:
                 columns = cur.fetchall()
             
             if columns:
-                table_dict["columns"] = []
+                table_dict.columns = []
                 for col in columns:
                     col_name, ordinal_position, data_type, is_nullable, col_default, char_max_length = col
-                    col_obj = {
-                        "name": col_name,
-                        "ordinal_position": ordinal_position,
-                        "data_type": data_type,
-                        "is_nullable": is_nullable == 'YES',
-                        "default": col_default,
-                        "character_maximum_length": char_max_length,
-                    }
-                    table_dict["columns"].append(col_obj)
+                    col_obj = ColumnSchema(
+                        name=col_name,
+                        ordinal_position=ordinal_position,
+                        data_type=data_type,
+                        is_nullable=is_nullable == 'YES',
+                        default=col_default,
+                        character_maximum_length=char_max_length,
+                    )
+                    table_dict.columns.append(col_obj)
             
             # Query primary key columns for this table
             with conn.cursor() as cur:
@@ -177,7 +181,7 @@ class SchemaEditorSession:
                     ORDER BY kcu.ordinal_position;
                 """, (schema_name, table_name))
                 pk_rows = cur.fetchall()
-            table_dict["primary_keys"] = [row[0] for row in pk_rows]
+            table_dict.primary_keys = [row[0] for row in pk_rows]
             
             # Query foreign key relationships for this table
             with conn.cursor() as cur:
@@ -197,16 +201,16 @@ class SchemaEditorSession:
                     AND tc.table_name = %s;
                 """, (schema_name, table_name))
                 fk_rows = cur.fetchall()
-            table_dict["relationships"] = []
+            table_dict.relationships = []
             for fk in fk_rows:
                 col_name, foreign_schema, foreign_table, foreign_column = fk
-                rel_obj = {
-                    "column": col_name,
-                    "foreign_table_schema": foreign_schema,
-                    "foreign_table_name": foreign_table,
-                    "foreign_column": foreign_column,
-                }
-                table_dict["relationships"].append(rel_obj)
+                rel_obj = RelationshipSchema(
+                    column=col_name,
+                    foreign_table_schema=foreign_schema,
+                    foreign_table_name=foreign_table,
+                    foreign_column=foreign_column,
+                )
+                table_dict.relationships.append(rel_obj)
             
             schema_resp.tables.append(table_dict)
         
