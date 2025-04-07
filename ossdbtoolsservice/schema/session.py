@@ -216,5 +216,5 @@ class SchemaEditorSession:
         return schema_resp
     
     def close_session(self):
-        # TODO
+        # TODO: Nothing to clean really?
         return

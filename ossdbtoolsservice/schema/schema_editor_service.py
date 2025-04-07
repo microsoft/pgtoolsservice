@@ -176,5 +176,11 @@ class SchemaEditorService(Service):
         return
 
     def _handle_shutdown(self) -> None:
-        """Close all OE sessions when service is shutdown"""
+        """Close all designer sessions when service is shutdown"""
+        if self.service_provider.logger is not None:
+            self.service_provider.logger.info("Closing all the Schema Designer sessions")
+        
+        """
+        Nothing to do here really, since we reuse the OE connection to the DB
+        """
         return
