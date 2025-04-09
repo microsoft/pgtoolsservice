@@ -25,6 +25,9 @@ from semantic_kernel.contents import (
     FunctionResultContent,
     TextContent,
 )
+from semantic_kernel.contents import (
+    ChatMessageContent as SKChatMessageContent,
+)
 from semantic_kernel.kernel import Kernel
 
 from ossdbtoolsservice.chat.chat_history_manager import ChatHistoryManager
@@ -284,11 +287,11 @@ class ChatService(Service):
 
                 # Get function call content out of history
                 if session_id:
-                    last_user_message: str | None = None
+                    last_user_message: SKChatMessageContent | None = None
                     tool_calls: dict[str, FunctionCallContent] = {}
                     for message in history.messages:
                         if message.role == AuthorRole.USER and message.content:
-                            last_user_message = message.content
+                            last_user_message = message
                         elif (
                             message.role == AuthorRole.ASSISTANT
                             or message.role == AuthorRole.TOOL
