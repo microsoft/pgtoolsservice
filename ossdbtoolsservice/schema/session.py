@@ -22,7 +22,7 @@ class SchemaEditorSession:
     id: str
     is_ready: bool
     _server: Optional[Server]
-    _schema: List[Dict[str, Any]] | None = None
+    _schema: GetSchemaModelResponseParams | None = None
 
     init_task: Optional[threading.Thread]
     get_schema_task: Optional[threading.Thread]
@@ -73,13 +73,13 @@ class SchemaEditorSession:
     
     def _get_schema_model_request_thread(self, request_context: RequestContext, connection: ServerConnection):
         try:
-            schema_resp = self.get_schema_json(connection._conn)
-            request_context.send_response(schema_resp)
+            self._schema = self.get_schema_json(connection._conn)
+            request_context.send_response(self._schema)
         except Exception as e:
             request_context.send_error(f"Error fetching db context: {e}")
         return
     
-    def get_schema_json(self, conn: psycopg.Connection) -> Dict[str, Any]:
+    def get_schema_json(self, conn: psycopg.Connection) -> GetSchemaModelResponseParams:
         schema_resp = GetSchemaModelResponseParams(tables=[])
         
         # First, query for all user tables (exclude system schemas)
