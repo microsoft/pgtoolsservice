@@ -513,6 +513,12 @@ class ConnectionManager:
             # not have been returned from the pool.
             # Set autocommit to True.
             conn.autocommit = True
+
+            # Disable prepared statements for the connection.
+            # This is to avoid issues with prepared statements
+            # being reused across connections.
+            conn.prepare_threshold = None
+
             # If this is an long lived connection, set the pool so that
             # it can be manually returned to the pool.
             return ServerConnection(conn, pool, pooled_connection)
