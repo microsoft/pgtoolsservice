@@ -9,7 +9,6 @@ from logging import Logger
 from ossdbtoolsservice.connection.connection_service import ConnectionService
 from ossdbtoolsservice.connection.contracts.connect_request import ConnectRequestParams
 from ossdbtoolsservice.utils import constants
-import ossdbtoolsservice.utils.validate as validate
 from ossdbtoolsservice.utils.connection import get_connection_details_with_defaults
 from ossdbtoolsservice.schema import utils as schema_utils
 
@@ -97,9 +96,6 @@ class SchemaEditorService(Service):
         if self._logger:
             self._logger.info(f" [handler] Creating OE session for {params.server_name}")
 
-        # Make sure we have the appropriate session params
-        validate.is_not_none("params", params)
-
         params = get_connection_details_with_defaults(params)
 
         # Generate the session ID and create/store the session
@@ -143,7 +139,6 @@ class SchemaEditorService(Service):
         """Handle a get schema model request"""
 
         try:
-            validate.is_not_none("session_id", params)
             session_id = params.session_id
             with self._session_lock:
                 assert(session_id in self._session_map)
@@ -167,7 +162,6 @@ class SchemaEditorService(Service):
         self, request_context: RequestContext, params: SessionIdContainer
     ) -> None:
         try:
-            validate.is_not_none("session_id", params)
             session_id = params.session_id
             with self._session_lock:
                 assert(session_id in self._session_map)
@@ -191,6 +185,4 @@ class SchemaEditorService(Service):
         with self._session_lock:
             for session in self._session_map.values():
                 session.close_session()
-                with self._connect_semaphore:
-                    self._conn_service.disconnect(session.id)
         return
