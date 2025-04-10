@@ -7,7 +7,7 @@ import threading
 from logging import Logger
 
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.object_explorer.object_explorer_service import ObjectExplorerService
+from ossdbtoolsservice.connection.contracts.connect_request import ConnectRequestParams
 from ossdbtoolsservice.utils import constants
 import ossdbtoolsservice.utils.validate as validate
 from ossdbtoolsservice.utils.connection import get_connection_details_with_defaults
@@ -15,7 +15,7 @@ from ossdbtoolsservice.schema import utils as schema_utils
 
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
 
-from ossdbtoolsservice.connection.contracts.common import ConnectionDetails, ConnectionType
+from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
 from ossdbtoolsservice.hosting import Service, ServiceProvider
 from ossdbtoolsservice.hosting.context import RequestContext
 from ossdbtoolsservice.schema.session import SchemaEditorSession
@@ -104,7 +104,6 @@ class SchemaEditorService(Service):
 
         # Generate the session ID and create/store the session
         session_id = schema_utils.generate_session_uri(params)
-        owner_uri = ObjectExplorerService._generate_session_uri(params)
 
         if self._logger:
             self._logger.info(f"   - Session ID: {session_id}")
@@ -120,9 +119,17 @@ class SchemaEditorService(Service):
                 request_context.send_error(message)
             else:
                 # If session doesn't exist, create a new one
-                session = SchemaEditorSession(session_id, owner_uri)
+                session = SchemaEditorSession(session_id, params)
                 self._session_map[session_id] = session
                 session.initialize(request_context)
+
+        with self._connect_semaphore:
+            connect_request = ConnectRequestParams(session.connection_details, session.id)
+            connect_result = self._conn_service.connect(connect_request)
+            if connect_result is None:
+                raise RuntimeError("Failed to create connection")
+            if connect_result.error_message is not None:
+                raise RuntimeError(connect_result.error_message)
 
         if self._logger:
             self._logger.info(f"   - Session created: {session_id}")
@@ -142,13 +149,12 @@ class SchemaEditorService(Service):
                 assert(session_id in self._session_map)
                 session = self._session_map[session_id]
                 assert(session.init_task is None)
-            connection = self._conn_service.get_connection(
-                session.owner_uri, ConnectionType.OBJECT_EXLPORER
-            )
-            if not connection:
-                request_context.send_error(f"No connection available for {session.owner_uri}")
-                return    
-            session.get_schema_model(request_context, connection)
+            connection_pool = self._conn_service.get_pooled_connection(session.id)
+            if not connection_pool:
+                request_context.send_error(f"No connection available for {session.id}")
+                return
+            with connection_pool as connection:
+                session.get_schema_model(request_context, connection)
         except Exception as e:
             message = f"Failed to get schema model: {str(e)}"
             if self.service_provider.logger is not None:
@@ -167,6 +173,8 @@ class SchemaEditorService(Service):
                 assert(session_id in self._session_map)
                 session = self._session_map.pop(session_id)
                 session.close_session()
+            with self._connect_semaphore:
+                self._conn_service.disconnect(session_id)
         except Exception as e:
             message = f"Failed to close session: {str(e)}"
             if self.service_provider.logger is not None:
@@ -180,7 +188,9 @@ class SchemaEditorService(Service):
         if self.service_provider.logger is not None:
             self.service_provider.logger.info("Closing all the Schema Designer sessions")
         
-        """
-        Nothing to do here really, since we reuse the OE connection to the DB
-        """
+        with self._session_lock:
+            for session in self._session_map.values():
+                session.close_session()
+                with self._connect_semaphore:
+                    self._conn_service.disconnect(session.id)
         return

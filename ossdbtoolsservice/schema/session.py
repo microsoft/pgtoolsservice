@@ -4,9 +4,10 @@
 # --------------------------------------------------------------------------------------------
 
 import threading
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from ossdbtoolsservice.connection import ServerConnection
+from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
 from ossdbtoolsservice.hosting.context import RequestContext
 from ossdbtoolsservice.schema.contracts.get_schema_model import ColumnSchema, RelationshipSchema, TableSchema
 from pgsmo import Server
@@ -17,9 +18,9 @@ from ossdbtoolsservice.schema.contracts import (
         SessionIdContainer,
 )
 
-class SchemaEditorSession:
-    owner_uri: str
+class SchemaEditorSession:    
     id: str
+    connection_details: ConnectionDetails
     is_ready: bool
     _server: Optional[Server]
     _schema: GetSchemaModelResponseParams | None = None
@@ -27,9 +28,9 @@ class SchemaEditorSession:
     init_task: Optional[threading.Thread]
     get_schema_task: Optional[threading.Thread]
 
-    def __init__(self, session_id: str, owner_uri: str) -> None:
-        self.owner_uri = owner_uri
+    def __init__(self, session_id: str, params: ConnectionDetails) -> None:
         self.id = session_id
+        self.connection_details = params
         self.is_ready = False
         self._server = None
         self._schema = None
