@@ -1,6 +1,13 @@
 from dataclasses import dataclass
 
-from semantic_kernel.contents import ChatHistory, FunctionCallContent, FunctionResultContent
+from semantic_kernel.contents import (
+    ChatHistory,
+    FunctionCallContent,
+    FunctionResultContent,
+)
+from semantic_kernel.contents import (
+    ChatMessageContent as SKChatMessageContent,
+)
 
 from ossdbtoolsservice.chat.messages import ChatMessageContent
 
@@ -31,32 +38,35 @@ class ChatHistoryManager:
 
         history.add_system_message(system_message)
 
-        for message in request_history or []:
+        for request_history_index, message in enumerate(request_history or []):
+            metadata = {"request_history_index": request_history_index}
             if message.participant == "user":
-                history.add_user_message(message.content)
+                history.add_user_message(message.content, metadata=metadata)
 
                 # If we've recorded tool calls after this user message,
                 # add them to the history.
-                if session_id in self._session_id_to_tool_call_records:
-                    message_hash = hash(message.content)
-                    if message_hash in self._session_id_to_tool_call_records[session_id]:
-                        for record in self._session_id_to_tool_call_records[session_id][
-                            message_hash
-                        ].values():
-                            history.add_tool_message([record.call])
-                            history.add_tool_message([record.result])
+                if session_id in self._session_id_to_tool_call_records and (
+                    request_history_index in self._session_id_to_tool_call_records[session_id]
+                ):
+                    for record in self._session_id_to_tool_call_records[session_id][
+                        request_history_index
+                    ].values():
+                        history.add_tool_message([record.call])
+                        history.add_tool_message([record.result])
             else:
-                history.add_assistant_message(message.content)
+                history.add_assistant_message(message.content, metadata=metadata)
 
         # Add prompt as last user input
-        history.add_user_message(request_prompt)
+        history.add_user_message(
+            request_prompt, metadata={"request_history_index": len(request_history)}
+        )
 
         return history
 
     def add_tool_call_record(
         self,
         session_id: str,
-        last_user_message: str,
+        last_user_message: SKChatMessageContent,
         call: FunctionCallContent,
         result: FunctionResultContent,
     ) -> None:
@@ -72,13 +82,24 @@ class ChatHistoryManager:
             call (FunctionCallContent): The function call content.
             result (FunctionResultContent): The function result content.
         """
+        if "request_history_index" not in last_user_message.metadata:
+            return
+        request_history_index = (
+            last_user_message.metadata.get("request_history_index")
+            if last_user_message.metadata
+            else None
+        )
+        if request_history_index is None:
+            return
         tool_call_record = ToolCallRecord(call=call, result=result)
-        message_hash = hash(last_user_message)
         if session_id not in self._session_id_to_tool_call_records:
             self._session_id_to_tool_call_records[session_id] = {}
-        if message_hash not in self._session_id_to_tool_call_records[session_id]:
-            self._session_id_to_tool_call_records[session_id][message_hash] = {}
-        if result.id not in self._session_id_to_tool_call_records[session_id][message_hash]:
-            self._session_id_to_tool_call_records[session_id][message_hash][result.id] = (
-                tool_call_record
-            )
+        if request_history_index not in self._session_id_to_tool_call_records[session_id]:
+            self._session_id_to_tool_call_records[session_id][request_history_index] = {}
+        if (
+            result.id
+            not in self._session_id_to_tool_call_records[session_id][request_history_index]
+        ):
+            self._session_id_to_tool_call_records[session_id][request_history_index][
+                result.id
+            ] = tool_call_record
