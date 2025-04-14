@@ -1,0 +1,47 @@
+
+---
+name: LLM statement check
+description: Decide whether a given statement applies to the copilot's response.
+model:
+  api: chat
+  parameters:
+    max_tokens: 256
+    temperature: 0.0
+    response_format:
+        type: json_object
+
+inputs:
+  examples:
+    type: list
+  response:
+    type: string
+  context:
+    type: string
+---
+
+# system:
+You are an AI assistant evaluating a response from a Copilot.
+Your task is to evaluate a score based on how the statement applies for the Copilot's response.
+If the statement totally applies to the response, the score should be 5.
+If the statement mostly applies to the response, the score should be 4.
+If the statement partially applies to the response, the score should be 3.
+If the statement does not apply to the response, the score should be 2.
+If the statement is completely irrelevant to the response, the score should be 1.
+You should compare the response with the statement and provide a score based on the comparison.
+Only accepts JSON format.
+
+This score value should always be an integer between 1 and 5. So the score produced should be 1 or 2 or 3 or 4 or 5.
+
+Here are a few examples:
+{% for ex in examples %}
+response: {{ex.response}}
+statement: {{ex.context}}
+OUTPUT:
+{"score": "{{ex.score}}", "explanation":"{{ex.explanation}}"}
+{% endfor %}
+
+# user:
+Now given the given response, evaluate the response based on how the statement applies for the response:
+response: {{response}}
+statement: {{context}}
+OUTPUT:

@@ -133,7 +133,7 @@ class TestWorkspaceService(unittest.TestCase):
                             "identifier_case": "lower",
                             "strip_comments": True,
                             "reindent": False,
-                        }
+                        },
                     },
                 }
             }

@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: SS_GH_AWLT
+Description: General Help questions specific to SQL Server
+TestSetup:
+  DatabaseToRestore: Prompts\AdventureWorksLT2022\AdventureWorksLT2022.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Schedule a job
+  Commands:
+  - Prompt: How do I schedule a job for my database?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The should include SQL Agent as a common solution.
+      MinScore: 4
+- Name: Create Alerts
+  Commands:
+  - Prompt: How do I create alerts on different issues in the database or server
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should outline a process of how to setup alerts in
+          SQL Server.
+      MinScore: 4

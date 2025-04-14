@@ -37,7 +37,7 @@ class RowUpdate(RowEdit):
                 self._cell_updates.pop(column_index)
 
             return EditCellResponse(
-                EditCell(self.row[column_index], False, self.row_id),
+                EditCell.from_db_cell_value(self.row[column_index], False, self.row_id),
                 len(self._cell_updates) > 0,
             )
 
@@ -46,7 +46,9 @@ class RowUpdate(RowEdit):
         return EditCellResponse(cell_update.as_edit_cell, True)
 
     def get_edit_row(self, cached_row: list[DbCellValue]) -> EditRow:
-        edit_cells = [EditCell(cell, True, self.row_id) for cell in cached_row]
+        edit_cells = [
+            EditCell.from_db_cell_value(cell, True, self.row_id) for cell in cached_row
+        ]
 
         for column_index, cell in self._cell_updates.items():
             edit_cells[column_index] = cell.as_edit_cell
@@ -56,7 +58,8 @@ class RowUpdate(RowEdit):
     def revert_cell_value(self, column_index: int) -> RevertCellResponse:
         self._cell_updates.pop(column_index)
         return RevertCellResponse(
-            EditCell(self.row[column_index], False, self.row_id), len(self._cell_updates) > 0
+            EditCell.from_db_cell_value(self.row[column_index], False, self.row_id),
+            len(self._cell_updates) > 0,
         )
 
     def get_script(self) -> EditScript:

@@ -1,12 +1,16 @@
+import uuid
 from collections.abc import Generator
 
+import psycopg
 import pytest
 from psycopg import Connection
 from psycopg_pool import ConnectionPool
 
+from ossdbtoolsservice.connection.core.server_connection import ServerConnection
 from ossdbtoolsservice.main import get_all_services
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 from tests_v2.test_utils.constants import DEFAULT_CONNECTION_STRING
+from tests_v2.test_utils.datasets import DatasetLoader, get_dataset
 from tests_v2.test_utils.message_server_client_wrapper import (
     ExecutableMessageServerClientWrapper,
     MessageServerClientWrapper,
@@ -149,3 +153,17 @@ def pagila_playback_db() -> Generator[PlaybackDB, None, None]:
     playback_db = PlaybackDB("pagila")
     with playback_db:
         yield playback_db
+
+
+@pytest.fixture(scope="function")
+def adventureworks_tmp_db(connection_string: str) -> Generator[ServerConnection, None, None]:
+    dbname = f"adventureworks{uuid.uuid4().hex[:4]}"
+    dataset = get_dataset("adventureworks")
+    if dataset is None:
+        raise ValueError("Dataset not found")
+    loader = DatasetLoader(dataset, connection_string, dbname)
+    conn = loader.create_db()
+    with psycopg.connect(conn) as pg_conn:
+        server_conn = ServerConnection(pg_conn)
+        yield server_conn
+    loader.drop_db()

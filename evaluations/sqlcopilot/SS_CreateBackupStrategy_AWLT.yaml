@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: SS__CBS
+Description: BR - Create Backup Strategy
+TestSetup:
+  DatabaseToRestore: Prompts\AdventureWorksLT2022\AdventureWorksLT2022.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Backup Strategy Conversation
+  Commands:
+  - Prompt: what is the backup strategy for this database
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: BackupStrategyAndRestrictions
+        Definition: The answer must summarize the current database recovery model
+          as SIMPLE, no agent jobs for backing up the current database were found
+          (none should be listed at all), and a statement about no available backups
+          for this specific database. A perfect answer will also highlight the restrictions
+          on types of backups that will work due to SIMPLE recovery model. Any content
+          regarding query issues, unrelated agent jobs, or failure to gather any data
+          should result in a score of 2 or less.
+      MinScore: 4
+  - Prompt: my lead said I should have a backup strategy for this new db.  She said
+      it should have an RP something and mentioned 10m.  What's that all about?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ExplainRPOAndBackupJobs
+        Definition: The reponse should explain what an RPO is.
+                    The response should provide a plan for how to implement an RPO of 10 minutes. 
+      MinScore: 4
+  - Prompt: That sounds good.  I'd like to review the scripts for the required agent
+      jobs for this db with an RPO of 10m, fix the recovery model and use the server's
+      current backup directory.
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: BackupJobScriptsWithRecoveryModel
+        Definition: The answer should include t-sql scripts to create an agent job
+          for each type of backup and the scripts should use the current database
+          name and the server's current backup directory. Scripts should not have
+          name and the server's current backup directory. Scripts should not have
+          any placeholder names. The answer should include changing the recovery model
+          to FULL or at least remind of the limitations of SIMPLE recovery model.
+      MinScore: 4

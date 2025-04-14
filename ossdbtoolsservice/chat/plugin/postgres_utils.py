@@ -6,33 +6,34 @@ from ossdbtoolsservice.utils.sql import as_sql
 
 
 def execute_readonly_query(
-    connection: Connection, query: str, max_result_chars: int = 7000
-) -> str:
+    connection: Connection, query: str, max_result_rows: int = 10000
+) -> str | None:
     """Execute a read-only query against the database."""
     with connection.cursor() as cur:
         cur.execute("BEGIN TRANSACTION READ ONLY;")
         try:
             cur.execute(as_sql(query))
-            result = cur.fetchall()
-            result_str = str(result)
+            rows = cur.fetchall()
+
+            result = None
             # Format as CSV
-            if result:
+            if rows:
+                result = ""
+                # If number of results is over the limit, return a message
+                # and the
+                if len(rows) > max_result_rows:
+                    result = (
+                        f"Result has {len(rows)} rows, and is too large to return. "
+                        f"Only returning the first {max_result_rows} results.\n\n"
+                    )
                 if cur.description:
                     headers = [desc.name for desc in cur.description]
-                    result_str = ",".join(headers) + "\n"
-                    result_str += "\n".join(
-                        ",".join(str(cell) for cell in row) for row in result
-                    )
+                    result += ",".join(headers) + "\n"
+                    result += "\n".join(",".join(str(cell) for cell in row) for row in rows)
                 else:
-                    result_str = str(result)
+                    result += str(rows)
 
-            # Estimate the number of tokens in the result
-            if len(result_str) > max_result_chars:
-                return (
-                    f"Result has {len(result)} rows, and is too large to return. "
-                    "Run the query in an editor to see the full result."
-                )
-            return result_str
+            return result
         finally:
             connection.rollback()
 
@@ -79,7 +80,7 @@ def get_table_scripts(connection: Connection, schema_name: str) -> list[str]:
         )
         objects = cur.fetchall()
         for obj_name, relkind, _oid in objects:
-            full_name = f"{schema_name}.{obj_name}"
+            full_name = f'"{schema_name}"."{obj_name}"'
             if relkind in ("r", "p", "f"):
                 cur.execute(
                     sql.SQL("""
@@ -173,7 +174,7 @@ def get_table_scripts(connection: Connection, schema_name: str) -> list[str]:
                         [full_name],
                     )
                     for part_name, part_bound in cur.fetchall():
-                        child_full_name = f"{schema_name}.{part_name}"
+                        child_full_name = f'"{schema_name}"."{part_name}"'
                         alter_stmt = (
                             f"ALTER TABLE {full_name} ATTACH PARTITION {child_full_name}"
                         )
@@ -181,6 +182,26 @@ def get_table_scripts(connection: Connection, schema_name: str) -> list[str]:
                             alter_stmt += f" {part_bound}"
                         alter_stmt += ";"
                         scripts.append(alter_stmt)
+                # --- Fetch table and column comments ---
+                cur.execute("SELECT obj_description(%s, 'pg_class')", [_oid])
+                table_comment = cur.fetchone()[0]
+                if table_comment:
+                    scripts.append(f"COMMENT ON TABLE {full_name} IS '{table_comment}';")
+                cur.execute(
+                    """
+                    SELECT a.attname, col_description(a.attrelid, a.attnum)
+                    FROM pg_attribute a
+                    WHERE a.attrelid = %s::regclass
+                      AND a.attnum > 0
+                      AND NOT a.attisdropped
+                      AND col_description(a.attrelid, a.attnum) IS NOT NULL
+                """,
+                    [full_name],
+                )
+                for col_name, col_comment in cur.fetchall():
+                    scripts.append(
+                        f"COMMENT ON COLUMN {full_name}.{col_name} IS '{col_comment}';"
+                    )
             elif relkind == "v":
                 cur.execute(
                     sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"), [full_name]
@@ -188,6 +209,11 @@ def get_table_scripts(connection: Connection, schema_name: str) -> list[str]:
                 viewdef_fetch = cur.fetchone()
                 viewdef = viewdef_fetch[0] if viewdef_fetch else ""
                 scripts.append(f"CREATE OR REPLACE VIEW {full_name} AS\n{viewdef};")
+                # --- Fetch view comments ---
+                cur.execute("SELECT obj_description(%s::regclass, 'pg_class')", [full_name])
+                view_comment = cur.fetchone()[0]
+                if view_comment:
+                    scripts.append(f"COMMENT ON VIEW {full_name} IS '{view_comment}';")
             elif relkind == "m":
                 cur.execute(
                     sql.SQL("SELECT pg_get_viewdef(%s::regclass, true);"), [full_name]
@@ -197,6 +223,13 @@ def get_table_scripts(connection: Connection, schema_name: str) -> list[str]:
                 scripts.append(
                     f"CREATE MATERIALIZED VIEW {full_name} AS\n{viewdef} WITH DATA;"
                 )
+                # --- Fetch materialized view comments ---
+                cur.execute("SELECT obj_description(%s::regclass, 'pg_class')", [full_name])
+                matview_comment = cur.fetchone()[0]
+                if matview_comment:
+                    scripts.append(
+                        f"COMMENT ON MATERIALIZED VIEW {full_name} IS '{matview_comment}';"
+                    )
     return scripts
 
 
@@ -228,6 +261,16 @@ def get_sequence_scripts(connection: Connection, schema_name: str) -> list[str]:
             seq_stmt += f"    MAXVALUE {max_value}\n"
             seq_stmt += f"    {'CYCLE' if cycle_option.upper() == 'YES' else 'NO CYCLE'};"
             scripts.append(seq_stmt)
+            # --- Fetch sequence comment ---
+            cur.execute(
+                "SELECT obj_description((%s)::regclass, 'pg_class')",
+                [f'"{schema_name}"."{seq_name}"'],
+            )
+            seq_comment = cur.fetchone()[0]
+            if seq_comment:
+                scripts.append(
+                    f"COMMENT ON SEQUENCE {schema_name}.{seq_name} IS '{seq_comment}';"
+                )
     return scripts
 
 
@@ -251,6 +294,13 @@ def get_index_scripts(connection: Connection, schema_name: str) -> list[str]:
         )
         for _oid, _indexname, indexdef in cur.fetchall():
             scripts.append(indexdef + ";")
+            # --- Fetch index comment ---
+            cur.execute("SELECT obj_description(%s, 'pg_class')", [_oid])
+            index_comment = cur.fetchone()[0]
+            if index_comment:
+                scripts.append(
+                    f"COMMENT ON INDEX {schema_name}.{_indexname} IS '{index_comment}';"
+                )
     return scripts
 
 
@@ -261,7 +311,7 @@ def get_function_scripts(connection: Connection, schema_name: str) -> list[str]:
         try:
             cur.execute(
                 sql.SQL("""
-                SELECT p.oid, p.proname,
+                SELECT p.oid, p.proname, pg_get_function_identity_arguments(p.oid) AS args,
                     CASE
                         WHEN p.prokind = 'f' THEN pg_get_functiondef(p.oid)
                         WHEN p.prokind = 'a' THEN
@@ -280,8 +330,14 @@ def get_function_scripts(connection: Connection, schema_name: str) -> list[str]:
             """),
                 [schema_name],
             )
-            for _oid, _proname, funcdef in cur.fetchall():
+            for _oid, _proname, args, funcdef in cur.fetchall():
                 scripts.append(funcdef)
+                # --- Fetch function comment ---
+                cur.execute("SELECT obj_description(%s, 'pg_proc')", [_oid])
+                func_comment = cur.fetchone()[0]
+                if func_comment:
+                    full_func = f'"{schema_name}".{_proname}({args})'
+                    scripts.append(f"COMMENT ON FUNCTION {full_func} IS '{func_comment}';")
         except Exception:
             pass
     return scripts
@@ -305,7 +361,7 @@ def get_table_grant_scripts(connection: Connection, schema_name: str) -> list[st
             [schema_name],
         )
         for relname, grantee, privileges in cur.fetchall():
-            full_name = f"{schema_name}.{relname}"
+            full_name = f'"{schema_name}"."{relname}"'
             # An empty grantee means PUBLIC
             if grantee == "":
                 grantee = "PUBLIC"
@@ -330,7 +386,7 @@ def get_sequence_grant_scripts(connection: Connection, schema_name: str) -> list
             [schema_name],
         )
         for relname, grantee, privileges in cur.fetchall():
-            full_name = f"{schema_name}.{relname}"
+            full_name = f'"{schema_name}"."{relname}"'
             if grantee == "":
                 grantee = "PUBLIC"
             scripts.append(f"GRANT {privileges} ON SEQUENCE {full_name} TO {grantee};")
@@ -356,7 +412,7 @@ def get_function_grant_scripts(connection: Connection, schema_name: str) -> list
             [schema_name],
         )
         for proname, args, grantee, privileges in cur.fetchall():
-            full_name = f"{schema_name}.{proname}({args})"
+            full_name = f'"{schema_name}"."{proname}({args})"'
             if grantee == "":
                 grantee = "PUBLIC"
             scripts.append(f"GRANT {privileges} ON FUNCTION {full_name} TO {grantee};")
@@ -400,90 +456,6 @@ def get_schema_grant_scripts(connection: Connection, schema_name: str) -> list[s
     return scripts
 
 
-def get_comment_scripts(connection: Connection, schema_name: str) -> list[str]:
-    """
-    Generate COMMENT statements for tables, columns, functions, indexes, and the schema.
-    """
-    scripts = []
-    with connection.cursor() as cur:
-        # Table comments.
-        cur.execute(
-            sql.SQL("""
-                SELECT c.relname, obj_description(c.oid, 'pg_class') AS comment
-                FROM pg_class c
-                JOIN pg_namespace n ON c.relnamespace = n.oid
-                WHERE n.nspname = %s
-                  AND obj_description(c.oid, 'pg_class') IS NOT NULL;
-            """),
-            [schema_name],
-        )
-        for relname, comment in cur.fetchall():
-            full_table = f"{schema_name}.{relname}"
-            scripts.append(f"COMMENT ON TABLE {full_table} IS '{comment}';")
-
-        # Column comments.
-        cur.execute(
-            sql.SQL("""
-                SELECT c.relname, a.attname, col_description(a.attrelid, a.attnum) AS comment
-                FROM pg_attribute a
-                JOIN pg_class c ON a.attrelid = c.oid
-                JOIN pg_namespace n ON c.relnamespace = n.oid
-                WHERE n.nspname = %s
-                  AND col_description(a.attrelid, a.attnum) IS NOT NULL;
-            """),
-            [schema_name],
-        )
-        for relname, attname, comment in cur.fetchall():
-            full_name = f"{schema_name}.{relname}"
-            scripts.append(f"COMMENT ON COLUMN {full_name}.{attname} IS '{comment}';")
-
-        # Function comments.
-        cur.execute(
-            sql.SQL("""
-                SELECT p.proname, pg_get_function_identity_arguments(p.oid) AS args,
-                       obj_description(p.oid, 'pg_proc') AS comment
-                FROM pg_proc p
-                JOIN pg_namespace n ON p.pronamespace = n.oid
-                WHERE n.nspname = %s
-                  AND obj_description(p.oid, 'pg_proc') IS NOT NULL;
-            """),
-            [schema_name],
-        )
-        for proname, args, comment in cur.fetchall():
-            full_func = f"{schema_name}.{proname}({args})"
-            scripts.append(f"COMMENT ON FUNCTION {full_func} IS '{comment}';")
-
-        # Index comments.
-        cur.execute(
-            sql.SQL("""
-                SELECT c.relname, obj_description(c.oid, 'pg_class') AS comment
-                FROM pg_class c
-                JOIN pg_namespace n ON c.relnamespace = n.oid
-                WHERE n.nspname = %s
-                  AND c.relkind = 'i'
-                  AND obj_description(c.oid, 'pg_class') IS NOT NULL;
-            """),
-            [schema_name],
-        )
-        for relname, comment in cur.fetchall():
-            full_index = f"{schema_name}.{relname}"
-            scripts.append(f"COMMENT ON INDEX {full_index} IS '{comment}';")
-
-        # Schema comment.
-        cur.execute(
-            sql.SQL("""
-                SELECT n.nspname, obj_description(n.oid, 'pg_namespace') AS comment
-                FROM pg_namespace n
-                WHERE n.nspname = %s
-                  AND obj_description(n.oid, 'pg_namespace') IS NOT NULL;
-            """),
-            [schema_name],
-        )
-        for nspname, comment in cur.fetchall():
-            scripts.append(f"COMMENT ON SCHEMA {nspname} IS '{comment}';")
-    return scripts
-
-
 def get_ownership_scripts(connection: Connection, schema_name: str) -> list[str]:
     """
     Generate ALTER ... OWNER TO statements for tables, views, materialized views,
@@ -503,7 +475,7 @@ def get_ownership_scripts(connection: Connection, schema_name: str) -> list[str]
             [schema_name],
         )
         for relname, owner, relkind in cur.fetchall():
-            full_name = f"{schema_name}.{relname}"
+            full_name = f'"{schema_name}"."{relname}"'
             if relkind in ("r", "p", "f"):
                 scripts.append(f"ALTER TABLE {full_name} OWNER TO {owner};")
             elif relkind == "v":
@@ -523,7 +495,7 @@ def get_ownership_scripts(connection: Connection, schema_name: str) -> list[str]
             [schema_name],
         )
         for relname, owner in cur.fetchall():
-            full_name = f"{schema_name}.{relname}"
+            full_name = f'"{schema_name}"."{relname}"'
             scripts.append(f"ALTER SEQUENCE {full_name} OWNER TO {owner};")
 
         # Ownership for functions.
@@ -538,7 +510,7 @@ def get_ownership_scripts(connection: Connection, schema_name: str) -> list[str]
             [schema_name],
         )
         for proname, args, owner in cur.fetchall():
-            full_func = f"{schema_name}.{proname}({args})"
+            full_func = f'"{schema_name}"."{proname}({args})"'
             scripts.append(f"ALTER FUNCTION {full_func} OWNER TO {owner};")
 
         # Ownership for the schema itself.
@@ -681,7 +653,16 @@ def get_fdw_scripts(connection: Connection) -> list[str]:
     return scripts
 
 
-def fetch_full_schema(connection: Connection) -> str:
+def fetch_full_schema(
+    connection: Connection,
+    include_sequences: bool = True,
+    include_indexes: bool = True,
+    include_functions: bool = True,
+    include_grants: bool = True,
+    include_ownership: bool = True,
+    include_default_privileges: bool = True,
+    include_fdw: bool = True,
+) -> str:
     """
     Fetch a complete schema creation script by assembling outputs
     from specialized helper functions.
@@ -727,67 +708,69 @@ def fetch_full_schema(connection: Connection) -> str:
                     get_table_scripts(connection, schema_name)
                 ),
             )
-            try_extend(
-                "sequence_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_sequence_scripts(connection, schema_name)
-                ),
-            )
-            try_extend(
-                "index_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_index_scripts(connection, schema_name)
-                ),
-            )
-            try_extend(
-                "function_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_function_scripts(connection, schema_name)
-                ),
-            )
-            try_extend(
-                "table_grant_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_table_grant_scripts(connection, schema_name)
-                ),
-            )
-            try_extend(
-                "sequence_grant_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_sequence_grant_scripts(connection, schema_name)
-                ),
-            )
-            try_extend(
-                "function_grant_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_function_grant_scripts(connection, schema_name)
-                ),
-            )
-            try_extend(
-                "schema_grant_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_schema_grant_scripts(connection, schema_name)
-                ),
-            )
-            try_extend(
-                "comment_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_comment_scripts(connection, schema_name)
-                ),
-            )
-            try_extend(
-                "ownership_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_ownership_scripts(connection, schema_name)
-                ),
-            )
-            try_extend(
-                "default_privileges_scripts",
-                lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
-                    get_default_privileges_scripts(connection, schema_name)
-                ),
-            )
+            if include_sequences:
+                try_extend(
+                    "sequence_scripts",
+                    lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
+                        get_sequence_scripts(connection, schema_name)
+                    ),
+                )
+            if include_indexes:
+                try_extend(
+                    "index_scripts",
+                    lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
+                        get_index_scripts(connection, schema_name)
+                    ),
+                )
+            if include_functions:
+                try_extend(
+                    "function_scripts",
+                    lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
+                        get_function_scripts(connection, schema_name)
+                    ),
+                )
+            if include_grants:
+                try_extend(
+                    "table_grant_scripts",
+                    lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
+                        get_table_grant_scripts(connection, schema_name)
+                    ),
+                )
+                try_extend(
+                    "sequence_grant_scripts",
+                    lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
+                        get_sequence_grant_scripts(connection, schema_name)
+                    ),
+                )
+                try_extend(
+                    "function_grant_scripts",
+                    lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
+                        get_function_grant_scripts(connection, schema_name)
+                    ),
+                )
+                try_extend(
+                    "schema_grant_scripts",
+                    lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
+                        get_schema_grant_scripts(connection, schema_name)
+                    ),
+                )
 
-        try_extend("fdw_scripts", lambda: "\n\n".join(get_fdw_scripts(connection)))
+            if include_ownership:
+                try_extend(
+                    "ownership_scripts",
+                    lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
+                        get_ownership_scripts(connection, schema_name)
+                    ),
+                )
+            if include_default_privileges:
+                try_extend(
+                    "default_privileges_scripts",
+                    lambda schema_name=schema_name: "\n\n".join(  # type: ignore[misc]
+                        get_default_privileges_scripts(connection, schema_name)
+                    ),
+                )
+
+        if include_fdw:
+            try_extend("fdw_scripts", lambda: "\n\n".join(get_fdw_scripts(connection)))
 
     return "\n\n".join(schema_creation_script)

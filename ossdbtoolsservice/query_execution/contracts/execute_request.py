@@ -21,7 +21,7 @@ class ExecutionPlanOptions(Serializable):
 
 class ExecuteRequestParamsBase(Serializable):
     owner_uri: str | None
-    execution_plan_options: ExecutionPlanOptions  # TODO: Seem unused in VSCode
+    execution_plan_options: ExecutionPlanOptions
 
     @classmethod
     def get_child_serializable_types(cls) -> dict[str, type[Serializable] | type[BaseModel]]:

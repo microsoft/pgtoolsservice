@@ -1,0 +1,797 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: AWLT
+Description: AdventureWorksLT
+TestSetup:
+  DatabaseToRestore: Prompts\AdventureWorksLT2022\AdventureWorksLT2022.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Q0
+  TestColor: Probation
+  Commands:
+  - Prompt: find me all companies from the United States that their name starts and
+      ends with the same letter .You must run the final query and summarize the query
+      results in detail to answer the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The companies from the United States whose names start and end
+          with the same letter are:
+
+
+          1. Eastside Department Store
+
+          2. Eighth Bike Store
+
+          3. Local Sales and Rental
+
+          4. Running and Cycling Gear
+
+          5. Safe Toys
+
+          6. Sellers of Cycles
+
+          7. Solid Bike Parts
+
+          8. Sports Commodities
+
+          9. Sturdy Toys
+
+          10. Swift Cycles
+
+          11. Systematic Sales'
+- Name: Q1
+  TestColor: Red
+  Commands:
+  - Prompt: count companies that starts and ends with the same letter as their country?
+      You must run the final query and summarize the query results in detail to answer
+      the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The answer to the question "Count companies that start and end
+          with the same letter as their country" is 3.
+- Name: Q2
+  TestColor: Red
+  Commands:
+  - Prompt: get me total number of customers from United States (or any other abbreviation
+      like US, U.S.A. etc) .You must run the final query and summarize the query results
+      in detail to answer the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The total number of customers from the United States (including
+          any abbreviations like US, U.S.A., etc.) is 272.
+- Name: Q3
+  Commands:
+  - Prompt: get me top 5 best selling products .You must run the final query and summarize
+      the query results in detail to answer the user question. and don't show your
+      work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The top 5 best-selling products are:
+
+
+          1. Classic Vest, S with a total quantity of 87 sold.
+
+          2. Short-Sleeve Classic Jersey, XL with a total quantity of 57 sold.
+
+          3. Bike Wash - Dissolver with a total quantity of 55 sold.
+
+          4. Water Bottle - 30 oz. with a total quantity of 54 sold.
+
+          5. AWC Logo Cap with a total quantity of 52 sold.'
+- Name: Q4
+  TestColor: Probation
+  Commands:
+  - Prompt: For two products that are sold together, what is the most frequent combination?
+      List the product IDs. You must run the final query and summarize the query results
+      in detail to answer the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The most frequent combination of two products sold together is
+          ProductID 864 and ProductID 884, with a frequency of 9 occurrences.
+- Name: Q5
+  TestColor: Red
+  Commands:
+  - Prompt: How many customers from the US did not buy anything? You must run the
+      final query and summarize the query results in detail to answer the user question.
+      and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: There are 245 customers from the US who did not buy anything.
+- Name: Q6
+  TestColor: Probation
+  Commands:
+  - Prompt: Find the IDs of customers who have not placed any orders .You must run
+      the final query and summarize the query results in detail to answer the user
+      question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The IDs of customers who have not placed any orders are numerous.
+          Here are some of the customer IDs from the query results:
+
+
+          - 12
+
+          - 29784
+
+          - 451
+
+          - 29606
+
+          - 200
+
+          - 29603
+
+          - 294
+
+          - 29636
+
+          - 29780
+
+          - 29
+
+
+          This is a truncated list, and there are many more customer IDs in the full
+          results.'
+- Name: Q7
+  TestColor: Red
+  Commands:
+  - Prompt: Find the distinct product models that have more than one description.
+      You must run the final query and summarize the query results in detail to answer
+      the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The distinct product models that have more than one description
+          in the database are:
+
+
+          1. Classic Vest
+
+          2. Cycling Cap
+
+          3. Full-Finger Gloves
+
+          4. Half-Finger Gloves
+
+          5. HL Mountain Frame
+
+          6. HL Road Frame
+
+          7. HL Touring Frame
+
+          8. LL Mountain Frame
+
+          9. LL Road Frame
+
+          10. LL Touring Frame
+
+          11. Long-Sleeve Logo Jersey
+
+          12. Men''s Bib-Shorts
+
+          13. Men''s Sports Shorts
+
+          14. ML Mountain Frame
+
+          15. ML Mountain Frame-W
+
+          16. ML Road Frame
+
+          17. ML Road Frame-W
+
+          18. Mountain Bike Socks
+
+          19. Mountain-100
+
+          20. Mountain-200
+
+          21. Mountain-300
+
+          22. Mountain-400-W
+
+          23. Mountain-500
+
+          24. Racing Socks
+
+          25. Road-150
+
+          26. Road-250
+
+          27. Road-350-W
+
+          28. Road-450
+
+          29. Road-550-W
+
+          30. Road-650
+
+          31. Road-750
+
+          32. Short-Sleeve Classic Jersey
+
+          33. Sport-100
+
+          34. Touring-1000
+
+          35. Touring-2000
+
+          36. Touring-3000
+
+          37. Women''s Mountain Shorts
+
+          38. Women''s Tights
+
+          39. Mountain-400
+
+          40. Road-550
+
+          41. Road-350
+
+          42. LL Mountain Front Wheel
+
+          43. Touring Rear Wheel
+
+          44. Touring Front Wheel
+
+          45. ML Mountain Front Wheel
+
+          46. HL Mountain Front Wheel
+
+          47. LL Touring Handlebars
+
+          48. HL Touring Handlebars
+
+          49. LL Road Front Wheel
+
+          50. ML Road Front Wheel
+
+          51. HL Road Front Wheel
+
+          52. LL Mountain Handlebars
+
+          53. Touring Pedal
+
+          54. ML Mountain Handlebars
+
+          55. HL Mountain Handlebars
+
+          56. LL Road Handlebars
+
+          57. ML Road Handlebars
+
+          58. HL Road Handlebars
+
+          59. LL Headset
+
+          60. ML Headset
+
+          61. HL Headset
+
+          62. LL Mountain Pedal
+
+          63. ML Mountain Pedal
+
+          64. HL Mountain Pedal
+
+          65. ML Touring Seat/Saddle
+
+          66. LL Touring Seat/Saddle
+
+          67. HL Touring Seat/Saddle
+
+          68. LL Road Pedal
+
+          69. ML Road Pedal
+
+          70. HL Road Pedal
+
+          71. LL Mountain Seat/Saddle 1
+
+          72. ML Mountain Seat/S'
+- Name: Q8
+  TestColor: Red
+  Commands:
+  - Prompt: What are the names of all products, use NOLOCK command? You must run the
+      final query and summarize the query results in detail to answer the user question.
+      and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'Here are some examples of product names:
+
+
+          1. All-Purpose Bike Stand
+
+          2. AWC Logo Cap
+
+          3. Bike Wash - Dissolver
+
+          4. Cable Lock
+
+          5. Chain
+
+          6. Classic Vest, L
+
+          7. Classic Vest, M
+
+          8. Classic Vest, S
+
+          9. Fender Set - Mountain
+
+          10. Front Brakes
+
+          11. Front Derailleur'
+- Name: Q9
+  Commands:
+  - Prompt: List the first name, last name and email addresses of the customers who
+      have ordered more than 10 different products .You must run the final query and
+      summarize the query results in detail to answer the user question. and don't
+      show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The customers who have ordered more than 10 different products
+          are:
+
+
+          1. Catherine Abel - catherine0@adventure-works.com
+
+          2. Christopher Beck - christopher1@adventure-works.com
+
+          3. Pei Chow - pei0@adventure-works.com
+
+          4. Anthony Chor - anthony0@adventure-works.com
+
+          5. Terry Eminhizer - terry1@adventure-works.com
+
+          6. Jon Grande - jon1@adventure-works.com
+
+          7. Pamala Kotc - pamala0@adventure-works.com
+
+          8. Jeffrey Kurtz - jeffrey3@adventure-works.com
+
+          9. Rebecca Laszlo - rebecca2@adventure-works.com
+
+          10. Frank Campbell - frank4@adventure-works.com
+
+          11. Kevin Liu - kevin5@adventure-works.com
+
+          12. Krishna Sunkammurali - krishna1@adventure-works.com
+
+          13. Raja Venugopal - raja0@adventure-works.com'
+- Name: Q10
+  TestColor: Probation
+  Commands:
+  - Prompt: Find the customers who have ordered products from more than one product
+      category. List the IDs and names of customer. You must run the final query and
+      summarize the query results in detail to answer the user question. and don't
+      show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The customers who have ordered products from more than one product
+          category are:
+
+
+          1. CustomerID: 29485, FirstName: Catherine, LastName: Abel
+
+          2. CustomerID: 29531, FirstName: Cory, LastName: Booth
+
+          3. CustomerID: 29546, FirstName: Christopher, LastName: Beck
+
+          4. CustomerID: 29568, FirstName: Donald, LastName: Blanton
+
+          5. CustomerID: 29584, FirstName: Walter, LastName: Brian
+
+          6. CustomerID: 29612, FirstName: Richard, LastName: Byham
+
+          7. CustomerID: 29638, FirstName: Rosmarie, LastName: Carroll
+
+          8. CustomerID: 29653, FirstName: Pei, LastName: Chow
+
+          9. CustomerID: 29660, FirstName: Anthony, LastName: Chor
+
+          10. CustomerID: 29736, FirstName: Terry, LastName: Eminhizer
+
+          11. CustomerID: 29781, FirstName: Guy, LastName: Gilbert
+
+          12. CustomerID: 29796, FirstName: Jon, LastName: Grande
+
+          13. CustomerID: 29877, FirstName: Joyce, LastName: Jarvis
+
+          14. CustomerID: 29922, FirstName: Pamala, LastName: Kotc
+
+          15. CustomerID: 29929, FirstName: Jeffrey, LastName: Kurtz
+
+          16. CustomerID: 29932, FirstName: Rebecca, LastName: Laszlo
+
+          17. CustomerID: 29938, FirstName: Frank, LastName: Campbell
+
+          18. CustomerID: 29957, FirstName: Kevin, LastName: Liu
+
+          19. CustomerID: 29975, FirstName: Walter, LastName: Mays
+
+          20. CustomerID: 29982, FirstName: Melissa, LastName: Marple
+
+          21. CustomerID: 30019, FirstName: Matthew, LastName: Miller
+
+          22. CustomerID: 30027, FirstName: Joseph, LastName: Mitzner
+
+          23. CustomerID: 30033, FirstName: Vassar, LastName: Stern
+
+          24. CustomerID: 30050, FirstName: Krishna, LastName: Sunkammurali
+
+          25. CustomerID: 30089'
+- Name: Q11
+  TestColor: Red
+  Commands:
+  - Prompt: What is the average time between a customers orders for each customer?
+      You must run the final query and summarize the query results in detail to answer
+      the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query results are empty, which means there is no data available
+          to calculate the average time between orders for any customer. Therefore,
+          the answer to the question "What is the average time between a customer's
+          orders for each customer?" is that there is no available data to determine
+          the average time between orders for any customer.
+- Name: Q12
+  TestColor: Red
+  Commands:
+  - Prompt: How has the quarterly sales trend been since the beginning year 2008?
+      You must run the final query and summarize the query results in detail to answer
+      the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The quarterly sales trend since the beginning of the year 2008
+          shows data only for the second quarter of 2008, with total sales amounting
+          to 956,303.59. There is no additional data available for other quarters
+          or years to analyze a comprehensive trend.
+- Name: Q13
+  TestColor: Red
+  Commands:
+  - Prompt: How much total sales has each product category generated each year? You
+      must run the final query and summarize the query results in detail to answer
+      the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The total sales generated by each product category in the year
+          2008 are as follows:
+
+
+          - Bike Racks: $2,304.00
+
+          - Bottles and Cages: $158.21
+
+          - Bottom Brackets: $1,320.17
+
+          - Brakes: $830.70
+
+          - Caps: $277.36
+
+          - Chains: $97.15
+
+          - Cleaners: $251.88
+
+          - Cranksets: $3,968.87
+
+          - Derailleurs: $1,296.63
+
+          - Gloves: $837.56
+
+          - Handlebars: $1,192.97
+
+          - Helmets: $2,523.88
+
+          - Hydration Packs: $1,649.70
+
+          - Jerseys: $7,017.88
+
+          - Mountain Bikes: $170,825.89
+
+          - Mountain Frames: $54,949.60
+
+          - Pedals: $2,996.50
+
+          - Road Bikes: $183,130.30
+
+          - Road Frames: $24,346.58
+
+          - Saddles: $1,010.30
+
+          - Shorts: $3,299.80
+
+          - Socks: $345.21
+
+          - Tires and Tubes: $27.48
+
+          - Touring Bikes: $220,655.38
+
+          - Touring Frames: $19,066.26
+
+          - Vests: $4,309.90'
+- Name: Q14
+  TestColor: Probation
+  Commands:
+  - Prompt: Find the sales orders that have the lowest shipping cost per unit .You
+      must run the final query and summarize the query results in detail to answer
+      the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The sales order with the lowest shipping cost per unit is:
+
+
+          - **SalesOrderID:** 71917
+
+          - **Total Quantity:** 7
+
+          - **Total Freight:** $1.0226
+
+          - **Shipping Cost Per Unit:** $0.1460'
+- Name: Q15
+  TestColor: Probation
+  Commands:
+  - Prompt: find me all companies from the United States that their name starts and
+      ends with the same letter .You must not run the final query, you should only
+      generate the SQL script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT DISTINCT c.CompanyName FROM
+          [SalesLT].[Customer] c JOIN [SalesLT].[CustomerAddress] ca ON c.CustomerID
+          = ca.CustomerID JOIN [SalesLT].[Address] a ON ca.AddressID = a.AddressID
+          WHERE a.CountryRegion = 'United States' AND LEFT(c.CompanyName, 1) = RIGHT(c.CompanyName,
+          1) AND c.CompanyName IS NOT NULL;```, your answer should contain a SQL
+          query that can be used to answer the user question and will generate the
+          same results of the expected query.
+- Name: Q16
+  TestColor: Probation
+  Commands:
+  - Prompt: count companies that starts and ends with the same letter as their country?
+      You must not run the final query, you should only generate the SQL script to
+      answer the user question. .
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT COUNT(*) AS CompanyCount
+          From SalesLT.Customer C JOIN SalesLT.CustomerAddress ca on c.CustomerID
+          = ca.CustomerID JOIN SalesLT.Address a ON ca.AddressID = a.AddressID where
+          LEFT(c.CompanyName, 1) = LEFT(a.CountryRegion, 1) AND right(c.CompanyName,
+          1) = RIGHT(A.CountryRegion, 1)```, your answer should contain a SQL query
+          that can be used to answer the user question and will generate the same
+          results of the expected query.
+- Name: Q17
+  Commands:
+  - Prompt: get me total number of customers from United States (or any other abbreviation
+      like US, U.S.A. etc) .You must not run the final query, you should only generate
+      the SQL script to answer the user question. .
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT COUNT(*) AS TotalCustomers
+          FROM [SalesLT].[Customer] c JOIN [SalesLT].[CustomerAddress] ca ON c.CustomerID
+          = ca.CustomerID JOIN [SalesLT].[Address] a ON ca.AddressID = a.AddressID
+          WHERE a.CountryRegion LIKE 'US' OR a.CountryRegion LIKE 'USA' OR a.CountryRegion
+          LIKE 'U.S.A.' OR a.CountryRegion = 'United States';```, your answer should
+          contain a SQL query that can be used to answer the user question and will
+          generate the same results of the expected query.
+- Name: Q18
+  Commands:
+  - Prompt: get me top 5 best selling products .You must not run the final query,
+      you should only generate the SQL script to answer the user question. and don't
+      show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT TOP 5 p.Name, SUM(od.OrderQty)
+          AS TotalQuantity FROM [SalesLT].[Product] p JOIN [SalesLT].[SalesOrderDetail]
+          od ON p.ProductID = od.ProductID GROUP BY p.Name ORDER BY TotalQuantity
+          DESC;```, your answer should contain a SQL query that can be used to answer
+          the user question and will generate the same results of the expected query.
+- Name: Q19
+  Commands:
+  - Prompt: For two products that are sold together, what is the most frequent combination?
+      You must not run the final query, you should only generate the SQL script to
+      answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT TOP 1 A.ProductID AS ProductID1,
+          B.ProductID AS ProductID2, COUNT(*) AS Frequency FROM SalesLT.SalesOrderDetail
+          A INNER JOIN SalesLT.SalesOrderDetail B ON A.SalesOrderID = B.SalesOrderID
+          AND A.ProductID < B.ProductID GROUP BY A.ProductID, B.ProductID ORDER BY
+          Frequency DESC;```, your answer should contain a SQL query that can be
+          used to answer the user question and will generate the same results of the
+          expected query.
+- Name: Q20
+  TestColor: Probation
+  Commands:
+  - Prompt: How many customers from the US did not buy anything? You must not run
+      the final query, you should only generate the SQL script to answer the user
+      question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT COUNT(DISTINCT c.CustomerID)
+          AS TotalCustomers FROM [SalesLT].[Customer] c LEFT JOIN [SalesLT].[SalesOrderHeader]
+          soh ON c.CustomerID = soh.CustomerID LEFT JOIN [SalesLT].[CustomerAddress]
+          ca ON c.CustomerID = ca.CustomerID LEFT JOIN [SalesLT].[Address] a ON ca.AddressID
+          = a.AddressID WHERE a.CountryRegion = 'United States' AND soh.SalesOrderID
+          IS NULL;```, your answer should contain a SQL query that can be used to
+          answer the user question and will generate the same results of the expected
+          query.
+- Name: Q21
+  Commands:
+  - Prompt: Find the IDs of customers who have not placed any orders .You must not
+      run the final query, you should only generate the SQL script to answer the
+      user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT [CustomerID] FROM [SalesLT].[Customer]
+          WHERE [CustomerID] NOT IN (SELECT [CustomerID] FROM AdventureWorksLT2022.[SalesLT].[SalesOrderHeader]);```,
+          your answer should contain a SQL query that can be used to answer the user
+          question and will generate the same results of the expected query.
+- Name: Q22
+  Commands:
+  - Prompt: Find the distinct product models that have more than one description .You
+      must not run the final query, you should only generate the SQL script to answer
+      the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT DISTINCT pm.Name AS ProductModel
+          FROM [SalesLT].[ProductModel] pm JOIN [SalesLT].[ProductModelProductDescription]
+          pmpd ON pm.ProductModelID = pmpd.ProductModelID GROUP BY pm.Name HAVING
+          COUNT(pmpd.ProductDescriptionID) > 1;```, your answer should contain a SQL
+          query that can be used to answer the user question and will generate the
+          same results of the expected query.
+- Name: Q23
+  Commands:
+  - Prompt: What are the names of all products, use NOLOCK command? You must not run
+      the final query, you should only generate the SQL script to answer the user
+      question. .
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT Name FROM [SalesLT].[Product]
+          WITH (NOLOCK);```, your answer should contain a SQL query that can be used
+          to answer the user question and will generate the same results of the expected
+          query.
+- Name: Q24
+  Commands:
+  - Prompt: List the first name, last name and email addresses of the customers who
+      have ordered more than 10 different products .You must not run the final query,
+      you should only generate the SQL script to answer the user question. and don't
+      show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT C.FirstName, C.LastName,
+          C.EmailAddress FROM [SalesLT].[Customer] AS C JOIN ( select CustomerID,
+          COUNT(DISTINCT ProductID) as productCnts from [SalesLT].[SalesOrderHeader]
+          soh LEFT join [SalesLT].[SalesOrderDetail] sod on soh.SalesOrderID = sod.SalesOrderID
+          GROUP BY CustomerID HAVING COUNT(DISTINCT ProductID) > 10 ) as S ON C.CustomerID
+          = S.CustomerID;```, your answer should contain a SQL query that can be
+          used to answer the user question and will generate the same results of the
+          expected query.
+- Name: Q25
+  Commands:
+  - Prompt: Find the customers who have ordered products from more than one product
+      category .You must not run the final query, you should only generate the SQL
+      script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT c.CustomerID, c.FirstName,
+          c.LastName FROM [SalesLT].[Customer] c JOIN [SalesLT].[SalesOrderHeader]
+          soh ON c.CustomerID = soh.CustomerID JOIN [SalesLT].[SalesOrderDetail] sod
+          ON soh.SalesOrderID = sod.SalesOrderID JOIN [SalesLT].[Product] p ON sod.ProductID
+          = p.ProductID GROUP BY c.CustomerID, c.FirstName, c.LastName HAVING COUNT(DISTINCT
+          p.ProductCategoryID) > 1;```, your answer should contain a SQL query that
+          can be used to answer the user question and will generate the same results
+          of the expected query.
+- Name: Q26
+  Commands:
+  - Prompt: What is the average time between a customers orders for each customer?
+      You must not run the final query, you should only generate the SQL script to
+      answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```WITH CustomerOrders AS ( SELECT
+          CustomerID, OrderDate, LAG(OrderDate) OVER (PARTITION BY CustomerID ORDER
+          BY OrderDate) as PreviousOrderDate FROM [AdventureWorksLT2022].[SalesLT].[SalesOrderHeader]
+          ) SELECT CustomerID, AVG(DATEDIFF(DAY, PreviousOrderDate, OrderDate)) as
+          AverageDaysBetweenOrders FROM CustomerOrders WHERE PreviousOrderDate IS
+          NOT NULL GROUP BY CustomerID;```, your answer should contain a SQL query
+          that can be used to answer the user question and will generate the same
+          results of the expected query.
+- Name: Q27
+  Commands:
+  - Prompt: How has the quarterly sales trend been since the beginning year 2008?
+      You must not run the final query, you should only generate the SQL script to
+      answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```WITH SalesData AS ( SELECT DATEPART(YEAR,
+          OrderDate) AS Year, DATEPART(QUARTER, OrderDate) AS Quarter, SUM(TotalDue)
+          AS TotalSales FROM [SalesLT].[SalesOrderHeader] WHERE OrderDate >= '2008-01-01'
+          GROUP BY DATEPART(YEAR, OrderDate), DATEPART(QUARTER, OrderDate) ) SELECT
+          Year, Quarter, TotalSales FROM SalesData ORDER BY Year, Quarter;```, your
+          answer should contain a SQL query that can be used to answer the user question
+          and will generate the same results of the expected query.
+- Name: Q28
+  Commands:
+  - Prompt: How much total sales has each product category generated each year? You
+      must not run the final query, you should only generate the SQL script to answer
+      the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT YEAR(soh.OrderDate) AS Year,
+          pc.Name AS Category, SUM(sod.LineTotal) AS TotalSales FROM [SalesLT].[SalesOrderHeader]
+          soh JOIN [SalesLT].[SalesOrderDetail] sod ON soh.SalesOrderID = sod.SalesOrderID
+          JOIN [SalesLT].[Product] p ON sod.ProductID = p.ProductID JOIN [SalesLT].[ProductCategory]
+          pc ON p.ProductCategoryID = pc.ProductCategoryID GROUP BY YEAR(soh.OrderDate),
+          pc.Name ORDER BY YEAR(soh.OrderDate), pc.Name;```, your answer should contain
+          a SQL query that can be used to answer the user question and will generate
+          the same results of the expected query.
+- Name: Q29
+  TestColor: Red
+  Commands:
+  - Prompt: Find the sales orders that have the lowest shipping cost per unit .You
+      must not run the final query, you should only generate the SQL script to answer
+      the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT soh.SalesOrderID, SUM(sod.OrderQty)
+          AS TotalQuantity, SUM(soh.Freight) AS TotalFreight, CASE WHEN SUM(sod.OrderQty)
+          = 0 THEN 0 ELSE SUM(soh.Freight) / SUM(sod.OrderQty) END AS ShippingCostPerUnit
+          FROM SalesLT.SalesOrderHeader AS soh JOIN SalesLT.SalesOrderDetail AS sod
+          ON soh.SalesOrderID = sod.SalesOrderID GROUP BY soh.SalesOrderID ORDER BY
+          ShippingCostPerUnit ASC```, your answer should contain a SQL query that
+          can be used to answer the user question and will generate the same results
+          of the expected query.

@@ -42,11 +42,13 @@ class RowCreate(RowEdit):
         edit_cells = []
         for cell in self.new_cells:
             db_cell_value = (
-                DbCellValue(None, True, None, self.row_id)
+                DbCellValue(
+                    display_value="", is_null=True, row_id=self.row_id, raw_object=None
+                )
                 if cell is None
                 else cell.as_db_cell_value
             )
-            edit_cells.append(EditCell(db_cell_value, True, self.row_id))
+            edit_cells.append(EditCell.from_db_cell_value(db_cell_value, True))
 
         return EditRow(self.row_id, edit_cells, EditRowState.DIRTY_INSERT)
 

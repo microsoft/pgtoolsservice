@@ -34,7 +34,7 @@ class RowDelete(RowEdit):
     def get_edit_row(self, cached_row: list[DbCellValue]) -> EditRow:
         return EditRow(
             self.row_id,
-            [EditCell(cell, True, self.row_id) for cell in cached_row],
+            [EditCell.from_db_cell_value(cell, True, self.row_id) for cell in cached_row],
             EditRowState.DIRTY_DELETE,
         )
 

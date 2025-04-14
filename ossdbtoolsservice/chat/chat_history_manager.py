@@ -45,8 +45,13 @@ class ChatHistoryManager:
 
                 # If we've recorded tool calls after this user message,
                 # add them to the history.
-                if session_id in self._session_id_to_tool_call_records and (
-                    request_history_index in self._session_id_to_tool_call_records[session_id]
+                if (
+                    session_id is not None
+                    and session_id in self._session_id_to_tool_call_records
+                    and (
+                        request_history_index
+                        in self._session_id_to_tool_call_records[session_id]
+                    )
                 ):
                     for record in self._session_id_to_tool_call_records[session_id][
                         request_history_index

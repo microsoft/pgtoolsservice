@@ -11,7 +11,7 @@ from azure.ai.evaluation import (
 )
 
 from evaluations.chat_service_wrapper import ChatServiceWrapper
-from evaluations.evaluators.correctness import CorrectnessEvaluator
+from evaluations.evaluators.common.correctness import CorrectnessEvaluator
 from evaluations.settings import EvaluationSettings
 from ossdbtoolsservice.chat.messages import ChatCompletionRequestParams
 
@@ -53,11 +53,12 @@ def test_evals(
 ) -> None:
     """Test the first evaluation."""
 
-    model_config = AzureOpenAIModelConfiguration(
-        api_key=eval_settings.azure_openai_api_key,
-        azure_deployment=eval_settings.azure_openai_eval_chat_deployment_name,
-        azure_endpoint=eval_settings.azure_openai_endpoint,
-    )
+    model_config = {
+        "type": "azure_openai",
+        "azure_endpoint": eval_settings.azure_openai_endpoint,
+        "api_key": eval_settings.azure_openai_api_key,
+        "azure_deployment": eval_settings.azure_openai_eval_chat_deployment_name,
+    }
 
     relevance_eval = RelevanceEvaluator(
         model_config=model_config,

@@ -184,7 +184,7 @@ def get_config() -> tuple[argparse.Namespace, configparser.ConfigParser]:
     return args, config
 
 
-def get_loggers(log_dir: str) -> logging.Logger:
+def get_logger(log_dir: str) -> logging.Logger:
     # Create the output logger
     logger = logging.getLogger("ossdbtoolsservice")
     try:

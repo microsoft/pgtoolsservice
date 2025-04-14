@@ -76,7 +76,7 @@ class ServiceBufferFileStreamReader(ServiceBufferFileStream):
             if type_value == datatypes.DATATYPE_NULL:
                 # wrap the NULL value as a DbCellValue
                 value = DbCellValue(
-                    display_value=None, is_null=True, raw_object=None, row_id=row_id
+                    display_value="", is_null=True, raw_object=None, row_id=row_id
                 )
             else:
                 # read the length of data, then update the offset by plus 4,

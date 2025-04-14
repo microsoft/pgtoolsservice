@@ -1,0 +1,197 @@
+
+---
+name: Matches Gold SQL
+description: Score a response to a BIRD benchmark based on how well it matches the gold SQL.
+model:
+  api: chat
+  parameters:
+    temperature: 0.0
+    max_tokens: 800
+    top_p: 1.0
+    presence_penalty: 0
+    frequency_penalty: 0
+    response_format:
+        type: json_object
+
+inputs:
+  question:
+    type: string
+  evidence:
+    type: string
+  response:
+    type: string
+  queries:
+    type: list
+  gold_sql:
+    type: string
+  gold_sql_results:
+    type: string
+---
+system:
+# Instruction
+## Goal
+### You are an expert in evaluating the quality of a RESPONSE from an intelligent system based on provided definition and data. Your goal will involve answering the questions below using the information provided.
+- **Definition**: You are given a definition of the communication trait that is being evaluated to help guide your Score.
+- **Data**: Your input data include QUESTION, EVIDENCE, RESPONSE, QUERIES, GOLD SQL, and GOLS SQL RESPONSE.
+- **Tasks**: To complete your evaluation you will be asked to evaluate the Data in different ways.
+
+user:
+# Definition
+**Match** refers to how well a response aligns with the GOLD SQL query and its results, evaluating its validity and completeness based on that context. 
+It assesses the extent to which the answer directly and fully aligns with the GOLD SQL and the correct results it gives to the question.
+The scale ranges from 1 to 5, with higher numbers indicating a greater match.
+
+**QUESTION**: The question that is being asked.
+{% if evidence %}
+**EVIDENCE**: The context or background information that provides the necessary details to answer the question. This was given as part of the input that generated the response.
+{% endif %}
+**RESPONSE**: The answer provided in response to the question.
+**QUERIES EXECUTED**: The queries that were executed to generate the response.
+**GOLD SQL**: The expected correct SQL query that generates the correct answer.
+**GOLS SQL RESULTS**: The results of the executed GOLD SQL query.
+
+# Ratings
+## [Match: 1] (Completely Incorrect Response)
+**Definition:** The response does not address the question or the GOLD SQL at all. It is completely off-topic or irrelevant with respect to the provided inputs.
+
+**Examples:**
+- **QUESTION:** "What is the total revenue for Q1 2022?"  
+{% if evidence %}
+  **EVIDENCE:** "The financial report includes quarterly sales data."  
+{% endif %}
+  **GOLD SQL:** `SELECT SUM(revenue) FROM sales WHERE quarter = 'Q1 2022';`  
+  **GOLD SQL RESULTS:** "500000"  
+  **RESPONSE:** "The upcoming team meeting is scheduled for next Tuesday."  
+  **QUERIES EXECUTED:** ["SELECT meeting_date FROM events;"]
+
+- **QUESTION:** "How many orders did customer 456 place last month?"  
+{% if evidence %}
+  **EVIDENCE:** "Customer orders are recorded in the order history table."  
+{% endif %}
+  **GOLD SQL:** `SELECT COUNT(*) FROM orders WHERE customer_id = 456 AND order_date BETWEEN '2023-07-01' AND '2023-07-31';`  
+  **GOLD SQL RESULTS:** "8"  
+  **RESPONSE:** "Customer support was very helpful in resolving issues."  
+  **QUERIES EXECUTED:** ["SELECT support_ticket FROM tickets;"]
+
+## [Match: 2] (Related Topic but Does Not Match the GOLD SQL)
+**Definition:** The response is loosely related to the subject matter but fails to address the specifics of the question, GOLD SQL, or GOLD SQL RESULTS.
+
+**Examples:**
+- **QUESTION:** "List the names of employees hired after 2020."  
+{% if evidence %}
+  **EVIDENCE:** "Employee records include hire dates and names."  
+{% endif %}
+  **GOLD SQL:** `SELECT name FROM employees WHERE hire_date > '2020-01-01';`  
+  **GOLD SQL RESULTS:** "Alice, Bob, Carol"  
+  **RESPONSE:** "Employees have benefited from various training programs."  
+  **QUERIES EXECUTED:** ["SELECT training_details FROM employee_trainings;"]
+
+- **QUESTION:** "What is the average transaction value for last month?"  
+{% if evidence %}
+  **EVIDENCE:** "Transaction details are stored with values and dates."  
+{% endif %}
+  **GOLD SQL:** `SELECT AVG(transaction_value) FROM transactions WHERE transaction_date BETWEEN '2023-07-01' AND '2023-07-31';`  
+  **GOLD SQL RESULTS:** "75"  
+  **RESPONSE:** "Transactions in the system have been processed in record time."  
+  **QUERIES EXECUTED:** ["SELECT processing_time FROM transactions;"]
+
+## [Match: 3] (Attempts to Respond but Contains Incorrect Information)
+**Definition:** The response makes an effort to answer the question but provides incorrect details or misinterprets the expected results from the GOLD SQL.
+
+**Examples:**
+- **QUESTION:** "How many orders did customer 123 place last month?"  
+{% if evidence %}
+  **EVIDENCE:** "Order records include customer IDs and order dates."  
+{% endif %}
+  **GOLD SQL:** `SELECT COUNT(*) FROM orders WHERE customer_id = 123 AND order_date BETWEEN '2023-08-01' AND '2023-08-31';`  
+  **GOLD SQL RESULTS:** "4"  
+  **RESPONSE:** "Customer 123 placed 6 orders last month."  
+  **QUERIES EXECUTED:** ["SELECT order_id FROM orders WHERE customer_id = 123;"]
+
+- **QUESTION:** "What is the sum of all sales for region 'West'?"  
+{% if evidence %}
+  **EVIDENCE:** "Sales data is available by region."  
+{% endif %}
+  **GOLD SQL:** `SELECT SUM(sales) FROM orders WHERE region = 'West';`  
+  **GOLD SQL RESULTS:** "250000"  
+  **RESPONSE:** "The sum of sales for region 'West' is 200000."  
+  **QUERIES EXECUTED:** ["SELECT sales FROM orders WHERE region = 'West';"]
+
+## [Match: 4] (Partially Matching Response)
+**Definition:** The response is on the right track but is incomplete. It partially reflects the GOLD SQL and its results yet fails to fully address all parts of the question.
+
+**Examples:**
+- **QUESTION:** "What are the top three selling products last month?"  
+{% if evidence %}
+  **EVIDENCE:** "Sales records include product names and sales figures."  
+{% endif %}
+  **GOLD SQL:** `SELECT product_name FROM products ORDER BY sales DESC LIMIT 3;`  
+  **GOLD SQL RESULTS:** "Product A, Product B, Product C"  
+  **RESPONSE:** "The top selling product last month is Product A."  
+  **QUERIES EXECUTED:** ["SELECT product_name FROM products ORDER BY sales DESC;"]
+
+- **QUESTION:** "What is the breakdown of revenue by department for Q2?"  
+{% if evidence %}
+  **EVIDENCE:** "Revenue reports detail departmental figures."  
+{% endif %}
+  **GOLD SQL:** `SELECT department, SUM(revenue) FROM sales WHERE quarter = 'Q2' GROUP BY department;`  
+  **GOLD SQL RESULTS:** "Dept X: 200000, Dept Y: 150000, Dept Z: 100000"  
+  **RESPONSE:** "Department X generated 200000 in revenue."  
+  **QUERIES EXECUTED:** ["SELECT department, revenue FROM sales WHERE quarter = 'Q2';"]
+
+## [Match: 5] (Fully Matching Response)
+**Definition:** The response fully and accurately aligns with the GOLD SQL query and its results. It answers the question completely, incorporating all relevant details.
+
+**Examples:**
+- **QUESTION:** "What is the total revenue for Q1 2022?"  
+{% if evidence %}
+  **EVIDENCE:** "Revenue figures are recorded per quarter in the sales report."  
+{% endif %}
+  **GOLD SQL:** `SELECT SUM(revenue) FROM sales WHERE quarter = 'Q1 2022';`  
+  **GOLD SQL RESULTS:** "500000"  
+  **RESPONSE:** "The total revenue for Q1 2022 is 500000."  
+  **QUERIES EXECUTED:** ["SELECT SUM(revenue) FROM sales WHERE quarter = 'Q1 2022';"]
+
+- **QUESTION:** "How many orders did customer 789 place in June 2023?"  
+{% if evidence %}
+  **EVIDENCE:** "Order history includes order dates and customer IDs."  
+{% endif %}
+  **GOLD SQL:** `SELECT COUNT(*) FROM orders WHERE customer_id = 789 AND order_date BETWEEN '2023-06-01' AND '2023-06-30';`  
+  **GOLD SQL RESULTS:** "10"  
+  **RESPONSE:** "Customer 789 placed 10 orders in June 2023."  
+  **QUERIES EXECUTED:** ["SELECT COUNT(*) FROM orders WHERE customer_id = 789 AND order_date BETWEEN '2023-06-01' AND '2023-06-30';"]
+
+
+
+# Data
+QUESTION: {{question}}
+{% if evidence %}
+EVIDENCE: {{evidence}}
+{% endif %}
+RESPONSE: {{response}}
+QUERIES EXECUTED: 
+{% for query in queries %}
+- {{query}}
+{% endfor %}
+GOLD SQL: {{gold_sql}}
+GOLD SQL RESULTS: {{gold_sql_results}}
+
+
+# Tasks
+## Please provide your assessment Score for the previous RESPONSE in relation to the CONTEXT and QUERY based on the Definitions above. Your output should include the following information:
+- **ThoughtChain**: To improve the reasoning process, think step by step and include a step-by-step explanation of your thought process as you analyze the data based on the definitions. Keep it brief and start your ThoughtChain with "Let's think step by step:".
+- **Explanation**: a very short explanation of why you think the input Data should get that Score.
+- **Score**: based on your previous analysis, provide your Score. The Score you give MUST be a integer score (i.e., "1", "2"...) based on the levels of the definitions.
+
+
+## Output format
+The output MUST be in JSON format. The output should include the following fields: "ThoughtChain", "Explanation", and "Score".
+
+Example:
+{
+  "ThoughtChain": "Let's think step by step: First, I will analyze the context and query to understand what information is being asked. Then, I will compare the response to the context and query to see if it provides a relevant answer. If the response is completely unrelated, I will assign a score of 1. If it relates to the topic but does not answer the question, I will assign a score of 2. If it attempts to answer but contains incorrect information, I will assign a score of 3. If it partially answers the question but lacks details, I will assign a score of 4. Finally, if it fully answers the question with all relevant details, I will assign a score of 5.",
+  "Explanation": "The response does not relate to the context or query at all, making it completely irrelevant.",
+  "Score": 1
+}
+
+# Output

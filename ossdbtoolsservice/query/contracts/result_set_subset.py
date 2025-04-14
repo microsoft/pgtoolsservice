@@ -6,6 +6,7 @@
 
 from typing import TYPE_CHECKING
 
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.query.contracts import DbCellValue
 from ossdbtoolsservice.utils import validate
@@ -15,9 +16,9 @@ if TYPE_CHECKING:
     from ossdbtoolsservice.query.result_set import ResultSet
 
 
-class ResultSetSubset:
-    rows: list[list[DbCellValue]]
-    row_count: int
+class ResultSetSubset(PGTSBaseModel):
+    rows: list[list[DbCellValue]] = []
+    row_count: int = 0
 
     @classmethod
     def from_result_set(
@@ -49,10 +50,6 @@ class ResultSetSubset:
         instance.row_count = len(instance.rows)
 
         return instance
-
-    def __init__(self) -> None:
-        self.rows: list[list[DbCellValue]] = []
-        self.row_count: int = 0
 
     def build_db_cell_values(
         self,
@@ -134,14 +131,13 @@ class ResultSetSubset:
 
         if index < result_set.row_count:
             return result_set.get_row(index)
-        return [DbCellValue(None, True, None, index)] * len(result_set.columns_info)
+        return [
+            DbCellValue(display_value="", is_null=True, row_id=None, raw_object=index)
+        ] * len(result_set.columns_info)
 
 
-class SubsetResult:
+class SubsetResult(PGTSBaseModel):
     result_subset: ResultSetSubset
-
-    def __init__(self, result_subset: ResultSetSubset):
-        self.result_subset: ResultSetSubset = result_subset
 
 
 OutgoingMessageRegistration.register_outgoing_message(SubsetResult)

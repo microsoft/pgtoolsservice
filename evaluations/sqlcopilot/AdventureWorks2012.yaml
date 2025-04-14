@@ -1,0 +1,270 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: AW2012
+Description: AdventureWorks2012
+TestSetup:
+  DatabaseToRestore: Prompts\AdventureWorks2012\AdventureWorks2012.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Q0
+  TestColor: Red
+  Commands:
+  - Prompt: find the total quantity for locationid smaller than 10 multiplied by 10
+      .You must run the final query and summarize the query results in detail to answer
+      the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The total quantity for location IDs smaller than 10, when multiplied
+          by 10, is 1,995,310.
+- Name: Q1
+  Commands:
+  - Prompt: what are the cumulative distribution and percent rank of employees' pay
+      rates within a Information Services department. Return department, last name,
+      rate, cumulative distribution use CUME_DIST function and percent rank of rate.
+      Only use EmployeePayHistory and vEmployeeDepartmentHistory table in your answer.
+      .You must run the final query and summarize the query results in detail to answer
+      the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The cumulative distribution and percent rank of employees'' pay
+          rates within the Information Services department are as follows:
+
+
+          - **Trenary** has a pay rate of 50.4808, with a cumulative distribution
+          of 1.0 and a percent rank of 1.000000.
+
+          - **Conroy** has a pay rate of 39.6635, with a cumulative distribution of
+          0.9 and a percent rank of 0.888889.
+
+          - **Ajenstat** and **Wilson** both have a pay rate of 38.4615, with a cumulative
+          distribution of 0.8 and a percent rank of 0.666667.
+
+          - **Sharma** and **Connelly** both have a pay rate of 32.4519, with a cumulative
+          distribution of 0.6 and a percent rank of 0.444444.
+
+          - **Berg**, **Meyyappan**, **Bacon**, and **Bueno** all have a pay rate
+          of 27.4038, with a cumulative distribution of 0.4 and a percent rank of
+          0.000000.
+
+
+          This data provides a detailed view of how each employee''s pay rate ranks
+          within the department.'
+- Name: Q2
+  Commands:
+  - Prompt: what are the names of all products .You must run the final query and summarize
+      the query results in detail to answer the user question. and don't show your
+      work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'Here are some examples of the names of all products in the database:
+
+
+          1. Adjustable Race
+
+          2. All-Purpose Bike Stand
+
+          3. AWC Logo Cap
+
+          4. BB Ball Bearing
+
+          5. Bearing Ball
+
+          6. Bike Wash - Dissolver
+
+          7. Blade
+
+          8. Cable Lock
+
+          9. Chain
+
+          10. Chain Stays'
+- Name: Q3
+  TestColor: Probation
+  Commands:
+  - Prompt: Find the product name that have been ordered by the same customer more
+      than once in the same year and month using CTE. You must run the final query
+      and summarize the query results in detail to answer the user question. and don't
+      show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'Based on the query results, the products that have been ordered
+          by the same customer more than once in the same year and month are:
+
+
+          1. Water Bottle - 30 oz.
+
+          2. ML Road Frame-W - Yellow, 44
+
+          3. Patch Kit/8 Patches
+
+          4. Mountain Tire Tube
+
+          5. Touring Tire
+
+          6. Long-Sleeve Logo Jersey, M
+
+          7. Mountain Bottle Cage
+
+          8. Road Tire Tube
+
+          9. Touring Tire Tube
+
+          10. Hydration Pack - 70 oz.
+
+          11. HL Road Tire
+
+          12. LL Road Tire
+
+          13. Sport-100 Helmet, Black
+
+          14. LL Mountain Tire
+
+          15. AWC Logo Cap
+
+          16. Sport-100 Helmet, Red
+
+          17. Sport-100 Helmet, Blue
+
+          18. Bike Wash - Dissolver
+
+          19. Long-Sleeve Logo Jersey, L
+
+          20. ML Road Tire
+
+          21. HL Road Handlebars
+
+          22. LL Mountain Tire
+
+          23. ML Mountain Handlebars
+
+          24. Fender Set - Mountain
+
+          25. Mountain Bottle Cage
+
+          26. Half-Finger Gloves, L
+
+          27. Road Bottle Cage'
+- Name: Q4
+  Commands:
+  - Prompt: find the persons whose last name starts with letter 'L'. Return BusinessEntityID,
+      FirstName, LastName, and PhoneNumber. Sort the result on lastname and firstname
+      .You must run the final query and summarize the query results in detail to answer
+      the user question. and don't show your work.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The query results show a list of persons whose last names start
+          with the letter ''L''. The results are sorted by last name and first name.
+          Here is a summary of the findings:
+
+
+          - The majority of the individuals have the last name "Lal".
+
+          - The list includes a variety of first names such as Aaron, Adam, Alejandro,
+          Alicia, Alisha, Alison, Alvin, Andres, Arturo, Ashlee, Austin, Barbara,
+          Benjamin, Bethany, Bonnie, Brad, Bradley, Brandon, Brendan, Caleb, Cameron,
+          Carl, Carly, Casey, Cassie, Chad, Christian, Christy, Clarence, Colin, Connor,
+          Corey, Cristina, Dale, Damien, Darrell, David, Dawn, Deborah, Devon, Don,
+          Donna, Drew, Dustin, Dylan, Edwin, Elijah, Eric, Ethan, Franklin, Gabriel,
+          Gilbert, Grant, Hunter, Jack, Jackson, Jaclyn, James, Jenny, Jerry, Jodi,
+          Johnny, Jon, Jonathan, Jordan, Jose, Julie, Justin, Kara, Karl, Karla, Kate,
+          Kathryn, Katie, Keith, Kelli, Kelsey, Kelvin, Kenneth, Kevin, Kurt, Kyle,
+          Lacey, Latoya, Leonard, Lindsay, Lindsey, Logan, Louis, Luis, Luke, Mario,
+          Marshall, Maurice, Michele, Mindy, Misty, Mitchell, Nathan, Nichole, Nicolas,
+          Nina, Noah, Omar, Priscilla, Rafael, Ricardo, Robert, Roger, Russell, Ryan,
+          Samuel, Sharon, Shaun, Shawn, Shawna, Sheena, Tamara, Tara, Tasha, Terrence,
+          Terry, Thomas, Tommy, Tony, Tonya, Tracy, Warren, and Wayne.
+
+          - There are also a few individuals with last names other than "Lal", such
+          as Brian LaMee, Andrew Lan, Eric Lang, and Rebecca Laszlo.
+
+
+          The query results are too large to display in full, but the provided sample
+          includes 135 entries.'
+- Name: Q5
+  TestColor: Probation
+  Commands:
+  - Prompt: find the total quantity for locationid smaller than 10 multiplied by 10
+      .You must not run the final query, you should only return the generated SQL
+      script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT SUM(Quantity) * 10 AS TotalQuantity
+          FROM Production.ProductInventory WHERE LocationID < 10```, your answer should
+          contain a SQL query that can be used to answer the user question and will
+          generate the same results of the expected query.
+- Name: Q6
+  Commands:
+  - Prompt: what are the cumulative distribution and percent rank of employees' pay
+      rates within a Information Services department. Return department, last name,
+      rate, cumulative distribution use CUME_DIST function and percent rank of rate.
+      Only use EmployeePayHistory and vEmployeeDepartmentHistory table in your answer.
+      .You must not run the final query, you should only return the generated SQL
+      script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT Department, LastName, Rate,
+          CUME_DIST () OVER (PARTITION BY Department ORDER BY Rate) AS CumeDist, PERCENT_RANK()
+          OVER (PARTITION BY Department ORDER BY Rate) AS PctRank FROM HumanResources.vEmployeeDepartmentHistory
+          AS edh INNER JOIN HumanResources.EmployeePayHistory AS e ON e.BusinessEntityID
+          = edh.BusinessEntityID WHERE Department IN ('Information Services') ORDER
+          BY Department, Rate DESC;```, your answer should contain a SQL query that
+          can be used to answer the user question and will generate the same results
+          of the expected query.
+- Name: Q7
+  Commands:
+  - Prompt: what are the names of all products. You must not run the final query,
+      you should only return the generated SQL script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT Name FROM [AdventureWorks2012].[Production].[Product];```,
+          your answer should contain a SQL query that can be used to answer the user
+          question and will generate the same results of the expected query.
+- Name: Q8
+  Commands:
+  - Prompt: Find the product name that have been ordered by the same customer more
+      than once in the same year and month using CTE. You must not run the final query,
+      you should only return the generated SQL script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```WITH CustomerProductOrders AS (
+          SELECT so.CustomerID, sod.ProductID, YEAR(so.OrderDate) AS OrderYear, MONTH(so.OrderDate)
+          AS OrderMonth, COUNT(*) AS OrderCount FROM Sales.SalesOrderHeader AS so
+          JOIN Sales.SalesOrderDetail AS sod ON so.SalesOrderID = sod.SalesOrderID
+          GROUP BY so.CustomerID, sod.ProductID, YEAR(so.OrderDate), MONTH(so.OrderDate)
+          HAVING COUNT(*) > 1 ) SELECT p.Name FROM CustomerProductOrders AS cpo JOIN
+          Production.Product AS p ON cpo.ProductID = p.ProductID;```, your answer
+          should contain a SQL query that can be used to answer the user question
+          and will generate the same results of the expected query.
+- Name: Q9
+  Commands:
+  - Prompt: find the persons whose last name starts with letter 'L'. Return BusinessEntityID,
+      FirstName, LastName, and PhoneNumber. Sort the result on lastname and firstname
+      .You must not run the final query, you should only return the generated SQL
+      script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: This is the expected query ```SELECT p.BusinessEntityID, FirstName,
+          LastName, PhoneNumber AS Person_Phone FROM Person.Person AS p JOIN Person.PersonPhone
+          AS ph ON p.BusinessEntityID  = ph.BusinessEntityID WHERE LastName LIKE 'L%'
+          ORDER BY LastName, FirstName;```, your answer should contain a SQL query
+          that can be used to answer the user question and will generate the same
+          results of the expected query.

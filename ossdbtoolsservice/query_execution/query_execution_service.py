@@ -508,7 +508,7 @@ class QueryExecutionService(Service):
                 params.rows_start_index + params.rows_count,
             )
 
-            return SubsetResult(result_set_subset)
+            return SubsetResult(result_subset=result_set_subset)
         except Exception as e:
             request_context.send_unhandled_error_response(e)
             return None
@@ -603,7 +603,7 @@ class QueryExecutionService(Service):
             batch_summaries = [batch.batch_summary for batch in query.batches]
 
             query_complete_params = QueryCompleteNotificationParams(
-                worker_args.owner_uri, batch_summaries
+                owner_uri=worker_args.owner_uri, batch_summaries=batch_summaries
             )
             _check_and_fire(worker_args.on_query_complete, query_complete_params)
 

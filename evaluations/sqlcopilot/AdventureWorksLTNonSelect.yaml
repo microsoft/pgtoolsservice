@@ -1,0 +1,181 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: AWLT_NonSelect
+Description: AdventureWorksLT Non-Select Queries
+TestSetup:
+  DatabaseToRestore: Prompts\AdventureWorksLT2022\AdventureWorksLT2022.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Q0
+  Commands:
+  - Prompt: Create a new table with sparse columns and a column set. You must not
+      run the final query, you should only generate the SQL script to answer the
+      user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should be very similar to ```CREATE TABLE NewTable (\n    ID
+          INT PRIMARY KEY,\n    Name NVARCHAR(100) SPARSE,\n    Age INT SPARSE,\n    Address
+          NVARCHAR(255) SPARSE,\n    SparseColumnSet XML COLUMN_SET FOR ALL_SPARSE_COLUMNS```
+- Name: Q1
+  Commands:
+  - Prompt: Insert a new record for a customer with FirstName 'John' and LastName
+      'Doe' in the SalesLT.Customer table. You must not run the final query, you should
+      only generate the SQL script to answer. the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should be very similar to ```INSERT INTO [SalesLT].[Customer]
+          (NameStyle, FirstName, LastName, PasswordHash, PasswordSalt, rowguid, ModifiedDate)
+          VALUES (0, 'John', 'Doe', 'hash', 'salt', NEWID(), GETDATE())```.
+- Name: Q2
+  Commands:
+  - Prompt: Create a stored procedure that shows all sales by agent ID, with agent
+      ID as the input parameter and raising an error if the agent ID does not exist.
+      You must not run the final query, you should only generate the SQL script to
+      answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should be very similar to ```"CREATE PROCEDURE GetSalesByAgentID\n    @AgentID
+          INT\nAS\nBEGIN\n -- Check if the agent ID exists in the Agents table\n    IF
+          NOT EXISTS (SELECT 1 FROM dbo.Agents WHERE AgentID = @AgentID)\n BEGIN\n        --
+          Raise an error if the agent ID does not exist\n        RAISERROR('Agent
+          ID does not exist', 16, 1)\n RETURN\n    END\n    -- Retrieve all sales
+          by agent ID\n    SELECT ph.SaleDate, ph.SalePrice\n    FROM dbo.PropertyHistory
+          ph\n INNER JOIN dbo.AgentPropertyMappings apm ON ph.PropertyID = apm.PropertyID\n    WHERE
+          apm.AgentID = @AgentID\nEND;"```.
+- Name: Q3
+  Commands:
+  - Prompt: create a view to calculate the total weight of the product in the SalesLT.Product
+      that multiplies weight by OrderQty. You must not run the final query, you should
+      only generate the SQL script to answer. the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should generate similar results to ```CREATE VIEW [SalesLT].[TotalProductWeight]
+          AS SELECT p.ProductID, p.Name, p.Weight * sod.OrderQty AS TotalWeight FROM
+          [SalesLT].[Product] p JOIN [SalesLT].[SalesOrderDetail] sod ON p.ProductID
+          = sod.ProductID;""```.
+- Name: Q4
+  Commands:
+  - Prompt: Create a non-persisted computed column in SalesLT.Product that calculates
+      the discounted price. You must not run the final query, you should only generate
+      the SQL script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should generate similar results to ```ALTER TABLE SalesLT.Product\r\nADD
+          DiscountedPrice AS (ListPrice * 0.9);""```.
+- Name: Q5
+  TestColor: Probation
+  Commands:
+  - Prompt: Create a new partition function and scheme to split SalesLT.SalesOrderHeader
+      into quarterly partitions, use create partition function and create partition
+      scheme.You must not run the final query, you should only generate the SQL script
+      to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should generate similar results to ```CREATE PARTITION
+          FUNCTION pf_SalesOrderHeader_OrderDate (datetime)\nAS RANGE RIGHT FOR VALUES
+          \n(\n    '2023-03-31',  -- End of Q1\n    '2023-06-30',  -- End of Q2\n    '2023-09-30',  --
+          End of Q3\n    '2023-12-31'   -- End of Q4\n);\n\n \nCREATE PARTITION SCHEME
+          ps_SalesOrderHeader_OrderDate\nAS PARTITION pf_SalesOrderHeader_OrderDate\nTO
+          \n(\n    [PRIMARY],  -- Q1\n    [PRIMARY],  -- Q2\n    [PRIMARY],  -- Q3\n    [PRIMARY],  --
+          Q4\n    [PRIMARY]   -- For values greater than the last boundary\n);```
+- Name: Q6
+  Commands:
+  - Prompt: Create a new schema bound function on Sales.SalesOrderHeader that returns
+      the total number of orders for a given customer.You must not run the final query,
+      you should only generate the SQL script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should generate similar results to ```'CREATE FUNCTION
+          SalesLT.GetTotalOrdersForCustomer (@CustomerID INT) RETURNS INT WITH SCHEMABINDING
+          AS BEGIN DECLARE @TotalOrders INT; SELECT @TotalOrders = COUNT(*) FROM SalesLT.SalesOrderHeader
+          WHERE CustomerID = @CustomerID; RETURN @TotalOrders; END;```
+- Name: Q7
+  Commands:
+  - Prompt: Create a function to calculate the total number of returns for a specific
+      product.You must not run the final query, you should only generate the SQL
+      script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should generate similar results to ```CREATE FUNCTION
+          dbo.GetTotalReturnsForProduct ( @ProductID INT) RETURNS INT AS BEGIN DECLARE
+          @TotalReturns INT; SELECT @TotalReturns = COUNT(*) FROM SalesLT.SalesOrderDetail
+          sod INNER JOIN SalesLT.SalesOrderHeader soh ON sod.SalesOrderID = soh.SalesOrderID
+          WHERE sod.ProductID = @ProductID AND soh.Status = 'Returned'; RETURN @TotalReturns;
+          END;```
+- Name: Q8
+  Commands:
+  - Prompt: Create a database-level trigger that logs any schema changes made to SalesLT
+      tables, create table dbo.SchemaChangeLog with LogID, TableName, ChangeType,
+      ChangeDate and store the log information in this table. You must not run the
+      final query, you should only generate the SQL script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should generate similar results to ```IF NOT EXISTS
+          (SELECT * FROM sys.tables WHERE name = 'SchemaChangeLog' AND schema_id =
+          SCHEMA_ID('dbo')) BEGIN CREATE TABLE dbo.SchemaChangeLog ( LogID INT IDENTITY(1,1)
+          PRIMARY KEY, TableName NVARCHAR(128), ChangeType NVARCHAR(50), ChangeDate
+          DATETIME ) END GO IF NOT EXISTS (SELECT * FROM sys.triggers WHERE name =
+          'SchemaChangeTrigger') BEGIN EXEC('CREATE TRIGGER SchemaChangeTrigger ON
+          DATABASE FOR DDL_DATABASE_LEVEL_EVENTS AS BEGIN SET NOCOUNT ON; DECLARE
+          @EventData XML; SET @EventData = EVENTDATA(); INSERT INTO dbo.SchemaChangeLog
+          (TableName, ChangeType, ChangeDate) VALUES ( @EventData.value(''(/EVENT_INSTANCE/ObjectName)[1]'',
+          ''NVARCHAR(128)''), @EventData.value(''(/EVENT_INSTANCE/EventType)[1]'',
+          ''NVARCHAR(50)''), GETDATE() ) END') END GO;```
+- Name: Q9
+  Commands:
+  - Prompt: Create a filtered index on SalesLT.Product where DiscontinuedDate is not
+      null.You must not run the final query, you should only generate the SQL script
+      to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should generate similar results to ```CREATE INDEX IX_Product_DiscontinuedDate\r\nON
+          SalesLT.Product (DiscontinuedDate)\r\nWHERE DiscontinuedDate IS NOT NULL;\r\n```
+- Name: Q10
+  Commands:
+  - Prompt: Update the customer email for agent with FirstName Lisa and LastName Irelad
+      to 'lisaTall@gmail.com'". You must not run the final query, you should only
+      generate the SQL script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should generate similar results to ```UPDATE [SalesLT].[Customer]
+          SET EmailAddress = 'lisaTall@gmail.com' WHERE FirstName = 'Lisa' AND LastName
+          = 'Irelad')```;
+- Name: Q11
+  TestColor: Red
+  Commands:
+  - Prompt: Write the T-SQL to first create SpecialDeals table that has column StartDate
+      with date type, then change the data type from a date to datetime for the StartDate
+      column in the SpecialDeals table. You must not run the final query, you should
+      only generate the SQL script to answer the user question.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The query should generate similar results to ```'-- First, add
+          a new column with the desired data type\nALTER TABLE SpecialDeals\nADD StartDateTemp
+          DATETIME;\n\n-- Copy the data from the old column to the new column\nUPDATE
+          SpecialDeals\nSET StartDateTemp = CAST(StartDate AS DATETIME);\n\n-- Drop
+          the old column\nALTER TABLE SpecialDeals\nDROP COLUMN StartDate; \n\n--
+          Rename the new column to the original column name\nEXEC sp_rename \'SpecialDeals.StartDateTemp\',
+          \'StartDate\', \'COLUMN\';```.

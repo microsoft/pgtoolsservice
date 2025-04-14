@@ -1,3 +1,6 @@
+from functools import lru_cache
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,3 +18,11 @@ class EvaluationSettings(BaseSettings):
     connection_string: str
 
     model_config = SettingsConfigDict(env_prefix="PGTS_EVAL_")
+
+    eval_log_file: Path | str = (Path(__file__).parent / "evaluation.log").absolute()
+    pgts_log_dir: Path | str = Path(__file__).parent.absolute()
+
+@lru_cache(maxsize=1)
+def get_settings() -> EvaluationSettings:
+    """Get the evaluation settings."""
+    return EvaluationSettings(_env_file=".env")  # pyright: ignore

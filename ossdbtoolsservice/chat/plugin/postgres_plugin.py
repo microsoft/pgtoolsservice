@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from logging import Logger
 from typing import Annotated, Any, Callable
 
@@ -28,7 +29,6 @@ from .postgres_utils import (
     execute_readonly_query,
     execute_statement,
     fetch_full_schema,
-    get_comment_scripts,
     get_default_privileges_scripts,
     get_fdw_scripts,
     get_function_scripts,
@@ -38,6 +38,14 @@ from .postgres_utils import (
     get_sequence_scripts,
     get_table_scripts,
 )
+
+
+@dataclass
+class ValidationQuery:
+    """ValidationQuery is a class for validating SQL queries."""
+
+    validate_value_query: str
+    fetch_distinct_values_query: str
 
 
 class PostgresPlugin(PGTSChatPlugin):
@@ -52,7 +60,7 @@ class PostgresPlugin(PGTSChatPlugin):
         profile_name: str,
         copilot_access_mode: CopilotAccessMode | None,
         logger: Logger | None,
-        max_result_chars: int = 30000,
+        max_result_rows: int = 10000,
     ) -> None:
         self._connection_service = connection_service
         self._request_context = request_context
@@ -61,7 +69,7 @@ class PostgresPlugin(PGTSChatPlugin):
         self._profile_name = profile_name
         self._copilot_access_mode = copilot_access_mode
         self._logger = logger
-        self._max_result_chars = max_result_chars
+        self._max_result_rows = max_result_rows
 
         super().__init__(
             name="PostgreSQL",
@@ -99,16 +107,24 @@ class PostgresPlugin(PGTSChatPlugin):
             "Use this function to retrieve the entire database structure—schemas, "
             "tables, indexes, functions, and sequences—to ensure that any recommendations "
             "or analyses are based on the current, accurate state of the database. "
+            "Use the boolean flags to include or exclude specific object types. "
             "Always call this function when your answer may benefit from knowing "
             "the full schema before proceeding."
         ),
     )
     def get_db_context(
         self,
+        include_sequences: Annotated[bool, "Include sequences."] = True,
+        include_indexes: Annotated[bool, "Include indexes"] = True,
+        include_functions: Annotated[bool, "Include functions."] = True,
+        include_grants: Annotated[bool, "Include grants."] = True,
+        include_ownership: Annotated[bool, "Include ownership information."] = True,
+        include_default_privileges: Annotated[bool, "Include default privileges."] = True,
+        include_fdw: Annotated[bool, "Include foreign data wrappers (FDW)."] = True,
     ) -> Annotated[
         str,
         "Full database context returned as a complete creation script for all schemas, "
-        "tables, indexes, functions, and sequences.",
+        "tables, indexes, etc based on flags.",
     ]:
         if self._logger:
             self._logger.info(" ... Fetching database context")
@@ -127,7 +143,18 @@ class PostgresPlugin(PGTSChatPlugin):
                 return "Error. Could not connect to the database. No connection found."
 
             with pooled_connection as connection:
-                return self._process_script_result(fetch_full_schema(connection._conn))
+                return self._process_script_result(
+                    fetch_full_schema(
+                        connection._conn,
+                        include_sequences=include_sequences,
+                        include_indexes=include_indexes,
+                        include_functions=include_functions,
+                        include_grants=include_grants,
+                        include_ownership=include_ownership,
+                        include_default_privileges=include_default_privileges,
+                        include_fdw=include_fdw,
+                    )
+                )
         except Exception as e:
             if self._logger:
                 self._logger.exception(e)
@@ -146,7 +173,7 @@ class PostgresPlugin(PGTSChatPlugin):
         description=(
             "Fetch the CREATE scripts for a specific type of database object. "
             "Use this function to retrieve detailed context about an object type "
-            "(e.g., 'tables', 'indexes', 'functions', 'sequences', 'comments', 'ownership', "
+            "(e.g., 'tables', 'indexes', 'functions', 'sequences', 'ownership', "
             "'default_privileges', or 'fdw') within a given schema or all schemas. "
             "This ensures that any recommendations "
             "(such as creating indexes or modifying tables) "
@@ -160,14 +187,14 @@ class PostgresPlugin(PGTSChatPlugin):
         object_type: Annotated[
             str,
             "Database object type (case-sensitive): 'tables', 'indexes', 'functions', "
-            "'sequences', 'comments', 'ownership', 'default_privileges', or 'fdw'.",
+            "'sequences', 'ownership', 'default_privileges', or 'fdw'.",
         ],
         schema_name: Annotated[
             str | None, "Schema name to inspect. If not supplied, will return for all schemas"
         ] = None,
     ) -> Annotated[
         str,
-        "The CREATE scripts for the specified database objects, "
+        "The CREATE scripts for the specified database objects and comments, "
         "representing their structure.",
     ]:
         if self._logger:
@@ -249,17 +276,6 @@ class PostgresPlugin(PGTSChatPlugin):
                             )
                         )
                     )
-                elif object_type == "comments":
-                    return self._process_script_result(
-                        "\n".join(
-                            _get_scripts(
-                                lambda s: get_comment_scripts(
-                                    connection._conn,
-                                    schema_name=s,
-                                )
-                            )
-                        )
-                    )
                 elif object_type == "ownership":
                     return self._process_script_result(
                         "\n".join(
@@ -312,7 +328,9 @@ class PostgresPlugin(PGTSChatPlugin):
             "It must only be a single, spacious, well formatted query"
             " with line breaks and tabs. The statement will be presented to the user,"
             " so focus on readability. "
-            "You do not need confirmation to use this function."
+            "You do not need confirmation to use this function. "
+            "You MUST include a validation query to check the validity of "
+            "EVERY literal values used in the SQL query. Do NOT skip this step."
         ),
     )
     async def execute_sql_query_readonly_kernelfunc(
@@ -326,6 +344,24 @@ class PostgresPlugin(PGTSChatPlugin):
         script_name: Annotated[str, "Short descriptive title for the SQL query."],
         script_description: Annotated[
             str, "A short and clear description of the script to execute"
+        ],
+        validation_queries: Annotated[
+            list[ValidationQuery],
+            "A list of validation queries to use to ensure correctness. "
+            "Use a validation query to check the validity of the literal "
+            "values used in the SQL query. If the validation query fails, automatically "
+            "fetch distinct values from the column being validated to identify "
+            "potential alternatives, limiting to 50 entries. Use this data to """ \
+            "adjust the query and retry "
+            "without requiring user intervention. "
+            "For example, if you use a literal value in a WHERE clause, "
+            "use a validate_value_query like "
+            "(SELECT 1 FROM table WHERE value = 'literal_value') and a "
+            "fetch_distinct_values_query like "
+            "(SELECT DISTINCT column_name FROM table LIMIT 50). "
+            "Distinct values will be returned if the validation query fails. "
+            "validation_queries can be empty if no validation is needed, but "
+            "do NOT skip this step. All literal values must be validated.",
         ],
     ) -> Annotated[str, "The result of the SQL query."]:
         if self._logger:
@@ -346,8 +382,35 @@ class PostgresPlugin(PGTSChatPlugin):
 
         try:
             with pooled_connection as connection:
+                # Validate the query
+                validation_results: dict[str, str | None] = {}
+                validation_error_msg = ""
+                for validation_query in validation_queries:
+                    validation_result = execute_readonly_query(
+                        connection._conn,
+                        validation_query.validate_value_query,
+                        self._max_result_rows,
+                    )
+                    validation_results[validation_query.validate_value_query] = (
+                        validation_result
+                    )
+                    if not validation_result:
+                        distinct_values = execute_readonly_query(
+                            connection._conn,
+                            validation_query.fetch_distinct_values_query,
+                            max_result_rows=50,
+                        )
+                        validation_error_msg += (
+                            f"Validation query '{validation_query.validate_value_query}' "
+                            "returned no results. "
+                            f"Distinct values: \n{distinct_values}.\n"
+                            "Please check the query and try again.\n\n"
+                        )
+                if validation_error_msg:
+                    return validation_error_msg
+
                 result = execute_readonly_query(
-                    connection._conn, query, self._max_result_chars
+                    connection._conn, query, self._max_result_rows
                 )
         except Exception as e:
             if self._logger:
@@ -384,9 +447,15 @@ class PostgresPlugin(PGTSChatPlugin):
                 chat_id=self._chat_id,
             ),
         )
+
+        response = ""
+        response += "---MAIN QUERY RESULTS---\n"
         if not result:
-            return "No result found."
-        return result
+            response += "NO RESULTS FOUND"
+        else:
+            response += result
+
+        return response
 
     @kernel_function(
         name=EXECUTE_STATEMENT_FUNCTION_NAME,

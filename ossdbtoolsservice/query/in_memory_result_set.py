@@ -49,7 +49,12 @@ class InMemoryResultSet(ResultSet):
     def get_row(self, row_id: int) -> list[DbCellValue]:
         row = self.rows[row_id]
         return [
-            DbCellValue(cell_value, cell_value is None, cell_value, row_id)
+            DbCellValue(
+                display_value=cell_value,
+                is_null=cell_value is None,
+                raw_object=cell_value,
+                row_id=row_id,
+            )
             for cell_value in list(row)
         ]
 

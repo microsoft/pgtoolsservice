@@ -1,0 +1,132 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: SU_D_AWLT
+Description: Universal Database Design Prompts
+TestSetup:
+  DatabaseToRestore: Prompts\AdventureWorksLT2022\AdventureWorksLT2022.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Index Strategy
+  Commands:
+  - Prompt: What indexing strategy should I use on SalesOrderDetail table?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should provide guidance on indexes to create for the SalesOrderDetail report.
+      MinScore: 4
+- Name: List Indexes
+  Commands:
+  - Prompt: Show me all the indexes for the Address table.
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should provide a list of indexes for the Address table.
+      MinScore: 4
+- Name: List Tables
+  Commands:
+  - Prompt: Show me names of all the tables in this database
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should provide a list of all the tables in the database.
+      MinScore: 4
+- Name: Tables without Indexes
+  Commands:
+  - Prompt: Do I have any tables without indexes in the current database?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should state there is a single table with no indexes, dbo.BuildVersion.
+      MinScore: 4
+- Name: Disabled Constraints
+  Commands:
+  - Prompt: Does my database have disabled constraints?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response for this database should find there are no disabled constraints.
+      MinScore: 4
+- Name: Indexes with Large Keys
+  Commands:
+  - Prompt: Does the current database have any indexes with excessively large keys?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should conclude there are no indexes with excessively
+          large keys in the database.
+      MinScore: 4
+- Name: Tables With No Primary Keys
+  Commands:
+  - Prompt: Does the current database have any tables without a primary key?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should state there is one table without a primary key, dbo.BuildVersion.
+      MinScore: 4
+- Name: Non-clustered Index Count
+  Commands:
+  - Prompt: What is the count of non-clustered indexes per table in the current database?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should list several tables and their non-clustered
+          index count. There should be more than 5 tables listed. No table should
+          have more than 5 non-clustered indexes. At least one table should have 3
+          non-clustered indexes.
+      MinScore: 4
+- Name: Tables Without Clustered Index
+  Commands:
+  - Prompt: Do I have any tables without a clustered index in the current database?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should list BuildVersion as a table without a clustered
+          index.
+      MinScore: 4
+- Name: Latest Schema Changes
+  Commands:
+  - Prompt: Show me the latest schema changes in the current database.
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should include a list of schema changes.
+      MinScore: 4
+- Name: Tables with Triggers
+  Commands:
+  - Prompt: Show me tables in the current database that have triggers defined on them.
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should list 2 tables with triggers defined on them,
+          SalesOrderDetail and SalesOrderHeader.
+      MinScore: 4

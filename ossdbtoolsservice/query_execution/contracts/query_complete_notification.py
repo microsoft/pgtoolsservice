@@ -4,11 +4,12 @@
 # --------------------------------------------------------------------------------------------
 
 
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.query.contracts import BatchSummary
 
 
-class QueryCompleteNotificationParams:
+class QueryCompleteNotificationParams(PGTSBaseModel):
     """
     Parameters to be sent back with a query execution complete event
     Attributes:
@@ -18,10 +19,6 @@ class QueryCompleteNotificationParams:
 
     owner_uri: str
     batch_summaries: list[BatchSummary]
-
-    def __init__(self, owner_uri: str, batch_summaries: list[BatchSummary]) -> None:
-        self.owner_uri: str = owner_uri
-        self.batch_summaries: list[BatchSummary] = batch_summaries
 
 
 QUERY_COMPLETE_NOTIFICATION = "query/complete"

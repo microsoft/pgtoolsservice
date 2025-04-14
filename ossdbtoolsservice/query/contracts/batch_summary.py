@@ -6,6 +6,7 @@
 
 from typing import TYPE_CHECKING
 
+from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import OutgoingMessageRegistration
 from ossdbtoolsservice.query.contracts import SelectionData
 from ossdbtoolsservice.query.contracts.result_set_summary import ResultSetSummary
@@ -14,42 +15,30 @@ if TYPE_CHECKING:
     from ossdbtoolsservice.query.batch import Batch
 
 
-class BatchSummary:
+class BatchSummary(PGTSBaseModel):
     id: int
-    selection: SelectionData | None
-    execution_start: str | None
-    has_error: bool
-    execution_end: str | None
-    execution_elapsed: str | None
-    result_set_summaries: list[ResultSetSummary] | None
+    selection: SelectionData | None = None
+    execution_start: str | None = None
+    has_error: bool = False
+    execution_end: str | None = None
+    execution_elapsed: str | None = None
+    result_set_summaries: list[ResultSetSummary] | None = None
 
     @classmethod
     def from_batch(cls, batch: "Batch") -> "BatchSummary":
-        instance = cls(batch.id, batch.selection, batch.start_date_str, batch.has_error)
-
-        if batch.has_executed:
-            instance.execution_elapsed = batch.elapsed_time
-            instance.execution_end = batch.end_time
-            instance.result_set_summaries = (
+        return cls(
+            id=batch.id,
+            selection=batch.selection,
+            execution_start=batch.start_date_str,
+            has_error=batch.has_error,
+            execution_end=batch.end_time if batch.has_executed else None,
+            execution_elapsed=batch.elapsed_time if batch.has_executed else None,
+            result_set_summaries=(
                 [batch.result_set.result_set_summary] if batch.result_set is not None else []
             )
-
-        return instance
-
-    def __init__(
-        self,
-        batchId: int,
-        selection: SelectionData | None = None,
-        execution_start: str | None = None,
-        has_error: bool = False,
-    ) -> None:
-        self.id = batchId
-        self.selection = selection
-        self.execution_start = execution_start
-        self.has_error = has_error
-        self.execution_end = None
-        self.execution_elapsed = None
-        self.result_set_summaries = None
+            if batch.has_executed
+            else None,
+        )
 
 
 OutgoingMessageRegistration.register_outgoing_message(BatchSummary)

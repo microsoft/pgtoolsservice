@@ -1,0 +1,152 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: SS_HLTH_AWLT
+Description: Health Audit Questions specific to SQL Server
+TestSetup:
+  DatabaseToRestore: Prompts\AdventureWorksLT2022\AdventureWorksLT2022.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Run a health audit
+  Commands:
+  - Prompt: Run a health audit on the current server
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: HealthAuditCheck
+        Definition: 'The response should include a section on server configuration.
+
+          The response should include a section on databases summary.
+
+          The response should include a section on security.
+
+          The response should include a section on backup and data recovery.
+
+          The response should include a conclusion.
+
+          '
+      MinScore: 4
+    - Criteria: ToolsCalled
+      Parameters:
+        ExpectedTools: Config_Common-GetCurrentDate, ExecPredefinedQuery_Common-ExecutePredefinedQuery
+- Name: What Patch Level
+  Commands:
+  - Prompt: What CU is the current server at?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CUPatchLevelCheck
+        Definition: The response should provide the current CU level of the server.
+      MinScore: 4
+    - Criteria: ToolsCalled
+      Parameters:
+        ExpectedTools: ExecPredefinedQuery_Common-ExecutePredefinedQuery
+- Name: Numa Configuration
+  Commands:
+  - Prompt: What is the NUMA configuration of the current server?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: NumaConfigurationCheck
+        Definition: The response should provide the current NUMA configuration of
+          the server.
+      MinScore: 4
+    - Criteria: ToolsCalled
+      Parameters:
+        ExpectedTools: ExecPredefinedQuery_Common-ExecutePredefinedQuery
+- Name: Soft NUMA Configuration
+  Commands:
+  - Prompt: Is SOFTNUMA enabled?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: SoftNumaCheck
+        Definition: The response should provide the current state of SOFTNUMA. The
+          response for the current server should be that SOFTNUMA is not enabled.
+      MinScore: 4
+    - Criteria: ToolsCalled
+      Parameters:
+        ExpectedTools: ExecPredefinedQuery_Common-ExecutePredefinedQuery
+- Name: Server Memory Configuration
+  Commands:
+  - Prompt: Is my current memory configuration optimal?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: MemoryConfigurationCheck
+        Definition: The response should include the current server memory configuration.
+          The response should conclude that the current server memory configuration
+          is not optimal and should be adjusted.
+      MinScore: 4
+    - Criteria: ToolsCalled
+      Parameters:
+        ExpectedTools: ExecPredefinedQuery_Common-ExecutePredefinedQuery
+- Name: Databases Summary
+  Commands:
+  - Prompt: Do I have any databases that are unhealthy or in a bad configuration state?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: DatabasesHealthCheck
+        Definition: The response should provide a summary of the databases that are
+          unhealthy or in a bad configuration state. The response should find at least
+          one database is in Simple Recovery Model.
+      MinScore: 4
+    - Criteria: ToolsCalled
+      Parameters:
+        ExpectedTools: ExecPredefinedQuery_Common-ExecutePredefinedQuery
+- Name: SA Account Enabled
+  Commands:
+  - Prompt: Is the SA account currently enabled?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: SAAccountCheck
+        Definition: The response should state succinctly whether the SA account is
+          enabled or not. The response should find that the SA account is disabled.
+      MinScore: 4
+    - Criteria: ToolsCalled
+      Parameters:
+        ExpectedTools: ExecPredefinedQuery_Common-ExecutePredefinedQuery
+- Name: Server Configuration Prompts
+  Commands:
+  - Prompt: I need to see a server configuration report.
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Server Config Report Contents
+        Definition: The response should be a Server Configuration Report. The response
+          should include a Warnings section with 1 item (xp_cmdshell is enabled).
+          The response should include an Information section with 2 items listed (scan
+          for startup procs and clr enabled) The response should conclude with an
+          offer to see all config values that differ fom their defaults
+      MinScore: 4
+    - Criteria: ToolsCalled
+      Parameters:
+        ExpectedTools: ExecPredefinedQuery_Common-ExecutePredefinedQuery
+  - Prompt: Yes. Please show them.
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: NoQueryExecutionErrors
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Check All Non-Default Config Values
+        Definition: The response should include a table with numerous properties that
+          differ from their default values. Each item in the table should include
+          a short comment about the property's value The response should include the
+          default and current value for each property listed.
+      MinScore: 4

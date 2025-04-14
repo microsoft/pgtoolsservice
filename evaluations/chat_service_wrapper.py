@@ -1,8 +1,10 @@
 from queue import Queue
 from threading import Lock
 
+from psycopg.conninfo import make_conninfo
 from pydantic import BaseModel
 
+from evaluations.settings import EvaluationSettings
 from ossdbtoolsservice.chat.messages import (
     CHAT_COMPLETION_REQUEST_METHOD,
     CHAT_COMPLETION_RESULT_METHOD,
@@ -12,7 +14,18 @@ from ossdbtoolsservice.chat.messages import (
     ChatCompletionRequestResult,
     CopilotQueryNotificationParams,
 )
+from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
+from ossdbtoolsservice.connection.contracts.connect_request import (
+    CONNECT_REQUEST,
+    ConnectRequestParams,
+)
+from ossdbtoolsservice.connection.contracts.connection_complete_notification import (
+    CONNECTION_COMPLETE_METHOD,
+    ConnectionCompleteParams,
+)
+from ossdbtoolsservice.connection.contracts.disconnect_request import DISCONNECT_REQUEST, DisconnectRequestParams
 from ossdbtoolsservice.hosting.lsp_message import LSPNotificationMessage
+from ossdbtoolsservice.hosting.service_provider import ServiceProvider
 from tests_v2.test_utils.message_server_client_wrapper import MessageServerClientWrapper
 
 
@@ -46,6 +59,36 @@ class ChatServiceWrapper:
             str, Queue[ChatCompletionContent | CopilotQueryNotificationParams]
         ] = {}
         self._lock = Lock()
+
+    def connect(
+        self, database: str, owner_uri: str, eval_settings: EvaluationSettings
+    ) -> None:
+        connection_string = make_conninfo(eval_settings.connection_string, dbname=database)
+
+        self._server_client_wrapper.send_client_request(
+            method=CONNECT_REQUEST.method,
+            params=ConnectRequestParams(
+                owner_uri=owner_uri,
+                connection=ConnectionDetails.from_connection_string(connection_string),
+            ),
+        )
+
+        notification = self._server_client_wrapper.wait_for_notification(
+            method=CONNECTION_COMPLETE_METHOD,
+        )
+        params = notification.get_params(ConnectionCompleteParams)
+        if params.error_message:
+            raise ValueError(f"Connection failed: {params.error_message}")
+        
+    def disconnect(
+        self, owner_uri: str
+    ) -> None:
+        self._server_client_wrapper.send_client_request(
+            method=DISCONNECT_REQUEST.method,
+            params=DisconnectRequestParams(
+                owner_uri=owner_uri,                
+            ),
+        )        
 
     def _handle_notifications(self, notification: LSPNotificationMessage) -> None:
         if notification.method == CHAT_COMPLETION_RESULT_METHOD:
@@ -81,8 +124,11 @@ class ChatServiceWrapper:
                 queries_executed.append(params.query)
             else:
                 result_part: ChatCompletionContent = params
-                if result_part.is_error:
-                    raise ChatCompletionError(result_part)
+                if result_part.is_error:                        
+                    return ChatServiceResponse(
+                        response=f"Error getting response: {result_part.error_message}",
+                        queries_executed=queries_executed,
+                    )
                 if result_part.is_complete:
                     break
                 if result_part.content:

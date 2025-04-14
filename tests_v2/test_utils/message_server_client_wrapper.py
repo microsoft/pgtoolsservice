@@ -8,6 +8,7 @@ from queue import Queue
 from threading import Lock
 from typing import Any, Callable
 
+from psycopg import Time
 from pydantic import BaseModel
 
 from ossdbtoolsservice.hosting.json_message import JSONRPCMessage, JSONRPCMessageType
@@ -20,7 +21,22 @@ from ossdbtoolsservice.hosting.lsp_message import (
     LSPResponseResultMessage,
 )
 from ossdbtoolsservice.hosting.message_server import TResult
-from ossdbtoolsservice.hosting.service_provider import Service
+from ossdbtoolsservice.hosting.service_provider import Service, ServiceProvider
+from ossdbtoolsservice.query.contracts.result_set_subset import SubsetResult
+from ossdbtoolsservice.query.contracts.result_set_summary import ResultSetSummary
+from ossdbtoolsservice.query_execution.contracts.execute_request import ExecuteStringParams
+from ossdbtoolsservice.query_execution.contracts.message_notification import (
+    MESSAGE_NOTIFICATION,
+    MessageNotificationParams,
+)
+from ossdbtoolsservice.query_execution.contracts.query_complete_notification import (
+    QUERY_COMPLETE_NOTIFICATION,
+    QueryCompleteNotificationParams,
+)
+from ossdbtoolsservice.query_execution.contracts.query_request import (
+    SUBSET_REQUEST,
+    SubsetParams,
+)
 from ossdbtoolsservice.serialization.serializable import Serializable
 from tests_v2.test_utils.queue_message_server import QueueRPCMessageServer
 from tests_v2.test_utils.utils import is_debugger_active
@@ -61,7 +77,7 @@ class MessageServerClientWrapper(ABC):
 
     def __init__(self, server_message_queue: Queue[JSONRPCMessage]) -> None:
         self._server_message_queue = server_message_queue
-        self._messages: list[JSONRPCMessage] = []
+        self._messages: list[tuple[JSONRPCMessage, float]] = []
         self._request_responses: dict[str, list[JSONRPCMessage]] = {}
         self._message_lock = Lock()
 
@@ -96,7 +112,7 @@ class MessageServerClientWrapper(ABC):
 
     def get_messages(self) -> list[JSONRPCMessage]:
         with self._message_lock:
-            return self._messages.copy()
+            return [message[0] for message in self._messages]
 
     def _process_server_messages(self) -> None:
         while not self._stop_requested:
@@ -104,7 +120,7 @@ class MessageServerClientWrapper(ABC):
             if message.message_method == "TEST_STOP":
                 break
             with self._message_lock:
-                self._messages.append(message)
+                self._messages.append((message, time.monotonic()))
 
             if (
                 message.message_type == JSONRPCMessageType.Request
@@ -192,7 +208,7 @@ class MessageServerClientWrapper(ABC):
             if timer is not None and timer.is_expired():
                 raise TimeoutError("Timed out waiting for response")
             if len(self._messages) > message_count:
-                for i, message in enumerate(self._messages[message_count:]):
+                for i, (message, _) in enumerate(self._messages[message_count:]):
                     if (
                         message.message_type == JSONRPCMessageType.ResponseSuccess
                         or message.message_type == JSONRPCMessageType.ResponseError
@@ -229,7 +245,11 @@ class MessageServerClientWrapper(ABC):
         self._send_client_message(notification_message)
 
     def wait_for_notification(
-        self, method: str, timeout: float = 2.0, pop_message: bool = False
+        self,
+        method: str,
+        timeout: float = 2.0,
+        pop_message: bool = False,
+        start_time: float | None = None,
     ) -> LSPNotificationMessage:
         """Wait for a notification from the server with the given method to be received.
 
@@ -237,6 +257,7 @@ class MessageServerClientWrapper(ABC):
             method: The method of the notification to wait for.
             timeout: The maximum time to wait for the notification, in seconds.
             pop_message: If True, remove the message from the queue after receiving it.
+            start_time: The time after which messages will be considered.
 
         Throws TimeoutError if the notification is not received within the timeout.
         """
@@ -245,7 +266,9 @@ class MessageServerClientWrapper(ABC):
             if timer.is_expired() and not is_debugger_active():
                 raise TimeoutError(f"Timed out waiting for notification {method}")
             with self._message_lock:
-                for i, msg in enumerate(self._messages):
+                for i, (msg, msg_time) in enumerate(self._messages):
+                    if start_time is not None and msg_time < start_time:
+                        continue
                     if (
                         msg.message_type == JSONRPCMessageType.Notification
                         and msg.message_method == method
@@ -260,6 +283,7 @@ class MessageServerClientWrapper(ABC):
         method: str,
         timeout: float = 2.0,
         pop_message: bool = False,
+        start_time: float | None = None,
     ) -> LSPRequestMessage:
         """Wait for a request from the server with the given method to be received.
 
@@ -267,6 +291,7 @@ class MessageServerClientWrapper(ABC):
             method: The method of the notification to wait for.
             timeout: The maximum time to wait for the request, in seconds.
             pop_message: If True, remove the message from the queue after receiving it.
+            start_time: The time after which messages will be considered.
 
         Throws TimeoutError if the notification is not received within the timeout.
         """
@@ -274,7 +299,9 @@ class MessageServerClientWrapper(ABC):
         while True:
             if timer.is_expired() and not is_debugger_active():
                 raise TimeoutError(f"Timed out waiting for notification {method}")
-            for i, msg in enumerate(self._messages):
+            for i, (msg, msg_time) in enumerate(self._messages):
+                if start_time is not None and msg_time < start_time:
+                    continue
                 if (
                     msg.message_type == JSONRPCMessageType.Request
                     and msg.message_method == method
@@ -289,8 +316,8 @@ class MessageServerClientWrapper(ABC):
         """Clears all notifications from the queue."""
         with self._message_lock:
             self._messages = [
-                message
-                for message in self._messages
+                (message, msg_time)
+                for (message, msg_time) in self._messages
                 if message.message_type != JSONRPCMessageType.Notification
             ]
 
@@ -307,8 +334,87 @@ class MessageServerClientWrapper(ABC):
         """Get the number of messages received from the server with the given method."""
         with self._message_lock:
             return len(
-                [message for message in self._messages if message.message_method == method]
+                [
+                    message
+                    for (message, _) in self._messages
+                    if message.message_method == method
+                ]
             )
+
+    def execute_query(
+        self, owner_uri: str, query: str, pop_messages: bool = False, timeout: float = 10.0
+    ) -> tuple[SubsetResult | None, ResultSetSummary]:
+        """Convenience method to execute a query on the server."""
+        params = ExecuteStringParams(
+            owner_uri=owner_uri,
+            query=query,
+        )
+
+        start_time = time.monotonic()
+
+        self.send_client_request(
+            method="query/executeString", params=params, pop_response=pop_messages
+        )        
+
+        try:
+            notification = self.wait_for_notification(
+                QUERY_COMPLETE_NOTIFICATION,
+                pop_message=pop_messages,
+                timeout=timeout,
+                start_time=start_time,
+            )
+        except TimeoutError as e:
+            # If we timed out, check if there was a message notification
+            message_notification = self.wait_for_notification(
+                MESSAGE_NOTIFICATION,
+                pop_message=pop_messages,
+                timeout=timeout,
+                start_time=start_time,
+            )
+            message = message_notification.get_params(MessageNotificationParams).message
+
+            if message.is_error:
+                raise Exception(f"Query failed: {message.message}") from e
+            else:
+                raise
+
+        batch_summaries = notification.get_params(
+            QueryCompleteNotificationParams
+        ).batch_summaries
+        if len(batch_summaries) != 1:
+            raise ValueError(f"Expected 1 batch summary, got {len(batch_summaries)}")
+        batch_summary = batch_summaries[0]
+        if batch_summary.has_error:
+            raise Exception("Query failed.")
+
+        # Only ever expect one result set summary
+        if not batch_summary.result_set_summaries:
+            raise ValueError("No result set summaries found")
+        if len(batch_summary.result_set_summaries) != 1:
+            raise ValueError(
+                "Expected 1 result set summary, "
+                f"got {len(batch_summary.result_set_summaries)}"
+            )
+        result_set_summary = batch_summary.result_set_summaries[0]
+
+        if result_set_summary.row_count == 0:
+            return None, result_set_summary
+
+        subset_params = SubsetParams(
+            owner_uri=owner_uri,
+            batch_index=0,
+            result_set_index=0,
+            rows_start_index=0,
+            rows_count_index=result_set_summary.row_count,
+        )
+        subset_response = self.send_client_request(
+            method=SUBSET_REQUEST.method,
+            params=subset_params,
+            pop_response=pop_messages,
+        )
+        subset = subset_response.get_result(SubsetResult)
+
+        return subset, result_set_summary
 
 
 class MockMessageServerClientWrapper(MessageServerClientWrapper):
@@ -339,6 +445,10 @@ class MockMessageServerClientWrapper(MessageServerClientWrapper):
         return await self._message_server.send_request(
             method, params, result_type=result_type, timeout=timeout
         )
+
+    def get_service_provider(self) -> ServiceProvider | None:
+        """Get the service provider from the server."""
+        return self._message_server.service_provider
 
 
 class ExecutableMessageServerClientWrapper(MessageServerClientWrapper):

@@ -57,7 +57,9 @@ class TestRowDelete(unittest.TestCase):
             self._row_delete.set_cell_value(column_index, "Some Text")
 
     def test_get_edit_row(self):
-        cached_row = [DbCellValue("True", False, True, 1)]
+        cached_row = [
+            DbCellValue(display_value="True", is_null=False, raw_object=True, row_id=1)
+        ]
 
         edit_row = self._row_delete.get_edit_row(cached_row)
 

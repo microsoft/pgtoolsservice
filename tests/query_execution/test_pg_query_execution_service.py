@@ -1350,7 +1350,7 @@ class TestQueryService(unittest.TestCase):
             subset.row_count = len(mock_rows)
             subset.rows = mock_rows
 
-            result = SubsetResult(subset)
+            result = SubsetResult(result_subset=subset)
 
             return result
 

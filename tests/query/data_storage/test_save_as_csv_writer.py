@@ -20,9 +20,9 @@ class TestSaveAsCsvWriter(unittest.TestCase):
         self.mock_io = mock.MagicMock()
 
         self.row = [
-            DbCellValue("Test", False, None, 0),
-            DbCellValue(1023, False, None, 0),
-            DbCellValue(False, False, None, 0),
+            DbCellValue(display_value="Test", is_null=False, raw_object=None, row_id=0),
+            DbCellValue(display_value="1023", is_null=False, raw_object=None, row_id=0),
+            DbCellValue(display_value="False", is_null=False, raw_object=None, row_id=0),
         ]
 
         name_column = DbColumn()

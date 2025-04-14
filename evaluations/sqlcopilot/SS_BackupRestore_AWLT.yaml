@@ -1,0 +1,129 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: SS_BR
+Description: BR-Core
+TestSetup:
+  DatabaseToRestore: Prompts\AdventureWorksLT2022\AdventureWorksLT2022.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Backup Definition
+  Commands:
+  - Prompt: What is a database backup?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The response should include a description of the types of backups
+          including full, differential and transaction log that SQL Server supports,
+          and the purpose of a database backup.
+- Name: How to create a backup.
+  Commands:
+  - Prompt: How do I create a database backup?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: An explanation of how to create a full backup using T-SQL and/or
+          SSMS.
+- Name: Create a differential backup.
+  Commands:
+  - Prompt: How do I create a differential database backup?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: An explanation of how to create a differential backup using T-SQL
+          and/or SSMS.
+- Name: How to create a log backup.
+  Commands:
+  - Prompt: How do I create a log backup?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: An explanation of how to create a log backup using T-SQL and/or
+          SSMS.
+- Name: Backup Script
+  Commands:
+  - Prompt: Write a script to backup the database
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The answer should include a script that uses T-SQL to backup the
+          current database.  The answer should not use placeholders for the database
+          name or backup directory.
+- Name: Automating backups
+  Commands:
+  - Prompt: How do I automate backups?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The answer should mention using Maintenance Plans or T-SQL scripts
+          in SQL Agent jobs to automate backups.
+- Name: Backup history
+  Commands:
+  - Prompt: I need a script to see the backup history for this database.
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The answer should provide a script that shows the backup history for the current database.
+- Name: Validate Backups
+  Commands:
+  - Prompt: How do I validate my backups
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The answer should summarize the importance of verifying backups
+          by restoring them, and list how verification can be done.
+- Name: Script RESTORE VERIFYONLY
+  Commands:
+  - Prompt: I need a script how to do a RESTORE VERIFYONLY on a local backup file,
+      c:\backups\mybackup.bak
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The answer should provide a script that does a RESTORE VERIFYONLY
+          with the file path c:\backups\mybackup.bak.
+- Name: Full and Log Difference
+  Commands:
+  - Prompt: What is the difference between a full and log backup?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The answer should provide a clear explanation of the difference
+          between a full and log backups.
+- Name: Define Differential Backup
+  Commands:
+  - Prompt: What's a differential backup? And when should I use them?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The answer should provide a clear explanation of differential
+          backups and when they are appropriate to use.
+- Name: Switching Recovery Model
+  Commands:
+  - Prompt: What happens to my backups if I switch to Bulk-Logged recovery model?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The answer should provide a clear explanation of what the impact
+          would be to switch the database to Bulk-Logged recovery model.

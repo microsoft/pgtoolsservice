@@ -1,0 +1,490 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: AWDW-S
+Description: AdventureWorksDWSales
+TestSetup:
+  DatabaseToRestore: AdventureWorksDW2014.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Q0
+  Commands:
+  - Prompt: show total internet sales for currency code CAD.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The total sales for the currency code CAD is 1,806,517.4446.
+- Name: Q5
+  Commands:
+  - Prompt: what was the number of internet sales by year in Clothing category?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The number of sales in the Clothing category by year are as follows:
+
+          - In 2012, there were 22 sales.
+
+          - In 2013, there were 8,686 sales.
+
+          - In 2014, there were 393 sales.'
+- Name: Q6
+  Commands:
+  - Prompt: Year with the highest internet sales?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The year with the highest sales is 2013.
+- Name: Q7
+  TestColor: Probation
+  Commands:
+  - Prompt: Show monthly total and year-to-date total internet sales. Order by year and month.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The query results provide a detailed breakdown of monthly sales
+          and cumulative year-to-date sales from December 2010 to January 2014. Here
+          is a summary of the results:
+
+
+          - In December 2010, the monthly sales were $43,421.04, which is also the
+          cumulative total for that year.
+
+          - In 2011, the monthly sales started at $469,823.91 in January and increased
+          to $669,431.50 by December, with a cumulative total of $7,075,525.93 by
+          the end of the year.
+
+          - In 2012, the monthly sales began at $495,364.13 in January and rose to
+          $624,502.17 by December, resulting in a cumulative total of $5,842,485.20
+          for the year.
+
+          - In 2013, the monthly sales were $857,689.91 in January and peaked at $1,874,360.29
+          in December, with a cumulative total of $16,351,550.34 by the end of the
+          year.
+
+          - In January 2014, the monthly sales were $45,694.72, which is also the
+          cumulative total for that year up to that point.
+
+
+          The data is ordered by year and month, showing a clear progression of sales
+          over time.'
+- Name: Q8
+  TestColor: Probation
+  Commands:
+  - Prompt: Show me a matrix of internet sales. List product categories as the rows and the years 2011 through 2014 as the columns.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: "Internet Sales Matrix (2011-2014)
+                    Product Category	2011 Sales	2012 Sales	2013 Sales	2014 Sales
+                    Accessories	0.00	2147.08	668241.53	30371.35
+                    Bikes	7075525.93	5839695.33	15359502.36	0.00
+                    Clothing	0.00	642.79	323806.45	15323.37
+                    "
+- Name: Q9
+  Commands:
+  - Prompt: what are the names of 5 products with the highest internet sales.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The names of the 5 products with the highest sales are:
+
+          1. Mountain-200 Black, 46
+
+          2. Mountain-200 Black, 42
+
+          3. Mountain-200 Silver, 38
+
+          4. Mountain-200 Silver, 46
+
+          5. Mountain-200 Black, 38'
+- Name: Q10
+  Commands:
+  - Prompt: what are the 5 products with the highest total internet sales for Canadian Dollar
+      in 2013.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The five products with the highest total sales in Canadian Dollars
+          for the year 2013 are:
+
+
+          1. Mountain-200 Black, 42
+
+          2. Mountain-200 Black, 38
+
+          3. Mountain-200 Silver, 38
+
+          4. Mountain-200 Silver, 46
+
+          5. Mountain-200 Black, 46'
+- Name: Q11
+  Commands:
+  - Prompt: what is the product with the highest total internet sales for Canadian Dollar in
+      2013.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The product with the highest total sales for Canadian Dollar in
+          2013 is the "Mountain-200 Black, 42".
+- Name: Q13
+  Commands:
+  - Prompt: for each year show me the product with the highest total internet sales amount.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'Based on the query results, the products with the highest total
+          sales amount for each year are as follows:
+
+
+          - In 2010, the product with the highest total sales amount was "Mountain-100
+          Silver, 44" with a total sales amount of 10,199.97.
+
+          - In 2011, the product with the highest total sales amount was "Road-150
+          Red, 48" with a total sales amount of 1,198,720.45.
+
+          - In 2013, the product with the highest total sales amount was "Mountain-200
+          Black, 42" with a total sales amount of 970,780.77.
+
+          - In 2014, the product with the highest total sales amount was "Sport-100
+          Helmet, Blue" with a total sales amount of 2,974.15.'
+- Name: Q14
+  TestColor: Probation
+  Commands:
+  - Prompt: What's the most profitable product in internet sales?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The most profitable product is the "Mountain-200 Black, 46."
+- Name: Q15
+  Commands:
+  - Prompt: Show average order quantity by product in internet sales.  Show the top 5 most ordered products.
+            List the name, average ordered quantity and that product's all time order count.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'Top 5 Most Ordered Products in Internet Sales
+                        Product Name	Average Ordered Quantity	Total Order Count
+                        Water Bottle - 30 oz.	1	4244
+                        Patch Kit/8 Patches	1	3191
+                        Mountain Tire Tube	1	3095
+                        Road Tire Tube	1	2376
+                        Sport-100 Helmet, Red	1	2230
+                        '
+- Name: Q17
+  TestColor: Probation
+  Commands:
+  - Prompt: what ratio of customers bought multiple products via the internet sales channel?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The ratio of customers who bought multiple products to the total
+          number of customers is approximately 0.865, or 86.52%.
+- Name: Q18
+  Commands:
+  - Prompt: which customers bought products in more than 10 subcategories via the internet sales channel? list their full names.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The customers who bought products in more than 10 subcategories
+          are:
+
+
+          1. Gina Martin
+
+          2. Mason Roberts
+
+          3. Ashley Henderson
+
+          4. Charles Jackson
+
+          5. Brandy Chandra'
+- Name: Q19
+  Commands:
+  - Prompt: which customers that bought products via the internet sales channel in 2010 and also bought products via the internet sales channel in 2013?
+            show each customer's full name'.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The customers who bought products in 2010 and also bought products
+          in 2013 are:
+
+
+          1. Albert Alvarez
+
+          2. Brad Deng
+
+          3. Christy Zhu
+
+          4. Cole Watson
+
+          5. Colin Anand
+
+          6. Curtis Lu
+
+          7. Edward Brown
+
+          8. Emma Brown
+
+          9. Julio Ruiz
+
+          10. Katrina Raji
+
+          11. Martha Xu
+
+          12. Ruben Prasad
+
+          13. Sydney Wright'
+- Name: Q20
+  TestColor: Probation
+  Commands:
+  - Prompt: looking at internet sales, which customers that bought products in 2010 did not buy in 2011?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The customers who bought products in 2010 but did not buy in
+          2011 are:
+
+            Albert Alvarez
+            Brad Deng
+            Christy Zhu
+            Cole Watson
+            Colin Anand
+            Curtis Lu
+            Edward Brown
+            Emma Brown
+            Julio Ruiz
+            Katrina Raji
+            Martha Xu
+            Rachael Martinez
+            Ruben Prasad
+            Sydney Wright'
+- Name: Q21
+  Commands:
+  - Prompt: looking at internet sales, which customers that bought products in 2010 did not buy afterwards?
+            Show the full name of the customers.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The customer who bought products in 2010 but did not make any
+          purchases afterwards is Rachael Martinez.
+- Name: Q22
+  TestColor: Probation
+  Commands:
+  - Prompt: List the top 5 customers (first and last name) the spent the most amount of money via our internet sales channel.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'Top 5 Customers by Spending
+                    First Name	Last Name	Total Spent
+                    Jordan	Turner	$15,999.10
+                    Willie	Xu	$13,490.06
+                    Nichole	Nara	$13,295.38
+                    Kaitlyn	Henderson	$13,294.27
+                    Margaret	He	$13,269.27
+                    '
+- Name: Q24
+  Commands:
+  - Prompt: looking at internet sales, what is the average number of days between repeated purchases by the same customer?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The average number of days between repeated purchases by the same
+          customer is 69 days.
+- Name: Q25
+  TestColor: Probation
+  Commands:
+  - Prompt: Show me the average change in internet sales amount in relation to the preceding purchase by the same customer.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The average change in sales amount in relation to the preceding
+          purchase by the same customer is approximately -344.0516. This indicates
+          that, on average, there is a decrease of 344.0516 in the sales amount when
+          compared to the previous purchase by the same customer.
+- Name: Q27
+  TestColor: Probation
+  Commands:
+  - Prompt: how long does it takes us to ship internet orders on average?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: On average, it takes us 7 days to ship.
+- Name: Q28
+  Commands:
+  - Prompt: what was the largest number of days it took to ship an order from the internet sales channel in 2013?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The largest number of days it took to ship an order in 2013 was 7 days
+- Name: Q29
+  TestColor: Probation
+  Commands:
+  - Prompt: what is the distribution of internet orders by day of the week?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The distribution of orders by day of the week is as follows:
+
+
+          - Tuesday: 8,949 orders
+
+          - Monday: 8,732 orders
+
+          - Sunday: 8,596 orders
+
+          - Wednesday: 8,585 orders
+
+          - Thursday: 8,550 orders
+
+          - Friday: 8,504 orders
+
+          - Saturday: 8,482 orders
+
+
+          Tuesday has the highest number of orders, while Saturday has the lowest.'
+- Name: Q30
+  Commands:
+  - Prompt: what is the distribution of the number of days that it takes to ship internet orders? 
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: "The distribution of the number of days it takes to ship internet orders is 7 days for 60,398 orders"
+- Name: Q31
+  TestColor: Probation
+  Commands:
+  - Prompt: what was the distribution of days that it takes us to ship internet orders in 2013?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: In 2013, the distribution of days it took to ship items shows
+          that it consistently took 7 days to ship, with a frequency of 52,801 occurrences.
+- Name: Q32
+  TestColor: Probation
+  Commands:
+  - Prompt: how many internet orders shipped more than 5 later than expected?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: There were no orders with shipping delayed by more than 5 days.
+- Name: Q33
+  Commands:
+  - Prompt: What are the top 3 territory regions based on internet sales?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The top 3 territory regions based on sales are:
+
+
+          1. Australia with total sales of 9,061,000.58
+
+          2. Southwest with total sales of 5,718,150.81
+
+          3. Northwest with total sales of 3,649,866.55'
+- Name: Q34
+  Commands:
+  - Prompt: What were the bottom 3 territory regions based on internet sales?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The bottom 3 territory regions based on internet sales are:
+
+
+          1. Central with total sales of 3,000.83
+
+          2. Northeast with total sales of 6,532.47
+
+          3. Southeast with total sales of 12,238.85'
+- Name: Q35
+  Commands:
+  - Prompt: how many managers do we have?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'We have 20 managers in the database.'
+- Name: Q36
+  Commands:
+  - Prompt: looking at customer sales from the United States, which 5 zip codes showed the most YoY growth in internet sales for the year 2013?  
+            I'd like the zip code, the revenue for 2012 and 2013 and the percent growth.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'Postal Code	Sales 2012	Sales 2013	Percent Growth (%)
+                    91791	5708.82	78288.74	1271.36
+                    98901	5615.95	55385.55	886.21
+                    90210	12732.74	118948.08	834.19
+                    97068	5686.50	49909.47	777.68
+                    91945	14422.53	99359.69	588.91
+                    '
+- Name: Q37
+  TestColor: Probation
+  Commands:
+  - Prompt: Total internet sales outside of US.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: The total sales outside of the US amount to 19,968,887.71.
+- Name: Q39
+  Commands:
+  - Prompt: Looking at customer internet sales from the US in 2013, show the top 5 zipcodes by their percentage growth from the 
+      the average internet sales per postal code for 2013.  Show the postal code, total sales, and percentage difference.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 
+          'The top 5 zipcodes by percentage growth:
+                Postal Code	Total Sales	Percentage Growth (%)
+                90706	$170,819.91	244.01
+                91950	$154,153.31	210.44
+                94704	$148,935.84	199.93
+                94014	$148,359.50	198.77
+                91502	$141,162.90	184.28
+                '
+- Name: Q40
+  Commands:
+  - Prompt: give me the breakdown of gross sales and net profits from our internet sales channel in 2013.
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'Internet Sales Channel Breakdown for 2013
+                    Metric	Amount
+                    Gross Sales	$16,351,550.34
+                    Net Profit	$6,765,410.97
+                    '
+- Name: Q41
+  Commands:
+  - Prompt: What's our average span of control?
+    RequiredEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: Correctness
+        Definition: 'The average span of control is 6.'

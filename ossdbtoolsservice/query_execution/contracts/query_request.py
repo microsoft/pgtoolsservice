@@ -12,18 +12,19 @@ from ossdbtoolsservice.serialization import Serializable
 
 
 class SubsetParams(Serializable):
-    owner_uri: str | None
-    batch_index: int | None
-    result_set_index: int | None
-    rows_start_index: int | None
-    rows_count: int | None
-
-    def __init__(self) -> None:
-        self.owner_uri = None
-        self.batch_index = None
-        self.result_set_index = None
-        self.rows_start_index = None
-        self.rows_count = None
+    def __init__(
+        self,
+        owner_uri: str | None = None,
+        batch_index: int | None = None,
+        result_set_index: int | None = None,
+        rows_start_index: int | None = None,
+        rows_count_index: int | None = None,
+    ) -> None:
+        self.owner_uri = owner_uri
+        self.batch_index = batch_index
+        self.result_set_index = result_set_index
+        self.rows_start_index = rows_start_index
+        self.rows_count = rows_count_index
 
 
 SUBSET_REQUEST = IncomingMessageConfiguration("query/subset", SubsetParams)

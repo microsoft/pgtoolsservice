@@ -27,6 +27,16 @@ class Dataset:
 
 DATASETS: list[Dataset] = [
     Dataset("pagila", db_name="pagila", scripts=["pagila-schema.sql", "pagila-data.sql"]),
+    Dataset(
+        "adventureworks",
+        db_name="adventureworks",
+        scripts=["adventureworks-schema.sql", "adventureworks-data.sql"],
+    ),
+    Dataset(
+        "adventureworks-dw",
+        db_name="adventureworksdw",
+        scripts=["AdventureWorksDW2012.sql"],
+    ),
 ]
 
 
@@ -56,8 +66,6 @@ class DatasetLoader:
             with conn.cursor() as cursor:
                 cursor.execute(as_sql(f"CREATE DATABASE {self.db_name}"))
 
-        # Use psycopg.conninfo to robustly replace the dbname in the connection string.
-
         target_db_connection_string = make_conninfo(
             self.admin_connection_string, dbname=self.db_name
         )
@@ -65,7 +73,7 @@ class DatasetLoader:
         with psycopg.connect(target_db_connection_string) as conn:
             for script in self.dataset.get_script_paths():
                 with conn.cursor() as cursor, conn.transaction(), open(script) as f:
-                    execute_sql_dump(f, conn)
+                    execute_import_sql(f, conn)
                     print(f"Executed {script}")
 
         return target_db_connection_string
@@ -77,7 +85,7 @@ class DatasetLoader:
                 cursor.execute(as_sql(f"DROP DATABASE IF EXISTS {self.db_name}"))
 
 
-def execute_sql_dump(file_obj: TextIOBase, conn: psycopg.Connection) -> None:
+def execute_import_sql(file_obj: TextIOBase, conn: psycopg.Connection) -> None:
     """
     Executes all SQL statements from an open PostgreSQL dump file using a non-async
     psycopg3 connection, handling COPY commands with the copy() method.

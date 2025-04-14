@@ -6,6 +6,8 @@
 from typing import Any
 
 from psycopg import Column
+from pydantic import field_validator
+from regex import P
 
 import ossdbtoolsservice.parsers.datatypes as datatypes
 from ossdbtoolsservice.core.models import PGTSBaseModel
@@ -123,19 +125,15 @@ class DbColumn(PGTSBaseModel):
         )
 
 
-class DbCellValue:
+class DbCellValue(PGTSBaseModel):
     display_value: str
     is_null: bool
     row_id: int | None
     raw_object: Any
 
-    def __init__(
-        self, display_value: Any, is_null: bool, raw_object: Any, row_id: int | None
-    ) -> None:
-        self.display_value: str = "" if (display_value is None) else str(display_value)
-        self.is_null: bool = is_null
-        self.row_id = row_id
-        self.raw_object = raw_object
+    @field_validator("display_value", mode="before")
+    def validate_display_value(cls, value):
+        return "" if value is None else str(value)
 
 
 OutgoingMessageRegistration.register_outgoing_message(DbColumn)

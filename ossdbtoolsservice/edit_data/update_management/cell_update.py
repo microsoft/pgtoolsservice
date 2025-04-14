@@ -25,11 +25,16 @@ class CellUpdate:
 
     @property
     def as_db_cell_value(self) -> DbCellValue:
-        return DbCellValue(self.value_as_string, self.value is None, self.value, None)
+        return DbCellValue(
+            display_value=self.value_as_string,
+            is_null=self.value is None,
+            row_id=None,
+            raw_object=self.value,
+        )
 
     @property
     def as_edit_cell(self) -> EditCell:
-        return EditCell(self.as_db_cell_value, True)
+        return EditCell.from_db_cell_value(self.as_db_cell_value, True)
 
     @property
     def value_as_string(self) -> str:

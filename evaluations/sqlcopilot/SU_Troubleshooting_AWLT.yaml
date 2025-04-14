@@ -1,0 +1,477 @@
+# yaml-language-server: $schema=..\..\GenericEvaluation\TestModels\TestSetSchema.json
+ShortName: SU_T_AWLT
+Description: General Troubleshooting Prompts
+TestSetup:
+  DatabaseToRestore: Prompts\AdventureWorksLT2022\AdventureWorksLT2022.bak
+  CartridgeExperience: SSMS_SQLEditorChat
+TestCases:
+- Name: Find Blocking Sessions
+  Commands:
+  - Prompt: I want to find blocking sessions
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: BlockingSessions
+        Definition: The response should state that either no blocking sessions were
+          found, or it should list the blocking sessions.
+      MinScore: 4
+- Name: Find Deadlocks
+  Commands:
+  - Prompt: I want to find deadlocks in the current database
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: DeadlocksSummary
+        Definition: The response should summarize the list of current deadlocks or
+          state there are no current deadlocks in the server.
+      MinScore: 4
+- Name: Find Fragmented Indexes
+  Commands:
+  - Prompt: Help me find fragmented indexes in the current database
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListFragmentedIndexes
+        Definition: The response should list fragmented indexes in the current database.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: NoFragmentedColumnstoreIndexes
+        Definition: The response should find no fragmented columnstore indexes.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: IndexMaintenanceRecommendations
+        Definition: The response should include recommendations for good index maintenance
+          practices.
+      MinScore: 4
+- Name: DB Hitting Resource Limits
+  Commands:
+  - Prompt: Is the database hitting resource limits? Which limits?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ResourceLimits
+        Definition: The response should return something, but this hasn't worked yet
+          so the exact details are unknown.
+      MinScore: 4
+- Name: Data out of sync
+  Commands:
+  - Prompt: Data seem to be out of sync. What's the issue?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ClarifyDataSyncIssue
+        Definition: The response should ask the user to clarify what type of data
+          sync issue they are experiencing.
+      MinScore: 4
+- Name: High Resource Queries
+  Commands:
+  - Prompt: What queries in the current database have the highest resource usage?
+      (please include the query id or plan id for each query)
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListHighResourceQueries
+        Definition: The response should include a list of the top queries using the
+          most resources (either CPU or memory).
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: IncludeQueryOrPlanID
+        Definition: The response should include query id or plan id information so
+          the user can investigate further.
+      MinScore: 4
+- Name: Check for Connection Timeouts
+  TestColor: Probation
+  Commands:
+  - Prompt: Check for causes of connection timeouts in my database
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ConnectionTimeoutCauses
+        Definition: The response should state that the system checked for conditions that may relate to connection
+          timeouts.  
+      MinScore: 4
+- Name: Have Queries Become Slower
+  Commands:
+  - Prompt: Have any of my queries in this database gotten significantly slower recently?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CheckRegressedQueryPerformance
+        Definition: The response should state that the system checked for regressed
+          query performance.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: NoRegressedQueryPerformanceFound
+        Definition: The response should conclude that it did not find any regressed
+          query performance in the current database.
+      MinScore: 4
+- Name: Improve Query Performance
+  Commands:
+  - Prompt: How can I improve performance of my slowest queries in the current database?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: StepByStepQueryOptimization
+        Definition: The response should provide a step-by-step guide to improve query
+          performance.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: QueryOptimizationSteps
+        Definition: The response should include identifying slow queries, analyzing
+          execution plans, and index optimization.
+      MinScore: 4
+- Name: Slowest Queries
+  Commands:
+  - Prompt: What are the slowest queries in the current database?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListSlowestQueries
+        Definition: The response should list the slowest queries in the database.
+      MinScore: 4
+- Name: Queries executed most often
+  Commands:
+  - Prompt: What queries are being executed most often in the current database?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListMostFrequentlyExecutedQueries
+        Definition: The response should list the queries running most often in the
+          current database.
+      MinScore: 4
+- Name: Highest CPU Queries
+  Commands:
+  - Prompt: What queries on this database have the highest CPU usage?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListHighestCPUQueries
+        Definition: The response should list the queries with the highest CPU Time.
+      MinScore: 4
+- Name: Why is CPU high?
+  Commands:
+  - Prompt: Why is the CPU usage high on this database?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListHighCPUQueries
+        Definition: The response should list high CPU queries.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CheckForMissingIndexesAndWaitStats
+        Definition: The response should check for missing indexes and current wait
+          stats.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CPUUsageSummaryAndRecommendations
+        Definition: The response should conclude with a summary and recommendations.
+      MinScore: 4
+- Name: Database I/O Check
+  Commands:
+  - Prompt: Is the current database experiencing high I/O?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListIOMetrics
+        Definition: The response should list various resource usage categories such
+          as CPU, Data I/O, Log Write, Memory, and others.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: NoHighIOfound
+        Definition: The response should conclude there is no high I/O on the current
+          database.
+      MinScore: 4
+- Name: Optimize MAXDOP
+  Commands:
+  - Prompt: What's the current MAXDOP and how to optimize?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListCurrentMAXDOP
+        Definition: The response should list the current MAXDOP configuration.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ProvideMAXDOPOptimizationGuidance
+        Definition: The response should provide guidance on how to optimize MAXDOP.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ProvideMAXDOPExample
+        Definition: The response should provide an example of how to change MAXDOP
+          if desired.
+      MinScore: 4
+- Name: Queries with High Variation
+  Commands:
+  - Prompt: Which queries on my database have a high variation in execution time?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListQueriesWithHighVariation
+        Definition: The response should list queries showing their variation in execution
+          time.
+      MinScore: 4
+- Name: Multiple Execution Plans
+  Commands:
+  - Prompt: Show me the top 5 queries in the current database that have had more than one
+      execution plan.
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListQueriesWithMultipleExecutionPlans
+        Definition: The response should list queries with multiple execution plans
+          or state there are no queries with multiple execution plans.
+      MinScore: 4
+    OptionalEvaluations:
+    - Criteria: NoQueryExecutionErrors
+- Name: Highest Wait Times
+  Commands:
+  - Prompt: Which queries have had the highest wait times?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListQueriesWithHighestWaitTimes
+        Definition: The response should list the queries with the highest wait times.
+      MinScore: 4
+- Name: Most Recent Queries
+  Commands:
+  - Prompt: What are the most recently executed queries in the current database?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListMostRecentQueries
+        Definition: The response should list the most recently executed queries in
+          the database.
+      MinScore: 4
+- Name: More writes than reads
+  Commands:
+  - Prompt: Do I have indexes that are written more frequently than read?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: AnalyzeIndexUsage
+        Definition: The response should include an explanation of how to analyze index
+          usage.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: NoIndexesWrittenMoreThanRead
+        Definition: The response should conclude there are no indexes that are written
+          more frequently than read for the current database.
+      MinScore: 4
+- Name: Rowcount for table
+  Commands:
+  - Prompt: How many items are in the SalesLT.SalesOrderDetail table?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListRowcountForOrderDetails
+        Definition: The response should list the number of rows in the table. It should
+          be around 542.
+      MinScore: 4
+- Name: Transaction Log Growth
+  Commands:
+  - Prompt: The transaction log for the current database keeps growing and I don't
+      know why
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListDatabaseRecoveryModel
+        Definition: The response should list the recovery model for the database.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListTransactionLogSizeAndFreeSpace
+        Definition: The response should list the size of the transaction log and the
+          current free space using DBCC SQLPERF(LOGSPACE).
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListLastTransactionLogBackup
+        Definition: The response should list the date and time of the last transaction
+          log backup.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: LogReuseWaitDescription
+        Definition: The response should list the log reuse wait description for the
+          database.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: IdentifyLongRunningTransactions
+        Definition: The response should identify any long-running transactions for
+          the database.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: IdentifyOpenTransactions
+        Definition: The response should identify any open transactions for the database.
+      MinScore: 4
+- Name: Database Low on Space
+  Commands:
+  - Prompt: My database is low on space, list options for fixing it
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ListDatabaseFilesAndFreeSpace
+        Definition: The response should list the files for the database, their size,
+          and the amount of free space.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CheckTransactionLogBackups
+        Definition: The response should identify if transaction log backups are not
+          being performed if the database uses the full recovery model.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CheckPageOrDataCompression
+        Definition: The response should identify if page or data compression is being
+          used for any indexes.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: ReviewUnusedIndexesAndOldData
+        Definition: The response should list topics to review including removing unused
+          indexes and archiving old data.
+      MinScore: 4
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: NoArbitraryDatabaseShrink
+        Definition: The response should not suggest arbitrarily shrinking the database
+          to reclaim space.
+      MinScore: 4
+- Name: Core Scenarios 31
+  Commands:
+  - Prompt: List columns that have high skew and need filtered statistics
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: HighSkewColumns
+        Definition: The response should state that identifying columns that have high
+          skew is a resource-intensive process and should be run in a test environment
+          with a copy of the production database.
+      MinScore: 4
+- Name: Core Scenarios 36
+  Commands:
+  - Prompt: Identify any blocked queries including what processes or users are running
+      the queries
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: IdentifyBlockedQueries
+        Definition: The response should identify there are currently no blocked queries.
+      MinScore: 4
+- Name: Missing Index Check 1
+  Commands:
+  - Prompt: Would any table benefit from an index?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CheckForMissingIndexRecommendations
+        Definition: The response should state no tables would benefit based on the current workload.
+                    The response should mention there are no missing index recommendations for the current database.
+      MinScore: 4
+- Name: Missing Index Check 2
+  Commands:
+  - Prompt: Are there any missing index recommendations?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CheckForMissingIndexRecommendations
+        Definition: The response should state there are no missing index recommendations for the current database.
+      MinScore: 4
+- Name: Hottest 7 Tables
+  Commands:
+  - Prompt: I need a script to find the 7 hottest tables?
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CheckForReadVsWrite
+        Definition: The response should ask the user to clarify if they are looking for the tables with the most reads or writes.
+      MinScore: 4
+  - Prompt: reads
+    RequiredEvaluations:
+    - Criteria: ResponseExists
+    OptionalEvaluations:
+    - Criteria: LLMCheck
+      Parameters:
+        CheckName: CheckForReadVsWrite
+        Definition: The response should include a script functionally equivalent to
+            SELECT TOP 7
+              SCHEMA_NAME(o.schema_id) AS [Schema Name], 
+              OBJECT_NAME(s.object_id) AS [Table Name],
+              SUM(s.user_seeks + s.user_scans + s.user_lookups) AS [Total Reads],
+              SUM(s.user_updates) AS [Total Writes]
+            FROM sys.dm_db_index_usage_stats AS s WITH (NOLOCK)
+            INNER JOIN sys.indexes AS i WITH (NOLOCK)
+              ON s.[object_id] = i.[object_id]
+              AND i.index_id = s.index_id
+            INNER JOIN sys.objects AS o WITH (NOLOCK)
+              ON i.[object_id] = o.[object_id]
+            WHERE o.is_ms_shipped = 0
+            AND s.database_id = DB_ID()
+            GROUP BY SCHEMA_NAME(o.schema_id), OBJECT_NAME(s.object_id)
+            ORDER BY [Total Reads] DESC, [Total Writes] DESC OPTION (RECOMPILE);
+      MinScore: 4

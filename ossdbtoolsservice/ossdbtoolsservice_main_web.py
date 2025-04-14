@@ -9,7 +9,7 @@ from logging import Logger
 from ossdbtoolsservice.hosting.message_server import MessageServer
 from ossdbtoolsservice.hosting.service_provider import ServiceProvider
 from ossdbtoolsservice.hosting.web_message_server import WebMessageServer
-from ossdbtoolsservice.main import create_server_init, get_config, get_loggers, main
+from ossdbtoolsservice.main import create_server_init, get_config, get_logger, main
 from ossdbtoolsservice.utils.async_runner import AsyncRunner
 
 
@@ -39,7 +39,7 @@ def _create_web_server(
 
 if __name__ == "__main__":
     args, config = get_config()
-    logger = get_loggers(args.log_dir)
+    logger = get_logger(args.log_dir)
     async_runner = AsyncRunner()
     server, service_provider = _create_web_server(
         async_runner,
