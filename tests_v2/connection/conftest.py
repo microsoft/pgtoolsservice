@@ -28,13 +28,11 @@ class MockConnectionClassFactory(ConnectionClassFactoryBase):
         self,
         details: ConnectionDetails,
         store_connection_error: Callable[[ConnectionDetails, Exception], None],
-        maybe_refresh_azure_token: Callable[[ConnectionDetails], AzureToken | None] | None,
+        get_azure_token: Callable[[ConnectionDetails], AzureToken | None] | None,
     ) -> type[Connection[TupleRow]]:
         def get_mock_connection(*args: Any, **kwargs: Any) -> Connection[TupleRow]:
-            nonlocal maybe_refresh_azure_token
-            ConnectionClassFactory.maybe_handle_azure_token(
-                details, maybe_refresh_azure_token, kwargs
-            )
+            nonlocal get_azure_token
+            ConnectionClassFactory.maybe_set_azure_token(details, get_azure_token, kwargs)
 
             # MOCK: Connection Info
             mock_connection_info = mock.Mock()

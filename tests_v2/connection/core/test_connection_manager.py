@@ -15,6 +15,7 @@ from ossdbtoolsservice.connection.core.connection_manager import ConnectionManag
 from ossdbtoolsservice.connection.core.errors import GetConnectionTimeout
 from ossdbtoolsservice.workspace.contracts.configuration import Configuration
 from tests_v2.connection.conftest import MockConnectionClassFactory, StubConnectionManager
+from tests_v2.test_utils.utils import is_debugger_active
 
 
 def get_connection_details() -> ConnectionDetails:
@@ -321,6 +322,7 @@ def test_fetches_expired_azure_token(
     connection_manager = ConnectionManager(
         fetch_azure_token=mock_fetch_token,
         connection_class_factory=mock_connection_class_factory,
+        timeout_override=10000 if is_debugger_active() else None,
     )
 
     owner_uri = "test_owner_uri_1"
@@ -332,6 +334,7 @@ def test_fetches_expired_azure_token(
     connection_manager.connect(owner_uri, details, config=Configuration())
 
     assert mock_fetch_token.called
+    assert mock_fetch_token.return_value.token == "new_token"
 
 
 def test_two_threads_against_expired_token_refreshes_once(
