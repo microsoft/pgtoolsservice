@@ -15,6 +15,7 @@ from ossdbtoolsservice.schema.contracts import (
     SessionIdContainer,
 )
 from ossdbtoolsservice.schema.contracts.get_schema_model import (
+    GET_SCHEMA_MODEL_COMPLETE,
     ColumnSchema,
     RelationshipSchema,
     TableSchema,
@@ -57,7 +58,7 @@ class SchemaEditorSession:
     ) -> None:
         # Check if we already have our schema cached
         if self._schema is not None:
-            request_context.send_notification(self._schema)
+            request_context.send_notification(GET_SCHEMA_MODEL_COMPLETE, self._schema)
             return
 
         # Check if retrieval is already in progress
@@ -76,10 +77,10 @@ class SchemaEditorSession:
 
     def _get_schema_model_request_thread(
         self, request_context: RequestContext, connection: ServerConnection
-    ):
+    ) -> None:
         try:
             self._schema = self.get_schema_json(connection._conn)
-            request_context.send_notification(self._schema)
+            request_context.send_notification(GET_SCHEMA_MODEL_COMPLETE, self._schema)
         except Exception as e:
             request_context.send_error(f"Error fetching db context: {e}")
         return
@@ -222,6 +223,6 @@ class SchemaEditorSession:
 
         return schema_resp
 
-    def close_session(self):
+    def close_session(self) -> None:
         # TODO: Nothing to clean really?
         return

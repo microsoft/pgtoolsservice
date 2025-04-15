@@ -7,7 +7,6 @@ import threading
 from logging import Logger
 
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts import ConnectionDetails
 from ossdbtoolsservice.hosting import Service, ServiceProvider
 from ossdbtoolsservice.hosting.context import RequestContext
 from ossdbtoolsservice.schema.contracts import (
@@ -24,8 +23,8 @@ class SchemaEditorService(Service):
     """Service for browsing database schemas"""
 
     def __init__(self) -> None:
-        self._service_provider: ServiceProvider | None = None
-        self._conn_service: ConnectionService | None = None
+        self._service_provider: ServiceProvider
+        self._conn_service: ConnectionService
         self._logger: Logger | None = None
         self._session_map: dict[str, SchemaEditorSession] = {}
         self._session_lock: threading.Lock = threading.Lock()
@@ -62,7 +61,7 @@ class SchemaEditorService(Service):
         )
 
     def _handle_create_session_request(
-        self, request_context: RequestContext, params: ConnectionDetails
+        self, request_context: RequestContext, params: SessionIdContainer
     ) -> None:
         """Handle a create object explorer session request"""
 
