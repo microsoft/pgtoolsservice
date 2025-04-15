@@ -139,6 +139,7 @@ class SchemaEditorService(Service):
                 assert (session_id in self._session_map)
                 session = self._session_map.pop(session_id)
                 session.close_session()
+            request_context.send_response(None)
         except Exception as e:
             message = f"Failed to close session: {str(e)}"
             if self.service_provider.logger is not None:
