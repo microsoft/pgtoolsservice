@@ -595,7 +595,7 @@ class ConnectionManager:
         connection_class = self.connection_class_factory.create_connection_class(
             details,
             self._store_connection_error,
-            self._maybe_refresh_azure_token if self._fetch_azure_token else None,
+            self._get_entra_token,
         )
         # Create a new connection pool.
         pool = ConnectionPool(
@@ -664,24 +664,33 @@ class ConnectionManager:
         )
         return ServerInfo(server=server, server_version=server_version, is_cloud=is_cloud)
 
-    def _maybe_refresh_azure_token(self, details: ConnectionDetails) -> AzureToken | None:
-        """Refresh the Azure token for the given connection details if need be.
-        Update the connection details with the new token.
+    def _get_entra_token(self, details: ConnectionDetails) -> AzureToken | None:
+        """Gets an Entra token from connection details to connect with an
+        Azure PG instance that uses Entra auth.
+
+        Refresh the Azure token for the given connection details if need be.
+        Update the connection details with the new token if it is refreshed.
 
         Args:
             details: The connection details to use.
         Returns:
-            The refreshed Azure token if refresh occurred, None otherwise.
+            The AzureToken for the Entra credentials if there is one,
+            refreshed if needed and the token is set, or
+            None if the token is not set.
         """
-        if self._fetch_azure_token is None or not details.azure_token:
-            # If the token is not set, return None.
-            return None
-
         # Operate in the lock to avoid multiple pool worker threads
         # trying to refresh the token at the same time.
         with self._pool_worker_lock:
             azure_token = details.azure_token
-            if azure_token.is_azure_token_expired():
+
+            if azure_token is not None and azure_token.is_azure_token_expired():
+                if not self._fetch_azure_token:
+                    self._logger.warning(
+                        "Azure token refresh needed but is not supported "
+                        "in this connection manager."
+                    )
+                    return azure_token
+
                 # Get the account ID and tenant ID from the connection details
                 account_id = details.azure_account_id
                 tenant_id = details.azure_tenant_id
@@ -691,10 +700,11 @@ class ConnectionManager:
                     raise ValueError(
                         "Azure account ID must be provided to refresh the token."
                     )
-                new_azure_token = self._fetch_azure_token(account_id, tenant_id)
-                details.azure_token = new_azure_token
-                return new_azure_token
-            return None
+
+                azure_token = self._fetch_azure_token(account_id, tenant_id)
+                details.azure_token = azure_token
+
+            return azure_token
 
     def _store_connection_error(self, details: ConnectionDetails, error: Exception) -> None:
         """Store the connection error for the given connection details.
