@@ -4,7 +4,6 @@
 # --------------------------------------------------------------------------------------------
 
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
-from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
     OutgoingMessageRegistration,
@@ -12,15 +11,19 @@ from ossdbtoolsservice.hosting import (
 from ossdbtoolsservice.schema.contracts.common import SessionIdContainer
 
 CREATE_SESSION_REQUEST = IncomingMessageConfiguration(
-    "schemaDesigner/createSession", ConnectionDetails
+    "schemaDesigner/createSession", SessionIdContainer
 )
-OutgoingMessageRegistration.register_outgoing_message(SessionIdContainer)
 
 CLOSE_SESSION_REQUEST = IncomingMessageConfiguration(
     "schemaDesigner/closeSession", SessionIdContainer
 )
 
+CREATE_SESSION_COMPLETE = "schemaDesigner/sessionCreated"
+
+OutgoingMessageRegistration.register_outgoing_message(SessionIdContainer)
+
 __all__ = [
     "CREATE_SESSION_REQUEST",
     "CLOSE_SESSION_REQUEST",
+    "CREATE_SESSION_COMPLETE",
 ]

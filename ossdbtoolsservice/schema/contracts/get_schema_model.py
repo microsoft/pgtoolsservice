@@ -49,8 +49,12 @@ class TableSchema(PGTSBaseModel):
     relationships: List[RelationshipSchema]
 
 class GetSchemaModelResponseParams(PGTSBaseModel):
+    session_id: str
     tables: List[TableSchema]
 
+GET_SCHEMA_MODEL_COMPLETE = "schemaDesigner/getSchemaModelComplete"
+
+OutgoingMessageRegistration.register_outgoing_message(SessionIdContainer)
 OutgoingMessageRegistration.register_outgoing_message(GetSchemaModelResponseParams)
 
 __all__ = [

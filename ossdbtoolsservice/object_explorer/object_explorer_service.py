@@ -91,12 +91,6 @@ class ObjectExplorerService(Service):
                 "Object Explorer service successfully initialized"
             )
 
-    @property
-    def service_provider(self) -> ServiceProvider:
-        if self._service_provider is None:
-            raise ValueError("Service provider is not set")
-        return self._service_provider
-
     # REQUEST HANDLERS #####################################################
 
     def _handle_create_session_request(

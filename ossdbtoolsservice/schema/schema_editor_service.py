@@ -70,13 +70,6 @@ class SchemaEditorService(Service):
         )
 
 
-    @property
-    def service_provider(self) -> ServiceProvider:
-        if self._service_provider is None:
-            raise ValueError("Service provider is not set")
-        return self._service_provider
-
-
     def _handle_create_session_request(
         self, request_context: RequestContext, params: ConnectionDetails
     ) -> None:
@@ -92,17 +85,10 @@ class SchemaEditorService(Service):
             return
 
 
-    def _create_session(self, request_context: RequestContext, params: ConnectionDetails) -> None:
+    def _create_session(self, request_context: RequestContext, params: SessionIdContainer) -> None:
+        session_id = params.session_id
         if self._logger:
-            self._logger.info(f" [handler] Creating OE session for {params.server_name}")
-
-        params = get_connection_details_with_defaults(params)
-
-        # Generate the session ID and create/store the session
-        session_id = schema_utils.generate_session_uri(params)
-
-        if self._logger:
-            self._logger.info(f"   - Session ID: {session_id}")
+            self._logger.info(f" [handler] Creating session for {session_id}")
 
         # Add the session to session map in a lock to
         # prevent race conditions between check and add
@@ -115,17 +101,10 @@ class SchemaEditorService(Service):
                 request_context.send_error(message)
             else:
                 # If session doesn't exist, create a new one
-                session = SchemaEditorSession(session_id, params)
+                session = SchemaEditorSession(session_id)
                 self._session_map[session_id] = session
+                request_context.send_response(params)
                 session.initialize(request_context)
-
-        with self._connect_semaphore:
-            connect_request = ConnectRequestParams(session.connection_details, session.id)
-            connect_result = self._conn_service.connect(connect_request)
-            if connect_result is None:
-                raise RuntimeError("Failed to create connection")
-            if connect_result.error_message is not None:
-                raise RuntimeError(connect_result.error_message)
 
         if self._logger:
             self._logger.info(f"   - Session created: {session_id}")
@@ -144,12 +123,13 @@ class SchemaEditorService(Service):
                 assert(session_id in self._session_map)
                 session = self._session_map[session_id]
                 assert(session.init_task is None)
-            connection_pool = self._conn_service.get_pooled_connection(session.id)
+            connection_pool = self._conn_service.get_pooled_connection(session_id)
             if not connection_pool:
-                request_context.send_error(f"No connection available for {session.id}")
+                request_context.send_error(f"No connection available for {session_id}")
                 return
             with connection_pool as connection:
                 session.get_schema_model(request_context, connection)
+            request_context.send_response(params)
         except Exception as e:
             message = f"Failed to get schema model: {str(e)}"
             if self.service_provider.logger is not None:
@@ -157,6 +137,7 @@ class SchemaEditorService(Service):
             request_context.send_error(message)
             return
         return
+
 
     def _handle_close_session_request(
         self, request_context: RequestContext, params: SessionIdContainer
@@ -167,15 +148,13 @@ class SchemaEditorService(Service):
                 assert(session_id in self._session_map)
                 session = self._session_map.pop(session_id)
                 session.close_session()
-            with self._connect_semaphore:
-                self._conn_service.disconnect(session_id)
         except Exception as e:
             message = f"Failed to close session: {str(e)}"
             if self.service_provider.logger is not None:
                 self.service_provider.logger.error(message)
             request_context.send_error(message)
-            return
         return
+
 
     def _handle_shutdown(self) -> None:
         """Close all designer sessions when service is shutdown"""
