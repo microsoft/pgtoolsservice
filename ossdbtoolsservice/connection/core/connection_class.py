@@ -17,7 +17,7 @@ class ConnectionClassFactoryBase(ABC):
         self,
         details: ConnectionDetails,
         store_connection_error: Callable[[ConnectionDetails, Exception], None],
-        maybe_refresh_azure_token: Callable[[ConnectionDetails], AzureToken | None] | None,
+        get_azure_token: Callable[[ConnectionDetails], AzureToken | None] | None,
     ) -> type[Connection[TupleRow]]:
         """
         Create a PostgreSQL connection object.
@@ -42,37 +42,39 @@ class ConnectionClassFactory(ConnectionClassFactoryBase):
     """
 
     @staticmethod
-    def maybe_handle_azure_token(
+    def maybe_set_azure_token(
         details: ConnectionDetails,
-        maybe_refresh_azure_token: Callable[[ConnectionDetails], AzureToken | None] | None,
+        get_azure_token: Callable[[ConnectionDetails], AzureToken | None] | None,
         kwargs: dict[str, Any],
     ) -> None:
         """
-        Handle the azure token refresh if needed.
+        Handle setting the azure token if needed.
+
+        The get_azure_token function should refresh the token if it is expired.
         """
-        if not details.azure_token or not maybe_refresh_azure_token:
+        if not get_azure_token:
             return
 
-        new_azure_token = maybe_refresh_azure_token(details)
-        if new_azure_token:
-            kwargs["password"] = new_azure_token
+        azure_token = get_azure_token(details)
+
+        if azure_token is not None:
+            kwargs["password"] = azure_token.token
 
     def create_connection_class(
         self,
         details: ConnectionDetails,
         store_connection_error: Callable[[ConnectionDetails, Exception], None],
-        maybe_refresh_azure_token: Callable[[ConnectionDetails], AzureToken | None] | None,
+        get_azure_token: Callable[[ConnectionDetails], AzureToken | None] | None,
     ) -> type[Connection[TupleRow]]:
+        # If the connection is using an Entra token, we need to be able to
+        # refresh that token when it expires. This is done by creating a new
+        # connection class that checks the token expiration and refreshes
+        # it if needed.
         class PGTSConnection(Connection[TupleRow]):
             @classmethod
             def connect(cls, *args: Any, **kwargs: Any) -> "PGTSConnection":
                 try:
-                    # If the connection is using an Entra token, we need to be able to
-                    # refresh that token when it expires. This is done by creating a new
-                    # connection class that checks the token expiration and refreshes
-                    # it if needed.
-                    self.maybe_handle_azure_token(details, maybe_refresh_azure_token, kwargs)
-
+                    self.maybe_set_azure_token(details, get_azure_token, kwargs)
                     return super().connect(*args, **kwargs)
                 except Exception as e:
                     store_connection_error(details, e)
