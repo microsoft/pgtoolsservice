@@ -249,10 +249,18 @@ class ConnectionDetails(Serializable):
         """
         Returns hash of the connection details.
         """
+        # If the connection uses Entra authentication,
+        # the password field does not identify the connection -
+        # after refresh, the connection parameters will have a different
+        # password value but represent the same connection.
+        # So we remove the password from the connection parameters
+        # before hashing.
+        connection_params = self.get_connection_params()
+        if self.azure_token and "password" in connection_params:
+            del connection_params["password"]
+
         conninfo = " ".join(
-            f"{k}={str(v)}"
-            for (k, v) in sorted(self.get_connection_params().items())
-            if v is not None
+            f"{k}={str(v)}" for (k, v) in sorted(connection_params.items()) if v is not None
         )
         return hash(conninfo)
 
