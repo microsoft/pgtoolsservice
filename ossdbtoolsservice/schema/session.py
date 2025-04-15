@@ -178,14 +178,19 @@ class SchemaEditorSession:
             # Query primary key columns for this table
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT kcu.column_name
-                    FROM information_schema.table_constraints tc
-                    JOIN information_schema.key_column_usage kcu 
-                    ON tc.constraint_name = kcu.constraint_name
-                    WHERE tc.constraint_type = 'PRIMARY KEY'
-                    AND tc.table_schema = %s
-                    AND tc.table_name = %s
-                    ORDER BY kcu.ordinal_position;
+                    SELECT a.attname AS column_name
+                    FROM pg_index i
+                    JOIN pg_attribute a
+                        ON a.attrelid = i.indrelid
+                        AND a.attnum = ANY(i.indkey)
+                    JOIN pg_class c
+                        ON c.oid = i.indrelid
+                    JOIN pg_namespace n
+                        ON n.oid = c.relnamespace
+                    WHERE i.indisprimary
+                    AND n.nspname = %s
+                    AND c.relname = %s
+                    ORDER BY a.attnum;
                 """, (schema_name, table_name))
                 pk_rows = cur.fetchall()
             table_dict.primary_keys = [row[0] for row in pk_rows]
@@ -194,18 +199,36 @@ class SchemaEditorSession:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT
-                        kcu.column_name,
-                        ccu.table_schema AS foreign_table_schema,
-                        ccu.table_name AS foreign_table_name,
-                        ccu.column_name AS foreign_column_name
-                    FROM information_schema.table_constraints tc
-                    JOIN information_schema.key_column_usage kcu 
-                    ON tc.constraint_name = kcu.constraint_name
-                    JOIN information_schema.constraint_column_usage ccu 
-                    ON ccu.constraint_name = tc.constraint_name
-                    WHERE tc.constraint_type = 'FOREIGN KEY'
-                    AND tc.table_schema = %s
-                    AND tc.table_name = %s;
+                        src_col.attname AS current_column,
+                        tgt_ns.nspname AS foreign_schema,
+                        tgt_tbl.relname AS foreign_table,
+                        tgt_col.attname AS foreign_column
+                    FROM
+                        pg_constraint c
+                        JOIN pg_class src_tbl
+                            ON c.conrelid = src_tbl.oid
+                        JOIN pg_namespace src_ns
+                            ON src_tbl.relnamespace = src_ns.oid
+                        JOIN pg_class tgt_tbl
+                            ON c.confrelid = tgt_tbl.oid
+                        JOIN pg_namespace tgt_ns
+                            ON tgt_tbl.relnamespace = tgt_ns.oid
+                        JOIN LATERAL unnest(c.conkey)
+                            WITH ORDINALITY AS src(attnum, ord) ON TRUE
+                        JOIN LATERAL unnest(c.confkey)
+                            WITH ORDINALITY AS tgt(attnum, ord) ON src.ord = tgt.ord
+                        JOIN pg_attribute src_col
+                            ON src_col.attrelid = src_tbl.oid
+                            AND src_col.attnum = src.attnum
+                        JOIN pg_attribute tgt_col
+                            ON tgt_col.attrelid = tgt_tbl.oid
+                            AND tgt_col.attnum = tgt.attnum
+                    WHERE
+                        c.contype = 'f'
+                        AND src_ns.nspname = %s
+                        AND src_tbl.relname = %s
+                    ORDER BY
+                        src_col.attname, tgt_ns.nspname, tgt_tbl.relname, tgt_col.attname;
                 """, (schema_name, table_name))
                 fk_rows = cur.fetchall()
             table_dict.relationships = []
