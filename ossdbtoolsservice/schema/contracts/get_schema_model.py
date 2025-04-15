@@ -3,15 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-from typing import Any, Dict, List
-
 from ossdbtoolsservice.core.models import PGTSBaseModel
 from ossdbtoolsservice.hosting import (
     IncomingMessageConfiguration,
     OutgoingMessageRegistration,
 )
 from ossdbtoolsservice.schema.contracts.common import SessionIdContainer
-
 
 GET_SCHEMA_MODEL_REQUEST = IncomingMessageConfiguration(
     "schemaDesigner/getSchemaModel", SessionIdContainer
@@ -44,13 +41,13 @@ class TableSchema(PGTSBaseModel):
     live_rows_estimate: str
     dead_rows_estimate: str
     comment: str | None
-    columns: List[Dict[str, ColumnSchema]]
-    primary_keys: List[str]
-    relationships: List[RelationshipSchema]
+    columns: list[ColumnSchema]
+    primary_keys: list[str]
+    relationships: list[RelationshipSchema]
 
 class GetSchemaModelResponseParams(PGTSBaseModel):
     session_id: str
-    tables: List[TableSchema]
+    tables: list[TableSchema]
 
 GET_SCHEMA_MODEL_COMPLETE = "schemaDesigner/getSchemaModelComplete"
 
@@ -59,5 +56,6 @@ OutgoingMessageRegistration.register_outgoing_message(GetSchemaModelResponsePara
 
 __all__ = [
     "GET_SCHEMA_MODEL_REQUEST",
+    "GET_SCHEMA_MODEL_COMPLETE",
     "GetSchemaModelResponseParams",
 ]

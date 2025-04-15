@@ -6,20 +6,23 @@
 import threading
 from typing import Optional
 
-from ossdbtoolsservice.connection import ServerConnection
-from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
-from ossdbtoolsservice.hosting.context import RequestContext
-from ossdbtoolsservice.schema.contracts.get_schema_model import ColumnSchema, RelationshipSchema, TableSchema
-from ossdbtoolsservice.schema.contracts.session_control import CREATE_SESSION_COMPLETE
-from pgsmo import Server
 import psycopg
 
+from ossdbtoolsservice.connection import ServerConnection
+from ossdbtoolsservice.hosting.context import RequestContext
 from ossdbtoolsservice.schema.contracts import (
-        GetSchemaModelResponseParams,
-        SessionIdContainer,
+    GetSchemaModelResponseParams,
+    SessionIdContainer,
 )
+from ossdbtoolsservice.schema.contracts.get_schema_model import (
+    ColumnSchema,
+    RelationshipSchema,
+    TableSchema,
+)
+from ossdbtoolsservice.schema.contracts.session_control import CREATE_SESSION_COMPLETE
 
-class SchemaEditorSession:    
+
+class SchemaEditorSession:
     id: str
     is_ready: bool
     _schema: GetSchemaModelResponseParams | None = None
@@ -42,15 +45,16 @@ class SchemaEditorSession:
         self.init_task.daemon = True
         self.init_task.start()
         return
-    
+
     def _initialize_in_thread(self, request_context: RequestContext) -> None:
         response = SessionIdContainer(session_id=self.id)
         request_context.send_notification(CREATE_SESSION_COMPLETE, response)
         self.init_task = None
         return
 
-
-    def get_schema_model(self, request_context: RequestContext, connection: ServerConnection) -> None:
+    def get_schema_model(
+        self, request_context: RequestContext, connection: ServerConnection
+    ) -> None:
         # Check if we already have our schema cached
         if self._schema is not None:
             request_context.send_notification(self._schema)
@@ -63,23 +67,27 @@ class SchemaEditorSession:
 
         # Start a process to retrieve the schema
         self.get_schema_task = threading.Thread(
-            target=self._get_schema_model_request_thread, args=(request_context,connection,)
+            target=self._get_schema_model_request_thread, args=(
+                request_context, connection,)
         )
         self.get_schema_task.daemon = True
         self.get_schema_task.start()
         return
-    
-    def _get_schema_model_request_thread(self, request_context: RequestContext, connection: ServerConnection):
+
+    def _get_schema_model_request_thread(
+        self, request_context: RequestContext, connection: ServerConnection
+    ):
         try:
             self._schema = self.get_schema_json(connection._conn)
             request_context.send_notification(self._schema)
         except Exception as e:
             request_context.send_error(f"Error fetching db context: {e}")
         return
-    
+
     def get_schema_json(self, conn: psycopg.Connection) -> GetSchemaModelResponseParams:
-        schema_resp = GetSchemaModelResponseParams(session_id=self.id, tables=[])
-        
+        schema_resp = GetSchemaModelResponseParams(
+            session_id=self.id, tables=[])
+
         # First, query for all user tables (exclude system schemas)
         with conn.cursor() as cur:
             cur.execute("""
@@ -110,14 +118,14 @@ class SchemaEditorSession:
                 ORDER BY n.nspname, c.relname;
             """)
             tables = cur.fetchall()
-        
+
         # Process each table
         for table_row in tables:
             (
-                table_id, schema_name, table_name, rls_enabled, rls_forced, 
+                table_id, schema_name, table_name, rls_enabled, rls_forced,
                 replica_identity, bytes_val, size_str, live_rows, dead_rows, comment
             ) = table_row
-            
+
             table_dict = TableSchema(
                 id=table_id,
                 schema=schema_name,
@@ -134,7 +142,7 @@ class SchemaEditorSession:
                 primary_keys=[],
                 relationships=[]
             )
-            
+
             # Query columns for this table
             with conn.cursor() as cur:
                 cur.execute("""
@@ -150,11 +158,12 @@ class SchemaEditorSession:
                     ORDER BY ordinal_position;
                 """, (schema_name, table_name))
                 columns = cur.fetchall()
-            
+
             if columns:
                 table_dict.columns = []
                 for col in columns:
-                    col_name, ordinal_position, data_type, is_nullable, col_default, char_max_length = col
+                    (col_name, ordinal_position, data_type,
+                     is_nullable, col_default, char_max_length) = col
                     col_obj = ColumnSchema(
                         name=col_name,
                         ordinal_position=ordinal_position,
@@ -164,7 +173,7 @@ class SchemaEditorSession:
                         character_maximum_length=char_max_length,
                     )
                     table_dict.columns.append(col_obj)
-            
+
             # Query primary key columns for this table
             with conn.cursor() as cur:
                 cur.execute("""
@@ -179,7 +188,7 @@ class SchemaEditorSession:
                 """, (schema_name, table_name))
                 pk_rows = cur.fetchall()
             table_dict.primary_keys = [row[0] for row in pk_rows]
-            
+
             # Query foreign key relationships for this table
             with conn.cursor() as cur:
                 cur.execute("""
@@ -208,11 +217,11 @@ class SchemaEditorSession:
                     foreign_column=foreign_column,
                 )
                 table_dict.relationships.append(rel_obj)
-            
+
             schema_resp.tables.append(table_dict)
-        
+
         return schema_resp
-    
+
     def close_session(self):
         # TODO: Nothing to clean really?
         return

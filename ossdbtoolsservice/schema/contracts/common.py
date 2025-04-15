@@ -5,6 +5,7 @@
 
 from ossdbtoolsservice.core.models import PGTSBaseModel
 
+
 class SessionIdContainer(PGTSBaseModel):
     session_id: str
 

@@ -23,8 +23,8 @@ from ossdbtoolsservice.hosting import MessageServer, Service, ServiceProvider
 from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.object_explorer import ObjectExplorerService
-from ossdbtoolsservice.schema import SchemaEditorService
 from ossdbtoolsservice.query_execution import QueryExecutionService
+from ossdbtoolsservice.schema import SchemaEditorService
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants, markdown

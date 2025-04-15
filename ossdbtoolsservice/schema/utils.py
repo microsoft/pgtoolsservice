@@ -8,6 +8,7 @@ from urllib.parse import quote
 from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
 from ossdbtoolsservice.utils import validate
 
+
 def generate_session_uri(params: ConnectionDetails) -> str:
     # Make sure the required params are provided
     server_name = validate.is_not_none_or_whitespace(

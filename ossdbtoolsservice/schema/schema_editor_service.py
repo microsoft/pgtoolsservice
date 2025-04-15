@@ -7,24 +7,17 @@ import threading
 from logging import Logger
 
 from ossdbtoolsservice.connection.connection_service import ConnectionService
-from ossdbtoolsservice.connection.contracts.connect_request import ConnectRequestParams
-from ossdbtoolsservice.utils import constants
-from ossdbtoolsservice.utils.connection import get_connection_details_with_defaults
-from ossdbtoolsservice.schema import utils as schema_utils
-
 from ossdbtoolsservice.connection.contracts import ConnectionDetails
-
-from ossdbtoolsservice.connection.contracts.common import ConnectionDetails
 from ossdbtoolsservice.hosting import Service, ServiceProvider
 from ossdbtoolsservice.hosting.context import RequestContext
-from ossdbtoolsservice.schema.session import SchemaEditorSession
-
 from ossdbtoolsservice.schema.contracts import (
-        GET_SCHEMA_MODEL_REQUEST,
-        CREATE_SESSION_REQUEST,
-        CLOSE_SESSION_REQUEST,
-        SessionIdContainer,
+    CLOSE_SESSION_REQUEST,
+    CREATE_SESSION_REQUEST,
+    GET_SCHEMA_MODEL_REQUEST,
+    SessionIdContainer,
 )
+from ossdbtoolsservice.schema.session import SchemaEditorSession
+from ossdbtoolsservice.utils import constants
 
 
 class SchemaEditorService(Service):
@@ -37,7 +30,6 @@ class SchemaEditorService(Service):
         self._session_map: dict[str, SchemaEditorSession] = {}
         self._session_lock: threading.Lock = threading.Lock()
         self._connect_semaphore = threading.Semaphore(1)
-
 
     def register(self, service_provider: ServiceProvider) -> None:
         self._service_provider = service_provider
@@ -69,7 +61,6 @@ class SchemaEditorService(Service):
             constants.CONNECTION_SERVICE_NAME, ConnectionService
         )
 
-
     def _handle_create_session_request(
         self, request_context: RequestContext, params: ConnectionDetails
     ) -> None:
@@ -84,8 +75,9 @@ class SchemaEditorService(Service):
             request_context.send_error(message)
             return
 
-
-    def _create_session(self, request_context: RequestContext, params: SessionIdContainer) -> None:
+    def _create_session(
+            self, request_context: RequestContext, params: SessionIdContainer
+        ) -> None:
         session_id = params.session_id
         if self._logger:
             self._logger.info(f" [handler] Creating session for {session_id}")
@@ -111,7 +103,6 @@ class SchemaEditorService(Service):
 
         return
 
-    
     def _handle_get_schema_model_request(
         self, request_context: RequestContext, params: SessionIdContainer
     ) -> None:
@@ -120,12 +111,14 @@ class SchemaEditorService(Service):
         try:
             session_id = params.session_id
             with self._session_lock:
-                assert(session_id in self._session_map)
+                assert (session_id in self._session_map)
                 session = self._session_map[session_id]
-                assert(session.init_task is None)
-            connection_pool = self._conn_service.get_pooled_connection(session_id)
+                assert (session.init_task is None)
+            connection_pool = self._conn_service.get_pooled_connection(
+                session_id)
             if not connection_pool:
-                request_context.send_error(f"No connection available for {session_id}")
+                request_context.send_error(
+                    f"No connection available for {session_id}")
                 return
             with connection_pool as connection:
                 session.get_schema_model(request_context, connection)
@@ -138,14 +131,13 @@ class SchemaEditorService(Service):
             return
         return
 
-
     def _handle_close_session_request(
         self, request_context: RequestContext, params: SessionIdContainer
     ) -> None:
         try:
             session_id = params.session_id
             with self._session_lock:
-                assert(session_id in self._session_map)
+                assert (session_id in self._session_map)
                 session = self._session_map.pop(session_id)
                 session.close_session()
         except Exception as e:
@@ -155,12 +147,12 @@ class SchemaEditorService(Service):
             request_context.send_error(message)
         return
 
-
     def _handle_shutdown(self) -> None:
         """Close all designer sessions when service is shutdown"""
         if self.service_provider.logger is not None:
-            self.service_provider.logger.info("Closing all the Schema Designer sessions")
-        
+            self.service_provider.logger.info(
+                "Closing all the Schema Designer sessions")
+
         with self._session_lock:
             for session in self._session_map.values():
                 session.close_session()
