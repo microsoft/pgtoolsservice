@@ -24,6 +24,7 @@ from ossdbtoolsservice.language import LanguageService
 from ossdbtoolsservice.metadata import MetadataService
 from ossdbtoolsservice.object_explorer import ObjectExplorerService
 from ossdbtoolsservice.query_execution import QueryExecutionService
+from ossdbtoolsservice.schema import SchemaEditorService
 from ossdbtoolsservice.scripting.scripting_service import ScriptingService
 from ossdbtoolsservice.tasks import TaskService
 from ossdbtoolsservice.utils import constants, markdown
@@ -47,6 +48,7 @@ def get_all_services() -> dict[str, type[Service] | Service]:
         constants.EDIT_DATA_SERVICE_NAME: EditDataService,
         constants.TASK_SERVICE_NAME: TaskService,
         constants.CHAT_SERVICE_NAME: ChatService,
+        constants.SCHEMA_EDITOR_NAME: SchemaEditorService,
     }
 
 
