@@ -31,6 +31,8 @@ class ColumnSchema(PGTSBaseModel):
 
 class TableSchema(PGTSBaseModel):
     id: int
+    is_parent: bool
+    parent_id: int | None
     schema: str
     name: str
     rls_enabled: bool

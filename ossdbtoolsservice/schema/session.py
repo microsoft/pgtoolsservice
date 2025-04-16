@@ -58,7 +58,8 @@ class SchemaEditorSession:
     ) -> None:
         # Check if we already have our schema cached
         if self._schema is not None:
-            request_context.send_notification(GET_SCHEMA_MODEL_COMPLETE, self._schema)
+            request_context.send_notification(
+                GET_SCHEMA_MODEL_COMPLETE, self._schema)
             return
 
         # Check if retrieval is already in progress
@@ -80,7 +81,8 @@ class SchemaEditorSession:
     ) -> None:
         try:
             self._schema = self.get_schema_json(connection._conn)
-            request_context.send_notification(GET_SCHEMA_MODEL_COMPLETE, self._schema)
+            request_context.send_notification(
+                GET_SCHEMA_MODEL_COMPLETE, self._schema)
         except Exception as e:
             request_context.send_error(f"Error fetching db context: {e}")
         return
@@ -93,29 +95,38 @@ class SchemaEditorSession:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT
-                    c.oid as id,
-                    n.nspname as schema,
-                    c.relname as name,
-                    c.relrowsecurity as rls_enabled,
-                    c.relforcerowsecurity as rls_forced,
+                    c.oid AS id,
+                    n.nspname AS schema,
+                    c.relname AS name,
+                    c.relrowsecurity AS rls_enabled,
+                    c.relforcerowsecurity AS rls_forced,
                     CASE c.relreplident
-                    WHEN 'd' THEN 'DEFAULT'
-                    WHEN 'i' THEN 'INDEX'
-                    WHEN 'f' THEN 'FULL'
-                    WHEN 'n' THEN 'NOTHING'
-                    ELSE c.relreplident
-                    END as replica_identity,
-                    pg_total_relation_size(c.oid) as bytes,
-                    pg_size_pretty(pg_total_relation_size(c.oid)) as size,
-                    COALESCE(s.n_live_tup, 0) as live_rows_estimate,
-                    COALESCE(s.n_dead_tup, 0) as dead_rows_estimate,
-                    d.description as comment
+                        WHEN 'd' THEN 'DEFAULT'
+                        WHEN 'i' THEN 'INDEX'
+                        WHEN 'f' THEN 'FULL'
+                        WHEN 'n' THEN 'NOTHING'
+                        ELSE c.relreplident
+                    END AS replica_identity,
+                    pg_total_relation_size(c.oid) AS bytes,
+                    pg_size_pretty(pg_total_relation_size(c.oid)) AS size,
+                    COALESCE(s.n_live_tup, 0) AS live_rows_estimate,
+                    COALESCE(s.n_dead_tup, 0) AS dead_rows_estimate,
+                    d.description AS comment,
+                    -- Indicates if this table is a partitioned parent table
+                    (p.partrelid IS NOT NULL) AS is_partitioned,
+                    -- The parent table ID, if this is a child table
+                    i.inhparent AS parent_id
                 FROM pg_class c
                 JOIN pg_namespace n ON n.oid = c.relnamespace
                 LEFT JOIN pg_stat_all_tables s ON s.relid = c.oid
                 LEFT JOIN pg_description d ON d.objoid = c.oid AND d.objsubid = 0
-                WHERE c.relkind = 'r'
-                AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+                LEFT JOIN pg_partitioned_table p ON p.partrelid = c.oid
+                LEFT JOIN pg_inherits i ON i.inhrelid = c.oid
+                WHERE
+                    -- Only include regular tables and partitioned parent tables
+                    c.relkind IN ('r', 'p')
+                    -- Exclude system schemas
+                    AND n.nspname NOT IN ('pg_catalog', 'information_schema')
                 ORDER BY n.nspname, c.relname;
             """)
             tables = cur.fetchall()
@@ -124,11 +135,14 @@ class SchemaEditorSession:
         for table_row in tables:
             (
                 table_id, schema_name, table_name, rls_enabled, rls_forced,
-                replica_identity, bytes_val, size_str, live_rows, dead_rows, comment
+                replica_identity, bytes_val, size_str, live_rows, dead_rows,
+                comment, is_partitioned, parent_id
             ) = table_row
 
             table_dict = TableSchema(
                 id=table_id,
+                is_parent=is_partitioned,
+                parent_id=parent_id,
                 schema=schema_name,
                 name=table_name,
                 rls_enabled=rls_enabled,
