@@ -3,10 +3,9 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 from collections.abc import Mapping, Sequence
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
 
 import psycopg
-from git import TYPE_CHECKING
 from psycopg import Column
 from psycopg.pq import TransactionStatus
 from psycopg_pool import ConnectionPool
