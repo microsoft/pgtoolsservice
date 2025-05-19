@@ -1,4 +1,11 @@
 # PostgreSQL Tools Service 
+
+> NOTICE: This project is in the process of being archived. The code is still available for reference, but no further development or support will be provided.
+
+New releases of this project can now be found at [pgsql-tools](https://github.com/microsoft/pgsql-tools).
+
+##
+
 The PostgreSQL Tools Service (pgtoolsservice, or PGTS) is an application that provides core functionality for various PostgreSQL Server tools.
 * Connection management
 * Language Service support using VS Code protocol
